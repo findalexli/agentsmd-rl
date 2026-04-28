@@ -1,0 +1,24 @@
+version: "2.0"
+
+task:
+  name: openclaw-fix-correct-data-path-in
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: openclaw/openclaw
+  pr: 11009
+  base_commit: "be7f825006d2c3a2c2840e7647aa55cabc6516ca"
+  merge_commit: "24d18d0d72bc22ec84bc3a44886a224ea6f173f6"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/coding-agent/SKILL.md."
+
+config_edits:
+  - path: skills/coding-agent/SKILL.md
+    tier: 1
+    gold_added: 8. **NEVER start Codex in ~/.openclaw/** - it'll read your soul docs and get weird ideas about the org chart!
+    gold_removed: ''

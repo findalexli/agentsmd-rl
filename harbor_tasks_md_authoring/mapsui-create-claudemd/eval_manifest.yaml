@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: mapsui-create-claudemd
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: Mapsui/Mapsui
+  pr: 3324
+  base_commit: "2847e5780534400b85c7fd5d19c04b08905dc759"
+  merge_commit: "ba3b250be252ff702d7a0360c619bb0f6c1e2d90"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+
+config_edits:
+  - path: CLAUDE.md
+    tier: 1
+    gold_added: "# CLAUDE.md\n\nThis file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.\n\n## Common Commands\n\n### Build\n```bash\n# Restore packages and build the entire solution in Debug configuration\n# (the Release configuration is identical except for the --configuration flag)\n#\n# Usage:\n#   dotnet restore && dotnet build Mapsui.slnx --configuration Debug\n#   dotnet restore && dotnet build Mapsui.slnx --configuration Release\n```\n\n### Lint / Format\nThe repository enforces a compact style via `dotnet format` and `.editorconfig`.\n```bash\n# Check for style violations (exits non‑zero if any exist)\n#\n#   dotnet format --check\n#\n# Apply automatic fixes (may modify the repository – run after a successful test run)\n#\n#   dotnet format\n```\n\n### Run Tests\nAll unit and regression tests live under `Tests/`.\n```bash\n# Run the entire test suite (all projects in the solution)\n#\n#   dotnet test\n```\n\n#### Run a single test project\n```bash\n# Example – run only the rendering regression tests\n#\n#   dotnet test Tests/Mapsui.Rendering.Skia.Tests\n```\n\n#### Run a single test method or class\n```bash\n# Use the fully‑qualified name (including namespace)\n# Example: run the CalloutSample test class in the rendering regression suite\n#\n#   dotnet test Tests/Mapsui.Rendering.Skia.Tests --filter \"FullyQualifiedName~CalloutSample\"\n#\n# To target a specific method:\n#   dotnet test Tests/Mapsui.Rendering.Skia.Tests --filter \"FullyQualifiedName~CalloutSample.TestMethod\"\n```\n\n#### Rendering regression tests\nThese tests render every sample and compare the output pixel‑by‑pixel against stored reference images.\n\n- **Run a single sample** (fastest for targeted changes):\n  ```bash\n  dotnet test Tests/Mapsui.Rendering.Skia.Tests --filter \"FullyQualifiedName~CalloutSample\"\n  ```\n- **Run all regression tests**:\n  ```bash\n  dotnet test Tests/Mapsui.Rendering.Skia.Tests --filter \"TestSampleAsync\"\n  ```\n- **Interpret results**:\n  - `Passed` – output matches the reference image.\n  - `Inconclusive` – no reference image yet; the test generated one in `GeneratedRegression/`.\n  - `Failed` – pixel difference exceeded the threshold. Compare\n    - Generated: `Tests/Mapsui.Rendering.Skia.Tests/bin/Debug/net9.0/Resources/Images/GeneratedRegression/`\n    - Reference: `Tests/Mapsui.Rendering.Skia.Tests/bin/Debug/net9.0/Resources/Images/OriginalRegression/`\n- **Update reference images** after intentional rendering changes:\n  ```bash\n  .\\Scripts\\CopyGeneratedImagesOverOriginalImages.ps1\n  ```\n  (Revert any unrelated binary files afterward.)\n\n## High‑Level Architecture\n\n- **Core library (`Mapsui`)** – Implements map rendering, layers, providers, styles, utilities, and the `Map` abstraction. Targets .NET 9 and is platform‑agnostic.\n- **UI wrappers** – Separate projects for each UI framework (e.g., `Mapsui.UI.Maui`, `Mapsui.UI.Wpf`, `Mapsui.UI.Blazor`). Each exposes a `MapControl` that hosts a `Map` instance.\n- **Sample projects** – Under `Samples`. They reference the appropriate UI wrapper and demonstrate usage. They are built only for demonstration and are not required for library consumption.\n- **Source generator (`Mapsui.Sample.SourceGenerator`)** – Scans all classes that implement `ISample`, `ISampleBase`, `ISampleTest`, or `IMapViewSample` at build time and generates a `Samples.Register()` method. Adding a new sample class that implements one of these interfaces is sufficient – no manual registration is needed.\n- **Tests** – Unit tests in `Tests/`. Rendering regression tests are in `Tests/Mapsui.Rendering.Skia.Tests`.\n- **CI** – GitHub Actions defined in `.github/workflows/dotnet.yml` perform lint, build, and test steps for each push/PR.\n\n## Build Configuration\n\n- Solution file: `Mapsui.slnx` (used by Visual Studio and the `dotnet` CLI).\n- Projects target .NET 9 (`net9.0`).\n- Packages are published via `dotnet pack` and `dotnet nuget push` (not part of the daily dev workflow).\n\n## Style and Quality\n\n- `.editorconfig` and `dotnet format` enforce a compact style (use `var`, optional braces, expression‑bodied members, etc.).\n- Copilot instructions are captured in `.github/copilot‑instructions.md` – follow those guidelines when writing or refactoring code.\n- Tests should be deterministic, fast, and avoid external dependencies unless mocked.\n\n## Documentation\n\n- Docs are under `docs/` and built with DocFX.\n- Public APIs are documented with XML comments; keep them up‑to‑date when changing surface types.\n\n---\n\nThis CLAUDE.md is generated automatically; future instances of Claude Code should refer to it for consistent workflow guidance."
+    gold_removed: ''

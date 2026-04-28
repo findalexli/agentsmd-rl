@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: agent-skills-fix-add-how-to-write
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: supabase/agent-skills
+  pr: 16
+  base_commit: "7aa8ecc25ff5f4cd81d6ecf7e8f4c0d2a6aa7d71"
+  merge_commit: "e5417d1a90dc26a2541fe0f6fc8131263e83570b"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+
+config_edits:
+  - path: AGENTS.md
+    tier: 1
+    gold_added: "**Before completing any task**, run `npm run check` and `npm run build` to\nensure CI passes.\n2. Create `SKILL.md` following the format below\n---\n\n## Writing SKILL.md Files\n\nSKILL.md is the core of every skill. It consists of **YAML frontmatter**\nfollowed by **Markdown instructions**.\n\n### Frontmatter (Required)\nname: skill-name\ndescription: What this skill does and when to use it.\n| Field         | Required | Constraints                                                                     |\n| ------------- | -------- | ------------------------------------------------------------------------------- |\n| `name`        | Yes      | 1-64 chars. Lowercase alphanumeric and hyphens only. Must match directory name. |\n| `description` | Yes      | 1-1024 chars. Describe what the skill does AND when to use it.                  |\n| `license`     | No       | License name or reference to bundled license file.                              |\n| `metadata`    | No       | Arbitrary key-value pairs (e.g., `author`, `version`).                          |\n\n### Name Field Rules\n\n- Lowercase letters, numbers, and hyphens only (`a-z`, `0-9`, `-`)\n- Must not start or end with `-`\n- Must not contain consecutive hyphens (`--`)\n- Must match the parent directory name\n\n```yaml\n# Valid\nname: pdf-processing\nname: data-analysis\n\n# Invalid\nname: PDF-Processing # uppercase not allowed\nname: -pdf # cannot start with hyphen\nname: pdf--processing # consecutive hyphens not allowed\n```\n\n### Description Field (Critical)\n\nThe description is the **primary trigger mechanism**. Claude uses it to decide\nwhen to activate the skill.\n\n**Include both:**\n\n1. What the skill does\n2. Specific triggers/contexts for when to use it\n\n```yaml\n# Good - comprehensive and trigger-rich\ndescription: >\n  Supabase database best practices for schema design, RLS policies,\n  indexing, and query optimization. Use when working with Supabase\n  projects, writing PostgreSQL migrations, configuring Row Level Security,\n  or optimizing database performance.\n\n# Bad - too vague\ndescription: Helps with databases.\n```\n\n**Do not put \"when to use\" in the body.** The body loads only after triggering,\nso trigger context must be in the description.\n\n### Body Content\n\nThe Markdown body contains instructions for using the skill. Write\nconcisely—Claude is already capable. Only add context Claude doesn't already\nhave.\n\n**Guidelines:**\n\n- Use imperative form (\"Create the table\", not \"You should create the table\")\n- Keep under 500 lines; move detailed content to `references/`\n- Prefer concise examples over verbose explanations\n- Challenge each paragraph: \"Does this justify its token cost?\"\n\n**Recommended structure:**\n\n1. Quick start or core workflow\n2. Key patterns with examples\n3. Links to reference files for advanced topics\n\n```markdown\n## Quick Start\n\nCreate a table with RLS:\n\n[concise code example]\n\n## Common Patterns\n\n### Authentication\n\n[pattern with example]\n\n## Advanced Topics\n\n- **Complex policies**: See\n  [references/rls-patterns.md](references/rls-patterns.md)\n- **Performance tuning**: See\n  [references/optimization.md](references/optimization.md)\n```\n\n### Progressive Disclosure\n\nSkills use three loading levels:\n\n1. **Metadata** (~100 tokens) - Always loaded for all skills\n2. **Body** (<5k tokens recommended) - Loaded when skill triggers\n3. **References** (as needed) - Loaded on demand by Claude\n\nKeep SKILL.md lean. Move detailed reference material to separate files and link\nto them.\n\n---\n\nReference files in `references/` extend skills with detailed documentation.\n\n**Incorrect:** \\`\\`\\`sql -- bad example \\`\\`\\`\n**Correct:** \\`\\`\\`sql -- good example \\`\\`\\`\n## What NOT to Include\n\nSkills should only contain essential files. Do NOT create:\n\n- README.md\n- INSTALLATION_GUIDE.md\n- QUICK_REFERENCE.md\n- CHANGELOG.md\nThe skill should contain only what an AI agent needs to do the job."
+    gold_removed: ''

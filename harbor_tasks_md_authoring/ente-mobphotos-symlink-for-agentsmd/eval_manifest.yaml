@@ -1,0 +1,28 @@
+version: "2.0"
+
+task:
+  name: ente-mobphotos-symlink-for-agentsmd
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: ente-io/ente
+  pr: 7128
+  base_commit: "7722c4e16b9e469570c16c67295c147e6a46e0b4"
+  merge_commit: "d902733809f9e254dead044549173519b427f016"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in mobile/apps/photos/CLAUDE.md."
+
+config_edits:
+  - path: mobile/apps/photos/AGENTS.md
+    tier: 1
+    gold_added: CLAUDE.md
+    gold_removed: ''
+  - path: mobile/apps/photos/CLAUDE.md
+    tier: 1
+    gold_added: This file provides guidance to Claude, Codex, and any other agent when working with code in this repository.
+    gold_removed: ''

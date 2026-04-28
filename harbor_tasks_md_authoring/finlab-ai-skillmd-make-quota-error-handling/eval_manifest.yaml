@@ -1,0 +1,41 @@
+version: "2.0"
+
+task:
+  name: finlab-ai-skillmd-make-quota-error-handling
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: koreal6803/finlab-ai
+  pr: 5
+  base_commit: "f7ef356f8f4f660aafb2320747c0ddb5956ce0db"
+  merge_commit: "1b3adbec6c4f3fabeb9fc1632980b0d894fd5895"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in finlab-plugin/skills/finlab/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in finlab-plugin/skills/finlab/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in finlab-plugin/skills/finlab/SKILL.md."
+
+config_edits:
+  - path: finlab-plugin/skills/finlab/SKILL.md
+    tier: 1
+    gold_added: '當出現 `Usage exceed 500 MB/day` 或類似用量超限錯誤時，**主動**告知用戶：
+
+
+      1. 今日用量已達上限（免費版 500 MB）
+
+      2. 台灣時間早上 8 點會自動重置
+
+      3. 升級 VIP 可享 5000 MB 額度（10 倍）
+
+      4. 升級連結：https://www.finlab.finance/payment'
+    gold_removed: ''

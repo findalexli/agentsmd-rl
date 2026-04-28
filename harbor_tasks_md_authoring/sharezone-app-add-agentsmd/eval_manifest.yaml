@@ -1,0 +1,42 @@
+version: "2.0"
+
+task:
+  name: sharezone-app-add-agentsmd
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: SharezoneApp/sharezone-app
+  pr: 2033
+  base_commit: "b4d3d7c3edd98807f348e023da4df79917c89c4c"
+  merge_commit: "b231f3ad3e1a695029de2ddcd7810e4528fe2de2"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+
+config_edits:
+  - path: AGENTS.md
+    tier: 1
+    gold_added: '# Agents
+
+
+      Please refer to our [contribution guidelines](./CONTRIBUTING.md) for information on topics such as:
+
+
+      - How to run the app
+
+      - How to run tests
+
+      - How to add multi-language strings'
+    gold_removed: ''

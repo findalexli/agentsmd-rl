@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: circt-copilot-move-copilot-instructions-to
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: llvm/circt
+  pr: 10229
+  base_commit: "9920e003fef569379546028612ac9a049ce82987"
+  merge_commit: "10ff0ab295ba4dbd832d8fab8753a5ae5e7fffd4"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in lib/Dialect/ESI/runtime/AGENTS.md."
+
+config_edits:
+  - path: AGENTS.md
+    tier: 1
+    gold_added: '- Always run `clang-format` on C++ code changes and `yapf` on Python code changes.'
+    gold_removed: ''
+  - path: lib/Dialect/ESI/runtime/AGENTS.md
+    tier: 1
+    gold_added: The GTest-based unit tests live in `lib/Dialect/ESI/runtime/tests/cpp` and they are built with the ESIRuntimeCppTests target. They can be run independently or they are run by pytest if the binary is present.
+    gold_removed: ''

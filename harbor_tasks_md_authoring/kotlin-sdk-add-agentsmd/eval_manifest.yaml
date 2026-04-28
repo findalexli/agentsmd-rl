@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: kotlin-sdk-add-agentsmd
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: modelcontextprotocol/kotlin-sdk
+  pr: 349
+  base_commit: "115066ab5d8ac29d2e5ccbcdb804789bc7c92d19"
+  merge_commit: "7b7cbebe1d08a3cf512f401864d7cd1432b492e5"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+
+config_edits:
+  - path: AGENTS.md
+    tier: 1
+    gold_added: "# kotlin-mcp-sdk\n\nMCP Kotlin SDK — Kotlin Multiplatform implementation of the Model Context Protocol.\n\n## Repository Layout\n- `kotlin-sdk-core`: Core protocol types, transport abstractions, WebSocket implementation\n- `kotlin-sdk-client`: Client transports (STDIO, SSE, StreamableHttp, WebSocket)\n- `kotlin-sdk-server`: Server transports + Ktor integration (STDIO, SSE, WebSocket)\n- `kotlin-sdk`: Umbrella module that aggregates all three above\n- `kotlin-sdk-test`: Shared test utilities\n- `samples/`: Three sample projects (composite builds)\n\n## General Guidance\n- Avoid changing public API signatures. Run `./gradlew apiCheck` before every commit.\n- **Explicit API mode** is strict: all public APIs must have explicit visibility modifiers and return types.\n- Anything under an `internal` directory is not part of the public API and may change freely.\n- Package structure follows: `io.modelcontextprotocol.kotlin.sdk.*`\n- The SDK targets Kotlin 2.2+ and JVM 1.8+ as minimum.\n\n## Building and Testing\n1. Build the project:\n   ```bash\n   ./gradlew build\n   ```\n2. Run tests. To save time, run only the module you changed:\n   ```bash\n   ./gradlew :kotlin-sdk-core:test\n   ./gradlew :kotlin-sdk-client:test\n   ./gradlew :kotlin-sdk-server:test\n   ```\n3. For platform-specific tests:\n   ```bash\n   ./gradlew jsTest\n   ./gradlew wasmJsTest\n   ```\n4. Check binary compatibility (required before commit):\n   ```bash\n   ./gradlew apiCheck\n   ```\n5. If you intentionally changed public APIs, update the API dump:\n   ```bash\n   ./gradlew apiDump\n   ```\n\n## Tests\n- All tests for each module are located in `src/commonTest/kotlin/io/modelcontextprotocol/kotlin/sdk/`\n- Platform-specific tests go in `src/jvmTest/`, `src/jsTest/`, etc.\n- Use Kotest assertions (`shouldBe`, `shouldContain`, etc.) for readable test failures.\n- Use `shouldMatchJson` from Kotest for JSON validation.\n- Mock Ktor HTTP clients using `MockEngine` from `io.ktor:ktor-client-mock`.\n- Always add tests for new features or bug fixes, even if not explicitly requested.\n\n## Code Conventions\n\n### Multiplatform Patterns\n- Use `expect`/`actual` pattern for platform-specific implementations in `utils.*` files.\n- Test changes on JVM first, then verify platform-specific behavior if needed.\n- Supported targets: JVM (1.8+), JS/Wasm, iOS, watchOS, tvOS.\n\n### Serialization\n- Use Kotlinx Serialization with explicit `@Serializable` annotations.\n- Custom serializers should be registered in the companion object.\n- JSON config is defined in `McpJson.kt` — use it consistently.\n\n### Concurrency and State\n- Use `kotlinx.atomicfu` for thread-safe operations across platforms.\n- Prefer coroutines over callbacks where possible.\n- Transport implementations extend `AbstractTransport` for consistent callback management.\n\n### Error Handling\n- Use sealed classes for representing different result states.\n- Map errors to JSON-RPC error codes in protocol handlers.\n- Log errors using `io.github.oshai.kotlinlogging.KotlinLogging`.\n\n### Logging\n- Use `KotlinLogging.logger {}` for structured logging.\n- Never log sensitive data (credentials, tokens).\n\n## Pull Requests\n- Base all PRs on the `main` branch.\n- PR title format: Brief description of the change\n- Include in PR description:\n  - **What changed?**\n  - **Why? Motivation and context**\n  - **Breaking changes?** (if any)\n- Run `./gradlew apiCheck` before submitting.\n- Link PR to related issue (except for minor docs/typo fixes).\n- Follow [Kotlin Coding Conventions](https://kotlinlang.org/docs/reference/coding-conventions.html).\n\n## Review Checklist\n- `./gradlew apiCheck` must pass.\n- `./gradlew test` must succeed for affected modules.\n- New tests added for any new feature or bug fix.\n- Documentation updated for user-facing changes.\n- No breaking changes to public APIs without discussion."
+    gold_removed: ''

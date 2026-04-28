@@ -1,0 +1,74 @@
+version: "2.0"
+
+task:
+  name: sentry-devagents-move-more-content-into
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: getsentry/sentry
+  pr: 105416
+  base_commit: "9607beabf47656ba3f309c0613796609514455de"
+  merge_commit: "6acda13d85b4d3bc383a99968d6d9ca4607ea2ca"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in src/AGENTS.md."
+  - id: signal_04
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in src/AGENTS.md."
+  - id: signal_05
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in src/AGENTS.md."
+  - id: signal_06
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in static/AGENTS.md."
+  - id: signal_07
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in static/AGENTS.md."
+  - id: signal_08
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in static/AGENTS.md."
+
+config_edits:
+  - path: AGENTS.md
+    tier: 1
+    gold_added: '> **IMPORTANT**: AGENTS.md files are the source of truth for AI agent instructions. Always update the relevant AGENTS.md file when adding or modifying agent guidance. Do not add to CLAUDE.md or Cursor rules.
+
+      ├── tests/                # Backend test suite
+
+      > - **Backend testing patterns**: `tests/AGENTS.md`
+
+      For backend development patterns, commands, security guidelines, and architecture, see `src/AGENTS.md`.
+
+      For backend testing patterns and best practices, see `tests/AGENTS.md`.
+
+      For frontend development patterns, commands, design system guidelines, and React testing best practices, see `static/AGENTS.md`.'
+    gold_removed: ''
+  - path: src/AGENTS.md
+    tier: 1
+    gold_added: "## Command Execution Requirements\n\n**CRITICAL**: Before running ANY Python commands (pytest, mypy, pre-commit, etc.), you MUST activate the virtual environment:\n\n```bash\ndirenv allow\n```\n\nThis ensures you're using the correct Python interpreter and dependencies from `.venv`. Commands will fail or use the wrong Python environment without this step.\n\n**When to run `direnv allow`:**\n\n- Before running tests (`pytest`)\n- Before running type checks (`mypy`)\n- Before running any Python scripts\n- At the start of any new terminal session\n\n## Security Guidelines\n\n### Preventing Indirect Object References (IDOR)\n\n**Indirect Object Reference** vulnerabilities occur when an attacker can access resources they shouldn't by manipulating IDs passed in requests. This is one of the most critical security issues in multi-tenant applications like Sentry.\n\n**Core Principle: Always Scope Queries by Organization/Project**\n\nWhen querying resources, ALWAYS include `organization_id` and/or `project_id` in your query filters. Never trust user-supplied IDs alone.\n\n```python\n# WRONG: Vulnerable to IDOR - user can access any resource by guessing IDs\nresource = Resource.objects.get(id=request.data[\"resource_id\"])\n\n# RIGHT: Properly scoped to organization\nresource = Resource.objects.get(\n    id=request.data[\"resource_id\"],\n    organization_id=organization.id\n)\n\n# RIGHT: Properly scoped to project\nresource = Resource.objects.get(\n    id=request.data[\"resource_id\"],\n    project_id=project.id\n)\n```\n\n**Project ID Handling: Use `self.get_projects()`**\n\nWhen project IDs are passed in the request (query string or body), NEVER directly access or trust `request.data[\"project_id\"]` or `request.GET[\"project_id\"]`. Instead, use the endpoint's `self.get_projects()` method which performs proper permission checks.\n\n```python\n# WRONG: Direct access bypasses permission checks\nproject_ids = request.data.get(\"project_id\")\nprojects = Project.objects.filter(id__in=project_ids)\n\n# RIGHT: Use self.get_projects() which validates permissions\nprojects = self.get_projects(\n    request=request,\n    organization=organization,\n    project_ids=request.data.get(\"project_id\")\n)\n```\n\n## Exception Handling\n\n- Avoid blanket exception handling (`except Exception:` or bare `except:`)\n- Only catch specific exceptions when you have a meaningful way to handle them\n- We have global exception handlers in tasks and endpoints that automatically log errors and report them to Sentry\n- Let exceptions bubble up unless you need to:\n  - Add context to the error\n  - Perform cleanup operations\n  - Convert one exception type to another with additional information\n  - Recover from expected error conditions\n\n> **See \"Command Execution Requirements\" above** for critical `direnv allow` guidance.\n\n### Linting\n\n```bash\n# Preferred: Run pre-commit hooks on specific files\npre-commit run --files src/sentry/path/to/file.py\n\n# Run all pre-commit hooks\npre-commit run --all-files\n```\n\n### Testing\n\n```bash\n# Run Python tests (always use these parameters)\npytest -svv --reuse-db\n\n# Run specific test file\npytest tests/sentry/api/test_base.py\n```"
+    gold_removed: ''
+  - path: static/AGENTS.md
+    tier: 1
+    gold_added: "### Linting\n\n```bash\n# JavaScript/TypeScript linting\npnpm run lint:js\n\n# Linting for specific file(s)\npnpm run lint:js components/avatar.tsx [...other files]\n\n# Fix linting issues\npnpm run fix\n```\n\n### Testing\n\n```bash\n# Run JavaScript tests (always use CI flag)\nCI=true pnpm test <file_path>\n\n# Run specific test file(s)\nCI=true pnpm test components/avatar.spec.tsx\n```\n\n## General Frontend Rules\n\n1. NO new Reflux stores\n2. NO class components\n3. NO CSS files (use [core components](./app/components/core/) or Emotion in edge cases)\n4. ALWAYS use TypeScript\n5. ALWAYS colocate tests\n6. Lazy load routes: `React.lazy(() => import('...'))`\n\n### Imports\n\n**Always** import from `sentry-test/reactTestingLibrary`, not directly from `@testing-library/react`:\n\n```tsx\nimport {\n  render,\n  screen,\n  userEvent,\n  waitFor,\n  within,\n} from 'sentry-test/reactTestingLibrary';\n```\n"
+    gold_removed: ''

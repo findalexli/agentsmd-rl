@@ -1,0 +1,24 @@
+version: "2.0"
+
+task:
+  name: deepagents-fix-invalid-yaml-in-skillcreator
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: langchain-ai/deepagents
+  pr: 675
+  base_commit: "da908e1664cbed692970d6a3a7136fbb5c717d46"
+  merge_commit: "c09eb465ac354ebed9fc6ece4818e8b76ea05ba2"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in libs/deepagents-cli/examples/skills/skill-creator/SKILL.md."
+
+config_edits:
+  - path: libs/deepagents-cli/examples/skills/skill-creator/SKILL.md
+    tier: 1
+    gold_added: 'description: "Guide for creating effective skills that extend agent capabilities with specialized knowledge, workflows, or tool integrations. Use this skill when the user asks to: (1) create a new skill, (2) make a skill, (3) build a skill, (4) set up a skill, (5) initialize a skill, (6) scaffold a skill, (7) update or modify an existing skill, (8) validate a skill, (9) learn about skill structure, (10) understand how skills work, or (11) get guidance on skill design patterns. Trigger on phrases like \"create a skill\", \"new skill\", \"make a skill\", \"skill for X\", \"how do I create a skill\", or \"help me build a skill\"."'
+    gold_removed: ''

@@ -1,0 +1,65 @@
+version: "2.0"
+
+task:
+  name: goose-adding-brand-guidelines-to-agentsmd
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: aaif-goose/goose
+  pr: 4887
+  base_commit: "2bd18a757b4c7afe28e851bbcfb152907df348ce"
+  merge_commit: "4ffc1429f640c4e07c517e16e7ad652d734d29b7"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in documentation/AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in documentation/AGENTS.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in documentation/AGENTS.md."
+
+config_edits:
+  - path: documentation/AGENTS.md
+    tier: 1
+    gold_added: '# Documentation Style Guide
+
+
+      ## Brand Guidelines
+
+
+      **IMPORTANT**: The product name "goose" should ALWAYS be written in lowercase "g" in all documentation, blog posts, and any content within this documentation directory.
+
+
+      - ✅ Correct: "goose", "using goose", "goose provides"
+
+      - ❌ Incorrect: "Goose", "using Goose", "Goose provides"
+
+
+      This is a brand guideline that must be strictly followed.
+
+
+      ## Context
+
+
+      This rule applies to:
+
+      - All markdown files in `/docs/`
+
+      - All blog posts in `/blog/`
+
+      - README files
+
+      - Configuration files with user-facing text
+
+      - Any other documentation content
+
+
+      When editing or creating content in this documentation directory, always ensure "goose" uses a lowercase "g".'
+    gold_removed: ''

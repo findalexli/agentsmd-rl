@@ -1,0 +1,28 @@
+version: "2.0"
+
+task:
+  name: opencontracts-consolidate-duplicate-claude-files-into
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: Open-Source-Legal/OpenContracts
+  pr: 732
+  base_commit: "9b60c29794a4e3af7062309b7a541760b893b823"
+  merge_commit: "cf78c0a94c5c597341101996f86803c11eb48982"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+
+config_edits:
+  - path: CLAUDE.md
+    tier: 1
+    gold_added: '   - Both read from Apollo reactive vars (`showStructuralAnnotations`, `showSelectedAnnotationOnly` in `cache.ts`)'
+    gold_removed: ''
+  - path: Claude.md
+    tier: 1
+    gold_added: ''
+    gold_removed: ''

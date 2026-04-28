@@ -1,0 +1,44 @@
+version: "2.0"
+
+task:
+  name: vibe-kanban-update-claudemd-vibekanban
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: BloopAI/vibe-kanban
+  pr: 1484
+  base_commit: "d0392e6d5ebe77c206fed6380948f3af8631fb39"
+  merge_commit: "cbe27a754974b633a83c89c4909e17c430a68b4a"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+
+config_edits:
+  - path: AGENTS.md
+    tier: 1
+    gold_added: '- `crates/`: Rust workspace crates — `server` (API + bins), `db` (SQLx models/migrations), `executors`, `services`, `utils`, `deployment`, `local-deployment`, `remote`.
+
+      - `remote-frontend/`: Remote deployment frontend.
+
+      - `docs/`: Documentation files.'
+    gold_removed: ''
+  - path: CLAUDE.md
+    tier: 1
+    gold_added: ''
+    gold_removed: ''
+  - path: CLAUDE.md
+    tier: 1
+    gold_added: AGENTS.md
+    gold_removed: ''

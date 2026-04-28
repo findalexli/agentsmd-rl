@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: ert-expand-copilot-instructions
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: equinor/ert
+  pr: 12922
+  base_commit: "978db1187c36ded7dd3246e2bf32b91b0a5e4740"
+  merge_commit: "c6fd38da1af75dcd9edac2cad0b98ce54dfa8bef"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/copilot-instructions.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/copilot-instructions.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/copilot-instructions.md."
+
+config_edits:
+  - path: .github/copilot-instructions.md
+    tier: 1
+    gold_added: "# Copilot instructions for `ert`\n\n## Build, test, lint, and type-check commands\n\nUse `uv` for all local commands (this repo is managed with `uv sync` groups).\n\n```bash\n# Dev environment\nuv sync --all-groups\n\n# Fast local regression checks (same target used by pre-push hook)\nuv run just rapid-tests\n\n# Full local check bundle (tests + typing + docs builds)\nuv run just check-all\n\n# ERT-focused suites\nuv run just ert-unit-tests\nuv run just ert-cli-tests\nuv run just ert-gui-tests\n\n# Everest suite\nuv run just everest-tests\n\n# Type checking\nuv run just check-types\n# (equivalent to: uv run mypy src)\n\n# Style/lint hooks used in CI\nSKIP=no-commit-to-branch uv run pre-commit run --all-files --hook-stage pre-push\n\n# Docs\nuv run just build-ert-docs\nuv run just build-everest-docs\n```\n\nRun a single test:\n\n```bash\nuv run pytest tests/ert/unit_tests/<path>/test_<file>.py::test_<name>\nuv run pytest tests/everest/test_<file>.py::test_<name>\n```\n\n## High-level architecture\n\n- `src/ert`: main application package (CLI + GUI + analysis workflows + storage integration).\n  - Entry point: `ert` script -> `src/ert/__main__.py`.\n  - `ert` subcommands include GUI, lint, API server, and running in CLI.\n  - `ert.services._storage_main` starts the storage server (uvicorn).\n  - `ert.dark_storage` contains the FastAPI app/endpoints used by the storage/API layer.\n- `src/everest`: optimization tool built on top of ERT.\n  - Entry point for `everest`: `src/everest/bin/main.py`.\n  - `everest/optimizer` converts the Everest model/configuration into `ropt`.\n- `src/_ert`: shared low-level runtime helpers (e.g., threading/forward-model runner support).\n- Plugin system lives under `src/ert/plugins` (hook specs + implementations + runtime plugin loading); `ert.__main__` executes within runtime plugin context.\n- Tests are split by intent:\n  - `tests/ert/unit_tests` (fast/reliable), `tests/ert/ui_tests` (cli/gui behavior), `tests/ert/performance_tests`, and `tests/everest`.\n\n## Key repository conventions\n\n- Prefer `just` targets for standardized test groupings and CI parity (`rapid-tests`, `check-all`, `ert-*`, `everest-tests`).\n- Keep unit tests in `tests/ert/unit_tests` exceptionally fast; slower/broader cases should be marked with `@pytest.mark.integration_test` or moved.\n- Test naming convention in this repo is explicit behavior-driven names (often `test_that_...`), not vague names like `test_works`.\n- Type-hint policy from `CONTRIBUTING.md`:\n  - avoid `Any` when possible,\n  - use `@override` for overridden non-dunder methods,\n  - prefer `cast`/`assert` over blanket `# type: ignore`.\n- Pre-commit is the source of truth for formatting/lint hooks (`ruff-check --fix`, `ruff-format`, yaml/json checks, actionlint, lockfile checks).\n- Some test data requires LFS/submodules (`git lfs install` and `git submodule update --init --recursive`) for representative local runs.\n\n---\n"
+    gold_removed: ''

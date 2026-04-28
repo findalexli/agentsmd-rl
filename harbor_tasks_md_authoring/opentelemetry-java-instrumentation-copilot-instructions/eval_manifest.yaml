@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: opentelemetry-java-instrumentation-copilot-instructions
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: open-telemetry/opentelemetry-java-instrumentation
+  pr: 15393
+  base_commit: "9bf4a608bac8b8154740114410efd26342140c88"
+  merge_commit: "f09bf569654f32f6d5053d1bd9de78ea9be0e98c"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/copilot-instructions.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/copilot-instructions.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/copilot-instructions.md."
+
+config_edits:
+  - path: .github/copilot-instructions.md
+    tier: 1
+    gold_added: "# OpenTelemetry Java Instrumentation\n\n## Testing\n\nTests use AssertJ for assertions and JUnit 5 as the testing framework\n\nTest classes and methods should not be public\n\nWhen registering tests in gradle configurations, if using `val testName by registering(Test::class) {`...\nthen you need to include `testClassesDirs` and `classpath` like so:\n\n```\nval testExperimental by registering(Test::class) {\n  testClassesDirs = sourceSets.test.get().output.classesDirs\n  classpath = sourceSets.test.get().runtimeClasspath\n  ...\n}\n```\n\n## General Java guidelines\n\n* Always import classes when possible (i.e. don't use fully qualified class names in code).\n\n## Gradle CLI\n\nNever use the `--rerun-tasks` flag unless explicitly asked to use this option.\n\nGradle automatically detects changes and re-runs tasks automatically when needed. Using `--rerun-tasks`\nis wasteful and slows down builds unnecessarily.\n\n## Throwing exceptions\n\nWhen writing instrumentation, you have to be really careful about throwing exceptions. For library\ninstrumentations it might be acceptable, but in javaagent code you shouldn't throw exceptions\n(keep in mind that javaagent instrumentations sometimes use library instrumentations).\n\nIn javaagent instrumentations we try not to break applications. If there are changes in the instrumented\nlibrary that are not compatible with the instrumentation we disable the instrumentation instead of letting\nit fail. This is handled by muzzle. In javaagent instrumentations you should not fail if the methods\nthat you need don't exist.\n\n## Javaagent Instrumentation\n\n### Java8BytecodeBridge\n\nWhen to use `Java8BytecodeBridge.currentContext()` vs `Context.current()` ?\n\nUsing `Context.current()` is preferred. `Java8BytecodeBridge.currentContext()` is for using inside\nadvice. We need this method because advice code is inlined in the instrumented method as it is.\nSince `Context.current()` is a static interface method it will cause a bytecode verification error\nwhen it is inserted into a pre 8 class. `Java8BytecodeBridge.currentContext()` is a regular class\nstatic method and can be used in any class version."
+    gold_removed: ''

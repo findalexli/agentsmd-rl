@@ -1,0 +1,36 @@
+version: "2.0"
+
+task:
+  name: utoo-docsci-add-claudemd-and-agentsmd
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: utooland/utoo
+  pr: 2602
+  base_commit: "f7bee8881d895b3cc8b6101a05b6c11fbf4c5851"
+  merge_commit: "f738f9c25762c4dcdba8e8740788ec5c005b7c11"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+
+config_edits:
+  - path: AGENTS.md
+    tier: 1
+    gold_added: "# Repository Guidelines\n\n- Repo: https://github.com/utooland/utoo\n\n## Project Overview\n\nUtoo is a unified frontend toolchain with a Rust core and TypeScript bindings. It has two main products:\n- **Package Manager (PM)** — the `utoo`/`ut` CLI, implemented in `crates/pm`\n- **Bundler (Pack)** — `@utoo/pack`, built on Turbopack, with Rust core in `crates/pack-core` and Node.js bindings via NAPI-RS in `crates/pack-napi`\n\nThe `next.js/` directory is a **git submodule** (`utooland/next.js`) providing Turbopack crates. Many Rust crates depend on paths within it. Initialize with `git submodule update --init --recursive`.\n\n## Project Structure & Module Organization\n\n### Rust Crates (`crates/`)\n\n| Crate | Purpose |\n|-------|---------|\n| `pm` | Package manager CLI (`utoo`/`ut`). Modules: `cmd/` (CLI commands), `service/` (business logic), `util/` (registry, cache, linker), `helper/` (workspace, deps) |\n| `pack-core` | Bundler core built on Turbopack |\n| `pack-api` | API layer for bundling operations (ProjectContainer, entrypoints) |\n| `pack-napi` | NAPI-RS bindings exposing bundler to Node.js |\n| `pack-schema` | Configuration schema definitions |\n| `pack-tests` | Snapshot-based bundler integration tests |\n| `pack-cli` | Rust CLI wrapper for the bundler |\n| `ruborist` | Dependency resolution helper for PM |\n| `utoo-wasm` | WebAssembly bindings for `@utoo/web` |\n\n### TypeScript Packages (`packages/`)\n\n| Package | Purpose |\n|---------|---------|\n| `@utoo/pack` | Main bundler library wrapping pack-napi, includes Webpack compatibility layer |\n| `@utoo/pack-cli` | CLI for bundler (`up`/`utoopack` commands) |\n| `@utoo/pack-shared` | Shared types and utilities |\n| `@utoo/web` | Browser-compatible toolchain via WASM |\n| `@utoo/style-loader` | Style loading support |\n\n### Key Data Flow\n\n- **Pack**: User config → `@utoo/pack` (TS) → `pack-napi` (NAPI bridge) → `pack-api` → `pack-core` (Turbopack) → bundled output\n- **PM**: CLI args → `crates/pm/src/cmd/` (command parsing) → `crates/pm/src/service/` (business logic) → `crates/pm/src/util/` (registry, cache, linker)\n- **Web**: `@utoo/web` is an independent TS project that uses `utoo-wasm` for browser-compatible toolchain. Demo workflow:\n  1. `ut build:local --workspace @utoo/web`\n  2. `ut start --workspace utooweb-demo`\n\n## Build, Test, and Development Commands\n\n- Install deps: `npm install` (or bootstrap via global `utoo`/`ut` or locally built `target/release` binary)\n- Build all packages: `npm run build` (via Turbo)\n- Build specific package: `npx turbo run build --filter=@utoo/pack`\n- Watch mode: `npm run dev`\n- Build Rust crates: `cargo build`\n- Faster local release build (no LTO): `cargo build --profile release-local`\n\n### Testing\n\n- PM unit tests: `cargo test -p utoo-pm`\n- Bundler snapshot tests: `cargo test -p pack-tests`\n- Update snapshots: `UPDATE=1 cargo test -p pack-tests`\n- PM end-to-end tests: `./e2e/utoo-pm.sh`\n- All JS tests: `npm run test` (via Turbo)\n\nBundler snapshot tests live in `crates/pack-tests/tests/snapshot/`. Each test case has an `input/` dir and an `output/` dir with expected results. Set `UPDATE=1` to regenerate snapshots.\n\n### Formatting & Linting\n\n- Format JS/JSON: `npm run biome` (Biome, double quotes, 2-space indent)\n- Format Rust: `cargo fmt`\n- Format TOML: `RUST_LOG=warn taplo format`\n- Spellcheck: `typos`\n\nThe pre-push hook runs: `cargo fmt --check`, `taplo format --check`, `npx biome ci`, `typos`.\n\n## Coding Style & Conventions\n\n- **Commits**: Conventional Commits with scopes — `feat(pm):`, `feat(pack):`, `fix(wasm):`, etc.\n- **Rust edition**: 2024, nightly toolchain (version pinned in `rust-toolchain.toml`)\n- **JS formatting**: Biome with double quotes, 2-space indent\n- **Monorepo**: npm workspaces (JS) + Cargo workspace (Rust), orchestrated by Turborepo\n- **Platform binaries**: Pack builds per-platform NAPI binaries (darwin-arm64, linux-gnu, linux-musl, win32-msvc)\n\n## Commit & Pull Request Guidelines\n\n- Follow Conventional Commits: `feat(scope):`, `fix(scope):`, `docs:`, `refactor(scope):`, etc.\n- Group related changes; avoid bundling unrelated refactors.\n- Keep commit messages concise and action-oriented.\n\n## Agent-Specific Notes\n\n- When adding a new `AGENTS.md` anywhere in the repo, also add a `CLAUDE.md` symlink pointing to it (example: `ln -s AGENTS.md CLAUDE.md`).\n- When answering questions, respond with high-confidence answers only: verify in code; do not guess.\n- Never edit `node_modules`.\n- Lint/format churn:\n  - If staged+unstaged diffs are formatting-only, auto-resolve without asking.\n  - If commit/push already requested, auto-stage and include formatting-only follow-ups in the same commit, no extra confirmation.\n  - Only ask when changes are semantic (logic/data/behavior)."
+    gold_removed: ''
+  - path: CLAUDE.md
+    tier: 1
+    gold_added: AGENTS.md
+    gold_removed: ''

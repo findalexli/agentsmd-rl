@@ -1,0 +1,56 @@
+version: "2.0"
+
+task:
+  name: open-wearables-fix-fix-globs-in-cursor
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: the-momentum/open-wearables
+  pr: 188
+  base_commit: "0356dbf09e4172c6f381da55dcc57d43a31b9080"
+  merge_commit: "327350a540ebb50b7690913890999cbd1a413bd4"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in backend/.cursor/rules/models.mdc."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in backend/.cursor/rules/repositories.mdc."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in backend/.cursor/rules/routes.mdc."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in backend/.cursor/rules/schemas.mdc."
+  - id: signal_04
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in backend/.cursor/rules/services.mdc."
+
+config_edits:
+  - path: backend/.cursor/rules/models.mdc
+    tier: 1
+    gold_added: 'globs: backend/app/models/**,backend/app/database.py,backend/app/mappings.py,backend/app/utils/mappings_meta.py'
+    gold_removed: ''
+  - path: backend/.cursor/rules/repositories.mdc
+    tier: 1
+    gold_added: 'globs: backend/app/repositories/**'
+    gold_removed: ''
+  - path: backend/.cursor/rules/routes.mdc
+    tier: 1
+    gold_added: 'globs: backend/app/api/routes/**'
+    gold_removed: ''
+  - path: backend/.cursor/rules/schemas.mdc
+    tier: 1
+    gold_added: 'globs: backend/app/schemas/**'
+    gold_removed: ''
+  - path: backend/.cursor/rules/services.mdc
+    tier: 1
+    gold_added: 'globs: backend/app/services/**,backend/app/utils/exceptions.py'
+    gold_removed: ''

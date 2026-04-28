@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: prism-update-doc-paths-in-skillmd
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: prism-php/prism
+  pr: 871
+  base_commit: "c25ee3f317c31ef9772461ca0eabd017c75186b0"
+  merge_commit: "28517946d0b015c38a9d2665bda926a340d8feae"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in resources/boost/skills/developing-with-prism/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in resources/boost/skills/developing-with-prism/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in resources/boost/skills/developing-with-prism/SKILL.md."
+
+config_edits:
+  - path: resources/boost/skills/developing-with-prism/SKILL.md
+    tier: 1
+    gold_added: "   read vendor/prism-php/prism/docs/core-concepts/text-generation.md\n   read vendor/prism-php/prism/docs/providers/openai.md\n   grep \"streaming\" vendor/prism-php/prism/docs/\n   grep \"withProviderOptions\" vendor/prism-php/prism/docs/providers/\n   glob \"vendor/prism-php/prism/docs/**/*.md\""
+    gold_removed: ''

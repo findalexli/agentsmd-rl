@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: cockroach-claudemd-improve-principles-around-comments
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: cockroachdb/cockroach
+  pr: 161957
+  base_commit: "1b497581bbad4a9e9878e917d9548e81ca1441d1"
+  merge_commit: "eaf9449eb14049bc17f0df5c1152021b0c4ce97b"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+
+config_edits:
+  - path: CLAUDE.md
+    tier: 1
+    gold_added: "#### Comment Placement Principles\n\nComments should be placed where they provide the most value and avoid duplication:\n\n**Data Structure Comments:**\n- Belong at the **data structure declaration**\n- Explain the purpose, lifecycle, and invariants of the struct/type\n- Document which code initializes fields, which code accesses them, and when they become obsolete\n- Do not repeat this information in function comments that use these structures\n\n**Algorithmic Comments:**\n- Belong **inside function bodies**\n- Explain the logic, phases, and non-obvious implementation details\n- Separate different processing phases with summary comments\n- Focus on \"why\" rather than \"what\" the code does\n\n**Function Declaration Comments:**\n- Focus on **inputs and outputs** - what the function does, not how\n- Describe the contract, preconditions, postconditions, and behavior\n- Do NOT explain the intricacies of input/output types if those are data structures already documented at their declaration\n- Readers should refer to the data structure definition for detailed field explanations\n\n**Overview and Design Comments:**\n- Must be **completely understandable with zero knowledge of the code**\n- If a reader cannot understand the overview without reading code, either improve the comment or remove it\n- Reading an incomprehensible comment followed by code is double work\n- To make overview comments understandable:\n  - **Minimize new terminology** - use plain language where possible\n  - **Define new terms immediately** when you must introduce them\n  - **Illustrate with examples** to clarify abstract concepts\n  - **Limit term introduction** - avoid introducing many new terms at once; consider using variants of existing terms instead\n- If you introduce terms like \"satisfiable\", \"strict\", \"coverage\" in quick succession, step back and see if fewer, clearer terms would suffice\n\nExplain concepts/abstractions, show how pieces fit together, connect to use cases. These must be understandable without reading any code - define terms clearly and use examples to illustrate abstract concepts.\nFocus on inputs, outputs, and behavior. Avoid re-documenting data structure details that are explained at their declaration.\n\nDocument the purpose, lifecycle, and usage of each field. This is where data structure details belong - function comments should not repeat this information.\n\nAlgorithmic comments that separate different processing phases and explain non-obvious logic. These belong inside functions, not at function declarations.\n"
+    gold_removed: ''

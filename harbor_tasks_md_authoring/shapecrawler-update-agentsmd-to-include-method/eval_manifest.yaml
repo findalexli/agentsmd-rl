@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: shapecrawler-update-agentsmd-to-include-method
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: ShapeCrawler/ShapeCrawler
+  pr: 1149
+  base_commit: "51e3b23506b35d893986ae9956773d1404a12b4c"
+  merge_commit: "48a78c8d5678f0b8a21e252ba1c90de829456f28"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+
+config_edits:
+  - path: AGENTS.md
+    tier: 1
+    gold_added: "- **Method complexity**:\n  - The maximum allowed method Cognitive Complexity is 15.\n  - The maximum allowed method Cyclomatic Complexity is 10."
+    gold_removed: ''

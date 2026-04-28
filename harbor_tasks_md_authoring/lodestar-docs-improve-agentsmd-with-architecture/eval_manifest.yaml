@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: lodestar-docs-improve-agentsmd-with-architecture
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: ChainSafe/lodestar
+  pr: 8929
+  base_commit: "2074a31ba7619fd6fae2d0d857af9c9ad530b998"
+  merge_commit: "628870a0205b9c6bbd6fb62aafc02f66b86b5ca0"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+
+config_edits:
+  - path: AGENTS.md
+    tier: 1
+    gold_added: "# Build a specific package (faster iteration)\npnpm --filter @lodestar/beacon-node build\n\n# Type check a specific package\npnpm --filter @lodestar/beacon-node check-types\n\n# Run specific test file with project filter\npnpm vitest run --project unit test/unit/path/to/test.test.ts\npnpm vitest run --project unit -t \"pattern\"\n**Tip:** For faster iteration, run tests from the specific package directory:\n\n```bash\ncd packages/beacon-node\npnpm vitest run test/unit/chain/validation/block.test.ts\n```\n\n- **Named exports only**: No default exports\n## Architecture patterns\n\n### Fork-aware code\n\nCode that varies by fork uses fork guards and type narrowing:\n\n```typescript\nimport {isForkPostElectra, isForkPostFulu} from \"@lodestar/params\";\n\n// Check fork before accessing fork-specific fields\nif (isForkPostElectra(fork)) {\n  // electra and later forks\n}\n```\n\nThe fork progression is: `phase0` → `altair` → `bellatrix` → `capella` →\n`deneb` → `electra` → `fulu` → `gloas`.\n\n### Configuration\n\n`ChainForkConfig` combines base chain config with computed fork information:\n\n```typescript\n// Access config values\nconfig.SLOTS_PER_EPOCH       // from params\nconfig.getForkName(slot)      // computed fork for a slot\nconfig.getForkTypes(fork)     // SSZ types for a fork\n```\n\n`@lodestar/params` holds constants (`SLOTS_PER_EPOCH`, etc.).\n`@lodestar/config` holds runtime chain configuration.\n\n### State access\n\n- Get current state via `chain.getHeadState()` — returns a tree-backed state\n- **Never hold references to old states** — they consume memory and can go stale\n- For read-only access, use the state directly; for mutations, use `state.clone()`\n- Beacon state is tree-backed (persistent data structure), making cloning cheap\n\n### SSZ types\n\nTypes use `@chainsafe/ssz` and come in two forms:\n\n- **Value types**: Plain JS objects. Easy to work with, higher memory usage.\n- **View/ViewDU types**: Tree-backed. Memory-efficient, used for beacon state.\n\n```typescript\n// Type definition\nconst MyContainer = new ContainerType({\n  field1: UintNumberType,\n  field2: RootType,\n}, {typeName: \"MyContainer\"});\n\n// Value usage\nconst value = MyContainer.defaultValue();\nvalue.field1 = 42;\n\n// View usage (tree-backed)\nconst view = MyContainer.toViewDU(value);\nview.field1 = 42;\nview.commit();\n```\n\n### Fork choice\n\nThe fork choice store uses proto-array for efficient head computation:\n\n- `getHead()` returns a **cached** `ProtoBlock` — may be stale after mutations\n- After modifying proto-array node state (e.g., execution status), call\n  `recomputeForkChoiceHead()` to refresh the cache\n- This applies to any code that modifies proto-array outside normal block import\n\n### Logging\n\nUse structured logging with metadata objects:\n\n```typescript\nthis.logger.debug(\"Processing block\", {slot, root: toRootHex(root)});\nthis.logger.warn(\"Peer disconnected\", {peerId: peer.toString(), reason});\n```\n\n- Prefer structured fields over string concatenation\n- Use appropriate levels: `error` > `warn` > `info` > `verbose` > `debug` > `trace`\n- Include relevant context (slot, root, peer) as structured fields\n\nUse vitest project filters for targeted test runs:\n# Unit tests only (from repo root)\npnpm vitest run --project unit test/unit/chain/validation/block.test.ts\n\n# With pattern matching\npnpm vitest run --project unit -t \"should reject\"\n\n# From package directory (no project filter needed)\npnpm vitest run test/unit/chain/validation/block.test.ts\n- Respond to review feedback promptly — reply to every comment, including bot reviewers\n- When updating based on feedback, respond in-thread to acknowledge\n### Adding a new API endpoint\n\n1. Define the route in `packages/api/src/beacon/routes/<resource>.ts`\n2. Add request/response SSZ codecs alongside the route definition\n3. Implement the server handler in `packages/beacon-node/src/api/impl/beacon/<resource>.ts`\n4. Add tests for the new endpoint\n5. Reference the [Beacon APIs spec](https://github.com/ethereum/beacon-APIs) for the endpoint contract\n\n\n## Common pitfalls\n\n- **Forgetting `pnpm lint` before pushing**: Biome enforces formatting. Always\n  run it before committing. CI will catch it, but it wastes a round-trip.\n- **Editing `lib/` instead of `src/`**: Files in `packages/*/lib/` are build\n  outputs. Always edit in `packages/*/src/`.\n- **Stale fork choice head**: After modifying proto-array execution status,\n  the cached head from `getHead()` is stale. Call `recomputeForkChoiceHead()`.\n- **Holding state references**: Beacon state objects are large. Don't store\n  references beyond their immediate use — let them be garbage collected.\n- **Missing `.js` extension**: Relative imports must use `.js` even though\n  source files are `.ts`. This is required for Node.js ESM resolution.\n- **Force pushing after review**: Never force push once a reviewer has started.\n  Use incremental commits — reviewers track changes between reviews."
+    gold_removed: ''

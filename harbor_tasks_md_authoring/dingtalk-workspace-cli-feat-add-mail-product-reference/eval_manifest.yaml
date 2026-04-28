@@ -1,0 +1,52 @@
+version: "2.0"
+
+task:
+  name: dingtalk-workspace-cli-feat-add-mail-product-reference
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: DingTalk-Real-AI/dingtalk-workspace-cli
+  pr: 167
+  base_commit: "ad33a46883be6e7a89bccc36b16a10f097a6ef30"
+  merge_commit: "e3b0c9b1ed78c34bdcad0b8e1a1231c575172aa2"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/SKILL.md."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/references/products/mail.md."
+  - id: signal_04
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/references/products/mail.md."
+  - id: signal_05
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/references/products/mail.md."
+
+config_edits:
+  - path: skills/SKILL.md
+    tier: 1
+    gold_added: 'description: 管理钉钉产品能力(AI表格/日历/通讯录/群聊与机器人/待办/审批/考勤/日志/DING消息/开放平台文档/钉钉文档/钉钉云盘/AI听记/邮箱等)。当用户需要操作表格数据、管理日程会议、查询通讯录、管理群聊、机器人发消息、创建待办、提交审批、查看考勤、提交日报周报（钉钉日志模版）、读写钉钉文档、上传下载云盘文件、查询听记纪要、收发邮件时使用。
+
+      | `mail`            | 邮箱：邮箱地址查询/邮件搜索(KQL)/邮件详情/发送邮件                        | [mail.md](./references/products/mail.md)                       |
+
+      用户提到"邮箱/邮件/发邮件/收邮件/搜邮件/查邮件" → `mail`'
+    gold_removed: ''
+  - path: skills/references/products/mail.md
+    tier: 1
+    gold_added: "# 邮箱 (mail) 命令参考\n\n## 命令总览\n\n### 查询可用邮箱地址\n```\nUsage:\n  dws mail mailbox list [flags]\nExample:\n  dws mail mailbox list\n```\n\n**返回字段：**\n\n| 字段 | 类型 | 说明 |\n|------|------|------|\n| `mailboxes` | `List[]` | 邮箱列表，每条包含邮箱地址、账号类型、所属企业 |\n\n### 搜索邮件 (KQL 语法)\n```\nUsage:\n  dws mail message search [flags]\nExample:\n  dws mail message search --email user@company.com --query \"subject:\\\"周报\\\"\" --size 20\n  dws mail message search --email user@company.com --query \"from:alice AND date>2025-06-01T00:00:00Z\" --size 10\nFlags:\n      --cursor string   邮件的起始偏移标识, 其值取自响应中的nextCursor字段。\"\"表示从头开始\n      --email string    搜索目标邮箱地址 (必填)\n      --query string    KQL 查询表达式 (必填), 其中 date 格式需遵循 ISO8601 规范\n      --size string     每页返回数量(最大限制 100, 默认 20) (必填)，别名: --limit, --page-size\n```\n\nKQL 查询字段: date, size, tag, folderId, isRead, hasAttachments, subject, attachname, body, from, to\n常用文件夹 ID: 1=已发送, 2=收件箱, 3=垃圾邮件, 5=草稿, 6=已删除\n\n### KQL 查询字段说明\n\n| 字段 | 类型 | 说明 | 正确示例 | 错误示例 |\n|------|------|------|----------|----------|\n| `date` | ISO8601 日期时间 | 邮件日期，支持 `>` `<` `>=` `<=` 比较运算符 | `date>2025-06-01T00:00:00Z` | `date>2025-06-01`（缺少时间部分） |\n| `size` | 整数（字节数） | 邮件大小，支持 `>` `<` `>=` `<=` 比较运算符 | `size>1024` | `size>\"1024\"`（值不需要引号） |\n| `tag` | 字符串 | 邮件标签 | `tag:important` | `tag:\"\"` |\n| `folderId` | 整数 | 文件夹 ID（1=已发送, 2=收件箱, 3=垃圾邮件, 5=草稿, 6=已删除） | `folderId:2` | `folderId:\"收件箱\"`（必须用数字 ID） |\n| `isRead` | 布尔 `true`/`false` | 是否已读 | `isRead:false` | `isRead:0`、`isRead:\"false\"`（不支持数字或字符串形式） |\n| `hasAttachments` | 布尔 `true`/`false` | 是否有附件 | `hasAttachments:true` | `hasAttachments:yes` |\n| `subject` | 字符串 | 邮件主题，含空格须加双引号 | `subject:周报`、`subject:\"项目 进展\"` | `subject:项目 进展`（含空格未加引号） |\n| `attachname` | 字符串 | 附件文件名，含空格须加双引号 | `attachname:report.pdf`、`attachname:\"月度 报告.xlsx\"` | `attachname:月度 报告.xlsx`（含空格未加引号） |\n| `body` | 字符串 | 邮件正文内容，含空格须加双引号 | `body:会议纪要`、`body:\"Q1 总结\"` | `body:Q1 总结`（含空格未加引号） |\n| `from` | 字符串（邮件地址或名称） | 发件人，支持：纯邮件地址、纯名称（含空格须加双引号）、`\"名称<邮件地址>\"` 格式 | `from:alice@company.com`、`from:\"张 三\"`、`from:\"alice<a@b.com>\"` | `from:张 三`（含空格未加引号） |\n| `to` | 字符串（邮件地址或名称） | 收件人，支持：纯邮件地址、纯名称（含空格须加双引号）、`\"名称<邮件地址>\"` 格式 | `to:bob@company.com`、`to:\"李 四\"`、`to:\"alice<a@b.com>\"` | `to:李 四`（含空格未加引号） |\n\n**组合查询说明：**\n- 支持 `AND` / `OR` / `NOT` 逻辑运算符（大写）\n- 括号用于分组：`(from:alice OR from:bob) AND folderId:2`\n- 排除特定文件夹：`(NOT folderId:3) AND (NOT folderId:6)`\n\n### message search 返回值说明\n\n| 字段 | 类型 | 说明 |\n|------|------|------|\n| `messages` | `List[]` | 邮件列表，每条包含邮件 ID 及元信息（不含正文） |\n| `total` | `int32` | 符合条件的总邮件数 |\n| `nextCursor` | `string` | 下一页游标，传入 `--cursor` 翻页；值为 `$` 表示已到达列表尾部 |\n\n**翻页示例：**\n```bash\n# 第一页\ndws mail message search --email user@company.com --query \"folderId:2\" --size 20 --format json\n# 取返回中的 nextCursor，传入下一次请求（nextCursor=\"$\" 时停止）\ndws mail message search --email user@company.com --query \"folderId:2\" --size 20 --cursor <nextCursor> --format json\n```\n\n### 查看邮件完整内容\n```\nUsage:\n  dws mail message get [flags]\nExample:\n  dws mail message get --email user@company.com --id <messageId>\nFlags:\n      --email string   邮件所属邮箱地址 (必填)\n      --id string      邮件 ID (必填)\n```\n\n**返回字段：**\n\n| 字段 | 类型 | 说明 |\n|------|------|------|\n| `message` | `object` | 邮件完整信息，包含主题、发件人、收件人、正文、附件等 |\n\n### 发送邮件\n```\nUsage:\n  dws mail message send [flags]\nExample:\n  dws mail message send --from user@company.com --to colleague@company.com \\\n    --subject \"周报\" --body \"本周完成任务A和任务B\"\nFlags:\n      --body string      邮件正文，支持 Markdown 格式 (必填)\n      --cc string        抄送人列表\n      --from string      发件人邮箱 (必填)，别名: --sender\n      --subject string   邮件标题 (必填)\n      --to string        收件人列表 (必填)\n```\n\n## 通用错误说明\n\n以下错误适用于所有 mail 命令。\n\n| 错误标识 | 含义 | 处理建议 |\n|----------|------|----------|\n| `domain.notFound` | 该用户的邮箱不是由钉钉邮箱托管，无法完成操作 | 确认邮箱是否已开通钉钉企业邮箱服务 |\n\n## 意图判断\n\n用户说\"我的邮箱/邮箱地址\" → `mailbox list`\n用户说\"找邮件/搜邮件/查邮件\" → `message search`\n用户说\"看邮件/打开邮件/邮件内容\" → 先 `message search` 获取 messageId，再 `message get`\n用户说\"发邮件/写邮件\" → 先 `mailbox list` 获取发件地址，再 `message send`\n用户说\"给(某人名字)发邮件\" → 先 `aisearch person` 获取 userId，再 `contact user get` 获取收件人邮箱，再 `message send`\n\n\n## 严格禁止 (NEVER DO)\n- 明确禁止猜测、假设、推断发件人和收件人邮箱\n- 无法获取邮箱时，强引导ask_human，由用户确认，不要通过假设或其他方式继续执行\n\n## 核心工作流\n\n```bash\n# 1. 查看可用邮箱 — 提取邮箱地址\ndws mail mailbox list --format json\n\n# 2. 搜索邮件 — 提取 messageId\ndws mail message search --email user@company.com \\\n  --query \"subject:\\\"周报\\\" AND date>2025-06-01T00:00:00Z\" --size 10 --format json\n\n# 3. 查看邮件详情\ndws mail message get --email user@company.com --id <messageId> --format json\n\n# 4. 发送邮件\ndws mail message send --from user@company.com --to colleague@company.com \\\n  --subject \"周报\" --body \"本周完成…\" --format json\n```\n\n## 上下文传递表\n\n| 操作 | 从返回中提取 | 用于 |\n|------|-------------|------|\n| `mailbox list` | 邮箱地址 | message search/get/send 的 --email/--from |\n| `message search` | `messageId` | message get 的 --id |\n| `aisearch person` → `contact user get` | 用户邮箱 (orgAuthEmail) | message send 的 --to/--cc (跨产品) |\n\n## 注意事项\n\n- `mailbox list` 返回用户所有邮箱（含个人和企业），每条记录包含邮箱地址、账号类型、所属企业。选择邮箱时优先匹配用户当前所在企业的企业邮箱；若有多个可选，向用户确认后再操作\n- `message search` 返回邮件 ID 和元信息（不含正文），需 `message get` 获取完整内容\n- KQL 查询支持 AND/OR/NOT 组合，字段值含空格时需用双引号\n- `--cc` 抄送人支持多人，逗号分隔\n- 收件人邮箱获取：用户只知道同事名字时，先通过 `dws aisearch person --keyword \"名字\" --dimension name` 获取 userId，再 `dws contact user get --ids <userId>` 从返回中提取 orgAuthEmail 字段\n\n"
+    gold_removed: ''

@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: bitbox-wallet-app-add-initial-agentsmd
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: BitBoxSwiss/bitbox-wallet-app
+  pr: 3715
+  base_commit: "d78450d9149ecac035c239df1045af1381d589f0"
+  merge_commit: "823bfdcdc441dda76eb128651d5b14fa1db93f21"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+
+config_edits:
+  - path: AGENTS.md
+    tier: 1
+    gold_added: "# Repository Guidelines for bitbox-wallet-app\n\n## Project Structure & Module Organization\nThe repository powers the BitBoxApp. Core Go services live under `backend/` with entrypoints in\n`cmd/` (e.g., `cmd/servewallet`). Frontend clients reside in `frontends/` (`web` for React, `qt` for\nthe desktop app, `android` and `ios` for mobile artifacts). Shared assets and docs sit in `docs/`,\nwhile automation lives in `scripts/`. Use `vendor/` for pinned Go modules and keep `config/` aligned\nwith the scenarios documented in `docs/BUILD.md`.\n\n## Build, Test, and Development Commands\n- `make envinit` installs golangci-lint, gomobile, and other dev tooling. Run once per environment\n  refresh.\n- `make servewallet` starts the Go backend against the vendored modules; pair it with `make webdev`\n  (which calls `npm start`) for live UI development.\n- `make buildweb` performs a clean web build (`npm ci && npm run build`) used by desktop packages.\n- `make webtest`, `make webe2etest`, and `make weblint` proxy to the React test, Playwright, and\n  ESLint pipelines under `frontends/web`.\n- `./scripts/ci.sh` mirrors CI: Go race tests, frontend build, and packaging checks. Use it before\n  large pull requests.\n\n## Coding Style & Naming Conventions\nGo code must stay gofmt/goimports clean; prefer package-level names that mirror directory names\n(`backend/accounts`, `backend/rates`). TypeScript follows the ESLint config surfaced by `npm run\nlint`; keep React components PascalCased and colocate styles alongside component folders. When\nadding Make targets or scripts, stick to lowercase hyphenated names (`servewallet-prodservers`).\n\n## Testing Guidelines\nPlace Go tests in `_test.go` files and run `go test -mod=vendor ./...` (optionally via\n`scripts/coverage.sh` to emit `coverage.cov`). Frontend unit specs live beside components as\n`*.test.ts(x)`; invoke `make webtest` for the suite. Use `make webe2etest` for Playwright smoke\nflows and document new scenarios in `frontends/web/tests/README.md` if they require fixtures.\n\n## Commit & Pull Request Guidelines\nFollow the existing `context: summary` convention (lowercase imperative, no trailing period)—e.g.,\n`frontend: simplify account selector`. Keep commits atomic and under ~500 lines when\npossible."
+    gold_removed: ''

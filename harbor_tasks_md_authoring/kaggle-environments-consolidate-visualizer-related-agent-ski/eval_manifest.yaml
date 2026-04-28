@@ -1,0 +1,131 @@
+version: "2.0"
+
+task:
+  name: kaggle-environments-consolidate-visualizer-related-agent-ski
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: Kaggle/kaggle-environments
+  pr: 861
+  base_commit: "40d16efe938eb1c0c7beaea0eb6e98fb32866c88"
+  merge_commit: "d4f03620f4b480a88eb202ccb9eccbe6eecb6c20"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .agents/skills/create-environment/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .agents/skills/create-environment/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .agents/skills/create-visualizer/SKILL.md."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .agents/skills/create-visualizer/SKILL.md."
+  - id: signal_04
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .agents/skills/create-visualizer/SKILL.md."
+  - id: signal_05
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .agents/skills/create-visualizer/visualizer-style-guide.md."
+  - id: signal_06
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .agents/skills/create-visualizer/visualizer-style-guide.md."
+  - id: signal_07
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .agents/skills/create-visualizer/visualizer-style-guide.md."
+  - id: signal_08
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .agents/skills/onboard-open-spiel-game/SKILL.md."
+  - id: signal_09
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .agents/skills/onboard-open-spiel-game/SKILL.md."
+  - id: signal_10
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .agents/skills/onboard-open-spiel-game/SKILL.md."
+  - id: signal_11
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_12
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_13
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_14
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_15
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_16
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+
+config_edits:
+  - path: .agents/skills/create-environment/SKILL.md
+    tier: 1
+    gold_added: '## Step 6: Add a visualizer (optional)
+
+
+      Follow the `create-visualizer` skill to build a web-based replay visualizer for this environment.
+
+      '
+    gold_removed: ''
+  - path: .agents/skills/create-open-spiel-visualizer/SKILL.md
+    tier: 1
+    gold_added: ''
+    gold_removed: ''
+  - path: .agents/skills/create-visualizer/SKILL.md
+    tier: 1
+    gold_added: "Build a web visualizer for any Kaggle game environment -- regular or OpenSpiel. Each visualizer is a Vite + TypeScript project within the pnpm workspace.\n**Related skills:**\n- `create-environment` -- if you need to build the Python backend for a custom game first\n- `onboard-open-spiel-game` -- if you need to register or configure an OpenSpiel game first\n## Step 1: Determine your variant\n\n| Variant | Directory | Relative path to `web/` | `gameName` |\n|---------|-----------|------------------------|------------|\n| Regular env | `kaggle_environments/envs/<name>/visualizer/default/` | `../../../../../` (5 levels) | `\"<name>\"` |\n| OpenSpiel env | `kaggle_environments/envs/open_spiel_env/games/<name>/visualizer/default/` | `../../../../../../../` (7 levels) | `\"open_spiel_<name>\"` |\n\nBoth variants use the same boilerplate, shared workspace dependency, and renderer interface. The only differences are the directory depth (which affects relative paths to base configs) and the replay data shape.\n\n## Step 2: Create the project structure\n\nCreate the visualizer directory with these files:\n├── replays/test-replay.json    (for dev -- see \"Generate a test replay\" below)\n    ├── renderer.ts\n    └── style.css\nFor OpenSpiel games, also create an empty `games/<name>/__init__.py` if one doesn't exist.\n    \"dev-with-replay\": \"cross-env VITE_REPLAY_FILE=./replays/test-replay.json vite\",\n// Adjust path depth: 5 levels for regular envs, 7 for OpenSpiel\nexport default mergeConfig(\n  baseConfig,\n  defineConfig({\n    publicDir: \"replays\",\n  })\n);\nAdjust the `extends` path to match your variant's depth.\n    <link rel=\"preconnect\" href=\"https://fonts.googleapis.com\" />\n    <link rel=\"preconnect\" href=\"https://fonts.gstatic.com\" crossorigin />\n    <link href=\"https://fonts.googleapis.com/css2?family=Mynerve&display=swap\" rel=\"stylesheet\" />\n### `src/style.css`\n\nSee [visualizer-style-guide.md](visualizer-style-guide.md) for the standard CSS and the full visual design system.\n\n### `src/main.ts`\nimport \"./style.css\";\nif (!app) {\n  throw new Error(\"Could not find app element\");\n\nif (import.meta.env?.DEV && import.meta.hot) {\n  import.meta.hot.accept();\n}\n\ncreateReplayVisualizer(\n  app,\n  new ReplayAdapter({\n    gameName: \"<name>\",           // must match the registered env name\n    renderer: renderer as any,\n    ui: \"side-panel\",             // \"side-panel\" (with reasoning logs) or \"inline\"\n  })\n);\n### Generate a test replay\nFor regular environments:\n\n```bash\nuv run python -c \"\nfrom kaggle_environments import make\nimport json\nenv = make('<name>', debug=True)\nenv.run(['agent1', 'agent2'])\nwith open('test-replay.json', 'w') as f:\n    json.dump(env.toJSON(), f, indent=2)\nprint(f'Generated replay with {len(env.toJSON()[\\\"steps\\\"])} steps')\n\"\n```\n\nFor OpenSpiel environments (the `\"random\"` agent needs `includeLegalActions`):\n\n```bash\nuv run python -c \"\nfrom kaggle_environments import make\nimport json\nenv = make('open_spiel_<name>', debug=True, configuration={'includeLegalActions': True})\nenv.run(['random', 'random'])\nreplay = env.toJSON()\nwith open('test-replay.json', 'w') as f:\n    json.dump(replay, f, indent=2)\nprint(f'Generated replay with {len(replay[\\\"steps\\\"])} steps')\nprint(f'Statuses: {replay[\\\"statuses\\\"]}')\n\"\n```\n\nVerify the replay has a reasonable number of steps (not 2-3, which indicates the agent failed).\n\n## Step 3: Understand the replay data shape\n\nThe renderer function receives a `RendererOptions` object. The shape of `replay.steps` differs between regular and OpenSpiel environments.\n\n### Regular environments\n\nSteps are transformed through the core adapter into `BaseGameStep` objects:\ninterface BaseGameStep {\n  step: number;\n  players: BaseGamePlayer[];\n}\ninterface BaseGamePlayer {\n  id: number;\n  name: string;\n  thumbnail: string;\n  isTurn: boolean;\n  actionDisplayText?: string;\n  thoughts?: string;\n}\n```\nAccess via `replay.steps[step].players[i]`. For raw env data, you can write a custom transformer (see \"Optional: Add a transformer\" below).\n### OpenSpiel environments\nSteps are raw arrays from the unified interpreter:\n```typescript\n// Each step is an array of player observations:\nreplay.steps[stepIndex][playerIndex].observation.observationString  // game state (JSON if proxy exists)\nreplay.steps[stepIndex][playerIndex].observation.currentPlayer      // whose turn it is\nreplay.steps[stepIndex][playerIndex].observation.isTerminal         // game over flag\nreplay.steps[stepIndex][playerIndex].action.submission              // action taken (-1 = not acting)\nreplay.steps[stepIndex][playerIndex].reward                        // cumulative reward\nreplay.steps[stepIndex][playerIndex].status                        // \"ACTIVE\" or \"DONE\"\n```\n\n#### Games with a proxy (default)\nIf the game has a proxy (see `onboard-open-spiel-game` skill -- this is the default), the `observationString` is **JSON**. The renderer just parses it:\n```typescript\nfunction getObservation(step: any, playerIdx: number): any | null {\n  const raw = step?.[playerIdx]?.observation?.observationString;\n  if (!raw) return null;\n  try { return JSON.parse(raw); } catch { return null; }\n}\n\n// Usage in renderer:\nconst obs = getObservation(currentStep, 0);\n// obs.board, obs.current_player, obs.is_terminal, obs.winner, obs.scores, obs.last_action, etc.\n```\n\nThe proxy's `state_dict()` method determines what fields are available. See `onboard-open-spiel-game` for the standard fields: `board`, `current_player`, `is_terminal`, `winner`, `scores`, `last_action`, `phase`.\n\nFor **perfect information** games, both players get the same observation. For **imperfect information** games, each player gets a different JSON object containing only their private view -- parse both and render them (e.g., side-by-side boards).\n\n#### Games without a proxy (raw text observations)\n\nSome games may not have a proxy (e.g., games added to `GAMES_LIST` only). In this case, `observationString` is the raw text from OpenSpiel's `ObservationString()` or `InformationStateString()`. You'll need to parse it manually:\n```typescript\nfunction getObservationString(step: any, playerIdx: number = 0): string {\n  return step?.[playerIdx]?.observation?.observationString ?? '';\nStudy the game's C++ source at `open_spiel/games/<game_name>/` (`.h`/`.cc` files) to understand the format of `ObservationString` and `ToString`.\n\n#### Common OpenSpiel step helpers\n\nThese helpers work regardless of whether the game has a proxy:\n\n```typescript\nfunction isTerminal(step: any): boolean {\n  if (!step || !Array.isArray(step)) return false;\n  return step.some((p: any) => p?.status === 'DONE' || p?.observation?.isTerminal);\n}\n\nfunction getCurrentPlayer(step: any): number {\n  if (!step || !Array.isArray(step)) return 0;\n  for (const player of step) {\n    const cp = player?.observation?.currentPlayer;\n    if (cp !== undefined && cp >= 0) return cp;\n  }\n  return 0;\n}\n\nfunction getRewards(step: any): [number, number] {\n  if (!step || !Array.isArray(step)) return [0, 0];\n  return [step[0]?.reward ?? 0, step[1]?.reward ?? 0];\n}\n```\n\n## Step 4: Write the renderer (`src/renderer.ts`)\n\nThe renderer function is called on every step change. It receives a `RendererOptions` object and should draw into the provided `parent` element.\n\n### Visual design requirements\n\nEvery visualizer MUST clearly communicate these four things:\n\n1. **Current actor (whose turn it is):** Show player names in the header, highlight the active player's card with `#bdeeff` background and `scale: 1.1`.\n\n2. **Move taken (what just happened):** Compare current and previous step states to detect what changed. Highlight the move visually (glowing ring, gold overlay, dashed outline, etc.).\n\n3. **Move implications (what the move caused):** Show deltas/diffs when state values change (`+N` / `-N` badges). Mark captured/removed pieces distinctly. Highlight score changes.\n\n4. **Current score / game progress:** Show scores, piece counts, progress indicators. At game over, display the final result prominently.\n### Renderer template\nimport type { RendererOptions } from \"@kaggle-environments/core\";\nexport function renderer(options: RendererOptions) {\n  const { step, replay, parent } = options;\n  const steps = replay.steps as any[];\n\n  // Re-create DOM structure each call (simple, reliable)\n  parent.innerHTML = `\n    <div class=\"renderer-container\">\n      <div class=\"header\"></div>\n      <canvas></canvas>\n      <div class=\"status-container sketched-border\"></div>\n    </div>\n  `;\n  const header = parent.querySelector('.header') as HTMLDivElement;\n  const canvas = parent.querySelector('canvas') as HTMLCanvasElement;\n  const statusContainer = parent.querySelector('.status-container') as HTMLDivElement;\n  if (!canvas || !replay) return;\n\n  // Size canvas to fill its flex area\n  canvas.width = 0;\n  canvas.height = 0;\n  const { width, height } = canvas.getBoundingClientRect();\n  canvas.width = width;\n  canvas.height = height;\n  const c = canvas.getContext('2d');\n  if (!c) return;\n\n  const currentStep = steps[step];\n\n  // --- Parse game state (game-specific) ---\n  // For regular envs: currentStep.players[i]\n  // For OpenSpiel (with proxy): JSON.parse(currentStep[0].observation.observationString)\n  // For OpenSpiel (no proxy): parse raw text from currentStep[0].observation.observationString\n\n  // --- 1. Build header (DOM) ---\n  // Player names in sketched-border cards, active player highlighted\n  header.innerHTML = `\n    <span class=\"sketched-border\" style=\"padding: 4px 12px; background-color: white; font-weight: 700;\">Player 1</span>\n    <span style=\"color: #444343;\">vs</span>\n    <span class=\"sketched-border\" style=\"padding: 4px 12px; background-color: white; font-weight: 700;\">Player 2</span>\n\
+      \  `;\n\n  // --- 2. Draw game board on canvas ---\n  c.clearRect(0, 0, width, height);\n  // ... draw board, pieces, move highlights ...\n\n  // --- 3. Update status container (DOM) ---\n  statusContainer.textContent = 'Game status here';\n- **Reuse DOM elements:** The renderer is called on every step change. The example above recreates innerHTML for simplicity, but for performance-sensitive games, create on first call and update on subsequent calls.\n### Follow the style guide\n\nSee [visualizer-style-guide.md](visualizer-style-guide.md) for the complete visual design system -- colors, fonts, layout patterns, and CSS.\n\n## Step 5 (optional): Add a transformer\n\nIf your game needs data preprocessing (e.g., parsing observation strings into structured step objects), add a transformer in `web/core/src/transformers/`.\n\n1. Create `web/core/src/transformers/<name>/`:\n   - `<name>ReplayTypes.ts` -- TypeScript types for raw and transformed steps\n   - `<name>Transformer.ts` -- transform function and step label/description helpers\n\n2. Register it in `web/core/src/transformers.ts`:\n   ```typescript\n   import { myGameTransformer, getMyGameStepLabel, getMyGameStepDescription } from './transformers/<name>/<name>Transformer';\n   import { MyGameStep } from './transformers/<name>/<name>ReplayTypes';\n\n   // In processEpisodeData switch:\n   case 'open_spiel_<name>':\n     transformedSteps = myGameTransformer(environment);\n     break;\n\n   // In getGameStepLabel switch:\n   case 'open_spiel_<name>':\n     return getMyGameStepLabel(gameStep as MyGameStep);\n\n   // In getGameStepDescription switch:\n   case 'open_spiel_<name>':\n     return getMyGameStepDescription(gameStep as MyGameStep);\n   ```\n3. Then use the transformed data in your renderer instead of parsing raw observations.\n\n**Reference transformers:** `web/core/src/transformers/chess/`, `web/core/src/transformers/connect_four/`, `web/core/src/transformers/go/`.\n\nA transformer is not required -- games with a proxy already get structured JSON observations, and simpler games can parse observation strings directly in the renderer.\n\n## Step 6: Integrate with the environment\n\nIn the environment's Python module, ensure `html_renderer()` reads the built visualizer output:\nFor OpenSpiel games, this is handled by the shared framework -- no per-game Python change is needed.\n\n## Step 7: Build and verify\n# Run dev server with a specific replay file\npnpm dev-with-replay   # select your game from the picker\n\n- [ ] `vite.config.ts` extends `web/vite.config.base` with correct relative path depth\n- [ ] `tsconfig.json` extends `web/tsconfig.base.json` with correct relative path depth\n- [ ] `src/style.css` follows the [visualizer-style-guide.md](visualizer-style-guide.md)\n- [ ] Current actor, move taken, move implications, and score are all visible\n- [ ] `html_renderer()` in the Python env reads `dist/index.html` (regular envs only)\n- [ ] `test-replay.json` has a full game (not 2-3 steps from agent failure)\n- [ ] If transformer: registered in `web/core/src/transformers.ts` switch statements\n- `kaggle_environments/envs/open_spiel_env/games/connect_four/visualizer/default/` -- OpenSpiel visualizer\n\n## Troubleshooting\n\n**Replay has only 2-3 steps / \"INVALID ACTION DETECTED\":** The OpenSpiel `\"random\"` agent needs `includeLegalActions: True` in the configuration. Generate the replay with:\n```python\nenv = make('open_spiel_<name>', debug=True, configuration={'includeLegalActions': True})\n```\n\n**Canvas is blank:** Check the browser console for errors. Common issues: incorrect CSS (canvas has 0 height), parse function returning null because the observation string format doesn't match expectations. Print the raw observation string to debug.\n\n**Observation string is empty (OpenSpiel):** Some games use `information_state_string()` instead of `observation_string()`. The framework handles this automatically -- check the game type in the OpenSpiel source for `provides_observation_string` vs `provides_information_state_string`.\n\n**Game requires list parameters (OpenSpiel):** OpenSpiel uses semicolons inside square brackets for lists: `ship_sizes=[2;3;4]`, `ship_values=[1.0;1.0;1.0]`. These go directly in the game string in `GAMES_LIST`."
+    gold_removed: ''
+  - path: .agents/skills/create-visualizer/visualizer-style-guide.md
+    tier: 1
+    gold_added: "# Visualizer Style Guide\n\nAll Kaggle environment visualizers should match a **paper-and-ink** aesthetic. The goal is a warm, tactile, stationery-like look -- as if the game were drawn on paper with hand-sketched borders.\n\n## Aesthetic principles\n\n1. **Warm paper-like background.** Use a warm parchment background (`#f5f1e2`) instead of dark or saturated colors. The canvas should have a transparent background so the page color shows through from the DOM layer beneath.\n\n2. **Light color scheme.** Use near-black text (`#050001`) on the paper background. Avoid dark backgrounds, white-on-dark text, and neon/diffused glows.\n\n3. **Sketched borders.** Use dashed borders (`1px dashed #3c3b37`) on containers instead of solid CSS borders or diffused `box-shadow`. This gives a hand-drawn, woodblock-print quality.\n\n4. **High-resolution text.** Prefer **DOM elements** for all text, labels, and status displays rather than canvas text. Canvas `fillText` cannot use web fonts reliably. Use canvas only for the game board/grid itself. Wrap the canvas in a flex container alongside DOM-based status elements.\n\n5. **Two typefaces.** Use **Inter** (sans-serif) for all UI text -- player names, scores, labels, controls. Use **Mynerve** (cursive) as an optional accent font for annotations, commentary, and decorative text. Load Inter via CSS `@import` in `style.css` and Mynerve via `<link>` in `index.html`.\n\n6. **Hard offset shadows.** For modals and popover panels, use hard black offset shadows (e.g., `box-shadow: -0.75rem 0.75rem`) rather than soft diffused drop-shadows. This matches the woodblock/stamp aesthetic.\n\n7. **Responsive sizing.** Use CSS container queries (`@container (max-width: 680px)`) for responsive layout adjustments. Set `container-type: inline-size` on the main wrapper. The **680px** breakpoint is the mobile threshold. Use `rem`-based font sizes (`0.8rem`, `1rem`, `1.1rem`).\n\n## Color palette\n\n| Element | Color / Treatment | Notes |\n|---------|------------------|-------|\n| Page background | `#f5f1e2` | Warm parchment, never dark or saturated |\n| Primary text | `#050001` | Near-black, used on all body text |\n| Secondary text | `#444343` | Softer dark for table values and metadata |\n| Container background | `white` | Player cards, score tables, panels |\n| Active player highlight | `#bdeeff` | Light blue background on the active player card |\n| Borders | `1px dashed #3c3b37` | Sketched look on containers |\n| Buttons / controls bg | `#f1f1f1` | Light gray for interactive elements |\n| Button shadow | `box-shadow: -0.125rem 0.125rem 0 #000` | Hard black offset, not diffused |\n| Canvas background | Transparent | Page background shows through from DOM layer |\n| Board grid lines | `1px dashed #3c3b37` or `1px solid #3c3b37` | Sketched look for grid lines on canvas |\n| Board labels | `#000000` (Inter font) | Column/row labels around the board |\n\n## Rendering approach\n\nUse a **hybrid DOM + canvas** architecture:\n\n- **Canvas**: game board grid, pieces, move highlights, board decorations. Keep the canvas background transparent so the page background shows through.\n- **DOM**: player names, score tables, turn indicators, game-over modals, annotations. Use `border: 1px dashed #3c3b37` on containers.\n\nCap the canvas at a maximum width (e.g., `max-width: 512px`) and use `aspect-ratio: 1` for square boards.\n\n```\n+------------------------------------------+\n|  [DOM] Header: player cards with         |\n|  dashed borders                          |\n+------------------------------------------+\n|                                          |\n|  [Canvas] Game board (transparent bg)    |\n|  on warm parchment background            |\n|                                          |\n+------------------------------------------+\n|  [DOM] Status / score with dashed        |\n|  borders, annotations in Mynerve font   |\n+------------------------------------------+\n```\n\n## Sketched border container pattern\n\nUse white containers with a dashed border for a hand-drawn look:\n\n```typescript\nconst statusContainer = document.createElement('div');\nObject.assign(statusContainer.style, {\n  padding: '5px 12px',\n  backgroundColor: 'white',\n  border: '1px dashed #3c3b37',\n  textAlign: 'center',\n  minWidth: '200px',\n  marginTop: '10px',\n  fontFamily: \"'Inter', sans-serif\",\n});\n```\n\n## Active player indication\n\nUse background color change and scale transform on player containers:\n\n```css\n.player {\n  background-color: white;\n  transition: scale 300ms;\n}\n\n.player.active {\n  background-color: #bdeeff;\n  scale: 1.1;\n}\n```\n\n## Game-over presentation\n\nUse a modal overlay with staggered reveal animations:\n\n```css\n.game-over-modal {\n  background-color: #f5f1e2;\n  color: #050001;\n}\n```\n\nDisplay results in a table with dashed borders. Use CSS `@starting-style` and `transition` for staggered element reveals.\n\n## Standard CSS (`style.css`)\n\n```css\n@import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap');\n\nhtml, body, #app {\n  width: 100%;\n  height: 100%;\n  margin: 0;\n  padding: 0;\n  overflow: hidden;\n}\n\n.renderer-container {\n  display: flex;\n  flex-direction: column;\n  align-items: center;\n  width: 100%;\n  height: 100%;\n  min-height: 0;\n  background-color: #f5f1e2;\n  overflow: hidden;\n  font-family: 'Inter', sans-serif;\n  box-sizing: border-box;\n  padding: 12px;\n  color: #050001;\n  container-type: inline-size;\n}\n\n.renderer-container canvas {\n  position: relative;\n  flex-grow: 1;\n  width: 100%;\n  max-width: 512px;\n  min-height: 0;\n}\n\n.sketched-border {\n  border: 1px dashed #3c3b37;\n}\n\n.header {\n  display: flex;\n  justify-content: center;\n  align-items: center;\n  width: 100%;\n  padding: 8px 0;\n  font-size: 1.1rem;\n  font-weight: 600;\n  flex-shrink: 0;\n  gap: 16px;\n}\n\n.status-container {\n  display: flex;\n  align-items: center;\n  justify-content: center;\n  padding: 5px 16px;\n  background-color: white;\n  font-size: 0.9rem;\n  font-weight: 600;\n  min-height: 18px;\n  min-width: 200px;\n  margin-top: 8px;\n  flex-shrink: 0;\n}\n```\n\n## Standard `index.html` font links\n\n```html\n<link rel=\"preconnect\" href=\"https://fonts.googleapis.com\" />\n<link rel=\"preconnect\" href=\"https://fonts.gstatic.com\" crossorigin />\n<link href=\"https://fonts.googleapis.com/css2?family=Mynerve&display=swap\" rel=\"stylesheet\" />\n```"
+    gold_removed: ''
+  - path: .agents/skills/onboard-open-spiel-game/SKILL.md
+    tier: 1
+    gold_added: '**Related skills:**
+
+      - `create-visualizer` -- for adding a web visualizer (covers both regular and OpenSpiel games)
+
+
+      All three approaches can optionally include a **visualizer** (see `create-visualizer` skill) and/or **support files** (openings, presets).'
+    gold_removed: ''
+  - path: AGENTS.md
+    tier: 1
+    gold_added: '- **create-environment** -- step-by-step guide for building a new game environment (Python backend)
+
+      - **create-visualizer** -- step-by-step guide for building a web visualizer for any game (regular or OpenSpiel)
+
+      - **onboard-open-spiel-game** -- step-by-step guide for adding an OpenSpiel game (Python backend)'
+    gold_removed: ''
+  - path: CLAUDE.md
+    tier: 1
+    gold_added: '- `create-environment` -- building a game environment (Python backend)
+
+      - `create-visualizer` -- building a web visualizer for any game (regular or OpenSpiel)
+
+      - `onboard-open-spiel-game` -- adding an OpenSpiel game (Python backend)'
+    gold_removed: ''

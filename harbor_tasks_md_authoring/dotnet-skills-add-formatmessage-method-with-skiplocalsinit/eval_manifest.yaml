@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: dotnet-skills-add-formatmessage-method-with-skiplocalsinit
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: Aaronontheweb/dotnet-skills
+  pr: 16
+  base_commit: "58e81a594e187634ef4d8dc27addc6bae58f3e3d"
+  merge_commit: "47c01a5e18d50f1dd6a249839a8a07bed98624ac"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/csharp/coding-standards/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/csharp/coding-standards/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/csharp/coding-standards/SKILL.md."
+
+config_edits:
+  - path: skills/csharp/coding-standards/SKILL.md
+    tier: 1
+    gold_added: "// SkipLocalsInit with stackalloc and Span<T>\nusing System.Runtime.CompilerServices;\n[SkipLocalsInit]\npublic void FormatMessage()\n{\n    Span<char> buffer = stackalloc char[256];\n    var written = FormatInto(buffer);\n    var message = new string(buffer.Slice(0, written));\n}\n"
+    gold_removed: ''

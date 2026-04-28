@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: github-misc-scripts-docs-update-copilot-instructions
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: joshjohanning/github-misc-scripts
+  pr: 131
+  base_commit: "3c687614e383ab24d965d60ebedb83ff027229fc"
+  merge_commit: "91c2ee533b70e0152421b98cfc3687f1aa9d90f0"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/copilot-instructions.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/copilot-instructions.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/copilot-instructions.md."
+
+config_edits:
+  - path: .github/copilot-instructions.md
+    tier: 1
+    gold_added: "When creating or modifying scripts in the `gh-cli` and `scripts` directories:\n- Ensure the script has input parameters\n- Include input validation and meaningful error messages\n- Ensure the script has a basic description and usage examples at the top\n- Make sure to paginate (`--paginate` and/or `octokit.paginate`) when retrieving results\n- With `gh api` commands, prefer `--jq` versus piping to `jq` when possible\n- Include the header `-H \"X-Github-Next-Global-ID: 1\"` in GraphQL queries to retrieve the new global ID format - see the [GitHub migration guide for global node IDs](https://docs.github.com/en/graphql/guides/migrating-graphql-global-node-ids) for details\n- Complex scripts in the `./scripts` directory should have its own folder (so a `package.json` can be included for example)\n- Don't be too verbose - keep descriptions and usage instructions concise and to the point\n- Don't use periods after bullet points for consistency\n## script naming and structure\n- Add hostname support for GitHub Enterprise instances / ghe.com when applicable\n\n## commit messages\n\nPrefer the Conventional Commits specification:\n\n- Format: `<type>(<scope>): <description>`\n- Types:\n  - `feat`: New feature\n  - `fix`: Bug fix\n  - `refactor`: Code change that neither fixes a bug nor adds a feature\n  - `docs`: Documentation only changes\n  - `chore`: Changes to build process or auxiliary tools\n  - `ci`: Changes to CI configuration files and scripts\n  - `style`: Code style changes (formatting, missing semicolons, etc.)\n  - `test`: Adding or updating tests\n- Scopes (optional):\n  - `scripts`: Changes in the scripts directory\n  - `gh-cli`: Changes in the gh-cli directory\n  - `ci`: Changes to CI/linting tools\n- Description: Short, imperative tense summary (e.g., \"add feature\" not \"added feature\")\n- Body (optional): Provide additional context with bullet points\n- Keep it concise but descriptive\n- Append `!` to the type if it's a breaking change (e.g., `feat!: add additional required input parameters`)"
+    gold_removed: ''

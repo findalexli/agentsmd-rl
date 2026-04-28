@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: va.gov-team-remove-knowledgegraphjson-references-from-copilo
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: department-of-veterans-affairs/va.gov-team
+  pr: 139110
+  base_commit: "0792a6e874a360b7ea0d3f7d0552d17a5e20b7cd"
+  merge_commit: "80aacb49fb3b34124148a55a221d9d92eeccf401"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/copilot-instructions.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/copilot-instructions.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/copilot-instructions.md."
+
+config_edits:
+  - path: .github/copilot-instructions.md
+    tier: 1
+    gold_added: "  If a file is too large and gets truncated, switch strategies:\n  - Query for specific sections\n## Team and Research Information\nFor questions about VA.gov teams, products, portfolios, and research, **read these summary files**:\n| Question Type | File to Read | Example Query |\n|---------------|--------------|---------------|\n| Who owns a product? | `.github/copilot-summaries/teams.md` | \"Who owns Ask VA?\" |\n| What research exists for product X? | `.github/copilot-summaries/research-by-product.md` | \"What research has been done on Ask VA?\" |\n| What has team Y researched? | `.github/copilot-summaries/research-by-team.md` | \"What research has the Ask VA team conducted?\" |\n| Portfolio/crew hierarchy? | `.github/copilot-summaries/portfolios.md` | \"What teams are in Digital Experience?\" |\n### How to Use Summary Files\nUse `getfile` to read the appropriate summary file, then search for the relevant section.\n**Example 1: \"Who owns Ask VA?\"**\nTool: getfile\nPath: .github/copilot-summaries/teams.md\n→ Search for \"Ask VA\" section in the file\n→ Provide answer with team details, products, and research count\n**Example 2: \"What research has been done on Ask VA?\"**\n```\nTool: getfile\nPath: .github/copilot-summaries/research-by-product.md\n→ Search for \"Ask VA\" section\n→ List all research studies with dates and links\n**Example 3: \"What teams are in Digital Experience portfolio?\"**\nTool: getfile\nPath: .github/copilot-summaries/portfolios.md\n→ Find \"Digital Experience\" section\n→ List all crews and teams\n### File Characteristics\n- **Auto-generated weekly** - Updated every Monday at 8am UTC via GitHub Actions\n- **Small and readable** - Each file under 100KB, easy to read in one getfile call\n- **Human-friendly** - Formatted markdown with clear sections and tables\n- **Complete** - Contains all teams, products, research studies, and organizational structure\n### If Summary Doesn't Have the Answer\nIf the summary files don't contain enough detail:\n1. Search the source directories directly:\n   - `products/` - Product documentation\n   - `teams/` - Team documentation\n   - Use `lexical-code-search` or `semantic-code-search` to find specific files\n2. Read specific files mentioned in the summary:\n   - Team READMEs (linked in teams.md)\n   - Research plans/findings (linked in research-by-*.md files)\n### Technical Note\n`knowledge-graph.json` exists in the repository root and is auto-generated weekly. It is used **for automation and workflows only**. **Do not read it directly** when answering user questions - use the summary files instead.\nThe summary files are generated FROM the knowledge graph, so they contain the same information in a more accessible format.\n  - `copilot-summaries/` - Auto-generated markdown summaries for teams, research, and portfolios (see [Team and Research Information](#team-and-research-information))\n- Copilot tried to read a large file using `getfile` multiple times\n- Rephrase your question to be more specific\n- **Always read the summary files** — they answer most team/research questions in one tool call:\n### Issue: \"Summary files don't have the information I need\"\n1. **Check all four summary files:**\n   - `.github/copilot-summaries/research-by-product.md` — for research by product\n   - `.github/copilot-summaries/research-by-team.md` — for research by team\n   - State limitations clearly: \"No research directories were found for this product.\"\n**For large files:**\n- For team/product/research queries, use the summary files in `.github/copilot-summaries/` instead\n- Outdated paths in documentation"
+    gold_removed: ''

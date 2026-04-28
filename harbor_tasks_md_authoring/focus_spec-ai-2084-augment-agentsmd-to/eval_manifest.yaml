@@ -1,0 +1,84 @@
+version: "2.0"
+
+task:
+  name: focus_spec-ai-2084-augment-agentsmd-to
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: FinOps-Open-Cost-and-Usage-Spec/FOCUS_Spec
+  pr: 2172
+  base_commit: "7eaac7a72c668ea56543b033b34e353441b60747"
+  merge_commit: "96a5d436130f8cd7a509c146d65fd9c72421ea67"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+
+config_edits:
+  - path: AGENTS.md
+    tier: 1
+    gold_added: '* **Location:** In spec content, capitalized BCP-14 keywords MUST NOT appear outside "Requirements" sections unless quoted. Do not flag lowercase usage (e.g., "may", "should").
+
+      * **Linking Rule:** Link entity names and Glossary terms ONLY on their first occurrence per source file. Exception: Functional links using different anchor text are exempt.
+
+      * **Anchors:** Pandoc auto-generates custom heading anchors. DO NOT flag missing HTML `<a name="">` tags.
+
+      * **Example Disclaimer:** Top-level sections with examples MUST begin with this exact note (skip all subsections): `> Note: The following examples are informative and non-normative. They do not define requirements.`
+
+      ### Review Conduct
+
+
+      * **Suggestion-first feedback:** When a concrete fix exists, post it as a GitHub `suggestion` block so the author can accept with one click. Use plain-text comments only when the feedback requires discussion rather than a specific replacement.
+
+      * **Self-contained comments:** Every review comment or suggestion MUST include all context needed for the author to evaluate it independently. Do not reference other comments (e.g., "same as above" or "see my comment on line X").
+
+      * **Diff-scope discipline:** Only flag issues on lines changed or added by the PR. Pre-existing problems are out of scope unless they create a direct inconsistency with new content in the same PR.
+
+      * **Deduplication:** If your tooling can read PR threads, do not flag already-raised issues or post competing suggestions. To add details, reply to the existing thread.
+
+
+      ### Issue and Pull Request Templates
+
+
+      GitHub does not auto-apply templates when issues or PRs are created via API. AI agents MUST include the required template content in the body.
+
+
+      #### Pull Requests
+
+
+      PR bodies MUST complete `.github/pull_request_template.md`, including the summary, "Type of Change", and "Author Checklist" (with [AI Usage Guidelines](guidelines/contributors/ai-usage-guidelines.md) attestation).
+
+
+      #### Issues
+
+
+      Issue templates are `.yml` form definitions in `.github/ISSUE_TEMPLATE/`. Use the correct title prefix and fill all fields marked required in the template.
+
+
+      | Type | Title Prefix | Template |
+
+      |---|---|---|
+
+      | Action Item | `[AI] ` | `action-item.yml` |
+
+      | Feature Request | `[FR] ` | `feature-request.yml` |
+
+      | Feedback | `[Feedback] ` | `feedback.yml` |
+
+      | Maintenance | `[Maintenance] ` | `maintenance.yml` |
+
+      | Work Item | `[WI]` | `work-item.yml` |
+
+      '
+    gold_removed: ''

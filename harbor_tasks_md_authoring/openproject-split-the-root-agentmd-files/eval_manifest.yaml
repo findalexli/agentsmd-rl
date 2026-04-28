@@ -1,0 +1,466 @@
+version: "2.0"
+
+task:
+  name: openproject-split-the-root-agentmd-files
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: opf/openproject
+  pr: 22240
+  base_commit: "e5271fbf92015b300e40e232baeac36140d6f73d"
+  merge_commit: "7f04bada0cf6f44691b8cf4783b379a42f6290e8"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in app/AGENTS.md."
+  - id: signal_04
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in app/AGENTS.md."
+  - id: signal_05
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in app/AGENTS.md."
+  - id: signal_06
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in config/AGENTS.md."
+  - id: signal_07
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in config/AGENTS.md."
+  - id: signal_08
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in config/AGENTS.md."
+  - id: signal_09
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in db/AGENTS.md."
+  - id: signal_10
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in db/AGENTS.md."
+  - id: signal_11
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in db/AGENTS.md."
+  - id: signal_12
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in docker/dev/AGENTS.md."
+  - id: signal_13
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in docker/dev/AGENTS.md."
+  - id: signal_14
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in docker/dev/AGENTS.md."
+  - id: signal_15
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in frontend/AGENTS.md."
+  - id: signal_16
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in frontend/AGENTS.md."
+  - id: signal_17
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in frontend/AGENTS.md."
+  - id: signal_18
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in spec/AGENTS.md."
+  - id: signal_19
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in spec/AGENTS.md."
+  - id: signal_20
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in spec/AGENTS.md."
+
+config_edits:
+  - path: AGENTS.md
+    tier: 1
+    gold_added: 'See [`docker/dev/AGENTS.md`](docker/dev/AGENTS.md) for full Docker setup and commands.
+
+
+      - `app/` — Rails application code
+
+      - `config/` — Rails configuration, routes, locales
+
+      - `db/` — Database migrations and seeds
+
+      - `docker/dev/` — Docker development environment
+
+      - `frontend/` — TypeScript/Angular/Stimulus frontend
+
+      - `lib/` — Ruby libraries and extensions
+
+      - `lookbook/` — ViewComponent previews (<https://qa.openproject-edge.com/lookbook/>)
+
+      - `modules/` — OpenProject plugin modules
+
+      - `spec/` — RSpec test suite
+
+
+      ## Commit Messages
+
+      - `docs/development/` — Development documentation
+
+      - `docs/development/running-tests/` — Testing guide
+
+      - `docs/development/code-review-guidelines/` — Code review standards
+
+      - `CONTRIBUTING.md` — Contribution workflow
+
+      - `.github/copilot-instructions.md` — Extended agent instructions with troubleshooting'
+    gold_removed: ''
+  - path: app/AGENTS.md
+    tier: 1
+    gold_added: '# App
+
+
+      ## Directory Structure
+
+
+      - `app/components/` - ViewComponent-based UI components (Ruby + ERB)
+
+      - `app/contracts/` - Validation and authorization contracts
+
+      - `app/controllers/` - Rails controllers
+
+      - `app/models/` - ActiveRecord models
+
+      - `app/services/` - Service objects (business logic)
+
+      - `app/workers/` - Background job workers
+
+
+      ## Code Style
+
+
+      ### Ruby
+
+
+      - Follow [Ruby community style guide](https://github.com/bbatsov/ruby-style-guide)
+
+      - Use service objects for complex business logic (return `ServiceResult`)
+
+      - Use contracts for validation and authorization
+
+      - Keep controllers thin, models focused
+
+      - Document with [YARD](https://yardoc.org/)
+
+      - Write RSpec tests for all new features
+
+
+      ### Templates
+
+
+      - Use ERB for server-rendered views
+
+      - Use ViewComponents for reusable UI (with Lookbook previews)
+
+      - Lint with erb_lint before committing
+
+
+      ## Translations
+
+
+      - UI strings must use translation keys (never hard-coded)'
+    gold_removed: ''
+  - path: app/CLAUDE.md
+    tier: 1
+    gold_added: AGENTS.md
+    gold_removed: ''
+  - path: config/AGENTS.md
+    tier: 1
+    gold_added: '# Config
+
+
+      ## Translations
+
+
+      - UI strings must use translation keys (never hard-coded)
+
+      - Source translations in `**/config/locales/en.yml` can be modified directly
+
+      - Other translations managed via Crowdin
+
+
+      ```bash
+
+      bundle exec i18n-tasks missing                        # Show missing translation keys
+
+      bundle exec i18n-tasks unused                         # Show unused translation keys
+
+      bundle exec i18n-tasks normalize                      # Fix/normalize translation files
+
+      bundle exec i18n-tasks check-consistent-interpolations  # Check interpolation consistency
+
+      ```'
+    gold_removed: ''
+  - path: config/CLAUDE.md
+    tier: 1
+    gold_added: AGENTS.md
+    gold_removed: ''
+  - path: db/AGENTS.md
+    tier: 1
+    gold_added: '# Database
+
+
+      ## Code Style
+
+
+      ### Database Migrations
+
+
+      - Follow Rails migration conventions
+
+      - Migrations are "squashed" between major releases (see `docs/development/migrations/`)
+
+
+      ## Commands
+
+
+      ### Local
+
+
+      ```bash
+
+      bundle exec rails g migration MigrationName  # Generate a migration
+
+      bundle exec rails db:migrate                 # Run migrations
+
+      bundle exec rails db:rollback                # Rollback last migration
+
+      bundle exec rails db:seed                    # Seed sample data
+
+      ```
+
+
+      ### Docker
+
+
+      ```bash
+
+      bin/compose exec backend bundle exec rails db:migrate      # Run migrations
+
+      bin/compose exec backend bundle exec rails db:seed         # Seed data
+
+      ```
+
+
+      ## Important Note
+
+
+      **CRITICAL**: `config/database.yml` must NOT exist when using Docker (rename or delete it)'
+    gold_removed: ''
+  - path: db/CLAUDE.md
+    tier: 1
+    gold_added: AGENTS.md
+    gold_removed: ''
+  - path: docker/dev/AGENTS.md
+    tier: 1
+    gold_added: '# Docker Development
+
+
+      The Docker development environment uses configurations in `docker/dev/` and the `bin/compose` wrapper script.
+
+
+      ## Setup
+
+
+      ```bash
+
+      # Initial setup (first time only)
+
+      bin/compose setup                         # Installs backend and frontend dependencies
+
+
+      # Starting services
+
+      bin/compose start                         # Start backend and frontend in background
+
+      bin/compose run                           # Start frontend in background, backend in foreground (for debugging with pry)
+
+
+      # Running tests
+
+      bin/compose rspec spec/models/user_spec.rb   # Run specific tests in backend-test container
+
+
+      # Other operations
+
+      bin/compose reset                         # Remove all containers and volumes (requires setup again)
+
+      bin/compose <command>                     # Pass any docker-compose command directly
+
+      ```
+
+
+      ## Important Notes
+
+
+      - **CRITICAL**: `config/database.yml` must NOT exist when using Docker (rename or delete it)
+
+      - Most developers use a local `docker-compose.override.yml` for custom port mappings and configurations
+
+      - Copy `docker-compose.override.example.yml` to `docker-compose.override.yml` and customize as needed
+
+      - Default ports: Backend at http://localhost:3000 (or 4200 for frontend dev server)
+
+      - Services: `backend`, `frontend`, `worker`, `db`, `db-test`, `backend-test`, `cache`
+
+      - Persisted volumes: `pgdata`, `bundle`, `npm`, `tmp`, `opdata` (data survives container restarts)
+
+      - Docker build context: Uses Dockerfiles in `docker/dev/backend/` and `docker/dev/frontend/`
+
+
+      ## Commands Reference
+
+
+      ```bash
+
+      # Setup and lifecycle
+
+      bin/compose setup                        # Setup Docker environment (first time)
+
+      bin/compose start                        # Start all services in background
+
+      bin/compose run                          # Start frontend in background, backend in foreground
+
+      bin/compose reset                        # Remove all containers and volumes
+
+      bin/compose stop                         # Stop all services
+
+      bin/compose down                         # Stop and remove containers
+
+
+      # Testing
+
+      bin/compose rspec spec/models/user_spec.rb    # Run specific tests
+
+      bin/compose exec backend bundle exec rspec    # Run tests directly in backend container
+
+
+      # Development
+
+      bin/compose exec backend bundle exec rails console   # Rails console
+
+      bin/compose logs backend                 # View backend logs
+
+      bin/compose logs -f backend              # Follow backend logs
+
+      bin/compose ps                           # List running containers
+
+
+      # Database
+
+      bin/compose exec backend bundle exec rails db:migrate      # Run migrations
+
+      bin/compose exec backend bundle exec rails db:seed         # Seed data
+
+
+      # Direct docker-compose commands
+
+      bin/compose up -d                        # Start services
+
+      bin/compose restart backend              # Restart backend service
+
+      ```'
+    gold_removed: ''
+  - path: docker/dev/CLAUDE.md
+    tier: 1
+    gold_added: AGENTS.md
+    gold_removed: ''
+  - path: frontend/AGENTS.md
+    tier: 1
+    gold_added: "# Frontend\n\n## Directory Structure\n\n- `./src/` - Frontend code\n  - `./src/app/` - Legacy Angular modules/components\n  - `./src/stimulus/` - Stimulus controllers\n  - `./src/turbo/` - Turbo integration\n\n## Configuration Files\n\n- `eslint.config.mjs` - JavaScript/TypeScript linting\n- `../package.json` / `./frontend/package.json` - Node.js dependencies\n\n## Version Requirements\n\n- Node: `^22.21.0` (see `package.json` engines)\n\n## Setup\n\n```bash\nnpm ci && cd ..   # Install Node packages\n```\n\n## Code Style\n\n### JavaScript/TypeScript\n\n- **New development**: Use Hotwire (Turbo + Stimulus) with server-rendered HTML\n- **Legacy code**: Follow ESLint rules\n- Prefer TypeScript over JavaScript\n- Use [Primer Design System](https://primer.style/product/) via ViewComponent\n\n## Linting\n\n```bash\n# JavaScript/TypeScript\nnpx eslint src/ && cd ..\n```\n\n## Testing\n\n```bash\n# Frontend (Jasmine/Karma)\nnpm test && cd ..\n```"
+    gold_removed: ''
+  - path: frontend/CLAUDE.md
+    tier: 1
+    gold_added: AGENTS.md
+    gold_removed: ''
+  - path: spec/AGENTS.md
+    tier: 1
+    gold_added: '# Spec
+
+
+      ## Directory Structure
+
+
+      - `spec/features/` - System/feature tests (Capybara)
+
+      - `spec/models/` - Model unit tests
+
+      - `spec/requests/` - API/integration tests
+
+      - `spec/services/` - Service tests
+
+
+      ## Running Tests
+
+
+      ```bash
+
+      # Backend (RSpec) - prefer specific tests over running all
+
+      bundle exec rspec spec/models/user_spec.rb              # Single file
+
+      bundle exec rspec spec/models/user_spec.rb:42           # Single line
+
+      bundle exec rspec spec/features                         # Directory
+
+      RAILS_ENV=test ./bin/rails parallel:spec                # Parallel execution
+
+      ```
+
+
+      ### Docker
+
+
+      ```bash
+
+      bin/compose rspec spec/models/user_spec.rb   # Run specific tests in backend-test container
+
+      bin/compose exec backend bundle exec rspec    # Run tests directly in backend container
+
+      ```
+
+
+      ## Debugging CI Failures
+
+
+      ```bash
+
+      ./script/github_pr_errors | xargs bundle exec rspec    # Run failed tests from CI
+
+      ./script/bulk_run_rspec spec/path/to/flaky_spec.rb     # Run tests multiple times
+
+      ```'
+    gold_removed: ''
+  - path: spec/CLAUDE.md
+    tier: 1
+    gold_added: AGENTS.md
+    gold_removed: ''

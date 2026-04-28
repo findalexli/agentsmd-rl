@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: prevail-create-agentsmd
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: vbpf/prevail
+  pr: 910
+  base_commit: "499eceb1c1e787361dd10472fe36696f372c3929"
+  merge_commit: "ded89b9ceffc2ce2eb0fe2ab44c95735d7a6dcfd"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+
+config_edits:
+  - path: AGENTS.md
+    tier: 1
+    gold_added: "# Prevail repository guide for AI agents\n\n## Soundness-first analysis principles\n- **Soundness beats throughput.** When updating the analyser or verifier, favour transfer functions and abstractions with explicit, auditable invariants over heuristic shortcuts. If a micro-optimisation risks dropping constraints that protect against false negatives, keep the precise version and document why it is safe.\n- **Prove invariants when possible.** Encode the assumptions an analysis relies on—preconditions, lattice properties, monotonicity—directly in code comments, assertions, or type-level checks before trusting experiments. When you need executable evidence, add deterministic tests or YAML fixtures that demonstrate both the sound and the unsound outcomes you are ruling out.\n- **Narrate the reasoning.** Any change that affects analysis results should spell out the argument for soundness: what inputs are assumed, what invariants are maintained, and how the change preserves them. Prefer control flow that makes this reasoning self-evident to future auditors.\n- **Default to conservative behaviour.** Introduce new analysis features behind flags or with stricter defaults until you can show they do not compromise soundness; never silently relax checks or widen abstractions without justification.\n- **Optimise for auditability.** Choose designs that are easy to step through and review by hand—even if they are marginally slower or more verbose—so that a future engineer can re-establish the soundness argument quickly.\n\n## Quick project facts\n- **Language & standards:** Core verifier is implemented in modern C++20 (see `CMakeLists.txt`).\n- **Primary deliverables:**\n  - `check`: command-line verifier for eBPF object files.\n  - `tests`: Catch2-based regression suite.\n  - `run_yaml` / `conformance_check`: tooling around the verifier and conformance data.\n- **Third-party code:** resides under `external/` and is treated as vendored dependencies. Do not edit these unless explicitly asked.\n\n## Repository map\n- `src/`\n  - `asm_*`, `cfg/`, `arith/`, `crab/`, `linux/`: verifier implementation broken down by domain.\n  - `main/`: entry points for command-line tools (`check`, `run_yaml`).\n  - `test/`: Catch2 unit and integration tests.\n- `ebpf-samples/`: sample ELF objects used for manual experimentation.\n- `scripts/`: developer utilities (formatting, license checks, git hooks).\n- `test-data/` and `test-schema.yaml`: YAML-driven verification fixtures.\n\n## Build & test workflow\n1. **Configure** (tests are enabled automatically when working from a git checkout):\n   ```bash\n   cmake -B build -DCMAKE_BUILD_TYPE=RelWithDebInfo\n   ```\n2. **Build everything** (produces binaries in the repo root via `RUNTIME_OUTPUT_DIRECTORY`):\n   ```bash\n   cmake --build build\n   ```\n3. **Run tests** using the generated `tests` executable:\n   ```bash\n   ./tests                      # from the repo root\n   ```\n4. **Spot-check the verifier** against bundled samples:\n   ```bash\n   ./check ebpf-samples/cilium/bpf_lxc.o 2/1\n   ```\n5. **Capture reasoning.** When a change introduces or relies on a new invariant, add a targeted regression test and document the invariant in code comments or `docs/` notes so future auditors can reconstruct the argument.\n\n### Platform notes\n- Linux & macOS: require `cmake`, `clang++`/`g++` with C++20 support, Boost, yaml-cpp, and Microsoft GSL (fetched automatically).\n- Windows: use Visual Studio Build Tools 2022; NuGet will fetch Boost, and yaml-cpp is built via `ExternalProject_Add`.\n- Docker: `docker build -t verifier .` then run the resulting image for a hermetic environment. Use `--privileged` to exercise the Linux kernel verifier.\n\n## Coding standards & automation\n- **Formatting:** Run `./scripts/format-code --staged` before committing (mirrors the Git hook). It wraps `clang-format` and warns if the version differs from the project baseline.\n- **License headers:** Ensure new C/C++ sources include the standard SPDX header; validate with `./scripts/check-license.sh <files>`.\n- **Git hooks:** `scripts/pre-commit` installs automatically from CMake to enforce names, whitespace, formatting, and license headers.\n- **Static includes:** Headers prefer `#pragma once`; follow existing patterns within each subdirectory.\n- **Review for soundness.** Before finishing a change, walk through the modified control-flow and data-flow manually to ensure no undefined behaviour or unchecked user input paths were introduced.\n\n## Working efficiently\n- Prefer adding new verifier logic under the matching subsystem directory (`cfg/`, `crab/`, etc.) to keep separation of concerns.\n- Tests live beside the production code in `src/test`; add focused Catch2 cases when modifying verifier behaviour.\n- When touching YAML-driven fixtures, update schemas in `test-schema.yaml` if new fields are introduced and exercise them via `run_yaml`.\n- Avoid editing vendored sources beneath `external/` unless the task explicitly targets them; instead, wrap behaviour in our own code where possible.\n- Keep runtime/tooling flags documented by updating `README.md` if you introduce new CLI options.\n- When in doubt, favour explicit error handling and early exits to surface problems instead of deferring to implicit behaviour."
+    gold_removed: ''

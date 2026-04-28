@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: torchjd-chore-update-agentsmd
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: SimplexLab/TorchJD
+  pr: 569
+  base_commit: "46962c2be7788503c151007fa013f761a6238ef2"
+  merge_commit: "c6e8f1d77c0b092e7cab40986cd3c12c506a3ff5"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+
+config_edits:
+  - path: AGENTS.md
+    tier: 1
+    gold_added: "- When you create or modify a code example in a public docstring, always update the corresponding\n  doc test in the appropriate file of `tests/doc`. This also applies to any change in an example of\n  a `.rst` file, that must be updated in the corresponding test in `tests/doc/test_rst.py`."
+    gold_removed: ''

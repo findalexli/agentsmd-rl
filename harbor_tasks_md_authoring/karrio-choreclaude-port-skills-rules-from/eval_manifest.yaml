@@ -1,0 +1,715 @@
+version: "2.0"
+
+task:
+  name: karrio-choreclaude-port-skills-rules-from
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: karrioapi/karrio
+  pr: 1069
+  base_commit: "cee0103bc80c0608eb7cb51a914e573a1038d297"
+  merge_commit: "c9fce0132129c249fa5b8566d4b3fba0af5a74a3"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/rules/code-style.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/rules/code-style.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/rules/code-style.md."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/rules/commit-conventions.md."
+  - id: signal_04
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/rules/commit-conventions.md."
+  - id: signal_05
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/rules/commit-conventions.md."
+  - id: signal_06
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/rules/extension-patterns.md."
+  - id: signal_07
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/rules/extension-patterns.md."
+  - id: signal_08
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/rules/extension-patterns.md."
+  - id: signal_09
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/rules/testing.md."
+  - id: signal_10
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/rules/testing.md."
+  - id: signal_11
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/rules/testing.md."
+  - id: signal_12
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/create-extension-module/SKILL.md."
+  - id: signal_13
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/create-extension-module/SKILL.md."
+  - id: signal_14
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/create-extension-module/SKILL.md."
+  - id: signal_15
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/django-graphql/SKILL.md."
+  - id: signal_16
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/django-graphql/SKILL.md."
+  - id: signal_17
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/django-graphql/SKILL.md."
+  - id: signal_18
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/django-rest-api/SKILL.md."
+  - id: signal_19
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/django-rest-api/SKILL.md."
+  - id: signal_20
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/django-rest-api/SKILL.md."
+  - id: signal_21
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/review-implementation/SKILL.md."
+  - id: signal_22
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/review-implementation/SKILL.md."
+  - id: signal_23
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/review-implementation/SKILL.md."
+  - id: signal_24
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/run-tests/SKILL.md."
+  - id: signal_25
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/run-tests/SKILL.md."
+  - id: signal_26
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/run-tests/SKILL.md."
+  - id: signal_27
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_28
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_29
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_30
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_31
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_32
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+
+config_edits:
+  - path: .claude/rules/code-style.md
+    tier: 1
+    gold_added: '## General Principles
+
+
+      - Write code as if the same person authored the entire codebase — consistency is paramount.
+
+      - Favor functional, declarative style: list comprehensions, `map` / `filter` / `reduce`.
+
+      - `list(dict.fromkeys(items))` for order-preserving deduplication.
+
+      - Concise but readable — no unnecessary verbosity, no cryptic one-liners.
+
+      - Never reinvent the wheel — always search for existing utilities before writing new code.
+
+
+      - PEP 8, 4-space indentation, format with `ruff format` (previously `black`), type-check with `mypy`.
+
+      - `snake_case` for modules/functions, `PascalCase` for classes.
+
+      - Import order: stdlib → third-party → karrio core → local/relative.
+
+      - **Always use `import karrio.lib as lib`** — NEVER the legacy `DP`, `SF`, `NF`, `DF`, `XP` utilities, and NEVER create new utility functions that duplicate `lib.*`.
+
+      - Use specific exceptions; never bare `except:` or `except Exception:`.
+
+      - No mutable default arguments — use `functools.partial` or sentinel pattern.
+
+
+      ### Localization (i18n)
+
+
+      - **All user-facing strings** must use `django.utils.translation.gettext` (or `gettext_lazy`) — never hardcode messages.
+
+      - This includes: error messages, validation messages, notification text, and any string returned in API responses that users see.
+
+      - Import as `from django.utils.translation import gettext as _` and wrap strings: `_("Shipment created successfully")`.
+
+      - Internal log messages and developer-facing strings (e.g., exception names, debug logs) do NOT need `gettext`.
+
+
+      ## TypeScript / React
+
+
+      - 2-space indentation, format with Prettier.
+
+      - `PascalCase` for components, `camelCase` for functions/variables.
+
+      - Functional components only — no class components; use hooks.
+
+      - Import order: React/Next → third-party → `@karrio/*` packages → local.
+
+      - Always import types from `@karrio/types` — never define inline.
+
+      - Use existing hooks from `@karrio/hooks/*` — never raw fetch/axios.
+
+      - Use existing UI components from `@karrio/ui` — never duplicate patterns.
+
+      - Never use `any` — use proper types, or `unknown` with type guards.
+
+      - Use regenerate scripts (`./bin/run-generate-on`, Next codegen) for type generation — never manually edit generated files.
+
+
+      ## Django Models
+
+
+      - Tenant-scoped models inherit from `OwnedEntity` and are filtered via `Model.access_by(request)` (or `Model.objects.filter(org=request.user.org)` at the ORM level).
+
+      - System models: plain `models.Model` (no tenant scoping).
+
+      - Register with `@core.register_model` decorator when applicable.
+
+      - Use `functools.partial(core.uuid, prefix="xxx_")` for ID generation.
+
+      - JSONField defaults: `functools.partial(karrio.server.core.models._identity, value=[])` (never bare `[]`).
+
+
+      ## Serializers
+
+
+      - Use mixin classes for shared logic between Account and System serializers.
+
+      - `@owned_model_serializer` for tenant-scoped serializers (handles `created_by` + `link_org()`).
+
+      - Plain serializers for system-scoped models (manual `created_by` in `create()`).
+
+      - Always use `Serializer.map()` pattern for validation + save.
+
+
+      ## Anti-Patterns (NEVER DO)
+
+
+      - `pytest` — always `unittest` for SDK, `karrio test` for Django server.
+
+      - Raw SQL in migrations — use Django migration operations (`AddField`, `RemoveField`, `RenameField`, `AlterField`, `RunPython`) only.
+
+      - `RunSQL` — must work across SQLite, PostgreSQL, MySQL.
+
+      - New utility functions duplicating `karrio.lib` — check `lib.*` reference first.
+
+      - Bare exceptions, mutable defaults, `any` types.
+
+      - Class components in React — use function components + hooks.
+
+      - Manual CSS files — use Tailwind classes.
+
+      - Features not explicitly requested.'
+    gold_removed: ''
+  - path: .claude/rules/commit-conventions.md
+    tier: 1
+    gold_added: '# Commit & PR Conventions
+
+
+      ## Commit Messages
+
+
+      Format: `type(scope): summary` or `type: summary`
+
+
+      **Types**: `feat`, `fix`, `chore`, `refactor`, `test`, `docs`, `release`
+
+
+      **Scopes**: carrier name (e.g. `ups`, `fedex`, `dhl_express`, `smartkargo`, `canadapost`), or module (`admin`, `graph`, `manager`, `core`, `cli`, `sdk`, `dashboard`, `mcp`, `tracing`, `documents`, `data`, `events`, `orders`, `proxy`, `pricing`, `connectors`).
+
+
+      Examples:
+
+
+      ```
+
+      feat(smartkargo): add rate + shipment support
+
+      fix(dhl_parcel_de): make package dimensions optional in shipment request
+
+      chore: update requirements
+
+      refactor(graph): auto-discover schemas via pkgutil.iter_modules
+
+      test(admin): add system rate sheet CRUD tests
+
+      docs(subtree): document SUBTREE_SYNC_WORKFLOW
+
+      release: 2026.5.0
+
+      ```
+
+
+      ## Rules
+
+
+      - **CRITICAL**: NEVER add `Co-Authored-By: <AI model>` or any AI attribution lines.
+
+      - **CRITICAL**: NEVER add "Generated with Claude Code" or similar AI footers to commits or PR bodies.
+
+      - **CRITICAL**: NEVER commit without explicit user permission.
+
+      - Max 72-character subject line, imperative mood ("add", not "added").
+
+      - Reference issues: `refs #123` or `fixes #123`.
+
+      - Keep commits focused — one logical change per commit.
+
+      - Run tests before pushing: `./bin/run-sdk-tests` and/or `./bin/run-server-tests`.
+
+
+      ## Pull Requests
+
+
+      - Title under 70 characters, same format as commits.
+
+      - Body follows [`git-workflow.md`](./git-workflow.md) — Feature / Fix / Release templates.
+
+      - No AI-generated boilerplate footers.
+
+      - Group related changes by `### Feat`, `### Fix`, `### Docs`, `### Chore` sections in release PRs.
+
+      - Use tables for file-level change summaries and audit matrices.
+
+      - Include test/build evidence in the Verification section.
+
+
+      ## Branch Naming
+
+
+      Format: `type/description` — examples:
+
+
+      - `feat/2026.5-huey-http`
+
+      - `fix/dhl-parcel-de-dimensions-optional`
+
+      - `hotfix/2026.1.29-idempotent-archiving-migrations`
+
+      - `chore/2026.5-ruff-precommit`
+
+      - `sync/shipping-platform-2026-04-19` (upstream subtree sync; see `PRDs/SUBTREE_SYNC_WORKFLOW.md`)
+
+
+      ## Release Commits
+
+
+      - Format: `release: YYYY.M.PATCH` (calendar versioning).
+
+      - Central version file: `apps/api/karrio/server/VERSION`.
+
+      - Version bump process: `./bin/update-version` → `./bin/update-package-versions` → `./bin/update-version-freeze` → `./bin/update-source-version-freeze`, or use `./bin/release [version]` for the full workflow.
+
+
+      ## Subtree Sync Commits
+
+
+      When pulling changes from or pushing to `jtlshipping/shipping-platform` per `PRDs/SUBTREE_SYNC_WORKFLOW.md`:
+
+
+      - Prefix with `fix: sync shipping-platform patches (<brief description>)`.
+
+      - Branch name: `sync/shipping-platform-YYYY-MM-DD`.
+
+      - Isolate sync to a single commit; no mixing with semantic changes.
+
+      - Document conflict-resolution decisions in the PR body (the SUBTREE_SYNC_WORKFLOW matrix is the authority).'
+    gold_removed: ''
+  - path: .claude/rules/extension-patterns.md
+    tier: 1
+    gold_added: "# Extension Patterns — \"Extend, Don't Modify Core\"\n\n## The Golden Rule\n\nKarrio is modular by design: `modules/core`, `modules/graph`, `modules/admin` form the server core; `modules/connectors/*` are plugins; everything else (`modules/orders`, `modules/data`, `modules/documents`, `modules/events`, `modules/pricing`, `modules/manager`, ...) is an auto-discovered extension module.\n\n**Prefer adding a new extension module over modifying an existing one.** Modify a core module only when the feature is genuinely generic and benefits all karrio deployments.\n\n## Decision Tree\n\n```\nIs this feature specific to one domain (orders, documents, pricing, …)?\n  YES -> Extend or create the relevant modules/<name>/ package\n  NO  -> Is it a bug fix in an existing module?\n    YES -> Fix in that module, isolate to a clean commit\n    NO  -> Is it a new generic capability the server always needs?\n      YES -> Add to modules/core or modules/graph\n      NO  -> Create a new extension module in modules/<name>/\n```\n\n## The Extension Module Pattern\n\n### Architecture\n\n```\n                    ┌────────────────────────────────────────┐\n                    │               karrio/                  │\n                    │                                        │\n                    │  modules/                              │\n                    │  ├── core/      (OSS core)             │\n                    │  ├── graph/     (OSS graph)            │\n                    │  ├── admin/     (OSS admin)            │\n                    │  ├── manager/                          │\n                    │  ├── orders/                           │\n                    │  ├── data/                             │\n                    │  ├── documents/                        │\n                    │  ├── events/                           │\n                    │  ├── pricing/                          │\n                    │  ├── connectors/*/  (carrier plugins)  │\n                    │  └── <your-module>/                    │\n                    │         │                              │\n                    │         │ hooks via                     │\n                    │         │ AppConfig.ready()             │\n                    │         ▼                              │\n                    │  ┌────────────────────┐                │\n                    │  │  core hook points  │                │\n                    │  │  @pre_processing    │                │\n                    │  │  pkgutil discover  │                │\n                    │  │  INSTALLED_APPS    │                │\n                    │  └────────────────────┘                │\n                    └────────────────────────────────────────┘\n```\n\n### Canonical Examples\n\nStudy these before creating new extensions:\n\n- `modules/orders/karrio/server/orders/` — domain module with REST + GraphQL + signals\n- `modules/events/karrio/server/events/` — webhook/event delivery module with Huey task registration\n- `modules/documents/karrio/server/documents/` — module that registers its own auto-discovered URLs\n- `modules/graph/karrio/server/graph/schemas/base/` — reference GraphQL module layout (base schemas for the whole server)\n\n### Module File Organization\n\nKeep `__init__.py` as a **thin interface definition** — just `Query` field declarations and `Mutation` one-liner delegations. All resolver logic belongs in `types.py` and `mutations.py`.\n\n**Canonical reference:** `modules/graph/karrio/server/graph/schemas/base/__init__.py`\n\n- **`__init__.py`** — Interface only. `Query` uses `strawberry.field(resolver=types.XType.resolve)`. `Mutation` methods are one-liners that delegate to `mutations.XMutation.mutate()`. No business logic, no imports of domain modules.\n- **`types.py`** — Strawberry types with `resolve` / `resolve_list` static methods containing query logic.\n- **`inputs.py`** — Strawberry input types and filters.\n- **`mutations.py`** — Mutation classes with `mutate()` static methods containing mutation logic.\n- **`datatypes.py`** — `@attr.s(auto_attribs=True)` dataclasses for structured data flowing through the module. Prefer typed attributes over raw dicts.\n- **`utils.py`** — Reusable helper functions (payload builders, transformers, formatters, availability decorators). **Must not import from `types.py` or `mutations.py`** — see dependency rule below.\n\n```\nmodules/<name>/karrio/server/graph/schemas/<name>/\n├── __init__.py      # Thin interface: Query fields + Mutation delegators\n├── types.py         # Strawberry types + resolve/resolve_list methods\n├── inputs.py        # Strawberry input types and filters\n├── mutations.py     # Mutation classes + mutate() methods\n├── datatypes.py     # @attr.s dataclasses for typed data\n└── utils.py         # Business logic, payload builders, decorators\n```\n\n### Dependency Direction (one-way only)\n\nImports between schema files must flow in one direction. Circular imports between these files cause silent schema registration failures (`schema.py` catches the error and skips the module).\n\n```\n__init__.py ──→ types.py ──→ utils.py\n            ──→ mutations.py ──→ utils.py\n            ──→ inputs.py\n```\n\n- **`utils.py`** must never import `types.py` or `mutations.py`.\n- **`types.py`** must never import `mutations.py` (or vice versa).\n- Factory methods that construct a GraphQL type belong as **static methods on the type itself** (e.g., `ShipmentType.parse(...)`), not in `utils.py`.\n\n```python\n# ✅ Good — type knows how to construct itself\n@strawberry.type\nclass ItemType:\n    id: int\n    name: str\n\n    @staticmethod\n    def parse(raw: dict) -> \"ItemType\":\n        return ItemType(id=raw[\"id\"], name=raw.get(\"name\", \"\"))\n\n# ❌ Bad — utils.py imports types.py, creating circular dependency\n# utils.py\nimport karrio.server.graph.schemas.items.types as types\ndef enrich_item(raw: dict) -> types.ItemType:  # circular!\n    return types.ItemType(...)\n```\n\n```python\n# ✅ Good __init__.py — thin interface\n@strawberry.type\nclass Query:\n    items: typing.List[types.ItemType] = strawberry.field(\n        resolver=types.ItemType.resolve_list\n    )\n    item: typing.Optional[types.ItemType] = strawberry.field(\n        resolver=types.ItemType.resolve\n    )\n\n@strawberry.type\nclass Mutation:\n    @strawberry.mutation\n    def create_item(self, info: Info, input: inputs.CreateItemInput) -> mutations.CreateItemMutation:\n        return mutations.CreateItemMutation.mutate(info, **input.__dict__)\n\n# ❌ Bad __init__.py — inline resolver logic\n@strawberry.type\nclass Query:\n    @strawberry.field\n    @staticmethod\n    def items(info: Info) -> typing.List[types.ItemType]:\n        # 50 lines of business logic...\n```\n\n### Hook Registration Pattern\n\n```python\n# apps.py\nfrom django.apps import AppConfig\n\nclass OrdersConfig(AppConfig):\n    name = \"karrio.server.orders\"\n\n    def ready(self):\n        from karrio.server.orders import signals  # noqa: registers signal handlers\n        # Append validation hooks to a core serializer's pre_process_functions:\n        # from karrio.server.manager.serializers import ShipmentSerializer\n        # ShipmentSerializer.pre_process_functions.append(validators.validate_order_link)\n```\n\n### Settings Auto-Discovery\n\n```python\n# modules/<name>/karrio/server/settings/<name>.py\nfrom karrio.server.settings.base import *  # noqa\n\nINSTALLED_APPS += [\"karrio.server.<name>\"]\nKARRIO_URLS += [\"karrio.server.<name>.urls\"]  # if module has REST endpoints\n```\n\nKarrio discovers settings modules via `importlib.util.find_spec()` at startup. Your settings file runs only if the module is installed via `-e ./modules/<name>` in `requirements.build.txt`.\n\n### GraphQL Extension (Auto-Discovery)\n\n```python\n# modules/<name>/karrio/server/graph/schemas/<name>/__init__.py\nimport strawberry\nimport typing\nfrom strawberry.types import Info\n\n@strawberry.type\nclass Query:\n    # Fields auto-merged into root Query via pkgutil.iter_modules()\n    ...\n\n@strawberry.type\nclass Mutation:\n    # Fields auto-merged into root Mutation\n    ...\n\nextra_types: typing.List = []  # required even if empty\n```\n\n### Namespace Packages — NEVER Add `__init__.py` to Shared Paths\n\nKarrio uses **implicit namespace packages** (`pkgutil.extend_path`) so that multiple installed packages can contribute to the same Python namespace (e.g., `karrio.server.graph.schemas`). The core packages (`modules/graph/`, `modules/admin/`, etc.) already define the namespace roots.\n\n**NEVER add `__init__.py` files to namespace paths that are owned by another package.** Doing so converts the implicit namespace package into a regular package, which shadows the core package and breaks `pkgutil.iter_modules()` discovery.\n\n```\n# ❌ WRONG — adding __init__.py to a namespace owned by core graph\nmodules/<yourmod>/karrio/server/graph/__init__.py            # breaks karrio.server.graph\nmodules/<yourmod>/karrio/server/graph/schemas/__init__.py    # breaks schema discovery\n\n# ✅ CORRECT — only add __init__.py inside your module's own leaf directory\nmodules/<yourmod>/karrio/server/graph/schemas/<yourmod>/__init__.py  # leaf: your schema module\nmodules/<yourmod>/karrio/server/<yourmod>/__init__.py                # leaf: your module root\n```\n\n**Rule of thumb:** if a directory path already exists in another installed module (e.g., `modules/graph/karrio/server/graph/`), do NOT create an `__init__.py` at that same path in your extension module. Only the **leaf directory** unique to your module gets `__init__.py`.\n\n### Core Hook Points\n\n| Hook | Location | Purpose |\n|------|----------|---------|\n| `@pre_processing` | `karrio.server.core.utils` | Append validators to serializer pipelines |\n| `AppConfig.ready()` | Django app startup | Register hooks, signal handlers |\n| `pkgutil.iter_modules()` | `graph/schema.py`, `admin/schema.py` | Auto-discover GraphQL\
+      \ schemas |\n| `importlib.util.find_spec()` | `settings/base.py` | Auto-discover settings modules |\n| `KARRIO_URLS` | `settings/base.py` | Register REST URL patterns |\n| `huey` task registry | `karrio.server.events.task_definitions` | Auto-discovered background tasks |\n\n## Creating a New Extension Module\n\n1. Create directory: `modules/<name>/karrio/server/<name>/`.\n2. Add `apps.py` with `AppConfig` and optional `ready()` hook.\n3. Add `karrio/server/settings/<name>.py` for auto-discovery.\n4. Add GraphQL schemas under `karrio/server/graph/schemas/<name>/` or `karrio/server/admin/schemas/<name>/` (admin is OSS-side; NOT `ee/insiders/modules/admin`).\n5. **Do NOT add `__init__.py` to shared namespace paths** (e.g., `karrio/server/graph/`, `karrio/server/admin/`) — only the leaf directory unique to your module gets `__init__.py` (see \"Namespace Packages\" above).\n6. Add tests under `modules/<name>/karrio/server/<name>/tests/`.\n7. **Add `karrio.server.<name>.tests` to `bin/run-server-tests`** — without this, tests pass locally but never run in CI.\n8. **Add `-e ./modules/<name>` to `requirements.build.txt`** — without this the module is not installed in Docker images and schema discovery silently skips it.\n9. Use the `create-extension-module` skill for scaffolding.\n\n## Connectors vs Extension Modules\n\nCarrier connectors under `modules/connectors/*/` follow a separate structure documented in [`carrier-integration.md`](./carrier-integration.md) — use `./bin/cli sdk add-extension` to scaffold. Do NOT use the extension-module pattern for carriers."
+    gold_removed: ''
+  - path: .claude/rules/testing.md
+    tier: 1
+    gold_added: "## Mandatory Testing Rule\n\nEvery feature, bug fix, or behavioral change MUST include tests. No PR should be merged without test coverage for the changed behavior.\n\n## Non-Negotiable Code Style Rules\n\n### Imports Always at the Top\n\n**Never import inside a function or test method.** All imports belong at the top of the file.\n\n```python\n# ✅ CORRECT — imports at file top\nimport re\nfrom unittest.mock import patch\nfrom karrio.server.manager.signals import trackers_bulk_updated\nfrom karrio.server.manager.serializers.tracking import bulk_save_trackers\n\nclass TestMyFeature(APITestCase):\n    def test_something(self):\n        ...\n\n# ❌ WRONG — imports inside test methods\nclass TestMyFeature(APITestCase):\n    def test_something(self):\n        from unittest.mock import patch          # never\n        import re                                # never\n```\n\n### Avoid Mocks Except for External Services\n\nTests should use **real DB objects, real signal dispatch, and real handler execution**. Only mock calls to **external services** — carrier API requests, third-party HTTP calls, Redis/queue tasks.\n\n```python\n# ✅ CORRECT — mock only the external task that would hit Redis/network\nwith patch(\"karrio.server.events.task_definitions.broadcast_tracking_event\") as mock_broadcast:\n    trackers_bulk_updated.send(\n        sender=models.Tracking,\n        changed_trackers=[(tracker, [\"status\", \"updated_at\"])],\n    )\nmock_broadcast.assert_called_once()\n\n# ❌ WRONG — mocking the entire signal or Django machinery\nwith patch(\"karrio.server.manager.signals.trackers_bulk_updated\") as mock_signal:\n    ...\n```\n\n## Test Commands\n# Single carrier (most common local flow)\n\n# Frontend tests\ncd apps/dashboard && pnpm test\n\n# TypeScript type checking\ncd apps/dashboard && pnpm tsc --noEmit\n\n- Always run tests from the repository root.\n- Always match existing test coding style.\n- **NEVER use pytest** — `unittest` for SDK, `karrio test` (Django) for server.\n- Test files: `test_<feature>.py` with classes `Test<Module><Feature>`.\n- **Always add `print(response.data)` before assertions** when debugging — remove once tests pass.\n- **Use `mock.ANY`** for dynamic fields (id, created_at, updated_at).\n- **Use `self.maxDiff = None`** in `setUp()` for full diff output.\n\n## SDK Carrier Integration Tests — 4-method Pattern\n\nEvery carrier feature requires 4 tests:\n\n1. `test_create_<feature>_request` — unified model → carrier request payload\n2. `test_get_<feature>` — proxy URL/method verification (HTTP call inspection)\n```python\nclass TestCarrierFeature(unittest.TestCase):\n    def setUp(self):\n        self.maxDiff = None\n\n    @patch(\"karrio.mappers.<carrier>.proxy.lib.request\")\n    def test_get_rates(self, mock_request):\n        mock_request.return_value = RESPONSE_JSON\n        parsed_response, messages = (\n            karrio.Rating.fetch(self.RateRequest).from_(gateway).parse()\n        )\n        print(lib.to_dict(parsed_response))  # always print before assert\n        self.assertListEqual(lib.to_dict(parsed_response), ParsedRateResponse)\n```\n\n## Django Server Test Pattern\n\n- Debug: add `print(response.data)` BEFORE assertions, remove when tests pass.\n- Create objects via API requests, not direct model manipulation.\n- Use `self.assertResponseNoErrors(response)` first for GraphQL.\n- Single comprehensive assertion: `self.assertDictEqual` with full response.\n\n```python\nclass TestFeatureName(TestCase):\n    fixtures = [\"fixtures\"]  # or specific fixtures\n\n    def test_query_or_mutation(self):\n        response = self.query(QUERY_STRING, operation_name=\"OperationName\")\n        response_data = response.data\n\n        # print(response_data)  # during debug, remove when passing\n\n        self.assertResponseNoErrors(response)\n        self.assertDictEqual(response_data, EXPECTED_RESPONSE)\n```\n\n- Module-level constants in `fixture.py`: `Payload`, `RequestData`, `Response`, `ParsedResponse`, `ErrorResponse`.\n- `cached_auth` dict for OAuth carriers.\n- `gateway` instance in `fixture.py`.\n- `lib.to_dict()` strips `None` and empty strings — expected fixtures shouldn't include them.\n\n## E2E Test Data\n\n- Use `@ngneat/falso` for generating fake test data (names, companies, emails, phones) in frontend E2E tests — never hardcode personal data.\n- Keep carrier-functional fields (country codes, zip codes, cities, addresses, weights) as fixed valid values — carrier APIs validate these combinations.\n\n## Migration Testing\n\n- Data migrations: verify data integrity with `RunPython` + reverse code.\n- Always test that migration is reversible when possible.\n- Test ordering: ensure dependencies are correct.\n- `HUEY[\"immediate\"] = True` in test settings — Huey tasks run synchronously.\n\n## What to Test\n\n| Change Type | Required Tests |\n|-------------|----------------|\n| New GraphQL mutation | `karrio test` with `assertResponseNoErrors` + response validation |\n| New REST endpoint | DRF test with status code + response body |\n| Model change | Migration test + serializer test |\n| Carrier integration | 4-method pattern per feature (rate, ship, track) |\n| Bug fix | Regression test proving the fix |\n| Hook / extension | Test that hook fires and validates correctly |"
+    gold_removed: ''
+  - path: .claude/skills/create-extension-module/SKILL.md
+    tier: 1
+    gold_added: "# Skill: Create Extension Module\n\nScaffold a new karrio extension module that hooks into core without modifying core code. Karrio is modular by design — `modules/core`, `modules/graph`, `modules/admin` form the server core, `modules/connectors/*` are carrier plugins, and everything else (`modules/orders`, `modules/data`, `modules/documents`, `modules/events`, `modules/pricing`, `modules/manager`, …) is an auto-discovered extension module following the pattern below.\n\n## When to Use\n\n- New domain logic (a new resource, workflow, or integration)\n- Extending the GraphQL schema with new types / mutations\n- Adding REST endpoints for new resources\n- Registering signal handlers, hook functions, or Huey tasks at startup\n\n**Do NOT use this pattern for carrier connectors** — they live in `modules/connectors/*` and are scaffolded via `./bin/cli sdk add-extension`. See `.claude/skills/carrier-integration/SKILL.md` and `.claude/rules/carrier-integration.md`.\n\n## Prerequisites\n\nRead these first:\n\n- `.claude/rules/extension-patterns.md` — namespace-package caveats, dependency-direction rule, hook points table\n- `.claude/skills/django-rest-api/SKILL.md` — REST view / router / serializer conventions\n- `.claude/skills/django-graphql/SKILL.md` — Strawberry GraphQL conventions\n\nStudy these existing modules — they are the canonical examples, use them as templates:\n\n- `modules/orders/karrio/server/orders/` — REST + GraphQL + signals (the most complete extension module reference)\n- `modules/documents/karrio/server/documents/` — REST + Huey tasks for document generation\n- `modules/events/karrio/server/events/` — webhook delivery + Huey task registration\n- `modules/data/karrio/server/data/` — import / export module with REST views\n- `modules/pricing/karrio/server/pricing/` — admin-scoped pricing with markups and fees\n\n## Steps\n\n### 1. Create the module directory\n\n```bash\nmkdir -p modules/<name>/karrio/server/<name>\nmkdir -p modules/<name>/karrio/server/settings\n```\n\nOptional sub-packages (create only what you need):\n\n```bash\nmkdir -p modules/<name>/karrio/server/<name>/serializers\nmkdir -p modules/<name>/karrio/server/<name>/tests\nmkdir -p modules/<name>/karrio/server/<name>/migrations\nmkdir -p modules/<name>/karrio/server/graph/schemas/<name>    # only if adding GraphQL\nmkdir -p modules/<name>/karrio/server/admin/schemas/<name>    # only if adding admin GraphQL\n```\n\n**Namespace-package rule (critical):** the only `__init__.py` files you create are inside the **leaf** directories unique to your module — i.e. `karrio/server/<name>/__init__.py`, `karrio/server/<name>/tests/__init__.py`, `karrio/server/graph/schemas/<name>/__init__.py`, etc. Never create `__init__.py` at `karrio/`, `karrio/server/`, `karrio/server/graph/`, `karrio/server/graph/schemas/`, `karrio/server/admin/`, or `karrio/server/admin/schemas/` — those paths are owned by core modules and must stay as implicit namespace packages. Adding an `__init__.py` there shadows the core package and silently breaks `pkgutil.iter_modules()` discovery. See `.claude/rules/extension-patterns.md` for details.\n\nVerify by looking at `modules/orders/karrio/` — there is no `__init__.py` at `karrio/` or `karrio/server/`, only inside `karrio/server/orders/` and its sub-packages.\n\n### 2. Create the AppConfig\n\n```python\n# modules/<name>/karrio/server/<name>/apps.py\nfrom django.apps import AppConfig\nfrom django.utils.translation import gettext_lazy as _\n\n\nclass <Name>Config(AppConfig):\n    name = \"karrio.server.<name>\"\n    verbose_name = _(\"<Name>\")\n    default_auto_field = \"django.db.models.BigAutoField\"\n\n    def ready(self):\n        from karrio.server.core import utils\n        from karrio.server.<name> import signals  # only if you have signals\n\n        @utils.skip_on_commands()\n        def _init():\n            signals.register_signals()\n\n        _init()\n```\n\nKarrio conventions (see `modules/orders/karrio/server/orders/apps.py`):\n\n- Wrap registration in `@utils.skip_on_commands()` — this prevents signal / hook registration from running during `migrate`, `collectstatic`, `makemigrations`, etc. Without it you get noisy side-effects (or outright failures) when running management commands on a fresh database.\n- Wrap `verbose_name` in `gettext_lazy` so the admin UI can be translated.\n- Import signals lazily inside `ready()`, never at module top-level — Django is not fully initialized yet when `apps.py` is imported.\n\n### 3. Register signal / hook handlers\n\n```python\n# modules/<name>/karrio/server/<name>/signals.py\nimport karrio.server.<name>.models as models\nfrom django.db.models import signals\nfrom karrio.server.core import utils\nfrom karrio.server.core.logging import logger\n\n\ndef register_signals():\n    signals.post_save.connect(_on_save, sender=models.Widget)\n    signals.post_delete.connect(_on_delete, sender=models.Widget)\n    logger.info(\"Signal registration complete\", module=\"karrio.<name>\")\n\n\n@utils.disable_for_loaddata\ndef _on_save(sender, instance, created, **kwargs):\n    ...\n\n\n@utils.disable_for_loaddata\ndef _on_delete(sender, instance, **kwargs):\n    ...\n```\n\n`@utils.disable_for_loaddata` prevents signals from firing during fixture loading (test setup, `loaddata`). See the orders module's `signals.py` for a full-featured example that touches related models.\n\nTo hook into a core serializer's validation pipeline, append to `pre_process_functions`:\n\n```python\n# inside register_signals() or a separate hooks.py\nfrom karrio.server.manager.serializers import ShipmentSerializer\nfrom karrio.server.<name> import validators\n\nShipmentSerializer.pre_process_functions.append(validators.validate_widget_link)\n```\n\n### 4. Add settings auto-discovery\n\n```python\n# modules/<name>/karrio/server/settings/<name>.py\n# ruff: noqa: F403, F405, I001\nfrom karrio.server.settings.base import *  # noqa\n\nINSTALLED_APPS += [\"karrio.server.<name>\"]\nKARRIO_URLS += [\"karrio.server.<name>.urls\"]  # only if the module has REST endpoints\n```\n\n`apps/api/karrio/server/settings/__init__.py` iterates its known module names with `importlib.util.find_spec(...)` and imports `karrio.server.settings.<name>` when the module is installed. Your settings file must follow that exact path — `modules/<name>/karrio/server/settings/<name>.py` — for discovery to work.\n\nIf your extension is a completely new module not already listed in `apps/api/karrio/server/settings/__init__.py`, add a matching `find_spec` guard there as a separate PR (this edits core and needs review). Karrio's current guards cover `graph`, `orders`, `data`, `admin`, `huey`, `servicebus`, `main` — check the file when adding a new one.\n\n### 5. Add REST endpoints (if needed)\n\nFollow `.claude/skills/django-rest-api/SKILL.md`. At minimum:\n\n- `modules/<name>/karrio/server/<name>/router.py` — `router = DefaultRouter(trailing_slash=False)`\n- `modules/<name>/karrio/server/<name>/urls.py` — `app_name = \"karrio.server.<name>\"`, mount `router.urls` at `v1/`\n- `modules/<name>/karrio/server/<name>/views.py` — views extending `karrio.server.core.views.api.GenericAPIView` / `APIView`, with a unique 5-char `ENDPOINT_ID`, `@openapi.extend_schema(...)` annotations, and self-registration via `router.urls.append(path(...))`\n\n### 6. Add GraphQL schemas (if needed)\n\nFollow `.claude/skills/django-graphql/SKILL.md`. Four files under a schemas sub-package:\n\n```\nmodules/<name>/karrio/server/graph/schemas/<name>/        # tenant-scoped\n├── __init__.py    # Query + Mutation classes + extra_types = [] (thin interface)\n├── types.py       # @strawberry.type with resolve / resolve_list static methods\n├── inputs.py      # @strawberry.input filters + mutation inputs\n└── mutations.py   # @strawberry.type mutations with mutate() static methods\n```\n\nFor admin-scoped (system) schemas use `modules/<name>/karrio/server/admin/schemas/<name>/` instead. `modules/graph/karrio/server/graph/schema.py` auto-discovers both via `pkgutil.iter_modules()` — no registration required.\n\n`extra_types: list = []` is required in every schema `__init__.py` even if empty — `schema.py` reads it unconditionally.\n\n### 7. Add `pyproject.toml`\n\nMatch the orders module's structure (`modules/orders/pyproject.toml`):\n\n```toml\n[build-system]\nrequires = [\"setuptools>=61.0\"]\nbuild-backend = \"setuptools.build_meta\"\n\n[project]\nname = \"karrio_server_<name>\"\nversion = \"2026.1.29\"  # keep in sync with apps/api/karrio/server/VERSION\ndescription = \"Multi-carrier shipping API <name> module\"\nreadme = \"README.md\"\nrequires-python = \">=3.11\"\nlicense = \"LGPL-3.0\"\nauthors = [\n    {name = \"karrio\", email = \"hello@karrio.io\"}\n]\nclassifiers = [\n    \"Programming Language :: Python :: 3\",\n]\ndependencies = [\n    \"karrio_server_core\",\n    \"karrio_server_graph\",     # if adding GraphQL\n    \"karrio_server_manager\",   # if importing from manager models\n]\n\n[project.urls]\nHomepage = \"https://github.com/karrioapi/karrio\"\n\n[tool.setuptools]\nzip-safe = false\ninclude-package-data = true\n\n[tool.setuptools.package-dir]\n\"\" = \".\"\n\n[tool.setuptools.packages.find]\nexclude = [\"tests.*\", \"tests\"]\nnamespaces = true\n```\n\n`namespaces = true` is mandatory — karrio uses PEP 420 namespace packages across modules.\n\n### 8. Add tests\n\nTests live in a `tests/` **directory** (not a single `tests.py`):\n\n```\nmodules/<name>/karrio/server/<name>/tests/\n├── __init__.py         # re-exports test classes for karrio test discovery\n├── base.py             # optional: shared fixture class extending APITestCase / GraphTestCase\n├── test_<resource>.py  # REST tests\n└── test_<feature>.py   # GraphQL / signal tests\n```\n\nUse the right base class:\n\n- REST: `karrio.server.core.tests.APITestCase` (see `modules/core/karrio/server/core/tests/base.py`)\n- GraphQL: `karrio.server.graph.tests.GraphTestCase` (see `modules/graph/karrio/server/graph/tests/base.py`)\n\
+      \nBoth provide `setUpTestData` with a superuser, API token, and seeded carrier connections.\n\n```python\n# modules/<name>/karrio/server/<name>/tests/test_widgets.py\nimport json\nfrom django.urls import reverse\nfrom rest_framework import status\nfrom karrio.server.core.tests import APITestCase\n\n\nclass TestWidgets(APITestCase):\n    def test_create_widget(self):\n        url = reverse(\"karrio.server.<name>:widget-list\")\n        response = self.client.post(url, {\"name\": \"Hello\"})\n        # print(response.data)  # DEBUG — remove when passing\n        self.assertEqual(response.status_code, status.HTTP_201_CREATED)\n```\n\n### 9. Register in build / dev / CI\n\nAll three files must be updated — missing any of them means the module is silently skipped:\n\n| File | Purpose |\n| --- | --- |\n| `requirements.build.txt` | Installs the module in prod Docker images. Without this, the module never reaches staging / production. |\n| `requirements.server.dev.txt` | Installs the module in local dev environments. Without this, `./bin/run-server-tests` skips it locally. |\n| `bin/run-server-tests` | Adds `karrio.server.<name>.tests` to the Django test-runner invocation. Without this, tests pass locally but never run in CI. |\n\nAdd a line like `-e ./modules/<name>` to both requirements files, and add `karrio.server.<name>.tests \\` to the `$KARRIO_TEST --failfast` invocation in `bin/run-server-tests`.\n\n### 10. Install in development\n\n```bash\nsource bin/activate-env\npip install -e modules/<name>\n./bin/run-server-tests            # full server suite\nkarrio test --failfast karrio.server.<name>.tests   # just your module\n```\n\n## Verification\n\n```bash\n# 1. Module imports\npython -c \"import karrio.server.<name>; print('OK')\"\n\n# 2. Settings auto-discovery picked it up (INSTALLED_APPS, KARRIO_URLS)\npython -c \"from django.conf import settings; print('karrio.server.<name>' in settings.INSTALLED_APPS)\"\n\n# 3. Django migrations generate\nkarrio makemigrations <name>\nkarrio migrate <name>\n\n# 4. GraphQL schema registration (if added)\npython -c \"from karrio.server.graph.schema import schema; print(schema)\"\n\n# 5. REST endpoints reachable (if added)\n./bin/start\ncurl -H \"Authorization: Token <tkn>\" http://localhost:5002/api/v1/widgets\n```\n\nIf `pkgutil.iter_modules()` silently skips your GraphQL schema, the usual culprits are:\n\n1. A stray `__init__.py` at `modules/<name>/karrio/server/graph/` or `.../schemas/` — delete it.\n2. A circular import between `types.py`, `mutations.py`, and `utils.py` — `schema.py` catches the `ImportError` and moves on (check `karrio.server.core.logging` output).\n3. The module isn't installed — `pip install -e modules/<name>` and confirm in `pip list`.\n4. `requirements.build.txt` missing the `-e ./modules/<name>` line — schema discovery works locally but staging / prod silently omit the module."
+    gold_removed: ''
+  - path: .claude/skills/django-graphql/SKILL.md
+    tier: 1
+    gold_added: "# Skill: Django GraphQL Development\n\nAdd queries, mutations, types, and inputs to karrio's Strawberry GraphQL schema.\n\n## When to Use\n\n- Adding new GraphQL queries or mutations\n- Creating new Strawberry types for existing Django models\n- Extending the base (tenant) or admin (system) graph\n- Adding GraphQL endpoints from an extension module (e.g. `orders`, `pricing`, `documents`)\n\n## Architecture\n\n```\n┌──────────────────────────────────────────────────────────────┐\n│                    GraphQL Request                           │\n│                                                              │\n│  Client ──POST /graphql──> schema.py ──> Query/Mutation      │\n│                                                              │\n│  ┌────────────────────────────────────────────────────────┐  │\n│  │  schema.py:                                            │  │\n│  │    pkgutil.iter_modules(schemas.__path__)              │  │\n│  │    → collects Query, Mutation, extra_types per module  │  │\n│  │    → class Query(*QUERIES):  pass                      │  │\n│  │    → class Mutation(*MUTATIONS):  pass                 │  │\n│  └────────────────────────┬───────────────────────────────┘  │\n│                           │                                   │\n│       ┌───────────────────┼───────────────────┐              │\n│       ▼                   ▼                   ▼               │\n│  ┌──────────┐     ┌──────────┐     ┌──────────────────┐      │\n│  │schemas/  │     │<ext>/    │     │admin/schemas/    │      │\n│  │base/     │     │schemas/  │     │base/             │      │\n│  │  __init__│     │  <ext>/  │     │  __init__        │      │\n│  │  types   │     │          │     │  types           │      │\n│  │  inputs  │     │          │     │  inputs          │      │\n│  │  mutations│     │          │     │  mutations       │      │\n│  └────┬─────┘     └──────────┘     └──────────────────┘      │\n│       │                                                       │\n│       ▼                                                       │\n│  Model.access_by(request)  ──>  DRF Serializer  ──>  save()  │\n└──────────────────────────────────────────────────────────────┘\n```\n\nRelevant files:\n\n- `modules/graph/karrio/server/graph/schema.py` — auto-discovery via `pkgutil.iter_modules`\n- `modules/graph/karrio/server/graph/schemas/base/` — canonical tenant schema (users, shipments, trackers, carriers, rate sheets, metafields, …)\n- `modules/admin/karrio/server/admin/schemas/base/` — canonical system-admin schema\n- `modules/graph/karrio/server/graph/utils.py` — `BaseInput`, `BaseMutation`, `Paginated`, `Connection[T]`, `paginated_connection`, `is_unset`, `authentication_required`, `password_required`, `error_wrapper`\n- `modules/admin/karrio/server/admin/utils.py` — `staff_required`, `superuser_required`\n\n## Two Schema Domains\n\n| Aspect           | Base graph (tenant)                 | Admin graph (system)                |\n| ---------------- | ----------------------------------- | ----------------------------------- |\n| URL              | `/graphql`                          | `/admin/graphql`                    |\n| Scope            | Tenant (per-org)                    | System-wide (staff / superuser)     |\n| Auth decorator   | `@utils.authentication_required`    | + `@admin.staff_required` on top    |\n| Model queries    | `Model.access_by(info.context.request)` | `Model.objects.all()`            |\n| Schema location  | `modules/graph/karrio/server/graph/schemas/`       | `modules/admin/karrio/server/admin/schemas/` |\n| Extension location | `modules/<name>/karrio/server/graph/schemas/<name>/` | `modules/<name>/karrio/server/admin/schemas/<name>/` |\n\n## File Layout (4-file pattern)\n\nEvery schema module (base, admin, or extension) follows the same thin-interface layout. See `.claude/rules/extension-patterns.md` for the dependency rules between these files — circular imports cause silent schema registration failures.\n\n```\nschemas/<name>/\n├── __init__.py    # Query + Mutation classes + extra_types (thin interface, REQUIRED)\n├── types.py       # @strawberry.type definitions with resolve/resolve_list\n├── inputs.py      # @strawberry.input Filter + Mutation inputs\n└── mutations.py   # @strawberry.type mutation classes with mutate()\n```\n\n## Step-by-Step: Add a New Feature\n\n### Step 1 — Define inputs (`inputs.py`)\n\n```python\nimport typing\nimport strawberry\n\nimport karrio.server.graph.utils as utils\n\n\n# Filter input — extends Paginated (gives offset + first)\n@strawberry.input\nclass WidgetFilter(utils.Paginated):\n    keyword: typing.Optional[str] = strawberry.UNSET\n    status: typing.Optional[typing.List[str]] = strawberry.UNSET\n    metadata_key: typing.Optional[str] = strawberry.UNSET\n    metadata_value: typing.Optional[utils.JSON] = strawberry.UNSET\n\n\n# Mutation input — extends BaseInput (gives to_dict() + pagination())\n@strawberry.input\nclass CreateWidgetMutationInput(utils.BaseInput):\n    name: str\n    description: typing.Optional[str] = strawberry.UNSET\n    metadata: typing.Optional[utils.JSON] = strawberry.UNSET\n\n\n@strawberry.input\nclass UpdateWidgetMutationInput(utils.BaseInput):\n    id: str\n    name: typing.Optional[str] = strawberry.UNSET\n    description: typing.Optional[str] = strawberry.UNSET\n    metadata: typing.Optional[utils.JSON] = strawberry.UNSET\n```\n\nKarrio conventions:\n\n- Optional fields default to `strawberry.UNSET`, never `None`.\n- Filters extend `utils.Paginated` (see `modules/graph/karrio/server/graph/utils.py`).\n- Mutation inputs extend `utils.BaseInput`; the `.to_dict()` method strips `UNSET` values.\n- Use typed enums from `karrio.server.graph.utils` (e.g. `utils.ShipmentStatusEnum`, `utils.CarrierNameEnum`) over raw strings whenever the value is enumerable.\n\n### Step 2 — Define types (`types.py`)\n\n```python\nimport typing\nimport strawberry\nfrom strawberry.types import Info\n\nimport karrio.server.graph.utils as utils\nimport karrio.server.core.filters as filters\nimport karrio.server.graph.schemas.base.inputs as inputs\nimport karrio.server.manager.models as manager  # or your extension module's models\n\n\n@strawberry.type\nclass WidgetType:\n    id: str\n    name: str\n    description: typing.Optional[str] = None\n    metadata: typing.Optional[utils.JSON] = None\n    created_at: typing.Optional[str] = None\n\n    # Computed field — resolved per instance, `self` is the model\n    @strawberry.field\n    def display_name(self: manager.Widget) -> str:\n        return f\"{self.name} ({self.id})\"\n\n    # Single-item resolver\n    @staticmethod\n    @utils.authentication_required\n    def resolve(info: Info, id: str) -> typing.Optional[\"WidgetType\"]:\n        return (\n            manager.Widget.access_by(info.context.request)\n            .filter(id=id)\n            .first()\n        )\n\n    # List resolver with pagination + filtering\n    @staticmethod\n    @utils.authentication_required\n    def resolve_list(\n        info: Info,\n        filter: typing.Optional[inputs.WidgetFilter] = strawberry.UNSET,\n    ) -> utils.Connection[\"WidgetType\"]:\n        _filter = filter if not utils.is_unset(filter) else inputs.WidgetFilter()\n        queryset = filters.WidgetFilter(\n            _filter.to_dict(),\n            manager.Widget.access_by(info.context.request),\n        ).qs\n        return utils.paginated_connection(queryset, **_filter.pagination())\n```\n\nKarrio conventions:\n\n- Single-item resolver returns `Optional[Type]`; list resolver returns `utils.Connection[Type]` (karrio's paginated wrapper, not Relay's).\n- Always use `Model.access_by(info.context.request)` in the base graph — this enforces tenant isolation. Never use `Model.objects.all()` here.\n- Use `utils.is_unset(filter)` to check the sentinel — `None`/truthiness checks do not work.\n- Factory methods that construct the type from a dict/record belong on the type itself as `@staticmethod parse(...)` — never in `utils.py` (that would create a circular import; see `.claude/rules/extension-patterns.md`).\n\n### Step 3 — Define mutations (`mutations.py`)\n\n```python\nimport typing\nimport strawberry\nfrom strawberry.types import Info\n\nimport karrio.server.graph.utils as utils\nimport karrio.server.graph.serializers as serializers\nimport karrio.server.graph.schemas.base.types as types\nimport karrio.server.graph.schemas.base.inputs as inputs\nimport karrio.server.manager.models as manager\nfrom karrio.server.serializers import process_dictionaries_mutations\n\n\n@strawberry.type\nclass CreateWidgetMutation(utils.BaseMutation):\n    widget: typing.Optional[types.WidgetType] = None\n\n    @staticmethod\n    @utils.authentication_required\n    def mutate(\n        info: Info, **input: inputs.CreateWidgetMutationInput\n    ) -> \"CreateWidgetMutation\":\n        serializer = serializers.WidgetModelSerializer(\n            data=input,\n            context=info.context.request,\n        )\n        serializer.is_valid(raise_exception=True)\n        return CreateWidgetMutation(widget=serializer.save())  # type: ignore\n\n\n@strawberry.type\nclass UpdateWidgetMutation(utils.BaseMutation):\n    widget: typing.Optional[types.WidgetType] = None\n\n    @staticmethod\n    @utils.authentication_required\n    def mutate(\n        info: Info, **input: inputs.UpdateWidgetMutationInput\n    ) -> \"UpdateWidgetMutation\":\n        instance = manager.Widget.access_by(info.context.request).get(id=input[\"id\"])\n        serializer = serializers.WidgetModelSerializer(\n            instance,\n            partial=True,\n            data=process_dictionaries_mutations([\"metadata\"], input, instance),\n            context=info.context.request,\n        )\n        serializer.is_valid(raise_exception=True)\n        return UpdateWidgetMutation(widget=serializer.save())  # type: ignore\n```\n\nKarrio conventions:\n\n- Inherit from `utils.BaseMutation` to get the `errors` field\
+      \ for free.\n- Mutations that require a password use `@utils.password_required` in addition to `@utils.authentication_required` (see `CreateAPIKeyMutation` in `mutations.py` for a reference).\n- For JSON fields (`metadata`, `options`, `config`), route the payload through `process_dictionaries_mutations([...], input, instance)` — this merges partial dict updates instead of replacing them.\n- Delegate validation + save to DRF serializers in `karrio.server.graph.serializers` (or a `karrio.server.<module>.serializers` for extension modules). Mutation bodies stay short.\n- For generic delete mutations, reuse `mutations.DeleteMutation.mutate(info, model=..., validator=...)` as in the base graph's `delete_parcel` / `delete_metafield`.\n\n### Step 4 — Wire up schema (`__init__.py`)\n\nKeep `__init__.py` as a **thin interface** — Query fields use `strawberry.field(resolver=...)`, Mutation methods are one-liners that delegate to `mutations.X.mutate(info, **input.to_dict())`. No business logic here.\n\n```python\nimport typing\nimport strawberry\nfrom strawberry.types import Info\n\nimport karrio.server.graph.utils as utils\nimport karrio.server.graph.schemas.base.types as types\nimport karrio.server.graph.schemas.base.inputs as inputs\nimport karrio.server.graph.schemas.base.mutations as mutations\n\nextra_types: list = []  # REQUIRED even if empty\n\n\n@strawberry.type\nclass Query:\n    widget: typing.Optional[types.WidgetType] = strawberry.field(\n        resolver=types.WidgetType.resolve\n    )\n    widgets: utils.Connection[types.WidgetType] = strawberry.field(\n        resolver=types.WidgetType.resolve_list\n    )\n\n\n@strawberry.type\nclass Mutation:\n    @strawberry.mutation\n    def create_widget(\n        self, info: Info, input: inputs.CreateWidgetMutationInput\n    ) -> mutations.CreateWidgetMutation:\n        return mutations.CreateWidgetMutation.mutate(info, **input.to_dict())\n\n    @strawberry.mutation\n    def update_widget(\n        self, info: Info, input: inputs.UpdateWidgetMutationInput\n    ) -> mutations.UpdateWidgetMutation:\n        return mutations.UpdateWidgetMutation.mutate(info, **input.to_dict())\n```\n\nAuto-discovery: `modules/graph/karrio/server/graph/schema.py` iterates `schemas/` via `pkgutil.iter_modules()` and collects `Query`, `Mutation`, and `extra_types` from every sub-package. No manual registration — but the module must be installed (`-e ./modules/<name>` in `requirements.build.txt`) and opt in via `modules/<name>/karrio/server/settings/<name>.py`.\n\n### Step 5 — Add the Django filter\n\n```python\n# modules/<module>/karrio/server/<module>/filters.py\nimport karrio.server.filters as filters  # NOT django_filters directly\nimport karrio.server.manager.models as manager\n\n\nclass WidgetFilter(filters.FilterSet):\n    keyword = filters.CharFilter(method=\"keyword_filter\")\n    status = filters.CharInFilter(field_name=\"status\", lookup_expr=\"in\")\n    metadata_key = filters.CharInFilter(\n        field_name=\"metadata\", method=\"metadata_key_filter\"\n    )\n    order_by = filters.OrderingFilter(fields={\"created_at\": \"created_at\"})\n\n    class Meta:\n        model = manager.Widget\n        fields: list = []\n\n    def keyword_filter(self, queryset, name, value):\n        return queryset.filter(name__icontains=value)\n\n    def metadata_key_filter(self, queryset, name, value):\n        return queryset.filter(metadata__has_key=value)\n```\n\n`karrio.server.filters` re-exports `django_filters` plus karrio-specific filters (`CharInFilter`, …) — see `modules/core/karrio/server/filters/abstract.py`.\n\n### Step 6 — Add the serializer\n\nSerializers live in `modules/<module>/karrio/server/<module>/serializers/` (or a single `serializers.py`). For tenant-scoped models, wrap with `@owned_model_serializer` — it links the instance to `request.user.org` automatically.\n\n```python\nfrom rest_framework import serializers\nfrom karrio.server.serializers import owned_model_serializer\nimport karrio.server.manager.models as manager\n\n\n@owned_model_serializer\nclass WidgetModelSerializer(serializers.ModelSerializer):\n    class Meta:\n        model = manager.Widget\n        exclude = [\"created_at\", \"updated_at\", \"created_by\"]\n```\n\nFor system-scoped (admin) serializers, don't wrap; set `created_by` manually in `.create()`:\n\n```python\nclass SystemWidgetModelSerializer(serializers.ModelSerializer):\n    class Meta:\n        model = manager.SystemWidget\n        exclude = [\"created_at\", \"updated_at\", \"created_by\"]\n\n    def create(self, validated_data, **kwargs):\n        validated_data[\"created_by\"] = self.context.user\n        return super().create(validated_data)\n```\n\n### Step 7 — Add tests\n\nTests use `karrio.server.graph.tests.GraphTestCase` (see `modules/graph/karrio/server/graph/tests/base.py`) — it creates class-level user, token, and carrier fixtures via `setUpTestData`.\n\n```python\nfrom unittest import mock\nfrom karrio.server.graph.tests import GraphTestCase\n\n\nclass TestWidgetSchema(GraphTestCase):\n\n    def test_create_widget(self):\n        response = self.query(\n            \"\"\"\n            mutation create_widget($data: CreateWidgetMutationInput!) {\n              create_widget(input: $data) {\n                widget { id name }\n                errors { field messages }\n              }\n            }\n            \"\"\",\n            operation_name=\"create_widget\",\n            variables=CREATE_DATA,\n        )\n        self.assertResponseNoErrors(response)\n        self.assertDictEqual(response.data, CREATE_RESPONSE)\n\n    def test_list_widgets(self):\n        response = self.query(\n            \"\"\"\n            query widgets { widgets { edges { node { id name } } } }\n            \"\"\",\n            operation_name=\"widgets\",\n        )\n        self.assertResponseNoErrors(response)\n\n\nCREATE_DATA = {\"data\": {\"name\": \"Test widget\"}}\nCREATE_RESPONSE = {\n    \"data\": {\n        \"create_widget\": {\n            \"widget\": {\"id\": mock.ANY, \"name\": \"Test widget\"},\n            \"errors\": None,\n        }\n    }\n}\n```\n\nRun tests:\n\n```bash\nkarrio test --failfast karrio.server.<module>.tests\n```\n\nDebug tip: add `print(response.data)` before `self.assertDictEqual(...)` when diagnosing failures, then remove it. `lib.to_dict()` strips `None` and empty strings — expected fixtures should not include them.\n\n## Admin Graph Differences\n\nAdmin schemas live under `modules/admin/karrio/server/admin/schemas/` and in extension modules under `modules/<name>/karrio/server/admin/schemas/<name>/`.\n\n```python\n# types.py in an admin schema — no access_by(), add staff_required\nimport karrio.server.admin.utils as admin\nimport karrio.server.graph.utils as utils\n\n\n@strawberry.type\nclass SystemWidgetType:\n    @staticmethod\n    @utils.authentication_required\n    @admin.staff_required\n    def resolve(info: Info, id: str) -> typing.Optional[\"SystemWidgetType\"]:\n        return manager.SystemWidget.objects.filter(id=id).first()\n\n    @staticmethod\n    @utils.authentication_required\n    @admin.staff_required\n    def resolve_list(\n        info: Info,\n        filter: typing.Optional[inputs.SystemWidgetFilter] = strawberry.UNSET,\n    ) -> utils.Connection[\"SystemWidgetType\"]:\n        _filter = filter if not utils.is_unset(filter) else inputs.SystemWidgetFilter()\n        queryset = filters.SystemWidgetFilter(\n            _filter.to_dict(),\n            manager.SystemWidget.objects.all(),  # no access_by\n        ).qs\n        return utils.paginated_connection(queryset, **_filter.pagination())\n```\n\nUse `admin.superuser_required` for mutations that must be restricted to superusers only.\n\n## N+1 Prevention\n\nAlways push `select_related` / `prefetch_related` into the model manager so that both REST and GraphQL benefit automatically.\n\n```python\nclass WidgetManager(models.Manager):\n    def get_queryset(self):\n        return (\n            super().get_queryset()\n            .select_related(\"created_by\")\n            .prefetch_related(\"tags\", \"services\")\n        )\n```\n\nInside a resolver that touches the same related field twice (e.g. returning computed fields that reuse `self.created_by`), call `.select_related` explicitly on the queryset produced by `access_by`.\n\n## Extension Module GraphQL\n\nTo contribute GraphQL from `modules/<name>/`:\n\n1. Create `modules/<name>/karrio/server/graph/schemas/<name>/` with the 4-file layout above.\n2. **Do not** create `__init__.py` anywhere above the leaf `<name>/` directory — shared paths (`karrio/server/graph/`, `karrio/server/graph/schemas/`) must remain implicit namespace packages, otherwise they shadow the core modules. See `.claude/rules/extension-patterns.md`.\n3. Add `-e ./modules/<name>` to `requirements.build.txt` (Docker / prod) **and** `requirements.server.dev.txt` (dev). Without both, schema discovery silently skips your module.\n4. Add `karrio.server.<name>.tests` to `bin/run-server-tests` so CI picks it up.\n5. Create `modules/<name>/karrio/server/settings/<name>.py` with `INSTALLED_APPS += [\"karrio.server.<name>\"]` so settings auto-discovery picks up the module (see `apps/api/karrio/server/settings/__init__.py`).\n\nFor admin-scoped extensions, use `modules/<name>/karrio/server/admin/schemas/<name>/` instead of `graph/schemas/<name>/`.\n\n## Karrio Conventions Recap\n\n- `import karrio.lib as lib` — never legacy `DP`/`SF`/`NF`/`DF`/`XP`.\n- User-facing strings wrap in `gettext_lazy` as `_(\"...\")`.\n- `self.maxDiff = None` in `setUp()` (already done in `GraphTestCase`).\n- Use `unittest` / `karrio test`, never `pytest`.\n- Don't hand-build the final `schema.Schema(...)` — `modules/graph/karrio/server/graph/schema.py` owns that; just export `Query`, `Mutation`, and `extra_types` from your module."
+    gold_removed: ''
+  - path: .claude/skills/django-rest-api/SKILL.md
+    tier: 1
+    gold_added: "# Skill: Django REST API Development\n\nAdd REST endpoints that follow karrio's view, serializer, router, and OpenAPI conventions.\n\n## When to Use\n\n- Adding new REST API endpoints to a core or extension module\n- Creating CRUD + custom-action views for a model\n- Wiring a new resource into the karrio URL namespace\n- Producing OpenAPI metadata for the public karrio-api spec\n\n## Architecture\n\n```\n┌────────────────────────────────────────────────────────────────┐\n│                       REST API Request                         │\n│                                                                │\n│  Client ──> /api/v1/<resource> ──> <module>/urls.py            │\n│                                    ↳ include(router.urls)      │\n│                                                                │\n│  ┌───────────────────────────────┐   ┌───────────────────────┐ │\n│  │ core.views.api.GenericAPIView │   │ core.views.api.APIView │ │\n│  │   (list + create)             │   │   (detail CRUD +      │ │\n│  │   get_queryset() → access_by  │   │    custom actions)    │ │\n│  │   filter_queryset()           │   │                       │ │\n│  │   paginate_queryset()         │   │   Model.access_by(req)│ │\n│  └──────────┬────────────────────┘   └────────┬──────────────┘ │\n│             │                                 │                │\n│             ▼                                 ▼                │\n│  ┌──────────────────────────────────────────────────────────┐  │\n│  │  Serializer.map(data=request.data, context=request)      │  │\n│  │    .save().instance                                      │  │\n│  └──────────────────────────┬───────────────────────────────┘  │\n│                             ▼                                  │\n│  Response(Entity(instance).data, status=...)                   │\n└────────────────────────────────────────────────────────────────┘\n```\n\nRelevant files:\n\n- `modules/manager/karrio/server/manager/views/shipments.py` — canonical reference (full CRUD + rate + purchase + cancel + documents)\n- `modules/orders/karrio/server/orders/views.py` — extension-module reference\n- `modules/core/karrio/server/core/views/api.py` — `GenericAPIView`, `APIView`, `LoggingMixin`\n- `modules/core/karrio/server/core/authentication.py` — `AccessMixin`, token / JWT / OAuth2 authenticators\n- `modules/core/karrio/server/serializers/abstract.py` — `Serializer`, `EntitySerializer`, `PaginatedResult`, `owned_model_serializer`\n- `modules/core/karrio/server/core/serializers.py` — `ErrorResponse`, `ErrorMessages`, enums (`ShipmentStatus`, …)\n- `modules/core/karrio/server/filters/abstract.py` — `FilterSet`, `CharInFilter`, `DateTimeFilter`\n- `modules/core/karrio/server/openapi.py` — `extend_schema` decorator for OpenAPI metadata\n\n## URL Convention\n\n```\n/api/v1/<resource>                    → GenericAPIView: GET (list) + POST (create)\n/api/v1/<resource>/<str:pk>           → APIView: GET + PATCH/PUT + DELETE\n/api/v1/<resource>/<str:pk>/<action>  → APIView: POST (custom action)\n```\n\nAll endpoints live under `/api/v1/` (the `urls.py` mounts `router.urls` at `v1/`).\n\n## Step-by-Step: Add CRUD Endpoints\n\n### Step 1 — Create the module router\n\n```python\n# modules/<module>/karrio/server/<module>/router.py\nfrom rest_framework.routers import DefaultRouter\n\nrouter = DefaultRouter(trailing_slash=False)\n```\n\nEach module instantiates its own `DefaultRouter`. Views append themselves to `router.urls` at module load time (self-registering pattern — see next step).\n\n### Step 2 — Wire `urls.py`\n\n```python\n# modules/<module>/karrio/server/<module>/urls.py\n\"\"\"\nkarrio server <module> urls\n\"\"\"\nfrom django.urls import include, path\nfrom karrio.server.<module>.views import router\n\napp_name = \"karrio.server.<module>\"\nurlpatterns = [\n    path(\"v1/\", include(router.urls)),\n]\n```\n\nThe import side-effect of `from karrio.server.<module>.views import router` triggers view modules to `router.urls.append(...)` themselves. `app_name` must match the dotted module path — `reverse(\"karrio.server.<module>:<name>\")` uses this namespace.\n\n### Step 3 — Define serializers\n\nSerializers use karrio's 3-tier pattern (input / entity / model) plus `PaginatedResult` for list responses. Lay out:\n\n```\nmodules/<module>/karrio/server/<module>/serializers/\n├── __init__.py     # re-exports\n├── base.py         # Data + Entity serializers (shapes)\n└── <resource>.py   # ModelSerializer + helpers (mutations)\n```\n\n```python\n# serializers/base.py\nfrom rest_framework import serializers\nfrom karrio.server.serializers import (\n    Serializer,\n    EntitySerializer,\n    PaginatedResult,\n    process_dictionaries_mutations,\n    owned_model_serializer,\n)\nimport karrio.server.<module>.models as models\n\n\n# 1) Input data shape (what the client POSTs)\nclass WidgetData(Serializer):\n    name = serializers.CharField(required=True)\n    description = serializers.CharField(required=False, allow_blank=True)\n    metadata = serializers.PlainDictField(required=False, allow_null=True)\n\n\n# 2) Output entity shape (response body) — inherits input + adds id/timestamps\nclass Widget(EntitySerializer, WidgetData):\n    object_type = serializers.CharField(default=\"widget\")\n\n\n# 3) Paginated list (auto-generated wrapper with count/next/previous/results)\n#    Conventionally instantiated in the view module instead of here — see Step 4.\n```\n\n```python\n# serializers/widget.py\n@owned_model_serializer\nclass WidgetSerializer(WidgetData):\n    def create(self, validated_data, **kwargs) -> models.Widget:\n        return models.Widget.objects.create(**validated_data)\n\n    def update(self, instance, validated_data, **kwargs) -> models.Widget:\n        data = process_dictionaries_mutations([\"metadata\"], validated_data, instance)\n        for key, val in data.items():\n            if hasattr(instance, key):\n                setattr(instance, key, val)\n        instance.save()\n        return instance\n```\n\nKarrio conventions:\n\n- `WidgetData` (inputs) stays free of id / timestamps — used as request schema.\n- `Widget` (entity) inherits `WidgetData` and adds the fields `EntitySerializer` provides (id, object_type, created_at, updated_at).\n- `@owned_model_serializer` attaches `created_by` and calls `link_org(...)` for multi-tenancy. Never omit it for tenant-scoped models.\n- Use `Serializer.map(data=..., context=request).save().instance` in views — this is karrio's idiomatic create/update call (see `modules/core/karrio/server/serializers/abstract.py`). `.map(instance, data=...)` auto-sets `partial=True`.\n- For JSON fields (`metadata`, `options`, `config`), always route through `process_dictionaries_mutations([...], payload, instance)` — it merges partial updates instead of clobbering.\n\n### Step 4 — Create views\n\n```python\n# modules/<module>/karrio/server/<module>/views.py\nfrom django.urls import path\nfrom rest_framework import status\nfrom rest_framework.request import Request\nfrom rest_framework.response import Response\nfrom rest_framework.pagination import LimitOffsetPagination\nfrom django_filters.rest_framework import DjangoFilterBackend\n\nfrom karrio.server.core.views.api import GenericAPIView, APIView\nfrom karrio.server.serializers import PaginatedResult, process_dictionaries_mutations\nfrom karrio.server.<module>.router import router\nfrom karrio.server.<module>.serializers import (\n    Widget,\n    WidgetData,\n    WidgetSerializer,\n)\nimport karrio.server.<module>.models as models\nimport karrio.server.<module>.filters as filters\nimport karrio.server.openapi as openapi\nfrom karrio.server.core.serializers import ErrorResponse\n\nENDPOINT_ID = \"$$$$$\"  # 5-char unique hash — keeps operation_id stable & collision-free\nWidgets = PaginatedResult(\"WidgetList\", Widget)\n\n\nclass WidgetList(GenericAPIView):\n    pagination_class = type(\n        \"CustomPagination\", (LimitOffsetPagination,), dict(default_limit=20)\n    )\n    filter_backends = (DjangoFilterBackend,)\n    filterset_class = filters.WidgetFilters\n    serializer_class = Widgets\n    model = models.Widget\n\n    @openapi.extend_schema(\n        tags=[\"Widgets\"],\n        operation_id=f\"{ENDPOINT_ID}list\",\n        extensions={\"x-operationId\": \"listWidgets\"},\n        summary=\"List all widgets\",\n        responses={200: Widgets(), 500: ErrorResponse()},\n    )\n    def get(self, _: Request):\n        \"\"\"Retrieve all widgets.\"\"\"\n        widgets = self.filter_queryset(self.get_queryset())\n        response = self.paginate_queryset(Widget(widgets, many=True).data)\n        return self.get_paginated_response(response)\n\n    @openapi.extend_schema(\n        tags=[\"Widgets\"],\n        operation_id=f\"{ENDPOINT_ID}create\",\n        extensions={\"x-operationId\": \"createWidget\"},\n        summary=\"Create a widget\",\n        request=WidgetData(),\n        responses={201: Widget(), 400: ErrorResponse(), 500: ErrorResponse()},\n    )\n    def post(self, request: Request):\n        \"\"\"Create a new widget instance.\"\"\"\n        widget = (\n            WidgetSerializer.map(data=request.data, context=request).save().instance\n        )\n        return Response(Widget(widget).data, status=status.HTTP_201_CREATED)\n\n\nclass WidgetDetails(APIView):\n\n    @openapi.extend_schema(\n        tags=[\"Widgets\"],\n        operation_id=f\"{ENDPOINT_ID}retrieve\",\n        extensions={\"x-operationId\": \"retrieveWidget\"},\n        summary=\"Retrieve a widget\",\n        responses={200: Widget(), 404: ErrorResponse(), 500: ErrorResponse()},\n    )\n    def get(self, request: Request, pk: str):\n        widget = models.Widget.access_by(request).get(pk=pk)\n        return Response(Widget(widget).data)\n\n    @openapi.extend_schema(\n        tags=[\"Widgets\"],\n        operation_id=f\"{ENDPOINT_ID}update\",\n        extensions={\"x-operationId\": \"updateWidget\"},\n        summary=\"Update a widget\"\
+      ,\n        request=WidgetData(),\n        responses={200: Widget(), 400: ErrorResponse(), 404: ErrorResponse()},\n    )\n    def patch(self, request: Request, pk: str):\n        widget = models.Widget.access_by(request).get(pk=pk)\n        payload = WidgetData.map(data=request.data).data\n        update = (\n            WidgetSerializer.map(\n                widget,\n                context=request,\n                data=process_dictionaries_mutations([\"metadata\"], payload, widget),\n            )\n            .save()\n            .instance\n        )\n        return Response(Widget(update).data)\n\n    @openapi.extend_schema(\n        tags=[\"Widgets\"],\n        operation_id=f\"{ENDPOINT_ID}discard\",\n        extensions={\"x-operationId\": \"discardWidget\"},\n        summary=\"Delete a widget\",\n        responses={200: Widget(), 404: ErrorResponse()},\n    )\n    def delete(self, request: Request, pk: str):\n        widget = models.Widget.access_by(request).get(pk=pk)\n        widget.delete(keep_parents=True)\n        return Response(Widget(widget).data)\n\n\n# Self-register at module load time — urls.py imports this module so router.urls is populated.\nrouter.urls.append(path(\"widgets\", WidgetList.as_view(), name=\"widget-list\"))\nrouter.urls.append(\n    path(\"widgets/<str:pk>\", WidgetDetails.as_view(), name=\"widget-details\")\n)\n```\n\nKarrio conventions:\n\n- **Base classes**: always `karrio.server.core.views.api.GenericAPIView` / `APIView`, never raw DRF `generics.GenericAPIView` / `views.APIView`. Karrio's base classes inject `LoggingMixin`, token / JWT / OAuth2 auth, throttling, and `access_by`-aware `get_queryset()`.\n- **`ENDPOINT_ID`**: set a 5-character prefix (e.g. `\"$$$$$\"`, `\"&&&&&\"`, `\"@@@@@\"`) at the top of each view module. It is concatenated with `list` / `create` / `retrieve` / `update` / `discard` etc. to keep operation-IDs unique across modules. Duplicates silently break the OpenAPI schema.\n- **`extensions={\"x-operationId\": \"camelCaseName\"}`**: provides a stable, human-readable operation id for the public OpenAPI spec and SDK generation.\n- **`extend_schema(request=..., responses={...: ErrorResponse()})`**: document both input and error shapes. `ErrorResponse` and `ErrorMessages` come from `karrio.server.core.serializers`.\n- **Filtering**: `filter_backends = (DjangoFilterBackend,)` + `filterset_class = filters.WidgetFilters`. The filterset lives in your module's `filters.py` and extends `karrio.server.filters.FilterSet`.\n- **Pagination**: subclass `LimitOffsetPagination` inline via `type(\"CustomPagination\", (LimitOffsetPagination,), dict(default_limit=20))` — default limit 20 matches the rest of karrio.\n- **Paginated serializer**: `PaginatedResult(\"WidgetList\", Widget)` factory generates a `{count, next, previous, results}` wrapper. Attach it as `serializer_class` on the list view.\n- **Tenant scoping**: `GenericAPIView.get_queryset()` calls `self.model.access_by(request)` when `model` is set (see `modules/core/karrio/server/core/views/api.py:99`). For `APIView` detail endpoints, call `Model.access_by(request).get(pk=pk)` manually — this is enforced everywhere (e.g. `shipments.py:120`, `orders/views.py:99`).\n- **Route registration**: append to `router.urls` at module level. Prefer `path(...)` over `re_path(...)` unless you need regex groups (e.g. file extensions, see the `ShipmentDocs` example).\n\n### Step 5 — Register the module\n\nExtension modules opt in via their own settings file:\n\n```python\n# modules/<module>/karrio/server/settings/<module>.py\nfrom karrio.server.settings.base import *  # noqa\n\nKARRIO_URLS += [\"karrio.server.<module>.urls\"]\nINSTALLED_APPS += [\"karrio.server.<module>\"]\n```\n\n`apps/api/karrio/server/settings/__init__.py` uses `importlib.util.find_spec()` to conditionally import this file, so it runs only when the module is actually installed.\n\nThen:\n\n- Add `-e ./modules/<module>` to `requirements.build.txt` (prod Docker) **and** `requirements.server.dev.txt` (dev).\n- Add `karrio.server.<module>.tests` to `bin/run-server-tests` so CI picks it up.\n\nSee `.claude/rules/extension-patterns.md` for the full checklist.\n\n## Advanced Patterns\n\n### Custom action endpoint\n\nCustom actions are POST endpoints under `/<resource>/<pk>/<action>`. The canonical example is shipment `cancel` / `purchase` / `rates` (`modules/manager/karrio/server/manager/views/shipments.py:163-286`).\n\n```python\nclass WidgetArchive(APIView):\n\n    @openapi.extend_schema(\n        tags=[\"Widgets\"],\n        operation_id=f\"{ENDPOINT_ID}archive\",\n        extensions={\"x-operationId\": \"archiveWidget\"},\n        summary=\"Archive a widget\",\n        request=None,\n        responses={200: Widget(), 404: ErrorResponse()},\n    )\n    def post(self, request: Request, pk: str):\n        widget = models.Widget.access_by(request).get(pk=pk)\n        widget.is_archived = True\n        widget.save(update_fields=[\"is_archived\"])\n        return Response(Widget(widget).data)\n\n\nrouter.urls.append(\n    path(\"widgets/<str:pk>/archive\", WidgetArchive.as_view(), name=\"widget-archive\")\n)\n```\n\n### Fallback lookup by `request_id`\n\nSeveral karrio endpoints accept either the primary key or the idempotency key stored in `instance.meta[\"request_id\"]` — see `ShipmentCancel` and `OrderCancel`:\n\n```python\nqs = models.Widget.access_by(request)\ntry:\n    widget = qs.get(pk=pk)\nexcept models.Widget.DoesNotExist:\n    widget = qs.filter(meta__request_id=pk).order_by(\"-created_at\").first()\n\nif widget is None:\n    raise models.Widget.DoesNotExist()\n```\n\n### Filtering with `filters.py`\n\n```python\n# modules/<module>/karrio/server/<module>/filters.py\nimport karrio.server.filters as filters\nfrom django.db.models import Q\nimport karrio.server.<module>.models as models\nimport karrio.server.<module>.serializers as serializers\n\n\nclass WidgetFilters(filters.FilterSet):\n    keyword = filters.CharFilter(method=\"keyword_filter\")\n    status = filters.MultipleChoiceFilter(\n        field_name=\"status\",\n        choices=[(s.value, s.value) for s in list(serializers.WidgetStatus)],\n    )\n    created_after = filters.DateTimeFilter(field_name=\"created_at\", lookup_expr=\"gte\")\n    created_before = filters.DateTimeFilter(field_name=\"created_at\", lookup_expr=\"lte\")\n    metadata_key = filters.CharInFilter(\n        field_name=\"metadata\", method=\"metadata_key_filter\"\n    )\n\n    parameters = [\n        # Optional: OpenAPI parameter hints — see ShipmentFilters for the full pattern\n    ]\n\n    class Meta:\n        model = models.Widget\n        fields: list = []\n\n    def keyword_filter(self, queryset, name, value):\n        return queryset.filter(Q(name__icontains=value) | Q(description__icontains=value))\n\n    def metadata_key_filter(self, queryset, name, value):\n        return queryset.filter(metadata__has_key=value)\n```\n\n`karrio.server.filters` re-exports `django_filters.rest_framework` plus karrio helpers (`CharInFilter`). In the view, reference the filter class and pass `filters.ShipmentFilters.parameters` to `extend_schema(parameters=...)` to inherit OpenAPI parameter metadata.\n\n### Document / file download\n\nFor label / invoice downloads, extend `django_downloadview.VirtualDownloadView` and mix `AccessMixin`:\n\n```python\nfrom karrio.server.core.authentication import AccessMixin\nfrom django_downloadview import VirtualDownloadView\n\n\nclass WidgetDocs(AccessMixin, VirtualDownloadView):\n    @openapi.extend_schema(exclude=True)  # exclude from public spec\n    def get(self, request, pk, doc=\"file\", format=\"pdf\", **kwargs):\n        ...\n```\n\nSee `ShipmentDocs` in `manager/views/shipments.py:288-352` for the full pattern (resource-token validation, `lib.failsafe` ZPL-to-PDF conversion, `X-Frame-Options: ALLOWALL`).\n\n### N+1 prevention in views\n\nPush `select_related` / `prefetch_related` into the model manager's default queryset so both list + detail benefit automatically:\n\n```python\nclass WidgetManager(models.Manager):\n    def get_queryset(self):\n        return (\n            super().get_queryset()\n            .select_related(\"created_by\")\n            .prefetch_related(\"tags\")\n        )\n```\n\n`GenericAPIView.get_queryset()` calls `model.access_by(request)`, which goes through your custom manager — no need to override on a per-view basis.\n\n## Testing REST Endpoints\n\nTests use `karrio.server.core.tests.APITestCase` (see `modules/core/karrio/server/core/tests/base.py`) — it creates a class-level superuser, API token, and carrier fixtures.\n\n```python\nimport json\nfrom django.http.response import HttpResponse\nfrom django.urls import reverse\nfrom rest_framework import status\nfrom karrio.server.core.tests import APITestCase\n\n\nclass TestWidgetFixture(APITestCase):\n    def create_widget(self) -> tuple[HttpResponse, dict]:\n        url = reverse(\"karrio.server.<module>:widget-list\")\n        response = self.client.post(url, WIDGET_DATA)\n        return response, json.loads(response.content)\n\n\nclass TestWidgets(TestWidgetFixture):\n    def test_create_widget(self):\n        response, data = self.create_widget()\n        # print(data)  # DEBUG — remove before committing\n        self.assertEqual(response.status_code, status.HTTP_201_CREATED)\n        self.assertDictEqual(data, WIDGET_RESPONSE)\n\n\nWIDGET_DATA = {\"name\": \"Test widget\"}\nWIDGET_RESPONSE = {...}\n```\n\nRun:\n\n```bash\nkarrio test --failfast karrio.server.<module>.tests\n./bin/run-server-tests                       # the whole server suite\n```\n\nKarrio testing conventions:\n\n- No `pytest` anywhere — `unittest` for SDK, `karrio test` for server (Django).\n- `self.maxDiff = None` is already set by `APITestCase.setUp`.\n- Always use `reverse(\"karrio.server.<module>:<url-name>\")` — hardcoding paths like `/api/v1/widgets` breaks under URL-prefix changes.\n- `lib.to_dict(...)` strips `None` / empty strings — expected\
+      \ fixtures should mirror that.\n- Add `print(response.data)` before the assertion while diagnosing failures, then remove it when the test passes (see `.claude/rules/testing.md`)."
+    gold_removed: ''
+  - path: .claude/skills/review-implementation/SKILL.md
+    tier: 1
+    gold_added: '- [ ] Every new mutation/query/endpoint has a corresponding test
+
+      - [ ] Carrier tests follow the 4-method pattern (if carrier work)
+
+      - [ ] Imports at top of test file — never inside a test method
+
+      ### 4. Extension Pattern Check
+
+
+      - [ ] New domain logic lives in `modules/<name>/`, not sprinkled across `modules/core` / `modules/graph` / `modules/manager`
+
+      - [ ] Hooks used where applicable (`@pre_processing`, `AppConfig.ready()`)
+
+      - [ ] New modules follow the pattern in `.claude/rules/extension-patterns.md`
+
+      - [ ] Module registered in `requirements.build.txt` (`-e ./modules/<name>`) AND in `bin/run-server-tests`
+
+
+      ### 5. Code Quality Check
+
+      - [ ] Uses `import karrio.lib as lib` — no legacy `DP`/`SF`/`NF`/`DF`/`XP`
+
+      - [ ] Functional style (list comprehensions, `map`/`filter`) rather than imperative loops
+
+      - [ ] No bare `except:` / `except Exception:` — specific exceptions only
+
+      - [ ] No mutable default arguments
+
+      - [ ] No `any` types in TypeScript
+
+      - [ ] Django: `OwnedEntity` for tenant-scoped models, plain `Model` for system models
+
+      - [ ] GraphQL: `utils.Connection[T]` for lists, `@authentication_required` on resolvers
+
+      - [ ] No manually edited auto-generated files (`mapper.py`, `karrio/schemas/<carrier>/*`, `packages/karriojs/api/generated/*`)
+
+      - [ ] User-facing strings wrapped in `gettext`
+
+
+      ### 6. N+1 Query Prevention Check
+
+
+      **CRITICAL**: N+1 queries are the #1 performance killer. Check every changed model, serializer, and view. Full patterns in `.claude/rules/django-patterns.md`.
+
+
+      **New models:**
+
+      - [ ] Custom manager with `get_queryset()` that applies `select_related` / `prefetch_related`
+
+      - [ ] ForeignKey fields have `select_related` in the manager
+
+      - [ ] Reverse FK / M2M fields have `prefetch_related` in the manager
+
+
+      **Serializers / GraphQL types:**
+
+      - [ ] No FK access (e.g., `obj.carrier.name`) without corresponding `select_related` in the queryset
+
+      - [ ] No reverse FK iteration (e.g., `obj.items.all()`) without `prefetch_related`
+
+      - [ ] Computed `@strawberry.field` methods don''t trigger per-row queries
+
+
+      **Views / Resolvers:**
+
+      - [ ] List views use optimized querysets (via manager or explicit `.select_related()`)
+
+      - [ ] No `Model.objects.get(pk=pk)` inside loops — batch with `filter(pk__in=pks)`
+
+      **Bulk operations:**
+
+      - [ ] No `for x in data: Model.objects.create()` — use `bulk_create()`
+
+      - [ ] No `for x in qs: x.save()` — use `bulk_update()`
+
+      **Red flags to grep for:**
+
+
+      ```bash
+
+      git diff main...HEAD -U0 | grep -E ''\.(save|create)\('' | head -20
+
+      git diff main...HEAD -U0 | grep -E ''\.objects\.(get|filter)'' | head -20
+
+      git diff main...HEAD -U0 | grep -E ''\.all\(\)'' | head -20
+
+      ```
+
+
+      ### 7. Migration Safety Check (if migrations exist)
+
+
+      - [ ] Operations ordered correctly (create table before data migration before column removal)
+
+      - [ ] Dependencies include all prerequisite migrations
+
+      - [ ] No `RunSQL` — uses Django operations only
+
+      - [ ] Rolling-deploy safe (no removals that crash running pods on older code)
+
+      ### 8. Security Check
+
+      - [ ] No hardcoded secrets or credentials
+
+      - [ ] Tenant isolation: all queries filtered by `org=request.user.org`
+
+      - [ ] No raw SQL injection vectors
+
+      - [ ] Input validation at system boundaries (serializers, GraphQL inputs)
+
+      - [ ] Sensitive fields not logged / tracked in request recordings
+
+      Report findings as:
+
+
+      2. [FAIL] Missing test for `delete_rate_sheet` mutation
+
+      3. [WARN] Consider using mixin pattern for shared serializer logic
+
+      4. [FAIL] `obj.carrier.name` accessed in serializer without `select_related`
+
+      - Add test for delete mutation in `modules/<module>/karrio/server/<module>/tests/`
+
+      - Add `select_related("carrier")` to the serializer''s base queryset'
+    gold_removed: ''
+  - path: .claude/skills/run-tests/SKILL.md
+    tier: 1
+    gold_added: '# Skill: Run Tests
+
+
+      Execute the appropriate test suites based on what was changed.
+
+
+      ## When to Use
+
+
+      - After implementing a feature or fix
+
+      - Before creating a commit or PR
+
+      - When validating that changes don''t break existing functionality
+
+
+      ## Determine What to Test
+
+
+      ```bash
+
+      git diff --name-only HEAD
+
+      git diff --name-only --cached   # staged changes
+
+      git diff --name-only main...HEAD  # whole branch vs main
+
+      ```
+
+
+      ## Test Commands by Area
+
+
+      ### SDK / Connectors
+
+
+      ```bash
+
+      source bin/activate-env
+
+
+      # All SDK + connector tests (slow; full coverage)
+
+      ./bin/run-sdk-tests
+
+
+      # Single carrier (fast; local flow)
+
+      python -m unittest discover -v -f modules/connectors/<carrier>/tests
+
+
+      # Single module
+
+      python -m unittest discover -v -f modules/sdk/karrio/core/tests
+
+      ```
+
+
+      ### Server Modules (Django)
+
+
+      ```bash
+
+      # All server tests
+
+      ./bin/run-server-tests
+
+
+      # Single module (fast, --failfast stops on first error)
+
+      karrio test --failfast karrio.server.<module>.tests
+
+
+      # Common modules:
+
+      karrio test --failfast karrio.server.graph.tests     # Base GraphQL
+
+      karrio test --failfast karrio.server.admin.tests     # Admin GraphQL
+
+      karrio test --failfast karrio.server.manager.tests   # Shipments / trackers REST
+
+      karrio test --failfast karrio.server.providers.tests # Carrier connections
+
+      karrio test --failfast karrio.server.pricing.tests   # Markups / fees
+
+      karrio test --failfast karrio.server.orders.tests    # Orders
+
+      karrio test --failfast karrio.server.events.tests    # Webhooks / events
+
+      karrio test --failfast karrio.server.documents.tests # Documents / labels
+
+      karrio test --failfast karrio.server.data.tests      # Imports / exports
+
+      ```
+
+
+      ### Frontend (Dashboard)
+
+
+      ```bash
+
+      cd apps/dashboard && pnpm test
+
+      cd apps/dashboard && pnpm tsc --noEmit   # type-checking only
+
+      cd apps/dashboard && pnpm build          # full production build
+
+      ```
+
+
+      ## Decision Table
+
+
+      | Files changed | Command |
+
+      |---|---|
+
+      | `modules/sdk/` | `./bin/run-sdk-tests` |
+
+      | `modules/connectors/<carrier>/` | `python -m unittest discover -v -f modules/connectors/<carrier>/tests` |
+
+      | `modules/graph/` | `karrio test --failfast karrio.server.graph.tests` |
+
+      | `modules/admin/` | `karrio test --failfast karrio.server.admin.tests` |
+
+      | `modules/manager/` | `karrio test --failfast karrio.server.manager.tests` |
+
+      | `modules/orders/` | `karrio test --failfast karrio.server.orders.tests` |
+
+      | `modules/events/` | `karrio test --failfast karrio.server.events.tests` |
+
+      | `modules/documents/` | `karrio test --failfast karrio.server.documents.tests` |
+
+      | `modules/core/` | `./bin/run-server-tests` (broad impact) |
+
+      | `modules/<new-extension>/` | `karrio test --failfast karrio.server.<name>.tests` (after registering in `bin/run-server-tests`) |
+
+      | `apps/dashboard/` | `cd apps/dashboard && pnpm test && pnpm tsc --noEmit` |
+
+      | Multiple areas | `./bin/run-sdk-tests && ./bin/run-server-tests` |
+
+
+      ## Debugging Failures
+
+
+      1. Add `print(response.data)` (or `print(lib.to_dict(parsed_response))`) before the failing assertion.
+
+      2. Run a single test: `karrio test --failfast karrio.server.<module>.tests.<TestClass>.<test_method>`.
+
+      3. Check for missing fixtures, seed data, or cached auth.
+
+      4. Remove `print` statements once tests pass.
+
+
+      ## Tips
+
+
+      - `HUEY["immediate"] = True` in test settings — Huey tasks run synchronously. Don''t mock them unless you''re testing failure paths.
+
+      - `lib.to_dict()` strips `None` and empty strings — expected fixtures shouldn''t include them.
+
+      - `lib.failsafe()` swallows exceptions — remove it temporarily to see the underlying error during debug.
+
+      - `str(None)` is `"None"` (not `None`) — always guard with a truthy check first.'
+    gold_removed: ''
+  - path: AGENTS.md
+    tier: 1
+    gold_added: "Load context in this order — later items override/refine earlier ones:\n\n1. **`CLAUDE.md`** (lean, project-specific) and this `AGENTS.md` (comprehensive reference) — the two sources of truth for project conventions.\n2. **`.claude/rules/*.md`** (scoped rules) — load the rule that matches what you're doing:\n   - `code-style.md` — naming, imports, formatting\n   - `testing.md` — unittest / `karrio test`, no pytest, 4-method carrier test pattern\n   - `git-workflow.md` — commits, submodules, changelog\n   - `commit-conventions.md` — `type(scope): summary` format\n   - `django-patterns.md` — multi-tenancy, N+1, migrations, Huey\n   - `carrier-integration.md` — connector structure, definition of done\n   - `extension-patterns.md` — \"extend, don't modify core\"; namespace-package rules\n   - `prd-and-review.md` — PRD-first workflow, fresh-context review gates\n3. **`.claude/skills/<name>/SKILL.md`** (step-by-step guides) — invoke by user or by another skill:\n   - `create-prd` — write PRDs with ASCII diagrams before non-trivial features\n   - `create-extension-module` — scaffold a new `modules/<name>/` extension\n   - `django-graphql` — schema layout + auto-discovery + test patterns\n   - `django-rest-api` — view / serializer / router patterns\n   - `carrier-integration` — full carrier connector implementation\n   - `run-tests` — pick the right test command for the changed files\n   - `review-implementation` — fresh-context review checklist\n   - `debugging` — request lifecycle, debugging commands, common pitfalls\n   - `project-setup` — environment setup, running servers, schema generation\n   - `release` — version bumping, package sync, frozen requirements, changelog\n4. **PRDs in `PRDs/`** — feature architecture decisions and active workstreams (e.g. `RELEASE_2026_5_PLATFORM_UPGRADE.md`, `SUBTREE_SYNC_WORKFLOW.md`).\n5. **Carrier integrations** — consult `CARRIER_INTEGRATION_GUIDE.md` and the existing carriers under `modules/connectors/*/`.\n6. **Existing code patterns** — review before implementing; prefer reuse via `karrio.lib.*` and existing hooks.\n7. **Search for existing utilities before writing new code.**"
+    gold_removed: ''
+  - path: CLAUDE.md
+    tier: 1
+    gold_added: '- `code-style.md` — naming, imports, formatting, i18n
+
+      - `testing.md` — test commands, patterns, fixtures, imports-at-top rule
+
+      - `commit-conventions.md` — `type(scope): summary` format, branch naming
+
+      - `extension-patterns.md` — "extend, don''t modify core" + namespace-package rules
+
+      - `create-extension-module/` — Scaffold a new `modules/<name>/` extension with AppConfig + auto-discovery
+
+      - `create-prd/` — Write PRDs with ASCII diagrams before non-trivial features
+
+      - `django-graphql/` — Schema layout, auto-discovery, mutation/query patterns
+
+      - `django-rest-api/` — View / serializer / router patterns
+
+      - `release/` — Version bumping, package sync, frozen requirements, changelog
+
+      - `run-tests/` — Decision table: which test command for the changed files'
+    gold_removed: ''

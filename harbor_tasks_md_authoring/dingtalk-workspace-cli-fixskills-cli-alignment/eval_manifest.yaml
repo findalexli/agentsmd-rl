@@ -1,0 +1,24 @@
+version: "2.0"
+
+task:
+  name: dingtalk-workspace-cli-fixskills-cli-alignment
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: DingTalk-Real-AI/dingtalk-workspace-cli
+  pr: 158
+  base_commit: "d13d1eed160ab5154b5889768ac1fbd2ad9eb958"
+  merge_commit: "9abc7ff4240c9c0eabe8d3f1d307398f79c609c0"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/references/products/report.md."
+
+config_edits:
+  - path: skills/references/products/report.md
+    tier: 1
+    gold_added: '      --to-chat              是否发送到日志接收人单聊 (bool flag，直接加 --to-chat 即可)'
+    gold_removed: ''

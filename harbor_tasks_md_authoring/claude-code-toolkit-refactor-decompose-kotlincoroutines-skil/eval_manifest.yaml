@@ -1,0 +1,140 @@
+version: "2.0"
+
+task:
+  name: claude-code-toolkit-refactor-decompose-kotlincoroutines-skil
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: notque/claude-code-toolkit
+  pr: 424
+  base_commit: "e4525729dc32f294868957671ab7e6ca01779fe9"
+  merge_commit: "a0883e5cee3f2bd6f6e71f119814e27446285da0"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/kotlin-coroutines/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/kotlin-coroutines/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/kotlin-coroutines/SKILL.md."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/kotlin-coroutines/references/anti-patterns.md."
+  - id: signal_04
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/kotlin-coroutines/references/anti-patterns.md."
+  - id: signal_05
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/kotlin-coroutines/references/anti-patterns.md."
+  - id: signal_06
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/kotlin-coroutines/references/channel-patterns.md."
+  - id: signal_07
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/kotlin-coroutines/references/channel-patterns.md."
+  - id: signal_08
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/kotlin-coroutines/references/channel-patterns.md."
+  - id: signal_09
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/kotlin-coroutines/references/concurrency-patterns.md."
+  - id: signal_10
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/kotlin-coroutines/references/concurrency-patterns.md."
+  - id: signal_11
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/kotlin-coroutines/references/concurrency-patterns.md."
+  - id: signal_12
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/kotlin-coroutines/references/flow-patterns.md."
+  - id: signal_13
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/kotlin-coroutines/references/flow-patterns.md."
+  - id: signal_14
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/kotlin-coroutines/references/flow-patterns.md."
+
+config_edits:
+  - path: skills/kotlin-coroutines/SKILL.md
+    tier: 1
+    gold_added: 'Umbrella skill for Kotlin coroutine development: structured concurrency, cancellation,
+
+      Flow, StateFlow/SharedFlow, Channels, exception handling, and dispatchers. Routes to
+
+      the correct reference based on the task at hand.
+
+      ## Instructions
+
+      ### Step 1: Identify the Domain
+
+      Classify the task into one or more domains, then load the corresponding reference files.
+
+      Only load what is needed -- do not load all references for every task.
+
+      | Domain | Load Reference | When |
+
+      |--------|---------------|------|
+
+      | Concurrency | `references/concurrency-patterns.md` | Scopes, cancellation, dispatchers, exception handling |
+
+      | Flow | `references/flow-patterns.md` | Flow builders, StateFlow, SharedFlow, operators |
+
+      | Channels | `references/channel-patterns.md` | Producer-consumer, fan-in/fan-out patterns |
+
+      | Anti-patterns | `references/anti-patterns.md` | GlobalScope, unstructured launch, CancellationException |
+
+      Multiple domains may apply. For example, reviewing code that uses both Flow and Channels
+
+      should load both `flow-patterns.md` and `channel-patterns.md`.
+
+      ### Step 2: Load and Follow the Reference
+
+      Read the selected reference file(s) using `${CLAUDE_SKILL_DIR}/references/<name>.md`.
+
+      Each reference contains the full patterns, code examples, and decision matrices for that
+
+      domain. Follow the instructions in the reference as if they were this skill''s instructions.
+
+      ### Step 3: Execute
+
+      Apply the loaded reference patterns to the task. Use the code examples as templates
+
+      for implementation guidance.
+
+      3. **Always rethrow CancellationException** -- rethrow it immediately or use specific exception types instead of catching `Exception`.'
+    gold_removed: ''
+  - path: skills/kotlin-coroutines/references/anti-patterns.md
+    tier: 1
+    gold_added: "---\nname: anti-patterns\ndescription: \"Kotlin coroutine anti-patterns: GlobalScope, unstructured launch, CancellationException swallowing.\"\nlevel: 2\n---\n\n# Kotlin Coroutine Anti-Patterns\n\n## GlobalScope: Fire-and-Forget Leak\n\n```kotlin\n// Before: No lifecycle management, lives until process dies\nfun handleRequest(request: Request) {\n    GlobalScope.launch {\n        auditService.log(request) // If this hangs, it leaks forever\n    }\n}\n\n// After: Use a scoped coroutine tied to the component lifecycle\nclass RequestHandler(private val scope: CoroutineScope) {\n    fun handleRequest(request: Request) {\n        scope.launch {\n            auditService.log(request)\n        }\n    }\n}\n```\n\nGlobalScope has no lifecycle, no cancellation, and no structured concurrency. Pass a scope from your application framework instead.\n\n## Unstructured launch Without Join\n\n```kotlin\n// After: coroutineScope waits for all children\nsuspend fun processAll(items: List<Item>) = coroutineScope {\n    items.forEach { item ->\n        launch { process(item) } // These run concurrently\n    }\n    // coroutineScope suspends until all children complete\n}\n\n// Before: Using a detached scope means no waiting\nfun processAllBroken(items: List<Item>) {\n    val scope = CoroutineScope(Dispatchers.Default)\n    items.forEach { item ->\n        scope.launch { process(item) } // No one awaits these!\n    }\n    // Function returns immediately, work may remain incomplete\n}\n```\n\n## Catching CancellationException\n\n```kotlin\n// Before: Swallowing cancellation breaks the entire coroutine tree\ntry {\n    longRunningWork()\n} catch (e: Exception) { /* swallows CancellationException */ }\n\n// After: Explicit rethrow\ntry {\n    longRunningWork()\n} catch (e: CancellationException) {\n    throw e\n} catch (e: Exception) {\n    recover(e)\n}\n```\n\nAlways rethrow CancellationException. Catching `Exception` broadly swallows the cancellation signal, preventing the coroutine tree from shutting down properly."
+    gold_removed: ''
+  - path: skills/kotlin-coroutines/references/channel-patterns.md
+    tier: 1
+    gold_added: "---\nname: channel-patterns\ndescription: \"Kotlin Channel types, fan-in/fan-out, and producer-consumer patterns.\"\nlevel: 2\n---\n\n# Kotlin Channel Patterns\n\n## Channels: Hot Communication Primitives\n\nChannels are hot -- they exist independently of consumers. Use them for producer-consumer patterns and inter-coroutine communication.\n\n```kotlin\nimport kotlinx.coroutines.channels.*\n\n// Producer-consumer with produce builder\nfun CoroutineScope.produceNumbers(): ReceiveChannel<Int> = produce {\n    var n = 1\n    while (true) {\n        send(n++)\n        delay(100)\n    }\n}\n\n// Fan-out: multiple coroutines consuming from one channel\nsuspend fun fanOut() = coroutineScope {\n    val channel = produceNumbers()\n\n    repeat(3) { workerId ->\n        launch {\n            for (number in channel) {\n                println(\"Worker $workerId processing $number\")\n            }\n        }\n    }\n}\n\n// Fan-in: multiple producers writing to one channel\nsuspend fun fanIn() = coroutineScope {\n    val channel = Channel<String>()\n\n    launch { repeat(5) { channel.send(\"Source A: $it\"); delay(100) } }\n    launch { repeat(5) { channel.send(\"Source B: $it\"); delay(150) } }\n\n    // Collect all from both sources\n    repeat(10) {\n        println(channel.receive())\n    }\n    channel.close()\n}\n```"
+    gold_removed: ''
+  - path: skills/kotlin-coroutines/references/concurrency-patterns.md
+    tier: 1
+    gold_added: "---\nname: concurrency-patterns\ndescription: \"Kotlin structured concurrency: coroutineScope, supervisorScope, cancellation, dispatchers, exception handling.\"\nlevel: 2\n---\n\n# Kotlin Concurrency Patterns\n\n## Structured Concurrency\n\nEvery coroutine must belong to a scope. The scope defines the lifetime -- when the scope is cancelled, all its children are cancelled. Tie every coroutine to a scope.\n\n```kotlin\nimport kotlinx.coroutines.*\n\n// coroutineScope suspends until ALL children complete.\n// If any child fails, all siblings are cancelled.\nsuspend fun fetchDashboard(): Dashboard = coroutineScope {\n    val user = async { userService.getUser() }\n    val orders = async { orderService.getRecent() }\n    val notifications = async { notificationService.getUnread() }\n\n    Dashboard(\n        user = user.await(),\n        orders = orders.await(),\n        notifications = notifications.await()\n    )\n}\n\n// supervisorScope lets children fail independently.\n// One child's failure does NOT cancel siblings.\nsuspend fun refreshCaches(): List<Result<Unit>> = supervisorScope {\n    val jobs = listOf(\"users\", \"products\", \"inventory\").map { cache ->\n        async {\n            runCatching { cacheService.refresh(cache) }\n        }\n    }\n    jobs.awaitAll()\n}\n```\n\n### coroutineScope vs supervisorScope\n\n| Behavior | `coroutineScope` | `supervisorScope` |\n|----------|------------------|-------------------|\n| Child failure | Cancels all siblings | Siblings continue |\n| Use when | All results required | Partial success acceptable |\n| Exception | Rethrown from scope | Must handle per-child |\n\n## Cancellation\n\nCoroutines use cooperative cancellation. Long-running work must check `isActive` or call suspending functions that respect cancellation.\n\n```kotlin\nsuspend fun processLargeFile(file: File) = coroutineScope {\n    file.useLines { lines ->\n        lines.forEach { line ->\n            // Check cancellation between iterations\n            ensureActive()\n            processLine(line)\n        }\n    }\n}\n\n// CPU-bound loops MUST check isActive — they won't suspend naturally\nsuspend fun computeHash(data: ByteArray): String = withContext(Dispatchers.Default) {\n    var hash = 0L\n    for (i in data.indices) {\n        if (!isActive) break  // Respect cancellation\n        hash = hash * 31 + data[i]\n    }\n    hash.toString(16)\n}\n```\n\n### NonCancellable for Cleanup\n\nWhen you need to run suspending cleanup code after cancellation, use `NonCancellable`.\n\n```kotlin\nsuspend fun transferFunds(from: Account, to: Account, amount: BigDecimal) {\n    try {\n        from.debit(amount)\n        to.credit(amount)\n    } finally {\n        // After cancellation, the coroutine is in a \"cancelling\" state.\n        // Suspending calls would throw CancellationException — unless\n        // we switch to NonCancellable.\n        withContext(NonCancellable) {\n            auditLog.record(\"Transfer attempted: $amount from ${from.id} to ${to.id}\")\n        }\n    }\n}\n```\n\n## Exception Handling\n\nExceptions in coroutines propagate up the scope hierarchy. Uncaught exceptions cancel the parent scope.\n\n```kotlin\n// CoroutineExceptionHandler — last resort for uncaught exceptions in launch.\n// Only works with launch (NOT async). Only at root scope level.\nval handler = CoroutineExceptionHandler { _, exception ->\n    logger.error(\"Uncaught coroutine exception\", exception)\n    metrics.incrementCounter(\"coroutine.unhandled_exception\")\n}\n\nval scope = CoroutineScope(SupervisorJob() + Dispatchers.Default + handler)\n\nscope.launch {\n    // If this throws, handler catches it instead of crashing\n    riskyOperation()\n}\n\n// For async, exceptions surface at await()\nval deferred = scope.async {\n    riskyOperation() // Exception stored, not thrown yet\n}\ntry {\n    deferred.await() // Exception thrown HERE\n} catch (e: Exception) {\n    handleError(e)\n}\n```\n\n### try-catch in Coroutines\n\n```kotlin\n// Wrap individual operations, not the entire coroutine\nsuspend fun fetchWithFallback(): Data {\n    return try {\n        remoteApi.fetch()\n    } catch (e: IOException) {\n        logger.warn(\"Remote fetch failed, using cache\", e)\n        localCache.get()\n    }\n}\n\n// Always rethrow CancellationException — it breaks structured concurrency\nsuspend fun badExample() {\n    try {\n        someWork()\n    } catch (e: Exception) {\n        // Before: This catches CancellationException too!\n        // The coroutine won't cancel properly.\n    }\n}\n\nsuspend fun goodExample() {\n    try {\n        someWork()\n    } catch (e: CancellationException) {\n        throw e // Always rethrow\n    } catch (e: Exception) {\n        handleError(e)\n    }\n}\n```\n\n## Dispatchers\n\n| Dispatcher | Thread Pool | Use For |\n|------------|------------|---------|\n| `Dispatchers.Default` | Shared, sized to CPU cores | CPU-bound work (parsing, sorting) |\n| `Dispatchers.IO` | Elastic, up to 64 threads | Blocking I/O (file, network, JDBC) |\n| `Dispatchers.Main` | Single UI thread | UI updates (Android, Swing) |\n| `Dispatchers.Unconfined` | Caller's thread (until first suspend) | Testing only; avoid in production |\n\n```kotlin\n// Switch dispatcher for blocking calls\nsuspend fun readConfig(): Config = withContext(Dispatchers.IO) {\n    val text = File(\"config.json\").readText() // Blocking call on IO pool\n    Json.decodeFromString(text)\n}\n\n// Custom dispatcher for limited parallelism\nval dbDispatcher = Dispatchers.IO.limitedParallelism(4)\n\nsuspend fun queryDatabase(): List<Row> = withContext(dbDispatcher) {\n    connection.executeQuery(\"SELECT * FROM orders\")\n}\n```"
+    gold_removed: ''
+  - path: skills/kotlin-coroutines/references/flow-patterns.md
+    tier: 1
+    gold_added: "---\nname: flow-patterns\ndescription: \"Kotlin Flow patterns: cold streams, StateFlow, SharedFlow comparison and usage.\"\nlevel: 2\n---\n\n# Kotlin Flow Patterns\n\n## Flow: Cold Asynchronous Streams\n\nFlow is cold -- it does not produce values until collected. Each collector gets its own execution of the flow body.\n\n```kotlin\nimport kotlinx.coroutines.flow.*\n\n// Producing a flow\nfun searchResults(query: String): Flow<SearchResult> = flow {\n    val page1 = api.search(query, page = 1)\n    emit(page1)\n\n    if (page1.hasMore) {\n        val page2 = api.search(query, page = 2)\n        emit(page2)\n    }\n}\n\n// Operators: transform, filter, combine\nfun processedResults(query: String): Flow<DisplayItem> =\n    searchResults(query)\n        .filter { it.results.isNotEmpty() }\n        .map { page -> page.results.map { it.toDisplayItem() } }\n        .flatMapConcat { items -> items.asFlow() }\n        .onEach { item -> analytics.trackImpression(item.id) }\n\n// Terminal operator — triggers collection\nsuspend fun displayResults(query: String) {\n    processedResults(query).collect { item ->\n        ui.render(item)\n    }\n}\n```\n\n## StateFlow vs SharedFlow\n\n```kotlin\nimport kotlinx.coroutines.flow.MutableStateFlow\nimport kotlinx.coroutines.flow.MutableSharedFlow\nimport kotlinx.coroutines.flow.asStateFlow\nimport kotlinx.coroutines.flow.asSharedFlow\nimport kotlinx.coroutines.channels.BufferOverflow\n\n// StateFlow: holds a SINGLE current value, replays latest to new collectors.\n// Use for UI state, configuration, or anything with a \"current\" value.\nclass CounterViewModel : ViewModel() {\n    private val _count = MutableStateFlow(0)\n    val count = _count.asStateFlow()\n\n    fun increment() {\n        _count.value++\n    }\n}\n\n// SharedFlow: event stream with configurable replay.\n// Use for one-shot events (navigation, toasts, errors).\nclass EventBus {\n    private val _events = MutableSharedFlow<AppEvent>(\n        replay = 0,           // Skip replaying old events to new subscribers\n        extraBufferCapacity = 64,\n        onBufferOverflow = BufferOverflow.DROP_OLDEST\n    )\n    val events = _events.asSharedFlow()\n\n    suspend fun emit(event: AppEvent) {\n        _events.emit(event)\n    }\n}\n```\n\n### StateFlow vs SharedFlow Decision Matrix\n\n| Property | `StateFlow` | `SharedFlow` |\n|----------|-------------|--------------|\n| Initial value | Required | Not required |\n| Replay | Always 1 (latest) | Configurable (0..N) |\n| Equality | Conflates duplicate values | Emits all values |\n| Use case | Current state | Event streams |"
+    gold_removed: ''

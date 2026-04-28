@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: uniwind-docs-update-skillmd
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: uni-stack/uniwind
+  pr: 507
+  base_commit: "8e0f8cc50a7601e802a22248eb6abfd267a0b0da"
+  merge_commit: "82c479048550243dad489fe7ad1500ed9aaf1617"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/uniwind/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/uniwind/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/uniwind/SKILL.md."
+
+config_edits:
+  - path: skills/uniwind/SKILL.md
+    tier: 1
+    gold_added: "- **55+ className props** update without re-renders across 20 components (all component bindings listed above)\n- **Group variants**: Tailwind `group-active:*` / `group-focus:*` propagate parent interaction state through the C++ shadow tree with zero re-renders\n### Group Variants\n\nTailwind `group` variants propagate parent interaction state to descendants through the C++ shadow tree. No re-renders, no context providers.\n\n```tsx\n// Basic group — descendants react to parent press\n<Pressable className=\"group p-4 bg-base rounded-xl\">\n  <Text className=\"text-default group-active:text-primary\">Press the card</Text>\n  <View className=\"size-8 bg-blue-500 rounded group-active:bg-red-500\" />\n</Pressable>\n\n// Named groups — descendants pick which ancestor to follow\n<Pressable className=\"group/card p-4 bg-base rounded-xl\">\n  <Pressable className=\"group/button px-3 py-1 bg-primary rounded\">\n    <Text className=\"text-white group-active/card:opacity-50 group-active/button:font-bold\">\n      Nested groups\n    </Text>\n  </Pressable>\n</Pressable>\n```\n\n**Supported variants**: `group-active:*` (press), `group-focus:*` (focus). Named variants: `group-active/{name}:*`, `group-focus/{name}:*`.\n\n**Supported group parents**: `Pressable` (press + focus), `Text` (press — requires `onPress`, even empty). `TouchableOpacity`, `TouchableHighlight`, `TouchableWithoutFeedback`, and `TextInput` do **not** act as group parents — wrap in a `Pressable` marked `group`.\n\n**Not supported**: `group-hover:*` (no pointer hover on native), `group-disabled:*` (parsed but no shadow tree trigger), arbitrary `group-[.selector]:*` variants, implicit `in-*` variants.\n"
+    gold_removed: ''

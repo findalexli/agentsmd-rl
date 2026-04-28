@@ -1,0 +1,36 @@
+version: "2.0"
+
+task:
+  name: cockroach-claudemd-avoid-f-hack-when
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: cockroachdb/cockroach
+  pr: 163517
+  base_commit: "48c3077cb5399be52719b167be9c3a14ed4eae1f"
+  merge_commit: "605c72c215b6290d763d20ba12f455b117d65ba8"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+
+config_edits:
+  - path: CLAUDE.md
+    tier: 1
+    gold_added: './dev build pkg/util/log
+
+      # Build the tests in package ./pkg/util/log
+
+      ./dev build pkg/util/log:log_test'
+    gold_removed: ''

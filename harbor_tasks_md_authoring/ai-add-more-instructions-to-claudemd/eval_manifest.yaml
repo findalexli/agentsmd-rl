@@ -1,0 +1,38 @@
+version: "2.0"
+
+task:
+  name: ai-add-more-instructions-to-claudemd
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: symfony/ai
+  pr: 433
+  base_commit: "de0c7486ca8d9ae953ee1c42e717b62a195d9651"
+  merge_commit: "5354a89cb14c93fe30c1b41a76a449ba37c18aea"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+
+config_edits:
+  - path: CLAUDE.md
+    tier: 1
+    gold_added: '- The monorepo structure allows independent versioning while maintaining shared development workflow
+
+      - Do not use void return type for testcase methods
+
+      - Always run PHP-CS-Fixer to ensure proper code style
+
+      - Always add a newline at the end of the file'
+    gold_removed: ''

@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: antigravity-awesome-skills-fixsecurityengineer-correct-risk-
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: sickn33/antigravity-awesome-skills
+  pr: 538
+  base_commit: "3a1cb0e042612c21028f54cdb35698851b95e054"
+  merge_commit: "428eaa357dd9ac052730772482c27fbcfe0ef634"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/ethical-hacking-methodology/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/ethical-hacking-methodology/SKILL.md."
+
+config_edits:
+  - path: skills/ethical-hacking-methodology/SKILL.md
+    tier: 1
+    gold_added: 'risk: offensive
+
+      > AUTHORIZED USE ONLY: Use this skill only for authorized penetration testing engagements, defensive validation, or controlled educational environments.
+
+      '
+    gold_removed: ''

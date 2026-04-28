@@ -1,0 +1,44 @@
+version: "2.0"
+
+task:
+  name: ai-refine-instructions-in-claudemd
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: symfony/ai
+  pr: 436
+  base_commit: "d4462f5a967447a9a7fc232b87b0fcdd9e76ef2f"
+  merge_commit: "2337657987e715869e6836f92aec49ef6fdfbc4e"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+
+config_edits:
+  - path: CLAUDE.md
+    tier: 1
+    gold_added: '- Always add a newline at the end of the file
+
+      - Prefer self::assert* oder $this->assert* in tests
+
+      - Never add Claude as co-author in the commits
+
+      - Add @author tags to newly introduced classes by the user
+
+      - Prefer classic if statements over short-circuit evaluation when possible
+
+      - Define array shapes for parameters and return types
+
+      - Use project specific exceptions instead of global exception classes like \RuntimeException, \InvalidArgumentException etc.'
+    gold_removed: ''

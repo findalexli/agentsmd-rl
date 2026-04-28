@@ -1,0 +1,38 @@
+version: "2.0"
+
+task:
+  name: vrc-get-dev-copilot-instructions
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: vrc-get/vrc-get
+  pr: 2819
+  base_commit: "a29a9bc9e23b08e772cd7ec4f26dddfb9b8b0933"
+  merge_commit: "dccfbc2867a86fce1a2e1b0c559b1a3dec8adfb8"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/copilot-instructions.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/copilot-instructions.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/copilot-instructions.md."
+
+config_edits:
+  - path: .github/copilot-instructions.md
+    tier: 1
+    gold_added: 'If you''re writing code:
+
+      - Please don''t make localization for locales other than en / ja. I cannot review those locales.
+
+      - Run cargo clippy for lints and cargo fmt for format before commit.
+
+      - After completing code and commit, please add changelog entry. please note that the numbers in the changelog file is pull request number, not a issue number.'
+    gold_removed: ''

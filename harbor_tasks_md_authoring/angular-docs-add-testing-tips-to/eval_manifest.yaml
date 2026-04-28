@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: angular-docs-add-testing-tips-to
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: angular/angular
+  pr: 67041
+  base_commit: "5b59dbd36f71332a756639df1a3f0c0e89298587"
+  merge_commit: "ee7b4eb24dd35a00d364a2062e732ad9b6f49cba"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+
+config_edits:
+  - path: AGENTS.md
+    tier: 1
+    gold_added: "## Testing\n\n- **Zoneless & Async-First:** Assume a zoneless environment where state changes schedule updates asynchronously.\n  - **Do NOT** use `fixture.detectChanges()` to manually trigger updates.\n  - **ALWAYS** use the \"Act, Wait, Assert\" pattern:\n    1. **Act:** Update state or perform an action.\n    2. **Wait:** `await fixture.whenStable()` to allow the framework to process the scheduled update.\n    3. **Assert:** Verify the output.\n- To keep tests fast, minimize the need for waiting:\n  - Use `useAutoTick()` (from `packages/private/testing/src/utils.ts`) to fast-forward time via the mock clock.\n- When waiting is necessary, use real async tests (`it('...', async () => { ... })`) along with:\n  - `await timeout(ms)` (from `packages/private/testing/src/utils.ts`) to wait a specific number of milliseconds.\n  - `await fixture.whenStable()` to wait for framework stability.\n"
+    gold_removed: ''

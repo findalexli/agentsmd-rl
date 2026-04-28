@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: ccf-enhance-copilot-instructions
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: microsoft/CCF
+  pr: 7678
+  base_commit: "6ae2fd7e43fa283e9c848b846348791ffbcbad11"
+  merge_commit: "be4bb9f711b5d69355fa40df121adbab888a44b1"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/copilot-instructions.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/copilot-instructions.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/copilot-instructions.md."
+
+config_edits:
+  - path: .github/copilot-instructions.md
+    tier: 1
+    gold_added: "# CCF Repository Copilot Instructions\n- This document provides guidance for AI coding and review agents working in the CCF (Confidential Consortium Framework) repository\n- **CCF** is an open-source framework for building secure, highly available, and performant applications focused on multi-party compute and data. It's designed for confidential, distributed systems running on secure hardware.\n\n**Key directories**:\n\n- `src/` - Core CCF implementation in C++ (consensus, crypto, kv store, HTTP, TLS, JavaScript runtime), including unit tests in subdirs\n- `include/ccf/` - Public C++ API headers\n- `tests/` - Python-based end-to-end test suite\n- `python/` - CCF Python SDK and client libraries\n- `doc/` - Sphinx-based RST documentation\n- `3rdparty/` - Third-party dependencies\n\n## Code changes\n\n- Coding style is enforced by the `ci-checks.sh` script, which runs clang-format for C++ and black for Python.\n- Linters and static analysis tools are also run as part of CI, clang-tidy for C++ and ruff for Python.\n- Run `ci-checks.sh -f` to automatically run these tools.\n- This tool must run successfully before creating a PR.\n- Match the existing coding style for naming and casing conventions. This is not automatically enforced, so pay attention to surrounding code for guidance.\n- All tests in `ci.yml` must pass before a PR can be merged. Consider which are likely to be affected by your changes and run those locally before pushing.\n- Take particular care with any changes that may affect compatibility with older releases, and ensure these are tested, via the `lts_compatibility` test with `LONG_TESTS=1` enabled.\n- Take particular care with changes to the consensus and crypto code, as these are critical for security and correctness. Ensure you have a thorough understanding of the existing code and the implications of your changes before proceeding.\n\n### C++\n\n- C++ changes must be built and tested locally before creating a PR. Use cmake and ninja to build, and refer to CI files for any further build configurations. For example:\n  ```bash\n  mkdir build && cd build\n  cmake -GNinja ..          # RelWithDebInfo by default\n  ninja                     # Build all targets\n  ```\n- Both unit tests and end-to-end tests can be run using ctest, but should be invoked via the `tests.sh` wrapper script to ensure the correct environment is set up and used. For example:\n  ```bash\n  cd build\n  ./tests.sh              # Run all tests\n  ./tests.sh -VV          # Verbose output\n  ./tests.sh -R pattern   # Run tests matching pattern\n  ```\n- Most changes should be accompanied by new or updated tests. End-to-end tests are required for any changes that affect the user-visible behaviour.\n- Use modern features where appropriate, but be wary of newer features that may not be fully supported.\n\n### Python\n\n- There are 2 kinds of Python code in the repository: the end-to-end tests (and supporting infra) in `tests/`, and the Python SDK in `python/`.\n- Pay attention to existing helpers and utilities in the test suite when writing new tests, and avoid duplicating code. If you find yourself copying and pasting code, consider refactoring it into a shared helper function or class.\n- All code in the SDK should include type annotations and docstrings.\n\n### Documentation\n\n- Any RST changes must be built with Sphinx to ensure they render correctly.\n- Check for existing documentation on the topic before creating new docs, and provide thorough crosslinks where appropriate. Avoid duplicating information that already exists in the docs.\n- For any user-facing changes, ensure that the documentation is updated to reflect the new behaviour.\n\n### Security posture\n\n- **No secrets in code**: Avoid committing API keys, passwords, or other secrets. Some certificates and keys are included in the repository for testing purposes, but if adding more ensure these are freshly created and properly documented as test-only artifacts.\n- **Input validation**: Always validate and sanitize external inputs\n- **Cryptographic operations**: Use CCF's crypto library (`include/ccf/crypto/`) - don't roll your own\n- **Memory safety**: Use RAII, smart pointers, and avoid manual memory management\n\n## Reviews\n\n- Never comment on code formatting when performing code reviews.\n- When shell scripts or bash scripts are created or modified, if they contain any use of the pipe (|) operator, they must also set the pipefail option (set -o pipefail). Remind the PR author if they have missed that.\n\n### Code Review Security Focus\n\nWhen reviewing code, pay special attention to:\n\n- Authentication and authorization logic\n- Cryptographic operations\n- Input parsing and validation\n- Memory management\n- Error handling in security-critical paths"
+    gold_removed: ''

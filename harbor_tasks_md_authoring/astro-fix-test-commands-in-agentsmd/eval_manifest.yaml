@@ -1,0 +1,42 @@
+version: "2.0"
+
+task:
+  name: astro-fix-test-commands-in-agentsmd
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: withastro/astro
+  pr: 15500
+  base_commit: "49a486e05fe5da215842d4542c90e8b8a21879a1"
+  merge_commit: "4c9f918c513b23caf23f26a719fa7eef9220e09c"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+
+config_edits:
+  - path: AGENTS.md
+    tier: 1
+    gold_added: '- Run `pnpm test` in the workspace root to run the full suite (slow).
+
+      - Run `pnpm -C <package-directory> test` to run a package’s tests (example: `pnpm -C packages/astro test`, `pnpm -C packages/integrations/react test`).
+
+      - Run an individual test file with `node path/to/test.js` (non-E2E).
+
+      - For focused Astro package runs: `pnpm -C packages/astro test:unit`, `pnpm -C packages/astro test:integration`, `pnpm -C packages/astro test:cli`, `pnpm -C packages/astro test:types`.
+
+      - For matching a subset by test name in Astro: `pnpm -C packages/astro test:match -- "<pattern>"`.
+
+      - For E2E: `pnpm test:e2e` or `pnpm test:e2e:match -- "<pattern>"`.'
+    gold_removed: ''

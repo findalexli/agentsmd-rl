@@ -1,0 +1,40 @@
+version: "2.0"
+
+task:
+  name: redb-add-agentsmd-and-claudemd-for
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: cberner/redb
+  pr: 1140
+  base_commit: "d2962161603d8459bf9bf32f82e5e5a9c12ab3ac"
+  merge_commit: "6dd5721ffe2fc7929bebf6da3fd9ed7aa5184dec"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+
+config_edits:
+  - path: AGENTS.md
+    tier: 1
+    gold_added: "# Agent instructions for redb\n\nThis file tells coding agents how to work productively in this repository.\n\n## Setup\n\nThe Rust toolchain is pinned by `rust-toolchain`, so `rustup`\nwill pick the right version automatically. Beyond that, install the following\ntools before doing anything else:\n\n- `just` (task runner): `cargo install --locked just`\n- `cargo-deny` (license / advisory checks): `cargo install --locked cargo-deny`\n- `cargo-fuzz` (fuzzing harness driver): `cargo install --locked cargo-fuzz`\n- `rustfmt` and `clippy` components: `rustup component add rustfmt clippy`\n- System packages: `libclang-dev` (required by transitive build deps on Linux)\n\nThe CI workflow pins specific versions; prefer those versions if you hit incompatibilities. See\n`.github/workflows/ci.yml` for the exact list CI uses.\n\nPython tests (`just test_py`) additionally need `maturin` and Python; only\ninstall these if you are touching `crates/redb-python`.\n\n## Before completing a task\n\n**Always run `just test` and confirm it passes before telling the user you are done.**\nThis target runs the `pre` recipe first, which executes `cargo deny check licenses`,\n`cargo fmt --check`, and `cargo clippy --all-targets --all-features`, and then\nruns `cargo test --all-features` with `RUST_BACKTRACE=1`. If any of those fail,\nfix the underlying issue — do not bypass checks.\n\nIf you are touching workspace crates beyond the main `redb` crate, run\n`just test_all` instead, which also builds and tests the full workspace.\n\n## Fuzzing\n\n`just fuzz` runs the libFuzzer-based harness under `fuzz/` (`fuzz_redb`) with\n`-max_len=10000` and no sanitizer. Use it (with an appropriate time limit) when\nchanging on-disk format, B-tree logic, transaction/savepoint code, or anything else\nwhere corner cases matter. Related targets: `just fuzz_ci` (60s\nsmoke run), `just fuzz_coverage` (HTML coverage report).\n\n## Benchmarks\n\n`just bench` runs `redb-bench`'s default benchmark (`redb_benchmark`). Pass a\ndifferent bench name to compare against other engines, e.g.\n`just bench lmdb_benchmark`. `just bench_containerized` runs benchmarks inside\na memory-limited Docker container (see `Dockerfile.bench`).\n\n## Design / architecture\n\nThe design doc lives at `docs/design.md` — read it before making non-trivial\nchanges to the storage format, transaction layer, or B-tree code. The main\ncrate source is in `src/`, additional workspace crates (bench harness, Python\nbindings, derive macro) are under `crates/`, integration tests in `tests/`,\nand fuzz targets in `fuzz/`.\n\n## Other notes\n\n- The repo enforces ASCII-only source: CI fails on non-ASCII characters in\n  `*.rs` and `*.toml` files. Keep new code ASCII-only.\n- `RUSTFLAGS=--deny warnings` is set in CI, so any new warning will break the\n  build. Fix warnings rather than silencing them.\n- The file format is stable; changes that affect on-disk layout require an\n  upgrade path and usually a `CHANGELOG.md` entry."
+    gold_removed: ''
+  - path: CLAUDE.md
+    tier: 1
+    gold_added: Read `AGENTS.md` for repository-specific agent instructions.
+    gold_removed: ''

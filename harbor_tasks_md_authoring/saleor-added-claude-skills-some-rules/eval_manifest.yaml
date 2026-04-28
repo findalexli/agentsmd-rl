@@ -1,0 +1,192 @@
+version: "2.0"
+
+task:
+  name: saleor-added-claude-skills-some-rules
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: saleor/saleor
+  pr: 18871
+  base_commit: "94ea1418175967f4c1bf0c8731a1008bf9c6f1bf"
+  merge_commit: "fb59f151cf0fa371abb4715b0cbfab69c44a1eab"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/saleor-django-migration/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/saleor-django-migration/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/saleor-django-migration/SKILL.md."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in saleor/graphql/AGENTS.md."
+  - id: signal_04
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in saleor/graphql/AGENTS.md."
+  - id: signal_05
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in saleor/graphql/AGENTS.md."
+
+config_edits:
+  - path: .claude/skills/saleor-django-migration/SKILL.md
+    tier: 1
+    gold_added: '---
+
+      name: saleor-django-migration
+
+      description: Generate Django schema migrations for the Saleor codebase using manage.py makemigrations. Use when (1) a new Django model is created, (2) model fields are added/altered/removed, (3) user explicitly asks to create a migration. This skill covers ONLY synchronous schema migrations (CreateModel, AddField, AlterField, RemoveField, etc.) — NOT data migrations with RunPython or RunSQL. If unsure whether the migration is schema-only, ask the user.
+
+      ---
+
+
+      # Saleor Django Schema Migration
+
+
+      ## Scope
+
+
+      This skill handles **schema-only** migrations: CreateModel, AddField, AlterField, RemoveField, AddIndex, AddConstraint, etc. It does NOT cover:
+
+      - Data migrations (RunPython, RunSQL with data changes)
+
+      - Async/background migrations (celery tasks, post_migrate signals)
+
+
+      If the change requires data transformation, stop and ask the user.
+
+
+      ## Critical Rules
+
+
+      1. **NEVER write migration files by hand.** Always let Django generate them.
+
+      2. **ALWAYS use `./manage.py makemigrations`** to generate migrations.
+
+      3. **Activate the virtual environment first** — run `. .venv/bin/activate` before any manage.py command.
+
+      4. **If database connection fails**, stop and ask the user to start the database.
+
+
+      ## Workflow
+
+
+      ### Step 1: Make model changes
+
+
+      Edit the Django model file(s) as needed. Do not touch any migration files.
+
+
+      ### Step 2: Generate migration
+
+
+      ```bash
+
+      . .venv/bin/activate && python manage.py makemigrations
+
+      ```
+
+
+      If Django asks interactive questions (e.g. "Did you rename field X to Y?"), answer based on the model changes you made.
+
+
+      ### Step 3: Read and analyze the generated migration
+
+
+      Read every generated migration file. Verify:
+
+      - It contains only schema operations (CreateModel, AddField, AlterField, RemoveField, AddIndex, etc.)
+
+      - Dependencies look correct
+
+      - No unexpected operations
+
+
+      ### Step 4: Apply separation rules
+
+
+      Apply these rules to the generated migration(s):
+
+
+      **Rule A — One model per migration for new models:**
+
+      If the migration creates MORE THAN ONE new model (multiple `CreateModel` operations), split them. Generate each separately:
+
+      ```bash
+
+      python manage.py makemigrations <app>
+
+      ```
+
+      If Django generates them together, delete the combined migration, then create models one at a time (add one model to models.py, run makemigrations, repeat).
+
+
+      **Rule B — One field change per migration:**
+
+      If the migration alters MORE THAN ONE field within a single model (e.g. two `AddField` or two `AlterField` operations on the same model), split into separate migrations — one per field. Delete the combined migration, make one field change at a time, and run makemigrations after each.
+
+
+      **Exceptions (do NOT split):**
+
+      - A `CreateModel` with all its fields is one operation — do not split the fields of a new model
+
+      - Cross-model dependencies where Django requires them together (e.g. ForeignKey + related model creation)
+
+      - Field + its index/constraint in the same migration is acceptable when auto-generated together
+
+
+      ### Step 5: Verify
+
+
+      Run the check command to confirm no pending migrations remain:
+
+      ```bash
+
+      python manage.py makemigrations --check --dry-run
+
+      ```
+
+
+      Expected output: `No changes detected` — meaning all model changes are captured in migrations.
+
+
+      ## Error Handling
+
+
+      | Error | Action |
+
+      |-------|--------|
+
+      | `django.db.utils.OperationalError: could not connect` | Ask user to start the database |
+
+      | `Conflicting migrations detected` | Stop and let user decide |
+
+      | `ModuleNotFoundError` | Virtual environment not activated — run `. .venv/bin/activate` |
+
+
+      ## Tips
+
+
+      - Rely on autogenerated migrations for correct timestamps, sequential numbers, dependencies, and field definitions. If you must hand-edit (e.g. to split), regenerate rather than edit — delete the migration, adjust models.py, and re-run makemigrations.
+
+      - When splitting, let Django figure out dependencies between the new smaller migrations.
+
+      - Check the newest existing migration in the app (`ls saleor/<app>/migrations/ | tail -5`) before generating, so you can confirm the new migration number is sequential.'
+    gold_removed: ''
+  - path: saleor/graphql/AGENTS.md
+    tier: 1
+    gold_added: "This folder contains graphQL layer\n\n**Each mutation must have its own error class.** Never reuse error classes between mutations.\nEach mutation gets a dedicated error type so clients can handle errors specifically and new error codes can be added without affecting other mutations.\n\n**Always tag new mutations and fields with `ADDED_IN_{VERSION}`.** Check the latest git tag to determine the current version.\nEvery new type, field, mutation, and input must include the version annotation in its description so the API changelog is generated correctly.\n\n**Limit input list sizes to a maximum of 100 per call (unless specified otherwise).** Unbounded lists in mutation inputs can lead to OOM errors, timeouts, and expensive queries.\nApply the same limit pattern used in queries (max 100 items) and document the limit in the field description.\n\n**Register query cost multipliers for limited/paginated fields.** When adding a new field with a `limit` argument, update `saleor/graphql/query_cost_map.py` so the `limit` value is used as a cost multiplier. This prevents expensive queries from bypassing rate limiting.\n\n\n**Use `Meta.permissions` rather than manual permission checks in `perform_mutation`.** The `BaseMutation.mutate` method already calls `check_permissions` using the permissions declared in `Meta`.\nAdding manual permission checks in `perform_mutation` is redundant and can diverge from the declared permissions.\n\n**Return the created or mutated object from mutations.** Callers may need the created object's ID or fields immediately after the mutation. Always include the result object in the mutation response type.\n\n**Use dataloader pattern when resolving fields**\n\n```python\n@staticmethod\ndef resolve_parent(root: models.Category, info):\n    if root.parent_id:\n        return CategoryByIdLoader(info.context).load(root.parent_id)\n    return None\n```\n\n**Regenerate graphql schema** when graphql types changes, run `python manage.py graphql_schema --schema saleor/graphql/schema.graphql` to regenerate schema\n\n**Ensure you use existing scalars**\n\n**Write exhaustive GraphQL descriptions on fields, including limits and behavior**\n\n# Input validation\n\nFor complex input shapes prefer using Pydantic model. Ensure Pydantic errors are mapped to Django ValidationError using `pydantic_to_validation_error` from `saleor/graphql/error.py`:\n\n```python\ntry:\n    validated = MyValidatedInput(**input_data)\nexcept PydanticValidationError as exc:\n    raise pydantic_to_validation_error(\n        exc, error_code=MyErrorCodeEnum.INVALID.value\n    ) from exc\n```\n\n# Adding new filter\n\n- Create new DB index on django model for each filtered field (add index concurrently)\n\nExample migration:\n\n```python\nimport django.contrib.postgres.indexes\nfrom django.contrib.postgres.operations import AddIndexConcurrently\nfrom django.db import migrations\nclass Migration(migrations.Migration):\n    atomic = False\n    dependencies = [\n        (“account”, “0095_repopulate_user_number_of_orders”),\n    ]\n    operations = [\n        AddIndexConcurrently(\n            model_name=“transactionitem”,\n            index=django.contrib.postgres.indexes.BTreeIndex(\n                fields=[“psp_reference”], name=“psp_reference_idx”\n            ),\n        ),\n    ]\n```"
+    gold_removed: ''
+  - path: saleor/graphql/CLAUDE.md
+    tier: 1
+    gold_added: AGENTS.md
+    gold_removed: ''

@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: agent-skills-update-skillmd-to-remove-references
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: firebase/agent-skills
+  pr: 19
+  base_commit: "c66a8c05b067363810f1afca6550370313fb06a3"
+  merge_commit: "77cd16abdce119c92f9f4ee56f185d12645aa34b"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/firebase-ai-logic-basics/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/firebase-ai-logic-basics/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/firebase-ai-logic-basics/SKILL.md."
+
+config_edits:
+  - path: skills/firebase-ai-logic-basics/SKILL.md
+    tier: 1
+    gold_added: "- Start with Gemini for most use cases, and choose Imagen for specialized tasks where image quality and specific styles are critical. (Example: gemini-2.5-flash-image)\nConsider that you do not need to hardcode model names (e.g., `gemini-flash-lite-latest`). Use Firebase Remote Config to update model versions dynamically without deploying new client code.  See [Changing model names remotely](https://firebase.google.com/docs/ai-logic/change-model-name-remotely.md.txt) \n**Always use the most recent version of Gemini (gemini-flash-latest) unless another model is requested by the docs or the user. DO NOT USE gemini-1.5-flash**"
+    gold_removed: ''

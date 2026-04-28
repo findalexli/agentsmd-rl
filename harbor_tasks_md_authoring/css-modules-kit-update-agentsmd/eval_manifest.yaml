@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: css-modules-kit-update-agentsmd
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: mizdra/css-modules-kit
+  pr: 361
+  base_commit: "944361ea5a76a99f0da062a8aaf9dbc29a55fb3f"
+  merge_commit: "7d8031646d4e1181beb8abba9b12ceee84711281"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+
+config_edits:
+  - path: AGENTS.md
+    tier: 1
+    gold_added: "## Development Flow\n- Write PR descriptions and commit messages in English\n  - `<type>` is one of: feat, fix, docs, refactor, test, chore, deps\n- Assign appropriate labels when creating a PR\n  - `Type: Breaking Change`: Breaking changes\n  - `Type: Bug`: Bug fixes\n  - `Type: Documentation`: Documentation changes\n  - `Type: Feature`: New features\n  - `Type: Refactoring`: Refactoring\n  - `Type: Testing`: Test additions/modifications\n  - `Type: Maintenance`: Repository maintenance\n  - `Type: CI`: CI/CD changes\n  - `Type: Security`: Security-related changes\n  - `Type: Dependencies`: Dependency updates"
+    gold_removed: ''

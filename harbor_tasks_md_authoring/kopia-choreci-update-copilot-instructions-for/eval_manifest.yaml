@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: kopia-choreci-update-copilot-instructions-for
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: kopia/kopia
+  pr: 4935
+  base_commit: "020092d973d670bcc0b03bb39adcb211955f5df4"
+  merge_commit: "eacee60d1933ff09562e46c3f4dddb0981ec942f"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/copilot-instructions.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/copilot-instructions.md."
+
+config_edits:
+  - path: .github/copilot-instructions.md
+    tier: 1
+    gold_added: '## Review Test Coverage
+
+      - Ensure there are tests that cover and exercise the new or changed functionality
+
+      '
+    gold_removed: ''

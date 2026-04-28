@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: htk8s-feat-add-agentsmd-file
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: fabito/htk8s
+  pr: 55
+  base_commit: "e4c8257e49cc5eb2fd13d63872dd561aca9ecebc"
+  merge_commit: "226f5a890e2ec018dade08a318955772494d6a97"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+
+config_edits:
+  - path: AGENTS.md
+    tier: 1
+    gold_added: "## For AI Agents\n\nThis document provides instructions for AI coding agents on how to work with this repository.\n\n### Project Structure\n\nThis project uses `kustomize` to manage Kubernetes manifests. The core manifests are located in the `base` directory, and environment-specific configurations (overlays) are in the `overlays` directory.\n\n- `base/`: Contains the base Kubernetes manifests for each application.\n- `overlays/`: Contains kustomize overlays for different environments (e.g., `x86`, `armhf`).\n- `install_*.yaml`: These are the final, generated Kubernetes manifest files. **DO NOT EDIT THESE FILES DIRECTLY.**\n\n### Making Changes\n\n1.  **Modify the Base Manifests**: If you need to add a new application or modify an existing one, make your changes in the `base` directory. This usually involves:\n    -   Creating a new directory for the application (e.g., `base/new-app/`).\n    -   Adding a `kustomization.yaml` to the new application directory.\n    -   Adding the new application to the `base/kustomization.yaml`.\n\n2.  **Regenerate the Install Manifests**: After you have made your changes to the base manifests, you **MUST** run the following script to regenerate the final install manifests:\n\n    ```bash\n    ./update-manifests.sh\n    ```\n\n    This script will update the `install_*.yaml` files in the root of the repository.\n\n### Important Notes\n\n-   **Never edit the `install_*.yaml` files directly.** These files are auto-generated, and your changes will be overwritten the next time the `update-manifests.sh` script is run.\n-   Always run `./update-manifests.sh` after making changes to the `base` or `overlays` directories."
+    gold_removed: ''

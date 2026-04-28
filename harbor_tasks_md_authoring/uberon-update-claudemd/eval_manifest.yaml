@@ -1,0 +1,24 @@
+version: "2.0"
+
+task:
+  name: uberon-update-claudemd
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: obophenotype/uberon
+  pr: 3547
+  base_commit: "a241f8114df1e01e30b54a9b34b5f28813cc46a5"
+  merge_commit: "d40b2f8ca6de13b014b69d5cb6bdf68be18c3800"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+
+config_edits:
+  - path: CLAUDE.md
+    tier: 1
+    gold_added: '- before committing, src/ontology/uberon-edit.obo should be reserialised via `robot convert -i  src/ontology/uberon-edit.obo -f obo -o src/ontology/uberon-edit.obo`'
+    gold_removed: ''

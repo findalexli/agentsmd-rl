@@ -1,0 +1,27 @@
+version: "2.0"
+
+task:
+  name: youtrackdb-add-agentsmd
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: JetBrains/youtrackdb
+  pr: 684
+  base_commit: "d8f40d41e120c66b738f503873e3c3420a57c868"
+  merge_commit: "a2b4c7651c0bfef5938fc1341b8dec6f638627c8"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+
+config_edits:
+  - path: AGENTS.md
+    tier: 1
+    gold_added: '# AGENTS.md
+
+
+      All agent instructions are in [`CLAUDE.md`](CLAUDE.md). Read that file first.'
+    gold_removed: ''

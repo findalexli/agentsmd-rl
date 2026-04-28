@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: android-add-investigation-debugging-practices-to
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: dotnet/android
+  pr: 11141
+  base_commit: "23bc9dfa5d1d81377bbdb2af0c52376454b3a60c"
+  merge_commit: "bb5297e724d7be8a250535fa22100956f0c02f86"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/copilot-instructions.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/copilot-instructions.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/copilot-instructions.md."
+
+config_edits:
+  - path: .github/copilot-instructions.md
+    tier: 1
+    gold_added: "## Investigation & Debugging Practices\n\nWhen diagnosing runtime, build, or test failures, follow these practices. They exist because the .NET ↔ JNI ↔ C++ ↔ generated-native stack is loosely coupled and static reasoning alone is unreliable.\n\n- **Reproduce CI failures locally — do not iterate through CI.** A clean local test cycle is minutes; a CI iteration is hours. Run device tests the same way CI does:\n  ```bash\n  make prepare && make all CONFIGURATION=Release\n  ./dotnet-local.sh build tests/Mono.Android-Tests/Mono.Android-Tests/Mono.Android.NET-Tests.csproj \\\n      -t:RunTestApp -c Release \\\n      -p:_AndroidTypeMapImplementation=<llvm-ir|managed|trimmable> \\\n      -p:UseMonoRuntime=<true|false>\n  ```\n  On Windows, use `build.cmd` and `dotnet-local.cmd` instead of `make`/`dotnet-local.sh`.\n  Results land in `TestResult-Mono.Android.NET_Tests-*.xml` at the repo root.\n\n- **When the build gets into a weird state, nuke `bin/` and `obj/` and rebuild from scratch.** Stale incremental output causes phantom errors. See **Troubleshooting → Build** below.\n\n- **Verify code paths with logging, not reasoning.** Add `log_warn (LOG_DEFAULT, \"...\"sv, ...)` in C++ or `Android.Util.Log` in C#, rebuild, re-run, and check `adb logcat -d`. If your log never fires, your call-graph assumption is wrong.\n\n- **Decompile the produced `.dll` before blaming runtime.** Use `ilspycmd` or `ildasm` to inspect the actual generated IL/metadata. A missing attribute or misnamed type in generator output cascades into opaque runtime failures.\n\n- **`am instrument` going silent means it crashed, not hung.** Check `adb logcat -d | grep -E 'FATAL|tombstone|signal'` for a native crash dump. Do not wait for a CI timeout to \"confirm\" a hang that was really an instant crash.\n\n- **Build:** Clean `bin/`+`obj/`, check Android SDK/NDK, `make clean && make prepare && make all`"
+    gold_removed: ''

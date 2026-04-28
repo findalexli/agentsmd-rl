@@ -1,0 +1,37 @@
+version: "2.0"
+
+task:
+  name: hypershift-nojira-docsai-add-reference-to
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: openshift/hypershift
+  pr: 7085
+  base_commit: "491ccf53752f6f88a53fab3b12bfdd9048c6ea77"
+  merge_commit: "cc8cbd4698e68111fcc2b0d07445b1ce6c69c93d"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+
+config_edits:
+  - path: CLAUDE.md
+    tier: 1
+    gold_added: 'This repository includes Claude Code specific configuration for enhanced development assistance.
+
+
+      Please also refer to @AGENTS.md for guidance to all AI agents when working with code in this repository.
+
+      The Effective Go skill is automatically enabled for all Go development. Just ask Claude to write or review Go code, and best practices will be automatically applied.'
+    gold_removed: ''

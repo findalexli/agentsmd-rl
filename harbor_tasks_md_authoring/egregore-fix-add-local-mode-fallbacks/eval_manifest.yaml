@@ -1,0 +1,123 @@
+version: "2.0"
+
+task:
+  name: egregore-fix-add-local-mode-fallbacks
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: egregore-labs/egregore
+  pr: 1
+  base_commit: "22ea4dfc555c6bd0bf523e81bc133230d9a372ce"
+  merge_commit: "215c22371b212a064d2ff2da38d1b251d9b121dc"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/add/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/add/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/add/SKILL.md."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/issue/SKILL.md."
+  - id: signal_04
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/issue/SKILL.md."
+  - id: signal_05
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/issue/SKILL.md."
+  - id: signal_06
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/todo/SKILL.md."
+  - id: signal_07
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/todo/SKILL.md."
+  - id: signal_08
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/todo/SKILL.md."
+
+config_edits:
+  - path: .claude/skills/add/SKILL.md
+    tier: 1
+    gold_added: '## Mode detection
+
+
+      ```bash
+
+      MODE=$(jq -r ''.mode // "connected"'' egregore.json 2>/dev/null)
+
+      ```
+
+
+      **Local mode** (`mode === "local"`): Skip ALL `bin/graph.sh` calls — do NOT run them. Do NOT show any graph-related messaging ("Graph offline", "will sync", Neo4j, etc.).
+
+
+      Local-mode flow:
+
+      - Steps 1-5 (fetch, type, quests, topics, file creation) work normally — quest matching reads from `memory/quests/` directory instead of graph query.
+
+      - Step 6 (Neo4j Artifact node): skip entirely. The artifact file in `memory/artifacts/` is the source of truth.
+
+      - Step 7: confirm file saved, skip relation messaging. Show `✓ Saved to memory/artifacts/{filename}`.
+
+      - Auto-save (commit + push) works normally.
+
+
+      **Connected mode**: Full behavior including graph nodes as specified below.
+
+
+      3. Suggest relevant quests based on content (local mode: read from `memory/quests/` files)
+
+      6. Create Artifact node in Neo4j via `bash bin/graph.sh query "..."` (never MCP, suppress raw output — capture in variable, only show status) — **CONNECTED MODE ONLY**
+
+      7. Confirm relations created (local mode: confirm file saved only)'
+    gold_removed: ''
+  - path: .claude/skills/issue/SKILL.md
+    tier: 1
+    gold_added: '## Mode detection
+
+
+      ```bash
+
+      MODE=$(jq -r ''.mode // "connected"'' egregore.json 2>/dev/null)
+
+      ```
+
+
+      **Local mode** (`mode === "local"`): Skip ALL `bin/graph.sh` and `bin/notify.sh` calls — do NOT run them. Do NOT show any graph-related messaging ("Graph offline", "will sync", Neo4j, etc.).
+
+
+      Local-mode flow:
+
+      - **Create mode**: Step 0 context capture — run Bash call 1 (git identity + state) normally; skip Bash call 2''s `bin/graph.sh test` line (keep the memory-symlink and egregore.json checks); skip the Neo4j recent-session query entirely. Steps 1-2 (description, smart routing) work normally. Step 3 — write the markdown file to `memory/knowledge/issues/` normally, but skip the Neo4j `CREATE (i:Issue)` node and the progress message referencing "graph". Skip Step 4 graph routing updates entirely. Skip Step 5 notifications entirely. Steps 6-7 (auto-save, confirmation TUI) work normally — in the TUI, show `✓ Saved to memory` (omit "graphed" and "team notified").
+
+      - **List mode**: Read issues from `memory/knowledge/issues/` directory — parse frontmatter for id, title, status, recipient, created, topics. Render same TUI.
+
+      - **Close mode**: Find issue file in `memory/knowledge/issues/`, update frontmatter `status: closed` + add `closed: {date}`. Skip graph update.
+
+      - **Search mode**: Grep through `memory/knowledge/issues/` files for matching text. Render same TUI.
+
+      - **Notifications**: Skip entirely — do not mention notifications.
+
+
+      **Connected mode**: Full behavior including graph nodes and notifications as specified below.
+
+      '
+    gold_removed: ''
+  - path: .claude/skills/todo/SKILL.md
+    tier: 1
+    gold_added: "## Step 0: Mode detection\n\n```bash\nMODE=$(jq -r '.mode // \"connected\"' egregore.json 2>/dev/null)\n```\n\n**Local mode** (`mode === \"local\"`): Skip ALL `bin/graph.sh` calls — do NOT run them. Do NOT show any graph-related messaging (\"Graph offline\", \"will sync\", Neo4j, etc.).\n\nLocal-mode storage: `memory/todos/{person}.md` — a YAML-frontmatter markdown file per user.\n\nLocal-mode flow:\n- **All routes** (add, list, done, cancel, check): same UX and TUI rendering, backed by YAML parse/write instead of Cypher queries.\n- **Quest matching**: check `memory/quests/` directory for active quest files instead of graph query.\n- **Person detection**: check `memory/people/` directory for person files instead of graph query.\n- **CheckIn persistence**: not available in local mode (no graph storage). The check-in flow still works interactively but check-in history is not persisted.\n- **Notifications**: skip entirely — do not mention notifications.\n\n### Local-mode file format\n\nFile: `memory/todos/{person}.md`\n\n```yaml\n---\ntodos:\n  - id: \"2026-03-30-bartu-001\"\n    text: \"review bugs manually\"\n    status: open\n    priority: 0\n    created: \"2026-03-30T22:00:00Z\"\n    completed: null\n    quest: null\n    source: manual\n    blockedBy: null\n    deferredUntil: null\n    lastNote: null\n    lastTransition: null\n---\n```\n\n### Local-mode initialization\n\nOn first use, the directory and file may not exist. Before any read or write:\n1. `mkdir -p memory/todos/`\n2. If `memory/todos/{person}.md` does not exist, create it with:\n   ```yaml\n   ---\n   todos: []\n   ---\n   ```\n\n### Local-mode route adjustments\n\n- **Add**: Ensure directory and file exist (see initialization above). Parse text, determine priority, check `memory/quests/` for quest matching (read frontmatter `status: active` from quest files). Generate todo ID as `YYYY-MM-DD-{person}-{NNN}` where NNN is zero-padded 3 digits: count existing entries in the `todos` array whose `id` starts with today's `YYYY-MM-DD-{person}-` prefix, add 1 (e.g., if 2 exist for today, next is `003`). Append to the YAML `todos` array. Write file.\n- **List**: Read the YAML file, filter by status, sort by priority desc then created desc. Render same TUI.\n- **Done/Cancel**: Read file, filter to active items (status `open`, `blocked`, `deferred`), sort by priority desc then created desc (same order as List display). Positional references (e.g., `todo done 2`) resolve against this filtered+sorted list — position 2 means the 2nd displayed item, not the 2nd entry in the raw YAML array. For text match, search the `text` field of filtered items. Update matched item's status + `completed` timestamp in the YAML. Write file.\n- **Check**: Read file, filter active items, walk through with AskUserQuestion (same UX). Update statuses in YAML after each item. Skip CheckIn node creation.\n- **Quest view**: Read file, filter todos where `quest` matches the slug. Same TUI with quest header.\n\n**Connected mode**: Full behavior including graph nodes and notifications as specified below.\n\n| Neo4j unavailable (connected mode) | Still attempt file-based save. Show warning: \"Graph offline — file saved, will sync on next /save\" |\n| Local mode | Skip all graph calls silently — no warnings, no \"graph offline\" messaging. YAML file is the source of truth. TUI renders identically. |"
+    gold_removed: ''

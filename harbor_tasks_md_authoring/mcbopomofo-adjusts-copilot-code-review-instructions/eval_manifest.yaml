@@ -1,0 +1,51 @@
+version: "2.0"
+
+task:
+  name: mcbopomofo-adjusts-copilot-code-review-instructions
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: openvanilla/McBopomofo
+  pr: 761
+  base_commit: "971d9e0e354cfa981b5dfde0757264e95d194b0d"
+  merge_commit: "f6f8c7a597852aa1c29b603f0d889e048043cd2f"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/copilot-instructions.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/copilot-instructions.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/copilot-instructions.md."
+
+config_edits:
+  - path: .github/copilot-instructions.md
+    tier: 1
+    gold_added: 'When reviewing code:
+
+
+      - Do NOT generate pull request overviews.
+
+      - Do NOT generate explainers.
+
+      - Do NOT summarize what a diff chunk does.
+
+      - Only point out issues that are of medium severity or higher.
+
+      - Do point out spelling errors in symbol names such as those of variables, classes, methods, and functions.
+
+      - Do point out spelling or grammar errors in comments.
+
+      - Do point out style issues such as extraneous spaces (for example `a  = b;`).
+
+      - Do point out spelling errors in commit messages.
+
+      - Pay attention when strings cross language boundaries, especially if code point counts are involved.'
+    gold_removed: ''

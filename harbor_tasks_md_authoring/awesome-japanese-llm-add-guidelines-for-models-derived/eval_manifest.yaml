@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: awesome-japanese-llm-add-guidelines-for-models-derived
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: llm-jp/awesome-japanese-llm
+  pr: 588
+  base_commit: "8b206d167f1c32d76db8c4f7a77c6fc0725bdd5f"
+  merge_commit: "ae2979d7454f406f078f31d72d04076ed83de92b"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+
+config_edits:
+  - path: CLAUDE.md
+    tier: 1
+    gold_added: "   - **CRITICAL - Models derived from Japanese continual pre-training models**:\n     - If the base model is a Japanese continual pre-training model (e.g., Swallow, ELYZA, Nekomata, youko), the derived model belongs in the **継続事前学習 (Continual Pre-training)** section, NOT 事後学習のみ\n     - Example: A model fine-tuned on \"Llama-3.1-Swallow-8B-Instruct\" → place in 継続事前学習 → ドメイン特化型, because Swallow itself is a continual pre-training model\n     - This applies even if the derived model only does instruction tuning (SFT/DPO/LoRA) without additional pre-training\n     - **Base model column**: Record the **original architecture** (e.g., \"Llama 3.1\"), NOT the intermediate Japanese model name (e.g., NOT \"Llama 3.1 Swallow\")"
+    gold_removed: ''

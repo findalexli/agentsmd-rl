@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: routedns-add-claudemd
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: folbricht/routedns
+  pr: 487
+  base_commit: "97e7783c6508161e8c6556fa717cdd4879c3a41a"
+  merge_commit: "2f2f68ad83642a02fe8584913f03db95fe75932a"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+
+config_edits:
+  - path: CLAUDE.md
+    tier: 1
+    gold_added: "# CLAUDE.md\n\nThis file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.\n\n## Project Overview\n\nRouteDNS is a composable DNS stub resolver, proxy and router written in Go. It builds processing pipelines from four component types (listeners, resolvers, groups/modifiers, routers) configured via TOML files.\n\n## Build & Test Commands\n\n```bash\n# Build\ngo build -o cmd/desync/ ./cmd/routedns\n\n# Run all tests\ngo test ./...\n\n# Run a single test\ngo test -run TestCacheLookupAndExpiry ./...\n\n# Run tests in a specific package\ngo test ./dnssec/\n\n# Run with race detector\ngo test -race ./...\n\n# Run the binary\nroutedns config.toml\n```\n\nThere is no Makefile or linter configuration. CI uses GitHub Actions with CodeQL analysis only.\n\n## Architecture\n\n### Core Abstraction\n\nEvery component in the pipeline implements the `Resolver` interface (`resolver.go`):\n\n```go\ntype Resolver interface {\n    Resolve(*dns.Msg, ClientInfo) (*dns.Msg, error)\n    fmt.Stringer\n}\n```\n\nThis single interface is implemented by clients, groups, modifiers, and routers alike, enabling arbitrary composition.\n\n### Pipeline Flow\n\n```\nListeners (receive DNS queries over UDP/TCP/DoT/DoH/DoQ/DTLS/ODoH)\n    ↓\nRouters (route based on query name, type, source IP, time, etc.)\n    ↓\nGroups/Modifiers (cache, blocklist, load-balance, transform)\n    ↓\nResolvers/Clients (forward to upstream DNS servers)\n```\n\n### Component Types\n\n- **Listeners** (`Listener` interface in `listener.go`): Entry points that accept DNS queries. Each protocol has its own file (e.g., `dohlistener.go`, `dotlistener.go`, `doqlistener.go`).\n- **Clients/Resolvers**: Forward queries upstream. Each protocol is in its own file (`dnsclient.go` for UDP/TCP, `dotclient.go`, `dohclient.go`, `doqclient.go`, `dtlsclient.go`, `odohclient.go`).\n- **Groups/Modifiers** (~30 types): Wrap one or more resolvers to add behavior — caching (`cache.go`), blocklists (`blocklist-v2.go`), load-balancing (`round-robin.go`, `failrotate.go`, `fastest.go`), rate limiting (`rate-limiter.go`), query/response modification, etc.\n- **Routers** (`router.go`): Conditional routing based on query properties (name regex, type, source IP, time of day, etc.). Routes evaluated in order; first match wins.\n\n### Configuration System\n\nTOML-based configuration defined in `cmd/routedns/config.go`. Four top-level sections: `[listeners]`, `[resolvers]`, `[groups]`, `[routers]`. Component instantiation in `cmd/routedns/resolver.go` uses a DAG (`github.com/heimdalr/dag`) to resolve dependencies bottom-up, preventing circular references.\n\nMultiple config files can be provided as arguments and are merged.\n\n### Key Patterns\n\n- **Go package name**: `rdns` (import as `github.com/folbricht/routedns`)\n- **Composition via Resolver interface**: Groups/modifiers wrap inner resolvers, creating decorator chains\n- **Options structs**: Constructors take `*XxxOptions` structs (e.g., `CacheOptions`, `DNSClientOptions`)\n- **Metrics**: Components export metrics via `expvar` using the pattern `routedns.<base>.<id>.<metric>`\n- **Graceful shutdown**: `onClose` functions registered globally, triggered on SIGTERM/SIGINT\n- **Blocklist databases**: `BlocklistDB` interface with implementations for domains, regex, hosts, CIDR, GeoIP, ASN, MAC formats\n\n### Testing\n\nTests use a `TestResolver` mock (returns the query as-is or a configured response). Test files live alongside source files. Some tests require network access (DoH/DoT/DoQ client tests connect to real servers)."
+    gold_removed: ''

@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: sentry-bugbot-add-disclosure-to-agentsmd
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: getsentry/sentry
+  pr: 102172
+  base_commit: "3e7b32d68996baf93444c33a8db4ef1ee626e528"
+  merge_commit: "7116ee36c645e4c45713d5efe8f43ccd8bfc3d18"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in static/AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in static/AGENTS.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in static/AGENTS.md."
+
+config_edits:
+  - path: static/AGENTS.md
+    tier: 1
+    gold_added: "Use <Grid> from `@sentry/scraps/layout` for elements that require grid layout as opposed to styled components with `display: grid`\nimport {Grid} from '@sentry/scraps/layout';\nUse <Flex> from `@sentry/scraps/layout` for elements that require flex layout as opposed to styled components with `display: flex`.\nimport {Flex} from '@sentry/scraps/layout';\nUse using <Container> from `@sentry/scraps/layout` over simple elements that require a border or border radius.\nimport {Container} from '@sentry/scraps/layout';\nimport {Flex} from '@sentry/scraps/layout';\nimport {Flex} from '@sentry/scraps/layout';\nUse <Heading> from `@sentry/scraps/text` for headings instead of styled components that style heading typography.\nimport {Heading} from '@sentry/scraps/text';\nimport {Heading} from '@sentry/scraps/text';\nUse <Text> from `@sentry/scraps/text` for text styling instead of styled components that handle typography features like color, overflow, font-size, font-weight.\nimport {Text} from '@sentry/scraps/text';\nimport {Text} from '@sentry/scraps/text';\nUse the core component <Image/> from `@sentry/scraps/image` instead of intrinsic <img />.\nimport {Image} from '@sentry/scraps/image';\n// ✅ Use Avatar component and useUser\nimport {UserAvatar} from '@sentry/scraps/avatar/userAvatar';\n<UserAvatar user={user}>\n\n```\n\nFor lists of avatars, use <AvatarList>.\n\n##### Disclosure\n\nUse the core disclosure component instead of building\n\n```tsx\n// ✅ Use Disclosure component\n<Disclosure>\n  <Disclosure.Title>Title</Disclosure.Title>\n  <Disclosure.Content>Content that is toggled based on expanded state</Disclosure.Content>\n</Disclosure>;\n// ❌ Do not reimplement disclosure pattern manually\n  const [isExpanded, setIsExpanded] = useState(false);\n\n  return (\n    <div>\n      <Button\n        onClick={() => setIsExpanded(!isExpanded)}\n        icon={<IconChevron direction={isExpanded ? 'down' : 'right'} />}\n      >\n        Title\n      </Button>\n      {isExpanded && (\n        <Container>Content that is toggled based on expanded state</Container>\n      )}\n    </div>\n  );"
+    gold_removed: ''

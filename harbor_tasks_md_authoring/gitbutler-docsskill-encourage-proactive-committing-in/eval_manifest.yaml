@@ -1,0 +1,37 @@
+version: "2.0"
+
+task:
+  name: gitbutler-docsskill-encourage-proactive-committing-in
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: gitbutlerapp/gitbutler
+  pr: 12159
+  base_commit: "a64ed2b9534b98ef39be6f88bb7201df37dcb43d"
+  merge_commit: "79bd50261a46d631701ad3d031f39906f976cf80"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in crates/but/skill/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in crates/but/skill/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in crates/but/skill/SKILL.md."
+
+config_edits:
+  - path: crates/but/skill/SKILL.md
+    tier: 1
+    gold_added: '**Commit early, commit often.** Don''t hesitate to create commits - GitButler makes editing history trivial. You can always `squash`, `reword`, or `absorb` changes into existing commits later. Small atomic commits are better than large uncommitted changes.
+
+
+      but diff --json             # See hunk IDs when a file has multiple changes
+
+      4. **Commit early and often** - don''t wait for perfection. Unlike traditional git, GitButler makes editing history trivial with `absorb`, `squash`, and `reword`. It''s better to have small, atomic commits that you refine later than to accumulate large uncommitted changes.'
+    gold_removed: ''

@@ -1,0 +1,24 @@
+version: "2.0"
+
+task:
+  name: sync_gateway-agentsmd-describe-git-branches
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: couchbase/sync_gateway
+  pr: 8176
+  base_commit: "d6c31d5d8fc291738ca188a1e3292fe2fad226fb"
+  merge_commit: "96699ed9dc84d35f7c4df78a3a5bffe258a62636"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+
+config_edits:
+  - path: AGENTS.md
+    tier: 1
+    gold_added: '- Git: `main` branch is the current in-development version. Released versions and backports end up in `release/x.y.z` branches. Feature branches are typically just named `CBG-xxxx` after the Jira ticket.'
+    gold_removed: ''

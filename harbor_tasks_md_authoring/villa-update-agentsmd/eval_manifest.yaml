@@ -1,0 +1,24 @@
+version: "2.0"
+
+task:
+  name: villa-update-agentsmd
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: ScrollPrize/villa
+  pr: 736
+  base_commit: "fa1fa0ae117f2d01a5d6c4c7b81448a60028b553"
+  merge_commit: "d5ed153aa74a8f9c937e7af34a1b861f16430930"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+
+config_edits:
+  - path: AGENTS.md
+    tier: 1
+    gold_added: This file defines how automated agents (Codex, Claude, chat-based coding agents, CI bots, etc.) should operate inside this monorepo.
+    gold_removed: ''

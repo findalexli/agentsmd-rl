@@ -1,0 +1,24 @@
+version: "2.0"
+
+task:
+  name: agent-skills-feat-optimize-skillmd-description
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: callstackincubator/agent-skills
+  pr: 2
+  base_commit: "652a62cd9e47d130185d39503191d8e0ac90e24b"
+  merge_commit: "7aad9427e8f998017a757efbfb78cb73f4867333"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/react-native-best-practices/SKILL.md."
+
+config_edits:
+  - path: skills/react-native-best-practices/SKILL.md
+    tier: 1
+    gold_added: 'description: Provides React Native performance optimization guidelines for FPS, TTI, bundle size, memory leaks, re-renders, and animations. Applies to tasks involving Hermes optimization, JS thread blocking, bridge overhead, FlashList, native modules, or debugging jank and frame drops.'
+    gold_removed: ''

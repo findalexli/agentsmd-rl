@@ -1,0 +1,38 @@
+version: "2.0"
+
+task:
+  name: ant-design-chore-fix-changelog-skill-agentsmd
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: ant-design/ant-design
+  pr: 57397
+  base_commit: "900d97f2035b301d6862d84b86fec57345ccfe30"
+  merge_commit: "735cb51cfa549dd0fc10df2a3d761cf89b6276cb"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .agents/skills/changelog-collect/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .agents/skills/changelog-collect/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .agents/skills/changelog-collect/SKILL.md."
+
+config_edits:
+  - path: .agents/skills/changelog-collect/SKILL.md
+    tier: 1
+    gold_added: '- [核心原则](../../../AGENTS.md#核心原则) - 有效性过滤规则
+
+      - [格式规范](../../../AGENTS.md#格式规范) - 分组、描述、Emoji 规范
+
+      - [Emoji 规范](../../../AGENTS.md#emoji-规范) - 根据 commit 类型自动标记
+
+      - [句式](../../../AGENTS.md#句式) - 中英文格式参考'
+    gold_removed: ''

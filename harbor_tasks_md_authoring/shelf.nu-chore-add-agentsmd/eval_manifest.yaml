@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: shelf.nu-chore-add-agentsmd
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: Shelf-nu/shelf.nu
+  pr: 2044
+  base_commit: "dbc16cfa91df219401d7474c3f1d5af731c82f49"
+  merge_commit: "e199b3570c6a83bad0413867a517553cb92f1849"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+
+config_edits:
+  - path: AGENTS.md
+    tier: 1
+    gold_added: "# AGENTS.md\n\nThis repository hosts **Shelf.nu**, an asset management platform built with Remix, React, TypeScript, and PostgreSQL. Follow the instructions below when working anywhere in this repository.\n\n## Key Commands\n\n### Development\n- `npm run dev` – Start the Remix development server on port 3000.\n- `npm run setup` – Generate the Prisma client and apply database migrations before running the app.\n\n### Quality & Testing\n- `npm run test` – Execute the Vitest unit test suite.\n- `npm run test:e2e:dev` – Launch Playwright end-to-end tests with the UI.\n- `npm run validate` – Run the full validation pipeline (Prisma generation, ESLint, Prettier, TypeScript, unit tests, and E2E tests). Run this before committing substantive code changes.\n- `npm run lint` / `npm run lint:fix` – Perform ESLint checks or auto-fixes.\n- `npm run typecheck` – Run the TypeScript compiler in type-check mode.\n\n### Build & Production\n- `npm run build` – Build the production bundle.\n- `npm run start` – Start the production server.\n\n## Architecture Notes\n- Routes live under `app/routes/` (organized with remix-flat-routes; notable groups include `_layout+/`, `_auth+/`, `_welcome+/`, `api+/`, and `qr+/`).\n- Business logic resides in `app/modules/` while shared UI lives in `app/components/`.\n- Database schema and migrations are in `app/database/` (Prisma-powered, with Supabase RLS and Postgres full-text search).\n- Global state uses Jotai atoms in `app/atoms/` and utilities are under `app/utils/`.\n\n## Implementation Guidelines\n1. Prefer Remix loaders/actions for server data access and Jotai atoms for complex client state.\n2. Keep reusable UI components modular and colocated with domain-specific functionality when appropriate.\n3. Follow existing patterns in `app/modules/` for service logic and `app/routes/` for Remix route modules.\n4. For database changes, update `app/database/schema.prisma`, create migrations with `npm run db:prepare-migration`, and deploy with the setup command.\n5. Maintain documentation and examples in Markdown.\n\n## Documentation & Research\n- Before starting significant feature work or architectural changes, review the guides in the `docs/` directory. They contain\n  up-to-date development practices, architecture deep-dives, and onboarding materials that must be followed when extending\n  Shelf.nu.\n- Cross-reference any relevant doc-specific checklists or conventions and incorporate them into your implementation plan and\n  PR notes.\n\n## Git Practices\n- Commit after completing a coherent task using descriptive messages.\n- Do **not** add \"\U0001F916 Generated with Claude Code\" or similar co-authored trailers to commits.\n- Ensure the working tree is clean and applicable checks (including `npm run validate` for code changes) pass before requesting review.\n\n## Environment Reminders\n- Required environment variables include `DATABASE_URL`, `DIRECT_URL`, `SUPABASE_URL`, `SUPABASE_ANON_PUBLIC`, and `SESSION_SECRET`.\n- Feature flags such as `ENABLE_PREMIUM_FEATURES`, `DISABLE_SIGNUP`, and `SEND_ONBOARDING_EMAIL` toggle optional functionality.\n\nBy following these guidelines, contributions will align with the repository's established workflows and quality standards."
+    gold_removed: ''

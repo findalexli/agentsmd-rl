@@ -1,0 +1,82 @@
+version: "2.0"
+
+task:
+  name: copilot-collections-fix-typos-in-skill-documentation
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: TheSoftwareHouse/copilot-collections
+  pr: 10
+  base_commit: "9ce7a06df20ac0f32f46f8d2566c3a3e2cd3d017"
+  merge_commit: "3c1c3de4b938bf9728721d2c9b845e4d3967df56"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/skills/architecture-design/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/skills/architecture-design/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/skills/architecture-design/SKILL.md."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/skills/code-review/SKILL.md."
+  - id: signal_04
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/skills/code-review/SKILL.md."
+  - id: signal_05
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/skills/code-review/SKILL.md."
+  - id: signal_06
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/skills/task-analysis/SKILL.md."
+  - id: signal_07
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/skills/task-analysis/SKILL.md."
+  - id: signal_08
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/skills/task-analysis/SKILL.md."
+
+config_edits:
+  - path: .github/skills/architecture-design/SKILL.md
+    tier: 1
+    gold_added: '- [ ] Step 3: Ask questions about ambiguous parts
+
+      - [ ] Step 5: Create an implementation plan document
+
+      **Step 3: Ask questions about ambiguous parts**
+
+      Don''t continue until you get all of the answers.
+
+      Your goal is to design a solution that is not overengineered and easy to comprehend by developers, that is at the same time scalable, secure and easy to maintain.'
+    gold_removed: ''
+  - path: .github/skills/code-review/SKILL.md
+    tier: 1
+    gold_added: '- [ ] Step 7: Run static code analysis tools and formatting tools
+
+      - [ ] Step 9: Validate the solution is scalable
+
+      **Step 7: Run static code analysis tools and formatting tools**
+
+      **Step 9: Validate the solution is scalable**'
+    gold_removed: ''
+  - path: .github/skills/task-analysis/SKILL.md
+    tier: 1
+    gold_added: '- [ ] Step 4: Based on the answers and gathered information finalize the research report
+
+      **Step 4: Based on the answers and gathered information finalize the research report**
+
+      Generate a report following the `./research.example.md` structure. Make sure to provide all necessary information that you gathered, all findings and all answered questions.'
+    gold_removed: ''

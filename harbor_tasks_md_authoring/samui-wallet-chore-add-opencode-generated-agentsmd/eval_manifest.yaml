@@ -1,0 +1,64 @@
+version: "2.0"
+
+task:
+  name: samui-wallet-chore-add-opencode-generated-agentsmd
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: samui-build/samui-wallet
+  pr: 102
+  base_commit: "dca51eac3c77148f27aee30899b2a66a9ff9b21a"
+  merge_commit: "35c53f96e39908204e1cd756d0406315808a2527"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+
+config_edits:
+  - path: AGENTS.md
+    tier: 1
+    gold_added: '# Agent Guidelines for Samui Wallet
+
+
+      ## Commands
+
+      - **Build**: `pnpm build`
+
+      - **Lint**: `pnpm lint` / `pnpm lint:fix`
+
+      - **Type Check**: `pnpm check-types`
+
+      - **Test All**: `pnpm test` / `pnpm test:watch`
+
+      - **Single Test**: `vitest run <path/to/test.ts>`
+
+      - **Format**: `pnpm format` / `pnpm format:check`
+
+
+      ## Code Style
+
+      - **TypeScript**: Strict mode, consistent type definitions/imports
+
+      - **Formatting**: Prettier (single quotes, 120 width, no semicolons, trailing commas)
+
+      - **Linting**: ESLint with perfectionist (alphabetical imports/sorting)
+
+      - **Naming**: camelCase variables/functions, PascalCase types
+
+      - **Error Handling**: Use `tryCatch` from `@workspace/core`
+
+      - **Testing**: Vitest globals, jsdom env, ARRANGE/ACT/ASSERT pattern
+
+      - **Imports**: Type imports separate, alphabetical perfectionist sorting'
+    gold_removed: ''

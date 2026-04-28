@@ -1,0 +1,36 @@
+version: "2.0"
+
+task:
+  name: yfinance-mcp-update-agentsmd
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: narumiruna/yfinance-mcp
+  pr: 102
+  base_commit: "41cd0250db29cf1a710df99605b50d76db36c964"
+  merge_commit: "2ad35d3ddaad94c374486056322952f47d7caba9"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+
+config_edits:
+  - path: AGENTS.md
+    tier: 1
+    gold_added: '- `README.md`: end-user setup and usage guide. Demo chatbot link points to the dedicated `yfinance-mcp-demo` repository.
+
+      - `uv sync --extra dev`: install development dependencies.
+
+      - PRs should summarize intent and list the validation commands run.'
+    gold_removed: ''

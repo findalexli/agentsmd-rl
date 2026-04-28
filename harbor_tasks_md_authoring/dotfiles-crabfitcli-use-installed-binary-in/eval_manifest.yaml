@@ -1,0 +1,46 @@
+version: "2.0"
+
+task:
+  name: dotfiles-crabfitcli-use-installed-binary-in
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: Mic92/dotfiles
+  pr: 4512
+  base_commit: "95bca3d8e4de3943e78cb17ead200b9b664e4715"
+  merge_commit: "bd65eda356220686717f0cf23ede954fd706bec1"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in pkgs/crabfit-cli/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in pkgs/crabfit-cli/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in pkgs/crabfit-cli/SKILL.md."
+
+config_edits:
+  - path: pkgs/crabfit-cli/SKILL.md
+    tier: 1
+    gold_added: 'crabfit-cli create --dates +0:+2 --start 9 --end 17
+
+      crabfit-cli create --name "Team Meeting" --dates 2026-01-20,2026-01-22
+
+      crabfit-cli create --dates +0:+6 --timezone America/New_York
+
+      crabfit-cli respond EVENT_ID --name "Alice" --all
+
+      crabfit-cli respond EVENT_ID --name "Bob" --slots 1000-19012026 1100-19012026
+
+      crabfit-cli show EVENT_ID
+
+      crabfit-cli create --name "Project Sync" --dates +1:+5 --start 10 --end 16
+
+      crabfit-cli show project-sync-123456'
+    gold_removed: ''

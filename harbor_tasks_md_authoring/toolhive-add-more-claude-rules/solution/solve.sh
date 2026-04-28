@@ -1,0 +1,153 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+cd /workspace/toolhive
+
+# Idempotency guard
+if grep -qF "Never mutate a value passed in by a caller. Maps and slices have reference seman" ".claude/rules/go-style.md" && grep -qF "In parallel tests, `defer` runs when the parent test function returns \u2014 which ca" ".claude/rules/testing.md"; then
+  echo "Gold patch already applied."
+  exit 0
+fi
+
+git apply --whitespace=nowarn <<'PATCH'
+diff --git a/.claude/rules/go-style.md b/.claude/rules/go-style.md
+@@ -76,6 +76,72 @@ if someCondition {
+ }
+ ```
+ 
++## Copy Before Mutating Caller Input
++
++Never mutate a value passed in by a caller. Maps and slices have reference semantics — passing them copies the header but shares the underlying data, so mutations are visible to the caller. Pointer parameters (`*T`) directly expose the caller's original value. Plain struct values (`T`) are copies and safe to modify, but structs passed as `*T`, or whose fields include maps, slices, or pointers, can still reach caller-visible data through those fields. In-place mutation surprises callers, can cause data races, and breaks the assumption that the caller's original value is unchanged after the call.
++
++Always copy the input first and mutate the copy:
++
++```go
++// Good
++meta := maps.Clone(callerMeta)
++meta["key"] = "value"
++
++// Avoid
++callerMeta["key"] = "value" // mutates the caller's map
++```
++
++Note that `maps.Clone` (and `slices.Clone`) perform a **shallow copy** — if map values or slice elements contain pointers, slices, or nested maps, mutating those nested values will still affect the caller's data. Use a deep copy when the value type requires it.
++
++This applies to function parameters, values extracted from context, and values returned by storage/cache loads. If the function's doc comment does not explicitly state "the caller's value will be modified", treat all inputs as read-only.
++
++## Keep Comments Synchronized With Code
++
++When you change behavior, update every comment that describes it. A comment that contradicts the code is worse than no comment — it actively misleads future readers and causes incorrect changes.
++
++- After any refactor, search for comments referencing the old behavior and update them.
++- If a comment names a specific function, variable, or mechanism, verify the name is still accurate.
++- Comments describing concurrency semantics (eviction timing, lazy vs. eager, which lock is held) are especially prone to drift — treat them as part of the implementation, not decoration.
++
++## Constructor Validation: Fail Loudly on Invalid Input
++
++Constructors must validate their required inputs and fail loudly (return an error or panic) rather than silently accepting invalid values and producing surprising behavior.
++
++- Required parameters: check for nil and return a descriptive error.
++- Numeric bounds: reject values outside the valid range (e.g., `capacity < 1`). Zero is Go's default — don't let it silently mean "unlimited" or "disabled".
++- Enum/string config: reject unknown values explicitly; don't fall back silently to a default that the caller didn't request.
++
++Misconfiguration that fails at startup is far easier to diagnose than misconfiguration that silently degrades behavior at runtime.
++
++## One Synchronization Primitive Per Data Structure
++
++Use a single synchronization mechanism per data set. Mixing `sync.Mutex` and `sync.Map` (or channels) on the same underlying data is a correctness hazard — future contributors cannot reason about which operations are atomic with respect to each other.
++
++If atomicity requirements grow beyond what `sync.Map` provides (e.g., you need read-modify-write), replace it with a plain `map` guarded by a `sync.Mutex` for all operations. The performance difference at typical cardinalities is negligible compared to the clarity gained.
++
++## Drain HTTP Response Bodies Before Closing
++
++Always drain a response body before closing it in error paths. Closing without reading prevents `net/http` from reusing the underlying TCP connection, causing unnecessary connection churn.
++
++```go
++// Good
++_, _ = io.Copy(io.Discard, resp.Body)
++resp.Body.Close()
++
++// Avoid — prevents connection reuse
++resp.Body.Close()
++```
++
++This applies in every code path that discards a response early (error handling, retries, fallbacks).
++
++## Write to Durable Storage Before Updating In-Memory State
++
++When a write must update both durable storage (database, Redis, file) and an in-memory structure (cache, map, struct field), always write to the authoritative store first. Update local state only after the durable write succeeds.
++
++- If the durable write fails, leave in-memory state unchanged — the next read will reload from the source of truth.
++- If the process crashes after the durable write but before the in-memory update, the next read reloads correctly.
++- Reversing the order leaves a window where in-memory state diverges permanently from durable state on any error.
++
+ ## Error Handling
+ 
+ - Return errors by default — never silently swallow errors
+diff --git a/.claude/rules/testing.md b/.claude/rules/testing.md
+@@ -35,6 +35,36 @@ Applies to test files and test directories.
+ 5. **Naming**: Test names must match what they actually assert — if the assertion changes, update the name too.
+ 6. **Boilerplate**: Minimize setup code; extract shared setup into helpers with `t.Helper()`
+ 
++## Running Operator E2E Tests
++
++Operator E2E tests live in `test/e2e/thv-operator/` and require a Kind cluster. All tasks are defined in `cmd/thv-operator/Taskfile.yml` and must be run from the repo root with `task -d cmd/thv-operator <task>` (or `cd cmd/thv-operator && task <task>`).
++
++**Full automated run** (creates cluster, deploys, tests, destroys on exit):
++```
++task -d cmd/thv-operator thv-operator-e2e-test
++```
++
++**Iterative manual workflow** (keep the cluster alive between test runs):
++```
++task -d cmd/thv-operator kind-setup-e2e       # Kind cluster with NodePort mappings
++task -d cmd/thv-operator operator-install-crds
++task -d cmd/thv-operator operator-deploy-local # builds & loads local images via ko
++task -d cmd/thv-operator thv-operator-e2e-test-run  # re-run as many times as needed
++task -d cmd/thv-operator kind-destroy          # when done
++```
++
++**Cluster variants:**
++- `kind-setup` — plain cluster, no port mappings (general use)
++- `kind-setup-e2e` — cluster with NodePort mappings required by Ginkgo E2E tests
++
++**Chainsaw (operator unit-level E2E):**
++```
++task -d cmd/thv-operator operator-e2e-test
++```
++Runs `chainsaw` against `test/e2e/chainsaw/operator/` scenarios. Installs `chainsaw` automatically if missing.
++
++The Ginkgo suite runs with `--procs=8` and uses `kconfig.yaml` (written to repo root by the kind-setup tasks) as its `KUBECONFIG`.
++
+ ## E2E Test Coverage
+ 
+ E2E tests must verify functional behavior, not just infrastructure state. Confirming that pods are ready or that counts are correct is not sufficient — the test must also exercise the actual code path (send traffic, trigger the feature) to prove it works end-to-end.
+@@ -70,6 +100,25 @@ Avoid adding test-only hook fields (nil-checked `func()` fields) to production s
+ 
+ Existing instances in the codebase are legacy — do not expand them. When touching a struct that already has hook fields, consider extracting them as part of the change.
+ 
++## Use `t.Cleanup` for Resource Teardown in Parallel Tests
++
++In tests using `t.Parallel()`, always register resource teardown (stopping servers, closing connections, cancelling contexts) with `t.Cleanup`, not just `defer`.
++
++In parallel tests, `defer` runs when the parent test function returns — which can happen before `t.Parallel()` subtests finish. `t.Cleanup` handlers are tied to the test's full lifecycle and run after all subtests complete, preventing leaked goroutines, ports, and connections.
++
++Note: `require.*` uses `runtime.Goexit`, and panics unwind the stack — both run deferred functions. The difference is not about defers being skipped; it's about *when* they run relative to subtests.
++
++```go
++// Good — runs after all subtests complete
++server := httptest.NewServer(handler)
++t.Cleanup(server.Close)
++
++// Avoid in parallel tests — may run before subtests finish
++defer server.Close()
++```
++
++Make stop/close functions idempotent (`sync.Once`) when registering with both `t.Cleanup` and an explicit mid-test shutdown.
++
+ ## Concurrent Tests: Always Add Timeouts to Blocking Barriers
+ 
+ Blocking operations in tests (`WaitGroup.Wait()`, channel receives, `sync.Cond.Wait()`) must have a timeout/fail-fast path. Without one, a panicking goroutine or regression in synchronization logic causes the test to hang until the global `go test` timeout.
+PATCH
+
+echo "Gold patch applied."

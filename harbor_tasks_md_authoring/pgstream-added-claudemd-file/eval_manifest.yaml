@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: pgstream-added-claudemd-file
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: xataio/pgstream
+  pr: 734
+  base_commit: "f2e63d8a5a0178b7975f0ceb4d26e2b5e58bb6e9"
+  merge_commit: "2e6db215f9cc23f5f1b692b4b311f08f2ab8c65c"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+
+config_edits:
+  - path: CLAUDE.md
+    tier: 1
+    gold_added: "# CLAUDE.md\n\nThis file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.\n\n## Project Overview\n\npgstream is a PostgreSQL Change Data Capture (CDC) tool and Go library. It captures WAL changes from PostgreSQL and routes them to multiple targets: PostgreSQL, Elasticsearch/OpenSearch, Kafka, or Webhooks. It supports schema tracking, DDL replication, data snapshots, and column-level transformations for anonymization.\n\n## Common Commands\n\n```bash\n# Build\nmake build\n\n# Run all unit tests (with race detector, 10m timeout)\nmake test\n\n# Run a single test\ngo test -run TestName ./pkg/path/to/package\n\n# Run integration tests (requires Docker for testcontainers)\nPGSTREAM_INTEGRATION_TESTS=true go test -timeout 180s github.com/xataio/pgstream/pkg/stream/integration\n\n# Lint (golangci-lint v2)\nmake lint\n\n# Run code generation (CLI definition + transformer definition)\nmake generate\n\n# Generate migration binaries\nmake gen-migrations\n\n# Fuzz tests\nmake fuzz\n\n# License header check\nmake license-check\n```\n\n## Architecture\n\n### Pipeline Design\n\n```\nSource (PostgreSQL WAL / Kafka) → Listener\n  → Processor chain: Filter → Injector → Transformer → Target Writer\n    → Checkpointer (tracks LSN/offset progress)\n```\n\nThe streaming pipeline is assembled in `pkg/stream/stream.go`. Sources produce WAL events, which flow through an ordered chain of processors before reaching the target writer. Each processor is optional and configured independently.\n\n### Key Package Layout\n\n- **`cmd/`** — CLI commands (cobra): `run`, `init`, `snapshot`, `status`, `destroy`, `validate`\n- **`cmd/config/`** — Configuration parsing (YAML, env vars, CLI flags via viper)\n- **`pkg/stream/`** — Pipeline orchestration: wires listeners, processors, and checkpointers together\n- **`pkg/wal/listener/`** — WAL event sources (PostgreSQL replication, Kafka consumer)\n- **`pkg/wal/processor/`** — Processing stages:\n  - `postgres/` — PostgreSQL target writer\n  - `search/` — Elasticsearch/OpenSearch indexer\n  - `kafka/` — Kafka batch writer\n  - `webhook/` — HTTP webhook notifier\n  - `transformer/` — Column value transformations\n  - `filter/` — Schema/table filtering\n  - `injector/` — Metadata/ID injection\n- **`pkg/wal/replication/`** — Replication slot management\n- **`pkg/wal/checkpointer/`** — LSN/offset checkpoint tracking\n- **`pkg/snapshot/`** — Initial and on-demand snapshot logic\n- **`pkg/transformers/`** — Data transformation implementations (greenmask, neosync, go-masker integrations)\n- **`internal/`** — Internal utilities (postgres client, search store, migrator, test helpers)\n- **`migrations/`** — SQL migrations (core schema + injector), compiled to Go via go-bindata\n\n### Configuration\n\nSupports YAML files, `.env` files, and CLI flags. Config parsing lives in `cmd/config/`. Environment variables use the `PGSTREAM_` prefix.\n\n### Integration Tests\n\nLocated in `pkg/stream/integration/`. They use testcontainers-go to spin up PostgreSQL, Elasticsearch, OpenSearch, and Kafka. Gated by `PGSTREAM_INTEGRATION_TESTS=true` env var.\n\n## Code Conventions\n\n- **Error wrapping**: Use `fmt.Errorf` with `%w`. The `github.com/pkg/errors` package is forbidden.\n- **No fmt.Print**: Use structured logging (zerolog). `fmt.Print*` calls are blocked by linter.\n- **Formatting**: gofumpt (enforced by golangci-lint).\n- **License headers**: All `.go` files must start with `// SPDX-License-Identifier: Apache-2.0`.\n- **No CGO**: Builds use `CGO_ENABLED=0`.\n- **Interface-driven design**: Processors, listeners, and stores use interfaces extensively with mock implementations for testing."
+    gold_removed: ''

@@ -1,0 +1,78 @@
+version: "2.0"
+
+task:
+  name: software-agent-sdk-docs-align-agentsmd-guidance-across
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: OpenHands/software-agent-sdk
+  pr: 2087
+  base_commit: "14ed6cce4cfa5f1f25d9862b49f33495bd423a44"
+  merge_commit: "1c7b1a32198a390c144f71069c1a10546b28e6ff"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in openhands-sdk/openhands/sdk/AGENTS.md."
+  - id: signal_04
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in openhands-sdk/openhands/sdk/AGENTS.md."
+  - id: signal_05
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in openhands-tools/openhands/tools/AGENTS.md."
+  - id: signal_06
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in openhands-tools/openhands/tools/AGENTS.md."
+  - id: signal_07
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in openhands-workspace/openhands/workspace/AGENTS.md."
+  - id: signal_08
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in openhands-workspace/openhands/workspace/AGENTS.md."
+
+config_edits:
+  - path: AGENTS.md
+    tier: 1
+    gold_added: '- Put unit tests under the corresponding domain folder in `tests/` (e.g., `tests/sdk`, `tests/tools`, `tests/workspace`). For example, changes to `openhands-sdk/openhands/sdk/tool/tool.py` should be covered in `tests/sdk/tool/test_tool.py`.
+
+      - This is a `uv`-managed Python monorepo (single `uv.lock` at repo root) with multiple distributable packages: `openhands-sdk/` (SDK), `openhands-tools/` (built-in tools), `openhands-workspace/` (workspace impls), and `openhands-agent-server/` (server runtime).
+
+      - `examples/` contains runnable patterns; `tests/` is split by domain (`tests/sdk`, `tests/tools`, `tests/workspace`, `tests/agent_server`, etc.).'
+    gold_removed: ''
+  - path: openhands-sdk/openhands/sdk/AGENTS.md
+    tier: 1
+    gold_added: '# Package Guidelines
+
+      ## Package Structure & Module Organization'
+    gold_removed: ''
+  - path: openhands-tools/openhands/tools/AGENTS.md
+    tier: 1
+    gold_added: '# Package Guidelines
+
+      ## Package Structure & Module Organization'
+    gold_removed: ''
+  - path: openhands-workspace/openhands/workspace/AGENTS.md
+    tier: 1
+    gold_added: '# Package Guidelines
+
+      ## Package Structure & Module Organization'
+    gold_removed: ''

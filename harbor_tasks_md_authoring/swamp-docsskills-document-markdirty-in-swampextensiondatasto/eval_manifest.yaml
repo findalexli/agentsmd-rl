@@ -1,0 +1,76 @@
+version: "2.0"
+
+task:
+  name: swamp-docsskills-document-markdirty-in-swampextensiondatasto
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: systeminit/swamp
+  pr: 1226
+  base_commit: "ce1175651e53482de1684e4536f625262b3db469"
+  merge_commit: "46b674460601c7638c0914d81b38766faa534c6e"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/swamp-extension-datastore/references/api.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/swamp-extension-datastore/references/api.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/swamp-extension-datastore/references/api.md."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/swamp-extension-datastore/references/examples.md."
+  - id: signal_04
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/swamp-extension-datastore/references/examples.md."
+  - id: signal_05
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/swamp-extension-datastore/references/examples.md."
+
+config_edits:
+  - path: .claude/skills/swamp-extension-datastore/references/api.md
+    tier: 1
+    gold_added: '  markDirty(): Promise<void>;
+
+
+      ### `markDirty()`
+
+
+      Signal that the local cache has uncommitted work. Swamp core calls this at the
+
+      start of every repository-layer mutation that writes into the cache (e.g.
+
+      `save`, `delete`, `rename`), **before** the write begins — a crash mid-write
+
+      still leaves the watermark dirty.
+
+
+      The method only matters for implementations that maintain a clean/dirty
+
+      watermark to short-circuit zero-diff syncs (the recommended fast-path pattern —
+
+      see `design/datastores.md`). Those implementations MUST flip the watermark to
+
+      dirty here so the next `pushChanged` cannot skip past core''s writes.
+
+      Implementations that unconditionally walk the cache on every `pushChanged` have
+
+      nothing to invalidate and can return `Promise.resolve()`.
+
+
+      `markDirty()` must be idempotent and cheap — core does not deduplicate calls.'
+    gold_removed: ''
+  - path: .claude/skills/swamp-extension-datastore/references/examples.md
+    tier: 1
+    gold_added: "        markDirty: () => {\n          // Swamp core calls this before every cache write. If your\n          // pushChanged walks the cache unconditionally, there's nothing\n          // to invalidate — no-op. If you add a clean/dirty sidecar\n          // (fast-path pattern in design/datastores.md), flip it here.\n          return Promise.resolve();\n        },"
+    gold_removed: ''

@@ -1,0 +1,24 @@
+version: "2.0"
+
+task:
+  name: vscode-add-symlinked-claudemd-file
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: microsoft/vscode
+  pr: 291967
+  base_commit: "bae323865abef569fc83901a38d27921c038bbde"
+  merge_commit: "d0201bc5f9b7b49fa34928b6163e08b8097ec86a"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/CLAUDE.md."
+
+config_edits:
+  - path: .claude/CLAUDE.md
+    tier: 1
+    gold_added: ../.github/copilot-instructions.md
+    gold_removed: ''

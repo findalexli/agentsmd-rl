@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: modelcontextprotocol-expose-mcp-skills-via-wellknownagentski
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: modelcontextprotocol/modelcontextprotocol
+  pr: 2589
+  base_commit: "ced4210b13bb520b901cdebe06e8744f36f157d6"
+  merge_commit: "d05a49bc2ea69d335073767917456e81dea437fd"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in docs/.mintlify/skills/search-mcp-github/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in plugins/mcp-spec/skills/search-mcp-github/SKILL.md."
+
+config_edits:
+  - path: docs/.mintlify/skills/search-mcp-github/SKILL.md
+    tier: 1
+    gold_added: ../../../../plugins/mcp-spec/skills/search-mcp-github/SKILL.md
+    gold_removed: ''
+  - path: plugins/mcp-spec/skills/search-mcp-github/SKILL.md
+    tier: 1
+    gold_added: 'license: Apache-2.0'
+    gold_removed: ''

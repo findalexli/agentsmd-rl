@@ -1,0 +1,24 @@
+version: "2.0"
+
+task:
+  name: stellar-cli-add-sorobantest-integration-testing-instructions
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: stellar/stellar-cli
+  pr: 2264
+  base_commit: "972feffb895e0630d67c06bb96c7db49b60465fc"
+  merge_commit: "859fe0b83c33fe17350b202ac0e13a53b2452696"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/copilot-instructions.md."
+
+config_edits:
+  - path: .github/copilot-instructions.md
+    tier: 1
+    gold_added: '- Test soroban-test integration tests: `cargo test --features it --test it -- integration` -- tests the commands of the cli and is where the bulk of the tests live for this repository. All new commands and changes to commands should include updates or additions to tests in soroban-test.'
+    gold_removed: ''

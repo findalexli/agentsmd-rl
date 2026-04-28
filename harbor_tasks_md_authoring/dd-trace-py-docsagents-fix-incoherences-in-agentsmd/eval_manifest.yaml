@@ -1,0 +1,40 @@
+version: "2.0"
+
+task:
+  name: dd-trace-py-docsagents-fix-incoherences-in-agentsmd
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: DataDog/dd-trace-py
+  pr: 16574
+  base_commit: "d38b87e060ea683db4beac09509ccd6e106d64b4"
+  merge_commit: "ff36d12b49640238b8080dc70529fff58562bf59"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+
+config_edits:
+  - path: AGENTS.md
+    tier: 1
+    gold_added: '7. Check for and remove unexpected prints
+
+      **Use whenever:** Creating or updating release notes for changes in the current branch.
+
+      **Purpose:** Creates or updates release notes using Reno, following dd-trace-py''s conventions:
+
+      - Generates Reno release note files for the current branch changes
+
+      - Follows the guidelines in `docs/releasenotes.rst`'
+    gold_removed: ''

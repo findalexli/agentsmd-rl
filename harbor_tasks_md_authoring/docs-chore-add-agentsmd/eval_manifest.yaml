@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: docs-chore-add-agentsmd
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: langchain-ai/docs
+  pr: 656
+  base_commit: "d190fab649fdbb921ea9c7135ea7d7a9d8de5326"
+  merge_commit: "26fe5e8b7c0f9f6c250458624204ef7aacbb8fdf"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+
+config_edits:
+  - path: AGENTS.md
+    tier: 1
+    gold_added: "# Mintlify documentation\n\n## Working relationship\n\n- You can push back on ideas-this can lead to better documentation. Cite sources and explain your reasoning when you do so\n- ALWAYS ask for clarification rather than making assumptions\n- NEVER lie, guess, or make up information\n\n## Project context\n\n- Format: MDX files with YAML frontmatter. Mintlify syntax.\n- Config: docs.json for navigation, theme, settings\n- Components: Mintlify components\n\n## Content strategy\n\n- Document just enough for user success - not too much, not too little\n- Prioritize accuracy and usability of information\n- Make content evergreen when possible\n- Search for existing information before adding new content. Avoid duplication unless it is done for a strategic reason. Reference existing content when possible\n- Check existing patterns for consistency\n- Start by making the smallest reasonable changes\n\n## docs.json\n\n- Refer to the [docs.json schema](https://mintlify.com/docs.json) when building the docs.json file and site navigation\n- If adding a new group, ensure the root `index.mdx` is included in the `pages` array like:\n\n```json\n{\n  \"group\": \"New group\",\n  \"pages\": [\"new-group/index\", \"new-group/other-page\"]\n}\n```\n\nIf the trailing `/index` (no extension included) is omitted, the Mintlify parser will raise a warning even though the site will still build.\n\n## Frontmatter requirements for pages\n\n- title: Clear, descriptive page title\n- description: Concise summary for SEO/navigation\n\n## Writing standards\n\n- Second-person voice (\"you\")\n- Prerequisites at start of procedural content\n- Test all code examples before publishing\n- Match style and formatting of existing pages\n- Include both basic and advanced use cases\n- Language tags on all code blocks\n- Alt text on all images\n- Relative paths for internal links\n\n## Do not\n\n- Skip frontmatter on any MDX file\n- Use absolute URLs for internal links\n- Include untested code examples\n- Make assumptions - always ask for clarification\n\nFor questions, refer to the Mintlify docs (either via MCP, if available), or at the\n[Mintlify documentation](https://docs.mintlify.com/docs/introduction)."
+    gold_removed: ''

@@ -1,0 +1,60 @@
+version: "2.0"
+
+task:
+  name: comfyui_skills_openclaw-docs-update-skillmd-for-new
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: HuangYuChuh/ComfyUI_Skills_OpenClaw
+  pr: 124
+  base_commit: "ac48b9437d7005accec4c219327255f8766f8472"
+  merge_commit: "27cf7ae0c932155d0ff26a98ab9b980870b7e1cb"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in SKILL.md."
+
+config_edits:
+  - path: SKILL.md
+    tier: 1
+    gold_added: '- User says "inpainting / mask this area" → `comfyui-skill --json upload <mask> --mask`, then execute
+
+      - User says "what failed / check job status" → `comfyui-skill --json jobs list --status failed`
+
+      - User says "which server has more VRAM" → `comfyui-skill --json server stats --all`
+
+      - User says "what nodes are available" → `comfyui-skill --json nodes list`
+
+      - User says "dry run / test without executing" → `comfyui-skill --json run <id> --validate`
+
+      | `comfyui-skill --json server stats` | Show VRAM, RAM, GPU, versions (`--all` for multi-server) |
+
+      | `comfyui-skill --json run <id> --args ''{...}''` | Execute a workflow (blocking, real-time streaming) |
+
+      | `comfyui-skill --json run <id> --validate` | Validate workflow without executing |
+
+      | `comfyui-skill --json upload <path>` | Upload image to ComfyUI (for img2img workflows) |
+
+      | `comfyui-skill --json upload <path> --mask` | Upload mask image (for inpainting workflows) |
+
+      | `comfyui-skill --json nodes list` | List all available ComfyUI nodes |
+
+      | `comfyui-skill --json jobs list` | List server-side job history (`--status failed` to filter) |
+
+      | `comfyui-skill --json workflow import <path>` | Import workflow (auto-detect, warns about deprecated nodes) |
+
+      comfyui-skill --json workflow import <json_path>
+
+      - After import, check dependencies before first execution.'
+    gold_removed: ''

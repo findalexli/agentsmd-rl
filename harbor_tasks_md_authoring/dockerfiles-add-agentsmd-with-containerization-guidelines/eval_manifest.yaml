@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: dockerfiles-add-agentsmd-with-containerization-guidelines
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: jauderho/dockerfiles
+  pr: 6835
+  base_commit: "e14c7f339b354d3ff3d7d2627383134604e3d7d3"
+  merge_commit: "edd871257b972d6d45746e65e87726a783a1e78f"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+
+config_edits:
+  - path: AGENTS.md
+    tier: 1
+    gold_added: "# Guidelines for Containerizing a New Program\n\nThis document provides instructions on how to add a new program to this repository. Following these guidelines ensures consistency, security, and maintainability across all Docker images.\n\n## 1. Directory Structure\n\nFor a new program named `<program>`:\n- Create a directory named `<program>` in the root of the repository.\n- Place the `Dockerfile` and a basic `README.md` inside the `<program>` directory.\n- Create a GitHub Action workflow file at `.github/workflows/<program>.yml`.\n\n## 2. GitHub Action Workflow Requirements (`.github/workflows/<program>.yml`)\n\n- **Security**:\n    - Use [Step Security's `harden-runner`](https://github.com/step-security/harden-runner) in all workflows.\n    - Pin all GitHub Actions to **full commit hashes**. Include a comment with the corresponding semantic version for readability.\n      Example: `uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v4.2.2`\n- **Configuration**:\n    - Hardcode the `BUILD_VERSION` in the `env` section of the workflow.\n    - Ensure the workflow pushes the built image to both **GitHub Container Registry (ghcr.io)** and **Docker Hub**.\n- **Triggers**:\n    - Include triggers for `push` (filtered by paths), `workflow_dispatch`, and a weekly `schedule`.\n\nSee `.github/workflows/adguardhome.yml` for a modern example.\n\n## 3. Dockerfile Standards\n\n- **Base Images**:\n    - **Always** use image digests (e.g., `image@sha256:...`) for base images to ensure build reproducibility and security.\n    - For **Go** applications, use `ghcr.io/jauderho/golang` as the build base.\n    - For **Alpine-based** final images, use `ghcr.io/jauderho/alpine`.\n- **Optimization**:\n    - Aim for multi-stage builds to keep the final image size minimal.\n    - Hardening: Whenever possible, run the application as a non-root user.\n\n## 4. Program README (`<program>/README.md`)\n\nEach program directory must contain a `README.md` with standard badges and usage information. Use the following badge pattern (replace `<program>` with the actual name):\n\n```markdown\n[![Build Status](https://github.com/jauderho/dockerfiles/workflows/<program>/badge.svg)](https://github.com/jauderho/dockerfiles/actions)\n[![Version](https://img.shields.io/docker/v/jauderho/<program>/latest)](https://github.com/<upstream_author>/<upstream_repo>/)\n[![Docker Pulls](https://img.shields.io/docker/pulls/jauderho/<program>)](https://hub.docker.com/r/jauderho/<program>/)\n[![Image Size](https://img.shields.io/docker/image-size/jauderho/<program>/latest)](https://hub.docker.com/r/jauderho/<program>/)\n```\n\n## 5. Root Repository Updates\n\nWhen adding a new program, you MUST update the following files in the root directory:\n- **`README.md`**: Add the new program to the \"Build Status\" table.\n- **`BUILD_STATUS.md`**: Add the new program to the table.\n\n**Important**: Entries in both files must be kept in **alphabetical order**.\n\n## 6. Language-Specific Examples\n\nUse the following existing programs as templates for new additions:\n- **Go**: `adguardhome`\n- **Rust**: `onetun`\n- **Python**: `ruff` or `ansible`\n\nAvoid using the `templates/` directory as it may contain outdated patterns."
+    gold_removed: ''

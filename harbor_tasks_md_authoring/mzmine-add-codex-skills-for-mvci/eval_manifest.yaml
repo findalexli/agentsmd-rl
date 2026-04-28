@@ -1,0 +1,48 @@
+version: "2.0"
+
+task:
+  name: mzmine-add-codex-skills-for-mvci
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: mzmine/mzmine
+  pr: 3223
+  base_commit: "821a65dedef030b749161cd23fe17b5780a8d004"
+  merge_commit: "bd92c79be3c54afd27963fb83380c1c059773313"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .agents/skills/mvci-gui/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .agents/skills/mvci-gui/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .agents/skills/mvci-gui/SKILL.md."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .agents/skills/new-chart/SKILL.md."
+  - id: signal_04
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .agents/skills/new-chart/SKILL.md."
+  - id: signal_05
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .agents/skills/new-chart/SKILL.md."
+
+config_edits:
+  - path: .agents/skills/mvci-gui/SKILL.md
+    tier: 1
+    gold_added: "---\nname: MVCI\ndescription: Use a MVC or MVCI architecture when building complex user interface components with multiple controls or panes and if the user requests the MVC/MVCI architecture. For simpler interfaces, default to single classes.\n---\n\n- Do not use FXML.\n- Split gui logic into a Model, a Controller, a ViewBuilder and potentially an Interactor\n\n## Model\n\n- The Model controls the state. It holds all data in JavaFX properties.\n- Indicate if the value of a property can be null or not with @Nullable or @NotNull annotations in\n  the `<>` brackets such as `ObjectProperty<@Nullable X>`.\n\n## Controller\n\n- The Controller is exposed to the outside and handles interactions of other application parts with\n  the Model and contains simple logic.\n- The Controller should extend io.github.mzmine.javafx.mvci.FxController or\n  io.github.mzmine.javafx.mvci.FxCachedViewController.\n- Use the FxCachedViewController if the same view needs to be accessed from multiple locations to\n  avoid building the view multiple times.\n- For threading, use the onGuiThread and onTaskThread methods from the FxController.\n- onGuiThread should be used in public methods that change the state of the model.\n- onTaskThread can be used for complex computations that would freeze the view.\n\n## View builder\n\n- The ViewBuilder is responsible for creating the UI components and layout and binds them to the\n  Model.\n- The ViewBuilder should extend io.github.mzmine.javafx.mvci.FxViewBuilder\n- Try using existing factory classes in io.github.mzmine.javafx.components.util or\n  io.github.mzmine.javafx.components.factories.\n- Consider using Insets.EMPTY when wrapping multiple components from the factory to not create\n  unnecessary whitespace.\n- Prefer bindings from the View to the Model over listeners. Use bidirectional bindings if possible.\n- The ViewBuilder is responsible for the logic that reacts to user input.\n- The ViewBuilder is responsible for logic that reflects the Controller's or Interactor's changes to\n  the Model in the View.\n- Event handlers to react to interactions should be put into the view builder.\n\n## Interactor\n\n- The interactor is not strictly required. In case it is used, the interactions with the outside\n  world should be moved from the Controller to the Interactor.\n- The Interactor is responsible for handling business logic. Reacting to user input is NOT business\n  logic and belongs into the ViewBuilder.\n- The Interactor gets a reference of the Model passed to it by the Controller.\n\n## Logic placement decision\n\n- The ViewBuilder handles UI events wiring, the Controller or Interactor handle application-facing\n  commands. "
+    gold_removed: ''
+  - path: .agents/skills/new-chart/SKILL.md
+    tier: 1
+    gold_added: "---\nname: New chart\ndescription: How to create a new chart, renderer, label generator in the mzmine framework.\n---\n\n- When creating new charts, check if we have an appropriate chart, dataset and/or renderer in\n  io.github.mzmine.gui.chartbasics.simplechart.\n- When reacting to Chart items, check if we have the property exposed in FxBaseChartModel,\n  FxXYPlotModel, or FxXYPlot. Most SimpleChart extend one of those classes.\n- At minimum use an EChartViewer.\n- When passing data to a chart, check if we have an appropriate provider in\n  io.github.mzmine.gui.chartbasics.simplechart.providers.\n- The providers can be passed to a ColoredXYDataset and a ColoredXYZDataset."
+    gold_removed: ''

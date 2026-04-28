@@ -1,0 +1,48 @@
+version: "2.0"
+
+task:
+  name: causalpy-add-subissue-discovery-to-githubissues
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: pymc-labs/CausalPy
+  pr: 817
+  base_commit: "7db0672a05789ec8ade853355239aa5697360617"
+  merge_commit: "cd8907953aa3b01d8c5926d3fd5fc7c886fafd98"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/skills/github-issues/reference/issue-evaluation.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/skills/github-issues/reference/issue-evaluation.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/skills/github-issues/reference/issue-evaluation.md."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/skills/github-issues/reference/parent-child-issues.md."
+  - id: signal_04
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/skills/github-issues/reference/parent-child-issues.md."
+  - id: signal_05
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/skills/github-issues/reference/parent-child-issues.md."
+
+config_edits:
+  - path: .github/skills/github-issues/reference/issue-evaluation.md
+    tier: 1
+    gold_added: "## Check for sub-issues (native hierarchy)\n\nAlways check whether an issue has native sub-issues. The `trackedIssues` / `trackedInIssues` GraphQL fields only cover older markdown task-list tracking and will miss native sub-issues.\n\n```bash\ngh api graphql -f query='query {\n  repository(owner:\"<owner>\", name:\"<repo>\") {\n    issue(number: <issue_number>) {\n      subIssues(first: 50) { nodes { number title state url } }\n      parent { number title state url }\n    }\n  }\n}'\n```\n\n- Review sub-issues (if any) for work breakdown and progress"
+    gold_removed: ''
+  - path: .github/skills/github-issues/reference/parent-child-issues.md
+    tier: 1
+    gold_added: "## 6) Discover existing sub-issues\n\nWhen evaluating an issue that may already have sub-issues, always use the `subIssues` GraphQL field. Do **not** use `trackedIssues` / `trackedInIssues` -- those only cover older markdown task-list tracking and will miss native sub-issues.\n\n```bash\ngh api graphql -f query='query {\n  repository(owner:\"<owner>\", name:\"<repo>\") {\n    issue(number: <issue_number>) {\n      subIssues(first: 50) {\n        nodes { number title state url }\n      }\n      parent { number title state url }\n    }\n  }\n}'\n```\n\n## 7) Verify links rendered correctly"
+    gold_removed: ''

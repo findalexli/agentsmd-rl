@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: pocket-casts-ios-add-details-to-agentsmd-file
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: Automattic/pocket-casts-ios
+  pr: 3973
+  base_commit: "1077d918531229e8f19bd44b3bfcd8b316668d4e"
+  merge_commit: "424f0a8eee975941dd12cb0e19cc95a14572234d"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+
+config_edits:
+  - path: AGENTS.md
+    tier: 1
+    gold_added: "\n### Running a Single Test\n\n```bash\nxcodebuild test -project podcasts.xcodeproj \\\n    -scheme pocketcasts \\\n    -only-testing:PocketCastsTests/YourTestClass/testMethodName\n```\n\n### Running Module Tests\n\n```bash\n# DataModel module tests\nxcodebuild test -project podcasts.xcodeproj -scheme pocketcasts \\\n    -only-testing:PocketCastsDataModelTests\n\n# Server module tests\nxcodebuild test -project podcasts.xcodeproj -scheme pocketcasts \\\n    -only-testing:PocketCastsServerTests\n\n# Utils module tests\nxcodebuild test -project podcasts.xcodeproj -scheme pocketcasts \\\n    -only-testing:PocketCastsUtilsTests\n```\n\n## Architecture\n\n### Modular Structure\n\nThe codebase uses Swift Package Manager modules under `Modules/`:\n\n- **DataModel** (`Modules/DataModel/`) - Core data persistence using GRDB. Contains podcast, episode, and playback models. Uses custom GRDB macros for model generation.\n- **Server** (`Modules/Server/`) - API communication layer using Protocol Buffers. Depends on DataModel and Utils.\n- **Utils** (`Modules/Utils/`) - Shared utilities including localization helpers.\n- **DependencyInjection** (`Modules/DependencyInjection/`) - DI container for the app.\n\n### Main App Structure\n\nThe main iOS app lives in `podcasts/` with:\n- UIKit + SwiftUI hybrid (123+ ViewControllers, XIBs/Storyboards)\n- Feature-based organization (Analytics, Bookmarks, Folders, IAP, Player, etc.)\n- Multi-platform targets: iOS, watchOS, widgets, App Clip, CarPlay\n\n### Key Directories\n\n| Directory | Purpose |\n|-----------|---------|\n| `podcasts/` | Main iOS app source |\n| `PocketCastsTests/` | Unit tests organized by feature |\n| `Pocket Casts Watch App/` | watchOS companion |\n| `WidgetExtension/` | Home screen widgets |\n| `BuildTools/` | SwiftLint and SwiftGen plugins |\n\n## Data Access - DataManager (Singleton Facade)\n\nAll data operations go through `DataManager.sharedManager`:\n\n```swift\n// Located at: Modules/DataModel/Sources/PocketCastsDataModel/Public/DataManager.swift\nlet dataManager = DataManager.sharedManager\n\n// Podcast operations\nlet podcasts = dataManager.allPodcasts(includeUnsubscribed: false)\nlet podcast = dataManager.findPodcast(uuid: \"...\")\ndataManager.save(podcast: podcast)\n\n// Episode operations\nlet episode = dataManager.findEpisode(uuid: \"...\")\ndataManager.save(episode: episode)\nlet downloadedCount = dataManager.downloadedEpisodeCount()\n\n// Playlist/Filter operations\nlet playlists = dataManager.allPlaylists(includeDeleted: false)\nlet episodes = dataManager.playlistEpisodes(for: playlist)\n\n// Up Next queue\nlet queue = dataManager.allUpNextEpisodes()\n\n// Folder operations\nlet folders = dataManager.allFolders(includeDeleted: false)\nlet podcastsInFolder = dataManager.allPodcastsInFolder(folder: folder)\n```\n\n## Localization\n\nStrings are managed via SwiftGen. Add new strings to `podcasts/en.lproj/Localizable.strings`:\n\n```swift\n/* Description for translators with placeholder info */\n\"feature_description_key\" = \"Value with %1$@ placeholder\";\n```\n\nUse generated `L10n` enum:\n```swift\nlet text = L10n.featureDescriptionKey(value)\n```\n\nKey rules:\n- Use snake_case keys with pattern: `feature_relevantIdentifier_description`\n- Always include comment describing context and placeholders\n- Use positional specifiers (`%1$@`, `%2$@`), never string interpolation\n- Handle plurals manually with separate `_singular`/`_plural` keys\n\n## Code Style\n\nSwiftLint is configured with opt-in rules. Notable custom rules:\n- Use `naturalContentHorizontalAlignment` instead of `.left`/`.right` for RTL support\n- Use `.natural` text alignment instead of `.left`\n- Never use `LocalizedStringKey` in SwiftUI - use `NSLocalizedString` with L10n\n\n## Themes\n- When styling Views, use `@EnvironmentObject private var theme: Theme` and inject `.environmentObject(Theme.sharedTheme)` where the View is used.\n- Use `AppTheme.color(for: .primaryText01, theme: theme)` to access themed colors\n\n## Protocol Buffers\n\nServer objects use protobuf. To regenerate after API changes:\n```bash\nbrew install protobuf swift-protobuf  # One-time setup\nmake update_proto API_PATH=/path/to/pocketcasts-api/api/modules/protobuf/src/main/proto\n```"
+    gold_removed: ''

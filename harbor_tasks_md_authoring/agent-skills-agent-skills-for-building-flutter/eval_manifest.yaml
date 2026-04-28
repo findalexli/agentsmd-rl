@@ -1,0 +1,58 @@
+version: "2.0"
+
+task:
+  name: agent-skills-agent-skills-for-building-flutter
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: firebase/agent-skills
+  pr: 78
+  base_commit: "9daacb7107d6eb54f2fdcf062616f342d8d89a84"
+  merge_commit: "0126a4746708806834c551b260da431e41ce643c"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/firebase-ai-logic-basics/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/firebase-ai-logic-basics/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/firebase-ai-logic-basics/references/flutter_setup.md."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/firebase-ai-logic-basics/references/flutter_setup.md."
+  - id: signal_04
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/firebase-ai-logic-basics/references/flutter_setup.md."
+  - id: signal_05
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/firebase-auth-basics/SKILL.md."
+
+config_edits:
+  - path: skills/firebase-ai-logic-basics/SKILL.md
+    tier: 1
+    gold_added: '| Flutter (Dart) | Gemini Developer API | [flutter_setup.md](references/flutter_setup.md) |
+
+      [Flutter SDK code examples and usage patterns](references/flutter_setup.md)
+
+      '
+    gold_removed: ''
+  - path: skills/firebase-ai-logic-basics/references/flutter_setup.md
+    tier: 1
+    gold_added: "# Flutter Setup for Firebase AI Logic\n\nThis guide covers how to integrate Firebase AI Logic (Gemini API) into your Flutter applications.\n\n> [!IMPORTANT]\n> **Foundational Workflows & CLI-First Approach:**\n> 1. **Review Foundation:** Before implementing platform-specific code, ALWAYS review the foundational `firebase-basics` skill to ensure familiarity with core workflows.\n> 2. **Backend Provisioning via CLI:** Use the Firebase CLI for backend setup. Running `npx firebase-tools init ailogic` automatically enables the Gemini Developer API.\n> 3. **Client Configuration:** Use `flutterfire configure` strictly for generating `firebase_options.dart`. Avoid manual Console configuration.\n\n> [!NOTE]\n> `firebase_vertexai` has been replaced by `firebase_ai`. Always use `firebase_ai` for new projects.\n\n## Installation\n\nAdd the necessary Firebase dependencies to your `pubspec.yaml`:\n\n```yaml\ndependencies:\n  flutter:\n    sdk: flutter\n  firebase_core: ^4.0.0\n  firebase_auth: ^6.0.0\n  firebase_ai: ^3.0.0\n```\n\nRun `flutter pub get` to install the packages.\n\n## Initialization\n\nInitialize Firebase and sign in (anonymously or via authenticated user) before using AI Logic.\n\n```dart\nimport 'package:firebase_core/firebase_core.dart';\nimport 'package:firebase_auth/firebase_auth.dart';\nimport 'package:firebase_ai/firebase_ai.dart';\n\nvoid main() async {\n  WidgetsFlutterBinding.ensureInitialized();\n  await Firebase.initializeApp();\n  await FirebaseAuth.instance.signInAnonymously();\n  runApp(const MyApp());\n}\n```\n\n## Usage\n\nUse `FirebaseAI.googleAI` for the **Gemini Developer API**.\n\n> [!IMPORTANT]\n> **Choose the Right API Provider:** Always use `FirebaseAI.googleAI` (Gemini Developer API) as the default for prototyping and standard use. Avoid using the Vertex AI Gemini API unless your application specifically requires enterprise-grade scalability and is configured for the Blaze plan.\n\n### Text Generation\n\n```dart\nimport 'package:firebase_ai/firebase_ai.dart';\nimport 'package:firebase_auth/firebase_auth.dart';\n\nFuture<String> generateText(String prompt) async {\n  final googleAI = FirebaseAI.googleAI(auth: FirebaseAuth.instance);\n  \n  // Use the latest Gemini Flash model\n  final model = googleAI.generativeModel(model: 'gemini-flash-latest');\n\n  final response = await model.generateContent([Content.text(prompt)]);\n  return response.text ?? 'No response';\n}\n```\n\n### Chat Session\n\n```dart\nfinal chat = model.startChat(history: [\n  Content.text('Hello, I am a user.'),\n  Content.model([TextPart('Hello! How can I help you today?')]),\n]);\n\nfinal response = await chat.sendMessage(Content.text('What is CBT?'));\n```"
+    gold_removed: ''
+  - path: skills/firebase-auth-basics/SKILL.md
+    tier: 1
+    gold_added: '**Flutter**
+
+      See [references/flutter_setup.md](references/flutter_setup.md).'
+    gold_removed: ''

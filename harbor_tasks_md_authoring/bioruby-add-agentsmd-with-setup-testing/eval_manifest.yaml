@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: bioruby-add-agentsmd-with-setup-testing
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: bioruby/bioruby
+  pr: 149
+  base_commit: "65a3e9ad1dcc05e095818b6d6462c142f84ec0cc"
+  merge_commit: "dfc8e90fd62383cd6207387b92ab79026ac1b095"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+
+config_edits:
+  - path: AGENTS.md
+    tier: 1
+    gold_added: "# BioRuby AGENTS.md file\n\n## Setup commands\n- Install deps: `sudo apt install ruby-full ruby-bundler`\n- Install BioRuby: `sudo gem install bio`\n- Run tests: `bundle exec rake`\n\n## Code style\n- RuboCop Default Ruby Style Guide\n\n## Testing instructions\n- Find the CI plan in the .github/workflows folder.\n- From the package root you can just call `bundle exec rake`. The commit should pass all tests before you merge.\n- Fix any test or type errors until the whole suite is green.\n- After updating .rb files, run `rubocop` to be sure RuboCop rules still pass.\n- Add or update tests for the code you change, even if nobody asked.\n \n## PR instructions\n- Always run `rubocop` and `bundle exec rake` before committing."
+    gold_removed: ''

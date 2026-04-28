@@ -1,0 +1,36 @@
+version: "2.0"
+
+task:
+  name: windmill-chore-add-agentsmd
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: windmill-labs/windmill
+  pr: 8849
+  base_commit: "4bda600729f907514f3f58728f2e592d4d1495ed"
+  merge_commit: "88e4120e962b227e2c82bc4c977bb86ae3667f06"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+
+config_edits:
+  - path: AGENTS.md
+    tier: 1
+    gold_added: "# Windmill\n\nOpen-source platform for internal tools, workflows, API integrations, background jobs, and UIs. Rust backend + Svelte 5 frontend.\n\n## Workflow\n\n1. **Understand**: Before coding, explore the codebase (see Code Navigation below). Use `outline` to understand file structure, `body` to read specific symbols, `def`/`callers`/`callees` to trace code, `Grep` to find usages. Read `docs/` for domain context.\n2. **Plan**: For non-trivial changes, use plan mode. For large features, break into reviewable stages\n3. **Execute**: Follow coding patterns from skills (`rust-backend`, `svelte-frontend`)\n4. **Validate**: After every change, run the appropriate checks per `docs/validation.md`\n\n## Documentation\n\n- **Validation**: `docs/validation.md` — what checks to run based on what you changed\n- **Enterprise**: `docs/enterprise.md` — EE file conventions and PR workflow\n- **Backend patterns**: use the `rust-backend` skill when writing Rust code\n- **Frontend patterns**: use the `svelte-frontend` skill when writing Svelte code. Do NOT edit svelte files unless you have read that skill.\n- **Code review**: use `/local-review` to review a PR for bugs and CLAUDE.md compliance\n- **Domain guides**: `.claude/skills/native-trigger/` and `frontend/tutorial-system-guide.mdc`\n- **Brand/UI guidelines**: `frontend/brand-guidelines.md`\n\n## Dev Environment\n\n- **Backend**: `cargo run` from `backend/` (API at http://localhost:8000)\n- **Frontend**: `REMOTE=http://localhost:8000 npm run dev` from `frontend/` (port 3000+)\n- **DB**: `psql postgres://postgres:changeme@localhost:5432/windmill`\n- **Login**: `admin@windmill.dev` / `changeme`\n- **Instance settings**: navigate to `/#superadmin-settings`\n- **Migrations**: use `cargo sqlx migrate add -r <name>` from `backend/` to create new migrations (never generate timestamps manually)\n\n## Banned Patterns\n\n### `$bindable(default_value)` on optional props\n\nUsing `$bindable(default_value)` on props that can be `undefined` is **banned**. This pattern causes subtle bugs because the default value masks the `undefined` state.\n\n**Bad:**\n\n```svelte\nlet { my_prop = $bindable(default_value) }: { my_prop?: string } = $props()\n```\n\n**Correct alternatives:**\n\n1. **Use `$derived` with nullish coalescing** — handle the potential `undefined` at the usage site:\n\n   ```svelte\n   let { my_prop = $bindable() }: { my_prop?: string } = $props()\n   let effective_value = $derived(my_prop ?? default_value)\n   ```\n\n2. **Create a `useMyPropState()` helper** — encapsulate the undefined-handling logic in a reusable function and call it higher in the component tree, so the child component always receives a defined value.\n\n## Code Navigation\n\n`wm-ts-nav` is an AST-aware code navigator. Use **wm-ts-nav** for structural queries — it skips comments/strings and understands symbol boundaries.\n\n**MUST use `outline` before `Read`** on unfamiliar files — a 500-line file costs ~500 lines of context, while `outline` costs ~20. Then **MUST use `body \"X\"`** instead of reading a full file to see one function/struct. Use `Read` with offset/limit only when you need surrounding context that `body` doesn't capture.\n- `refs \"X\" --caller` instead of reading files to find which function contains each reference\n- `callers \"X\"` / `callees \"X\"` for call-graph questions\n\nEE files (`*_ee.rs`, `*_ee.ts`, `*_ee.svelte`) are indexed — you can `outline`, `def`, `body`, `refs` etc. on them just like regular files.\n\n```bash\nNAV=\"sh wm-ts-nav/nav\"\n# Use --root backend for Rust, --root frontend/src for TS/Svelte\n$NAV --root backend outline backend/path/to/file.rs      # file structure\n$NAV --root backend def \"ServiceName\"                     # find definition\n$NAV --root backend body \"decrypt_oauth_data\"             # extract source code\n$NAV --root backend search \"%\" --parent ServiceName       # methods on a type\n$NAV --root backend search \"Trigger\" --kind struct        # find by kind\n$NAV --root backend refs \"X\" --file handler.rs --caller   # scoped refs with caller\n$NAV --root backend callers \"X\"                           # who calls X?\n$NAV --root backend callees \"X\"                           # what does X call?\n```\n\n**Limitations** — syntax-level analysis, no type inference. Use **Grep** instead when completeness matters (finding all usages, exhaustiveness checks):\n- `refs`/`callers`/`callees` can't follow re-exports, glob imports, or different import paths to the same symbol\n- Trait impls, macro-generated symbols (`sqlx::FromRow`), and namespace member access (`ns.X`) are invisible\n- `callees` shows all identifiers in a function body, not just actual calls\n\n## Core Principles\n\n- **MUST `outline` before `Read`** on unfamiliar files — then `body` or `Read` with offset/limit for specifics\n- Search for existing code to reuse before writing new code\n- Follow established patterns in the codebase\n- Keep changes focused — don't refactor beyond what's asked"
+    gold_removed: ''
+  - path: CLAUDE.md
+    tier: 1
+    gold_added: '@AGENTS.md'
+    gold_removed: ''

@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: flightctl-noissue-internalagent-add-agentsmd
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: flightctl/flightctl
+  pr: 1653
+  base_commit: "1813f7dc7779b30553e737ffde9ba7753fda963a"
+  merge_commit: "5e836f6d2063ec8b8065bfb711a81d43df452c7e"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in internal/agent/AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in internal/agent/AGENTS.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in internal/agent/AGENTS.md."
+
+config_edits:
+  - path: internal/agent/AGENTS.md
+    tier: 1
+    gold_added: "# Flightctl Agent Contribution Guidelines\n\n## Overview\nThe agent reconciles `Device.Spec` from control plane, reports resource usage, manages application lifecycles, handles OS-level configuration, and provides lifecycle hooks.\n\n## Core Principles\n\n### Minimal Binary Profile\n**\"A little copying is better than a little dependency\"**\n- Strongly vet new dependencies - verify existing code first\n- Serial operations preferred over parallel (resource conservation > speed)\n\n### PR Requirements\n- Concise and minimal changes\n- Demonstrate understanding of agent internals\n\n## Agent Architecture\n\n### Key Components\n- **Bootstrap**: Initialization phase before reconciliation - only used in agent.go setup\n- **Priority Queue**: Version reconciliation with cache/policy dependencies\n- **FileIO Module**: ALL disk operations (enables testing/simulation)\n- **Managers**: `agent/device/<namespace>` mirrors spec keys (e.g., applications/, config/, os/)\n- **Prefetch Manager**: Pulls images serially to conserve resources\n\n### Failure Handling\n- Non-retryable errors during spec reconciliation trigger rollback\n- Error declarations and helpers in `agent/device/errors` package\n\n### Threading & Lifecycle\n- Primarily single-threaded (async requires strong justification)\n- **Graceful Termination** (`agent/shutdown`): Clean shutdown with in-flight completion\n- **Configuration Reload** (`agent/reload`): Runtime updates without restart\n\n## Testing Standards\n- Use `testify/require`: `require := require.New(t)`\n- Table-driven tests with inline `setupMocks`\n- gomock with `defer ctrl.Finish()`\n\n```go\ntestCases := []struct {\n    name          string\n    setupMocks    func(*MockA, *MockB)\n    expectedError error\n}{\n    {\n        name: \"success case\",\n        setupMocks: func(mockA *MockA, mockB *MockB) {\n            mockA.EXPECT().Method(arg).Return(result, nil)\n        },\n    },\n}\n```\n\n## Extending Functionality\n- Use functional options pattern: `func New(opts ...Option)`\n- **One way to do things** - no duplicate functionality\n- Integrate with existing patterns\n\n## Code Review Checklist\n- [ ] No unnecessary dependencies\n- [ ] Uses fileio for ALL disk operations\n- [ ] Spec access via spec manager only\n- [ ] No unwarranted async code\n- [ ] PR is minimal and focused\n- [ ] One way to do things"
+    gold_removed: ''

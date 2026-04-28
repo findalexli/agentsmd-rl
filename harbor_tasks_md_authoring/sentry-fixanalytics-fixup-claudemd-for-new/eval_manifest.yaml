@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: sentry-fixanalytics-fixup-claudemd-for-new
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: getsentry/sentry
+  pr: 98595
+  base_commit: "263894f979164e668bdf2d992ed6e792fea5a519"
+  merge_commit: "e05101732ddfbea4d8ddbedc907823998119e07d"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+
+config_edits:
+  - path: CLAUDE.md
+    tier: 1
+    gold_added: "from sentry.analytics.events.feature_used import FeatureUsedEvent  # does not exist, only for demonstration purposes\n    FeatureUsedEvent(\n        user_id=user.id,\n        organization_id=org.id,\n        feature=\"new-dashboard\",\n    )"
+    gold_removed: ''

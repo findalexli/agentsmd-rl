@@ -1,0 +1,30 @@
+version: "2.0"
+
+task:
+  name: aidevops-tgh21005-fix-path-prefix-and
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: marcusquinn/aidevops
+  pr: 21009
+  base_commit: "524d69b111d836b874c77d8f62d8b269956dca81"
+  merge_commit: "237a69239cb5f07c83b71d9071e0472934f0bf6e"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .agents/AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .agents/AGENTS.md."
+
+config_edits:
+  - path: .agents/AGENTS.md
+    tier: 1
+    gold_added: 'Hard rules: see "Framework Rules > Git Workflow > Pre-edit rules" below. Details: `.agents/workflows/pre-edit.md`.
+
+      Git is the audit trail. Procedures: see the "## Git Workflow" section below.'
+    gold_removed: ''

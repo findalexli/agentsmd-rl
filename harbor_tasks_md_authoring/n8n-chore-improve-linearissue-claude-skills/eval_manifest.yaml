@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: n8n-chore-improve-linearissue-claude-skills
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: n8n-io/n8n
+  pr: 27970
+  base_commit: "4c3dc92c5280bbfa016df4c562b9fe32aaec121d"
+  merge_commit: "2597669a5de9c0caee17069d99f69edfe401e4c9"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/plugins/n8n/skills/linear-issue/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/plugins/n8n/skills/linear-issue/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/plugins/n8n/skills/linear-issue/SKILL.md."
+
+config_edits:
+  - path: .claude/plugins/n8n/skills/linear-issue/SKILL.md
+    tier: 1
+    gold_added: "### 2. Check for Private/Security Issues (MANDATORY — do this before anything else)\n\nAfter fetching the issue, immediately check its labels:\n\n1. Look at the labels returned with the issue.\n2. If any label is **`n8n-private`**:\n   a. Run `git remote -v` (via Bash) to list all configured remotes.\n   b. If **any** remote URL contains `n8n-io/n8n` without the `-private` suffix (i.e. matches the public repo), **stop immediately** and tell the user:\n\n   > **This issue is marked `n8n-private` and must be developed in a clean clone of the private repository.**\n   >\n   > One or more of your remotes point to the **public** `n8n-io/n8n` repo. Mixed remotes are not allowed — you must work in a **separate local clone** of `n8n-io/n8n-private` with no references to the public repo.\n   > For the full process, see: https://www.notion.so/n8n/Processing-critical-high-security-bugs-vulnerabilities-in-private-2f45b6e0c94f803da806f472111fb1a5\n\n   Do **not** continue with any further steps — return after showing this message.\n\n3. If the label is not present, or all remotes point exclusively to `n8n-io/n8n-private`, continue normally.\n\n### 3. Analyze Attachments and Media (MANDATORY)\n### 4. Fetch Related Context\n### 5. Review Comments\n- Any attachments or media linked in comments (process in Step 3)\n### 6. Identify Affected Node (if applicable)\n### 7. Assess Effort/Complexity\n### 8. Present Summary"
+    gold_removed: ''

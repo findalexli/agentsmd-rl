@@ -1,0 +1,73 @@
+version: "2.0"
+
+task:
+  name: transformerlab-app-add-agentsmd-file
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: transformerlab/transformerlab-app
+  pr: 1040
+  base_commit: "03611f82c8948679700a25370e95e6a9c536f29c"
+  merge_commit: "6f6225ce2db911cc4e47d4e698f1d74b443cd2b3"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+
+config_edits:
+  - path: AGENTS.md
+    tier: 1
+    gold_added: '# AGENTS.md
+
+
+      ## Build/Lint/Test Commands
+
+      - **Frontend dev**: `npm start:cloud` (Node v22, not v23+)
+
+      - **Frontend lint**: `npm run lint`
+
+      - **Frontend test**: `npm test` (Jest); single test: `npm test -- --testPathPattern="<pattern>"`
+
+      - **Frontend format**: `npm run format` (Prettier, single quotes)
+
+      - **API install**: `cd api && ./install.sh` or `npm run api:install`
+
+      - **API start**: `cd api && ./run.sh` or `npm run api:start`
+
+      - **API test**: `cd api && pytest`; single test: `pytest test/<file>::<test>`
+
+      - **Python lint**: `ruff check api/` (line-length=120, indent=4)
+
+      - **DB migrations**: `cd api && alembic upgrade head`
+
+
+      ## Architecture
+
+      - **Frontend**: Electron + React (TypeScript) in `src/` (renderer + main process)
+
+      - **Backend**: Python FastAPI in `api/transformerlab/`, entry point: `api/api.py`
+
+      - **SDK**: `lab-sdk/` - Python SDK published to PyPI as `transformerlab`
+
+      - **Database**: SQLite with Alembic migrations in `api/alembic/`
+
+
+      ## Code Style
+
+      - **TypeScript**: ESLint with erb config, Prettier (single quotes), functional components
+
+      - **Python**: Ruff (Black-compatible), 120 char line length, 4-space indent
+
+      - **Imports**: Use existing patterns in neighboring files; check package.json/pyproject.toml before adding deps'
+    gold_removed: ''

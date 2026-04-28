@@ -1,0 +1,24 @@
+version: "2.0"
+
+task:
+  name: icerpc-csharp-rename-copilotcodereviewinstructions-to-copilo
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: icerpc/icerpc-csharp
+  pr: 4344
+  base_commit: "f73ae75e25ce035b0f896e7caea7c0dcb6528bcc"
+  merge_commit: "d5bca68ec9b0f6f840b9e39400937e049c85dea7"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/copilot-instructions.md."
+
+config_edits:
+  - path: .github/copilot-instructions.md
+    tier: 1
+    gold_added: For pull requests targeting any other branch (e.g., release branches), flag API-breaking changes as warnings.
+    gold_removed: ''

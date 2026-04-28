@@ -1,0 +1,40 @@
+version: "2.0"
+
+task:
+  name: todoist-cli-docs-add-agentsmd-with-skill
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: Doist/todoist-cli
+  pr: 48
+  base_commit: "ab9193db3417323da6c73ebc408801ccc3299edf"
+  merge_commit: "15797a1091e6d853c02aef0c905d5dafd210908b"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+
+config_edits:
+  - path: AGENTS.md
+    tier: 1
+    gold_added: "# Todoist CLI\n\nTypeScript CLI for Todoist. Binary name: `td`.\n\n## Build & Run\n\n```bash\nnpm run build       # compile TypeScript\nnpm run dev         # watch mode\nnpm run type-check  # type check\nnpm run format      # format code\nnpm test            # run tests\n```\n\n**Run the CLI directly** (no linking needed):\n\n```bash\nnode dist/index.js --help          # show commands\nnode dist/index.js today           # run 'today' command\nnode dist/index.js <command> ...   # run any command\n```\n\nUse this to verify changes work before committing.\n\n## Architecture\n\n```\nsrc/\n  index.ts              # entry point, registers all commands\n  commands/             # one file per command group\n    add.ts              # td add (quick add)\n    auth.ts             # td auth (login, token, status, logout)\n    today.ts            # td today\n    inbox.ts            # td inbox\n    task.ts             # td task <action>\n    project.ts          # td project <action>\n    label.ts            # td label <action>\n    comment.ts          # td comment <action>\n    section.ts          # td section <action>\n  lib/\n    api.ts              # API client wrapper, type exports\n    auth.ts             # token loading/saving (env var or config file)\n    output.ts           # formatting utilities\n    refs.ts             # id: prefix parsing utilities\n    task-list.ts        # shared task listing logic\n```\n\n## Key Patterns\n\n- **ID references**: All explicit IDs use `id:` prefix. Use `requireIdRef()` for ID-only args, `isIdRef()`/`extractId()` for mixed refs (fuzzy name + explicit ID)\n- **API responses**: Client returns `{ results: T[], nextCursor? }` - always destructure\n- **Priority mapping**: API uses 4=p1 (highest), 1=p4 (lowest)\n- **Command registration**: Each command exports `registerXxxCommand(program: Command)` function\n\n## Testing\n\nTests use vitest with mocked API. Run `npm test` before committing.\n\n- All commands and lib modules have tests in `src/__tests__/`\n- Shared mock factory in `helpers/mock-api.ts`, fixtures in `helpers/fixtures.ts`\n- When adding features, add corresponding tests\n- Pattern: mock `getApi`, use `program.parseAsync()` to test commands\n\n## Auth\n\nToken from `TODOIST_API_TOKEN` env var or `~/.config/todoist-cli/config.json`:\n\n```json\n{ \"api_token\": \"your-api-token\" }\n```\n\n## Skill Content (Agent Command Reference)\n\nThe file `src/lib/skills/content.ts` exports `SKILL_CONTENT` — a comprehensive command reference that gets installed into AI agent skill directories via `td skill install`. This is the source of truth that agents use to understand available CLI commands.\n\n**Whenever commands, subcommands, flags, or options are added, updated, or removed in `src/commands/`, the `SKILL_CONTENT` in `src/lib/skills/content.ts` must be updated to match.** This includes:\n\n- Adding new commands or subcommands with usage examples\n- Adding, removing, or renaming flags and options\n- Updating the Quick Reference section when new top-level commands are introduced\n- Keeping examples accurate and consistent with actual CLI behavior\n\nAfter updating `SKILL_CONTENT`, run `td skill update claude-code` (and any other installed agents) to propagate the changes to installed skill files."
+    gold_removed: ''
+  - path: CLAUDE.md
+    tier: 1
+    gold_added: See [AGENTS.md](./AGENTS.md) for all project guidelines and development instructions.
+    gold_removed: ''

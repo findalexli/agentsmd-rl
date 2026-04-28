@@ -1,0 +1,41 @@
+version: "2.0"
+
+task:
+  name: plano-add-workflow-preferences-to-claudemd
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: katanemo/plano
+  pr: 770
+  base_commit: "baeee56f6b8f0c4faf22218b7eab3e1c9343b318"
+  merge_commit: "21b043e6d07387ceb206232295be84ea0004e98d"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+
+config_edits:
+  - path: CLAUDE.md
+    tier: 1
+    gold_added: '## Workflow Preferences
+
+
+      - **Git commits:** Do NOT add `Co-Authored-By` lines. Keep commit messages short and concise (one line, no verbose descriptions). NEVER commit and push directly to `main`—always use a feature branch and PR.
+
+      - **Git branches:** Use the format `<github_username>/<feature_name>` when creating branches for PRs. Determine the username from `gh api user --jq .login`.
+
+      - **GitHub issues:** When a GitHub issue URL is pasted, fetch all requirements and context from the issue first. The end goal is always a PR with all tests passing.
+
+      '
+    gold_removed: ''

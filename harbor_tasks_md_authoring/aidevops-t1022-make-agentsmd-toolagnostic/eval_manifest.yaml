@@ -1,0 +1,50 @@
+version: "2.0"
+
+task:
+  name: aidevops-t1022-make-agentsmd-toolagnostic
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: marcusquinn/aidevops
+  pr: 1329
+  base_commit: "7300a6eafda3de0c1d1355be46da157aec6ff94c"
+  merge_commit: "7cb7aff2b059077c4d7653fef2806ac76203c353"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .agents/AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .agents/AGENTS.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .agents/AGENTS.md."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+
+config_edits:
+  - path: .agents/AGENTS.md
+    tier: 1
+    gold_added: '**Supported tools:** [Claude Code](https://Claude.ai/) (TUI, Desktop, and Extension for Zed/VSCode) is the only tested and supported AI coding tool for aidevops. The `Claude` CLI is used for headless worker dispatch, supervisor orchestration, and companion subagent spawning. aidevops is also available in the Claude marketplace.
+
+      **Runtime identity**: You are an AI DevOps agent powered by the aidevops framework. When asked about your identity, use the app name from the version check output - do not guess or assume based on system prompt content. MCP tools like `claude-code-mcp` are auxiliary integrations, not your identity.
+
+      Full PTY access: run any CLI (`vim`, `psql`, `ssh`, `htop`, dev servers, `Claude -p "subtask"`). Long-running: use `&`/`nohup`/`tmux`. Parallel AI: `tools/ai-assistants/opencode-server.md`.
+
+      **CLI**: `Claude` is the ONLY supported CLI for worker dispatch. Never use `claude` CLI.
+
+      **Session memory monitoring + respawn** (t264, t264.1): Long-running Claude Code/Bun sessions accumulate WebKit malloc dirty pages that are never returned to the OS (25GB+ observed). Phase 11 of the pulse cycle checks the parent session''s `phys_footprint` when a batch wave completes (no running/queued tasks). If memory exceeds `SUPERVISOR_SELF_MEM_LIMIT` (default: 8192MB), it saves a checkpoint, logs the respawn event to `~/.aidevops/logs/respawn-history.log`, and exits cleanly for the next cron pulse to start fresh. Use `supervisor-helper.sh mem-check` to inspect memory and `supervisor-helper.sh respawn-history` to review respawn patterns.
+
+      **Cross-tool**: Claude marketplace plugin, Agent Skills (SKILL.md), Claude Code agents, manual AGENTS.md reference.'
+    gold_removed: ''
+  - path: AGENTS.md
+    tier: 1
+    gold_added: '- Primary: `~/.config/Claude/Claude.json`, `~/.config/Claude/agent/`'
+    gold_removed: ''

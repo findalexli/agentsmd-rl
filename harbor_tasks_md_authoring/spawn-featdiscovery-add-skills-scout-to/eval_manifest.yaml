@@ -1,0 +1,74 @@
+version: "2.0"
+
+task:
+  name: spawn-featdiscovery-add-skills-scout-to
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: OpenRouterTeam/spawn
+  pr: 3252
+  base_commit: "561be1cef9f64ee275523e01c451a81403c8fa40"
+  merge_commit: "1cf0e0b9c6c3df99fd94de14e1846f8be8bd58ee"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/rules/discovery.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/rules/discovery.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/rules/discovery.md."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/setup-agent-team/discovery-team-prompt.md."
+  - id: signal_04
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/setup-agent-team/discovery-team-prompt.md."
+  - id: signal_05
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/setup-agent-team/discovery-team-prompt.md."
+
+config_edits:
+  - path: .claude/rules/discovery.md
+    tier: 1
+    gold_added: '## 5. Curate skills catalog
+
+
+      Research and maintain the `skills` section of `manifest.json`. Skills are agent-specific capabilities pre-installed on VMs via `--beta skills`.
+
+
+      Three types:
+
+      - **MCP servers** — npm packages giving agents tool access (GitHub, Playwright, databases)
+
+      - **Agent Skills** — SKILL.md files following the Agent Skills standard (agentskills.io)
+
+      - **Agent configs** — native config files unlocking agent features (Cursor rules, OpenClaw SOUL.md)
+
+
+      When adding a skill:
+
+      1. Verify the npm package exists and starts: `npm view PACKAGE version && timeout 5 npx -y PACKAGE`
+
+      2. Document prerequisites (apt packages, Chrome, API keys)
+
+      3. Mark OAuth-requiring skills as `"headless_compatible": false`
+
+      4. Only add actively maintained packages (updated in last 6 months)
+
+
+      ## 6. Extend tests'
+    gold_removed: ''
+  - path: .claude/skills/setup-agent-team/discovery-team-prompt.md
+    tier: 1
+    gold_added: "## Phase 3: Skills Discovery\n\n### Skills Scout (spawn 1)\n\nResearch the best skills, MCP servers, and agent-specific configurations for each agent in manifest.json.\n\n**What to research per agent:**\n\nFor EACH agent in manifest.json (`jq -r '.agents | keys[]' manifest.json`):\n\n1. **Agent Skills standard** — search the agent's docs for SKILL.md / `.agents/skills/` support\n2. **Popular community skills** — search GitHub for `awesome-{agent}`, `{agent}-skills`, `{agent}-rules`\n3. **MCP servers** — which MCP servers are most useful for this specific agent? Check npm for:\n   - `@modelcontextprotocol/server-*` (official reference servers)\n   - `@playwright/mcp` (browser automation)\n   - `@upstash/context7-mcp` (library docs)\n   - `@brave/brave-search-mcp-server` (web search)\n   - `@sentry/mcp-server` (error tracking)\n4. **Agent-specific configs** — what native config files unlock the agent's full potential?\n   - Claude Code: skills in `~/.claude/skills/`, hooks, CLAUDE.md\n   - Cursor: `.mdc` rules in `.cursor/rules/`, `.cursor/mcp.json`\n   - OpenClaw: SOUL.md personality, skills registry, Composio integrations\n   - Codex CLI: AGENTS.md with subagent roles, `config.toml`\n   - Hermes: self-improving skills, YOLO mode config\n   - Kilo Code: custom modes (Architect/Coder/Debugger), AGENTS.md\n   - OpenCode: OmO extension, LSP configs\n   - Aider: `.aider.conf.yml`, architect mode, lint-cmd\n5. **Prerequisites** — for each skill, what needs to be pre-installed?\n   - Chrome/Chromium for Playwright (`npx playwright install chromium && npx playwright install-deps`)\n   - Docker for GitHub MCP server (official Go binary)\n   - API keys (which ones? free tier available?)\n   - System packages (apt)\n\n**Verification (MANDATORY before adding to manifest):**\n\nFor MCP servers:\n```bash\n# Verify package exists on npm\nnpm view PACKAGE_NAME version 2>/dev/null\n# Verify it starts (5s timeout)\ntimeout 5 npx -y PACKAGE_NAME 2>&1 | head -5 || true\n```\n\nFor skills (SKILL.md):\n- Verify the source repo/registry still exists\n- Check the skill content is <5000 tokens (Agent Skills spec limit)\n- Verify frontmatter has required `name` and `description` fields\n\n**Update manifest.json skills section:**\n\nEach skill entry should follow this schema:\n```json\n{\n  \"name\": \"Human-readable name\",\n  \"description\": \"What it does — one line\",\n  \"type\": \"mcp\" | \"skill\" | \"config\",\n  \"package\": \"@scope/package-name\",\n  \"prerequisites\": {\n    \"apt\": [\"package1\"],\n    \"commands\": [\"npx playwright install chromium\"],\n    \"env_vars\": [\"GITHUB_TOKEN\"]\n  },\n  \"agents\": {\n    \"claude\": {\n      \"mcp_config\": { \"command\": \"npx\", \"args\": [\"-y\", \"@scope/package\"] },\n      \"skill_path\": \"~/.claude/skills/skill-name/SKILL.md\",\n      \"skill_content\": \"---\\nname: ...\\n---\\n...\",\n      \"default\": true\n    }\n  }\n}\n```\n\n**Rules:**\n- Only add skills that are actively maintained (updated in last 6 months)\n- Prefer official packages over community forks\n- Mark deprecated packages in the PR description\n- Test MCP server startup on this VM before adding\n- Skills requiring OAuth browser flows should be marked `\"headless_compatible\": false`\n- Each PR should update no more than 5 skills (small, reviewable changes)\n- **SIGN-OFF**: `-- discovery/skills-scout`\n\n3. **Skills** — spawn skills scout to research and update the skills catalog\n4. **Issues** — respond to open issues\n5. **Monitor** — TaskList loop until ALL teammates report back\n6. **Shutdown** — Full shutdown sequence, exit"
+    gold_removed: ''

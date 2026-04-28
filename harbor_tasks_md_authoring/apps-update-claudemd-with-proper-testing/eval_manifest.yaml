@@ -1,0 +1,24 @@
+version: "2.0"
+
+task:
+  name: apps-update-claudemd-with-proper-testing
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: saleor/apps
+  pr: 2087
+  base_commit: "75fbefada976fdba24a4a5de5fd6a8543c09f595"
+  merge_commit: "e1b0e3e72bebccfd81150c0cdf67fa8f73540f83"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+
+config_edits:
+  - path: CLAUDE.md
+    tier: 1
+    gold_added: '- `pnpm test:ci` - Run unit tests for all projects'
+    gold_removed: ''

@@ -1,0 +1,63 @@
+version: "2.0"
+
+task:
+  name: saleor-add-agentsmd
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: saleor/saleor
+  pr: 18193
+  base_commit: "187e42a5329c15ce7b07f9ed6bb193b50153f251"
+  merge_commit: "dd097cb7db8fbdea443e4201db29bb2bdace9317"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+
+config_edits:
+  - path: AGENTS.md
+    tier: 1
+    gold_added: '# AGENTS.md
+
+
+      # Testing
+
+
+      ## Running tests
+
+
+      - Run tests using `pytest`
+
+      - Attach `--reuse-db` argument to speed up tests by reusing the test database
+
+      - Select tests to run by passing test file path as an argument
+
+      - Enter virtual environment before executing tests
+
+
+      ## Writing tests
+
+
+      - Use given/when/then structure for clarity
+
+      - Use `pytest` fixtures for setup and teardown
+
+      - Declare test suites flat in file. Do not wrapp in classes
+
+      - Prefer using fixtures over mocking. Fixtures are usually within directory "tests/fixtures" and are functions decorated with`@pytest.fixture`'
+    gold_removed: ''
+  - path: CLAUDE.md
+    tier: 1
+    gold_added: '@AGENTS.md'
+    gold_removed: ''

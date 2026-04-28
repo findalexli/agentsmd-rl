@@ -1,0 +1,24 @@
+version: "2.0"
+
+task:
+  name: vibesec-skill-fix-use-hyphenated-name-in
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: BehiSecc/VibeSec-Skill
+  pr: 5
+  base_commit: "846c6790ae18ecc4798d0d1b9c6cbb7d818465a0"
+  merge_commit: "3ad1c4cb5bfbff1d7bf5409def386fb9b7a5a05c"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in SKILL.md."
+
+config_edits:
+  - path: SKILL.md
+    tier: 1
+    gold_added: 'name: Vibe-Security-Skill'
+    gold_removed: ''

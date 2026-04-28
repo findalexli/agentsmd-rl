@@ -1,0 +1,36 @@
+version: "2.0"
+
+task:
+  name: opennextjs-cloudflare-add-basic-agentsmd
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: opennextjs/opennextjs-cloudflare
+  pr: 1228
+  base_commit: "a3a76a63fa18398de031321c2dd8476f6242fe1e"
+  merge_commit: "7ba626f2d71003b8a35713c6510ef568cda3c2a1"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+
+config_edits:
+  - path: AGENTS.md
+    tier: 1
+    gold_added: "# What this is\n\n`@opennextjs/cloudflare` is an adapter that takes a Next.js `standalone` build and runs it on Cloudflare Workers via the Node.js compatibility layer. It sits on top of `@opennextjs/aws`, which provides the generic OpenNext build/runtime core; this package plugs Cloudflare-specific bindings (KV, R2, D1, Durable Objects, Assets, Images) into the override points that `@opennextjs/aws` exposes, and also contains the esbuild plugins and AST grep patches needed to rewrite Next's emitted code to run on Workers.\n\n# Layout\n\n```\npackages/cloudflare/        # the adapter\n  src/api/                  # runtime surface users import (small)\n  src/cli/                  # the `opennextjs-cloudflare` build CLI\n    commands/               # build, deploy, preview, etc. commands live here\n    build/patches/          # esbuild plugins + ast-grep patches applied to Next's output\n  templates/                # starter configs copied by `migrate` command\nexamples/                   # sample Next apps used for manual + e2e testing\ncreate-cloudflare/          # templates for the `create-cloudflare` CLI\nbenchmarking/               # perf harness\n```\n\nTwo things to keep separate in your head: **`src/api`** is the tiny surface users import at runtime; **`src/cli`** is the much larger build tool. Changes to `src/api` are user-visible; changes in `src/cli/build/patches` are user-invisible but the riskiest code in the repo.\n\n# Commands\n\nUse pnpm. Run from the repo root.\n\n| Command                                | What it does                                                                                             |\n| -------------------------------------- | -------------------------------------------------------------------------------------------------------- |\n| `pnpm install`                         | also triggers a `postinstall` build of the adapter.                                                      |\n| `pnpm build`                           | build `packages/cloudflare`.                                                                             |\n| `pnpm --filter cloudflare build:watch` | rebuild on change.                                                                                       |\n| `pnpm test`                            | builds, then runs all vitest suites.                                                                     |\n| `pnpm code:checks`                     | prettier + eslint + tsc.                                                                                 |\n| `pnpm fix`                             | auto-fix prettier + eslint.                                                                              |\n| `pnpm --filter <example> preview`      | build + preview an example app end-to-end. Add `SKIP_NEXT_APP_BUILD=true` when only the adapter changed. |\n| `pnpm e2e` / `pnpm e2e:dev`            | Playwright suites against the example apps.                                                              |\n| `pnpm --filter <example> e2e`          | Run a specific example's Playwright suite.                                                               |\n| `pnpm changeset`                       | create a changeset for changes.                                                                          |\n\n# Conventions\n\n- **Strict TypeScript**. Don't loosen; reach for generics or narrowing.\n- **ESM only**. Internal imports use the `.js` extension (`./foo.js`) even though the source is `.ts` - this is required for bundling, not a mistake.\n- **Unit tests are `*.spec.ts` colocated with source**, run with Vitest. Use `mock-fs` for filesystem-heavy tests. E2E coverage lives in `examples/` and runs under Playwright.\n- **Formatting is prettier**. Don't fight it; `pnpm fix`.\n- **Imports are sorted by `simple-import-sort`.** Let eslint reorder them.\n- **Dependency versions live in `pnpm-workspace.yaml` under `catalog:`.** When adding a shared dep, add it to the catalog and reference it as `\"catalog:\"` in the package.json. Don't pin versions inline when a catalog entry already exists.\n- **`packages/cloudflare` ships to users**. Be deliberate about adding runtime `dependencies`. Prefer `devDependencies`, inlining small helpers, or moving logic into code that only runs in the CLI.\n- **`CloudflareEnv` is augmented globally** in `src/api/cloudflare-context.ts`. New bindings that users configure should be declared there with a comment explaining what they're for.\n- **User-facing logs** go through `@opennextjs/aws`'s logger, not `console.*`. Warn (don't throw) when experimental features are used.\n\n## Where things tend to go wrong\n\n- **`src/cli/build/patches/`** contains esbuild plugins and `@ast-grep/napi` transforms that rewrite Next's emitted code to run on Workers. Every patch needs a spec, and ideally a minimal fixture of the input it's matching. Upstream Next changes break these; when a patch stops matching, fix the matcher, don't widen it blindly.\n- **Overrides in `src/api/overrides/`** implement contracts defined in `@opennextjs/aws`. Check the upstream type before changing a signature. `@opennextjs/aws` is pinned in `package.json`, so bumping it is a deliberate change with its own changeset.\n\n# Pre-PR checklist\n\n1. `pnpm code:checks` is clean.\n2. `pnpm test` passes.\n3. Changeset included if necessary.\n\n## Changesets\n\nAny behavioural change to `packages/cloudflare` needs one. Skip for internal refactors, test-only changes, example/doc tweaks.\n\n```sh\npnpm changeset\n```\n\nFormat:\n\n```\n<type>: <imperative title>\n\n<body explaining the why>\n```\n\n- `type` is one of `feature | fix | refactor | docs | chore`.\n- Bugfixes and experimental work -> `patch`.\n- New feature -> `minor`.\n- Breaking changes -> `major`.\n\nFull rules in [CONTRIBUTING.md](CONTRIBUTING.md)."
+    gold_removed: ''
+  - path: CLAUDE.md
+    tier: 1
+    gold_added: '@AGENTS.md'
+    gold_removed: ''

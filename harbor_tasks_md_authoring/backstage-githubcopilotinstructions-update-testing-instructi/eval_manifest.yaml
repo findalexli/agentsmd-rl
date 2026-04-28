@@ -1,0 +1,24 @@
+version: "2.0"
+
+task:
+  name: backstage-githubcopilotinstructions-update-testing-instructi
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: backstage/backstage
+  pr: 31307
+  base_commit: "9556a3bb16e1c12a10ec603b33d271202415bda3"
+  merge_commit: "6ee65a9deba0e9b1a184928113afe06cc0e33c79"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/copilot-instructions.md."
+
+config_edits:
+  - path: .github/copilot-instructions.md
+    tier: 1
+    gold_added: '- Test: Use `yarn test --no-watch <path>` in the project root to run tests. The path can be either a single file or a directory. Always provide a path, avoid running all tests.'
+    gold_removed: ''

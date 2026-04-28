@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: cultivation-world-simulator-feat-add-specinterview-skill-for
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: 4thfever/cultivation-world-simulator
+  pr: 103
+  base_commit: "4a4c45c42856172b36f07072ff09f2d82d131745"
+  merge_commit: "c3ac584a9037be1ed60dd9c3250b0dd3f94c3f43"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/spec-interview/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/spec-interview/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/spec-interview/SKILL.md."
+
+config_edits:
+  - path: .claude/skills/spec-interview/SKILL.md
+    tier: 1
+    gold_added: "---\nname: spec-interview\ndescription: Conduct an in-depth interview to gather requirements and write a detailed spec\n---\n\n## Overview\n\nConduct a thorough interview using `AskUserQuestion` to deeply understand a feature, system, or idea before writing a specification document.\n\n## Core Principles\n\n1. **Use your judgment** - Adapt question depth and focus based on the topic. A small UI change needs different questions than a new authentication system.\n\n2. **Ask non-obvious questions** - Skip surface-level questions. Probe for:\n   - Hidden assumptions the user hasn't articulated\n   - Edge cases they haven't considered\n   - Tradeoffs they're implicitly making\n   - Constraints they forgot to mention\n   - Failure modes and recovery paths\n\n3. **Follow interesting threads** - When an answer reveals complexity or uncertainty, dig deeper before moving on.\n\n4. **Challenge gently** - Ask \"what if X fails?\" or \"why not Y instead?\" to stress-test the design.\n\n5. **Know when to stop** - End the interview when you have enough clarity to write a useful spec. Not every topic needs exhaustive coverage.\n\n## Question Areas (use as needed, not as a checklist)\n\n- **Problem & motivation**: Why now? What's the cost of not doing this?\n- **Technical design**: Data model, state, APIs, performance, migrations\n- **User experience**: Error states, loading, edge cases, accessibility\n- **Integration**: What else does this touch? Security? Observability?\n- **Tradeoffs**: What are you NOT building? What debt are you accepting?\n- **Risks**: What assumptions could be wrong? What would make this a failure?\n\n## Interview Flow\n\n1. Start with 2-4 questions per round via `AskUserQuestion`.\n2. Synthesize answers and follow up on gaps or ambiguities.\n3. Periodically summarize to confirm understanding.\n4. When sufficiently complete, confirm with the user and write the spec.\n\n## Output\n\nWrite the spec to `docs/specs/<feature-name>.md` (or ask user for preferred path). Include whatever sections are relevant — don't force a rigid template.\n\n## Invocation\n\n```\n/spec-interview [topic]\n```"
+    gold_removed: ''

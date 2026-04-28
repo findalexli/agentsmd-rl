@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: prefect-docs-document-pagination-limit-pitfall
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: PrefectHQ/prefect
+  pr: 21715
+  base_commit: "cc8d64aa26f6d6fa58e4329eaaf263980b5f26d2"
+  merge_commit: "2bbff78f60cfc123e48e8d4dc6e249058b9f3090"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in ui-v2/e2e/AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in ui-v2/e2e/AGENTS.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in ui-v2/e2e/AGENTS.md."
+
+config_edits:
+  - path: ui-v2/e2e/AGENTS.md
+    tier: 1
+    gold_added: "### Pagination Tests — Use a Small Limit\n\nWhen testing pagination, set a small enough `limit` in the URL so the next-page button stays enabled even after filters are applied. A large limit (e.g., `limit=5`) against a filtered data set that returns fewer rows than the limit leaves the next-page button disabled, and a conditional `isEnabled()` check silently skips the assertion rather than catching the regression:\n\n```typescript\n// ❌ Fragile - filtering may reduce results to ≤ limit, so next-page is never available\nawait page.goto(`/runs?limit=5&flow-run-search=${filter}`);\nif (await nextPageButton.isEnabled({ timeout: 3000 }).catch(() => false)) {\n  await nextPageButton.click(); // silently skipped when pagination isn't triggered\n}\n\n// ✅ Reliable - small limit guarantees next page is always needed\nawait page.goto(`/runs?limit=2&flow-run-search=${filter}`);\nawait expect(nextPageButton).toBeEnabled({ timeout: 10000 });\nawait nextPageButton.click();\nawait expect(page).toHaveURL(/page=2/);\n```\n\nAlways assert `toBeEnabled()` rather than conditionally checking — the conditional silently turns a pagination test into a no-op when setup conditions change.\n"
+    gold_removed: ''

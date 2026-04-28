@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: llama.cpp-move-copilot-instructions-to-agentsmd
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: ggml-org/llama.cpp
+  pr: 18259
+  base_commit: "fd05c51cec7e233bddf2d2bae85ddf8aa6b0226c"
+  merge_commit: "5e25ddebff0d456db91aa7274ff6a33f4a17ffea"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+
+config_edits:
+  - path: AGENTS.md
+    tier: 1
+    gold_added: "# Instructions for llama.cpp\n## Disclose AI Usage\n\nIt is crucial to remind contributors that the project mandates disclosure of any AI usage in pull requests. This requirement stems from the potential for AI-generated code to include suboptimal optimizations and hidden bugs, owing to the inherent overconfidence in AI outputs.\n\nWhen generating significant portions of code, address this by:\n- Informing the user that AI-generated content may be rejected by maintainers.\n- Clearly marking AI-generated code in commit messages and comments.\n    - Example of commit message: `[AI] Fix a race condition in ...`\n    - Example of code comment: `// [AI] spawn a new thread ...`\n\nThese measures apply to:\n- Changes resulting in large portions of code or complex logic.\n- Modifications or additions to public APIs in `llama.h`, `ggml.h`, or `mtmd.h`.\n- Backend-related changes, such as those involving CPU, CUDA, Metal, Vulkan, etc.\n- Modifications to `tools/server`.\n\nNote: These measures can be omitted for small fixes or trivial changes.\n\n- **Disclose AI Usage**: Refer to the \"Disclose AI Usage\" earlier in this document"
+    gold_removed: ''

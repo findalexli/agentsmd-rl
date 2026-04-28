@@ -1,0 +1,47 @@
+version: "2.0"
+
+task:
+  name: angular-docs-add-using-agent-skills
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: angular/angular
+  pr: 68156
+  base_commit: "a89b565395c67612da229b9020c8f04848298542"
+  merge_commit: "bb03878ae0ca79862d8c756c52b534abda4ee343"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/dev-skills/README.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/dev-skills/README.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/dev-skills/README.md."
+
+config_edits:
+  - path: skills/dev-skills/README.md
+    tier: 1
+    gold_added: '## Using Agent Skills
+
+
+      Agent Skills are designed to be used with agentic coding tools like [Gemini CLI](https://geminicli.com/docs/cli/skills/), [Antigravity](https://antigravity.google/docs/skills) and more. Activating a skill loads the specific instructions and resources needed for that task.
+
+
+      To use these skills in your own environment you may follow the instructions for your specific tool or use a community tool like [skills.sh](https://skills.sh/).
+
+
+      ```bash
+
+      npx skills add https://github.com/angular/skills
+
+      ```
+
+      '
+    gold_removed: ''

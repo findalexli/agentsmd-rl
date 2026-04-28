@@ -1,0 +1,131 @@
+version: "2.0"
+
+task:
+  name: causalpy-clarify-reusefirst-python-environment-guidance
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: pymc-labs/CausalPy
+  pr: 808
+  base_commit: "eec45f75cddb5d6b3dac8942c81524a6474e78d0"
+  merge_commit: "673ce6ee63f449d207cd6d88bb78c2d415222aab"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/skills/python-environment/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/skills/python-environment/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/skills/python-environment/SKILL.md."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_04
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_05
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+
+config_edits:
+  - path: .github/skills/python-environment/SKILL.md
+    tier: 1
+    gold_added: 'description: Detect, configure, and use a conda-compatible tool. Use before tasks that need the project environment, such as importing project code, running tests, building docs, or invoking repo tooling.
+
+      ## Decide whether the env is required
+
+
+      Use the `CausalPy` env when the command:
+
+
+      - imports project code (for example `import causalpy` or project modules)
+
+      - runs tests
+
+      - builds docs
+
+      - invokes repo tooling such as `make`, `prek`, or notebook execution
+
+
+      For simple inspection helpers that only read local text/JSON or use the Python standard library, any Python on `PATH` is acceptable.
+
+
+      ## Reuse before creating
+
+
+      Do the least work that will get the task done:
+
+
+      1. Reuse an existing `CausalPy` env if one is already available.
+
+      2. If `run -n CausalPy` cannot resolve the env, check whether it exists under a different prefix and use `run -p`.
+
+      3. Only create the env if no suitable existing env is available.
+
+      4. Only update the env or rerun `make setup` when dependencies changed, the editable install is stale, or the current checkout has not been installed into that env yet.
+
+
+      ## Create the environment only if needed
+
+
+      If no suitable existing env can be reused, create it:
+
+      ## Install the package only when needed
+
+
+      Run `make setup` after creating or updating the env. Also rerun it when using a different git worktree if that env has not been installed against the current checkout yet.
+
+      Never use `$CONDA_EXE activate`, instead use `$CONDA_EXE run -n CausalPy <command>`.
+
+      ### Named env cannot be resolved
+
+
+      If `$CONDA_EXE run -n CausalPy ...` fails with errors such as `The given prefix does not exist`:
+
+
+      ```bash
+
+      $CONDA_EXE env list
+
+      $CONDA_EXE run -p "/full/path/to/CausalPy" <command>
+
+      ```
+
+
+      Keep using `run -p` with that full prefix for the rest of the session.
+
+
+      ### Git worktrees and remote machines
+
+
+      Git worktrees do not require a fresh env per agent session. Prefer reusing an existing env to save time. The main caveat is that this repo uses editable installs, so one shared env can point at whichever checkout most recently ran `make setup`.
+
+
+      - For ordinary local work on one checkout, reuse the existing env.
+
+      - For long-lived parallel worktrees, one env per worktree is the safest option, but do not create one unless needed.
+
+      - On a fresh remote machine or ephemeral container, create the env once. On a persistent remote machine with an existing env, reuse it.
+
+      '
+    gold_removed: ''
+  - path: AGENTS.md
+    tier: 1
+    gold_added: 'Use `mamba`, `micromamba`, or `conda` (in that preference order) to manage the `CausalPy` environment. Reuse an existing `CausalPy` env whenever possible; do not create or update an env unless the task needs the project environment and the existing env is missing, stale, or broken. Use `$CONDA_EXE run -n CausalPy <command>` for commands that import project code, run tests, build docs, or use repo tooling; never use `$CONDA_EXE activate`. For simple text/JSON inspection helpers that do not import project code, any Python on `PATH` is fine.
+
+      - If `$CONDA_EXE run -n CausalPy ...` fails because the named env cannot be resolved, inspect `$CONDA_EXE env list` and retry with `$CONDA_EXE run -p <full-prefix> <command>`.
+
+      - In git worktrees, prefer reusing an existing env. Because the repo uses editable installs, rerun `make setup` in the current worktree only when that checkout has not been installed into the env yet or when dependencies changed.
+
+      '
+    gold_removed: ''

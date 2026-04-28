@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: classicy-docs-add-claudemd-for-claude
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: robbiebyrd/classicy
+  pr: 116
+  base_commit: "41925f82b808fcbc441493730eab703b27902ec1"
+  merge_commit: "708bf6290bdb894bd3c883c9fd33aa75efcbe418"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+
+config_edits:
+  - path: CLAUDE.md
+    tier: 1
+    gold_added: "# CLAUDE.md\n\nThis file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.\n\n## Project Overview\n\nClassicy is a React/TypeScript UI framework that replicates the Mac OS 8 (Platinum) interface. It's distributed as an npm package with ES and UMD module formats.\n\n## Common Commands\n\n```bash\nnpm install              # Install dependencies\nnpm run dev              # Start Vite dev server\nnpm run build            # Full build (audio sprites + source)\nnpm run build:source     # TypeScript + Vite build only\nnpm run build:audio      # Generate audio sprites from resources/sounds/\nnpm run lint             # Run ESLint\nnpm run preview          # Preview production build\n```\n\nUse `npm run build:source` for faster iteration when not modifying sound files.\n\n## Path Aliases\n\n- `@/` → `./src/`\n- `@snd/` → `./assets/sounds/`\n- `@img/` → `./assets/img/`\n\n## Architecture\n\n### Component Hierarchy\n\n```\nClassicyAppManagerProvider     # Root provider - wraps entire desktop\n  └── ClassicyDesktop          # Desktop surface with icons and menu bar\n       ├── ClassicyDesktopMenuBar\n       └── ClassicyApp         # Individual application container\n            └── ClassicyWindow # Window component with controls\n                 └── UI Components (Button, Input, Tabs, etc.)\n```\n\n### State Management\n\nUses React Context + useReducer pattern with a centralized event reducer:\n\n- **ClassicyAppManagerProvider** (`src/SystemFolder/ControlPanels/AppManager/ClassicyAppManagerContext.tsx`) - Root provider that wraps SoundManager and Analytics\n- **ClassicyStore** - Central state object containing all system managers\n- **classicyDesktopStateEventReducer** (`ClassicyAppManager.ts:264`) - Routes events by prefix to domain-specific handlers\n\nEvent routing by prefix:\n- `ClassicyWindow*` → Window operations (focus, move, resize, collapse, zoom)\n- `ClassicyDesktop*` → Desktop operations (menus, themes, backgrounds)\n- `ClassicyDesktopIcon*` → Icon selection and interaction\n- `ClassicyApp*` → App lifecycle (open, close, focus, activate)\n- `ClassicyAppFinder*`, `ClassicyAppMoviePlayer*`, `ClassicyAppPictureViewer*` → App-specific handlers\n\n### Directory Structure\n\n- `src/SystemFolder/ControlPanels/` - System-level managers (AppManager, SoundManager, AppearanceManager, DateAndTimeManager)\n- `src/SystemFolder/SystemResources/` - Reusable UI components (Window, Button, Input, Menu, etc.)\n- `src/SystemFolder/Finder/` - Finder app implementation\n- `src/SystemFolder/QuickTime/` - Media player apps\n\n### Creating Apps\n\nApps follow this pattern:\n1. Use `ClassicyApp` wrapper with id, name, icon props\n2. Use `useAppManager()` to read state, `useAppManagerDispatch()` to dispatch events\n3. Wrap content in `ClassicyWindow` components\n4. Create a Context file with event handler if app needs custom state management\n\n### Theming\n\nThemes are JSON-based (`src/SystemFolder/ControlPanels/AppearanceManager/styles/themes.json`) and control:\n- Typography (body, ui, header fonts)\n- Colors (system palette, theme accent colors)\n- Desktop appearance (background, patterns)\n\nState persists to localStorage under key `classicyDesktopState`.\n\n## Build Notes\n\n- Uses Volta for Node version management (Node 24.11.0)\n- Audio sprites generated via audiosprite npm package from `resources/sounds/` directories\n- Library outputs to `dist/` as `classicy.es.js` and `classicy.umd.js`"
+    gold_removed: ''

@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: farmer-add-github-copilot-instructions-for
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: CompositionalIT/farmer
+  pr: 1228
+  base_commit: "027c933b50aa6f72e0cb021646624dcec73a54b6"
+  merge_commit: "31470da33b8e945a163b3b4e97a4cdc96871f795"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/copilot-instructions.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/copilot-instructions.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/copilot-instructions.md."
+
+config_edits:
+  - path: .github/copilot-instructions.md
+    tier: 1
+    gold_added: "# GitHub Copilot Instructions for Farmer Repository\n\n## Pull Request Requirements\n\nWhen creating or updating pull requests for this repository, you **MUST** follow these guidelines:\n\n### 1. Follow the PR Template\n\nEvery PR must follow the template in `pull_request_template.md`:\n\n- Link to the issue being closed: \"This PR closes #\" (add issue number)\n- List all changes in bullet points under \"The changes in this PR are as follows:\"\n- State: \"I have read the [contributing guidelines](CONTRIBUTING.md) and have completed the following:\"\n- Complete the checklist items:\n  - [ ] **Tested my code** end-to-end against a live Azure subscription.\n  - [ ] **Updated the documentation** in the docs folder for the affected changes.\n  - [ ] **Written unit tests** against the modified code that I have made.\n  - [ ] **Updated the [release notes](RELEASE_NOTES.md)** with a new entry for this PR.\n  - [ ] **Checked the coding standards** outlined in the [contributions guide](CONTRIBUTING.md) and ensured my code adheres to them.\n- If you haven't completed any of the tasks above, include the reasons why here\n- Include this section: \"Below is a minimal example configuration that includes the new features, which can be used to deploy to Azure:\" followed by an F# code block with the example\n\n### 2. Format Code with Fantomas\n\n**CRITICAL**: All F# code MUST be formatted with Fantomas before committing. This is automatically checked by CI and PRs will be rejected if formatting is not applied.\n\n**How to format code:**\n\n1. Restore tools first (only needed once):\n   ```bash\n   dotnet tool restore\n   ```\n\n2. Format all F# code in the src directory:\n   ```bash\n   dotnet fantomas src -r\n   ```\n\n3. Verify formatting is correct:\n   ```bash\n   dotnet fantomas src --check\n   ```\n\n**ALWAYS run `dotnet fantomas src -r` after making any changes to F# files and before committing.**\n\n### 3. Coding Standards\n\nFollow these F# coding standards:\n\n- **Never** use `yield` - it is no longer necessary in F#\n- Prefer `[ for x in y do ... ]` to `[ for x in y -> ... ]`\n- **Never** use `.Value` on `Option` types\n- Follow the .editorconfig settings for indentation and formatting\n\n### 4. Documentation\n\nEvery PR that modifies a resource or adds a new keyword **MUST** have corresponding documentation updates in the `docs/` folder.\n\n### 5. Unit Tests\n\nEvery PR **SHOULD** have at least one test associated with it. If no tests are added, provide an explanation in the PR description.\n\n### 6. Release Notes\n\nEvery PR **MUST** include an entry in the `RELEASE_NOTES.md` file under the next release section. \n\nYou can generally assume it will be in the next release based off the GitHub releases. Once the PR milestone is set, it will confirm what release the PR should be under in the release notes.\n\nFormat:\n\n```markdown\n* [Feature/Fix description] - [link to PR]\n```\n\n## Workflow Summary\n\nFor every PR:\n\n1. Create an issue first (for non-trivial changes)\n2. Make code changes following coding standards\n3. **RUN FANTOMAS**: `dotnet fantomas src -r`\n4. Update documentation in `docs/`\n5. Write unit tests\n6. Update `RELEASE_NOTES.md`\n7. Verify fantomas formatting: `dotnet fantomas src --check`\n8. Follow the PR template when creating the PR\n9. Include a minimal F# example in the PR description\n\n## Testing\n\nRun tests with:\n```bash\ndotnet test -v n -c release\n```\n\n## Build\n\nBuild the project with:\n```bash\ndotnet build -c release\n```\n\n---\n\n**Remember**: Fantomas formatting is enforced by CI. Always run `dotnet fantomas src -r` before committing!"
+    gold_removed: ''

@@ -1,0 +1,322 @@
+version: "2.0"
+
+task:
+  name: kuma-choredevx-add-claudemd-and-clauderules
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: kumahq/kuma
+  pr: 15642
+  base_commit: "c80e0486d30f6ac58b2c54ead635fcadd61d5d84"
+  merge_commit: "cc458d430d339df9dc638f3268db24b37e6dbe33"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/rules/debug.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/rules/debug.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/rules/debug.md."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/rules/linting.md."
+  - id: signal_04
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/rules/linting.md."
+  - id: signal_05
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/rules/linting.md."
+  - id: signal_06
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/rules/policies.md."
+  - id: signal_07
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/rules/policies.md."
+  - id: signal_08
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/rules/policies.md."
+  - id: signal_09
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/rules/release.md."
+  - id: signal_10
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/rules/release.md."
+  - id: signal_11
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/rules/release.md."
+  - id: signal_12
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/rules/testing.md."
+  - id: signal_13
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/rules/testing.md."
+  - id: signal_14
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/rules/testing.md."
+  - id: signal_15
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_16
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_17
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+
+config_edits:
+  - path: .claude/rules/debug.md
+    tier: 1
+    gold_added: "# Debugging and local development\n\n## k3d cluster setup\n\n```bash\nmake k3d/start KIND_CLUSTER_NAME=kuma-1\nexport KUBECONFIG=~/.kube/kind-kuma-1-config\n```\n\nKubeconfig: `~/.kube/kind-<name>-config`. k3d context: `k3d-<name>`.\n\n### Build, load, and deploy\n\n```bash\n# One step: build images, load into k3d, clean previous release, helm install, wait for CP\nmake k3d/deploy/helm KIND_CLUSTER_NAME=kuma-1\n\n# Or step by step:\nmake k3d/load KIND_CLUSTER_NAME=kuma-1\nmake k3d/deploy/helm/upgrade k3d/deploy/wait/cp KIND_CLUSTER_NAME=kuma-1\n```\n\n### Variables\n\n| Variable | Default | Purpose |\n|:---------|:--------|:--------|\n| `KIND_CLUSTER_NAME` | `kuma` | Cluster name |\n| `KUMA_MODE` | `zone` | `zone` or `global` |\n| `K3D_HELM_DEPLOY_NO_CNI` | unset | Set `true` to skip CNI (lighter for local dev) |\n| `K3D_HELM_DEPLOY_ADDITIONAL_SETTINGS` | unset | Extra helm values, space-separated |\n| `K3D_DEPLOY_HELM_DONT_CLEAN` | unset | Set to skip cleaning previous release |\n\n### Deploy with custom settings\n\n```bash\nmake k3d/deploy/helm KIND_CLUSTER_NAME=kuma-1 \\\n  K3D_HELM_DEPLOY_NO_CNI=true \\\n  K3D_HELM_DEPLOY_ADDITIONAL_SETTINGS=\"dataPlane.features.unifiedResourceNaming=true\"\n```\n\nOther targets: `k3d/deploy/kumactl` (deploy via CLI), `k3d/deploy/demo` (demo app), `k3d/stop` (delete cluster).\n\nRenamed targets that will error: `k3d/restart` (use `k3d/restart/kumactl`), `k3d/deploy/kuma` (use `k3d/deploy/kumactl`).\n\n### Skaffold dev loop\n\nHot-reload: watches code changes, rebuilds, redeploys. Config: `skaffold.yaml`.\n\n```bash\nmake k3d/start KIND_CLUSTER_NAME=kuma-1\nexport KUBECONFIG=~/.kube/kind-kuma-1-config\nmake dev/fetch-demo\nskaffold dev\n```\n\n`skaffold debug` exposes a dlv port (logged on startup) for remote debugging from GoLand/VS Code.\n\n## Envoy admin API\n\nAccess via the sidecar container on port 9901:\n\n```bash\n# Full config dump\nkubectl exec deploy/<name> -c kuma-sidecar -- wget -qO- localhost:9901/config_dump\n\n# Filter by section (replace <Section> with Listeners, ClustersConfigDump, Routes, etc.)\nkubectl exec deploy/<name> -c kuma-sidecar -- \\\n  wget -qO- localhost:9901/config_dump | \\\n  jq '.configs[] | select(.\"@type\" | contains(\"<Section>\"))'\n```\n\nOther endpoints: `/stats` (Envoy metrics), `/clusters` (upstream info), `/server_info` (version).\n\n## Control plane\n\n```bash\nkubectl logs -n kuma-system deploy/kuma-control-plane -f\nkubectl exec -n kuma-system deploy/kuma-control-plane -- \\\n  wget -qO- localhost:5681/meshes/default/dataplanes\n```\n\nThe CP REST API runs on port 5681. See `pkg/api-server/` for available endpoints.\n\n## Common tasks\n\n### Enable unified resource naming\n\nRequires both helm value AND mesh patch:\n\n```bash\n# Set during deploy via K3D_HELM_DEPLOY_ADDITIONAL_SETTINGS, then:\nkubectl patch mesh default --type merge \\\n  -p '{\"spec\":{\"meshServices\":{\"mode\":\"Exclusive\"}}}'\n```\n\n### Test a policy change locally\n\n1. Build, load, deploy: `make k3d/deploy/helm KIND_CLUSTER_NAME=kuma-1`\n2. Create a test namespace with sidecar injection: `kubectl label namespace <ns> kuma.io/sidecar-injection=enabled`\n3. Deploy a test workload and apply the policy\n4. Inspect Envoy config to verify xDS changes (see Envoy admin API above)\n5. Clean up: `make k3d/stop KIND_CLUSTER_NAME=kuma-1`\n\n## CPU limit workaround\n\nk3d init containers sometimes get throttled on local machines. Set `K3D_HELM_DEPLOY_NO_CNI=true` to reduce resource pressure. If still slow, comment out CPU limits in `pkg/plugins/runtime/k8s/webhooks/injector/injector.go` (search for `NewScaledQuantity(100, kube_api.Milli)`). Revert before committing.\n\n## Test output\n\nFilter noisy macOS linker warnings: `| grep -vE 'LC_DYSYMTAB|#'`"
+    gold_removed: ''
+  - path: .claude/rules/linting.md
+    tier: 1
+    gold_added: '# Linting rules and import conventions
+
+
+      ## Required import aliases
+
+
+      The `importas` linter enforces these aliases. Using wrong names fails `make check`:
+
+
+      - `core_mesh` → `github.com/kumahq/kuma/v2/pkg/core/resources/apis/mesh`
+
+      - `mesh_proto` → `github.com/kumahq/kuma/v2/api/mesh/v1alpha1`
+
+      - `system_proto` → `github.com/kumahq/kuma/v2/api/system/v1alpha1`
+
+      - `util_proto` → `github.com/kumahq/kuma/v2/pkg/util/proto`
+
+      - `util_rsa` → `github.com/kumahq/kuma/v2/pkg/util/rsa`
+
+      - `kuma_cmd` → `github.com/kumahq/kuma/v2/pkg/cmd`
+
+      - `bootstrap_k8s` → `github.com/kumahq/kuma/v2/pkg/plugins/bootstrap/k8s`
+
+      - `config_core` → `github.com/kumahq/kuma/v2/pkg/config/core`
+
+      - `core_model` → `github.com/kumahq/kuma/v2/pkg/core/resources/model`
+
+      - `common_api` → `github.com/kumahq/kuma/v2/api/common/v1alpha1`
+
+      - `api_types` → `github.com/kumahq/kuma/v2/api/openapi/types`
+
+
+      ## Import ordering
+
+
+      Enforced by `gci`: standard library → third-party → `github.com/kumahq/kuma/v2`
+
+
+      ## Forbidden patterns
+
+
+      Use `tracing.SafeSpanEnd(span)` instead of `span.End()`. The `forbidigo` linter blocks direct `span.End()` calls to prevent panics during OTel init/shutdown.
+
+
+      ## Blocked packages (depguard)
+
+
+      - `github.com/golang/protobuf` → use `google.golang.org/protobuf` (except for JSON, see next line)
+
+      - `google.golang.org/protobuf/encoding/protojson` → use `github.com/golang/protobuf/jsonpb` (compatibility issues)
+
+      - `sigs.k8s.io/controller-runtime/pkg/log` → use `sigs.k8s.io/controller-runtime` (data race in init containers, see #13299)
+
+      - `io/ioutil` → use `io` and `os`
+
+      - `github.com/kumahq/kuma/v2/app` from `pkg/`. Architectural boundary (`pkg/` cannot import `app/`)
+
+
+      ## RBAC validation
+
+
+      `make check` runs `check/rbac`: if any RBAC manifests in `deployments/` change (Role, RoleBinding, ClusterRole, ClusterRoleBinding), `UPGRADE.md` must also be updated.'
+    gold_removed: ''
+  - path: .claude/rules/policies.md
+    tier: 1
+    gold_added: '# Policy plugin system
+
+
+      Policies live in `pkg/plugins/policies/` (MeshTrafficPermission, MeshHTTPRoute, MeshTimeout, etc.).
+
+
+      ## Directory structure per policy
+
+
+      ```
+
+      {policyname}/
+
+      ├── api/v1alpha1/
+
+      │   ├── {policyname}.go              # HAND-WRITTEN: spec struct with +kuma:policy markers
+
+      │   ├── validator.go                 # HAND-WRITTEN: validation logic
+
+      │   ├── deprecated.go                # HAND-WRITTEN: deprecation warnings (optional)
+
+      │   ├── zz_generated.resource.go     # GENERATED
+
+      │   ├── zz_generated.deepcopy.go     # GENERATED
+
+      │   ├── zz_generated.helpers.go      # GENERATED
+
+      │   └── rest.yaml                    # GENERATED: OpenAPI spec
+
+      ├── k8s/v1alpha1/
+
+      │   ├── groupversion_info.go         # HAND-WRITTEN: K8s group/version
+
+      │   ├── zz_generated.deepcopy.go     # GENERATED
+
+      │   └── zz_generated.types.go        # GENERATED
+
+      ├── plugin/v1alpha1/
+
+      │   ├── plugin.go                    # HAND-WRITTEN: xDS generation logic
+
+      │   ├── plugin_test.go               # HAND-WRITTEN: tests with testdata/
+
+      │   └── testdata/                    # Golden files
+
+      └── zz_generated.plugin.go           # GENERATED: plugin registration
+
+      ```
+
+
+      **Rule**: only edit hand-written files. Never edit `zz_generated.*` or `rest.yaml`.
+
+
+      ## After changing a policy
+
+
+      ```bash
+
+      make generate    # Regenerate all dependent files
+
+      make check       # Lint and validate
+
+      make test TEST_PKG_LIST=./pkg/plugins/policies/{policyname}/...
+
+      ```
+
+
+      ## Policy spec markers
+
+
+      Add above the main struct in `api/v1alpha1/{policyname}.go`:
+
+      - `// +kuma:policy:singular_display_name=...`: UI name
+
+      - `// +kuma:policy:skip_registration=true`: test-only policies
+
+      - `// +kuma:policy:scope=Mesh`: Mesh or Global scope
+
+
+      Field markers: `+kuma:discriminator` (union types), `+kuma:non-mergeable-struct`
+
+
+      ## Plugin interface
+
+
+      Policies implement `core_plugins.PolicyPlugin`:
+
+      - `MatchedPolicies()`: finds policies applying to a dataplane (use `matchers.MatchedPolicies()`)
+
+      - `Apply()`: modifies Envoy xDS `ResourceSet` based on matched policies
+
+
+      Access matched policies in Apply: `proxy.Policies.Dynamic[api.PolicyType]`
+
+
+      ## Generation pipeline
+
+
+      `make generate` runs per policy: `policy-gen core-resource` → `k8s-resource` → `plugin-file` → `helpers` → `openapi`
+
+
+      **Gotcha**: `tools/resource-gen` depends on `tools/policy-gen`, so modifying policy-gen forces resource-gen rebuild.'
+    gold_removed: ''
+  - path: .claude/rules/release.md
+    tier: 1
+    gold_added: '# Release process
+
+
+      ## Branch/tag format
+
+
+      - Branch: `release-X.Y`
+
+      - Tag: `vX.Y.Z` (WITH `v` prefix)
+
+      - Default base: `master`
+
+      - Latest versions: see `versions.yml`
+
+
+      ## Steps
+
+
+      1. Verify CI green on `release-X.Y`
+
+      2. Tag: `git tag -a vX.Y.Z -m "Release vX.Y.Z"` then `git push --no-verify upstream vX.Y.Z`
+
+      3. Monitor build-test-distribute workflow
+
+      4. Smoke tests (Universal + K8s)
+
+      5. `gh workflow run release.yaml --repo kumahq/kuma --ref master -f version=X.Y.Z -f check=true`
+
+      6. Publish release notes
+
+      7. Kong Mesh sync (PRs, tag, build, release)
+
+      8. Post-release: docs metadata, merge changelog/docs PRs
+
+      9. Verify: `curl -L https://kuma.io/installer.sh | VERSION=vX.Y.Z sh -`
+
+      10. Announce (GTM Jira, notify EM/PM on #team-mesh)
+
+
+      ## Utilities
+
+
+      - Check dep version: `git show upstream/<branch>:go.mod | grep <dep>`
+
+      - Image scan: `trivy image <image>:<tag>`
+
+      - Go dep scan: `osv-scanner --lockfile=go.mod`
+
+      - Update deps: `gh workflow run update-insecure-dependencies.yaml --repo kumahq/kuma` (runs daily 03:00 UTC)'
+    gold_removed: ''
+  - path: .claude/rules/testing.md
+    tier: 1
+    gold_added: "# Testing patterns\n\n## Suite structure\n\nEach package has `*_suite_test.go` with:\n```go\nfunc TestXxx(t *testing.T) { test.RunSpecs(t, \"Suite Name\") }\n```\nFor E2E tests, use `test.RunE2ESpecs()` instead (sets higher Gomega timeouts).\n\n## Imports\n\nUse dot imports for Ginkgo/Gomega:\n```go\n. \"github.com/onsi/ginkgo/v2\"\n. \"github.com/onsi/gomega\"\n```\n\n## Golden file matchers\n\n- `matchers.MatchGoldenYAML(\"testdata\", \"file.yaml\")`: YAML comparison\n- `matchers.MatchGoldenJSON(\"testdata\", \"file.json\")`: JSON comparison\n- `matchers.MatchGoldenEqual(\"testdata\", \"file.txt\")`: raw string equality\n- `matchers.MatchGoldenXML(\"testdata\", \"file.xml\")`: XML comparison\n- `matchers.MatchProto()`: protobuf message comparison with detailed diffs\n\nUpdate all golden files: `UPDATE_GOLDEN_FILES=true make test`\n\n## Table-driven tests\n\nUse `DescribeTable`/`Entry` for parameterized tests:\n```go\nDescribeTable(\"description\",\n    func(input, expected string) { ... },\n    Entry(\"case 1\", \"input1\", \"expected1\"),\n)\n```\n\nAuto-load from testdata: `test.EntriesForFolder(\"testdata/folder\")` scans for `.input.yaml` files.\n\n## Test resource builders\n\nFluent API in `pkg/test/resources/builders/`:\n```go\nbuilders.Dataplane().WithName(\"dp-1\").WithMesh(\"default\").WithAddress(\"127.0.0.1\").Build()\n```\nPre-built samples in `pkg/test/resources/samples/`.\n\n## Mocks\n\nHand-written stubs only, no mockgen or counterfeiter. Implement the minimal interface in the test file itself.\n\n## Async testing\n\n- `test.Within(timeout, func() { ... })`: wraps async task with timeout and GinkgoRecover\n- `Eventually()` / `Consistently()` for async Gomega assertions\n- Spawn goroutines with `defer GinkgoRecover()` for panic safety\n\n## Test ordering\n\n- `Ordered` modifier on `Describe()` for sequential test execution\n- `Serial` for individual serial tests\n- Default: parallel execution within suites"
+    gold_removed: ''
+  - path: CLAUDE.md
+    tier: 1
+    gold_added: "# CLAUDE.md\n\nKuma - CNCF service mesh (Envoy-based) for K8s/VMs. L4-L7 connectivity, security, observability, multi-zone/multi-mesh.\n\n## Commands\n\n```bash\nmake install              # Install dev tools (runs: mise install + buf dep update)\nmake build                # Build all components\nmake format               # Format and generate code (auto-fix)\nmake check                # Run format + lint, then verify no files changed\nmake generate             # Generate code (protobuf, policies, resources)\nmake test                 # Run tests\nmake test/e2e             # Run E2E tests (slow, requires cluster setup)\n\nmake build/kuma-cp        # Build control plane\nmake build/kuma-dp        # Build data plane\nmake build/kumactl        # Build CLI\n\nmake test TEST_PKG_LIST=./pkg/xds/...    # Test specific package\nUPDATE_GOLDEN_FILES=true make test       # Update golden files\nmake k3d/start && skaffold dev           # Dev environment\n```\n\n## Workflow\n\n**Code quality principles** (CRITICAL):\n\n1. **Minimal, surgical changes only**\n   - Modify ONLY what's necessary; keep PRs small (<10 files)\n   - Don't refactor unrelated code \"while you're there\"\n\n2. **Follow existing patterns**\n   - Study surrounding code before making changes\n   - Match naming conventions, error handling, structure\n   - When in doubt, ask for clarification\n\n3. **No bloated changes**\n   - No unnecessary abstractions or `utils.go`/`helpers.go` files\n   - No new dependencies without explicit discussion\n   - Remove unused code you encounter, but don't hunt for it\n\n4. **Quality gates** (code changes only, skip for docs/config/CI)\n   - `make format` to auto-fix, then `make check` to validate (fails if files changed)\n   - Fix ALL linting issues (config: `.golangci.yml`, see `.claude/rules/linting.md`)\n   - `git diff` to verify changes are focused\n\n### Standard workflow\n\n1. `make check` to ensure clean starting state\n2. Read existing code in relevant `pkg/` directory\n3. Write tests first (`*_test.go`, Ginkgo/Gomega)\n4. Implement minimal, focused changes\n5. `make format && make check && make test` to validate\n\n## Git & PRs\n\n```bash\ngit push --no-verify <remote> branch-name    # ALWAYS use --no-verify\n```\n\n- **Commit format**: `type(scope): description`, e.g., `feat(xds):`, `fix(meshtrace):`, `chore(deps):`\n- **Commit signing**: use `git commit -s` (DCO `Signed-off-by:` required by CI)\n- **Active branches**: see `active-branches.json`\n- **Base branch**: `master`\n- **PR template**: `.github/PULL_REQUEST_TEMPLATE.md`\n- **Changelog**: from PR title or `> Changelog: {<desc>,skip}`\n- **CI labels**: MUST use `gh pr create --label \"ci/...\"`. Labels added after creation are ignored by CI\n- **MADR**: `docs/madr/decisions/000-template.md` for features/architecture decisions\n- **Downstream refs**: say \"downstream project\" or \"enterprise fork\". Never mention Kong Mesh in PRs/commits (private repo)\n\n## Architecture\n\n### Components\n\n- `kuma-cp`: control plane, serves xDS configs to data planes, manages mTLS certs, coordinates zones\n- `kuma-dp`: data plane proxy (wraps Envoy), connects to `kuma-cp` for bootstrap config\n- `kumactl`: CLI for `kuma-cp` REST API\n- `kuma-cni`: CNI plugin for transparent proxy setup on K8s\n\n### Key directories\n\n- `pkg/core/`: core resource types and managers\n- `pkg/xds/`: Envoy xDS config generation (listeners, clusters, routes, endpoints)\n- `pkg/kds/`: Kuma Discovery Service, syncs resources between Global CP and Zone CPs\n- `pkg/api-server/`: REST API server (validate external inputs here)\n- `pkg/dp-server/`: data plane server (SDS, health checks)\n- `pkg/plugins/policies/`: policy plugins; see `.claude/rules/policies.md`\n- `pkg/plugins/`: plugin architecture (bootstrap, runtime, CA, resources, policies)\n- `pkg/transparentproxy/`: transparent proxy (iptables, eBPF)\n- `pkg/config/`: configuration management\n- `pkg/test/`: test utilities, matchers, and resource builders\n- `tools/`: code generation tools (policy-gen, resource-gen, openapi)\n\n### Multi-zone\n\n- Global CP coordinates Zone CPs via KDS (`pkg/kds/`)\n- Zone Ingress/Egress handle cross-zone traffic\n- Supports Kubernetes and Universal (VM/bare metal)\n\n### Code generation\n\nRun `make generate` after changes to `.proto` files, `pkg/plugins/policies/*/api/` dirs, or resource definitions. Generated files: `zz_generated.*`, `*.pb.go`, `*.pb.validate.go`, `rest.yaml`\n\n### Tool management\n\nUses `mise` (config: `mise.toml`). Install via `make install`. Includes: buf, ginkgo, helm, kind, kubectl, protoc, golangci-lint, skaffold.\n\n## Testing\n\n- **Framework**: Ginkgo (BDD) + Gomega assertions (`*_test.go`); see `.claude/rules/testing.md`\n- **Golden matchers**: `MatchGoldenYAML`, `MatchGoldenJSON`, `MatchGoldenEqual`, `MatchProto`\n- **Golden files**: in `testdata/` dirs. Update with `UPDATE_GOLDEN_FILES=true make test`\n- **Mocks**: hand-written stubs (no mockgen/counterfeiter). Implement the interface in the test file\n- **E2E**: `make test/e2e`. Slow, requires cluster setup\n\n## Gotchas\n\n- **RBAC gate**: if `deployments/` RBAC manifests change, `UPGRADE.md` must also be updated or `make check` fails\n- **Import aliases required**: `.golangci.yml` enforces `core_mesh`, `mesh_proto`, `core_model`, `common_api`, etc. See `.claude/rules/linting.md`\n- **Cached resources are read-only**: `pkg/core/resources/manager/cache.go` returns shared instances. Never modify them\n- **`pkg/` cannot import `app/`**: architectural boundary enforced by depguard linter\n\n## Common issues\n\n- Missing dependencies → `make install`\n- Outdated generated code → `make generate`\n- Formatting errors → `make format` (auto-fixes), then `make check` (validates)\n- Golden file mismatches → `UPDATE_GOLDEN_FILES=true make test`\n\n## Notes\n\n- Versions: `active-branches.json` and `versions.yml` in the repo root\n- Docs: `DEVELOPER.md` (setup), `CONTRIBUTING.md` (PR workflow)\n- Release process: see `.claude/rules/release.md`\n- Local dev and debugging: see `.claude/rules/debug.md`"
+    gold_removed: ''

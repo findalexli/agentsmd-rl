@@ -1,0 +1,28 @@
+version: "2.0"
+
+task:
+  name: chart-visualization-skills-fix-fix-docs-typo-agentsmd
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: antvis/chart-visualization-skills
+  pr: 65
+  base_commit: "79513ce84a523162ddfd7270e6abbbc10764ab1e"
+  merge_commit: "703fc58e6f7bff1e9e0543d14ff16c12cd46007b"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+
+config_edits:
+  - path: AGENTS.md
+    tier: 1
+    gold_added: ''
+    gold_removed: ''
+  - path: CLAUDE.md
+    tier: 1
+    gold_added: See [AGENTS.md](./AGENTS.md) for project architecture and structure.
+    gold_removed: ''

@@ -1,0 +1,64 @@
+version: "2.0"
+
+task:
+  name: swamp-docsskills-document-barespecifier-vs-scorer
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: systeminit/swamp
+  pr: 1220
+  base_commit: "76b653b98262dca620a9f96ff9c53600db509f9e"
+  merge_commit: "03130a3d55f007532e99ba9aedd86cc86a288ae3"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/swamp-extension-publish/references/publishing.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/swamp-extension-publish/references/publishing.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/swamp-extension-publish/references/publishing.md."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/swamp-extension-quality/SKILL.md."
+  - id: signal_04
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/swamp-extension-quality/SKILL.md."
+  - id: signal_05
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/swamp-extension-quality/SKILL.md."
+  - id: signal_06
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/swamp-extension-quality/references/templates.md."
+  - id: signal_07
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/swamp-extension-quality/references/templates.md."
+  - id: signal_08
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/swamp-extension-quality/references/templates.md."
+
+config_edits:
+  - path: .claude/skills/swamp-extension-publish/references/publishing.md
+    tier: 1
+    gold_added: "`import { z } from \"npm:zod@4\";` is the canonical zod import for entrypoint\nfiles. Two distinct constraints make this the right form:\n\n- **Hermeticity at score time.** The swamp-club scorer and the local\n  `swamp extension quality` command both run in a sandbox that strips the\n  tarball's `deno.json` and writes its own with `nodeModulesDir: \"auto\"` and no\n  imports map. Bare specifiers like `from \"zod\"` resolve at bundle time via the\n  repo's `deno.json` import map, but fail at score time — `deno doc --json`\n  cannot find the bare name and the command throws before factor scoring begins.\n  The inline `npm:` form is the only form that resolves under both the bundler's\n  permissive resolution AND the scorer's hermetic resolution.\n- **Zod externalization.** Zod is the sole import that is NOT inlined into the\n  published bundle. The extension must share swamp's zod instance so schema\n  `instanceof` checks work across the module boundary — that is why zod in\n  particular is called out as the canonical inline form, not merely a\n  consequence of hermeticity.\n\nOther Deno-compatible imports (`npm:`, `jsr:`, `https://`) are inlined into the\nbundle by the swamp packager. Bare specifiers backed by `deno.json` or\n`package.json` work for the bundler, but follow the hermeticity rule above for\nanything that needs to score: prefer the inline form in entrypoint files.\n"
+    gold_removed: ''
+  - path: .claude/skills/swamp-extension-quality/SKILL.md
+    tier: 1
+    gold_added: "**Bare-specifier imports fail `swamp extension quality`.** The command runs\nhermetically — it strips the tarball's `deno.json`, so a bare `\"zod\"` import\ncannot resolve and the command throws\n`deno doc --json failed: Import \"zod\" not a dependency` **before** factor\nscoring begins. Fix: use `import { z } from \"npm:zod@4\"` in every entrypoint\nfile. Adding `deno.json` to `additionalFiles:` does not help — it lands at\n`files/deno.json`, which the scorer does not promote. **Deno's default lint\nrules enable `no-import-prefix` whenever an `imports` map is present**, so\n`swamp extension fmt` / `swamp extension push` reject the inline form as soon as\nyou add a `deno.json` with an `imports` section — the same `deno.json` the\nscorer strips. Break the deadlock one of two ways: disable the rule in your\n`deno.json` (`\"lint\": { \"rules\": { \"exclude\": [\"no-import-prefix\"] } }`), or\nsuppress per-import with `// deno-lint-ignore no-import-prefix` above the zod\nimport line. The deadlock goes away entirely once the scorer honours the\ntarball's `files/deno.json`.\n\nIf `swamp extension quality` throws a `deno doc` error instead of printing\nfactor results, the entrypoint uses a bare specifier — see \"Bare-specifier\nimports fail `swamp extension quality`\" above for the fix.\n\n- **`swamp extension quality` throws `Import \"zod\" not a dependency` instead of\n  showing factor results** → entrypoint uses bare `\"zod\"`; switch to\n  `\"npm:zod@4\"`. Adding `deno.json` to `additionalFiles:` does not resolve it."
+    gold_removed: ''
+  - path: .claude/skills/swamp-extension-quality/references/templates.md
+    tier: 1
+    gold_added: "import { z } from \"npm:zod@4\";\n- **Inline `npm:zod@4` specifier**, not bare `\"zod\"`. The scorer and\n  `swamp extension quality` run in a hermetic sandbox that strips the repo's\n  `deno.json` and writes its own with no imports map, so a bare specifier cannot\n  resolve at score time even when an import map maps it at bundle time."
+    gold_removed: ''

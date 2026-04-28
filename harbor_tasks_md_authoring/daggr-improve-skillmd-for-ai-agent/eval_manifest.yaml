@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: daggr-improve-skillmd-for-ai-agent
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: gradio-app/daggr
+  pr: 26
+  base_commit: "c987f90ae6918d2af80589bfc819b2c6509eb9d0"
+  merge_commit: "fdab8df6aa2c3358f80d31d18824512b05399acb"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .agents/skills/daggr/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .agents/skills/daggr/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .agents/skills/daggr/SKILL.md."
+
+config_edits:
+  - path: .agents/skills/daggr/SKILL.md
+    tier: 1
+    gold_added: "  version: \"1.1\"\nFind Spaces with semantic queries (describe what you need): `https://huggingface.co/api/spaces/semantic-search?q=generate+music+for+a+video&sdk=gradio&includeNonRunning=false`\nOr by category: `https://huggingface.co/api/spaces/semantic-search?category=image-generation&sdk=gradio&includeNonRunning=false`\n   ```bash\n   curl -s \"https://<space-subdomain>.hf.space/gradio_api/openapi.json\"\n   Replace `<space-subdomain>` with the Space's subdomain (e.g., `Tongyi-MAI/Z-Image-Turbo` → `tongyi-mai-z-image-turbo`).\nuvx --python 3.12 daggr workflow.py &  # Launch in background, hot reloads on file changes"
+    gold_removed: ''

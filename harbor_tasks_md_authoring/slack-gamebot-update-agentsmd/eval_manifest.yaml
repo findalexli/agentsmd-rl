@@ -1,0 +1,49 @@
+version: "2.0"
+
+task:
+  name: slack-gamebot-update-agentsmd
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: dblock/slack-gamebot
+  pr: 250
+  base_commit: "23c0bcabec984ccc1f0229fd643b5581a9788dc2"
+  merge_commit: "257580204c3e959357fa51fa4fc236df99e9bff9"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+
+config_edits:
+  - path: AGENTS.md
+    tier: 1
+    gold_added: '## Starting Work
+
+
+      Before creating a new branch, always sync and clean up:
+
+
+      ```
+
+      git checkout master
+
+      git pull
+
+      git branch --merged master | grep -v ''^\* \|^  master$'' | xargs -r git branch -d
+
+      ```
+
+
+      - Never push directly to master — always work on a branch and open a PR.'
+    gold_removed: ''

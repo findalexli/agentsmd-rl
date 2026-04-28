@@ -1,0 +1,24 @@
+version: "2.0"
+
+task:
+  name: hypershift-cntrlplane1756-fixaiskill-prevent-security-warnin
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: openshift/hypershift
+  pr: 7125
+  base_commit: "2d2371195cb8b648c4c7ff9a70ca4dcff32f947a"
+  merge_commit: "9ecb32c358619c6917737e661b78f43ea13d30d6"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/git-commit-format/SKILL.md."
+
+config_edits:
+  - path: .claude/skills/git-commit-format/SKILL.md
+    tier: 1
+    gold_added: '- [ ] Use "!" or `BREAKING CHANGE` for breaking changes'
+    gold_removed: ''

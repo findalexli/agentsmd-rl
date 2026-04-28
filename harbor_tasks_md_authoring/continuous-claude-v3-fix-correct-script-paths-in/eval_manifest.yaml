@@ -1,0 +1,232 @@
+version: "2.0"
+
+task:
+  name: continuous-claude-v3-fix-correct-script-paths-in
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: parcadei/Continuous-Claude-v3
+  pr: 79
+  base_commit: "49cef1012da794a7563d16ded83a1e6ef8d59693"
+  merge_commit: "8765d6d9611802b5c8d71d7e33d831535855a193"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/firecrawl-scrape/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/github-search/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/help/SKILL.md."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/implement_task/SKILL.md."
+  - id: signal_04
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/morph-apply/SKILL.md."
+  - id: signal_05
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/morph-search/SKILL.md."
+  - id: signal_06
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/nia-docs/SKILL.md."
+  - id: signal_07
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/perplexity-search/SKILL.md."
+  - id: signal_08
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/recall-reasoning/SKILL.md."
+  - id: signal_09
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/recall-reasoning/SKILL.md."
+  - id: signal_10
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/recall-reasoning/SKILL.md."
+  - id: signal_11
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/recall/SKILL.md."
+  - id: signal_12
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/remember/SKILL.md."
+  - id: signal_13
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/research-agent/SKILL.md."
+  - id: signal_14
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/research-agent/SKILL.md."
+  - id: signal_15
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/research-agent/SKILL.md."
+  - id: signal_16
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/research-external/SKILL.md."
+  - id: signal_17
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/research-external/SKILL.md."
+  - id: signal_18
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/research-external/SKILL.md."
+  - id: signal_19
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/system_overview/SKILL.md."
+
+config_edits:
+  - path: .claude/skills/firecrawl-scrape/SKILL.md
+    tier: 1
+    gold_added: 'uv run python -m runtime.harness scripts/mcp/firecrawl_scrape.py \
+
+      uv run python -m runtime.harness scripts/mcp/firecrawl_scrape.py \
+
+      uv run python -m runtime.harness scripts/mcp/firecrawl_scrape.py \'
+    gold_removed: ''
+  - path: .claude/skills/github-search/SKILL.md
+    tier: 1
+    gold_added: 'uv run python -m runtime.harness scripts/mcp/github_search.py \
+
+      uv run python -m runtime.harness scripts/mcp/github_search.py \
+
+      uv run python -m runtime.harness scripts/mcp/github_search.py \'
+    gold_removed: ''
+  - path: .claude/skills/help/SKILL.md
+    tier: 1
+    gold_added: (cd opc && uv run python scripts/core/recall_learnings.py --query "hook patterns")
+    gold_removed: ''
+  - path: .claude/skills/implement_task/SKILL.md
+    tier: 1
+    gold_added: uv run python -m runtime.harness scripts/mcp/morph_apply.py \
+    gold_removed: ''
+  - path: .claude/skills/morph-apply/SKILL.md
+    tier: 1
+    gold_added: 'uv run python -m runtime.harness scripts/mcp/morph_apply.py \
+
+      uv run python -m runtime.harness scripts/mcp/morph_apply.py \
+
+      uv run python -m runtime.harness scripts/mcp/morph_apply.py \'
+    gold_removed: ''
+  - path: .claude/skills/morph-search/SKILL.md
+    tier: 1
+    gold_added: 'uv run python -m runtime.harness scripts/mcp/morph_search.py \
+
+      uv run python -m runtime.harness scripts/mcp/morph_search.py \
+
+      uv run python -m runtime.harness scripts/mcp/morph_search.py \
+
+      uv run python -m runtime.harness scripts/mcp/morph_search.py \
+
+      uv run python -m runtime.harness scripts/mcp/morph_search.py \'
+    gold_removed: ''
+  - path: .claude/skills/nia-docs/SKILL.md
+    tier: 1
+    gold_added: 'uv run python -m runtime.harness scripts/mcp/nia_docs.py \
+
+      uv run python -m runtime.harness scripts/mcp/nia_docs.py \
+
+      uv run python -m runtime.harness scripts/mcp/nia_docs.py \
+
+      uv run python -m runtime.harness scripts/mcp/nia_docs.py \
+
+      uv run python -m runtime.harness scripts/mcp/nia_docs.py \
+
+      uv run python -m runtime.harness scripts/mcp/nia_docs.py \
+
+      uv run python -m runtime.harness scripts/mcp/nia_docs.py \'
+    gold_removed: ''
+  - path: .claude/skills/perplexity-search/SKILL.md
+    tier: 1
+    gold_added: 'uv run python scripts/mcp/perplexity_search.py \
+
+      uv run python scripts/mcp/perplexity_search.py \
+
+      uv run python scripts/mcp/perplexity_search.py \
+
+      uv run python scripts/mcp/perplexity_search.py \
+
+      uv run python scripts/mcp/perplexity_search.py \
+
+      uv run python scripts/mcp/perplexity_search.py \
+
+      uv run python scripts/mcp/perplexity_search.py \
+
+      uv run python scripts/mcp/perplexity_search.py \
+
+      uv run python scripts/mcp/perplexity_search.py \'
+    gold_removed: ''
+  - path: .claude/skills/recall-reasoning/SKILL.md
+    tier: 1
+    gold_added: 'uv run python scripts/core/artifact_query.py "<query>" [--outcome SUCCEEDED|FAILED] [--limit N]
+
+      uv run python scripts/core/artifact_query.py "authentication OAuth JWT"
+
+      uv run python scripts/core/artifact_query.py "implement agent" --outcome SUCCEEDED
+
+      uv run python scripts/core/artifact_query.py "hook implementation" --outcome FAILED
+
+      - Run `uv run python scripts/core/artifact_index.py --all` to index existing handoffs'
+    gold_removed: ''
+  - path: .claude/skills/recall/SKILL.md
+    tier: 1
+    gold_added: cd $CLAUDE_PROJECT_DIR/opc && PYTHONPATH=. uv run python scripts/core/recall_learnings.py --query "<ARGS>" --k 5
+    gold_removed: ''
+  - path: .claude/skills/remember/SKILL.md
+    tier: 1
+    gold_added: cd $CLAUDE_PROJECT_DIR/opc && PYTHONPATH=. uv run python scripts/core/store_learning.py \
+    gold_removed: ''
+  - path: .claude/skills/research-agent/SKILL.md
+    tier: 1
+    gold_added: 'uv run python -m runtime.harness scripts/mcp/nia_docs.py \
+
+      uv run python -m runtime.harness scripts/mcp/perplexity_search.py \
+
+      uv run python -m runtime.harness scripts/mcp/firecrawl_scrape.py \'
+    gold_removed: ''
+  - path: .claude/skills/research-external/SKILL.md
+    tier: 1
+    gold_added: '(cd $CLAUDE_PROJECT_DIR/opc && uv run python -m runtime.harness scripts/mcp/nia_docs.py \
+
+      (cd $CLAUDE_PROJECT_DIR/opc && uv run python -m runtime.harness scripts/mcp/nia_docs.py \
+
+      (cd $CLAUDE_PROJECT_DIR/opc && uv run python -m runtime.harness scripts/mcp/firecrawl_scrape.py \
+
+      (cd $CLAUDE_PROJECT_DIR/opc && uv run python scripts/mcp/perplexity_search.py \
+
+      (cd $CLAUDE_PROJECT_DIR/opc && uv run python scripts/mcp/perplexity_search.py \
+
+      (cd $CLAUDE_PROJECT_DIR/opc && uv run python scripts/mcp/perplexity_search.py \
+
+      (cd $CLAUDE_PROJECT_DIR/opc && uv run python scripts/mcp/perplexity_search.py \
+
+      (cd $CLAUDE_PROJECT_DIR/opc && uv run python scripts/mcp/perplexity_search.py \
+
+      (cd $CLAUDE_PROJECT_DIR/opc && uv run python -m runtime.harness scripts/mcp/nia_docs.py \
+
+      (cd $CLAUDE_PROJECT_DIR/opc && uv run python scripts/mcp/perplexity_search.py \
+
+      (cd $CLAUDE_PROJECT_DIR/opc && uv run python -m runtime.harness scripts/mcp/firecrawl_scrape.py \'
+    gold_removed: ''
+  - path: .claude/skills/system_overview/SKILL.md
+    tier: 1
+    gold_added: '| Store learning | `opc/scripts/core/store_learning.py` |'
+    gold_removed: ''

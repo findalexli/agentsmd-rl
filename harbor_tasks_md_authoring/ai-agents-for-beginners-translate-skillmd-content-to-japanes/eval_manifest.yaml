@@ -1,0 +1,119 @@
+version: "2.0"
+
+task:
+  name: ai-agents-for-beginners-translate-skillmd-content-to-japanes
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: microsoft/ai-agents-for-beginners
+  pr: 515
+  base_commit: "ab885dcd687287eaa1b3c839dc732945316427b8"
+  merge_commit: "41aad5fe51513dbdca0e7c84b90b5f0723ec8cbb"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in translations/ja/.agents/skills/jupyter-notebook/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in translations/ja/.agents/skills/jupyter-notebook/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in translations/ja/.agents/skills/jupyter-notebook/SKILL.md."
+
+config_edits:
+  - path: translations/ja/.agents/skills/jupyter-notebook/SKILL.md
+    tier: 1
+    gold_added: '## いつ使うか
+
+      ## 決定木分析
+
+      ## スキルパス（一度設定）
+
+      ユーザー限定スキルは `$CODEX_HOME/skills` ディレクトリにインストールされます（デフォルト：`~/.codex/skills`）。
+
+      ## ワークフロー
+
+      1. インテントを確定する。
+
+      ノートブックの種類（`experiment` または `tutorial`）を特定する。
+
+      目的、対象ユーザー、完了状態を明確にする。
+
+      2. テンプレートからスキャフォールディングする。
+
+      ヘルパースクリプトを使用することで、ノートブックのJSONを手作業で作成する必要がなくなります。
+
+      3. ノートブックには、実行可能な小さなステップを記述してください。
+
+      各コードセルは、1つのステップに焦点を絞ってください。
+
+      目的と期待される結果を説明する短いマークダウンセルを追加してください。
+
+      短い要約で済む場合は、長くて冗長な出力は避けてください。
+
+
+      4. 適切なパターンを適用します。
+
+      実験については、`references/experiment-patterns.md` を参照してください。
+
+      チュートリアルについては、`references/tutorial-patterns.md` を参照してください。
+
+
+      5. 既存のノートブックを編集する際は、安全に作業を進めてください。
+
+      ノートブックの構造を維持し、全体の流れを改善する場合を除き、セルの順序変更は避けてください。
+
+      全面的な書き換えよりも、対象を絞った編集を優先してください。
+
+      どうしてもJSONファイルを編集する必要がある場合は、まず`references/notebook-structure.md`を確認してください。
+
+
+      6. 結果を検証する。
+
+      環境が許せば、ノートブックを最初から最後まで実行してください。
+
+      実行できない場合は、その旨を明記し、ローカル環境での検証方法を指示してください。
+
+      最終合格チェックリストは、`references/quality-checklist.md` を参照してください。
+
+
+      ## テンプレートとヘルパースクリプト
+
+      - テンプレートは `assets/experiment-template.ipynb` と `assets/tutorial-template.ipynb` にあります。
+
+      - ヘルパースクリプトはテンプレートを読み込み、タイトルセルを更新し、ノートブックを作成します。
+
+
+      スクリプトのパス:
+
+      ## 一時ファイルと出力ファイルの保存規則
+
+      - 中間ファイルは `tmp/jupyter-notebook/` に保存し、作業完了後に削除してください。
+
+      - このリポジトリで作業する場合は、最終成果物を `output/jupyter-notebook/` に保存してください。
+
+      - 安定した、分かりやすいファイル名を使用してください（例：`ablation-temperature.ipynb`）。
+
+      ## 依存関係（必要な場合のみインストールしてください）
+
+      依存関係の管理には`uv`の使用を推奨します。
+
+      ローカルノートブック実行のためのオプションのPythonパッケージ：
+
+      同梱されているスキャフォールディングスクリプトはPython標準ライブラリのみを使用しており、追加の依存関係は不要です。
+
+      ## 環境
+
+      必須の環境変数はありません。
+
+      ## 参照マップ
+
+      本書はAI翻訳サービス「[Co-op Translator](https://github.com/Azure/co-op-translator)」を使用して翻訳されました。正確さには努めていますが、自動翻訳には誤りや不正確な箇所が含まれる可能性があります。原文（原言語の文書）を正本としてご参照ください。重要な情報については、専門の人間による翻訳を推奨します。本翻訳の利用により生じたいかなる誤解や解釈の相違についても、当社は責任を負いません。
+
+      <!-- CO-OP TRANSLATOR DISCLAIMER END -->'
+    gold_removed: ''

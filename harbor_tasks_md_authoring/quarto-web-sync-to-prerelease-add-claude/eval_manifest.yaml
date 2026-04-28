@@ -1,0 +1,47 @@
+version: "2.0"
+
+task:
+  name: quarto-web-sync-to-prerelease-add-claude
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: quarto-dev/quarto-web
+  pr: 1986
+  base_commit: "5c2a7d6ab4634ff8b3ff64a072cb757b5909e943"
+  merge_commit: "d6e8ecd8bcc722d4c1a7a66631d65d08942d2e4f"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/rules/docs-authoring.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/rules/docs-authoring.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/rules/docs-authoring.md."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in _extensions/prerelease/CLAUDE.md."
+  - id: signal_04
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in _extensions/prerelease/CLAUDE.md."
+
+config_edits:
+  - path: .claude/rules/docs-authoring.md
+    tier: 1
+    gold_added: "---\npaths:\n  - \"docs/**/*.qmd\"\n---\n\n# Docs Authoring\n\n## Prerelease shortcodes\n\nWhen documenting a feature introduced in a specific Quarto version, add at the top of the section:\n\n```\n{{< prerelease-callout X.Y >}}\n```\n\nShows a pre-release callout before X.Y ships, disappears automatically after — never remove them manually. For blog posts use `type=\"blog\"`. For URLs use `{{< prerelease-docs-url X.Y >}}`. See `_extensions/prerelease/` for details."
+    gold_removed: ''
+  - path: _extensions/prerelease/CLAUDE.md
+    tier: 1
+    gold_added: '# Prerelease Extension
+
+
+      See `prerelease.lua` for implementation and #1961 for design rationale.'
+    gold_removed: ''

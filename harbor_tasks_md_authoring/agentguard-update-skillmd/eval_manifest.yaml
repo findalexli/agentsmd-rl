@@ -1,0 +1,24 @@
+version: "2.0"
+
+task:
+  name: agentguard-update-skillmd
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: GoPlusSecurity/agentguard
+  pr: 1
+  base_commit: "ebdd4c8e2591d879c896430f512e59cb608cefea"
+  merge_commit: "43495975f0e49b4797c99b44a6c7e9f23e28edf4"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/agentguard/SKILL.md."
+
+config_edits:
+  - path: skills/agentguard/SKILL.md
+    tier: 1
+    gold_added: 'argument-hint: "[scan|action|trust|report|config] [args...]"'
+    gold_removed: ''

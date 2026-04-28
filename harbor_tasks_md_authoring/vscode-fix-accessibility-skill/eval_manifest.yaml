@@ -1,0 +1,30 @@
+version: "2.0"
+
+task:
+  name: vscode-fix-accessibility-skill
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: microsoft/vscode
+  pr: 293548
+  base_commit: "84c404c3d09093323d723e4e35f43537971b9251"
+  merge_commit: "424c52d5019aa0b90781948460bb3d5d274295c9"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/skills/accessibility/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/skills/accessibility/SKILL.md."
+
+config_edits:
+  - path: .github/skills/accessibility/SKILL.md
+    tier: 1
+    gold_added: 'name: accessibility
+
+      description: Accessibility guidelines for VS Code features — covers accessibility help dialogs, accessible views, verbosity settings, accessibility signals, ARIA alerts/status announcements, keyboard navigation, and ARIA labels/roles. Applies to both new interactive UI surfaces and updates to existing features. Use when creating new UI or updating existing UI features.'
+    gold_removed: ''

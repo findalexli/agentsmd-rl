@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: phpstan-webmozart-assert-add-claudemd-with-project-documenta
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: phpstan/phpstan-webmozart-assert
+  pr: 200
+  base_commit: "a8ec2739561d1b4ccb52dddb3e7ff440fc6ca571"
+  merge_commit: "c4f3f092907b03fd05d1b6810f795c89321a8cc9"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+
+config_edits:
+  - path: CLAUDE.md
+    tier: 1
+    gold_added: "# CLAUDE.md\n\nThis is the `phpstan/phpstan-webmozart-assert` extension for [PHPStan](https://phpstan.org/). It provides type-narrowing support for [webmozart/assert](https://github.com/webmozart/assert) assertion methods.\n\n## Project Goal\n\nPHPStan cannot natively understand type narrowing from `Webmozart\\Assert\\Assert` static method calls. This extension teaches PHPStan to refine types after assertions like `Assert::integer($a)`, `Assert::notNull($a)`, `Assert::isInstanceOf($a, Foo::class)`, etc. After an assertion call, PHPStan understands the variable's type has been narrowed accordingly.\n\nThe extension also supports `nullOr*`, `all*`, and `allNullOr*` method prefixes, as well as negative assertions like `allNotNull`, `allNotInstanceOf`, and `allNotSame`.\n\n## Repository Structure\n\n```\nsrc/Type/WebMozartAssert/\n  AssertTypeSpecifyingExtension.php  # The single main extension class\nstubs/\n  Assert.stub                        # PHPStan stub for Assert methods not covered by the library's own PHPDocs\ntests/Type/WebMozartAssert/\n  AssertTypeSpecifyingExtensionTest.php          # Type inference tests\n  AssertTypeSpecifyingExtensionTestBleedingEdge.php  # Type inference tests with bleeding edge config\n  ImpossibleCheckTypeMethodCallRuleTest.php      # Impossible check detection tests\n  MethodReturnTypeRuleTest.php                   # Return type rule tests\n  data/                                          # Test fixture PHP files (type.php, array.php, bug-*.php, etc.)\nextension.neon          # PHPStan extension config (registers the service and stub)\nphpstan.neon            # PHPStan config for analysing this project itself\nphpstan-baseline.neon   # PHPStan baseline for this project\n```\n\n## PHP Version Requirement\n\nThis extension supports **PHP 7.4+**. All code must be compatible with PHP 7.4. The `composer.json` platform is pinned to PHP 7.4.6.\n\n## Library Version Support\n\nThe extension supports **webmozart/assert ^1.11.0 || ^2.0**. CI tests run with both `--prefer-lowest` and highest dependency versions.\n\n## Development Commands\n\nAll commands are defined in the `Makefile`:\n\n- **`make check`** — runs all checks (lint, cs, tests, phpstan)\n- **`make tests`** — runs PHPUnit tests (`vendor/bin/phpunit`)\n- **`make lint`** — runs PHP parallel lint on `src/` and `tests/`\n- **`make cs`** — runs PHP_CodeSniffer with the phpstan/build-cs standard\n- **`make cs-fix`** — auto-fixes coding standard violations\n- **`make cs-install`** — clones and installs the `phpstan/build-cs` coding standard (2.x branch)\n- **`make phpstan`** — runs PHPStan at level 8 on `src/` and `tests/`\n- **`make phpstan-generate-baseline`** — regenerates the PHPStan baseline\n\n## How It Works\n\nThe extension registers `AssertTypeSpecifyingExtension` as a `phpstan.typeSpecifier.staticMethodTypeSpecifyingExtension` in `extension.neon`. This class implements `StaticMethodTypeSpecifyingExtension` and `TypeSpecifierAwareExtension`.\n\nFor each supported `Assert::*` method, the extension translates the assertion into an equivalent PHP expression (using php-parser AST nodes) that PHPStan's type specifier already understands. For example, `Assert::integer($a)` is translated to `is_int($a)`, and `Assert::stringNotEmpty($a)` becomes `is_string($a) && $a !== ''`.\n\nThe `getExpressionResolvers()` method returns a map of assertion method names to closures that build the equivalent AST expressions.\n\n## Testing Approach\n\nTests use PHPStan's `TypeInferenceTestCase` and `RuleTestCase` base classes:\n\n- **Type inference tests** (`AssertTypeSpecifyingExtensionTest`): Use `assertType()` calls in fixture files under `tests/Type/WebMozartAssert/data/` to verify PHPStan resolves the correct types after assertions.\n- **Rule tests** (`ImpossibleCheckTypeMethodCallRuleTest`): Verify that impossible/always-true assertion checks are correctly detected.\n- **Return type tests** (`MethodReturnTypeRuleTest`): Verify return type rules work correctly with the extension.\n\nTest data files are excluded from PHPStan analysis via `phpstan.neon` (`excludePaths: tests/*/data/*`).\n\n## Coding Style\n\n- **Indentation**: Tabs for PHP, XML, and NEON files; spaces for YAML files (see `.editorconfig`)\n- **Coding standard**: Uses `phpstan/build-cs` (2.x branch) — PHP_CodeSniffer with PHPStan's custom ruleset\n- **Strict types**: All PHP files use `declare(strict_types = 1)` (note the spaces around `=`)\n- **Namespace**: `PHPStan\\Type\\WebMozartAssert`\n\n## CI\n\nGitHub Actions workflow (`.github/workflows/build.yml`) runs on the `2.0.x` branch and pull requests:\n\n- **Lint**: PHP 7.4–8.4\n- **Coding Standard**: PHP 8.2 with `phpstan/build-cs`\n- **Tests**: PHP 7.4–8.4 matrix with lowest/highest dependencies\n- **Static Analysis (PHPStan)**: PHP 7.4–8.4 matrix with lowest/highest dependencies"
+    gold_removed: ''

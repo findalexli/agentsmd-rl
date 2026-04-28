@@ -1,0 +1,48 @@
+version: "2.0"
+
+task:
+  name: catalyst-add-claude-skills-for-releasecatalyst
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: bigcommerce/catalyst
+  pr: 2922
+  base_commit: "0d951ab190c6bf1573ca7de925ecb0017d954cb7"
+  merge_commit: "0d5763ef39d79c1eef83c498a61b60f94382853b"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/release-catalyst/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/release-catalyst/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/release-catalyst/SKILL.md."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/sync-makeswift/SKILL.md."
+  - id: signal_04
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/sync-makeswift/SKILL.md."
+  - id: signal_05
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/sync-makeswift/SKILL.md."
+
+config_edits:
+  - path: .claude/skills/release-catalyst/SKILL.md
+    tier: 1
+    gold_added: "---\nname: release-catalyst\ndescription: >\n  Cut a new release of Catalyst (`@bigcommerce/catalyst-core` and `@bigcommerce/catalyst-makeswift`).\n  Use when the user says \"/release-catalyst\", \"cut a release\", \"release catalyst\", or asks to\n  publish new versions of the Catalyst packages. This skill orchestrates the full two-stage release\n  process: merging the Version Packages PR on canary, syncing integrations/makeswift, and pushing\n  @latest tags.\n---\n\n# Release Catalyst\n\nExecute stages in order. Pause for user input where indicated.\n\n## Stage 1: Cut release from `canary`\n\n### 1a. Find and merge the Version Packages PR\n\n```bash\ngh pr list --search \"Version Packages (canary)\" --state open --json number,title,reviews,mergeable\n```\n\n- If **no open PR** exists, inform the user that there are no pending changesets on `canary` and stop.\n- If the PR is **approved and checks are passing**, merge it: `gh pr merge <number> --squash`\n- If the PR is **not approved or checks are not passing**, tell the user and wait.\n  - Bot-opened PRs often don't trigger CI. If checks aren't running, push an empty commit to trigger them:\n    ```bash\n    git checkout --track origin/changeset-release/canary\n    git commit --allow-empty -m \"chore: trigger CI\"\n    git push origin changeset-release/canary\n    git checkout canary && git branch -D changeset-release/canary\n    ```\n  - **Stop here.** Wait for the user to confirm checks pass and the PR is approved before merging.\n\n### 1b. Verify the release\n\nAfter the PR merges:\n\n```bash\ngit fetch origin --tags\n```\n\nDetermine the new `@bigcommerce/catalyst-core` version from the PR body (look for `## @bigcommerce/catalyst-core@X.Y.Z`). Then verify:\n\n```bash\ngh release view @bigcommerce/catalyst-core@<version> --json tagName,name,isDraft,isPrerelease\n```\n\nIf the release and tag don't exist yet, wait briefly and retry — the Changesets action may still be running.\n\nRecord the **version number** and **bump type** (patch/minor/major) for use in Stage 2.\n\n## Stage 2: Sync and release `integrations/makeswift`\n\n### 2a. Sync branches\n\nInvoke the `/sync-makeswift` skill, with one addition: during the sync (after merge, before pushing), also add a changeset for `@bigcommerce/catalyst-makeswift`:\n\n**Determine bump type**: Match the bump type from Stage 1 (e.g., if core went `1.4.2` → `1.5.0`, that's a `minor`).\n\n**Create changeset file** (`.changeset/sync-canary-<version>.md`):\n\n```markdown\n---\n\"@bigcommerce/catalyst-makeswift\": <patch|minor|major>\n---\n\nPulls in changes from the `@bigcommerce/catalyst-core@<version>` release. For more information about what was included in the `@bigcommerce/catalyst-core@<version>` release, see the [changelog entry](https://github.com/bigcommerce/catalyst/blob/<canary-sha>/core/CHANGELOG.md#<version-anchor>).\n```\n\nWhere:\n- `<canary-sha>` is the merge commit SHA on canary (from the Version Packages merge)\n- `<version-anchor>` is the version with dots removed (e.g., `1.5.0` → `150`)\n\nInclude this changeset in the merge commit (amend if needed) alongside the normal sync work.\n\n### 2b. Merge the Version Packages (`integrations/makeswift`) PR\n\nAfter the sync lands, the Changesets action will open a \"Version Packages (`integrations/makeswift`)\" PR.\n\n```bash\ngh pr list --search \"Version Packages (integrations/makeswift)\" --state open --json number,title\n```\n\nSame flow as Stage 1a:\n- If checks aren't running (bot PR), push an empty commit to trigger CI, then **drop it before merging** by resetting to the parent and force-pushing.\n- Once approved and green, merge with `gh pr merge <number> --squash`.\n  - Note: squash merging is normally disallowed on `integrations/makeswift` to preserve merge bases for sync PRs. The user may need to temporarily enable squash merging in the branch protection rules for this step, then re-disable it after.\n\n### 2c. Verify the makeswift release\n\n```bash\ngit fetch origin --tags\ngh release view @bigcommerce/catalyst-makeswift@<version> --json tagName,name,isDraft,isPrerelease\n```\n\n## Stage 3: Push `@latest` tags\n\nUpdate both `@latest` tags to point to the new releases:\n\n```bash\ngit fetch origin --tags\ngit tag @bigcommerce/catalyst-core@latest @bigcommerce/catalyst-core@<version> -f\ngit tag @bigcommerce/catalyst-makeswift@latest @bigcommerce/catalyst-makeswift@<version> -f\ngit push origin @bigcommerce/catalyst-core@latest -f\ngit push origin @bigcommerce/catalyst-makeswift@latest -f\n```\n\nConfirm both tags were pushed successfully.\n\n## Stage 4: Cleanup\n\n```bash\ngit checkout canary\ngit pull\n```\n\nDelete any leftover local branches (`changeset-release/*`, `sync-integrations-makeswift`, `integrations/makeswift`).\n\nReport the final state: both package versions released, tags updated, branches cleaned up."
+    gold_removed: ''
+  - path: .claude/skills/sync-makeswift/SKILL.md
+    tier: 1
+    gold_added: "---\nname: sync-makeswift\ndescription: >\n  Sync the `integrations/makeswift` branch with `canary` in the Catalyst monorepo.\n  Use when the user says \"/sync-makeswift\", \"sync makeswift\", \"sync integrations/makeswift\",\n  or asks to bring `integrations/makeswift` up to date with `canary`.\n---\n\n# Sync `integrations/makeswift` with `canary`\n\nExecute the following phases in order. Pause for user input where indicated.\n\n## Phase 1: Prepare and merge\n\n```bash\ngit fetch origin\ngit checkout -B sync-integrations-makeswift origin/integrations/makeswift\ngit merge canary\n```\n\nIf the merge completes cleanly, skip to changeset cleanup. Otherwise, resolve conflicts.\n\n### Conflict resolution rules\n\n- `core/package.json`: the `name` field MUST stay `@bigcommerce/catalyst-makeswift`. The `version` field MUST stay at the latest published `@bigcommerce/catalyst-makeswift` version (check what's on `origin/integrations/makeswift`, not `canary`).\n- `core/CHANGELOG.md`: the latest release entry MUST match the latest published `@bigcommerce/catalyst-makeswift` version.\n- `pnpm-lock.yaml`: accept canary's version (`git checkout --theirs pnpm-lock.yaml`), then regenerate with `pnpm install --no-frozen-lockfile`.\n- For all other conflicts, prefer canary's structure/patterns while preserving makeswift-specific additions (imports, components, config).\n\nAfter resolving all conflicts, stage everything and verify no unresolved conflicts remain:\n\n```bash\ngit add <resolved files>\ngit diff --name-only --diff-filter=U  # should return empty\n```\n\n### Changeset cleanup\n\nRemove any `.changeset/*.md` files that do NOT target `@bigcommerce/catalyst-makeswift`. Read each changeset file and delete any that reference `@bigcommerce/catalyst-core` or other packages. Amend the removals into the merge commit.\n\n### Commit the merge\n\n```bash\ngit commit --no-edit\n```\n\nIf changesets were removed after the initial commit, amend them in (`git commit --amend --no-edit`) rather than creating a separate commit.\n\n## Phase 2: Push and open PR\n\n```bash\ngit push origin sync-integrations-makeswift\n```\n\nOpen a PR into `integrations/makeswift` (not `canary`):\n\n- Title: `sync \\`integrations/makeswift\\` with \\`canary\\``\n- Body: summarize what came from canary, list conflict resolutions, and include this notice:\n\n> **Do not squash or rebase-and-merge this PR.** Use a true merge commit or rebase locally to preserve the merge base between `canary` and `integrations/makeswift`.\n\n**Stop here.** Tell the user the PR is ready for review and wait for them to confirm approval before continuing.\n\n## Phase 3: Rebase and push (after PR approval)\n\n```bash\ngit fetch origin\ngit checkout -B integrations/makeswift origin/integrations/makeswift\ngit rebase sync-integrations-makeswift\ngit push origin integrations/makeswift --force-with-lease\n```\n\nThis closes the PR automatically. Confirm with the user that the push succeeded and the PR closed.\n\n## Phase 4: Cleanup\n\nSwitch back to `canary` and delete the local branches that are no longer needed:\n\n```bash\ngit checkout canary\ngit branch -D sync-integrations-makeswift integrations/makeswift\n```"
+    gold_removed: ''

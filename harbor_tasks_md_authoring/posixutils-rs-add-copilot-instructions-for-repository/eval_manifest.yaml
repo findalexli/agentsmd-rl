@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: posixutils-rs-add-copilot-instructions-for-repository
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: rustcoreutils/posixutils-rs
+  pr: 473
+  base_commit: "a804ba4a5a87ebfbc41993860975ce2f9658294e"
+  merge_commit: "0dfb3d879cd4f2c2408d64d8e0b371975c52c60c"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/copilot-instructions.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/copilot-instructions.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/copilot-instructions.md."
+
+config_edits:
+  - path: .github/copilot-instructions.md
+    tier: 1
+    gold_added: "# Copilot Instructions for posixutils-rs\n\n## Project Overview\n\nposixutils-rs is a suite of Rust-native core command line utilities (cp, mv, awk, make, vi, etc.) using POSIX.2024 as the baseline specification. The goal is to create clean, race-free userland utilities that are POSIX compliant, maximizing compatibility with existing shell scripts while minimizing bloat.\n\n## Core Principles\n\n1. **POSIX Compliance First**: The primary specification is POSIX.2024. Implement features according to POSIX specification before considering GNU/BSD extensions.\n2. **Minimalism**: Avoid bloat. Only implement widely-used GNU/BSD extensions, not obscure rarely-used options.\n3. **Clean Rust Code**: Each utility should look like a standard Rust CLI program with minimal dependencies.\n4. **Race-Free**: Design utilities to be race-free in concurrent environments.\n\n## Development Guidelines\n\n### Code Style\n\n1. **Always run `cargo fmt`** - This is required and enforced in CI.\n2. **No warnings**: Code must compile without warnings. Never use `#[allow(dead_code)]`.\n   - If code is unused, delete it\n   - If code is only used in tests, use `#[cfg(test)]`\n3. **Readability over cleverness**: Code should be readable by unfamiliar developers. Avoid dense, uncommented code.\n4. **Write small functions**: Break up large functions. The compiler can inline as needed.\n5. **Priority order**: Correctness, readability, performance (in that order).\n\n### Dependencies\n\n1. **Prefer \"std only\"**: Minimize external crate dependencies.\n2. **Use tiny crates**: When external crates are needed, prefer tiny, single-purpose crates like `tempfile`.\n3. **Avoid mega-crates**: Do not introduce large dependency trees.\n4. **Standard dependencies**: The project commonly uses:\n   - `clap` for command-line parsing\n   - `libc` for system calls\n   - `regex` for pattern matching\n   - `chrono` for date/time handling\n   - `plib` (internal) for common utilities\n\n### Testing\n\n1. **Test pattern**:\n   - Pre-generate input data files\n   - Run system OS utility on input data, generating known-good output\n   - Store input and output in-tree as known-good data\n   - Write TestPlan that executes our utility using static input/output data\n2. **Use plib's TestPlan framework** for integration tests.\n3. **Quick tests only in `cargo test`**: Longer tests or tests requiring root should use feature flags like `posixutils_test_all` or `requires_root`.\n4. **All commits should pass tests**: Keep `git bisect` working.\n\n### Building and Testing Commands\n\n- **Build**: `cargo build --release`\n- **Test all** (long, 15+ minutes): `cargo test --release`\n- **Test one module**: `cargo test --release -p posixutils-SOMECRATE`\n- **Test with all features**: `cargo test --release --features posixutils_test_all`\n- **Format check**: `cargo fmt --all -- --check`\n\n### Project Structure\n\n- Each utility is typically in its own crate under a category directory (e.g., `text/`, `fs/`, `process/`)\n- `plib/` contains shared library code and the TestPlan framework\n- `ftw/` contains race-free file tree walking functionality\n- Integration test harness should ONLY contain `mod` statements\n- Test logic goes in `$module/tests/$category/mod.rs` files\n\n### Utility Lifecycle Stages\n\nWhen working on utilities, be aware of their maturity stage:\n1. **Rough draft**: Core algorithm implemented, bugs may exist\n2. **Feature complete**: Complete per POSIX specification\n3. **Test coverage**: Integration tests complete and passing 100%\n4. **Code coverage**: 100% automated code coverage\n5. **Translated**: All strings internationalized\n6. **Audited**: Externally reviewed for correctness and security\n\n### Commit Guidelines\n\n1. Separate logical changes into separate commits (bug fixes vs. new features)\n2. All commits should pass tests\n3. All PRs must pass tests before merging\n4. All code must be **copyright clean**: freshly written or from compatible open source licenses\n\n### Error Handling and Internationalization\n\n- Support internationalization for error messages\n- Use `gettext-rs` for i18n when appropriate\n- Handle common OS errors with user-friendly messages\n\n### Platform Support\n\n- Primary targets: Linux and macOS\n- The project should work on Unix-like systems\n- Consider platform-specific features when necessary, but keep code portable\n\n## What NOT to Do\n\n1. **Don't add GNU-specific bloat**: Only add GNU features that users cannot live without.\n2. **Don't break POSIX compliance**: Always verify changes maintain POSIX compliance.\n3. **Don't introduce race conditions**: Use race-free patterns, especially with file operations.\n4. **Don't add commented-out code**: Delete unused code instead.\n5. **Don't add dependencies casually**: Each new dependency should be justified and minimal.\n\n## When Implementing New Features\n\n1. Check the POSIX.2024 specification first\n2. Review the existing utility's stage of maturity\n3. Follow the code style of similar utilities in the project\n4. Add integration tests following the TestPlan pattern\n5. Ensure `cargo fmt` and `cargo test --release` pass\n6. Consider whether the feature aligns with project minimalism goals\n\n## References\n\n- POSIX specification: https://pubs.opengroup.org/onlinepubs/9699919799/\n- Minimum Rust version: 1.84.0\n- License: MIT"
+    gold_removed: ''

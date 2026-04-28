@@ -1,0 +1,39 @@
+version: "2.0"
+
+task:
+  name: automat-claudemd-forbid-subagents-for-codebase
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: mafik/automat
+  pr: 5
+  base_commit: "6e7f9d464b33b1e32cbffeff749582c9d381c2b3"
+  merge_commit: "e100c618fb20078d99e7452976339e1df21e8fb6"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+
+config_edits:
+  - path: CLAUDE.md
+    tier: 1
+    gold_added: '## Working in this codebase
+
+
+      - **Do not use sub-agents (Agent / Task / Explore) for codebase exploration.** Read the actual source files yourself with Read/Grep/Glob. Sub-agent summaries are lossy and have introduced factual errors about this codebase (inventing globals, misreading init order, misattributing ownership). When in doubt, open the file.
+
+      - The authoritative list of process-wide state lives in `src/automat.hh` and `src/root_widget.hh`. Init and teardown order is explicit in `automat::Main()` in `src/automat.cc`.
+
+      '
+    gold_removed: ''

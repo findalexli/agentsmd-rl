@@ -1,0 +1,26 @@
+version: "2.0"
+
+task:
+  name: cli-add-url-quoting-reminder-to
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: firecrawl/cli
+  pr: 13
+  base_commit: "c39c867192d8d497ce09f8d85fa0adbfbf76d1f8"
+  merge_commit: "8db0ec6f191e5c13117b80472142dc258a3211dc"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/firecrawl-cli/SKILL.md."
+
+config_edits:
+  - path: skills/firecrawl-cli/SKILL.md
+    tier: 1
+    gold_added: '**Always quote URLs** - shell interprets `?` and `&` as special characters.
+
+      '
+    gold_removed: ''

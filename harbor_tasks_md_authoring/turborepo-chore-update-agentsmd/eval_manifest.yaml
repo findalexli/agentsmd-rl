@@ -1,0 +1,39 @@
+version: "2.0"
+
+task:
+  name: turborepo-chore-update-agentsmd
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: vercel/turborepo
+  pr: 11978
+  base_commit: "68928c08beb81c83c8ae17757462b35a98149f5e"
+  merge_commit: "3887e0d949069f13111a59be5b1ee9c95e0d1dfa"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+
+config_edits:
+  - path: AGENTS.md
+    tier: 1
+    gold_added: '### Always run pre-commit/pre-push hooks
+
+
+      - You are not allowed to use `--no-verify` when making a commit or push.
+
+      - If you do not have dependencies available, you can download them with `pnpm install --frozen-lockfile`.
+
+      '
+    gold_removed: ''

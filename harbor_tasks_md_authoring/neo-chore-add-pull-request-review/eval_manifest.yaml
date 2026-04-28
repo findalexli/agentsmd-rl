@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: neo-chore-add-pull-request-review
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: neomjs/neo
+  pr: 7375
+  base_commit: "c99360a427ad7c55a8324dbed7931c04f30e8eaa"
+  merge_commit: "3a960dd7fd91e07f4ff72e2827fef8b78a318885"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+
+config_edits:
+  - path: AGENTS.md
+    tier: 1
+    gold_added: "\n## 6. Pull Request Review Protocol\n\nThis section outlines the protocol for conducting pull request (PR) reviews to ensure feedback is consistent, constructive, and aligned with the Neo.mjs project's standards.\n\n### 6.1. General Guidelines\n- Always provide feedback in a **constructive and polite tone**.\n- Focus on helping contributors improve their code while maintaining the project's standards.\n- Avoid personal criticism; keep feedback objective, actionable, and specific.\n\n### 6.2. Verification Steps\n1. **Check Against Coding Guidelines:**\n   - Verify that the PR adheres to the project's coding standards as defined in `.github/CODING_GUIDELINES.md`.\n   - Pay special attention to JSDoc comments, formatting, naming conventions, and reactivity rules.\n\n2. **Run Tests:**\n   - Execute the project's test suite (e.g., `npm test`) to ensure no regressions are introduced.\n   - If tests fail, include the failure details in the review and suggest fixes.\n\n3. **Check Completeness:**\n   - Ensure the PR includes all necessary updates, such as documentation, tests, and examples.\n   - Verify that the PR description is clear and provides sufficient context for the changes.\n\n4. **Assess Code Quality:**\n   - Review the code for readability, maintainability, and adherence to Neo.mjs architectural principles.\n   - Ensure the code is free of unnecessary complexity and aligns with the framework's reactivity model.\n\n### 6.3. Standard Review Comment Format\nUse the following format for review comments to ensure clarity and consistency:\n\n1. **Summary of Findings:**\n   - Begin with a brief summary of the overall review, highlighting strengths and areas for improvement.\n\n2. **Line-by-Line Comments:**\n   - Provide specific feedback for each issue, referencing the relevant line(s) of code.\n   - Use the following structure:\n     - **What is the issue?**\n     - **Why is it an issue?**\n     - **How can it be improved?**"
+    gold_removed: ''

@@ -1,0 +1,152 @@
+version: "2.0"
+
+task:
+  name: claude-code-toolkit-refactor-decompose-kubernetessecurity-sk
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: notque/claude-code-toolkit
+  pr: 427
+  base_commit: "e4525729dc32f294868957671ab7e6ca01779fe9"
+  merge_commit: "bc70b6a9efb2e04563c328713db49788fc2acfc0"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/kubernetes-security/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/kubernetes-security/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/kubernetes-security/SKILL.md."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/kubernetes-security/references/network-policies.md."
+  - id: signal_04
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/kubernetes-security/references/network-policies.md."
+  - id: signal_05
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/kubernetes-security/references/network-policies.md."
+  - id: signal_06
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/kubernetes-security/references/pod-security.md."
+  - id: signal_07
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/kubernetes-security/references/pod-security.md."
+  - id: signal_08
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/kubernetes-security/references/pod-security.md."
+  - id: signal_09
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/kubernetes-security/references/rbac-patterns.md."
+  - id: signal_10
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/kubernetes-security/references/rbac-patterns.md."
+  - id: signal_11
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/kubernetes-security/references/rbac-patterns.md."
+  - id: signal_12
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/kubernetes-security/references/supply-chain.md."
+  - id: signal_13
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/kubernetes-security/references/supply-chain.md."
+  - id: signal_14
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/kubernetes-security/references/supply-chain.md."
+
+config_edits:
+  - path: skills/kubernetes-security/SKILL.md
+    tier: 1
+    gold_added: 'version: 1.1.0
+
+      ## Reference Loading Table
+
+      | Signal | Reference | Size |
+
+      |--------|-----------|------|
+
+      | RBAC, Role, RoleBinding, ClusterRole, ServiceAccount, least-privilege, access control, permissions | `references/rbac-patterns.md` | ~60 lines |
+
+      | PodSecurity, SecurityContext, runAsNonRoot, readOnlyRootFilesystem, restricted, baseline, image hardening, distroless, Dockerfile | `references/pod-security.md` | ~90 lines |
+
+      | NetworkPolicy, default-deny, allow-list, egress, ingress, DNS, lateral movement, namespace isolation | `references/network-policies.md` | ~70 lines |
+
+      | cosign, Kyverno, OPA, admission controller, Sealed Secrets, External Secrets, supply chain, misconfiguration, privileged | `references/supply-chain.md` | ~120 lines |
+
+      **Load greedily.** If the user''s question touches any signal keyword, load the matching reference before responding. Multiple signals matching = load all matching references.
+
+      ---
+
+      ## Phase 1: IDENTIFY
+
+      Determine which security domain the user is asking about.
+
+      | Domain | Reference |
+
+      |--------|-----------|
+
+      | Access control, permissions, roles | `references/rbac-patterns.md` |
+
+      | Pod hardening, container security | `references/pod-security.md` |
+
+      | Network isolation, traffic rules | `references/network-policies.md` |
+
+      | Image signing, secrets, admission control | `references/supply-chain.md` |
+
+      If the question spans multiple domains, load all relevant references. Most production hardening tasks touch at least RBAC + pod security.
+
+      **Gate**: Domain identified. Reference(s) loaded. Proceed to Phase 2.
+
+      ---
+
+      ## Phase 2: RESPOND
+
+      Use loaded reference knowledge to answer with concrete YAML manifests and specific configurations. The references contain complete, copy-paste-ready examples for each security domain.
+
+      For general Kubernetes debugging, pair with the `kubernetes-debugging` skill.
+
+      **Gate**: Question answered with reference-backed manifests, not generic advice.
+
+      ---
+
+      ## Phase 3: VERIFY
+
+      Validate the security posture against the misconfiguration table in `references/supply-chain.md`. Flag any of the 8 common misconfigurations if present in the user''s manifests.
+
+      ---'
+    gold_removed: ''
+  - path: skills/kubernetes-security/references/network-policies.md
+    tier: 1
+    gold_added: "# Network Policies\n\n> **Scope**: Default-deny NetworkPolicy YAML, allow-list patterns, DNS egress rules, and namespace isolation\n> **Version range**: Kubernetes 1.26+ (NetworkPolicy v1 stable)\n> **Generated**: 2026-04-16 — verify against current Kubernetes Network Policies documentation\n\n---\n\n## Overview\n\nStart with a default-deny policy for both ingress and egress in every namespace. Apply this on day one, not later. Without network policies, lateral movement between compromised pods is trivial.\n\n---\n\n## Default Deny All Traffic\n\n```yaml\n# Default deny all traffic in the namespace\napiVersion: networking.k8s.io/v1\nkind: NetworkPolicy\nmetadata:\n  name: default-deny-all\n  namespace: production\nspec:\n  podSelector: {}\n  policyTypes:\n    - Ingress\n    - Egress\n```\n\n---\n\n## Allow-List: Frontend to Backend\n\n```yaml\n# Allow frontend pods to reach backend on port 8080\napiVersion: networking.k8s.io/v1\nkind: NetworkPolicy\nmetadata:\n  name: allow-frontend-to-backend\n  namespace: production\nspec:\n  podSelector:\n    matchLabels:\n      app: backend\n  policyTypes:\n    - Ingress\n  ingress:\n    - from:\n        - podSelector:\n            matchLabels:\n              app: frontend\n      ports:\n        - protocol: TCP\n          port: 8080\n```\n\n---\n\n## DNS Egress (Required for Service Discovery)\n\n```yaml\n# Allow DNS egress for all pods (required for service discovery)\napiVersion: networking.k8s.io/v1\nkind: NetworkPolicy\nmetadata:\n  name: allow-dns-egress\n  namespace: production\nspec:\n  podSelector: {}\n  policyTypes:\n    - Egress\n  egress:\n    - to: []\n      ports:\n        - protocol: UDP\n          port: 53\n        - protocol: TCP\n          port: 53\n```\n\n---\n\n## Error Handling\n\n### Error: NetworkPolicy blocking legitimate traffic\nCause: Default-deny is in place but the allow-list rule is missing or has incorrect label selectors.\nSolution: Verify pod labels match the NetworkPolicy `podSelector` and `from`/`to` selectors. Use `kubectl describe networkpolicy` to inspect rules."
+    gold_removed: ''
+  - path: skills/kubernetes-security/references/pod-security.md
+    tier: 1
+    gold_added: "# Pod Security\n\n> **Scope**: PodSecurityStandards (Baseline, Restricted, Privileged), SecurityContext configuration, non-root enforcement, and image hardening\n> **Version range**: Kubernetes 1.25+ (PodSecurity admission GA, PodSecurityPolicy removed)\n> **Generated**: 2026-04-16 — verify against current Kubernetes Pod Security Standards documentation\n\n---\n\n## Overview\n\nKubernetes PodSecurity admission replaces the deprecated PodSecurityPolicy. Apply labels at the namespace level. All containers must run as non-root with a read-only root filesystem unless there is a documented exception. If an app claims it needs root, it usually just needs a writable `/tmp`, which an emptyDir volume solves.\n\n---\n\n## Namespace-Level PodSecurity Labels\n\n```yaml\n# Enforce restricted profile, warn on baseline violations\napiVersion: v1\nkind: Namespace\nmetadata:\n  name: production\n  labels:\n    pod-security.kubernetes.io/enforce: restricted\n    pod-security.kubernetes.io/warn: restricted\n    pod-security.kubernetes.io/audit: restricted\n```\n\n---\n\n## Restricted-Compliant Pod SecurityContext\n\n```yaml\napiVersion: v1\nkind: Pod\nmetadata:\n  name: secure-app\nspec:\n  securityContext:\n    runAsNonRoot: true\n    seccompProfile:\n      type: RuntimeDefault\n  containers:\n    - name: app\n      image: registry.example.com/app:v1.2.3@sha256:abc123\n      securityContext:\n        allowPrivilegeEscalation: false\n        readOnlyRootFilesystem: true\n        runAsUser: 1000\n        runAsGroup: 1000\n        capabilities:\n          drop: [\"ALL\"]\n      resources:\n        limits:\n          memory: \"256Mi\"\n          cpu: \"500m\"\n        requests:\n          memory: \"128Mi\"\n          cpu: \"100m\"\n```\n\n---\n\n## PodSecurity Levels\n\n- **Baseline** — blocks known privilege escalations (hostNetwork, privileged, hostPID) but allows running as root\n- **Restricted** — enforces non-root, drops all capabilities, requires seccomp profile, disallows privilege escalation\n\n---\n\n## Image Hardening\n\nContainers should never run as privileged or with elevated capabilities unless explicitly justified. Privileged mode grants full host access to an attacker if the pod is compromised. Use specific capabilities or debug containers instead.\n\nBuild minimal, non-root container images:\n\n```dockerfile\n# Use distroless or minimal base images\nFROM gcr.io/distroless/static-debian12:nonroot\nCOPY --chown=65532:65532 app /app\nUSER 65532:65532\nENTRYPOINT [\"/app\"]\n```\n\nRequirements:\n- **Non-root user**: Always set `USER` in the Dockerfile and `runAsNonRoot: true` in the SecurityContext\n- **Read-only root filesystem**: Use `readOnlyRootFilesystem: true` and mount writable volumes only where needed\n- **Distroless or scratch**: No shell, no package manager — reduces attack surface\n- **Pin image digests**: Use `image:tag@sha256:...` to prevent tag mutation attacks\n- **Scan images**: Run Trivy, Grype, or Snyk in CI before pushing to registry\n\n---\n\n## Error Handling\n\n### Error: Pod rejected by PodSecurity admission\nCause: Pod spec violates the namespace's PodSecurity level (e.g., missing `runAsNonRoot`, `privileged: true`).\nSolution: Check the admission warning message, then update the pod's SecurityContext to comply with the enforced level."
+    gold_removed: ''
+  - path: skills/kubernetes-security/references/rbac-patterns.md
+    tier: 1
+    gold_added: "# RBAC Patterns\n\n> **Scope**: Role, RoleBinding, ClusterRole YAML manifests and ServiceAccount best practices for least-privilege Kubernetes access control\n> **Version range**: Kubernetes 1.26+ (RBAC v1 stable)\n> **Generated**: 2026-04-16 — verify against current Kubernetes RBAC documentation\n\n---\n\n## Overview\n\nRBAC (Role-Based Access Control) is the primary authorization mechanism in Kubernetes. Grant the minimum permissions required. Prefer namespace-scoped Roles over ClusterRoles. Write exact verbs and resources in production. Even in dev clusters, because dev habits carry forward and dev manifests get promoted. Write exact verbs and resources every time.\n\n---\n\n## Namespace-Scoped Role\n\n```yaml\n# Good: namespace-scoped Role with specific verbs and resources\napiVersion: rbac.authorization.k8s.io/v1\nkind: Role\nmetadata:\n  namespace: app-team\n  name: deployment-reader\nrules:\n  - apiGroups: [\"apps\"]\n    resources: [\"deployments\"]\n    verbs: [\"get\", \"list\", \"watch\"]\n```\n\n---\n\n## RoleBinding\n\n```yaml\n# Bind the Role to a specific ServiceAccount, not a user or group wildcard\napiVersion: rbac.authorization.k8s.io/v1\nkind: RoleBinding\nmetadata:\n  namespace: app-team\n  name: deployment-reader-binding\nsubjects:\n  - kind: ServiceAccount\n    name: ci-deployer\n    namespace: app-team\nroleRef:\n  kind: Role\n  name: deployment-reader\n  apiGroup: rbac.authorization.k8s.io\n```\n\n---\n\n## ServiceAccount Best Practices\n\n- Create dedicated ServiceAccounts per workload\n- Set `automountServiceAccountToken: false` on pods that have no need for Kubernetes API access\n- Regularly audit which ServiceAccounts have ClusterRole bindings\n\n---\n\n## Error Handling\n\n### Error: RBAC \"access denied\" errors in application logs\nCause: ServiceAccount lacks required permissions.\nSolution: Identify the API group, resource, and verb from the error message. Create or update a Role with the exact permissions needed. List specific verbs and resources."
+    gold_removed: ''
+  - path: skills/kubernetes-security/references/supply-chain.md
+    tier: 1
+    gold_added: "# Supply Chain Security\n\n> **Scope**: Image signing with cosign, admission controllers (Kyverno, OPA Gatekeeper), secret management (Sealed Secrets, External Secrets Operator), and common misconfiguration detection\n> **Version range**: cosign v2+, Kyverno v1.10+, External Secrets Operator v0.9+\n> **Generated**: 2026-04-16 — verify against current tool documentation\n\n---\n\n## Overview\n\nSupply chain security covers image provenance, admission-time policy enforcement, secret management, and misconfiguration detection. These controls complement RBAC, pod security, and network policies by securing the software delivery pipeline and runtime configuration.\n\n---\n\n## Image Signing with cosign\n\n```bash\n# Sign an image after building\ncosign sign --key cosign.key registry.example.com/app:v1.2.3@sha256:abc123\n\n# Verify before deploying\ncosign verify --key cosign.pub registry.example.com/app:v1.2.3@sha256:abc123\n```\n\n---\n\n## Admission Controllers\n\nEnforce policy at deploy time:\n- **Kyverno** or **OPA Gatekeeper** — reject pods that violate security policies\n- **Sigstore Policy Controller** — verify image signatures before admission\n\n### Kyverno Policy: Require Non-Root Containers\n\n```yaml\napiVersion: kyverno.io/v1\nkind: ClusterPolicy\nmetadata:\n  name: require-run-as-nonroot\nspec:\n  validationFailureAction: Enforce\n  rules:\n    - name: run-as-non-root\n      match:\n        any:\n          - resources:\n              kinds:\n                - Pod\n      validate:\n        message: \"Containers must run as non-root\"\n        pattern:\n          spec:\n            containers:\n              - securityContext:\n                  runAsNonRoot: true\n```\n\n---\n\n## Secret Management\n\nStore secrets using Sealed Secrets or External Secrets Operator, not environment variables from manifests or checked-in YAML. Secrets exposed as env vars are visible in `kubectl describe pod` output, which makes them trivially discoverable after any pod compromise.\n\n### Sealed Secrets\n\nEncrypts secrets client-side so they are safe in Git:\n\n```bash\n# Encrypt a secret with kubeseal\nkubectl create secret generic db-creds \\\n  --from-literal=password=supersecret \\\n  --dry-run=client -o yaml | \\\n  kubeseal --format yaml > sealed-db-creds.yaml\n```\n\n### External Secrets Operator\n\nSyncs secrets from external vaults:\n\n```yaml\napiVersion: external-secrets.io/v1beta1\nkind: ExternalSecret\nmetadata:\n  name: db-credentials\n  namespace: production\nspec:\n  refreshInterval: 1h\n  secretStoreRef:\n    name: vault-backend\n    kind: ClusterSecretStore\n  target:\n    name: db-credentials\n  data:\n    - secretKey: password\n      remoteRef:\n        key: secret/data/production/db\n        property: password\n```\n\n### Anti-Patterns (Do Not Use)\n\n- Mounting secrets as environment variables in the pod spec (visible in `kubectl describe pod`)\n- Storing secrets in ConfigMaps\n- Hardcoding credentials in container images or Dockerfiles\n\n---\n\n## Common Misconfiguration Detection\n\n| Misconfiguration | Risk | Fix |\n|------------------|------|-----|\n| `privileged: true` | Full host access | Remove or use specific capabilities |\n| `hostNetwork: true` | Pod shares host network stack | Use CNI networking |\n| `hostPID: true` / `hostIPC: true` | Can see/signal host processes | Remove unless debugging |\n| Wildcard RBAC verbs (`*`) | Grants all operations | List specific verbs |\n| `automountServiceAccountToken: true` on workloads | Token exposed to compromised pod | Set to `false` unless API access needed |\n| No resource limits | Pod can exhaust node resources (DoS) | Set CPU and memory limits |\n| Latest tag without digest | Image can change without notice | Pin by digest |\n| Secrets as env vars in pod spec | Visible in `kubectl describe` | Mount as files or use external secrets |"
+    gold_removed: ''

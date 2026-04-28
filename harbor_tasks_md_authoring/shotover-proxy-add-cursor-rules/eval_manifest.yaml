@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: shotover-proxy-add-cursor-rules
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: shotover/shotover-proxy
+  pr: 1992
+  base_commit: "773a6dbcd46eaac6e42bde6a14e3ecec46e0f4bb"
+  merge_commit: "8cd6f5916ba0f8efe16bf17c64c0836934344d9e"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .cursor/rules/rules.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .cursor/rules/rules.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .cursor/rules/rules.md."
+
+config_edits:
+  - path: .cursor/rules/rules.md
+    tier: 1
+    gold_added: "---\ndescription: Shotover development guidelines for this repo\nalwaysApply: true\n---\n\n# Shotover Development Guidelines\n\nShotover is a high performance, configurable and extensible L7 data-layer proxy written in rust.\nIt supports Cassandra, Kafka, and Valkey (experimental opensearch support)\nShotover is configured by a topology.yaml file which sets up a Source which listens for incoming connections, and a series of transforms which inspect and alter requests before finally sending them off to the destination via a Sink Transform.\nResponses are processed in reverse.\n\n## Project layout\n\nThe project is a cargo workspace consisting of:\n\n* shotover\n  + contains the full implementation of shotover, exposed as a library\n  + contains all the unittests for shotover\n* shotover-proxy\n  + a tiny crate, that uses the `shotover` crate to make a shotover binary, this is what gets shipped as Shotover.\n  + contains all the integration tests for shotover\n* custom-transforms-example\n  + a small example demonstrating adding a custom transform to shotover via the `shotover` crate.\n* ec2-cargo\n  + a tool for spinning up EC2 instances to allow us to test linux-only tests from our mac os laptops.\n* website\n  + a static site generator for the https://shotover.io website, includes promotional material and generates the includes the docs for past and present versions of shotover.\n\n## Config Deserialization\n\nConfig deserialization (topology.yaml and config.yaml) is done via the serde crate.\nIt is required that all types implement `serde::Deserialize` via `#[derive(Serialize)]` instead of manually implementing the trait.\nThis ensures that deserialization is robust and that the types map directly to whats in the yaml.\n\n## Verifying your work\n\n* Any time you make a change to a rust file run the following before giving control back to the user\n  + cargo clippy --all-targets --features alpha-transforms\n    + to resolve clippy failures run `cargo clippy --all-targets --features alpha-transforms --fix`, then manually fix any issues not covered by `--fix`\n  + cargo fmt --all\n* If you need to, run specific tests via `cargo nextest run $TEST_NAME`, never `cargo test $TEST_NAME`\n  + running the full test suite will take too long, so always run specific tests instead.\n  + note that users will be running mac os where many integration tests dont work, unittests will always work fine however."
+    gold_removed: ''

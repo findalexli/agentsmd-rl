@@ -1,0 +1,74 @@
+version: "2.0"
+
+task:
+  name: lavinmq-update-claudemd-to-have-more
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: cloudamqp/lavinmq
+  pr: 1210
+  base_commit: "3fdc288c09e66032315291b7e9a8c9dc7d6ddcf1"
+  merge_commit: "21e037fc6d145aeca95f6a29a04725aa1292c613"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+
+config_edits:
+  - path: CLAUDE.md
+    tier: 1
+    gold_added: '
+
+      ## Code Review Guidelines
+
+
+      When conducting code reviews, Claude should:
+
+
+      ### Review Style
+
+      - Provide concise, to-the-point and actionable feedback
+
+      - Focus on critical issues: bugs, security vulnerabilities, performance problems
+
+      - Highlight Crystal-specific best practices and idioms
+
+      - Check for proper error handling and resource cleanup
+
+      - Verify thread safety in concurrent code
+
+
+      ### Key Areas to Review
+
+      - **Memory Safety** - Check for potential memory leaks, especially with C bindings
+
+      - **AMQP Compliance** - Ensure protocol implementations follow AMQP 0-9-1 specification
+
+      - **Performance** - Look for inefficient algorithms, unnecessary allocations, blocking operations
+
+      - **Testing** - Verify adequate test coverage for new functionality
+
+
+      ### Review Format
+
+      - Use bullet points for multiple issues
+
+      - Reference specific lines when possible, and always mention the file name
+
+      - Suggest concrete improvements rather than just identifying problems
+
+      - Keep feedback under 200 words per file unless critical issues require detailed explanation
+
+      - Give a short summary of key points at the end of the review'
+    gold_removed: ''

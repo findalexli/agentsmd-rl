@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: mono-chore-clean-up-agentsmd
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: rocicorp/mono
+  pr: 5036
+  base_commit: "d278f58d54f7d02e7a176e251bcf6624c8946523"
+  merge_commit: "1552f158643b34de76e344b46ef107ddef32844a"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+
+config_edits:
+  - path: AGENTS.md
+    tier: 1
+    gold_added: "# Rocicorp Monorepo Instructions\n### Repo Structure\n```\nmono/\n├── packages/          # 29 core packages (libraries and engines)\n│   ├── zero-client    # Main Zero client (uses Replicache)\n│   ├── zero-cache     # Server-side cache and sync engine\n│   ├── zero-server    # Server-side mutations/queries\n│   ├── zero-schema    # Schema definition builder\n│   ├── zql            # IVM (Incremental View Maintenance) query engine and language\n│   ├── replicache     # Core client-side sync library\n│   └── shared         # Shared utilities and testing helpers\n├── apps/              # 3 applications\n│   ├── zbugs          # Reference app (React + Wouter + Zero + PostgreSQL)\n│   ├── otel-proxy     # OpenTelemetry proxy\n│   └── zql-viz        # Query visualization tool\n├── tools/             # 5 development tools\n└── prod/              # Production deployment (SST/Pulumi)\n```\n**Always run `lint`, `format` and `check-types` after every change.**\nPrefer package-level commands when possible. Each package supports: `test`, `check-types`, `lint`, `format`, `build`. e.g.:\n\n```bash\nnpm --workspace=zero-client run format\nnpm --workspace=zero-cache run lint\nnpm --workspace=zero-server run check-types\n\n# Run specific test file\nnpm --workspace=zero-client run test -- zero.test\n```\n- Tests are co-located with source files using environment-specific naming:\n  - `.test.ts` - Standard tests (Node.js environment)\n  - `.node.test.ts` - Node-specific tests (Replicache)\n  - `.web.test.ts` - Browser tests (Replicache)\n  - `.pg.test.ts` - PostgreSQL integration tests\n- **DO NOT import from `mod.ts`**: Use direct relative paths instead\n\n  ```typescript\n  // Correct - use relative path\n  import {helper} from './helper.ts';\n\n  // Incorrect - don't import from mod.ts\n  import {helper} from './mod.ts';\n  ```\n\n- Re-exports are common: main packages re-export from sub-packages (e.g., `packages/zero/src/mod.ts` → exports from `zero-client`, `zero-server`)\n## Database\nZero is a streaming database:\n- **PostgreSQL**: Source of truth for data\n- **SQLite**: Server-side replica managed by `zero-cache`\n- **Replicache**: Client-side store managed by `zero-client` and `replicache`, in IndexedDB by default\n## Git Conventions\n\n### Commit Messages\n\nFollow conventional commits format:\n\n```\ntype(scope): description\n```\n\n- `feat(zero-client): add support for custom mutations`\n- `fix(zero-cache): resolve memory leak in connection pool`\n- `chore(deps): update vitest to 3.2.4`\n"
+    gold_removed: ''

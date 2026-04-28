@@ -1,0 +1,62 @@
+version: "2.0"
+
+task:
+  name: liam-docs-move-database-operations-guidance
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: liam-hq/liam
+  pr: 3568
+  base_commit: "3fec00b9a8df0d134d7ee9d830dd3aea106cb6d6"
+  merge_commit: "b6f586c8b3f4615bd203794bfd0de78720ec61f3"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in frontend/internal-packages/db/CLAUDE.md."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in frontend/internal-packages/db/CLAUDE.md."
+  - id: signal_04
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in frontend/internal-packages/db/CLAUDE.md."
+
+config_edits:
+  - path: CLAUDE.md
+    tier: 1
+    gold_added: '```bash
+
+      ```
+
+      - **Let the code speak** – If you need a multi-paragraph comment, refactor until intent is obvious
+
+      - **Delete fearlessly, Git remembers** – Cut dead code, stale logic, and verbose history
+
+
+      ```'
+    gold_removed: ''
+  - path: frontend/internal-packages/db/CLAUDE.md
+    tier: 1
+    gold_added: '# CLAUDE.md - Database Package
+
+
+      This file provides guidance to Claude Code (claude.ai/code) when working with database operations.
+
+
+      ## Database Operations
+
+
+      For database migration and type generation workflows, see @../../../docs/migrationOpsContext.md'
+    gold_removed: ''

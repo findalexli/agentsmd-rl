@@ -1,0 +1,53 @@
+version: "2.0"
+
+task:
+  name: rsbuild-featcreatersbuild-add-agentsmd
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: web-infra-dev/rsbuild
+  pr: 6440
+  base_commit: "a26e73ec43e05a83d0fe87bbfd0e98b0c20080d4"
+  merge_commit: "85352a1c1b3ffca99f66ac07ba1d72b20df69281"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in packages/create-rsbuild/template-common/AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in packages/create-rsbuild/template-common/AGENTS.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in packages/create-rsbuild/template-common/AGENTS.md."
+
+config_edits:
+  - path: packages/create-rsbuild/template-common/AGENTS.md
+    tier: 1
+    gold_added: '# AGENTS.md
+
+
+      You are an expert in JavaScript, Rsbuild, and web application development. You write maintainable, performant, and accessible code.
+
+
+      ## Commands
+
+
+      - `npm run dev` - Start the dev server
+
+      - `npm run build` - Build the app for production
+
+      - `npm run preview` - Preview the production build locally
+
+
+      ## Docs
+
+
+      - Rsbuild: <https://rsbuild.rs/llms.txt>
+
+      - Rspack: <https://rspack.rs/llms.txt>'
+    gold_removed: ''

@@ -1,0 +1,30 @@
+version: "2.0"
+
+task:
+  name: magento-lts-test-copilot-instructions
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: OpenMage/magento-lts
+  pr: 4962
+  base_commit: "deb951d0f498b2ccd82b7daf1b59233acce988dc"
+  merge_commit: "4516833dddb1de09b9ae1c0733e93536508465f1"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/copilot-instructions.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/copilot-instructions.md."
+
+config_edits:
+  - path: .github/copilot-instructions.md
+    tier: 1
+    gold_added: '- Use short array syntax `[]` for arrays in new code.
+
+      - Ignore support for PHP versions below PHP 8.1 in new code.'
+    gold_removed: ''

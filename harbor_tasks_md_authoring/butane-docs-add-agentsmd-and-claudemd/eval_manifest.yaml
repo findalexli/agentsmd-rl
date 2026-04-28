@@ -1,0 +1,76 @@
+version: "2.0"
+
+task:
+  name: butane-docs-add-agentsmd-and-claudemd
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: coreos/butane
+  pr: 697
+  base_commit: "f543ff5d8eb0d8f77a8bb27c738e54d2b1994227"
+  merge_commit: "4dcc4b319105dc9ffa9277b0356b11f1c97e20b4"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_04
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_05
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+
+config_edits:
+  - path: AGENTS.md
+    tier: 1
+    gold_added: "# Butane Repository\n\n**Butane** translates human-readable Butane Configs into machine-readable [Ignition](https://github.com/coreos/ignition) Configs for CoreOS-based operating systems.\n\n**Variants**: `fcos` (Fedora CoreOS), `flatcar`, `openshift`, `r4e` (RHEL for Edge), `fiot` (Fedora IoT)\n\n## Architecture\n\n```\nbase/vX_Y/           # Distro-agnostic, targets Ignition versions (v0_7, v0_8_exp)\nconfig/*/vX_Y/       # Distro-specific (fcos/v1_7, fcos/v1_8_exp, openshift/v4_21)\n  ├── schema.go      # Butane config structs\n  ├── translate.go   # Butane → Ignition translation\n  └── validate.go    # Validation logic\ninternal/doc/        # Documentation generation (butane.yaml)\n.opencode/           # Automation scripts and skills\n```\n\n**Rules**:\n- Never import from `base/` packages directly\n- Only experimental specs (`*_exp`) receive new features\n- Stable specs are frozen (bug fixes only)\n\n**Version Lifecycle**: Experimental → Stabilization → Stable → New Experimental\n\n## Core Patterns\n\n### Schema-Translate-Validate\n\nEach spec implements three files:\n\n**schema.go**: Go structs with YAML tags, optional fields use pointers (`*string`, `*bool`), auto-filtered fields use `` `butane:\"auto_skip\"` ``\n\n**translate.go**: Main function `ToIgnX_YUnvalidated()` returns (config, translation set, report)\n\n**validate.go**: Returns validation reports (warnings/errors), uses `config/common/errors.go` for error definitions\n\n### Sugar Implementation\n\n**Preferred**: Config merging via `baseutil.MergeTranslatedConfigs()` - desugared struct is merge parent, user config is child (allows user overrides)\n\n**Alternative**: Direct struct modification (only if merging isn't expressive enough)\n\n### Error Handling\n\nDefine in `config/common/errors.go`:\n```go\nvar ErrExample = errors.New(\"message\")\n```\n\nUse: `r.AddOnError(path.New(\"json\", \"field\"), common.ErrExample)`\n\n### Documentation\n\nAfter spec changes:\n1. Update `internal/doc/butane.yaml`\n2. Run `./generate`\n3. Update `docs/examples.md` and `docs/release-notes.md`\n\n## Commit Conventions\n\n**Format**: `component: description in imperative mood`\n\n**Component patterns** (NO file extensions):\n- `fcos translate: add warn on small partition`\n- `fcos translate_test: add tests for detection`\n- `docs: run generate`\n- `*: update experimental specs`\n- `base/v0_7_exp: stabilize to v0_7`\n\n**Style**:\n- Imperative tense (\"add\" not \"added\")\n- Lowercase component and description\n- Under 72 characters\n- NO file extensions (.go, .md)\n\n## Testing\n\n**ALWAYS run before commit**: `./test`\n\nRuns: `gofmt -d`, `go vet -composites=false`, `go test ./... -cover`, doc validation\n\n**Test patterns**: Table-driven tests, positive/negative cases, edge cases, `*_test.go` files alongside code\n\n## OpenCode Skills\n\nLocated in `.opencode/skills/`:\n\n- **add-sugar**: `/add-sugar --spec fcos/v1_8_exp` - Scaffolds sugar features (schema, translate, validate, tests, docs)\n- **stabilize-spec**: `/stabilize-spec --spec fcos/v1_8_exp` - Stabilizes experimental specs, creates new experimental\n- **remove-feature**: `/remove-feature --spec fcos/v1_8_exp --field old_sugar` - Safely removes features\n\n**Global skills**: `add-skill`, `commit-message`, `review-pr`\n\n## Automation Scripts\n\n`.opencode/scripts/`:\n\n- **version-info.sh**: `eval \"$(.opencode/scripts/version-info.sh config/fcos/v1_8_exp)\"` - Sets PACKAGE, IS_EXP, DOTTED, SPEC_TYPE vars\n- **preflight.sh**: `--exists`, `--experimental`, `--git-clean`, `--all-experimental` - Pre-flight checks\n\n## Development Workflow\n\n**Adding Features**:\n1. Target experimental spec (`base/v0_8_exp` for distro-independent, `config/fcos/v1_8_exp` for distro-specific)\n2. Use `/add-sugar --spec {spec}` or manual: update schema.go → translate.go → validate.go → tests → errors.go → doc/butane.yaml\n3. Run `./generate`\n4. Run `./test`\n5. Commit: `git commit -m \"component: description\"`\n\n**Stabilizing**: Use `/stabilize-spec` or follow [stabilization checklist](https://github.com/coreos/butane/issues/new?template=stabilize-checklist.md)\n\n**Releases**: Follow [release checklist](https://github.com/coreos/butane/issues/new?template=release-checklist.md)\n\n## Important Rules\n\n**Translation**: Prefer config merging; desugared = parent, user = child\n\n**Validation**: All errors in `config/common/errors.go`; use path tracking; distinguish errors (fatal) vs warnings\n\n**Testing**: Run `./test` before every commit (non-negotiable)\n\n**Documentation**: Run `./generate` after changes; keep examples and release notes updated\n\n**Code Quality**: `gofmt` formatting, `golangci-lint` in CI, `go vet -composites=false`\n\n## Resources\n\n- Docs: `docs/getting-started.md`, `docs/specs.md`, `docs/development.md`\n- Dependencies: Ignition (github.com/coreos/ignition), vcontext (github.com/coreos/vcontext)\n- Main branch: `main`, CI: format/vet/tests/linting\n\n## Quick Reference\n\n- Read existing code before changes\n- Use experimental specs (`*_exp`) for new features\n- Use config merging for sugar unless impossible\n- Check preflight: `.opencode/scripts/preflight.sh --all-experimental {spec}`\n- Butane configs should be intuitive and human-friendly"
+    gold_removed: ''
+  - path: CLAUDE.md
+    tier: 1
+    gold_added: '@AGENTS.md
+
+
+      ## Claude Code Specific Workflows
+
+
+      This file imports the main repository specification from AGENTS.md and adds Claude Code-specific instructions.
+
+
+      ### Task Management
+
+
+      When working on multi-step tasks, use `TaskCreate` to break down work and track progress.
+
+
+      ### Agent Usage
+
+
+      - Use the **Explore** agent for broad codebase searches when simple Grep/Glob isn''t enough
+
+      - Use **Plan** mode (if available) for complex changes affecting multiple files
+
+      - Delegate independent research to subagents to keep main context clean
+
+
+      ### Testing
+
+
+      Always run `./test` before committing - this is non-negotiable and enforced by the repository.'
+    gold_removed: ''

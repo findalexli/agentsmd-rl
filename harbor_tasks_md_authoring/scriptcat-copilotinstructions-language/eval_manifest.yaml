@@ -1,0 +1,40 @@
+version: "2.0"
+
+task:
+  name: scriptcat-copilotinstructions-language
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: scriptscat/scriptcat
+  pr: 732
+  base_commit: "dd64da719c081acbf21645e2b1e1f38653ffae8c"
+  merge_commit: "34b621d066c141d303f6db776844730b9500bb32"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/copilot-instructions.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/copilot-instructions.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/copilot-instructions.md."
+
+config_edits:
+  - path: .github/copilot-instructions.md
+    tier: 1
+    gold_added: '
+
+      ## Language
+
+      - The code is developed and maintained by developers based in Mainland China.
+
+      - Comments should preferably be written in Simplified Chinese.
+
+      - The user interface supports multiple languages, with English set as the default for global users.'
+    gold_removed: ''

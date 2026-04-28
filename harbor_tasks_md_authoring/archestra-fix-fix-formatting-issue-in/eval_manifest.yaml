@@ -1,0 +1,24 @@
+version: "2.0"
+
+task:
+  name: archestra-fix-fix-formatting-issue-in
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: archestra-ai/archestra
+  pr: 572
+  base_commit: "b4365214d66654bf72d25970467f41a5217569bd"
+  merge_commit: "0a2946a125998620a37222c2e06690478b1179bf"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+
+config_edits:
+  - path: CLAUDE.md
+    tier: 1
+    gold_added: This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository
+    gold_removed: ''

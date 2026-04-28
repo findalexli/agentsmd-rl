@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: newrelic-dotnet-agent-chore-set-up-comprehensive-copilot
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: newrelic/newrelic-dotnet-agent
+  pr: 3283
+  base_commit: "9d0e57ed8c069c21b284b3695361b18fcfe66bdc"
+  merge_commit: "9383f4287369fdefc68a64a45ae9c098a1672bda"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/copilot-instructions.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/copilot-instructions.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/copilot-instructions.md."
+
+config_edits:
+  - path: .github/copilot-instructions.md
+    tier: 1
+    gold_added: "# GitHub Copilot Instructions for New Relic .NET Agent\n\n## Repository Overview\n\nThis repository contains the New Relic .NET Agent, which monitors .NET applications and provides performance insights. The agent supports both .NET Framework and .NET Core/.NET applications on Windows and Linux.\n\n### Key Solutions\n\n- **FullAgent.sln**: Main solution containing the managed C# code for the agent, including all unit tests\n- **Profiler.sln**: Native profiler component that implements the .NET Profiling API\n- **IntegrationTests.sln**: Integration tests for the agent (`tests/Agent/IntegrationTests/`)\n- **ContainerIntegrationTests.sln**: Container-based integration tests (`tests/Agent/IntegrationTests/`)\n- **UnboundedIntegrationTests.sln**: Unbounded integration tests (`tests/Agent/IntegrationTests/`)\n- **BuildTools.sln**: Build tools and utilities (`build/`)\n\n### Important Directories\n\n- `src/Agent/`: Core agent code and home directories\n- `tests/Agent/UnitTests/`: Unit tests using NUnit\n- `tests/Agent/IntegrationTests/`: Integration tests that verify agent functionality\n- `build/`: Build scripts and packaging configuration\n- `docs/`: Development and testing documentation\n\n## Coding Standards\n\n### C# Style\n\n- Always use the latest C# features and syntax available in the project\n- Follow the `.editorconfig` file for formatting rules\n- Use PascalCase for methods, properties, and constants\n- Use camelCase for local variables (prefer `var` when possible)\n- Use `_camelCase` for private fields\n- All class declarations must have access modifiers\n- All interfaces must be prefixed with \"I\" (e.g., `ITransactionName`)\n\n### File Headers\n\n- **Every file must include the standard license header:**\n  ```csharp\n  // Copyright 2020 New Relic, Inc. All rights reserved.\n  // SPDX-License-Identifier: Apache-2.0\n  ```\n  Note: The year 2020 is specified in `.editorconfig` and should be used as-is\n- Always include required `using` directives at the top of the file\n- System usings should come first (per `.editorconfig`)\n\n### Backwards Compatibility\n\n- Code in `src/Agent/` and `src/NewRelic.Core/` must be compatible with:\n  - .NET Framework 4.6.2+ \n  - .NET Standard 2.0+\n- Avoid using newest-version-only features that break backwards compatibility\n- The instrumentation must work with a wide range of versions of instrumented modules\n- Read comments carefully - code that seems overcomplicated may be necessary for compatibility\n\n### Comments and Documentation\n\n- When refactoring code, preserve existing comments and documentation\n- Don't add comments unless they match the style of existing comments or explain complex logic\n- Complicated compatibility workarounds should be documented\n\n## Testing\n\n### Unit Tests\n\n- Use NUnit framework for all unit tests\n- **Always use modern NUnit assertions** (e.g., `Assert.That(actual, Is.EqualTo(expected))`)\n- **Do not use reflection** to access private members of the class under test\n- We use **JustMock Lite** (free version) - only use mock configurations valid for this package\n- When tests use disposable resources in `[SetUp]`, always add `[TearDown]` to clean them up\n- Test files should follow the naming pattern: `*Tests.cs`\n\n### Integration Tests\n\n- Integration tests verify agent instrumentation functionality\n- PRs that add or modify instrumentation should include new or updated integration tests\n- See `docs/integration-tests.md` for setup requirements\n- Integration tests execute against actual New Relic accounts\n\n### Running Tests\n\n- Unit tests can be run from Visual Studio Test Explorer\n- Build the solution first to ensure all dependencies are available\n- Some integration tests require additional infrastructure (databases, IIS, etc.)\n\n## Building\n\n### Prerequisites\n\n- Visual Studio 2022 with:\n  - .NET desktop development workload\n  - Desktop development with C++ workload\n  - C++ ATL for v142 build tools (x86 & x64)\n\n### Build Process\n\n1. **FullAgent.sln** is the primary solution to build\n2. Building creates agent home directories in `src/Agent/` for each target platform\n3. The profiler is pulled from NuGet - you typically don't need to build Profiler.sln\n4. See `docs/development.md` for detailed build instructions\n\n## Important Conventions\n\n### Security and Safety\n\n- **Never commit secrets** to source code\n- The agent runs in customer application processes - **it must not crash, destabilize, or significantly degrade performance**\n- **Never leak PII** (personally identifying information) from customer applications\n- Any third-party dependencies must have permissive open source licenses (e.g., MIT, Apache)\n\n### Making Changes\n\n- Make minimal, surgical changes - change only what's necessary\n- Validate changes don't break existing behavior\n- Use ecosystem tools (package managers, refactoring tools) to reduce mistakes\n- Run linters and tests early and often\n- For complex contributions, open a GitHub issue first to discuss with maintainers\n\n### Git and PR Conventions\n\n- **Always use conventional commit prefixes** for commits and pull request titles\n  - We typically only use `fix`, `feat`, `chore`, `test`, and `ci`\n  - Because we use Release Please, commit prefixes are important\n  - Only public-facing changes important to users should be prefixed with `feat` or `fix`\n  - Use `chore` for non-public-facing changes\n- **Branch naming conventions:**\n  - Bug fixes: `fix/**`\n  - Features: `feature/**`\n  - Other changes: Use appropriate prefixes like `test/**`, `chore/**`, etc."
+    gold_removed: ''

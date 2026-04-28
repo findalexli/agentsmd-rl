@@ -1,0 +1,48 @@
+version: "2.0"
+
+task:
+  name: ace-add-agentsmd
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: ai2cm/ace
+  pr: 829
+  base_commit: "8dd3433146524f0d33cb57445669de40b49ce7f2"
+  merge_commit: "099932f2f82ad9fc2f47532b8e349a9b62193934"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+
+config_edits:
+  - path: .cursor/rules/ace-context.mdc
+    tier: 1
+    gold_added: ''
+    gold_removed: ''
+  - path: .cursor/rules/pr-rereview.mdc
+    tier: 1
+    gold_added: ''
+    gold_removed: ''
+  - path: .cursor/rules/pr-review.mdc
+    tier: 1
+    gold_added: ''
+    gold_removed: ''
+  - path: AGENTS.md
+    tier: 1
+    gold_added: "# AGENTS.md\n\nThis file is the single source of agent guidance for the `ai2cm/ace` repository.\n\n## Repository Context\n\nThis is a Python machine learning project for atmospheric modeling (ACE - AI2 Climate Emulator).\n\n### Key Conventions\n\n- Code is in the `fme/` directory (ace, core, coupled, diffusion, downscaling modules)\n- Tests follow pytest conventions\n- Configuration uses YAML files in `configs/`\n- The project uses PyTorch for ML components\n- The default conda environment for the repo is named `fme`\n\n### Common Commands\n\n- Run all tests: `make test`\n- Run fast tests only: `make test_fast`\n- Run very fast tests: `make test_very_fast`\n- Run tests with coverage: `make test_cov`\n- Create development environment: `make create_environment`\n- Build Docker image: `make build_docker_image`\n\nWhen running tests in a conda environment, use `python -m pytest` (not `pytest`) to ensure the correct interpreter is used.\n\n### GitHub MCP Server Setup\n\nTo use the PR review rules, configure the GitHub MCP server in Cursor's \"Tools & MCP\" settings. You will need a read-only personal access token with the following permissions: Pull requests, Issues, Contents, Metadata.\n\n## Pull Request Review Assistant\n\nUse this same workflow for both initial review and re-review.\n\n### 1) Gather context with GitHub MCP\n\n- `pull_request_read`:\n  - `get` for metadata/state\n  - `get_diff` for full diff (or current context)\n  - `get_review_comments` for review threads\n  - `get_comments` for general PR discussion\n- `list_commits` and `get_commit` when commit-by-commit analysis is needed\n\n### 2) Scope the review\n\n- **Initial review**: review the full PR diff and all current discussion.\n- **Re-review (delta review)**:\n  - If user provides a starting SHA, review changes from that point.\n  - If not, ask for starting SHA or default to changes since last review comment timestamp.\n  - Focus on what changed, whether prior comments were addressed, and whether new issues were introduced.\n\n### 3) Evaluate findings\n\nUse these severity buckets:\n\n- **Critical Issues (Must Fix)**: security vulnerabilities, logic bugs, breaking changes\n- **Suggestions (Should Consider)**: performance, error handling, clarity/design improvements\n- **Minor/Nitpicks (Optional)**: style, naming, docs polish\n\nFor re-reviews, classify prior comments as **Addressed**, **Partially Addressed**, **Unaddressed**, or **Dismissed**. Treat clear author rationale as addressed when appropriate.\n\n### 4) Output format\n\nWrite concise markdown with:\n\n1. **PR Summary**: title/number, author, target branch, goal\n2. **Changes Overview**: files changed + high-level summary\n3. **Code Review Findings**: grouped by severity with file/line references\n4. **Discussion Status**: key unresolved comment threads\n5. **Testing Assessment**: gaps and edge cases\n6. **Recommendation**: Ready to merge / Needs minor changes / Needs revision\n\nFor re-reviews, include:\n\n- Commits reviewed (`<start_sha>...<head_sha>`)\n- Status of previously raised comments\n- Outstanding items before merge\n\n### 5) Practical guidance\n\n- Be specific, constructive, and explicit about blocking vs non-blocking items.\n- Prefer delta-focused summaries for re-reviews.\n- If the PR was heavily refactored, recommend a fresh full review.\n- For large PRs, batch API calls to avoid rate limits.\n- Remember that GitHub MCP access is read-only."
+    gold_removed: ''
+  - path: CLAUDE.md
+    tier: 1
+    gold_added: '@AGENTS.md'
+    gold_removed: ''

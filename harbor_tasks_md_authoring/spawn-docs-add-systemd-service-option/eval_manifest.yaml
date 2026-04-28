@@ -1,0 +1,164 @@
+version: "2.0"
+
+task:
+  name: spawn-docs-add-systemd-service-option
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: OpenRouterTeam/spawn
+  pr: 840
+  base_commit: "ac5ef953f978f37fccfc37ffc96b20b1e7886a73"
+  merge_commit: "ac3a8c58a51a5616008fe7e4dfb734d605b18494"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/setup-agent-team/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/setup-agent-team/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/setup-agent-team/SKILL.md."
+
+config_edits:
+  - path: .claude/skills/setup-agent-team/SKILL.md
+    tier: 1
+    gold_added: '## Step 4: Create the service
+
+
+      Choose the service management approach based on your environment:
+
+
+      ### Option A: systemd (standard Linux VMs, recommended for non-Sprite environments)
+
+
+      Create a systemd unit file at `/etc/systemd/system/spawn-<service-name>.service`:
+
+
+      ```ini
+
+      [Unit]
+
+      Description=Spawn <Service Name> Trigger Server
+
+      After=network.target
+
+
+      [Service]
+
+      Type=simple
+
+      User=<run-as-user>
+
+      Group=<run-as-group>
+
+      WorkingDirectory=$REPO_ROOT/.claude/skills/setup-agent-team
+
+      ExecStart=/path/to/bun run $REPO_ROOT/.claude/skills/setup-agent-team/trigger-server.ts
+
+      Restart=on-failure
+
+      RestartSec=10
+
+
+      # Environment (same vars as the wrapper script)
+
+      Environment=TRIGGER_SECRET=<secret-from-step-2>
+
+      Environment=TARGET_SCRIPT=$REPO_ROOT/.claude/skills/setup-agent-team/<target-script>.sh
+
+      Environment=REPO_ROOT=$REPO_ROOT
+
+      Environment=MAX_CONCURRENT=2
+
+      Environment=RUN_TIMEOUT_MS=7200000
+
+      Environment=PATH=/home/<user>/.bun/bin:/home/<user>/.local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+
+
+      # Logging
+
+      StandardOutput=journal
+
+      StandardError=journal
+
+      SyslogIdentifier=spawn-<service-name>
+
+
+      [Install]
+
+      WantedBy=multi-user.target
+
+      ```
+
+
+      Enable and start:
+
+
+      ```bash
+
+      systemctl daemon-reload
+
+      systemctl enable spawn-<service-name>
+
+      systemctl start spawn-<service-name>
+
+      ```
+
+
+      **Service management:**
+
+
+      ```bash
+
+      systemctl status spawn-<service-name>          # Check status
+
+      journalctl -u spawn-<service-name> -f          # Tail logs
+
+      systemctl restart spawn-<service-name>         # Restart
+
+      systemctl stop spawn-<service-name>            # Stop
+
+      ```
+
+
+      ### Option B: Sprite service (Sprite VMs only)
+
+      **Service management:**
+
+      sprite-env services list                       # List all services
+
+      sprite-env services stop <service-name>        # Stop
+
+      sprite-env services start <service-name>       # Start
+
+      sprite-env services delete <service-name>      # Delete entirely
+
+      ```
+
+
+      ### Verify the service (either option)
+
+      ```bash
+
+      # Expected: streaming output from the target script
+
+      | systemd service won''t start | Check `journalctl -u spawn-<name> -n 50` — common issues: port in use (EADDRINUSE), wrong PATH (bun/claude not found), permission denied |
+
+      | systemd service keeps restarting | Check exit code in `systemctl status` — if exit 1, check journal logs. If EADDRINUSE, run `fuser -k 8080/tcp` first |
+
+      | Workflow | Host | Service Type | Service Name | Secrets |
+
+      |----------|------|-------------|-------------|---------|
+
+      | `discovery.yml` (Trigger Discovery) | `lab-spawn-discovery` (Sprite) | sprite-env | `discovery-trigger` | `DISCOVERY_SPRITE_URL`, `DISCOVERY_TRIGGER_SECRET` |
+
+      | `refactor.yml` (Trigger Refactor) | `lab-spawn-foundations` (Sprite) | sprite-env | `refactor` | `REFACTOR_SPRITE_URL`, `REFACTOR_TRIGGER_SECRET` |
+
+      | `security.yml` (Trigger Security) | sandbox VM | systemd | `spawn-security` | `SECURITY_SPRITE_URL`, `SECURITY_TRIGGER_SECRET` |'
+    gold_removed: ''

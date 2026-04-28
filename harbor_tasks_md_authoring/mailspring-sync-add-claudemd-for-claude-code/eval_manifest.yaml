@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: mailspring-sync-add-claudemd-for-claude-code
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: Foundry376/Mailspring-Sync
+  pr: 15
+  base_commit: "d756d8f55d9bd938f6e3d5574fab606139f264f0"
+  merge_commit: "7991c2138ce823cfeb9b18ac3aaca8ef52938ec0"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+
+config_edits:
+  - path: CLAUDE.md
+    tier: 1
+    gold_added: "# CLAUDE.md\n\nThis file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.\n\n## Project Overview\n\nMailspring-Sync is the native C++11 sync engine for the Mailspring email client. It handles email, contact, and calendar synchronization via IMAP/SMTP using MailCore2, storing data in SQLite with a JSON-based schema.\n\n## Build Commands\n\n### Linux\n```bash\n# Install dependencies (Ubuntu)\nsudo apt install libc-ares-dev libicu-dev libctemplate-dev libtidy-dev uuid-dev libxml2-dev libsasl2-dev liblzma-dev libcurl4-openssl-dev libglib2.0-dev libssl-dev\n\n# Build (from project root)\ncd Vendor/libetpan && ./autogen.sh && make && sudo make install prefix=/usr\ncd Vendor/mailcore2 && mkdir -p build && cd build && cmake .. && make\ncmake . && make\n```\n\n### macOS\n```bash\nxcodebuild -scheme mailsync -configuration Release\n```\n\n### Windows\n```cmd\ncd Windows\nmsbuild.exe mailsync.sln /property:Configuration=Release;Platform=Win32\n```\n\n## Running Mailsync\n\nRequires environment variables and command-line arguments:\n```bash\nCONFIG_DIR_PATH=/path/to/config IDENTITY_SERVER=https://id.getmailspring.com \\\n  ./mailsync --identity \"<identity-json>\" --account \"<account-json>\" --mode sync\n```\n\nModes: `sync`, `test` (auth validation), `reset` (clear account data), `migrate` (run migrations)\n\nFor debugging in Xcode/Visual Studio, configure the debugger to pass `--identity`, `--account`, and `--mode` arguments.\n\n## Architecture\n\n### Reactive Data Flow (Core Path)\n\nAll database changes flow through an entity layer and are emitted as a JSON event stream to stdout, enabling the Mailspring UI to reactively update.\n\n**Data Flow:**\n1. **Model modification** → Caller modifies a `MailModel` subclass (Message, Thread, Folder, etc.)\n2. **Save via MailStore** → `store->save(model)` increments version, calls `beforeSave()`, writes to SQLite, calls `afterSave()`\n3. **Delta creation** → Save/remove creates a `DeltaStreamItem` with type \"persist\" or \"unpersist\"\n4. **Delta emission** → `_emit()` queues the delta (immediately or within transaction)\n5. **Output to stdout** → `DeltaStream` flushes buffered deltas as newline-separated JSON\n\n**Transaction Behavior:**\n```cpp\nMailStoreTransaction transaction(store, \"operationName\");\nstore->save(model1);  // Delta accumulated\nstore->save(model2);  // Delta accumulated\ntransaction.commit(); // All deltas emitted together\n// Destructor auto-rollbacks if commit() not called\n```\n\n**Delta Coalescing:** Multiple saves of the same object within a flush window are merged—only the final state is emitted, with keys merged to preserve conditionally-included fields (e.g., `message.body`).\n\n**Output Format:**\n```json\n{\"type\":\"persist\",\"modelClass\":\"Message\",\"modelJSONs\":[{...}]}\n{\"type\":\"unpersist\",\"modelClass\":\"Thread\",\"modelJSONs\":[{\"id\":\"...\"}]}\n```\n\n**Key Classes:**\n- `MailModel` (`MailSync/Models/MailModel.hpp`) - Base class with `_data` JSON, lifecycle hooks, version tracking\n- `MailStore` (`MailSync/MailStore.hpp`) - Database layer, emits deltas on save/remove\n- `MailStoreTransaction` - RAII transaction wrapper, batches deltas until commit\n- `DeltaStream` (`MailSync/DeltaStream.hpp`) - Singleton (`SharedDeltaStream()`) managing stdout output with buffering\n\n### Process Model\nEach mailsync process handles a single email account. Mailspring runs one process per connected account. The process communicates via:\n- **stdout**: Emits newline-separated JSON for all model changes (see Reactive Data Flow above)\n- **stdin**: Accepts JSON task objects and commands (queue-task, cancel-task, wake-workers, need-bodies)\n\n### Threading Model\n- **Main thread**: Listens on stdin for tasks and commands\n- **Background thread** (`SyncWorker`): Iterates folders, performs incremental sync using CONDSTORE/XYZRESYNC\n- **Foreground thread** (`SyncWorker`): IDLEs on primary folder, handles body fetches and task execution\n- **CalContacts thread** (`DAVWorker`, `GoogleContactsWorker`): Calendar/contact sync via CardDAV/CalDAV\n- **Metadata threads** (`MetadataWorker`, `MetadataExpirationWorker`): Syncs plugin metadata to/from id.getmailspring.com\n\n### Key Components\n- `MailStore`: SQLite database wrapper with template-based queries. Uses \"fat\" rows with a `data` JSON column plus indexed columns for queryable fields. See Reactive Data Flow above.\n- `TaskProcessor`: Handles local (immediate) and remote (network) task execution for operations like sending mail, modifying flags, etc.\n- `MailProcessor`: Parses IMAP messages, creates stable IDs from headers\n\n### Models (in `MailSync/Models/`)\nAccount, Message, Thread, Folder, Label, Contact, ContactBook, ContactGroup, Calendar, Event, File, Task, Identity\n\n### Vendor Libraries\nLocated in `Vendor/` - both libetpan and mailcore2 contain local modifications from upstream.\n\n## Gmail-Specific Behavior\nGmail accounts sync only Spam, All Mail, and Trash folders, using X-GM-LABELS extension for label handling. Virtual folders are ignored.\n\n## Adding New Files\nNew source files must be manually added to:\n- `CMakeLists.txt` (Linux)\n- `MailSync.xcodeproj` (macOS)\n- `Windows/mailsync.vcxproj` (Windows)"
+    gold_removed: ''

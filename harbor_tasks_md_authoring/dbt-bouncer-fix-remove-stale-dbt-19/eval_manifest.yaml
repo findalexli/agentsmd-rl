@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: dbt-bouncer-fix-remove-stale-dbt-19
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: godatadriven/dbt-bouncer
+  pr: 811
+  base_commit: "e0866b19590f8edb124c0b45b86e646796983d37"
+  merge_commit: "89a4df67c9db98197e0b83f3070f6cec8885d6d0"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/build-artifacts/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+
+config_edits:
+  - path: .claude/skills/build-artifacts/SKILL.md
+    tier: 1
+    gold_added: 'This generates fixtures for dbt 1.10 and 1.11 in `tests/fixtures/dbt_1X/target/` (manifest.json, catalog.json, run_results.json). Note: dbt 1.9 fixtures are frozen and not regenerated.'
+    gold_removed: ''
+  - path: AGENTS.md
+    tier: 1
+    gold_added: '| `make build-artifacts` | Regenerate test fixtures (dbt 1.10, 1.11) |'
+    gold_removed: ''

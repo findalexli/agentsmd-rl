@@ -1,0 +1,129 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+cd /workspace/ai
+
+# Idempotency guard
+if grep -qF "This is the Symfony AI monorepo containing multiple components and bundles that " "CLAUDE.md"; then
+  echo "Gold patch already applied."
+  exit 0
+fi
+
+git apply --whitespace=nowarn <<'PATCH'
+diff --git a/CLAUDE.md b/CLAUDE.md
+@@ -0,0 +1,111 @@
++# CLAUDE.md
++
++This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
++
++## Project Overview
++
++This is the Symfony AI monorepo containing multiple components and bundles that integrate AI capabilities into PHP applications. The project is organized as a collection of independent packages under the `src/` directory, each with their own composer.json, tests, and dependencies.
++
++## Architecture
++
++### Core Components
++- **Platform** (`src/platform/`): Unified interface to AI platforms (OpenAI, Anthropic, Azure, Gemini, VertexAI, etc.)
++- **Agent** (`src/agent/`): Framework for building AI agents that interact with users and perform tasks
++- **Store** (`src/store/`): Data storage abstraction with indexing and retrieval for vector databases
++- **MCP SDK** (`src/mcp-sdk/`): SDK for Model Context Protocol enabling agent-tool communication
++
++### Integration Bundles
++- **AI Bundle** (`src/ai-bundle/`): Symfony integration for Platform, Store, and Agent components
++- **MCP Bundle** (`src/mcp-bundle/`): Symfony integration for MCP SDK
++
++### Supporting Directories
++- **Examples** (`examples/`): Standalone examples demonstrating component usage across different AI platforms
++- **Demo** (`demo/`): Full Symfony web application showcasing components working together
++- **Fixtures** (`fixtures/`): Shared test fixtures for multi-modal testing (images, audio, PDFs)
++
++## Development Commands
++
++### Testing
++Each component has its own test suite. Run tests for specific components:
++```bash
++# Platform component
++cd src/platform && vendor/bin/phpunit
++
++# Agent component  
++cd src/agent && vendor/bin/phpunit
++
++# AI Bundle
++cd src/ai-bundle && vendor/bin/phpunit
++
++# Demo application
++cd demo && vendor/bin/phpunit
++```
++
++### Code Quality
++The project uses PHP CS Fixer with Symfony coding standards:
++```bash
++# Fix code style issues
++vendor/bin/php-cs-fixer fix
++
++# Check specific directories
++vendor/bin/php-cs-fixer fix src/platform/
++```
++
++Static analysis with PHPStan (component-specific):
++```bash
++cd src/platform && vendor/bin/phpstan analyse
++```
++
++### Development Linking
++Use the `./link` script to symlink local development versions:
++```bash
++# Link components to external project
++./link /path/to/project
++
++# Copy instead of symlink
++./link --copy /path/to/project
++
++# Rollback changes
++./link --rollback /path/to/project
++```
++
++### Running Examples
++Examples are self-contained and can be run individually:
++```bash
++cd examples
++php anthropic/chat.php
++php openai/function-calling.php
++```
++
++Many examples require environment variables (see `.env` files in example directories).
++
++### Demo Application
++The demo is a full Symfony application:
++```bash
++cd demo
++composer install
++symfony server:start
++```
++
++## Component Dependencies
++
++Components are designed to work independently but have these relationships:
++- Agent depends on Platform for AI communication
++- AI Bundle integrates Platform, Agent, and Store
++- MCP Bundle provides MCP SDK integration
++- Store is standalone but often used with Agent for RAG applications
++
++## Testing Architecture
++
++Each component uses:
++- **PHPUnit 11+** for testing framework
++- Component-specific `phpunit.xml.dist` configurations
++- Shared fixtures in `/fixtures` for multi-modal content
++- MockHttpClient pattern preferred over response mocking
++
++## Development Notes
++
++- Each component in `src/` is a separate Composer package with its own dependencies
++- Use `@dev` versions for internal component dependencies during development
++- Components follow Symfony coding standards and use `@Symfony` PHP CS Fixer rules
++- The monorepo structure allows independent versioning while maintaining shared development workflow
+\ No newline at end of file
+PATCH
+
+echo "Gold patch applied."

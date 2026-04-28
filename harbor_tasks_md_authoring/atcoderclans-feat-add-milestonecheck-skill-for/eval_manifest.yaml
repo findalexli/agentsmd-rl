@@ -1,0 +1,87 @@
+version: "2.0"
+
+task:
+  name: atcoderclans-feat-add-milestonecheck-skill-for
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: KATO-Hiro/AtCoderClans
+  pr: 12014
+  base_commit: "da6b25afcfcaf05f7f81cf6259762fe51e973b09"
+  merge_commit: "4f7e1a3804bf214144869151fc58d759c17fc14a"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/rules/architecture.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/rules/architecture.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/rules/architecture.md."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/rules/workflow.md."
+  - id: signal_04
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/rules/workflow.md."
+  - id: signal_05
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/rules/workflow.md."
+  - id: signal_06
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/milestone-check/SKILL.md."
+  - id: signal_07
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/milestone-check/SKILL.md."
+  - id: signal_08
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/milestone-check/SKILL.md."
+  - id: signal_09
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/milestone-check/instructions.md."
+  - id: signal_10
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/milestone-check/instructions.md."
+  - id: signal_11
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/milestone-check/instructions.md."
+
+config_edits:
+  - path: .claude/rules/architecture.md
+    tier: 1
+    gold_added: "\n## AI support structure\n\n- `.claude/rules/` — persistent behavioral rules loaded in every session\n- `.claude/skills/` — invocable skills (use `/skill-name` to trigger)\n  - `milestone-check` — detect users who newly crossed a rating threshold after a contest"
+    gold_removed: ''
+  - path: .claude/rules/workflow.md
+    tier: 1
+    gold_added: '
+
+      ## Milestone check after contests
+
+
+      After an AtCoder contest, use `/milestone-check <contest_id>` to detect newly eligible
+
+      blog candidates. See `.claude/skills/milestone-check/` for details.'
+    gold_removed: ''
+  - path: .claude/skills/milestone-check/SKILL.md
+    tier: 1
+    gold_added: "---\nname: milestone-check\ndescription: >\n  Detect users who newly crossed a rating threshold (2000/2400/2800/3200) in a given\n  AtCoder contest, validate whether they are listed on the site's blog pages, and report\n  candidates for addition. Does not modify any files.\n---\n\n## Overview\n\nValidate an AtCoder contest for users who newly reached a rating milestone, and report\nblog listing candidates. Both Algorithm and Heuristic divisions are covered.\n\n## Input\n\n```\n/milestone-check <contest_id>\n```\n\nExamples: `/milestone-check abc399`, `/milestone-check ahc040`\n\n## Process\n\nRead `.claude/skills/milestone-check/instructions.md` and follow Steps 1–5 in order."
+    gold_removed: ''
+  - path: .claude/skills/milestone-check/instructions.md
+    tier: 1
+    gold_added: "# milestone-check: Detailed Instructions\n\n## Step 1: Identify threshold crossers\n\nFetch: `https://atcoder.jp/contests/{contest_id}/results`\n\nExtract users who satisfy any of the following. Fetch all result pages if paginated.\n\n| Threshold | Color  | Condition                                    |\n|-----------|--------|----------------------------------------------|\n| 2000      | Yellow | `new_rating >= 2000` and `old_rating < 2000` |\n| 2400      | Orange | `new_rating >= 2400` and `old_rating < 2400` |\n| 2800      | Red    | `new_rating >= 2800` and `old_rating < 2800` |\n| 3200      | Crown  | `new_rating >= 3200` and `old_rating < 3200` |\n\n- Skip rows where rating is hidden (`----`).\n- A user who crosses multiple thresholds in one contest (e.g. 1999→2402) counts only for\n  the highest threshold crossed (Orange in this example).\n\n---\n\n## Step 2: Check existing blog listings\n\nSearch all of the following files for each username from Step 1:\n\n- `docs/blogs/algorithm/*.md` (C, C++, C#, Crystal, Java, Nim, Python, Ruby, Rust)\n- `docs/blogs/heuristic/*.md` (C, C++, C#, Crystal, D, Go, Java, Nim, Python, Rust)\n\nClassify each user as one of:\n\n| Status                             | Description                                                    |\n|------------------------------------|----------------------------------------------------------------|\n| **Unlisted**                       | Not found in any file → proceed to Step 4                      |\n| **Listed, section correct**        | Listed section matches current highest rating → no change needed |\n| **Listed, section upgrade needed** | Newly crossed a higher threshold → section move required       |\n\n---\n\n## Step 3: Detect primary language\n\nFetch: `https://atcoder.jp/contests/{contest_id}/submissions?f.User={username}`\n\n- Use the most frequently submitted language in this contest as the primary language.\n- Tie-break: prefer the language used for the hardest problem solved\n  (latest letter in the alphabet, e.g. F > D).\n- If zero submissions (e.g. virtual participation): fetch `https://atcoder.jp/users/{username}`\n  and check the last 10 contest entries to determine language.\n\n---\n\n## Step 4: Blog search (unlisted users only)\n\nCheck in order; record all found URLs — do not stop at the first match.\n\n1. Profile page `https://atcoder.jp/users/{username}` — look for any listed blog URL\n2. `https://qiita.com/{username}` — HTTP 404 means not present\n3. `https://zenn.dev/{username}` — HTTP 404 means not present\n4. `https://note.com/{username}` — HTTP 404 means not present\n5. Web search: `\"{username}\" AtCoder はてなブログ`\n\n---\n\n## Step 5: Report\n\nOutput in the following structure:\n\n```markdown\n## Results: {contest_id}\n\n### Unlisted\n\n| Username | Threshold     | Primary Language | Blog URL    |\n|----------|---------------|------------------|-------------|\n| foo      | Yellow (2000) | C++              | https://... |\n| baz      | Yellow (2000) | Rust             | Not found   |\n\n### Listed (section upgrade needed)\n\n- bar\n- qux\n```\n\nInclude all detected users. For Unlisted, include every candidate even if no blog was found.\nFor Listed, names only — details are already in the site."
+    gold_removed: ''

@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: stream-chat-swift-added-agentsmd-file
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: GetStream/stream-chat-swift
+  pr: 3801
+  base_commit: "90af337b3cf7b8524197ca784f629cd2ed29dbea"
+  merge_commit: "18a38bbe151e4ab78de9f1d2dda4d908921cefe6"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+
+config_edits:
+  - path: AGENTS.md
+    tier: 1
+    gold_added: "Guidance for AI coding agents (Copilot, Cursor, Aider, Claude, etc.) working in this repository. Human readers are welcome, but this file is written for tools.\n\n### Repository purpose\n\nThis repo hosts Stream’s iOS Chat SDK in Swift. It provides:\n  • A low-level client (StreamChat) for the Stream Chat API\n  • UI SDK (StreamChatUI) that provides chat screens/components\n\nAgents should prioritize backwards compatibility, API stability, and high test coverage when changing code.\n\n### Tech & toolchain\n  • Language: Swift (iOS; Mac Catalyst supported)\n  • Package managers: Swift Package Manager (primary), CocoaPods and XCFrameworks (also supported)\n  • Minimum Xcode: 15.x or newer (Apple Silicon supported)\n  • iOS targets: Follow existing deployment targets in package/podspec files; don’t lower without approval\n  • CI: GitHub Actions (assume PR validation on build + tests + lint)\n  • Linters & docs: SwiftLint (via Mint)\n\n### Project layout (high level)\n\nSources/\n  StreamChat/            # Core chat client, models, networking, state\n  StreamChatUI/          # UIKit components\nTests/\n  StreamChatTests/\n  StreamChatUITests/\n\nUse the closest folder’s patterns and conventions when editing.\n\n### Local setup (SPM)\n  1.  Open the repository root in Xcode (Package.swift is present), resolve packages.\n  2.  Select the intended scheme (see Schemes below), pick an iOS Simulator (e.g., iPhone 15), then Build.\n\n### Alternative: CocoaPods consumer check\n\nIf you need to validate as a Pod consumer:\n  1.  Create a throwaway sample app.\n  2.  Add to Podfile:\n\n```\nuse_frameworks!\npod 'StreamChatUI', '~> 4.0'\n# core only: pod 'StreamChat', '~> 4.0'\n```\n\n  3.  pod install then build the sample.\n\n### Schemes\n\nCommon scheme names in this repo include (exact names may evolve):\n  • StreamChat\n  • StreamChatUI\n  • Corresponding …Tests schemes\n\nAgents should query existing schemes from the project before invoking xcodebuild.\n\n### Build & test commands (CLI)\n\nPrefer Xcode for day-to-day work; use CLI for CI parity & agent automation.\n\nSwift Package (workspace-based) build:\n\n```\nxcodebuild \\\n  -scheme StreamChat \\\n  -destination 'platform=iOS Simulator,name=iPhone 15' \\\n  -configuration Debug build\n```\n\nRun unit tests for all modules:\n\n```\nxcodebuild \\\n  -scheme StreamChat \\\n  -destination 'platform=iOS Simulator,name=iPhone 15' \\\n  -configuration Debug test\n```\n\n```\nxcodebuild \\\n  -scheme StreamChatUI \\\n  -destination 'platform=iOS Simulator,name=iPhone 15' \\\n  -configuration Debug test\n```\n\nIf a Makefile is present, prefer the provided targets (e.g., make build, make test, make format, make lint). Always run make help to discover tasks.\n\nLinting & formatting\n  • SwiftLint is part of onboarding and may be installed via Mint. Run before committing:\n\n```\nswiftlint --strict\n```\n\n  • Respect .swiftlint.yml and any repo-specific rules. Do not suppress rules broadly; justify and scope exceptions.\n\nCommit / PR conventions\n  • Update CHANGELOG entries for user-visible SDK changes.\n  • Keep PRs small and focused; include tests.\n  • Follow the project’s “zero warnings” policy—fix new warnings and avoid introducing any.\n  • For UI changes, attach comparison screenshots (before/after) where feasible.\n  • Ensure public API changes include docs and migration notes.\n\nTesting policy\n  • Add/extend tests in the matching module’s Tests/ folder.\n  • Cover:\n    • Core models & API surface (StreamChat)\n    • View Controllers and UI behaviors (StreamChatUI)\n    • Use fakes/mocks from the test helpers provided by the repo when possible.\n\nDocs & samples\n  • When altering public API, update inline docs and any affected guide pages in the docs site where this repo is the source of truth.\n  • Keep sample/snippet code compilable; prefer // MARK: sections and concise examples.\n\nSecurity & credentials\n  • Never commit API keys or customer data.\n  • Example code must use obvious placeholders (e.g., YOUR_STREAM_KEY).\n  • If you add scripts, ensure they fail closed on missing env vars.\n\nCompatibility & distribution\n  • Maintain compatibility with supported iOS versions listed in Package.swift/podspecs.\n  • Don’t introduce third-party deps without discussion.\n  • Validate SPM and CocoaPods integration when changing module boundaries.\n\nWhen in doubt\n  • Mirror existing patterns in the nearest module.\n  • Prefer additive changes; avoid breaking public APIs.\n  • Ask maintainers (CODEOWNERS) through PR mentions for modules you touch.\n\n⸻\n\nQuick agent checklist (per commit)\n  • Build all modified modules for iOS Simulator\n  • Run tests for affected modules and ensure green\n  • Run swiftlint --strict\n  • Update CHANGELOG and docs if public API changed\n  • Add/adjust tests\n  • No new warnings\n\nEnd of machine guidance. Edit this file to refine agent behavior over time; keep human-facing details in README.md and docs."
+    gold_removed: ''

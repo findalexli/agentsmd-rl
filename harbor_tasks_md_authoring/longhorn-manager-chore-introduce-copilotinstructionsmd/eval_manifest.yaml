@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: longhorn-manager-chore-introduce-copilotinstructionsmd
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: longhorn/longhorn-manager
+  pr: 4635
+  base_commit: "2891ed5247ac6d868a1dd4fa65703885cf90f49d"
+  merge_commit: "18b99e6f55fd301c084a61868cadb56d0de89215"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/copilot-instructions.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/copilot-instructions.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/copilot-instructions.md."
+
+config_edits:
+  - path: .github/copilot-instructions.md
+    tier: 1
+    gold_added: "# Project Guidelines\n\n## Pull Request Review Workflow\nAct as an expert reviewer for distributed systems, storage, and cloud-native Go control planes.\n\nFor pull request reviews, follow this order strictly:\n1. Read the PR title and description first.\n2. Extract linked issue references (`Issue #1234`, `Issue longhorn/longhorn#1234`, issue URL, `fixes/closes/resolves/refs`).\n3. Read linked issue ticket(s) and confirm problem statement, expected behavior, and constraints.\n4. Read the files modified in the diff and their direct callers/callees to understand existing patterns.\n5. Validate implementation against issue intent.\n6. Perform detailed code review and testing assessment.\n\nDo not start line-by-line diff review before steps 1-4 are done.\n\n## Source of Truth and Missing Context\n- Treat linked issue ticket content as the source of truth for intent.\n- If no issue is linked, explicitly report `Missing issue reference`.\n- If issue details are unavailable, report `Issue context unavailable` and perform a partial review limited to code correctness only. Do not assess issue alignment.\n- When context is missing, do not invent assumptions. Ask for the missing context and limit findings accordingly.\n\n## Review Priorities\n- Prioritize correctness, safety, stability, and maintainability over style-only feedback.\n- Focus on issue alignment, logic correctness, edge cases, regression risk, and test sufficiency.\n- Check consistency with existing repository architecture and controller/datastore/reconciliation patterns.\n- Flag unnecessary scope expansion or refactors unrelated to the issue.\n\n## Domain Focus (Go, Storage, Distributed Systems)\nPay special attention to:\n- Concurrency and lifecycle safety:\n\t- Goroutine leaks\n\t- Channel misuse (blocking, closing)\n\t- Context propagation\n\t- Lock ordering and deadlock risk\n- Data consistency:\n\t- Idempotency of operation\n\t- Safe state transitions\n\t- Handling of stale cache\n\t- Retry safety (do duplicate side effects)\n- Error handling:\n\t- Errors must not be dropped or silently ignored\n\t- Include actionable context in return errors\n\t- Distinguish retryable vs terminal errors\n- Resource and performance risks:\n\t- Unbounded loops/retries\n\t- Repeated expensive operations\n\t- Cleanup correctness and missing cleanup on failure paths.\n\n## Review Output Format\nReturn review results in this order:\n1. Context Check\n2. Issue Alignment (`Fully aligned`, `Partially aligned`, `Not aligned`, or `Unable to verify`)\n\t- `Fully aligned`: the implementation matches the linked issue intent and constraints.\n\t- `Partially aligned`: the implementation addresses part of the issue intent but leaves meaningful gaps.\n\t- `Not aligned`: the implementation does not solve the linked issue or conflicts with its intent.\n\t- `Unable to verify`: issue context is missing or unavailable, so alignment cannot be assessed.\n3. Key Findings (ordered by severity):\n   - Critical: correctness bugs, data loss risk, deadlock or race conditions\n   - Major: regression risk, missing error handling, unsafe state transitions\n   - Minor: maintainability issues, inconsistent patterns, suboptimal logic\n   - Informational: style and naming (report last, briefly)\n4. Architectural and Logic Assessment\n5. Testing Status\n\nExample:\n\n```\n1. Context Check\nThe Pull Request description references Issue longhorn/longhorn#4567.\nThe issue context is improving replica rebuild performance under high I/O. The PR includes changes to replica_manager.go and spdk_io.go.\n\n2. Issue Alignment\nPartially aligned — the PR improves I/O throughput but does not address edge cases for concurrent rebuilds mentioned in the issue.\n\n3. Key Findings\n- Critical: spdk_io.go:102-150 — Potential race condition in WriteAsync when multiple replicas rebuild simultaneously.\n- Major: replica_manager.go:220-235 — Locking may block unrelated operations, risking overall throughput.\n- Minor: replica_manager.go:310 — Minor variable naming inconsistency (replicaID vs replicaId).\n\n4. Architectural and Logic Assessment\n- Changes follow existing SPDK integration patterns and maintain data plane separation.\n- Lock handling could be refactored to avoid blocking unrelated operations.\n- No major architectural conflicts with current controller patterns detected.\n\n5. Testing Status\n- Unit tests added for spdk_io.go new functions.\n- Missing tests for concurrent rebuild scenarios, as highlighted in the linked issue #4567.\n- Recommend adding integration tests simulating high I/O concurrent rebuilds to validate race conditions.\n```\n\n## Behavioral Constraints\n- Begin findings with the CRITICAL issue found, not with style comments or lint feedback.\n- Justify each correctness or safety assessment with a specific reason tied to the code or the linked issue.\n- Claim issue resolution only after explicitly citing the relevant issue requirement and the code that satisfies it."
+    gold_removed: ''

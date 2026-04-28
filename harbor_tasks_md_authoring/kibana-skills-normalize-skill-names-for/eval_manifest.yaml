@@ -1,0 +1,64 @@
+version: "2.0"
+
+task:
+  name: kibana-skills-normalize-skill-names-for
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: elastic/kibana
+  pr: 252996
+  base_commit: "06e62c13ab8e20e3ab51cbb2a4896c94855a5a67"
+  merge_commit: "7d076d319c8f459f197f159c56b735d8a82e6498"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .agent/skills/ftr-testing/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .agent/skills/scout-api-testing/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .agent/skills/scout-best-practices-reviewer/SKILL.md."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .agent/skills/scout-create-scaffold/SKILL.md."
+  - id: signal_04
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .agent/skills/scout-migrate-from-ftr/SKILL.md."
+  - id: signal_05
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .agent/skills/scout-ui-testing/SKILL.md."
+
+config_edits:
+  - path: .agent/skills/ftr-testing/SKILL.md
+    tier: 1
+    gold_added: 'name: ftr-testing'
+    gold_removed: ''
+  - path: .agent/skills/scout-api-testing/SKILL.md
+    tier: 1
+    gold_added: 'name: scout-api-testing'
+    gold_removed: ''
+  - path: .agent/skills/scout-best-practices-reviewer/SKILL.md
+    tier: 1
+    gold_added: 'name: scout-best-practices-reviewer'
+    gold_removed: ''
+  - path: .agent/skills/scout-create-scaffold/SKILL.md
+    tier: 1
+    gold_added: 'name: scout-create-scaffold'
+    gold_removed: ''
+  - path: .agent/skills/scout-migrate-from-ftr/SKILL.md
+    tier: 1
+    gold_added: 'name: scout-migrate-from-ftr'
+    gold_removed: ''
+  - path: .agent/skills/scout-ui-testing/SKILL.md
+    tier: 1
+    gold_added: 'name: scout-ui-testing'
+    gold_removed: ''

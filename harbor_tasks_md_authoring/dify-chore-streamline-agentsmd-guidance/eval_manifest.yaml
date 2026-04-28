@@ -1,0 +1,87 @@
+version: "2.0"
+
+task:
+  name: dify-chore-streamline-agentsmd-guidance
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: langgenius/dify
+  pr: 26308
+  base_commit: "0c1ec35244a361d368cad7df8d48a8e243060767"
+  merge_commit: "4906eeac189f959ae45d7db0230c8bef07a35a31"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+
+config_edits:
+  - path: AGENTS.md
+    tier: 1
+    gold_added: 'The codebase is split into:
+
+      - **Backend API** (`/api`): Python Flask application organized with Domain-Driven Design
+
+      - **Frontend Web** (`/web`): Next.js 15 application using TypeScript and React 19
+
+      ## Backend Workflow
+
+      - Run backend CLI commands through `uv run --project api <command>`.
+
+      - Backend QA gate requires passing `make lint`, `make type-check`, and `uv run --project api --dev dev/pytest/pytest_unit_tests.sh` before review.
+
+      - Use Makefile targets for linting and formatting; `make lint` and `make type-check` cover the required checks.
+
+
+      - Integration tests are CI-only and are not expected to run in the local environment.
+
+      ## Frontend Workflow
+
+      pnpm lint
+
+      pnpm lint:fix
+
+      pnpm test
+
+      ## Testing & Quality Practices
+
+      - Follow TDD: red → green → refactor.
+
+      - Use `pytest` for backend tests with Arrange-Act-Assert structure.
+
+      - Enforce strong typing; avoid `Any` and prefer explicit type annotations.
+
+      - Write self-documenting code; only add comments that explain intent.
+
+      ## Language Style
+
+      - **Python**: Keep type hints on functions and attributes, and implement relevant special methods (e.g., `__repr__`, `__str__`).
+
+      - **TypeScript**: Use the strict config, lean on ESLint + Prettier workflows, and avoid `any` types.
+
+      ## General Practices
+
+      - Prefer editing existing files; add new documentation only when requested.
+
+      - Inject dependencies through constructors and preserve clean architecture boundaries.
+
+      - Handle errors with domain-specific exceptions at the correct layer.
+
+      ## Project Conventions
+
+      - Backend architecture adheres to DDD and Clean Architecture principles.
+
+      - Async work runs through Celery with Redis as the broker.
+
+      - Frontend user-facing strings must use `web/i18n/en-US/`; avoid hardcoded text.'
+    gold_removed: ''

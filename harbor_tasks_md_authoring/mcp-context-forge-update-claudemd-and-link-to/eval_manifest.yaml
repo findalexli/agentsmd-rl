@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: mcp-context-forge-update-claudemd-and-link-to
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: IBM/mcp-context-forge
+  pr: 1347
+  base_commit: "4262b1a67a65461d8d6de3b3bcdfea1f19725941"
+  merge_commit: "bc2264948ff750df2aa4155daf8107a768334b2d"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+
+config_edits:
+  - path: CLAUDE.md
+    tier: 1
+    gold_added: "MCP Gateway (ContextForge) is a production-grade gateway, proxy, and registry for Model Context Protocol (MCP) servers\nand A2A Agents. It federates MCP and REST services, providing unified discovery, auth, rate-limiting, observability,\nvirtual servers, multi-transport protocols, and an optional Admin UI.\n# Testing individual files (using uv environment manager)\nuv run pytest --cov-report=annotate tests/unit/mcpgateway/test_translate.py\n  - FastAPI is build on Starlette ASGI framework\n- DO NOT include test plans in pull requests\n- uv for managing virtual environments\n\n## Documentation Quick Links\n\n### Getting Started\n- [Developer Onboarding](docs/docs/development/developer-onboarding.md) - Complete setup guide for new contributors\n- [Building & Testing](docs/docs/development/building.md) - Build system, testing workflows, coverage\n- [Configuration Reference](docs/docs/manage/configuration.md) - Environment variables and settings\n\n### API & Protocol Reference\n- [REST API Usage](docs/docs/manage/api-usage.md) - Comprehensive REST API guide with curl examples\n- [MCP JSON-RPC Guide](docs/docs/development/mcp-developer-guide-json-rpc.md) - Low-level MCP protocol implementation\n- [OpenAPI Interactive Docs](http://localhost:4444/docs) - Swagger UI (requires running server)\n- [OpenAPI Schema](http://localhost:4444/openapi.json) - Machine-readable API specification\n\n### Core Features\n- [A2A Agent Integration](docs/docs/using/agents/a2a.md) - Agent-to-Agent setup, authentication, monitoring\n- [Plugin Development](docs/docs/architecture/plugins.md) - Plugin framework, hooks, creating custom plugins\n- [Virtual Servers](docs/docs/manage/api-usage.md#virtual-server-management) - Creating and managing composite MCP servers\n- [Export/Import Reference](docs/docs/manage/export-import-reference.md) - Bulk operations and configuration migration\n\n### Architecture & Design\n- [Architecture Overview](docs/docs/architecture/index.md) - System design, components, data flow\n- [ADR Index](docs/docs/architecture/adr/index.md) - Architecture Decision Records\n- [Security Architecture](docs/docs/architecture/security-features.md) - Authentication, authorization, security features\n- [Multi-Transport Design](docs/docs/architecture/adr/003-expose-multi-transport-endpoints.md) - HTTP, WebSocket, SSE, STDIO\n\n### Operations & Management\n- [Logging & Monitoring](docs/docs/manage/logging.md) - Log configuration, rotation, analysis\n- [Performance Tuning](docs/docs/testing/performance.md) - Benchmarks, optimization, profiling\n- [Scaling & High Availability](docs/docs/manage/scale.md) - Horizontal scaling, load balancing, federation\n- [Well-Known URIs](docs/docs/manage/well-known-uris.md) - Standard endpoints (robots.txt, security.txt)\n\n### Deployment\n- [Container Deployment](docs/docs/deployment/container.md) - Docker/Podman setup and configuration\n- [Kubernetes Deployment](docs/docs/deployment/kubernetes.md) - K8s manifests and Helm charts\n- [Cloud Deployments](docs/docs/deployment/) - AWS, Azure, GCP, Fly.io guides\n\n### Testing & Quality\n- [Testing Guide](docs/docs/testing/basic.md) - Unit, integration, E2E, security testing\n- [Fuzzing & Property Testing](docs/docs/testing/fuzzing.md) - Advanced testing techniques\n- [Documentation Standards](docs/docs/development/documentation.md) - Writing and maintaining docs\n\n### Integration Guides\n- [Agent Frameworks](docs/docs/using/agents/) - LangChain, CrewAI, LangGraph, AutoGen\n- [MCP Clients](docs/docs/using/clients/) - Claude Desktop, Continue, Zed, OpenWebUI\n- [MCP Servers](docs/docs/using/servers/) - Example server integrations"
+    gold_removed: ''

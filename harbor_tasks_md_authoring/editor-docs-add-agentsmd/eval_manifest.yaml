@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: editor-docs-add-agentsmd
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: playcanvas/editor
+  pr: 1734
+  base_commit: "9a316f5d84ac041ecc8f378e40eca5c5ba108815"
+  merge_commit: "8f93f2dacf9b423e34bbaf59f11315853e5c283b"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+
+config_edits:
+  - path: AGENTS.md
+    tier: 1
+    gold_added: "# Agent Guidelines for PlayCanvas Editor\n\n## Project\n\n- TypeScript frontend for the PlayCanvas web-based 3D editor\n- Build: Rollup + SWC | Styles: SASS | Lint: ESLint 9 + Stylelint 16 | Test: Mocha + Chai\n- Node >=22.x (see `.nvmrc`)\n- Commands: `npm run build`, `npm run develop`, `npm run lint`, `npm test`, `npm run type:check`\n\n## How the Editor Loads\n\n- A backend server renders an HTML shell via Mustache templates\n- Injects `var config = {...}` (user, project, flags, URLs) into a `<script>` tag\n- Frontend bundle loaded from a configurable base URL; `window.config` drives all runtime behavior\n- Page variants:\n  - **Editor** — `src/editor/index.ts` → `editor.js` (full editor)\n  - **Blank** — `src/editor/blank.ts` → `editor-empty.js` (project/scene selection)\n  - **Code Editor** — `src/code-editor/index.ts` → `code-editor.js` (Monaco)\n  - **Launch** — `src/launch/index.ts` → `launch.js` (app preview)\n\n## Architecture\n\n- Class hierarchy: `Caller` → `Editor<T>` (`src/common/editor.ts`) → `MainEditor` (`src/editor/editor.ts`)\n- **Caller pattern** — cross-module communication via `this.call('method:name', ...args)` / `this.method('method:name', handler)`\n- **Side-effect imports** — `src/editor/index.ts` registers all modules on import; do not remove imports unless removing a feature\n- **editor-api** — `@playcanvas/editor-api` at `modules/editor-api/`, exposes `api.globals.*` (history, selection, assets, entities, realtime); `editor` global injected via Rollup footer\n\n## Conventions\n\n- Path aliases: `@/*` → `./src/*`\n- Naming: PascalCase classes, camelCase functions, UPPER_SNAKE_CASE constants, kebab-case files\n- Strict TypeScript — all public APIs must have proper type annotations\n- Only fix lint issues in code you are modifying\n- Styles live in `sass/`, compiled via `compile-sass.mjs`\n- Heavy work (texture convert, search, console) goes in Web Workers (`src/workers/`)\n\n## Things to Avoid\n\n- Don't edit `dist/` — generated output\n- Don't remove side-effect imports from `index.ts` without understanding consequences\n- Don't bypass the Caller pattern for cross-module communication\n- Don't add heavy synchronous work to the main thread — use Web Workers\n- Don't introduce circular dependencies\n- Don't hardcode URLs or config values — use `window.config`\n\nWhen in doubt, look at similar existing code or ask."
+    gold_removed: ''

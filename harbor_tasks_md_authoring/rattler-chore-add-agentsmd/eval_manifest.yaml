@@ -1,0 +1,48 @@
+version: "2.0"
+
+task:
+  name: rattler-chore-add-agentsmd
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: conda/rattler
+  pr: 2067
+  base_commit: "7b49851511d5d8efd638342c4074c8c0a3529c5f"
+  merge_commit: "9371a85dcdf6ca7690059b517eb5121f5312f397"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/CLAUDE.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+
+config_edits:
+  - path: .claude/CLAUDE.md
+    tier: 1
+    gold_added: ../AGENTS.md
+    gold_removed: ''
+  - path: AGENTS.md
+    tier: 1
+    gold_added: '- Rust monorepo for conda package management (solving, installing, fetching repodata), used by pixi, rattler-build, prefix.dev
+
+      - Build: `pixi run build` | Test: `pixi run test` | Lint all: `pixi run lint`
+
+      - Single test: `pixi run -- cargo nextest run -p <crate_name> <test_name>`
+
+      - Before committing, run `pixi run cargo-fmt` and `pixi run cargo-clippy` to ensure formatting and lint compliance
+
+      - crates in `crates/`, Python bindings in `py-rattler/`, WASM bindings in `js-rattler/`'
+    gold_removed: ''

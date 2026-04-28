@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: sentry-docs-featdevelop-add-section-to-agentmd
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: getsentry/sentry-docs
+  pr: 15982
+  base_commit: "a97addcc93f39c641fbb42249210bfd31b728030"
+  merge_commit: "cf041e121b99ab2479bfb486aaf955a6944ead7b"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+
+config_edits:
+  - path: AGENTS.md
+    tier: 1
+    gold_added: "\n## Developer Documentation (develop-docs/)\n\nWhen writing requirements in `develop-docs/`:\n\n1. **Use RFC 2119 Keywords**: Use \"MUST\", \"MUST NOT\", \"REQUIRED\", \"SHALL\", \"SHALL NOT\", \"SHOULD\", \"SHOULD NOT\", \"RECOMMENDED\", \"MAY\", and \"OPTIONAL\" as defined in [RFC 2119](https://www.ietf.org/rfc/rfc2119.txt). These keywords **MUST** be written in uppercase and bold, for example: **MUST**, **SHOULD**, **MAY**.\n\n2. **Add RFC 2119 Alert**: When creating a new file with requirements, or adding requirements to an existing file, ensure the file has an Alert at the top (after frontmatter) to clarify RFC 2119 usage. If missing, add:\n   ```mdx\n   <Alert>\n     This document uses key words such as \"MUST\", \"SHOULD\", and \"MAY\" as defined in [RFC 2119](https://www.ietf.org/rfc/rfc2119.txt) to indicate requirement levels.\n   </Alert>\n   ```"
+    gold_removed: ''

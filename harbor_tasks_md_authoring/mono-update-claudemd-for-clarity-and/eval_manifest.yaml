@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: mono-update-claudemd-for-clarity-and
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: rocicorp/mono
+  pr: 4869
+  base_commit: "7c4cd45c83e400eaf013b8ff37ec7129ab682a2f"
+  merge_commit: "76a32e48fe0828b335920436c2571336d87d5064"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+
+config_edits:
+  - path: CLAUDE.md
+    tier: 1
+    gold_added: "2. **Always run TS checks after every change** - Most packages have a `type-check` command that must pass before committing changes.\n1. **Optional fields convention**: In this codebase, whenever there's an optional field (marked with `?`), the type is always explicitly defined as `type | undefined`. \n   - You can always explicitly pass `undefined` for optional fields in this codebase"
+    gold_removed: ''

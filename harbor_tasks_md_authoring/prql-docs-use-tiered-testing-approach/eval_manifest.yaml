@@ -1,0 +1,54 @@
+version: "2.0"
+
+task:
+  name: prql-docs-use-tiered-testing-approach
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: PRQL/prql
+  pr: 5629
+  base_commit: "e125d11826e281f33e423519e403c7491a6fa24e"
+  merge_commit: "947336b71ab18d36f2a2b187fb58acba2ad135a5"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+
+config_edits:
+  - path: CLAUDE.md
+    tier: 1
+    gold_added: 'Use a tiered testing approach—iterate quickly, validate thoroughly:
+
+      **Inner loop** (during development, ~5s):
+
+      # Fast tests on core packages
+
+      # Filtered by test name
+
+      **Before returning to user** (~30s):
+
+
+      ```sh
+
+      # Comprehensive prqlc tests - sufficient for most changes
+
+      task prqlc:pull-request
+
+      ```
+
+
+      **Cross-binding changes only** (~2min):
+
+      # Only when changes affect JS/Python/wasm bindings'
+    gold_removed: ''

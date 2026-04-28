@@ -1,0 +1,40 @@
+version: "2.0"
+
+task:
+  name: wp-calypso-agentsmd-consolidate-pr-guidelines
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: Automattic/wp-calypso
+  pr: 108822
+  base_commit: "de23afacc6cf7141c9699fe6ca148bef4bf7dbf5"
+  merge_commit: "492a9042f38c1789a5a6a0ac58582416befe6ebc"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+
+config_edits:
+  - path: .claude/rules/pr.md
+    tier: 1
+    gold_added: ''
+    gold_removed: ''
+  - path: AGENTS.md
+    tier: 1
+    gold_added: "\n## Creating Pull Requests\n\n- Create PRs as draft. Follow the template in .github/PULL_REQUEST_TEMPLATE.md.\n- Follow the branch naming conventions in docs/git-workflow.md.\n- In the PR description:\n  - Use Linear issue IDs (e.g., `LIN-123`) instead of full Linear URLs.\n  - Avoid mentioning people's names.\n  - Do not link to wordpress.com URLs.\n  - Include all checklist items from .github/PULL_REQUEST_TEMPLATE.md. Only mark items as completed (`[x]`) if they actually apply; leave inapplicable items unchecked (`[ ]`)."
+    gold_removed: ''
+  - path: CLAUDE.md
+    tier: 1
+    gold_added: ''
+    gold_removed: ''

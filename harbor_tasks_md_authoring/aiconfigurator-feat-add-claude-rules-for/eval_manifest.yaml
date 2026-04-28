@@ -1,0 +1,377 @@
+version: "2.0"
+
+task:
+  name: aiconfigurator-feat-add-claude-rules-for
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: ai-dynamo/aiconfigurator
+  pr: 663
+  base_commit: "a07261e61a38d626c86a964e0eacc77745d72123"
+  merge_commit: "d24b43d434e607b9d075df4f028d085bd2427f05"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/rules/generator-development.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/rules/generator-development.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/rules/generator-development.md."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/rules/generator/config_schema.md."
+  - id: signal_04
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/rules/generator/config_schema.md."
+  - id: signal_05
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/rules/generator/config_schema.md."
+  - id: signal_06
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/rules/generator/cross_module_impact.md."
+  - id: signal_07
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/rules/generator/cross_module_impact.md."
+  - id: signal_08
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/rules/generator/cross_module_impact.md."
+  - id: signal_09
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/rules/generator/debugging.md."
+  - id: signal_10
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/rules/generator/debugging.md."
+  - id: signal_11
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/rules/generator/debugging.md."
+  - id: signal_12
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/rules/generator/guard_rails.md."
+  - id: signal_13
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/rules/generator/guard_rails.md."
+  - id: signal_14
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/rules/generator/guard_rails.md."
+  - id: signal_15
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/rules/generator/new_backend_version.md."
+  - id: signal_16
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/rules/generator/new_backend_version.md."
+  - id: signal_17
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/rules/generator/new_backend_version.md."
+  - id: signal_18
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/rules/generator/rule_authoring.md."
+  - id: signal_19
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/rules/generator/rule_authoring.md."
+  - id: signal_20
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/rules/generator/rule_authoring.md."
+  - id: signal_21
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/rules/generator/template_authoring.md."
+  - id: signal_22
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/rules/generator/template_authoring.md."
+  - id: signal_23
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/rules/generator/template_authoring.md."
+  - id: signal_24
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/rules/generator/testing.md."
+  - id: signal_25
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/rules/generator/testing.md."
+  - id: signal_26
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/rules/generator/testing.md."
+  - id: signal_27
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_28
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_29
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+
+config_edits:
+  - path: .claude/rules/generator-development.md
+    tier: 1
+    gold_added: "---\ndescription: >\n  Universal rules for developing the aiconfigurator generator module.\n  Covers cross-module awareness, template/rule safety, and documentation\n  discipline. Applies to all generator work including templates, rules,\n  config schemas, and rendering logic.\npaths:\n  - \"src/aiconfigurator/generator/**\"\n---\n\nRules and workflows for safely modifying the aiconfigurator generator module.\nRead the relevant reference file in `.claude/rules/generator/` before starting task-specific work.\n\n## Generator Pipeline Overview\n\nThe generator transforms deployment intent into backend-specific artifacts through 6 stages:\n\n```text\nRaw Input (YAML + CLI --set)\n  -> [1] Input Parsing        (api.py)\n  -> [2] Default Application   (rendering/schemas.py, deployment_config.yaml)\n  -> [3] Rule Evaluation       (rendering/rule_engine.py, rule_plugin/*.rule)\n  -> [4] Parameter Mapping     (rendering/engine.py, backend_config_mapping.yaml)\n  -> [5] Template Rendering    (rendering/engine.py, backend_templates/**/*.j2)\n  -> [6] Artifact Emission     (artifacts.py)\n  -> Generated Artifacts: k8s_deploy.yaml, run.sh, cli_args, engine configs\n```\n\nBugs can originate at any stage but manifest at stage 5/6. Always trace backwards.\n\n## High-Risk Files\n\nModifying these files affects the entire pipeline. Understand the full data flow\nbefore changing them:\n\n| File | Risk | Why |\n|---|---|---|\n| `src/aiconfigurator/generator/rendering/engine.py` | High | Context building + template rendering; changes affect ALL backends and versions |\n| `src/aiconfigurator/generator/rendering/rule_engine.py` | High | Rule DSL evaluator; bugs here corrupt ALL computed parameters silently |\n| `src/aiconfigurator/generator/rendering/schemas.py` | High | Default application; wrong defaults propagate through every downstream stage |\n| `src/aiconfigurator/generator/module_bridge.py` | Medium | SDK/profiler bridge; field name mismatches break the profiler -> generator flow |\n\n## Universal Rules\n\nThese rules apply to ALL generator work regardless of task type.\n\n### Rule 1: Respect Template and Rule Comments\n\nBefore modifying any `.j2` template or `.rule` file, read ALL comments in the file.\nComments with `# Guard:` or `# Why:` encode hard-won lessons from 60+ production\nbug fixes. If the developer's requested change contradicts a guarded comment:\n\n1. Quote the guard comment to the developer\n2. Explain why the guard exists\n3. Ask the developer to confirm they want to override it\n4. Do NOT silently remove or bypass guard comments\n\nWhen in doubt, the `# Guard:` comments in the source files are authoritative over\n`.claude/rules/generator/guard_rails.md`. The reference is a convenient index but\nmay lag behind code changes.\n\nSee `.claude/rules/generator/guard_rails.md` for the full catalog of constraints by backend.\n\n### Rule 2: Assess Cross-Module Impact\n\nBefore implementing a generator change, check whether it affects:\n\n- **CLI** (`src/aiconfigurator/cli/`) -- new params need CLI arg registration\n- **SDK/profiler bridge** (`src/aiconfigurator/generator/module_bridge.py`) -- field name changes break the bridge\n- **Dynamo profiler** (https://github.com/ai-dynamo/dynamo/tree/main/components/src/dynamo/profiler) -- profiler feeds data that generator consumes; schema changes propagate\n- **Generator validator** (`tools/generator_validator/`) -- new flags need validator updates\n- **Support matrix** (`tools/support_matrix/`) -- new backends/models may need matrix updates\n- **Collector** (`collector/`) -- performance data collection may reference generator params\n\nSee `.claude/rules/generator/cross_module_impact.md` for the detailed dependency map.\n\n### Rule 3: Update Documentation\n\nAfter completing a feature or adding a new user-facing parameter, update the\nrelevant docs under `docs/`. Skip doc updates for small bug fixes or internal\nrefactors that don't change user-visible behavior.\n\n| Change Type | Update |\n|---|---|\n| Pipeline/rendering logic | `docs/generator_overview.md` |\n| New CLI parameter | `docs/cli_user_guide.md` |\n| Model config changes | `docs/add_a_new_model.md` |\n| K8s/deployment changes | `docs/dynamo_deployment_guide.md` |\n| New backend version | `docs/support-matrix/` |\n| Tuning parameters | `docs/advanced_tuning.md` |\n\nIf no existing doc covers the change, note this to the developer and suggest where\ndocumentation should be added.\n\n## Task Routing\n\nRead the appropriate reference file BEFORE starting work:\n\n| Task Type | Reference File |\n|---|---|\n| Adding/modifying Jinja2 templates | `.claude/rules/generator/template_authoring.md` |\n| Writing/modifying .rule files | `.claude/rules/generator/rule_authoring.md` |\n| Modifying deployment_config.yaml or backend_config_mapping.yaml | `.claude/rules/generator/config_schema.md` |\n| Debugging generator output bugs | `.claude/rules/generator/debugging.md` |\n| Writing tests for generator changes | `.claude/rules/generator/testing.md` |\n| Adding a new backend engine version | `.claude/rules/generator/new_backend_version.md` |\n| Understanding backend-specific constraints | `.claude/rules/generator/guard_rails.md` |\n| Checking cross-module dependencies | `.claude/rules/generator/cross_module_impact.md` |\n\n## Cross-Backend Consistency\n\nThe generator supports 3 backends: **TRT-LLM**, **vLLM**, **SGLang**.\nEach has its own templates, rules, and parameter mappings.\n\nWhen modifying any backend-specific file, ALWAYS check the other two backends:\n\n1. Does the same parameter/rule/template block exist in the other backends?\n2. If yes, does it need the same change?\n3. If the change is intentionally different across backends, document WHY.\n\nThe most common generator bug pattern is fixing something in one backend and\nforgetting the others (PR #579: MoE TP rule missing from SGLang).\n\n## Versioned Template Discipline\n\n- Each backend has versioned templates (e.g., `cli_args.0.16.0.j2`)\n- The renderer picks the HIGHEST version <= requested version (floor match)\n- When fixing or updating versioned templates, check\n  `src/aiconfigurator/generator/config/backend_version_matrix.yaml` to identify\n  active versions. Generally only modify templates for the **latest 5 Dynamo versions**\n  and their associated backend versions. If the change requires touching more than 5\n  versions, confirm with the developer before proceeding.\n- To support a new version: copy the closest prior template, modify the copy\n- Only create a new version template when the backend CLI interface actually changed\n\n## Quick Validation\n\nAfter any generator change:\n\n```bash\n# Run existing unit tests\npytest tests/unit/generator/ -v\n\n# Generate a test config and inspect output\npython -m aiconfigurator generate --model <model> --system <system> --backend <backend> -o /tmp/test_output\n\n# Run generator validator (if backend images available)\npython tools/generator_validator/validator.py --backend <backend> --path /tmp/test_output/\n```"
+    gold_removed: ''
+  - path: .claude/rules/generator/config_schema.md
+    tier: 1
+    gold_added: "# Config Schema Modification Reference\n\nThe generator's behavior is driven by two declarative YAML files. This reference\ncovers safe practices for modifying them.\n\n## When to Use This Reference\n\n- Adding a new user-facing configuration parameter\n- Modifying defaults (global or backend-specific)\n- Adding a parameter mapping for a backend\n- Changing parameter constraints or required status\n- Adding a new config section (namespace)\n\n## Key Files\n\n| File | Purpose |\n|---|---|\n| `src/aiconfigurator/generator/config/deployment_config.yaml` | Input schema: ~54 params, defaults, constraints |\n| `src/aiconfigurator/generator/config/backend_config_mapping.yaml` | Unified param -> backend CLI flag mapping |\n| `src/aiconfigurator/generator/rendering/schemas.py` | Schema validation, default application |\n\n## Schema File Structures\n\n**deployment_config.yaml entry:**\n```yaml\n- key: <Section>.<param_name>        # e.g., K8sConfig.k8s_namespace\n  required: true|false\n  default: <value or Jinja2 expr>    # e.g., '\"default-ns\"' or 'model_path.split(\"/\")[-1]'\n  backend_defaults:                   # Optional: override default per backend\n    trtllm: <value or expr>\n    vllm: <value or expr>\n    sglang: <value or expr>\n  backends:                            # Optional: restrict to specific backends\n    - trtllm\n```\n\n**backend_config_mapping.yaml entry:**\n```yaml\n- param_key: <unified_name>          # e.g., tensor_parallel_size\n  vllm: <cli_flag_name>             # e.g., tensor-parallel-size (or null if unsupported)\n  sglang: <cli_flag_name>\n  trtllm: <cli_flag_name>\n  # OR with value transformation:\n  sglang:\n    key: disable-cuda-graph-padding\n    value: \"not cuda_graph_enable_padding\"  # Jinja2 expression\n```\n\n## Workflow\n\n### 1. Define the Parameter\n\n- What section does it belong to? (ServiceConfig, K8sConfig, ModelConfig, etc.)\n- Is it required or optional?\n- What is the default value? Is it static or computed?\n- Does the default differ by backend?\n- Which backends support this parameter?\n\n### 2. Add to deployment_config.yaml\n\n- Place in the correct section (entries are grouped by section)\n- If default uses an expression, test it:\n  1. What variables does the expression reference?\n  2. Are those variables available at default-evaluation time?\n  3. Test with missing/None values of referenced variables\n- If backend-specific: add `backend_defaults` block\n- If backend-restricted: add `backend_constraint` list\n\n### 3. Add to backend_config_mapping.yaml\n\n- Add entry with unified `param_key`\n- For each backend:\n  - If supported: add the CLI flag name\n  - If unsupported: set to null\n  - If value needs transformation: use `{key:, value:}` format\n- VERIFY the CLI flag names:\n  - TRT-LLM: check `tensorrt_llm` Python API or docs\n  - vLLM: check `vllm.engine.arg_utils.EngineArgs`\n  - SGLang: check `sglang.srt.server_args.ServerArgs`\n\n### 4. Update Rule Files (if needed)\n\nIf the parameter requires computation, add rules.\nSee `.claude/rules/generator/rule_authoring.md` for rule authoring details.\n\n### 5. Update Templates (if needed)\n\nIf the parameter needs special handling in artifacts.\nSee `.claude/rules/generator/template_authoring.md` for template authoring details.\n\n### 6. Validate\n\n- Run generator with the new parameter set to a test value\n- Run generator with the parameter omitted (verify default works)\n- Run generator validator to check output against backend API schemas\n- Verify the parameter appears in `--generator-help` output\n\n## Common Mistakes\n\n1. **Jinja2 expression quoting**: String defaults must be double-quoted inside single\n   quotes: `default: '\"my-string\"'`. Without inner quotes, YAML interprets it as a\n   bare string and Jinja2 evaluation breaks.\n\n2. **Missing null handling in expressions**: If `default: 'model_path.split(\"/\")[-1]'`\n   and `model_path` is None, the expression throws. Guard with:\n   `'model_path.split(\"/\")[-1] if model_path else \"\"'`.\n\n3. **Backend flag name format mismatch**: TRT-LLM uses underscores (`kv_cache_dtype`),\n   vLLM/SGLang use dashes (`kv-cache-dtype`). Always check the actual backend CLI.\n\n4. **Mapping value transformation gotchas**: SGLang's `disable-cuda-graph-padding` is\n   the INVERSE of the unified `cuda_graph_enable_padding`. The mapping\n   `value: \"not cuda_graph_enable_padding\"` handles this. Forgetting the inversion\n   produces a silent semantic bug.\n\n5. **Circular default references**: If param A defaults to an expression using param B,\n   and B defaults to an expression using A, the schema loader will silently produce\n   None for both. Verify the dependency chain is acyclic.\n\n## Checklist\n\n```text\n[ ] Define parameter: section, required/optional, default, backend support\n[ ] Add entry to deployment_config.yaml with correct syntax\n[ ] Test default expression with edge cases (None, empty string)\n[ ] Add entry to backend_config_mapping.yaml\n[ ] Verify CLI flag names against actual backend APIs\n[ ] Add rules if parameter needs computation\n[ ] Add template changes if needed\n[ ] Run generator with parameter set and omitted\n[ ] Run generator validator\n[ ] Verify --generator-help output includes new parameter\n```"
+    gold_removed: ''
+  - path: .claude/rules/generator/cross_module_impact.md
+    tier: 1
+    gold_added: "# Cross-Module Impact Map\n\nWhen modifying the generator, check this map to identify affected modules outside\n`src/aiconfigurator/generator/`.\n\n## Dependency Directions\n\n```text\nCLI (cli/)\n  |-- calls --> generator/api.py (generate_config_from_input_dict, parse_cli_params)\n  |-- calls --> generator/main.py (render-config, render-artifacts subcommands)\n  |-- reads --> generator/config/deployment_config.yaml (for --generator-help)\n\nSDK/Profiler Bridge (generator/module_bridge.py)\n  |-- reads <-- sdk/task.py (TaskConfig)\n  |-- reads <-- sdk/perf_database.py (result DataFrame)\n  |-- calls --> generator/api.py (generate_config_from_input_dict)\n\nDynamo Profiler (external: ai-dynamo/dynamo/components/src/dynamo/profiler)\n  |-- produces --> performance CSV data consumed by sdk/perf_database.py\n  |-- field names must match --> model_configs/*.json + systems/*.yaml\n\nGenerator Validator (tools/generator_validator/)\n  |-- reads <-- generated artifacts (cli_args, engine configs, k8s manifests)\n  |-- validates against --> actual backend engine APIs (vLLM, SGLang, TRT-LLM)\n\nSupport Matrix (tools/support_matrix/)\n  |-- reads <-- model_configs/*.json, systems/*.yaml\n  |-- reads <-- generator/config/backend_version_matrix.yaml\n\nCollector (collector/)\n  |-- produces --> performance data CSVs\n  |-- references --> generator parameter names for benchmark configs\n```\n\n## Impact by Change Type\n\n### Adding a New Parameter\n\n| Step | File(s) | Why |\n|---|---|---|\n| 1. Schema | `src/aiconfigurator/generator/config/deployment_config.yaml` | Define the param, default, backend support |\n| 2. Mapping | `src/aiconfigurator/generator/config/backend_config_mapping.yaml` | Map to backend CLI flag names |\n| 3. CLI | `src/aiconfigurator/cli/main.py` or CLI arg group | Expose via `--generator-set` (auto if in schema) |\n| 4. Bridge | `src/aiconfigurator/generator/module_bridge.py` | Pass from SDK search results if profiler-sourced |\n| 5. Validator | `tools/generator_validator/` | Add to expected flags if new CLI flag |\n| 6. Docs | `docs/cli_user_guide.md` | Document the new parameter |\n\n### Renaming a Parameter\n\n| Step | File(s) | Why |\n|---|---|---|\n| 1. Schema | `deployment_config.yaml` | Update key name |\n| 2. Mapping | `backend_config_mapping.yaml` | Update param_key |\n| 3. Bridge | `module_bridge.py` | Update field extraction from TaskConfig/DataFrame |\n| 4. Rules | `rule_plugin/*.rule` | Update all references in rule expressions |\n| 5. Templates | `backend_templates/**/*.j2` | Update variable references |\n| 6. Aggregators | `aggregators.py` | Update if param is aggregated there |\n| 7. Tests | `tests/unit/generator/` | Update test fixtures and assertions |\n| 8. Backward compat | `aggregators.py` or `api.py` | Add alias if old name was user-facing |\n\n### Modifying Rule Logic\n\n| Check | File(s) | Why |\n|---|---|---|\n| 1. All backends | `rule_plugin/*.rule` | Same rule may need update in all backends |\n| 2. Benchmark rules | `rule_plugin/benchmark/*.rule` | Benchmark may need different logic |\n| 3. Bridge output | `module_bridge.py` | If rule uses fields from bridge output |\n| 4. Template consumers | `backend_templates/**/*.j2` | Templates may assume rule output format |\n| 5. Validator | `tools/generator_validator/` | New computed values may need validation |\n\n### Adding a New Backend Version\n\n| Step | File(s) | Why |\n|---|---|---|\n| 1. Version matrix | `src/aiconfigurator/generator/config/backend_version_matrix.yaml` | Map Dynamo -> backend version |\n| 2. Templates | `src/aiconfigurator/generator/config/backend_templates/<backend>/` | Version-specific templates if CLI changed |\n| 3. Image defaults | `deployment_config.yaml` | Container image tag expressions |\n| 4. Support matrix | `tools/support_matrix/` | Update supported combinations |\n| 5. Validator | `tools/generator_validator/` | May need new backend image for validation |\n\n### Modifying Template Output Format\n\n| Check | File(s) | Why |\n|---|---|---|\n| 1. K8s manifests | Verify YAML is valid K8s | `kubectl apply --dry-run` |\n| 2. Run scripts | Verify bash syntax | `bash -n generated_run.sh` |\n| 3. Engine configs | Verify against backend schema | `tools/generator_validator/` |\n| 4. Collector | `collector/` | If collector parses generated configs |\n\n## External Dependencies\n\n### Dynamo Profiler (ai-dynamo/dynamo)\n\nThe Dynamo profiler runs benchmarks and produces performance data that the SDK\nconsumes. Generator changes that affect:\n\n- **Worker topology** (TP, PP, DP dimensions) -- profiler must benchmark matching configs\n- **Batch size computation** -- profiler's benchmark configs must align\n- **K8s deployment format** -- Dynamo's DynamoGraphDeployment CRD must accept generated manifests\n- **Entry points** (e.g., `python3 -m dynamo.vllm`) -- must match Dynamo runtime\n\nWhen changing these areas, verify compatibility with the Dynamo profiler or flag\nthe change to the developer as potentially requiring upstream Dynamo updates.\n\n### Backend Engines (vLLM, SGLang, TRT-LLM)\n\nThe generator produces CLI arguments and config files consumed by these engines.\nChanges to generated flags must be validated against the actual engine version's API:\n\n- **vLLM**: `vllm.engine.arg_utils.EngineArgs`\n- **SGLang**: `sglang.srt.server_args.ServerArgs`\n- **TRT-LLM**: `tensorrt_llm` Python API / `trtllm-serve` CLI\n\nUse `tools/generator_validator/` when backend images are available."
+    gold_removed: ''
+  - path: .claude/rules/generator/debugging.md
+    tier: 1
+    gold_added: "# Generator Debugging Reference\n\nGenerator bugs have distinct patterns: silent output corruption, mode confusion,\nversion template drift, and MoE edge cases. This reference provides a systematic\nbackwards-tracing diagnostic approach.\n\n## When to Use This Reference\n\n- Generator produces wrong output (invalid CLI args, missing config blocks, wrong values)\n- Engine startup fails with generated config\n- Generator validator reports mismatches\n- User reports deployment failure with generated artifacts\n\n## Diagnostic Pipeline\n\nThe generator has 6 stages. A bug can originate at any stage but manifests at the output.\nTrace backwards from the output:\n\n```text\nStage 6: TEMPLATE RENDERING (most visible)\n  Symptom: Wrong CLI flag name, missing block, wrong YAML structure\n  Check:   Read the template (.j2 file), verify variable names match context\n  Tool:    Diff the template output against a known-good output\n\nStage 5: RULE EVALUATION (most common source)\n  Symptom: Wrong computed value (batch size, TP, token budget)\n  Check:   Read the .rule file, trace expression evaluation\n  Tool:    Add debug logging in rule_engine.py:apply_rule_plugins()\n\nStage 4: PARAMETER MAPPING (subtle bugs)\n  Symptom: Correct value, wrong flag name or inverted boolean\n  Check:   Read backend_config_mapping.yaml for the parameter\n  Tool:    Grep for the param_key across all mapping entries\n\nStage 3: DEFAULT APPLICATION (silent failures)\n  Symptom: Parameter is None/missing when it should have a value\n  Check:   Read deployment_config.yaml for the entry's default expression\n  Tool:    Evaluate the default expression manually with test inputs\n\nStage 2: INPUT PARSING (user-facing)\n  Symptom: Override not taking effect, wrong section targeting\n  Check:   Read api.py:parse_cli_params(), check dotted-path resolution\n  Tool:    Print parsed input dict before processing\n\nStage 1: SCHEMA LOADING (rare)\n  Symptom: Schema validation error or missing field\n  Check:   Read rendering/schemas.py:apply_defaults()\n```\n\n## Workflow\n\n### 1. Reproduce\n\n- Get the exact input config (YAML + CLI overrides)\n- Get the backend and version\n- Run the generator and capture output\n- Identify the specific wrong output (CLI flag, YAML block, value)\n\n### 2. Trace Backwards from Output\n\nStart at Stage 6 and work backwards:\n\n**a. TEMPLATE**: Find the template that produced the wrong output\n- Glob: `src/aiconfigurator/generator/config/backend_templates/<backend>/<artifact>*.j2`\n- Find the exact version template used (check `backend_version_matrix.yaml`)\n- Read the template, identify which variable is wrong\n\n**b. CONTEXT**: Check what value the variable had in the rendering context\n- Read `src/aiconfigurator/generator/rendering/engine.py:make_worker_context()`\n- Trace how the variable gets into the context dict\n\n**c. RULE**: Check if a rule computed the wrong value\n- Read `src/aiconfigurator/generator/rule_plugin/<backend>.rule`\n- Find the rule for this variable\n- Check scope prefix (agg vs prefill vs decode)\n- Evaluate the expression manually with known inputs\n\n**d. MAPPING**: Check if the mapping is correct\n- Read `src/aiconfigurator/generator/config/backend_config_mapping.yaml`\n- Verify the param_key -> backend flag mapping\n- Check for value transformations\n\n**e. DEFAULT**: Check if the default was applied correctly\n- Read `src/aiconfigurator/generator/config/deployment_config.yaml` for the parameter\n- Evaluate the default expression\n- Check `backend_defaults` if applicable\n\n### 3. Identify Root Cause\n\nCommon root causes:\n- Wrong scope prefix in `.rule` file (e.g., `agg` instead of `agg_prefill_decode`)\n- Stale variable reference in template after context restructuring\n- Missing null guard in expression `(value or 0)`\n- Parameter only fixed in one backend's `.rule`, not all\n- Version template not updated (fix in v1.0.0 but not v1.1.0)\n\n### 4. Fix\n\n- Apply fix at the correct stage (don't patch templates for rule bugs)\n- Check ALL backends and ALL version templates for the same issue\n- Use `.claude/rules/generator/template_authoring.md` if fixing templates\n- Use `.claude/rules/generator/rule_authoring.md` if fixing rules\n\n### 5. Verify\n\n- Re-run with the original failing input\n- Run generator validator\n- Check other backends for the same bug pattern\n- Add regression test\n\n## Bug Pattern Catalog\n\n| Pattern | Example PR | Root Cause | Fix Location |\n|---|---|---|---|\n| Wrong value for one mode | #609 | Rule scope wrong | `.rule` file scope prefix |\n| Missing parameter in one backend | #579 | Rule not added | `.rule` file for that backend |\n| Invalid CLI flag | #613 | Backend doesn't support it | mapping yaml + template |\n| Stale template variable | #540 | Context restructured | ALL version templates |\n| RFC-1123 violation | #490 | No sanitization | `naive.py` or `aggregators.py` |\n| Disagg config in agg mode | #609 | Missing mode guard | Template `{% if %}` block |\n| Version mismatch | #519 | Deprecated flag | Version-specific template |\n\n## Checklist\n\n```text\n[ ] Reproduce the bug with exact inputs\n[ ] Identify the wrong output (specific flag/value/block)\n[ ] Trace backwards through the 6-stage pipeline\n[ ] Identify root cause stage and specific file\n[ ] Check all backends for the same bug pattern\n[ ] Check all version templates for the same bug pattern\n[ ] Apply fix at the correct stage\n[ ] Add regression test\n[ ] Run generator validator\n```"
+    gold_removed: ''
+  - path: .claude/rules/generator/guard_rails.md
+    tier: 1
+    gold_added: '# Guard Rails Reference
+
+
+      Distilled from ~60 merged PRs. These are constraints that MUST NOT be violated.
+
+      Each guard has a severity level indicating the impact of violation.
+
+
+      Severity: **CRASH** (engine won''t start), **OOM** (out of memory), **SILENT** (wrong results),
+
+      **K8S** (pod failure), **PERF** (degraded performance)
+
+
+      ---
+
+
+      ## TRT-LLM Backend
+
+
+      | Guard | Severity | Key Detail |
+
+      |---|---|---|
+
+      | `build_config` nesting is version-dependent | SILENT | Pre-1.2.0rc5: inside `build_config`. Post-1.2.0rc5: top-level. Wrong placement silently ignored. |
+
+      | Template variables must be top-level keys | SILENT | `engine.py` flattens context; nested paths like `build_config.max_batch_size` are undefined. |
+
+      | `cache_transceiver_config` lifecycle | CRASH | Absent pre-1.0.0rc4. In engine YAML 1.0.0rc4-1.3.0rc1. In CLI `--override-engine-args` post-1.3.0rc5. |
+
+      | `cache_transceiver_config.backend` must be `''DEFAULT''` | CRASH | Omitting backend field causes TRT-LLM to reject config in disagg mode. |
+
+      | Engine params go into `--override-engine-args` JSON | CRASH | TRT-LLM''s Dynamo argparser only accepts specific direct CLI flags. |
+
+      | `max_num_tokens % tokens_per_block == 0` | CRASH | TRT-LLM asserts block alignment; violation crashes engine startup. |
+
+      | `cache_transceiver_max_tokens_in_buffer` must align to block | CRASH | Same block-alignment assertion applies. |
+
+      | Prefill: `disable_overlap_scheduler = true` | CRASH | Overlap scheduler on prefill causes hangs. |
+
+      | Decode/agg: `disable_overlap_scheduler = false` | PERF | Disabling on decode/agg hurts throughput. |
+
+      | MoE: `TP = moe_tp * moe_ep` | OOM | Without this, model may replicate per GPU. |
+
+      | KV cache dtype `"float16"`/`"bfloat16"` -> `"auto"` | CRASH | TRT-LLM doesn''t accept literal dtype strings. |
+
+
+      ## SGLang Backend
+
+
+      | Guard | Severity | Key Detail |
+
+      |---|---|---|
+
+      | MoE: `TP = moe_tp * moe_ep` | OOM | SGLang uses unified TP; without this, `tp=1` -> full model replicated per GPU. |
+
+      | Do NOT emit `--moe-dense-tp-size` | CRASH | SGLang only accepts value 1 or None; other values crash startup. |
+
+      | KV transfer backend default: `"nixl"` | CRASH | SGLang >=0.5.6.post2 requires explicit transfer backend for disagg. |
+
+      | `enable_mixed_chunk = true` for agg mode | PERF | Without it, poor prefill/decode scheduling. |
+
+      | KV cache dtype `"fp8"` -> `"fp8_e4m3"` | SILENT | SGLang accepts `"fp8_e4m3"` not `"fp8"`. |
+
+      | KV cache dtype `"float16"` -> `"auto"` | SILENT | SGLang interprets `"float16"` literally. |
+
+      | Wideep vs non-wideep are exclusive | CRASH | SGLang doesn''t support mixed `moe_tp + moe_ep` configurations. |
+
+      | `enable_attention_dp` when DP > 1 and MoE | SILENT | MoE models with DP>1 require attention DP. |
+
+      | NVFP4 models need explicit `--quantization` | OOM | SGLang can''t auto-detect NVFP4; loads in FP16/BF16 without it. |
+
+
+      ## vLLM Backend
+
+
+      | Guard | Severity | Key Detail |
+
+      |---|---|---|
+
+      | `--cudagraph-capture-sizes` uses space-separated values | CRASH | Commas treated as part of value strings; startup failure. |
+
+      | `--kv-transfer-config` required for disagg | SILENT | Without it, KV cache silently fails to transfer. |
+
+      | `--max-model-len` and `--max-num-batched-tokens` required | OOM | Without these, vLLM uses model default max length. |
+
+      | `enable_expert_parallel` when `moe_ep > 1` | SILENT | vLLM requires explicit flag; EP silently disabled without it. |
+
+      | KV cache dtype `"float16"` -> `"auto"` | CRASH | vLLM doesn''t accept `"float16"` as literal. |
+
+
+      ## Cross-Backend Rules
+
+
+      | Guard | Severity | Key Detail |
+
+      |---|---|---|
+
+      | `gpus_per_worker = TP * PP * DP` | K8S | Wrong value causes pod scheduling failure or idle GPUs. |
+
+      | Prefix caching: `disable_prefix_cache=false` AND `enable_router=true` | SILENT | Both must be set when `ModelConfig.prefix > 0`. |
+
+      | Speculative decoding type string differs by backend | CRASH | TRT-LLM: `"MTP"`, SGLang: `"NEXTN"`, vLLM: `"mtp"`. |
+
+      | Prefill `max_batch_size` must never be 0 | CRASH | Fallback to 1; zero causes division-by-zero. |
+
+      | Do NOT extract common K8s templates | N/A | PR #314 attempted; PR #340 reverted. Keep templates standalone per backend. |
+
+
+      ## K8s Template Guards
+
+
+      | Guard | Severity | Key Detail |
+
+      |---|---|---|
+
+      | PVC mounts on WORKER pods, not frontend | K8S | SGLang frontend doesn''t need model files. |
+
+      | `k8s_model_cache` must be present for vllm/sglang | K8S | Missing PVC param omits volume mount entirely. |
+
+      | `k8s_etcd_endpoints` must be rendered when configured | K8S | Disagg mode requires etcd for service discovery. |
+
+      | `k8s_hf_home` defaults to `/workspace/model_cache` when PVC set | SILENT | Ensures HF downloads go to persistent volume. |
+
+      | DGD name must be RFC 1123 compliant | K8S | Lowercase, alphanumeric, hyphens only, max 63 chars. |
+
+      | Use `MODEL_PATH` not `MODEL` as env var | SILENT | Aligns with trtllm convention; `MODEL` caused conflicts. |
+
+
+      ## Version & Template Selection
+
+
+      | Guard | Severity | Key Detail |
+
+      |---|---|---|
+
+      | Template version selection: floor match (highest <= requested) | SILENT | Not every version has its own template. |
+
+      | Catch unsupported system/backend/version combos early | PERF | Late failures after profiling waste user time. |
+
+      | `--generator-dynamo-version` vs `--generated-config-version` | SILENT | Different purposes: Dynamo image tag vs template selection. |
+
+
+      ## Run Script Guards
+
+
+      | Guard | Severity | Key Detail |
+
+      |---|---|---|
+
+      | `#!/bin/bash` shebang and `set -e` | CRASH | Missing shebang causes exec format error. |
+
+      | Benchmark templates must include `--artifact-dir` | CRASH | Default path may be read-only in containers. |
+
+      | Dynamo >=0.8.0 entry points: `python3 -m dynamo.<backend>` | CRASH | Old entry points fail on new Dynamo versions. |
+
+      | Multi-node disagg: per-node scripts, `include_frontend` only node 0 | K8S | Workers assigned to non-existent GPU slots. |
+
+
+      ## Model Detection
+
+
+      | Guard | Severity | Key Detail |
+
+      |---|---|---|
+
+      | MoE detection from `config.json`, not model name | SILENT | Name patterns miss non-standard naming. |
+
+      | Use `model_family` not `model_name` for compatibility | SILENT | `model_name` includes size/quant info. |
+
+      | `safe_model_name` generated BEFORE saving results | CRASH | Race condition with raw `model_path` containing slashes. |
+
+      | Quantization inferred from model config, not name | SILENT | Name patterns are inconsistent. |
+
+
+      ## Benchmark vs Deployment Differences
+
+
+      | Parameter | Deployment | Benchmark |
+
+      |---|---|---|
+
+      | `agg_decode max_batch_size` | `max(512, batch*2)` | `max(128, batch)` |
+
+      | `cuda_graph_batch_sizes` | Coarse-grained ranges | All sizes `range(1, max+1)` |
+
+      | Rule selection | `--generator-set rule=default` | `--generator-set rule=benchmark` |'
+    gold_removed: ''
+  - path: .claude/rules/generator/new_backend_version.md
+    tier: 1
+    gold_added: "# Adding a New Backend Version Reference\n\nAdding a new backend version is one of the most frequent generator tasks. It involves\ncoordinated changes across multiple files. Getting any step wrong results in deployment\nfailures that only surface when users try the new version.\n\n## When to Use This Reference\n\n- Adding support for a new backend engine version (TRT-LLM, vLLM, SGLang)\n- Bumping the default Dynamo version\n- Handling deprecated/renamed backend CLI flags\n- Updating container image references\n\n## Workflow\n\n### 1. Gather Version Information\n\n- What is the new backend version? (e.g., vLLM 0.17.0)\n- What Dynamo release maps to it? (e.g., Dynamo 1.1.0)\n- What changed in this backend version?\n  - New CLI flags added\n  - Deprecated/removed CLI flags\n  - Renamed flags\n  - Changed default behaviors\n  - New model architecture support\n- Source: backend release notes, changelog, arg_utils diff\n\n### 2. Update Version Matrix\n\nFile: `src/aiconfigurator/generator/config/backend_version_matrix.yaml`\n\n- Add new Dynamo version entry (or update existing)\n- Map to new backend version\n- Example:\n  ```yaml\n  - dynamo_version: \"1.1.0\"\n    backends:\n      trtllm: \"1.4.0\"\n      vllm: \"0.17.0\"\n      sglang: \"0.6.0\"\n  ```\n\n### 3. Create Version-Specific Templates (if needed)\n\nOnly create new version templates if the backend CLI interface changed.\n\n1. Identify which artifact templates need new versions:\n   - `cli_args.j2` -- if CLI flags changed\n   - `extra_engine_args.yaml.j2` -- if engine config format changed (TRT-LLM)\n   - `k8s_deploy.yaml.j2` -- usually version-independent\n   - `run.sh.j2` -- if startup command changed\n\n2. Copy the closest prior version template:\n   ```bash\n   cp cli_args.0.16.0.j2 cli_args.0.17.0.j2\n   ```\n\n3. Modify the new template:\n   - Add new flags\n   - Remove deprecated flags\n   - Update renamed flags\n   - Adjust conditionals for changed behavior\n\n4. **DO NOT modify the prior version template** -- it must continue working for\n   existing deployments.\n\n### 4. Update Parameter Mapping (if needed)\n\nFile: `src/aiconfigurator/generator/config/backend_config_mapping.yaml`\n\nIf new parameters were added:\n- Add `param_key` entry\n- Set CLI flag names for each backend (null if unsupported)\n\nIf parameters were renamed:\n- Update the backend-specific flag name\n- Keep the unified `param_key` stable (don't rename the internal name)\n\n### 5. Update Deployment Config (if needed)\n\nFile: `src/aiconfigurator/generator/config/deployment_config.yaml`\n\nIf new user-facing parameters were added:\n- Add schema entry with section, default, required status\n- Add `backend_defaults` if behavior differs by backend\n\n### 6. Update Rule Files (if needed)\n\nFiles: `src/aiconfigurator/generator/rule_plugin/<backend>.rule` (production)\nand `src/aiconfigurator/generator/rule_plugin/benchmark/<backend>.rule` (benchmark)\n\nIf parameter computation logic changed:\n- Update expressions\n- Add new rules for new parameters\n- Check: did a previously-valid flag become invalid? (PR #613: `moe_dense_tp_size`)\n\n### 7. Update Container Images\n\nIf the Dynamo release includes new container images:\n- Verify default image expressions in `deployment_config.yaml`\n- Check that version tag resolution works for new version\n\n### 8. Test\n\n- Generate config for the new version with a representative model\n- Compare output against manually-written reference config\n- Run generator validator if backend image available\n- Test all modes: agg, disagg-prefill, disagg-decode\n- Test with MoE model if backend version added MoE changes\n- **MOST IMPORTANT: Test that OLD version still works**\n\n## Deprecated Flag Handling\n\nWhen a backend deprecates a CLI flag:\n\n1. Identify the deprecation:\n   - Old flag: `--connector` (deprecated in version X)\n   - New flag: `--kv-transfer-config '{\"connector\": \"...\"}'`\n\n2. Create version-specific template:\n   - Old template (< boundary version): keeps old flag\n   - New template (>= boundary version): uses new flag\n\n3. Update version matrix to ensure correct version -> template mapping\n\n4. **DO NOT modify old templates** -- users on old versions must still work\n\n## Version Template Selection Logic\n\nThe rendering engine selects templates by version:\n\n1. Look for exact version match: `cli_args.<version>.j2`\n2. Fall back to closest prior version (highest version <= requested)\n3. Fall back to base template: `cli_args.j2`\n\nYou only need a new version template when the interface CHANGES, not for every\nversion bump.\n\n## Anti-Patterns\n\n1. **Don't edit prior version templates** -- They serve existing deployments. Create\n   a new version template instead.\n\n2. **Don't create a new version template for no-op changes** -- If the CLI interface\n   didn't change, the existing template works fine. The version fallback logic handles it.\n\n3. **Don't forget to test the OLD version** -- Adding version 0.17.0 support must not\n   break 0.16.0 generation.\n\n4. **Don't hardcode version checks in rendering engine** -- Use the version template\n   naming convention and fallback logic. No `if version >= \"0.17.0\"` in Python code.\n\n## Checklist\n\n```text\n[ ] Gather new version info: what changed (new/deprecated/renamed flags)\n[ ] Update backend_version_matrix.yaml\n[ ] Determine if version-specific templates are needed\n[ ] Create new version templates (copy closest prior, modify)\n[ ] DO NOT modify prior version templates\n[ ] Update backend_config_mapping.yaml for new/changed parameters\n[ ] Update deployment_config.yaml for new user-facing parameters\n[ ] Update rule files for changed computation logic\n[ ] Handle deprecated flags with version-specific templates\n[ ] Update container image references if needed\n[ ] Test: generate config for new version, all modes\n[ ] Test: generate config for OLD version still works\n[ ] Run generator validator\n```"
+    gold_removed: ''
+  - path: .claude/rules/generator/rule_authoring.md
+    tier: 1
+    gold_added: "# Rule Plugin Authoring Reference\n\nThe rule plugin system (`.rule` files) computes derived parameters using a custom DSL.\nThis reference covers safe practices for writing and modifying rules.\n\n## When to Use This Reference\n\n- Adding a new computed parameter to the generator\n- Modifying parameter computation logic (batch size, parallelism, CUDA graphs)\n- Adding MoE, speculative decoding, or prefix caching support\n- Creating a new rule mode (like `benchmark/`)\n\n## Key Files\n\n| File | Purpose |\n|---|---|\n| `src/aiconfigurator/generator/rule_plugin/*.rule` | Production rules per backend |\n| `src/aiconfigurator/generator/rule_plugin/benchmark/*.rule` | Benchmark rules per backend |\n| `src/aiconfigurator/generator/rendering/rule_engine.py` | Rule DSL evaluation engine |\n| `src/aiconfigurator/generator/config/backend_config_mapping.yaml` | Parameter backend support |\n\n## DSL Reference\n\n```text\n# === SCOPE PREFIXES ===\n# Apply to specific worker roles:\nprefill <key> = <expr>              # Only prefill workers\ndecode <key> = <expr>               # Only decode workers\nagg <key> = <expr>                  # Only aggregated (single) workers\nagg_decode <key> = <expr>           # Both agg and decode workers\nprefill_decode <key> = <expr>       # Both prefill and decode workers\nagg_prefill_decode <key> = <expr>   # ALL worker roles\n\n# === ASSIGNMENT ===\n<scope> <key> = <expression>\n# Expression uses Jinja2 syntax, evaluated via compile_expression()\n\n# === CONDITIONALS ===\nwhen <condition>:\n    <scope> <key> = <expr>\n    <scope> <key> = <expr>\n\n# === CONFIG GROUP TARGETING (global, not per-worker) ===\nDynConfig.enable_router = true\nBenchConfig.estimated_concurrency = <expr>\n\n# === AVAILABLE CONTEXT VARIABLES ===\n# From deployment_config.yaml:  ServiceConfig.*, K8sConfig.*, ModelConfig.*, SlaConfig.*\n# From params (per-worker):     tensor_parallel_size, max_batch_size, max_num_tokens, etc.\n# Special shorthand:            isl, osl, bs, is_moe\n```\n\n## Workflow\n\n### 1. Understand the Parameter\n\n- What is the parameter's purpose?\n- Which backends support it? (check `backend_config_mapping.yaml`)\n- Which worker roles need it? (prefill, decode, agg, or all?)\n- Does it depend on other computed parameters?\n\n### 2. Check Existing Rules\n\n- Read ALL `.rule` files: `trtllm.rule`, `vllm.rule`, `sglang.rule`\n- Check `benchmark/` variants too\n- Identify if the parameter is already computed elsewhere\n- Identify dependencies (e.g., `max_num_tokens` depends on `max_batch_size`)\n\n### 3. Write the Rule\n\n- Use the correct scope prefix (most common mistake!)\n- Guard nullable values: `(value or 0)`, `(value if value else default)`\n- Place new rules AFTER their dependencies in the file\n- Use Jinja2 expression syntax (not Python -- no list comprehensions, no f-strings)\n\n### 4. Cross-Backend Consistency\n\nFor each backend's `.rule` file:\n\n1. Does this backend support the parameter? (check mapping yaml)\n2. If yes, does the rule exist? If not, add it.\n3. If the computation differs by backend, document WHY.\n4. If the parameter is null for this backend in mapping, skip it.\n\n### 5. Test\n\n- Write a test case that exercises the rule with known inputs\n- Test edge cases: MoE models, disagg mode, nullable params\n- Verify rule ordering: if rule B depends on rule A's output, A must come first\n\n## Common Patterns\n\n```python\n# Pattern: Scale batch size for production (agg + decode get bigger batches)\nagg_decode max_batch_size = (512 if (max_batch_size or 0) < 512 else (max_batch_size * 2))\nprefill max_batch_size = (max_batch_size if max_batch_size else 1)\n\n# Pattern: MoE parallelism remapping (TP = moe_tp * moe_ep)\nwhen ModelConfig.is_moe and (moe_tensor_parallel_size and moe_expert_parallel_size):\n    agg_prefill_decode tensor_parallel_size = moe_tensor_parallel_size * moe_expert_parallel_size\n\n# Pattern: Feature toggle based on model config\nwhen (ModelConfig.prefix or 0) > 0:\n    agg_prefill_decode disable_prefix_cache = false\n    DynConfig.enable_router = true\n\n# Pattern: Token budget alignment to block size\nagg max_num_tokens = ((max_batch_size + SlaConfig.isl + 1500 + tokens_per_block - 1) // tokens_per_block) * tokens_per_block\n```\n\n## Gotchas\n\n1. **`agg_prefill_decode` means ALL roles**, not a special combined role. Use it when\n   a rule applies universally.\n\n2. **Rule ordering matters** -- Rules are evaluated top-to-bottom. If rule B uses\n   `max_batch_size` that rule A modifies, A must appear before B.\n\n3. **Nullable guards are mandatory** -- `SlaConfig.isl` can be None. Always use\n   `(SlaConfig.isl or 0)` in arithmetic.\n\n4. **`when` blocks don't nest** -- There's no `when` inside `when`. Combine conditions:\n   `when A and B:`.\n\n5. **Backend-specific parameters** -- Some params only exist for one backend (e.g.,\n   `moe_dense_tp_size` was SGLang-only but removed as invalid per PR #613). Check\n   mapping yaml before adding.\n\n6. **Config group targeting is global** -- `DynConfig.enable_router = true` applies to\n   the entire deployment, not per-worker.\n\n## Checklist\n\n```text\n[ ] Identify parameter purpose, backend support, and worker scope\n[ ] Read all existing .rule files (production + benchmark)\n[ ] Write rule with correct scope prefix and null guards\n[ ] Verify rule ordering (dependencies first)\n[ ] Add equivalent rule to all applicable backend .rule files\n[ ] Document intentional cross-backend differences\n[ ] Add test case covering the new rule\n[ ] Test with MoE and disagg scenarios if applicable\n```"
+    gold_removed: ''
+  - path: .claude/rules/generator/template_authoring.md
+    tier: 1
+    gold_added: "# Template Authoring Reference\n\nBackend templates are the most error-prone part of the generator. This reference\ncovers safe practices for adding and modifying Jinja2 templates.\n\n## When to Use This Reference\n\n- Adding a new backend version template\n- Modifying existing templates (bug fix, feature addition)\n- Adding a new parameter to template rendering context\n- Adding a new artifact type (e.g., sflow templates)\n\n## Key Files\n\n| File | Purpose |\n|---|---|\n| `src/aiconfigurator/generator/config/backend_templates/<backend>/` | Jinja2 templates |\n| `src/aiconfigurator/generator/config/backend_config_mapping.yaml` | Param name mapping |\n| `src/aiconfigurator/generator/config/deployment_config.yaml` | Input schema + defaults |\n| `src/aiconfigurator/generator/config/backend_version_matrix.yaml` | Version compatibility |\n| `src/aiconfigurator/generator/rendering/engine.py` | Template rendering + context building |\n| `src/aiconfigurator/generator/rule_plugin/*.rule` | Rule DSL files |\n| `tools/generator_validator/` | Post-generation validation |\n\n## Template Types by Backend\n\n```text\nbackend_templates/\n  vllm/       cli_args[.version].j2, k8s_deploy.yaml.j2, run.sh.j2\n  sglang/     cli_args[.version].j2, k8s_deploy.yaml.j2, run.sh.j2, sflow_deploy.yaml.j2\n  trtllm/     cli_args.j2, extra_engine_args[.version].yaml.j2, k8s_deploy.yaml.j2, run.sh.j2\n  benchmark/  bench_run.sh.j2, k8s_bench.yaml.j2\n```\n\n## Workflow\n\n### 1. Identify Scope\n\n- Which backends are affected? (trtllm, vllm, sglang, benchmark, sflow)\n- Which artifact types? (cli_args, engine_config, k8s_deploy, run.sh, bench)\n- Which versions need the change? (check `backend_version_matrix.yaml`)\n\n### 2. Read Current State\n\n- Read the target template(s)\n- Read `backend_config_mapping.yaml` for the parameter mapping\n- Read `rendering/engine.py:make_worker_context()` to understand context shape\n- Read the corresponding `.rule` file to see if rules compute the variable\n\n### 3. Cross-Backend Parity Check\n\nFor each affected parameter:\n\n1. Grep all backend templates for the parameter name\n2. Compare handling across backends\n3. Flag any backend that is missing the parameter or handles it differently\n4. Document intentional differences vs. accidental omissions\n\n### 4. Implement\n\n- **New version templates**: Copy the closest prior version, modify. NEVER edit prior versions.\n- **Fixes**: Apply to ALL affected version templates (list them explicitly).\n- **New parameters**:\n  1. Add to `backend_config_mapping.yaml` if it's a mapped param\n  2. Add to `deployment_config.yaml` if it's a new input\n  3. Add to `.rule` file if it requires computation\n  4. Add to template(s)\n\n### 5. Verify Template Variables\n\nList all variables referenced in the modified template(s). For each variable,\nconfirm its source:\n\n- [ ] Direct from `deployment_config.yaml` input\n- [ ] Computed by rule plugin\n- [ ] Mapped via `backend_config_mapping.yaml`\n- [ ] Injected by `rendering/engine.py` context\n\nFlag any variable that cannot be traced to a source.\n\n### 6. Test\n\n- Run existing generator unit tests\n- If adding a new parameter: add a test in `test_<backend>_cli_args.py`\n- Use generator validator (`tools/generator_validator/`) to check output validity\n- Compare output diff against golden artifacts if available\n\n## Anti-Patterns\n\n1. **Don't extract shared templates** -- PR #314 attempted shared macros; PR #340 reverted\n   it because backend-specific variations broke override mechanisms. Keep templates\n   standalone per backend.\n\n2. **Don't fix one version and forget the rest** -- Always enumerate ALL version-specific\n   templates. Use `glob backend_templates/<backend>/<artifact>*.j2` to list them.\n\n3. **Don't assume parameter names are the same across backends** -- Check\n   `backend_config_mapping.yaml`. SGLang uses `disable-cuda-graph-padding` (inverted!)\n   while TRT-LLM uses `cuda_graph_enable_padding`.\n\n4. **Don't add a template variable without a source** -- Every variable must be traceable\n   through the pipeline: input -> default -> rule -> mapping -> context -> template.\n\n## Checklist\n\n```text\n[ ] Identify all affected backends and version templates\n[ ] Read current template + mapping + rule file\n[ ] Cross-backend parity check for affected parameters\n[ ] Implement changes in ALL affected templates\n[ ] Verify all template variables have traced sources\n[ ] Update backend_config_mapping.yaml if needed\n[ ] Update deployment_config.yaml if needed\n[ ] Update .rule files if needed\n[ ] Run unit tests\n[ ] Run generator validator on output\n```"
+    gold_removed: ''
+  - path: .claude/rules/generator/testing.md
+    tier: 1
+    gold_added: "# Generator Testing Reference\n\nGenerator testing has unique challenges: combinatorial output space, no backend\nruntime in CI, silent regressions, and test coverage gaps. This reference defines\nthe testing strategy.\n\n## When to Use This Reference\n\n- After any generator code change (templates, rules, schemas, rendering)\n- Adding test coverage for untested generator components\n- Setting up golden output snapshots\n- Running the generator validator\n\n## Test Strategy Layers\n\n```text\nLayer 1: UNIT TESTS (fast, always run)\n  - Test individual functions in isolation\n  - Mock: schema loading, template rendering\n  - Files: tests/unit/generator/test_*.py\n\nLayer 2: INTEGRATION TESTS (medium, run on PR)\n  - Test full pipeline: input -> artifacts\n  - Compare output against golden snapshots\n  - No external dependencies\n\nLayer 3: VALIDATOR TESTS (slow, run in specialized CI)\n  - Import actual backend engine modules\n  - Compare generated flags against engine API schemas\n  - Requires docker images with backends installed\n```\n\n## Workflow\n\n### 1. Determine Test Layer\n\n- Pure logic change (expression, calculation): Unit test\n- Template/rule/schema change (output-affecting): Integration + golden snapshot\n- New parameter or flag: Validator test\n\n### 2. Write Unit Tests\n\nLocation: `tests/unit/generator/`\n\nFor aggregators/API changes:\n```python\ndef test_new_parameter_default(self):\n    result = collect_generator_params(\n        service={\"model_path\": \"test/model\", \"served_model_name\": \"test\"},\n        k8s={\"k8s_namespace\": \"test\"},\n        backend=\"trtllm\"\n    )\n    assert result[\"SectionConfig\"][\"new_param\"] == expected_value\n```\n\nFor rule evaluation:\n```python\ndef test_moe_tp_remapping(self):\n    params = {\"tensor_parallel_size\": 1, \"moe_tensor_parallel_size\": 2,\n              \"moe_expert_parallel_size\": 4}\n    model_config = {\"is_moe\": True}\n    result = apply_rule_plugins(\"trtllm\", params, model_config=model_config)\n    assert result[\"agg\"][\"tensor_parallel_size\"] == 8  # 2 * 4\n```\n\n### 3. Write Golden Snapshot Tests\n\nPurpose: Catch any unintended output change.\n\n1. Generate reference outputs for key configurations:\n   - Minimal config (just model_path + backend)\n   - Full disagg config (prefill + decode workers)\n   - MoE model config\n   - Each backend x version combination\n\n2. Store as golden files:\n   ```\n   tests/golden/generator/<backend>/<version>/<mode>/\n     cli_args.txt\n     k8s_deploy.yaml\n     run.sh\n   ```\n\n3. Test compares current output against golden:\n   ```python\n   def test_trtllm_agg_golden(self):\n       output = generate_backend_artifacts(params, backend=\"trtllm\", ...)\n       golden = read_golden(\"trtllm/1.3.0rc5/agg/cli_args.txt\")\n       assert output[\"cli_args\"] == golden\n   ```\n\n4. Update goldens intentionally:\n   ```bash\n   UPDATE_GOLDEN=1 pytest tests/golden/ -k trtllm\n   git diff tests/golden/  # review changes\n   ```\n\n### 4. Use Generator Validator\n\nWhen available (specialized CI or local with backend images):\n\n```bash\n# Validate generated TRT-LLM config against engine API\npython tools/generator_validator/validator.py --backend trtllm --path output/\n\n# Validate vLLM CLI args\npython tools/generator_validator/validator.py --backend vllm --path output/\n```\n\n### 5. Test Edge Cases\n\nAlways test these scenarios:\n\n- [ ] MoE model (`is_moe=True`, `moe_tensor_parallel_size` set)\n- [ ] Disagg mode (prefill + decode workers)\n- [ ] Agg mode (single worker)\n- [ ] Speculative decoding (`ModelConfig.nextn > 0`)\n- [ ] Prefix caching (`ModelConfig.prefix > 0`)\n- [ ] Minimal config (only required fields)\n- [ ] PVC configuration (`k8s_pvc_name` set, `k8s_hf_home` auto-derived)\n- [ ] Each backend (trtllm, vllm, sglang)\n- [ ] Benchmark mode (`rule=benchmark`)\n\n## Test File Organization\n\n```text\ntests/\n  unit/\n    generator/\n      test_aggregators.py       # Parameter collection, defaults\n      test_naive.py             # Naive TP calculation, RFC-1123\n      test_trtllm_cli_args.py   # TRT-LLM specific rendering\n      test_vllm_cli_args.py     # vLLM specific rendering\n      test_sglang_cli_args.py   # SGLang specific rendering\n      test_rule_engine.py       # Rule DSL evaluation\n      test_schema_defaults.py   # Default expression evaluation\n      test_config_mapping.py    # Parameter mapping correctness\n  golden/\n    generator/\n      trtllm/<version>/<mode>/  # Golden outputs per combination\n      vllm/<version>/<mode>/\n      sglang/<version>/<mode>/\n```\n\n## Checklist\n\n```text\n[ ] Determine test layer (unit / integration / validator)\n[ ] Write unit tests for changed logic\n[ ] Update or create golden snapshots for output-affecting changes\n[ ] Test MoE, disagg, speculative decoding edge cases\n[ ] Test all affected backends\n[ ] Run generator validator if backend images available\n[ ] Verify test passes in CI\n```"
+    gold_removed: ''
+  - path: AGENTS.md
+    tier: 1
+    gold_added: '# AGENTS
+
+
+      This file adds an explicit guard for generator rule edits.
+
+
+      ## Required First Step
+
+
+      Before making any change under:
+
+      - `aiconfigurator/src/aiconfigurator/generator/**`
+
+
+      MUST read:
+
+      - `aiconfigurator/.claude/rules/generator-development.md`'
+    gold_removed: ''

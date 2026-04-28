@@ -1,0 +1,41 @@
+version: "2.0"
+
+task:
+  name: rdf4j-update-agentsmd
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: eclipse-rdf4j/rdf4j
+  pr: 5503
+  base_commit: "824254524dd298ce947791c541a85745aad4601f"
+  merge_commit: "217d4fab73691239d1be3233dea83d515eda826c"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+
+config_edits:
+  - path: AGENTS.md
+    tier: 1
+    gold_added: '### Version Control Conventions
+
+
+      * Branch names must always start with the GitHub issue identifier in the form `GH-XXXX`, where `XXXX` is the numeric issue number.
+
+      * Every commit message must be prefixed with the corresponding `GH-XXXX` label.
+
+      * Exception: if no GitHub issue number is available for the task, clearly note this in your handoff and align with the requester on an appropriate branch/commit prefix before proceeding.
+
+      '
+    gold_removed: ''

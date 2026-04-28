@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: skymp-docs-add-claudemd
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: skyrim-multiplayer/skymp
+  pr: 2529
+  base_commit: "e899e6c4b88bada7704363a287a315168992e0d3"
+  merge_commit: "9a83959005085be23c4459bb70c062f212e91fe0"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+
+config_edits:
+  - path: CLAUDE.md
+    tier: 1
+    gold_added: "\n# Build & Test Tips\n\nAll commands below must be run **inside the build directory**  \n(e.g., `mkdir build && cd build && cmake ..`).\n\n## Build\n```bash\ncmake --build .\n````\n\nThis compiles the project\n\n## Test\n\n```bash\nctest --verbose\n```\n\nRuns all tests with detailed output.\n\n## Test Partuicular Unit Test\n\nThis example runs tests with only [Respawn] tag. Tags you can see in test files (.cpp).\nIf you see more than 1 unit test failed, please select one to work on and iterate with the following command.\n```bash\ncd build\n./unit/unit [Respawn]\n```"
+    gold_removed: ''

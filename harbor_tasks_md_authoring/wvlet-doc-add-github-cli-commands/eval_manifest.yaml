@@ -1,0 +1,46 @@
+version: "2.0"
+
+task:
+  name: wvlet-doc-add-github-cli-commands
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: wvlet/wvlet
+  pr: 1169
+  base_commit: "de5f9ea4fb76ffdb4d573f448b69884b8714b576"
+  merge_commit: "e20ab9fe13a2a393368170f547b2c5d212e053dd"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+
+config_edits:
+  - path: CLAUDE.md
+    tier: 1
+    gold_added: '- To debug SQL generator, add -L *GenSQL=trace to the test option
+
+
+      ## GitHub CLI Commands
+
+
+      ### Pull Request Management
+
+      - Read PR review comments: `gh api repos/OWNER/REPO/pulls/PR_NUMBER/comments`
+
+      - Check PR status: `gh pr status`
+
+      - View PR checks: `gh pr checks PR_NUMBER`
+
+      - Merge PR: `gh pr merge --squash --auto`'
+    gold_removed: ''

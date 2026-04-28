@@ -1,0 +1,48 @@
+version: "2.0"
+
+task:
+  name: morphir-feattechnicalwriter-add-specdesign-consistency-check
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: finos/morphir
+  pr: 577
+  base_commit: "42ed5ecb711a5430f45211b7f60f2f0845af3c27"
+  merge_commit: "7315cdf54e4e56192508722f7b1b4336907e7cc3"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/technical-writer/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/technical-writer/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/technical-writer/SKILL.md."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/technical-writer/references/spec-design-consistency.md."
+  - id: signal_04
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/technical-writer/references/spec-design-consistency.md."
+  - id: signal_05
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/technical-writer/references/spec-design-consistency.md."
+
+config_edits:
+  - path: .claude/skills/technical-writer/SKILL.md
+    tier: 1
+    gold_added: "9. **Spec/Design Consistency** - Verify specification docs match design docs\n### Spec/Design Consistency Review\n\nWhen specification documents (`docs/spec/`) need to match design documents (`docs/design/`), use the consistency checklist at [spec-design-consistency.md](references/spec-design-consistency.md).\n\n**Key consistency checks:**\n\n1. **Naming Format Validation**\n   - FQName format: `package/path:module/path#local-name`\n   - Path format: `segment/segment` (no `:` or `#`)\n   - Name format: `kebab-case` with `(abbreviations)` for letter sequences\n   - Validate all examples parse correctly\n\n2. **Node Coverage**\n   - All type nodes from design are in spec\n   - All value nodes from design are in spec\n   - v4-specific additions marked with `(v4)`\n\n3. **JSON Example Validation**\n   - Examples use correct wrapper object format\n   - Field names match design\n   - Examples are valid JSON\n\n4. **Directory Structure Validation**\n   - Directory tree examples match actual/expected structure\n   - File name patterns are consistent (e.g., `.type.json`, `.value.json`, `module.json`)\n   - Path separators and naming conventions align with canonical format\n\n5. **Terminology Alignment**\n   - Specs and definitions explained consistently\n   - Same terms used in both design and spec\n\n**Workflow for consistency review:**\n\n```bash\n# 1. Open design and spec side-by-side\n# 2. Walk through each section\n# 3. Validate JSON examples\n# 4. Verify directory structure examples\n# 5. Fix discrepancies\n# 6. Regenerate llms.txt\npython .claude/skills/technical-writer/scripts/generate_llms_txt.py\n```\n"
+    gold_removed: ''
+  - path: .claude/skills/technical-writer/references/spec-design-consistency.md
+    tier: 1
+    gold_added: "# Spec/Design Consistency Checklist\n\nUse this checklist when reviewing specification documents (`docs/spec/`) against design documents (`docs/design/`).\n\n## Naming Conventions\n\n### Canonical String Format Consistency\n- [ ] FQName examples use correct format: `package/path:module/path#local-name`\n- [ ] Path examples use correct format: `segment/segment` (not mixed with FQName separators)\n- [ ] Name examples use correct format: `kebab-case` with `(abbreviations)` for letter sequences\n- [ ] No confusion between paths and FQNames (paths don't have `:` or `#`)\n\n### Common Naming Errors\n| Error | Example | Correct |\n|-------|---------|---------|\n| Path with FQName separators | `morphir/sdk:string` | `morphir/sdk` (path) or `morphir/sdk:string#string` (FQName) |\n| Missing local name in FQName | `morphir/sdk:list` | `morphir/sdk:list#map` |\n| Abbreviation not marked | `morphir/sdk` | `morphir/(sdk)` only if S-D-K, else `morphir/sdk` for word \"sdk\" |\n\n## Type/Value Node Consistency\n\n### Type Expressions\n- [ ] All type nodes from design are documented in spec\n- [ ] Structure notation matches design (e.g., `Type attributes name` vs `Type(attributes, name)`)\n- [ ] Components list matches design fields\n- [ ] v4-specific nodes are marked with `(v4)`\n\n### Value Expressions\n- [ ] All value nodes from design are documented in spec\n- [ ] v4 additions present: `Hole`, `Native`, `External`\n- [ ] `ValueDefinitionBody` variants documented: `ExpressionBody`, `NativeBody`, `ExternalBody`, `IncompleteBody`\n\n### Specifications vs Definitions\n- [ ] Clear distinction explained between specs and definitions\n- [ ] All spec types listed: `TypeAliasSpecification`, `OpaqueTypeSpecification`, `CustomTypeSpecification`, `DerivedTypeSpecification`\n- [ ] All definition types listed: `TypeAliasDefinition`, `CustomTypeDefinition`, `IncompleteTypeDefinition`\n- [ ] Derivation rules documented (definition → specification)\n\n## JSON Serialization Consistency\n\n### Format Examples\n- [ ] JSON examples are valid JSON\n- [ ] Wrapper object format matches design: `{ \"NodeType\": { \"field\": value } }`\n- [ ] Shorthand formats documented where applicable\n- [ ] Legacy format compatibility documented\n\n### Field Naming\n- [ ] JSON field names match design (camelCase vs snake_case)\n- [ ] Required vs optional fields match design\n- [ ] Default values documented where applicable\n\n## Directory Structure Consistency\n\n### File Naming Patterns\n- [ ] Document Tree file suffixes are consistent: `.type.json`, `.value.json`, `module.json`\n- [ ] Directory examples use canonical name format (kebab-case)\n- [ ] Path separators are forward slashes `/`\n\n### Expected Directory Structure\n\nPackage and module paths expand to fully split directories. Definition files (`.type.json`, `.value.json`) reside directly in the module directory—the suffixes distinguish types from values.\n\n```\npkg/my-org/my-project/\n└── orders/\n    ├── module.json\n    ├── order.type.json\n    ├── line-item.type.json\n    ├── create-order.value.json\n    ├── calculate-total.value.json\n    └── shipping/\n        ├── module.json\n        ├── address.type.json\n        └── calculate-cost.value.json\n```\n\n### Common Directory Structure Errors\n| Error | Example | Correct |\n|-------|---------|---------|\n| Wrong suffix | `user.json` | `user.type.json` |\n| CamelCase in path | `pkg/Main/Domain/` | `pkg/main/domain/` |\n| Collapsed path segments | `pkg/my-org-my-project/` | `pkg/my-org/my-project/` |\n| Unnecessary subfolders | `types/user.type.json` | `user.type.json` (directly in module) |\n| Inconsistent separators | `pkg\\main\\domain` | `pkg/main/domain` |\n\n## Cross-Reference Validation\n\n### Internal Links\n- [ ] References to other spec documents use correct paths\n- [ ] References to design documents are accurate\n- [ ] No dangling references to removed/renamed concepts\n\n### Terminology\n- [ ] Terms used consistently across spec and design\n- [ ] No conflicting definitions of the same concept\n- [ ] Abbreviations/acronyms explained on first use\n\n## Completeness Checklist\n\n### From Design to Spec\nFor each design document in `docs/design/draft/ir/`:\n- [ ] `naming.md` → `docs/spec/draft/names.md`\n- [ ] `types.md` → `docs/spec/draft/types.md`\n- [ ] `values.md` → `docs/spec/draft/values.md`\n- [ ] `modules.md` → `docs/spec/draft/modules.md`\n- [ ] `packages.md` → `docs/spec/draft/packages.md`\n\n### Key Design Concepts to Verify\n| Design Concept | Should Be In Spec |\n|----------------|-------------------|\n| AccessControlled wrapper | Definitions section |\n| Documented wrapper | Modules/Packages section |\n| Documentation type | Modules section |\n| Incompleteness type | Types & Values sections |\n| HoleReason type | Types & Values sections |\n| NativeInfo/NativeHint | Values section |\n| ValueDefinitionBody variants | Values section |\n\n## Common Discrepancy Patterns\n\n### 1. Outdated Examples\n**Symptom**: Examples don't compile or parse\n**Check**: Validate all code/JSON examples against current schema\n\n### 2. Missing v4 Features\n**Symptom**: Design has features not in spec\n**Check**: Search design for `(v4)` or \"v4\" and verify spec coverage\n\n### 3. Inconsistent Structure Notation\n**Symptom**: Spec uses different notation than design\n**Check**: Align on one notation style (recommend design's Gleam-like notation)\n\n### 4. Partial Updates\n**Symptom**: Some sections updated, others stale\n**Check**: Review entire document when updating any section\n\n## Review Process\n\n1. **Open both documents side-by-side** - spec and corresponding design\n2. **Walk through design section by section** - verify each concept in spec\n3. **Validate all examples** - copy-paste and check they parse\n4. **Check cross-references** - ensure links resolve correctly\n5. **Note discrepancies** - create issues or fix directly\n6. **Update llms.txt** - regenerate after fixes\n\n## Automated Checks (TODO)\n\nFuture script `check_spec_design_consistency.py` should:\n- Parse JSON examples and validate syntax\n- Extract canonical name examples and validate format\n- Cross-reference type/value node lists\n- Report missing v4 features"
+    gold_removed: ''

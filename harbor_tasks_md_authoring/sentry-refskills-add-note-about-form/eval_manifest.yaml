@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: sentry-refskills-add-note-about-form
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: getsentry/sentry
+  pr: 109370
+  base_commit: "bf9c244d0341de6ad77ed57e7b1479a1320f9871"
+  merge_commit: "796217ae55a6486de9c96042b4d2cc3051e38d52"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .agents/skills/migrate-frontend-forms/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .agents/skills/migrate-frontend-forms/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .agents/skills/migrate-frontend-forms/SKILL.md."
+
+config_edits:
+  - path: .agents/skills/migrate-frontend-forms/SKILL.md
+    tier: 1
+    gold_added: "## Preserving Form Search Functionality\n\nSentry's SettingsSearch allows users to search for individual settings fields. When migrating forms, you must preserve this searchability by wrapping migrated forms with `FormSearch`.\n\n### The `FormSearch` Component\n\n`FormSearch` is a **build-time marker component** — it has zero runtime behavior and simply renders its children unchanged. Its `route` prop is read by a static extraction script to associate form fields with their navigation route, enabling them to appear in SettingsSearch results.\n\n```tsx\nimport {FormSearch} from 'sentry/components/core/form';\n\n<FormSearch route=\"/settings/account/details/\">\n  <FieldGroup title={t('Account Details')}>\n    <AutoSaveField name=\"name\" schema={schema} initialValue={user.name} mutationOptions={...}>\n      {field => (\n        <field.Layout.Row label={t('Name')} hintText={t('Your full name')} required>\n          <field.Input />\n        </field.Layout.Row>\n      )}\n    </AutoSaveField>\n  </FieldGroup>\n</FormSearch>\n```\n\n**Props:**\n\n| Prop       | Type        | Description                                                                                          |\n| ---------- | ----------- | ---------------------------------------------------------------------------------------------------- |\n| `route`    | `string`    | The settings route for this form (e.g., `'/settings/account/details/'`). Used for search navigation. |\n| `children` | `ReactNode` | The form content — rendered unchanged at runtime.                                                    |\n\n**Rules:**\n\n- The `route` must match the settings page URL exactly (including trailing slash).\n- Wrap the **entire form section** with a single `FormSearch`, not individual fields.\n- Every `<AutoSaveField>` or `<form.AppField>` inside a `FormSearch` will be indexed. Make sure `label` and `hintText` are plain string literals or `t()` calls — computed/dynamic strings will be skipped by the extractor.\n\n### The Form Field Registry\n\nAfter adding or updating `FormSearch` wrappers, regenerate the field registry so that search results stay up to date:\n\n```bash\npnpm run extract-form-fields\n```\n\nThis script (`scripts/extractFormFields.ts`) scans all TSX files, finds `<FormSearch>` components, extracts field metadata (`name`, `label`, `hintText`, `route`), and writes the generated registry to `static/app/components/core/form/generatedFieldRegistry.ts`. **Commit this generated file** alongside your migration PR — it is part of the source tree.\n\n> Run the command after **any** change to forms inside a `FormSearch` wrapper (adds, removals, label changes). The generated file is checked in and should not be edited manually.\n\n### Migration: Old Forms Already Searchable\n\nIf the legacy `JsonForm` being migrated was already indexed by SettingsSearch (i.e., it had entries in `sentry/data/forms`), you **must** add a `FormSearch` wrapper to the new form so search functionality is preserved. The old and new sources coexist — new registry entries take precedence over old ones for the same route + field combination — but once you remove the legacy form the old entries will disappear.\n\n- [ ] Wrap the migrated form with `<FormSearch route=\"...\">` if the old form was searchable in SettingsSearch\n- [ ] Run `pnpm run extract-form-fields` and commit the updated `generatedFieldRegistry.ts`"
+    gold_removed: ''

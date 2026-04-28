@@ -1,0 +1,24 @@
+version: "2.0"
+
+task:
+  name: swift-concurrency-agent-skill-fix-description-formatting-err
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: AvdLee/Swift-Concurrency-Agent-Skill
+  pr: 2
+  base_commit: "fb331984c2b6545772c84a4f9c382a77004b27b9"
+  merge_commit: "adce42a0e8b72cec015f830b8f15bfc4bc631a88"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in swift-concurrency/SKILL.md."
+
+config_edits:
+  - path: swift-concurrency/SKILL.md
+    tier: 1
+    gold_added: 'description: ''Expert guidance on Swift Concurrency best practices, patterns, and implementation. Use when developers mention: (1) Swift Concurrency, async/await, actors, or tasks, (2) "use Swift Concurrency" or "modern concurrency patterns", (3) migrating to Swift 6, (4) data races or thread safety issues, (5) refactoring closures to async/await, (6) @MainActor, Sendable, or actor isolation, (7) concurrent code architecture or performance optimization.'''
+    gold_removed: ''

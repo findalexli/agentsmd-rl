@@ -1,0 +1,40 @@
+version: "2.0"
+
+task:
+  name: anolisa-docssight-fix-stale-api-endpoint
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: alibaba/anolisa
+  pr: 397
+  base_commit: "02274c1d7e608cdec05c4d9a53e3adfca6885935"
+  merge_commit: "1e2acdf61338a788835efb560386561466c70a9b"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in src/agentsight/AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in src/agentsight/AGENTS.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in src/agentsight/AGENTS.md."
+
+config_edits:
+  - path: src/agentsight/AGENTS.md
+    tier: 1
+    gold_added: '| `/api/conversations/{id}` | GET | conversation 事件详情 |
+
+      | `/api/export/atif/conversation/{id}` | GET | ATIF conversation 导出 |
+
+      | `/api/token-savings` | GET | Token 节省统计（`start_ns`, `end_ns`, `agent_name`） |
+
+      | `/api/interruptions/conversation-counts` | GET | 按 conversation 分组的中断计数（`start_ns`, `end_ns`） |
+
+      | `/api/conversations/{id}/interruptions` | GET | 指定 conversation 的所有中断 |'
+    gold_removed: ''

@@ -1,0 +1,113 @@
+version: "2.0"
+
+task:
+  name: unicli-update-skillmd-with-missing-commands
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: yucchiy/UniCli
+  pr: 4
+  base_commit: "07ed5302a81093ad70158c2682973bed23fc025a"
+  merge_commit: "63b566454670b541ae1a478cf7a7e940235d75a6"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude-plugin/unicli/skills/unicli/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude-plugin/unicli/skills/unicli/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude-plugin/unicli/skills/unicli/SKILL.md."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_04
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_05
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+
+config_edits:
+  - path: .claude-plugin/unicli/skills/unicli/SKILL.md
+    tier: 1
+    gold_added: '| `GameObject.AddComponent` | Add a component to a GameObject |
+
+      | `GameObject.RemoveComponent` | Remove a component from a GameObject |
+
+      | `Prefab.GetStatus` | Get prefab instance status |
+
+      | `Prefab.Instantiate` | Instantiate a prefab into scene |
+
+      | `Prefab.Save` | Save GameObject as prefab asset |
+
+      | `Prefab.Apply` | Apply prefab overrides |
+
+      | `Prefab.Unpack` | Unpack a prefab instance |
+
+      | `AssetDatabase.Delete` | Delete an asset |
+
+      **Manage components:**
+
+
+      ```bash
+
+      unicli exec GameObject.AddComponent --path "Player" --typeName BoxCollider --json
+
+      unicli exec GameObject.RemoveComponent --componentInstanceId 1234 --json
+
+      ```
+
+
+      **Prefab operations:**
+
+
+      ```bash
+
+      unicli exec Prefab.GetStatus --path "MyPrefabInstance" --json
+
+      unicli exec Prefab.Instantiate --assetPath "Assets/Prefabs/Enemy.prefab" --json
+
+      unicli exec Prefab.Save --path "Player" --assetPath "Assets/Prefabs/Player.prefab" --json
+
+      unicli exec Prefab.Apply --path "MyPrefabInstance" --json
+
+      unicli exec Prefab.Unpack --path "MyPrefabInstance" --json
+
+      ```
+
+
+      **Delete an asset:**
+
+
+      ```bash
+
+      unicli exec AssetDatabase.Delete --path "Assets/Prefabs/Old.prefab" --json
+
+      ```
+
+      '
+    gold_removed: ''
+  - path: CLAUDE.md
+    tier: 1
+    gold_added: '### Maintaining documentation
+
+
+      When adding or modifying commands, update the following files to keep them in sync:
+
+
+      - `README.md` — Available Commands table and Examples section
+
+      - `.claude-plugin/unicli/skills/unicli/SKILL.md` — Built-in Commands table and Common Workflows section
+
+      '
+    gold_removed: ''

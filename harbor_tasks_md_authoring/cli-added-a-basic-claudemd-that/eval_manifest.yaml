@@ -1,0 +1,30 @@
+version: "2.0"
+
+task:
+  name: cli-added-a-basic-claudemd-that
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: Shopify/cli
+  pr: 6653
+  base_commit: "dec24f5a60e646ded1c32e5b8ff9627d5435c107"
+  merge_commit: "e34fb116e3cbed7fde2ca8ac39f904f7092ef5ee"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/CLAUDE.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/CLAUDE.md."
+
+config_edits:
+  - path: .claude/CLAUDE.md
+    tier: 1
+    gold_added: 'See @../.cursor/rules/base.mdc for information on your desired behavior.
+
+      See @../.cursor/rules/docs.mdc for details on Shopify CLI architecture and conventions.'
+    gold_removed: ''

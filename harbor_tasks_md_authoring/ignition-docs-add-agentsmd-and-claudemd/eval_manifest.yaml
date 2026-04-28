@@ -1,0 +1,83 @@
+version: "2.0"
+
+task:
+  name: ignition-docs-add-agentsmd-and-claudemd
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: coreos/ignition
+  pr: 2223
+  base_commit: "e3742b68017dc5d4561594b46751a08b013dedf1"
+  merge_commit: "5ae6f82c724b9cd99d395476088167be2cc94180"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_04
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_05
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+
+config_edits:
+  - path: AGENTS.md
+    tier: 1
+    gold_added: "# Ignition\n\nFirst-boot provisioning utility for immutable Linux (Fedora CoreOS, RHEL CoreOS, Flatcar). Partitions disks, formats filesystems, writes files, configures users during initramfs.\n\n## Tech Stack\n\n- **Language**: Go 1.24+ (CGO enabled, requires `libblkid-dev`)\n- **Module**: `github.com/coreos/ignition/v2`\n- **Dependencies**: Vendored (`vendor/`). After `go.mod` changes run `make vendor`.\n- **Testing**: Go `testing` + `testify` assertions\n- **Binaries**: `ignition` (provisioning engine), `ignition-validate` (config validator)\n\n## Architecture\n\n```\nconfig/                  # Frontend: stable library API (used by external programs)\n  v3_0/ .. v3_6/         # Frozen stable specs - DO NOT MODIFY\n  v3_7_experimental/     # Active development spec\n    schema/              # JSON schema → run ./generate after changes\n    types/               # Go types (schema.go is generated)\n    translate/           # Version translation\ninternal/                # Backend: system configuration engine\n  exec/stages/           # Execution stages (fetch-offline, fetch, disks, mount, files, umount)\n  providers/             # 30+ cloud/platform providers (aws, azure, gcp, ...)\n  resource/              # Resource fetching (HTTP, S3, GCS, TFTP, data URIs)\ntests/                   # Blackbox integration tests\n  positive/              # Tests that should succeed\n  negative/              # Tests that should fail\ndocs/                    # Documentation (GitHub Pages/Jekyll)\ndracut/                  # Dracut module for initramfs integration\n```\n\n## Build Commands\n\n- `./build` - Build binaries to `bin/<arch>/`\n- `./test` - Run all checks (license, gofmt, govet, unit tests, doc validation)\n- `./generate` - Regenerate schema types and docs after JSON schema changes\n- `./build_blackbox_tests` - Compile integration tests\n- `make vendor` - Vendor dependencies (`go mod vendor && go mod tidy`)\n- `make install` - Install binaries, dracut modules, systemd units\n\n## Code Style\n\n- **Formatting**: `gofmt` enforced (CI and `./test`)\n- **Linting**: `golangci-lint` v2.11.3 in CI\n- **License header**: Required on all `.go` files (Apache 2.0, 13-line header)\n- **Imports**: stdlib, blank line, project packages, blank line, external deps\n- **Naming**: PascalCase exported, camelCase unexported, snake_case filenames\n- **Vendoring**: Changes to `go.mod`/`go.sum`/`vendor/` must be in their own commit\n\n## Testing\n\n- **Unit tests**: `./test` runs all checks including gofmt, govet, license, unit tests\n- **Blackbox tests**: `./build_blackbox_tests && sudo sh -c 'PATH=$PWD/bin/amd64:$PATH ./tests.test'`\n- **Subset**: `./tests.test -test.run TestIgnitionBlackBox/Preemption.*`\n- **Pattern**: Table-driven tests with `struct{ in, out }` slices\n- **Registration**: New test modules must be imported in `tests/registry/registry.go`\n\n## Commit Conventions\n\n**Format**: `subsystem: lowercase description`\n\n**Examples**:\n- `providers/hetzner: add Hetzner Cloud support`\n- `config/v3_6: stabilize spec`\n- `internal/exec/stages/files: fix permission handling`\n- `docs: update supported platforms`\n- `*: refactor provider interface`\n- `tests: add filesystem blackbox tests`\n\n**Style**: Imperative mood, lowercase after colon, no trailing period, ~50 char subject.\nBody optional; use `Fixes #N` for issue references.\n\n## Important Rules\n\n1. **Frontend is stable API** -- `config/` is used by external programs. API changes require bumping Ignition major version.\n2. **New features only in experimental spec** (`v3_7_experimental`). Never modify frozen specs (`v3_0`-`v3_6`).\n3. **Declarative config only** -- describe desired state, not actions. No verbs in field names.\n4. **Generated files**: `config/v3_*/types/schema.go` -- regenerate with `./generate`, never edit manually.\n5. **Platform providers must**: retry config fetch, allow empty config, never guess platform ID.\n6. **Network access fields** must be added to the `fetch-offline` needs-net detector.\n7. **Execution stages are fixed** (fetch-offline, fetch, disks, mount, files, umount). External projects hardcode this list.\n8. **Every platform must be documented** in `docs/supported-platforms.md` (enforced by `./test`).\n9. **Schema changes**: After modifying `config/v3_7_experimental/schema/ignition.json`, run `./generate`. CI verifies this.\n10. **Security**: Always provide secure defaults. No directives that encourage unsafe behavior.\n\n## Resources\n\n- [Development Guide](docs/development.md)\n- [Supported Platforms](docs/supported-platforms.md)\n- [Spec Stabilization Checklist](.github/ISSUE_TEMPLATE/stabilize-checklist.md)\n- [Release Checklist](.github/ISSUE_TEMPLATE/release-checklist.md)"
+    gold_removed: ''
+  - path: CLAUDE.md
+    tier: 1
+    gold_added: '@AGENTS.md
+
+
+      ## Claude Code Specific Workflows
+
+
+      ### Task Management
+
+
+      When working on multi-step tasks, use TodoWrite to break down work and track progress.
+
+
+      ### Agent Usage
+
+
+      - Use the **Explore** agent for broad codebase searches when simple Grep/Glob isn''t enough
+
+      - Delegate independent research to subagents to keep main context clean
+
+
+      ### Pre-Commit Checks
+
+
+      Run `./test` before committing any changes. This validates license headers, gofmt, govet, unit tests, and documentation.
+
+
+      ### Skills
+
+
+      This repo has OpenCode skills available:
+
+      - `add-platform-support` -- Add new cloud provider support
+
+      - `release_note_update` -- Update release notes
+
+      - `stabilize-spec` -- Stabilize experimental config spec (8-commit process)'
+    gold_removed: ''

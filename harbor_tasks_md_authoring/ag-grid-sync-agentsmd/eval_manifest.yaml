@@ -1,0 +1,40 @@
+version: "2.0"
+
+task:
+  name: ag-grid-sync-agentsmd
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: ag-grid/ag-grid
+  pr: 13061
+  base_commit: "d1e506c6f21b3ae84c36e45018515d80621c5822"
+  merge_commit: "3406211b3789278b2e5c81578a5f8eb56f924e0d"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+
+config_edits:
+  - path: AGENTS.md
+    tier: 1
+    gold_added: '#### Styling
+
+
+      The grid is in transition from Legacy Themes (.scss files written in Sass under `/community-modules/styles/`) to the Theming API (.css written in modern nested CSS under `/packages/`).
+
+
+      While this transition is in progress, changes made to Theming API should be applied to Legacy Themes. When reviewing a PR with changes to the Theming API CSS, if the same PR does not have corresponding changes to Legacy Themes, this should be flagged as a P1 level issue.
+
+      '
+    gold_removed: ''

@@ -1,0 +1,71 @@
+version: "2.0"
+
+task:
+  name: dataframely-docs-add-pr-title-format
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: Quantco/dataframely
+  pr: 249
+  base_commit: "b813ac975ed576501c01d9dd6f86028811223eb3"
+  merge_commit: "764074e6458193e18b08c6ef05f2a3ace3755470"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/copilot-instructions.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/copilot-instructions.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/copilot-instructions.md."
+
+config_edits:
+  - path: .github/copilot-instructions.md
+    tier: 1
+    gold_added: '### Pull request titles (required)
+
+
+      Pull request titles must follow the Conventional Commits format: `<type>[!]: <Subject>`
+
+
+      Allowed `type` values:
+
+
+      - `feat`: A new feature
+
+      - `fix`: A bug fix
+
+      - `docs`: Documentation only changes
+
+      - `style`: Changes that do not affect the meaning of the code (white-space, formatting, missing semi-colons, etc)
+
+      - `refactor`: A code change that neither fixes a bug nor adds a feature
+
+      - `perf`: A code change that improves performance
+
+      - `test`: Adding missing tests or correcting existing tests
+
+      - `build`: Changes that affect the build system or external dependencies
+
+      - `ci`: Changes to our CI configuration files and scripts
+
+      - `chore`: Other changes that don''t modify src or test files
+
+      - `revert`: Reverts a previous commit
+
+
+      Additional rules:
+
+
+      - Use `!` only for **breaking changes**
+
+      - `Subject` must start with an **uppercase** letter and must **not** end with `.` or a trailing space
+
+      '
+    gold_removed: ''

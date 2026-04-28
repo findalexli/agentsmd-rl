@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: nettacker-added-agentsmd
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: OWASP/Nettacker
+  pr: 1128
+  base_commit: "b465808c595534b17e2e356e05e3ca246859d679"
+  merge_commit: "a0831bc70a8c646a12e146eacd4344893d4f5729"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+
+config_edits:
+  - path: AGENTS.md
+    tier: 1
+    gold_added: "<!-- \nThink of AGENTS.md as a README for AI agents: a dedicated, predictable place to provide the context and instructions to help AI coding agents work on your project.\nSee https://agents.md for more info\n-->\n\n# Repository Guidelines\n## Project Structure & Module Organization\n- Source: `nettacker/` (CLI: `nettacker/main.py`, API: `nettacker/api/`, core libs: `nettacker/core/`, modules: `nettacker/modules/`).\n- Entry points: `nettacker.py` (Python) and `poetry` script `nettacker`.\n- Tests: `tests/` (mirrors package layout: `tests/core/`, `tests/lib/`, etc.).\n- Docs & assets: `docs/`, `nettacker/web/static/`.\n- Runtime data (not for commit): `.nettacker/data/` (DB at `.nettacker/data/nettacker.db`, results in `.nettacker/data/results/`).\n\n## Build, Test, and Development Commands\n- Install: `poetry install` (uses `pyproject.toml`).\n- Lint/format (all hooks): `make pre-commit` or `pre-commit run --all-files`.\n- Tests: `make test` or `poetry run pytest` (coverage configured via `pyproject.toml`).\n- Run CLI: `poetry run nettacker --help` or `python nettacker.py --help`.\n- Docker (web UI): `docker-compose up`.\n\n## Coding Style & Naming Conventions\n- Python 3.9–3.12 supported. Use 4-space indents.\n- Line length: 99 chars (`ruff`, `ruff-format`, `isort` profile=black).\n- Names: modules/files `lower_snake_case`; functions/vars `lower_snake_case`; classes `PascalCase`; constants `UPPER_SNAKE_CASE`.\n- Keep functions small, typed where practical, and add docstrings for public APIs.\n\n## Testing Guidelines\n- Framework: `pytest` (+ `pytest-asyncio`, `xdist`).\n- Location/pattern: place tests under `tests/`; name files `test_*.py`; parametrize where useful.\n- Coverage: enforced via `--cov=nettacker` (see `tool.pytest.ini_options`). Add tests with new features and for bug fixes.\n- Run subsets: `poetry run pytest -k <expr>`.\n\n## Commit & Pull Request Guidelines\n- Commit messages: imperative tense, concise subject; reference issues (`Fixes #123`).\n- Before pushing: `pre-commit run --all-files` and `make test` must pass.\n- PRs: include a clear description, rationale, linked issue(s), test evidence (logs or screenshots for web UI), and update docs if behavior changes.\n\n## Security & Configuration Tips\n- Legal/ethics: only scan assets you are authorized to test.\n- Secrets: never commit API keys, DBs, or results; `.nettacker/data/` is runtime-only.\n- Config: defaults in `nettacker/config.py` (API key, DB path, paths). Review sensitive headers list before logging."
+    gold_removed: ''

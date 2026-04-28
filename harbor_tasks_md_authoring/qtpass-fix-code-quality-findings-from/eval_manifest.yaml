@@ -1,0 +1,36 @@
+version: "2.0"
+
+task:
+  name: qtpass-fix-code-quality-findings-from
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: IJHack/QtPass
+  pr: 1181
+  base_commit: "064e8624c7b2bfd010e029138e07b4737a5fa191"
+  merge_commit: "77888b5e71fc4047f12d84674decc01b48b45184"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .opencode/skills/qtpass-github/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .opencode/skills/qtpass-github/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .opencode/skills/qtpass-github/SKILL.md."
+
+config_edits:
+  - path: .opencode/skills/qtpass-github/SKILL.md
+    tier: 1
+    gold_added: '# If upstream remote is not set, add it (one-time setup):
+
+      # Use an unresolved thread ID from step 1 output (format typically starts with PRRT_)
+
+      THREAD_ID="PRRT_FROM_STEP_1"'
+    gold_removed: ''

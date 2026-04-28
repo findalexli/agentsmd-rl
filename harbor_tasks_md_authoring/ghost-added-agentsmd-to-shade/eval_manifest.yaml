@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: ghost-added-agentsmd-to-shade
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: TryGhost/Ghost
+  pr: 24864
+  base_commit: "f0612d59daa17b16de3cedc691421e53cadeb8d5"
+  merge_commit: "5620ef34b27752dede6c6e4d9dd5025cd6c99787"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in apps/shade/AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in apps/shade/AGENTS.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in apps/shade/AGENTS.md."
+
+config_edits:
+  - path: apps/shade/AGENTS.md
+    tier: 1
+    gold_added: "# Repository Guidelines\n\n## Project Structure & Module Organization\n- `src/components/ui/*`: Atomic UI components (Radix/ShadCN-based). Each component should have a `*.stories.tsx` file next to it.\n- `src/components/layout/*`: Reusable layout containers (Page, Heading, Header, ViewHeader, ErrorPage).\n- `src/components/features/*`: Higher-level, opinionated components (e.g., PostShareModal, SourceTabs).\n- `src/hooks/*`: Custom React hooks.\n- `src/lib/utils.ts`: Shared utilities (class merging, formatting, chart helpers).\n- `src/providers/*` and `src/ShadeApp.tsx`: Context + app wrapper that scopes styles to `.shade`.\n- `src/assets/*`: Logos and custom icon SVGs (icons auto-exported via `Icon`).\n- `test/unit/*`: Vitest tests. `test/unit/utils/test-utils.tsx` provides a `render` helper.\n- Build artifacts: `es/` (compiled ESM) and `types/` (generated `.d.ts`). Storybook config lives in `.storybook/`.\n\n## Build, Test, and Development Commands\n- `yarn build` — Type declarations + Vite library build to `es/`.\n- `yarn test` — Type-checks then runs Vitest with coverage.\n- `yarn test:unit` / `yarn test:types` — Run unit tests or TS type-checks only.\n- `yarn lint` — ESLint for source and tests (`tailwindcss` plugin enabled).\n- `yarn storybook` — Run Storybook locally. `yarn build-storybook` — static export.\n\n## Coding Style & Naming Conventions\n- React + TypeScript. Prefer composable components over heavy prop configuration.\n- Filenames: ShadCN-generated files keep kebab-case; component identifiers use `PascalCase`.\n- Functions/vars: `camelCase`. Keep file-scoped components in the same file.\n- Always forward and merge `className` with `cn(...)`. Use CVA for variants when useful.\n- Tailwind is scoped via `.shade`; dark mode uses `.dark`. Follow ESLint and `tailwindcss/*` rules.\n\n## Adding New Components\n- Prefer ShadCN first: search for an equivalent and add via `npx shadcn@latest add <component>`. Follow the guardrails above to avoid accidental overwrites.\n- Location & exports: place new UI components under `src/components/ui` and export them from `src/index.ts`.\n- Storybook: add a sibling `*.stories.tsx` file with an overview (what/why) and stories showing different use cases/variants (sizes, states, important props).\n- Implementation: forward `className` and merge with `cn(...)`; use CVA for variants where appropriate.\n- Verification: `yarn lint`, `yarn test`, plus `yarn storybook` to visually validate stories before opening a PR.\n\n## Testing Guidelines (TBD)\nWe are finalizing a formal testing strategy.\n\nInterim expectations:\n- Use the existing setup (Vitest + Testing Library + jsdom) when adding tests.\n- Location/patterns: `test/unit/**/*.(test).(ts|tsx|js)`; use `test/unit/utils/test-utils.tsx`’s `render` when a wrapper is needed.\n- For new UI components, prioritize comprehensive Storybook stories; add focused unit tests where they provide real value (e.g., hooks, utils, logic-heavy parts).\n- No strict coverage threshold yet; run `yarn test` locally to ensure the suite passes.\n\n## Commit & Pull Request Guidelines\n- Commit messages are the release notes. Follow this structure:\n  - 1st line: ≤ 80 chars, past tense, start with one of: Fixed/Changed/Updated/Improved/Added/Removed/Reverted/Moved/Released/Bumped/Cleaned.\n  - 2nd line: blank.\n  - 3rd line: magic word + absolute issue URL (e.g., `ref https://linear.app/...` or `closes ...`).\n  - 4th+: explain the “why”/context behind the change.\n- Gotchas: don’t use `ref:` (colon) — magic word must be followed by a space; Linear requires full URLs.\n - Dependency bumps: focus the message on resulting user‑visible changes (no need to list which internal packages changed).\n- PRs: describe changes, link issues, add screenshots/gifs for UI changes, and update/add stories.\n\n## Storybook Documentation for New Components\nRefer to “Adding New Components” for the process. Story content should:\n- Include a short overview (what the component does and primary use case).\n- Demonstrate key variants and states (sizes, disabled/loading, critical props).\n- Be minimal but representative; prefer CVA variants/props over ad‑hoc class overrides.\n\n## Notes for Contributors (and Agents)\n- Do not rename ShadCN-generated files purely for casing.\n- Use the `@` alias for internal imports (e.g., `@/lib/utils`).\n- When changing tokens/config, verify Storybook and a library build still succeed.\n- When adding new components to Shade, always look for a ShadCN/UI equivalent and if it exists add it using `npx`.\n\n## ShadCN Component Installation Guardrails\n- Never overwrite existing Shade components during `npx shadcn@latest add <name>` prompts. Choose “No” when asked to overwrite.\n- Always work on a fresh branch and commit a clean baseline before running the installer so you can easily revert: `git checkout -b chore/shadcn-add-<name>`.\n- If a component already exists in `src/components/ui`, generate the new version in a temporary workspace (scratch repo), then manually diff and port only the desired changes into the existing Shade file.\n- After integrating, run `yarn lint`, `yarn test`, and verify in Storybook before merging."
+    gold_removed: ''

@@ -1,0 +1,58 @@
+version: "2.0"
+
+task:
+  name: mcpspy-choreclaude-move-to-claude-folder
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: alex-ilgayev/MCPSpy
+  pr: 96
+  base_commit: "1d477ef115c28a74b6a623ab6a785b116af7c8ff"
+  merge_commit: "de0fd35925d0b213c7d030365b37474d9ed5f7f3"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/CLAUDE.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/CLAUDE.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/CLAUDE.md."
+
+config_edits:
+  - path: .claude/CLAUDE.md
+    tier: 1
+    gold_added: '
+
+      ## Git Worktrees for Parallel Claude Sessions
+
+
+      Use worktrees to run multiple Claude sessions on separate feature branches.
+
+      Use the .worktrees/ directory to keep things organized in terms of permissions:
+
+
+      ```bash
+
+      # Create worktree with new branch
+
+      git worktree add .worktrees/MCPSpy-<feature> -b feat/<feature-name>
+
+
+      # Work in the new directory
+
+      cd .worktrees/MCPSpy-<feature> && claude
+
+
+      # Cleanup after merge
+
+      git worktree remove .worktrees/MCPSpy-<feature>
+
+      ```'
+    gold_removed: ''

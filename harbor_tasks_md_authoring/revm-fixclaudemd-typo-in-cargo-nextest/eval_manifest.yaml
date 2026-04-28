@@ -1,0 +1,30 @@
+version: "2.0"
+
+task:
+  name: revm-fixclaudemd-typo-in-cargo-nextest
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: bluealloy/revm
+  pr: 3016
+  base_commit: "0e05a3070d2f94b44ce5555604f9ac9ca5d2cb08"
+  merge_commit: "11b30543d014ee2ffadec3bc7fc7724fe0452780"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+
+config_edits:
+  - path: CLAUDE.md
+    tier: 1
+    gold_added: 'cargo nextest run --workspace
+
+      - Update relevant examples if needed'
+    gold_removed: ''

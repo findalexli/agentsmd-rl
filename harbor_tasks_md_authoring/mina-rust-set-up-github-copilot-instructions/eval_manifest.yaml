@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: mina-rust-set-up-github-copilot-instructions
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: o1-labs/mina-rust
+  pr: 1424
+  base_commit: "8d9d156d733a9060c14a5e967e77e6bf59509ed8"
+  merge_commit: "a2a3bad69e5341f9d3db981b1c66cd5103dc4251"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/copilot-instructions.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/copilot-instructions.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/copilot-instructions.md."
+
+config_edits:
+  - path: .github/copilot-instructions.md
+    tier: 1
+    gold_added: "# GitHub Copilot Instructions for Mina Rust Repository\n\n## Project Overview\n\nMina is a Rust implementation of the Mina Protocol, a lightweight blockchain\nusing zero-knowledge proofs. It follows a Redux-style state machine architecture\nfor predictable, debuggable behavior.\n\n## Architecture\n\n### State Machine Pattern\n\nThe codebase follows Redux principles:\n\n- **State** - Centralized, immutable data structure\n- **Actions** - Events that trigger state changes\n- **Enabling Conditions** - Guards that prevent invalid state transitions\n- **Reducers** - Functions that update state and dispatch new actions\n- **Effects** - Thin wrappers for service calls\n- **Services** - Separate threads handling I/O and heavy computation\n\n### Key Components\n\n- **node/** - Main node logic (block production, transaction pool, consensus)\n- **p2p/** - Networking layer (libp2p and WebRTC transports)\n- **snark/** - Proof verification orchestration\n- **ledger/** - Ledger implementation and transaction logic\n- **core/** - Shared types and utilities\n\n## Code Patterns\n\n### File Organization\n\n- `*_state.rs` - State definitions\n- `*_actions.rs` - Action types\n- `*_reducer.rs` - State transitions\n- `*_effects.rs` - Service interactions\n- `*_service.rs` - Service interfaces\n\n### Defensive Programming\n\n- Use `bug_condition!` macro for theoretically unreachable code paths\n- Always add enabling condition checks before state transitions\n- Extract complex logic from reducers into state methods\n\n## Development Workflow\n\n### Before Making Changes\n\n1. Understand the Redux-style architecture\n2. Identify the correct component and layer for your changes\n3. Check existing patterns in similar files\n4. Run tests to understand current behavior\n\n### Code Changes\n\n1. Make minimal, surgical modifications\n2. Follow existing patterns and conventions\n3. Update documentation if directly related to changes\n4. Preserve working functionality\n\n### Formatting and Quality\n\n**MANDATORY before any commit:**\n\n```bash\n# Format Rust and TOML files\nmake format\n\n# Format markdown and MDX files\nmake format-md\n\n# Fix trailing whitespaces (CRITICAL)\nmake fix-trailing-whitespace\n\n# Verify formatting\nmake check-format\nmake check-md\nmake check-trailing-whitespace\n```\n\n### Testing\n\n```bash\n# Run all tests\nmake test\n\n# Run specific test suites\nmake test-p2p\nmake test-ledger\nmake nextest  # Faster test execution\n\n# Build project\nmake build\nmake build-release\n```\n\n### Documentation\n\n- Update `CHANGELOG.md` for significant user-facing changes\n- Use format: `- **Category**: Description ([#PR](github-link))`\n- Component docs are in individual `summary.md` files\n- Website docs are in `website/docs/`\n\n## Commit Guidelines\n\n**CRITICAL RULES:**\n\n- **NEVER** add any AI assistant as co-author in commit messages\n- **NEVER** use emojis in commit messages\n- **ALWAYS** wrap commit titles at 80 characters\n- **ALWAYS** run `make fix-trailing-whitespace` before committing\n\n### Commit Message Format\n\n```\nBrief description of change (80 chars max)\n\nLonger description if needed, wrapped at 80 characters.\nReference issues/PRs when relevant.\n```\n\n## Code Style\n\n### Rust Code\n\n- Follow existing `rustfmt` configuration\n- Use `clippy` suggestions: `make lint`\n- Prefer explicit error handling over panics\n- Use descriptive variable names\n- Add comments only when they add value beyond the code\n\n### Documentation Style\n\n- Use lowercase for section headings (\"test design\", \"resource management\")\n- Use lowercase for bullet point labels\n- Wrap Docusaurus admonitions with prettier-ignore comments:\n\n  ```mdx\n  <!-- prettier-ignore-start -->\n\n  :::note Content here :::\n\n  <!-- prettier-ignore-stop -->\n  ```\n\n## Common Tasks\n\n### Adding New Features\n\n1. Define actions in appropriate `*_actions.rs`\n2. Add state transitions in `*_reducer.rs`\n3. Implement effects in `*_effects.rs` if needed\n4. Add service methods in `*_service.rs` if needed\n5. Update tests and documentation\n\n### Debugging\n\n- Use existing test scenarios in `node/testing/`\n- Check component `summary.md` files for known issues\n- Follow the Redux flow: Action → Reducer → Effect → Service\n\n### Dependencies\n\n- Update `Cargo.toml` files carefully\n- Run `make check` after dependency changes\n- Consider impact on WebAssembly build (`make build-wasm`)\n\n## Important Files\n\n- `node/src/state.rs` - Global state structure\n- `node/src/action.rs` - Top-level action enum\n- `node/src/reducer.rs` - Main reducer dispatch\n- `Makefile` - Build and development commands\n- `CLAUDE.md` - Comprehensive codebase navigation guide\n- `ARCHITECTURE.md` - Migration guide for old vs new style\n\n## Resources\n\n- Architecture docs: `docs/handover/`\n- Component docs: Find `summary.md` in component directories\n- Website: `make docs-serve` (http://localhost:3000)\n- Build commands: `make help`\n\nRemember: This is a complex blockchain implementation. Take time to understand\nthe Redux architecture and existing patterns before making changes."
+    gold_removed: ''

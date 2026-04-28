@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: juju-feat-initial-agentsmd
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: juju/juju
+  pr: 21300
+  base_commit: "2750ed25c53cf4e0be0f063eff2d635469eeb784"
+  merge_commit: "8f0293fd268e39919be2d52621895501b3172757"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+
+config_edits:
+  - path: AGENTS.md
+    tier: 1
+    gold_added: "# Guidelines for Coding Agents Working on the Juju Codebase\n\nJuju is a large, long-lived distributed systems project.  \n\nCorrectness, stability, and architectural boundaries are more important than novelty.\n\n## What Juju Is\n\nJuju is an orchestration engine for deploying, managing, scaling and integrating infrastructure and applications.  \n\nJuju code must prioritize:\n- **Correctness under concurrency**\n- **Eventual consistency where required**\n- **Strict architectural layering**\n- **Testability**\n\nAvoid introducing new patterns or abstractions unless absolutely necessary.\n\n## Architectural Boundaries\n\n### Core rule: **Respect Juju’s layering. Do not create new cross-layer dependencies.**\n\nMajor layers include:\n- `domain/` — Application logic consisting of services that utilise states for persistence.\n- `apiserver/` — RPC facade implementations; should not contain business logic.\n- `api/` — Client functionality for calling RPC facades.\n- `internal/worker/` — Actors that converge real world to declared state.\n- `cmd/` — CLI commands and utilities.\n- `core/` — Shared internal logic; avoid adding functionality here unless truly cross-cutting.\n\n### Import rules\n- `apiserver` → may import `domain` and `core` packages, but must not depend on `cmd`.\n- `internal/worker` → may depend on `domain` and `api`, but not on `cmd`.\n- `domain` → must not import `apiserver`, `cmd` or `internal/worker`.\n- `core` → should only import other sub-packages in `core` or external packages; not other Juju packages.\n\n## Concurrency & Goroutine Rules\n\nJuju uses high concurrency and distributed coordination.  \n\n### Required patterns\n- Always propagate `context.Context`; never ignore cancellation.\n- Use existing worker framework abstractions (`worker.Worker`, `worker.Runner`, etc.).\n- For background operations, prefer existing worker patterns instead of ad-hoc goroutines.\n- For loops/polling, follow the established worker lifecycle patterns.\n\n### Prohibited patterns\n- Unmanaged goroutines or goroutines without cancellation.\n- Starting goroutines from inside API handlers.\n- Introducing blocking operations in hot paths.\n- Client, cross-controller or third-party connections without corresponding closure.\n\n## Juju-Specific Patterns to Respect\n\n### API facades\n- These contain *thin orchestration*, not business logic.\n- Primary responsibilities are auth, encoding/decoding wire data and calling domain services.\n\n### Domain services\n- Domain services are grouped by workflow concern.\n- There is a strict layering of service and state.\n- Services depend on state indirections; not implementations.\n- No transaction or database details leak out of state packages.\n- Business logic should be in the service layer, unless strictly required within a transaction, in which case it may\n  reside in the state layer.\n- State sub-packages must use Sqlair to query and modify data.\n- State method arguments should be simple types (string, int, etc.) or types internal to the domain they reside in.\n\n### Workers\n- Each worker must be restartable, deterministic, and observe cancellation.\n- A worker's main loop must be managed by a `tomb.Tomb` or `worker.Catacomb`.\n\n## Making Changes\n\n### When editing code\n- Follow existing local conventions before introducing new abstractions.\n- When modifying a subsystem, examine all files in the directory to maintain consistency.\n- Prefer minimal diffs that improve clarity, safety, and/or correctness.\n\n### When generating new code\n- Use patterns already in that directory.\n- Avoid adding new dependencies unless necessary.\n- Avoid new global state."
+    gold_removed: ''

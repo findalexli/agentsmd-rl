@@ -1,0 +1,24 @@
+version: "2.0"
+
+task:
+  name: camunda-docs-add-no-commit-scopes
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: camunda/camunda
+  pr: 51712
+  base_commit: "942483a42b940f6590755fd82199803ec33f21e1"
+  merge_commit: "aa4c5e01a1e8180dd509ad38b0c35cd3a6dde643"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/copilot-instructions.md."
+
+config_edits:
+  - path: .github/copilot-instructions.md
+    tier: 1
+    gold_added: '- Do not use commit scopes — commitlint enforces `scope-empty`. Use `fix: ...` not `fix(ci): ...`'
+    gold_removed: ''

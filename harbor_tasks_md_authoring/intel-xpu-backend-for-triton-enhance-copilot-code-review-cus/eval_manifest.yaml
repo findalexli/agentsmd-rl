@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: intel-xpu-backend-for-triton-enhance-copilot-code-review-cus
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: intel/intel-xpu-backend-for-triton
+  pr: 6148
+  base_commit: "9baee0e2159770d3a859351f1990a3d2108a7b88"
+  merge_commit: "14ea6dbf34d59b8e07c0ba9a78b1b97ee263e345"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/copilot-instructions.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/copilot-instructions.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/copilot-instructions.md."
+
+config_edits:
+  - path: .github/copilot-instructions.md
+    tier: 1
+    gold_added: "---\ndescription: 'AI-assisted coding guidelines following LLVM/MLIR standards'\napplyTo: '**/*.cpp, **/*.tpp, **/*.c, **/*.h, **/*.hpp'\n---\n\n# LLVM/MLIR Coding Guidelines for AI Assistance\nGenerate code following LLVM/MLIR standards. Apply these conventions consistently for high-quality, maintainable code.\n### Critical Requirements (Mandatory)\n- **Always** use LLVM/MLIR naming conventions (detailed below)\n- **Always** use `llvm::Error`/`llvm::Expected<T>` for error handling\n- **Always** use LLVM casting (`dyn_cast`, `cast`, `isa`) instead of C-style casts\n- **Always** handle errors and edge cases properly\n### Preferred Patterns\n- Write readable, maintainable code following the principle of least surprise\n- Make code self-documenting through clear naming\n- Use LLVM containers (`SmallVector`, `DenseMap`, `StringMap`) for performance\n- Prefer `SmallVector<T, N>` for small collections\n- Follow LLVM/MLIR C++ best practices\n// ✅ Functions and variables: camelCase (lowercase start)\n// ✅ Types, classes, enums: CamelCase (uppercase start)\nenum TokenKind { Identifier, NumericConstant };\nconstexpr unsigned MaxBufferSize = 1024;\n// ✅ Exception: STL-style methods use lowercase\n// ❌ Avoid: snake_case\nint calculate_offset();  // Wrong\nStringRef file_name;     // Wrong\n// ✅ Include order: main header, local, LLVM, system\n#include \"MyFile.h\"\n#include \"LocalHelper.h\"\n#include \"llvm/IR/Function.h\"\n#include <algorithm>\n// ✅ Function design: single responsibility, inputs first, return values\n// ✅ Out-parameters acceptable when necessary\n**Key principles:**\n- Use `#pragma once` or include guards\n- Forward declare to reduce dependencies\n- Make headers self-contained\n\n**Key principles:** Use LLVM types (`StringRef`, `ArrayRef`), express ownership clearly, follow RAII, use LLVM casting, avoid exceptions.\n// ✅ StringRef for read-only strings, ArrayRef for arrays\nvoid processData(ArrayRef<int> data);\n// ✅ LLVM casting: dyn_cast for runtime checks, cast when type guaranteed\nCallInst *call = cast<CallInst>(instr);  // Asserts if wrong type\n// ❌ Avoid: C-style casts\n// ✅ Smart pointers express ownership clearly\nstd::unique_ptr<Module> createModule();\n\n// ❌ Avoid: Raw pointers for ownership\nModule *createModule();  // Who owns this?\n\n// ✅ References for non-null, pointers when null valid\nvoid process(Module &mod);        // Non-null\nvoid maybeProcess(Module *mod);   // Can be nullptr\n```\nUse `llvm::Error` and `llvm::Expected<T>` for all error handling. Avoid exceptions.\n// ✅ Return Expected<T> for operations that can fail\n// ✅ Check and propagate errors\nAvoid copies, use efficient algorithms, prefer LLVM containers, use range-based loops.\n// ✅ Pass by const reference, use LLVM containers\nvoid processInstructions(const SmallVectorImpl<Instruction*> &instructions);\n// ✅ Range-based loops over indexed loops\n    // Process\n\n// ❌ Avoid: String copies, inefficient loops\nvoid processName(std::string name);  // Use StringRef\nfor (int i = 0; i < vec.size(); ++i)  // Use range-based loop\nDocument public APIs and complex logic. Explain \"why\" not just \"what\".\n/// Analyzes the function for optimization opportunities.\n/// Performs control flow analysis to identify safe optimizations.\n## Common Anti-Patterns to Avoid\n// ❌ Avoid: Hungarian notation\nint m_count;  // Use: int count\nif (condition == true)  // Use: if (condition)\n// ❌ Avoid: Unclear auto usage\nauto thing = process();  // What type is this?\n\n// ✅ Good: Clear auto usage\n// ✅ Operation and pass naming: CamelCase with uppercase start\n**GPU kernels:** Respect hardware limits (thread blocks, shared memory), use memory coalescing, avoid bank conflicts.\n**MLIR patterns:** Use rewriter patterns for transformations, follow dialect conversion infrastructure, register and verify operations properly."
+    gold_removed: ''

@@ -1,0 +1,40 @@
+version: "2.0"
+
+task:
+  name: cherry-studio-chore-update-claudemd-with-ui
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: CherryHQ/cherry-studio
+  pr: 10021
+  base_commit: "95f6e4dd3b93082e29b7aa9b2669cecf35211595"
+  merge_commit: "4a72d4039408c1e53db165ec33edeea51cf60468"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+
+config_edits:
+  - path: CLAUDE.md
+    tier: 1
+    gold_added: '### UI Design
+
+
+      The project is in the process of migrating from antd & styled-components to HeroUI. Please use HeroUI to build UI components. The use of antd and styled-components is prohibited.
+
+
+      HeroUI Docs: https://www.heroui.com/docs/guide/introduction
+
+      '
+    gold_removed: ''

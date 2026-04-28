@@ -1,0 +1,158 @@
+version: "2.0"
+
+task:
+  name: opik-na-fe-update-cursor-rules
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: comet-ml/opik
+  pr: 3278
+  base_commit: "d47aff42668053d30a3de82dc8255afde83abaae"
+  merge_commit: "320eb51fa0b0fbc16ea09176a7676adfea27fb64"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in apps/opik-frontend/.cursor/rules/accessibility-testing.mdc."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in apps/opik-frontend/.cursor/rules/accessibility-testing.mdc."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in apps/opik-frontend/.cursor/rules/accessibility-testing.mdc."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in apps/opik-frontend/.cursor/rules/api-data-fetching.mdc."
+  - id: signal_04
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in apps/opik-frontend/.cursor/rules/api-data-fetching.mdc."
+  - id: signal_05
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in apps/opik-frontend/.cursor/rules/api-data-fetching.mdc."
+  - id: signal_06
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in apps/opik-frontend/.cursor/rules/code-quality.mdc."
+  - id: signal_07
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in apps/opik-frontend/.cursor/rules/code-quality.mdc."
+  - id: signal_08
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in apps/opik-frontend/.cursor/rules/code-quality.mdc."
+  - id: signal_09
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in apps/opik-frontend/.cursor/rules/forms.mdc."
+  - id: signal_10
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in apps/opik-frontend/.cursor/rules/forms.mdc."
+  - id: signal_11
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in apps/opik-frontend/.cursor/rules/forms.mdc."
+  - id: signal_12
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in apps/opik-frontend/.cursor/rules/performance.mdc."
+  - id: signal_13
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in apps/opik-frontend/.cursor/rules/performance.mdc."
+  - id: signal_14
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in apps/opik-frontend/.cursor/rules/performance.mdc."
+  - id: signal_15
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in apps/opik-frontend/.cursor/rules/state-management.mdc."
+  - id: signal_16
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in apps/opik-frontend/.cursor/rules/state-management.mdc."
+  - id: signal_17
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in apps/opik-frontend/.cursor/rules/state-management.mdc."
+  - id: signal_18
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in apps/opik-frontend/.cursor/rules/tech-stack.mdc."
+  - id: signal_19
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in apps/opik-frontend/.cursor/rules/ui-components.mdc."
+  - id: signal_20
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in apps/opik-frontend/.cursor/rules/ui-components.mdc."
+  - id: signal_21
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in apps/opik-frontend/.cursor/rules/ui-components.mdc."
+  - id: signal_22
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in apps/opik-frontend/.cursor/rules/unit-testing.mdc."
+  - id: signal_23
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in apps/opik-frontend/.cursor/rules/unit-testing.mdc."
+  - id: signal_24
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in apps/opik-frontend/.cursor/rules/unit-testing.mdc."
+
+config_edits:
+  - path: apps/opik-frontend/.cursor/rules/accessibility-testing.mdc
+    tier: 1
+    gold_added: "alwaysApply: true\n\n\n<Button\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nimport { renderHook, act } from \"@testing-library/react\";\nimport { useEntityList } from \"./useEntityList\";\ndescribe(\"useEntityList\", () => {\n  it(\"fetches entities successfully\", async () => {\n      content: [{ id: \"1\", name: \"Entity 1\" }],\n\n\n      useEntityList({ workspaceName: \"test\", page: 1, size: 10 }),\n\n\n\nimport { rest } from \"msw\";\n  rest.get(\"/api/v1/entities\", (req, res, ctx) => {\n          { id: \"1\", name: \"Entity 1\" },\n          { id: \"2\", name: \"Entity 2\" },\n      }),\n\n  rest.delete(\"/api/v1/entities/:id\", (req, res, ctx) => {\nimport { server } from \"../mocks/server\";\n\n\n\n\n\n\n\n\n\nexpect(screen.getByRole(\"button\", { name: /save/i })).toBeEnabled();\nexpect(screen.getByRole(\"alert\")).toHaveTextContent(\"Email is required\");\n```"
+    gold_removed: ''
+  - path: apps/opik-frontend/.cursor/rules/api-data-fetching.mdc
+    tier: 1
+    gold_added: "alwaysApply: true\n\n\n\n  return (\n    data?.content\n      ?.filter((entity) => entity.status === \"active\")\n      ?.map((entity) => ({\n        ...entity,\n        displayName: formatEntityName(entity),\n      })) ?? []\n  );\n\n\n\n\n      content:\n        old?.content?.map((entity) =>\n          entity.id === newEntity.id ? { ...entity, ...newEntity } : entity,\n        ) ?? [],\n\n\n\n// Error toast\ntoast({\n  description: \"Operation failed\",\n  variant: \"destructive\",\n\n\nconst { data, fetchNextPage, hasNextPage, isFetchingNextPage } =\n  useInfiniteQuery({\n    queryKey: [\"entities\"],\n    queryFn: ({ pageParam = 1 }) => fetchEntities({ page: pageParam }),\n    getNextPageParam: (lastPage) => {\n      return lastPage.hasMore ? lastPage.page + 1 : undefined;\n    },\n  });\n```"
+    gold_removed: ''
+  - path: apps/opik-frontend/.cursor/rules/code-quality.mdc
+    tier: 1
+    gold_added: "alwaysApply: true\n\n\n\ntype ButtonVariant = \"default\" | \"outline\" | \"ghost\" | \"destructive\";\ntype Size = \"sm\" | \"md\" | \"lg\";\n  ADMIN = \"admin\",\n  USER = \"user\",\n  GUEST = \"guest\",\nconst VALID_STATUSES = [\"pending\", \"approved\", \"rejected\"] as const;\ntype Status = (typeof VALID_STATUSES)[number];\n\n  filters: FilterOptions,\n    .filter((user) => applyFilters(user, filters))\n    .map((user) => transformUser(user));\nconst handleUserSelect = useCallback(\n  (user: UserData, event: React.MouseEvent) => {\n    event.preventDefault();\n    onUserSelect(user.id);\n  },\n  [onUserSelect],\n);\n\n// 5. Lodash utilities (grouped together)\nimport isString from \"lodash/isString\";\nimport isArray from \"lodash/isArray\";\nimport isEmpty from \"lodash/isEmpty\";\nimport pick from \"lodash/pick\";\nimport groupBy from \"lodash/groupBy\";\n\n// 6. Types and constants\n\n\nDataTable.tsx;\nUserProfile.tsx;\nSettingsDialog.tsx;\ndateUtils.ts;\nstringHelpers.ts;\napiClient.ts;\nuseEntityList.ts;\nuseUserPermissions.ts;\nuseDebounce.ts;\nUserData.ts;\nApiResponse.ts;\nComponentProps.ts;\n\n  STRING: \"string\",\n  NUMBER: \"number\",\n  DATE: \"date\",\n  USERS: \"/api/v1/users\",\n  PROJECTS: \"/api/v1/projects\",\nconst onSubmit = () => {}; // What is being submitted?\n\nclassName = \"comet-table-row-active\";\nclassName = \"comet-sidebar-collapsed\";\nclassName = \"comet-header-height\";\nclassName = \"flex items-center gap-2\";\nclassName = \"rounded-lg border bg-card p-6\";\nclassName = \"text-sm text-muted-foreground\";\n\n\n\n\n\n        <Button\n          variant=\"destructive\"\n## Utility Libraries\n\n### Lodash Usage Guidelines\n\nUse Lodash for complex operations, but **always import methods individually** for optimal tree-shaking and bundle size:\n\n```typescript\n// ✅ Good: Individual imports for tree-shaking\nimport pick from \"lodash/pick\";\nimport merge from \"lodash/merge\";\nimport cloneDeep from \"lodash/cloneDeep\";\nimport uniqBy from \"lodash/uniqBy\";\nimport groupBy from \"lodash/groupBy\";\nimport orderBy from \"lodash/orderBy\";\nimport isNil from \"lodash/isNil\";\nimport isEmpty from \"lodash/isEmpty\";\nimport isEqual from \"lodash/isEqual\";\nimport camelCase from \"lodash/camelCase\";\nimport capitalize from \"lodash/capitalize\";\n\n// ✅ Object operations\nconst user = pick(rawUser, [\"id\", \"name\", \"email\"]);\nconst merged = merge({}, defaultConfig, userConfig);\nconst deepCloned = cloneDeep(complexObject);\n\n// ✅ Array operations\nconst uniqueItems = uniqBy(items, \"id\");\nconst grouped = groupBy(users, \"role\");\nconst sorted = orderBy(data, [\"date\", \"name\"], [\"desc\", \"asc\"]);\n\n// ✅ Type checking - Use Lodash methods instead of built-in type checks\nimport isString from \"lodash/isString\";\nimport isNumber from \"lodash/isNumber\";\nimport isBoolean from \"lodash/isBoolean\";\nimport isObject from \"lodash/isObject\";\nimport isArray from \"lodash/isArray\";\nimport isFunction from \"lodash/isFunction\";\nimport isDate from \"lodash/isDate\";\nimport isRegExp from \"lodash/isRegExp\";\nimport isNull from \"lodash/isNull\";\n\n// ✅ Prefer Lodash type determination over built-in methods\nif (isString(value)) {\n  /* handle string */\n}\nif (isNumber(value)) {\n  /* handle number */\n}\nif (isBoolean(value)) {\n  /* handle boolean */\n}\nif (isObject(value)) {\n  /* handle object */\n}\nif (isArray(value)) {\n  /* handle array */\n}\n\n// ❌ Avoid: Default import (includes entire library)\nimport _ from \"lodash\"; // Bad for bundle size\nconst user = _.pick(rawUser, [\"id\", \"name\", \"email\"]);\n\n// ❌ Avoid: Named imports from main module (still includes more than needed)\nimport { pick, merge, cloneDeep } from \"lodash\"; // Less efficient than individual imports\n\n// ❌ Avoid: Lodash only for very specific simple operations where built-in is clearer\nimport has from \"lodash/has\";\nconst hasProperty = has(obj, \"prop\"); // Use: 'prop' in obj or obj.hasOwnProperty('prop')\n```\n\n## Functionality Isolation Patterns\n\n### Isolating for Future Replacement\n\nWhen you like the emulation of some functionality, try to isolate it in a way that makes it easy to replace in the future:\n\n```typescript\n// ✅ Good: Isolated date formatting service\n// lib/dateService.ts\nexport interface DateService {\n  format(date: Date, format: string): string;\n  parse(dateString: string): Date;\n  isValid(date: any): boolean;\n}\n\nclass MomentDateService implements DateService {\n  format(date: Date, format: string): string {\n    return moment(date).format(format);\n  }\n\n  parse(dateString: string): Date {\n    return moment(dateString).toDate();\n  }\n\n  isValid(date: any): boolean {\n    return moment(date).isValid();\n  }\n}\n\n// Export single instance\nexport const dateService: DateService = new MomentDateService();\n\n// Usage in components\nimport { dateService } from \"@/lib/dateService\";\n\nconst formattedDate = dateService.format(new Date(), \"YYYY-MM-DD\");\n\n// ✅ Easy to replace later with different implementation:\n// class DayJsDateService implements DateService { ... }\n// export const dateService: DateService = new DayJsDateService();\n```\n\n```typescript\n// ✅ Good: Isolated chart service\n// lib/chartService.ts\nexport interface ChartService {\n  createLineChart(data: ChartData[], container: HTMLElement): ChartInstance;\n  updateChart(chart: ChartInstance, data: ChartData[]): void;\n  destroyChart(chart: ChartInstance): void;\n}\n\nclass RechartsService implements ChartService {\n  createLineChart(data: ChartData[], container: HTMLElement): ChartInstance {\n    // Recharts implementation\n    return new RechartsInstance(data, container);\n  }\n\n  // ... other methods\n}\n\nexport const chartService: ChartService = new RechartsService();\n\n// Easy to replace with D3, Chart.js, etc.\n```\n\n\n  \"item2\",\nconst filteredActiveUsers = users.filter((user) => user.isActive);\n\n\n\n  const activeUsers = useMemo(() =>\n    users?.filter(user => user.isActive) ?? [],\n\n\n\n\n```"
+    gold_removed: ''
+  - path: apps/opik-frontend/.cursor/rules/forms.mdc
+    tier: 1
+    gold_added: "alwaysApply: true\n\n\n\n\n\n\n    <Button\n      type=\"button\"\n      variant=\"outline\"\n<Button\n  type=\"button\"\n\nconst formSchema = z\n  .object({\n    type: z.enum([\"user\", \"admin\"]),\n    permissions: z.array(z.string()).optional(),\n  })\n  .refine(\n    (data) => {\n      // Conditional validation: admin must have permissions\n      if (\n        data.type === \"admin\" &&\n        (!data.permissions || data.permissions.length === 0)\n      ) {\n        return false;\n      }\n      return true;\n    },\n    {\n      message: \"Admin users must have at least one permission\",\n      path: [\"permissions\"],\n    },\n  );\n\n\n\n\n    toast({\n      description: \"Failed to submit form\",\n      variant: \"destructive\"\n\nconst handleResetWithData = useCallback(\n  (newData: Partial<FormData>) => {\n    form.reset(newData);\n  },\n  [form],\n);\n\nconst phoneSchema = z.string().refine(\n  (val) => {\n    const phoneRegex = /^\\+?[1-9]\\d{1,14}$/;\n    return phoneRegex.test(val);\n  },\n  {\n    message: \"Invalid phone number format\",\n  },\n);\nconst emailSchema = z\n  .string()\n  .email()\n  .refine(\n    async (email) => {\n      const isAvailable = await checkEmailAvailability(email);\n      return isAvailable;\n    },\n    {\n      message: \"Email is already taken\",\n    },\n  );\n\n    setCurrentStep((prev) => Math.min(prev + 1, steps.length - 1));\n  setCurrentStep((prev) => Math.max(prev - 1, 0));\n```"
+    gold_removed: ''
+  - path: apps/opik-frontend/.cursor/rules/performance.mdc
+    tier: 1
+    gold_added: "alwaysApply: true\n\n    .filter((item) => item.category === selectedCategory)\n    .map((item) => transformItem(item));\n\nconst handleItemSelect = useCallback(\n  (id: string) => {\n    setSelectedItem(id);\n    onSelectionChange?.(id);\n  },\n  [onSelectionChange],\n);\n\n  return (\n    data?.content\n      ?.filter((item) => item.status === \"active\")\n      ?.map((item) => ({\n        ...item,\n        displayName: `${item.firstName} ${item.lastName}`,\n        formattedDate: formatDate(item.createdAt),\n      })) ?? []\n  );\n\n- Simple object/array literals that don't impact child components"
+    gold_removed: ''
+  - path: apps/opik-frontend/.cursor/rules/state-management.mdc
+    tier: 1
+    gold_added: "alwaysApply: true\n\n\n  updateFilters: (newFilters) =>\nexport const useSelectedEntity = () =>\nexport const useEntityFilters = () => useEntityStore((state) => state.filters);\n\nconst updatePreference = useCallback(\n  (key: string, value: any) => {\n    setPreferences((prev) => ({ ...prev, [key]: value }));\n  },\n  [setPreferences],\n);\n\n  theme: \"light\" | \"dark\";\n  },\n\n\n\n\n\n\n\n\n\nimport { shallow } from \"zustand/shallow\";\n  shallow,\nconst actions = useMemo(\n  () => ({\n    updateFilters: useEntityStore.getState().updateFilters,\n    resetFilters: useEntityStore.getState().resetFilters,\n  }),\n  [],\n);\n```"
+    gold_removed: ''
+  - path: apps/opik-frontend/.cursor/rules/tech-stack.mdc
+    tier: 1
+    gold_added: 'alwaysApply: true
+
+
+
+
+
+      ```'
+    gold_removed: ''
+  - path: apps/opik-frontend/.cursor/rules/ui-components.mdc
+    tier: 1
+    gold_added: "alwaysApply: true\n\n\n// Secondary actions\n\nsize = \"3xs\" | \"2xs\" | \"sm\" | \"default\" | \"lg\";\nsize = \"icon-3xs\" | \"icon-2xs\" | \"icon-xs\" | \"icon-sm\" | \"icon\" | \"icon-lg\";\n\n<DataTable\n\n\n\n\n\n\n\n\n// Card containers\n\n## Component Reusability and Organization\n\n### UI Logic Separation\n\nTry not to write complex UI logic inside components. Follow these principles:\n\n```typescript\n// ✅ Good: Extract reusable logic into separate component\n// components/shared/UserCard/UserCard.tsx\nconst UserCard: React.FC<{ user: User; onEdit: (user: User) => void }> = ({ user, onEdit }) => {\n  return (\n    <Card className=\"p-4\">\n      <div className=\"flex items-center gap-3\">\n        <Avatar src={user.avatar} />\n        <div>\n          <h3 className=\"comet-title-s\">{user.name}</h3>\n          <p className=\"comet-body-s text-muted-foreground\">{user.email}</p>\n        </div>\n      </div>\n      <Button variant=\"outline\" onClick={() => onEdit(user)}>\n        Edit\n      </Button>\n    </Card>\n  );\n};\n\n// ❌ Avoid: Complex inline UI logic\nconst UserList: React.FC = () => {\n  return (\n    <div>\n      {users.map(user => (\n        <div key={user.id} className=\"p-4 border rounded\">\n          <div className=\"flex items-center gap-3\">\n            <img src={user.avatar} className=\"w-10 h-10 rounded-full\" />\n            <div>\n              <h3>{user.name}</h3>\n              <p>{user.email}</p>\n            </div>\n          </div>\n          <button onClick={() => /* complex edit logic */}>Edit</button>\n        </div>\n      ))}\n    </div>\n  );\n};\n```\n\n### Component Placement Rules\n\n- **Reusable components**: Place in `components/shared/` folder\n- **Non-reusable components**: Place in the same folder as the parent component\n\nCheck these folders when adding new components:\n\n- `apps/opik-frontend/src/components/ui` for low-level components\n- `apps/opik-frontend/src/components/shared` for high-level components\n\n```\ncomponents/\n├── ui/                     # Low-level base components (Button, Input, etc.)\n├── shared/\n│   ├── UserCard/          # Reusable across multiple pages\n│   ├── DataTable/         # Reusable table component\n│   └── LoadingSpinner/    # Reusable loading component\n└── pages/\n    └── UserManagement/\n        ├── UserManagement.tsx\n        ├── UserFilters.tsx    # Only used in UserManagement\n        └── UserActions.tsx    # Only used in UserManagement\n```\n\n## Dark Theme Support\n\n### Theme-Aware Components\n\nWhen adding a new UI component, remember it should support both light and dark themes:\n\n```typescript\n// ✅ Good: Use theme-aware classes\nconst MyComponent: React.FC = () => (\n  <div className=\"bg-card text-card-foreground border border-border\">\n    <h2 className=\"text-primary\">Title</h2>\n    <p className=\"text-muted-foreground\">Description</p>\n    <Button className=\"bg-primary text-primary-foreground hover:bg-primary-hover\">\n      Action\n    </Button>\n  </div>\n);\n\n// ❌ Avoid: Hard-coded colors\nconst MyComponent: React.FC = () => (\n  <div className=\"bg-white text-black border-gray-200\">\n    <h2 className=\"text-blue-600\">Title</h2>\n    <p className=\"text-gray-500\">Description</p>\n  </div>\n);\n```\n\n### Color Management\n\nAdd all new colors to the `main.css` file, along with their alternatives for the dark theme:\n\n```css\n/* main.css */\n:root {\n  /* Light theme colors */\n  --my-custom-color: 210 100% 50%;\n  --my-custom-color-foreground: 0 0% 100%;\n}\n\n.dark {\n  /* Dark theme alternatives */\n  --my-custom-color: 220 100% 60%;\n  --my-custom-color-foreground: 0 0% 0%;\n}\n```\n\nThen use in components:\n\n```typescript\n// ✅ Good: Using CSS custom properties\n<div className=\"bg-my-custom-color text-my-custom-color-foreground\">\n  Content\n</div>\n```\n\n\n- Border radius: `rounded-md` (default), `rounded-lg`, `rounded-xl`"
+    gold_removed: ''
+  - path: apps/opik-frontend/.cursor/rules/unit-testing.mdc
+    tier: 1
+    gold_added: "alwaysApply: true\n\n\n\n2. **Data Processing Logic** with edge cases\n\n\n      expect(\n        isStringMarkdown(\"This contains an asterisk * but is not markdown.\"),\n      ).toBe(false);\n      expect(\n        isStringMarkdown(\"This contains a hash # but is not markdown.\"),\n      ).toBe(false);\n        { name: \"c\", type: \"any\", optional: false },\n        { name: \"b\", type: \"str\", optional: false },\n        { name: \"data\", type: \"Dict[str, List[int]]\", optional: false },\n        { name: \"count\", type: \"int\", optional: true },\n      expect(result).toEqual([{ name: \"input\", type: \"str\", optional: false }]);\n      expect(() =>\n        parsePythonMethodParameters(code, \"missing_method\"),\n      ).toThrowError(\"Method missing_method not found\");\n    metrics: { cost: 0.05, tokens: 100 },\n      const filter = [\n        {\n          field: \"name\",\n          operator: \"=\",\n          value: \"Test Item\",\n          type: COLUMN_TYPE.string,\n        },\n      ];\n      const filter = [\n        {\n          field: \"name\",\n          operator: \"contains\",\n          value: \"Test\",\n          type: COLUMN_TYPE.string,\n        },\n      ];\n      const filter = [\n        {\n          field: \"name\",\n          operator: \"contains\",\n          value: \"test\",\n          type: COLUMN_TYPE.string,\n        },\n      ];\n      const filter = [\n        {\n          field: \"type\",\n          operator: \"=\",\n          value: \"llm\",\n          type: COLUMN_TYPE.category,\n        },\n      ];\n      const isEmptyFilter = [\n        {\n          field: \"type\",\n          operator: \"is_empty\",\n          value: \"\",\n          type: COLUMN_TYPE.category,\n        },\n      ];\n\n      const isNotEmptyFilter = [\n        {\n          field: \"type\",\n          operator: \"is_not_empty\",\n          value: \"\",\n          type: COLUMN_TYPE.category,\n        },\n      ];\n          type: COLUMN_TYPE.string,\n          operator: \"=\",\n          type: COLUMN_TYPE.category,\n        },\n          type: COLUMN_TYPE.string,\n          type: COLUMN_TYPE.category,\n        },\n\n      const expectedOutput = {\n        /* expected result */\n      };\n\n\n\n    const largeArray = Array(1000)\n      .fill()\n      .map((_, i) => ({ id: i }));\n\n  ...overrides,\n\n// Test error conditions\nWhen in doubt, write the test. Complex functions should have comprehensive test coverage to prevent regressions and ensure reliability."
+    gold_removed: ''

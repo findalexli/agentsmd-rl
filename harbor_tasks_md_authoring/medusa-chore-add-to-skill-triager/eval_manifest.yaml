@@ -1,0 +1,115 @@
+version: "2.0"
+
+task:
+  name: medusa-chore-add-to-skill-triager
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: medusajs/medusa
+  pr: 15158
+  base_commit: "dd29f6f3201f275586746902953004011159b1e8"
+  merge_commit: "783957994112ee95de0c559028450d789530d5fa"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/reviewing-prs/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/reviewing-prs/reference/comment-guidelines.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/triaging-issues/SKILL.md."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/triaging-issues/reference/bug-report.md."
+  - id: signal_04
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/triaging-issues/reference/bug-report.md."
+  - id: signal_05
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/triaging-issues/reference/bug-report.md."
+
+config_edits:
+  - path: .claude/skills/reviewing-prs/SKILL.md
+    tier: 1
+    gold_added: '- [ ] Approving a PR that changes behavior documented as intentional — always check the docs when a PR modifies existing behavior; if the docs describe it as by design, flag it as `requires-more`'
+    gold_removed: ''
+  - path: .claude/skills/reviewing-prs/reference/comment-guidelines.md
+    tier: 1
+    gold_added: '- **Is the behavior being changed intentional and documented?** If the PR modifies existing behavior, check whether that behavior is described as by design in the official Medusa documentation (`www/apps/book/app/learn/`). If the docs explicitly describe the current behavior as intentional, the PR is changing intended behavior and must be flagged as `requires-more`. Explain that the behavior is by design and reference the documentation section. This is a **blocking** concern — do not apply `initial-approval`.'
+    gold_removed: ''
+  - path: .claude/skills/triaging-issues/SKILL.md
+    tier: 1
+    gold_added: '- [ ] Confirming a bug without first checking the documentation — always check if the behavior is documented as intentional before treating it as a bug'
+    gold_removed: ''
+  - path: .claude/skills/triaging-issues/reference/bug-report.md
+    tier: 1
+    gold_added: '## Step 2 — Check Documentation for Intentional Behavior
+
+      > **CRITICAL:** Before treating anything as a bug, check the official Medusa documentation to determine if the reported behavior is **intentional and documented**. Do this actively — search the docs and the codebase for explanations of the feature.
+
+
+      Read the relevant documentation section (e.g. `www/apps/book/app/learn/fundamentals/`) for the feature mentioned in the issue. Ask: "Is the behavior the user is reporting described as by design anywhere in the docs?"
+
+
+      **If the behavior is explicitly documented as by design:**
+
+      1. Add a comment explaining the behavior is intentional, referencing the relevant documentation section
+
+      2. Close the issue
+
+      3. **Stop** — this is not a bug
+
+
+      **Comment template — documented intentional behavior:**
+
+      ```
+
+      Thank you for the report! After investigating, the behavior you''re describing is actually intentional and documented.
+
+
+      [Explain the behavior and why it works this way]
+
+
+      You can find more details in our [documentation](link-to-relevant-docs-section).
+
+
+      If you''d like a different behavior, we''d suggest [workaround or alternative approach if applicable].
+
+
+      I''m going to close this issue, but feel free to reopen if your situation differs from what I''ve described.
+
+      ```
+
+
+      Then: `bash scripts/close_issue.sh <issue_number>`
+
+
+      ---
+
+
+      **If the behavior is undocumented or the docs are unclear/misleading** (but it still turns out to be by design after codebase review), treat it as a documentation gap — see Step 3 below.
+
+
+      ---
+
+
+      **If the behavior is NOT described in the docs at all**, continue to Step 2.5.
+
+
+      ---
+
+
+      ## Step 2.5 — Check for User Error
+
+
+      After verifying it''s not documented intentional behavior, assess whether the issue may be caused by the user:'
+    gold_removed: ''

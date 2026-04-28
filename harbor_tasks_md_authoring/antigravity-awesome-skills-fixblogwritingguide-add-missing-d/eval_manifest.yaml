@@ -1,0 +1,24 @@
+version: "2.0"
+
+task:
+  name: antigravity-awesome-skills-fixblogwritingguide-add-missing-d
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: sickn33/antigravity-awesome-skills
+  pr: 537
+  base_commit: "1dc1379221a965bea12e54e2a8aafd9461eceff4"
+  merge_commit: "3460d170f2240ad5427abd6d504b9c4d8d32b817"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/blog-writing-guide/SKILL.md."
+
+config_edits:
+  - path: skills/blog-writing-guide/SKILL.md
+    tier: 1
+    gold_added: 'date_added: ''2026-03-06'''
+    gold_removed: ''

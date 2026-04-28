@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: delegatedecompiler-set-up-copilot-instructions
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: hazzik/DelegateDecompiler
+  pr: 270
+  base_commit: "870d309d875b351b422dbf64d69c9a5ec4d1ae48"
+  merge_commit: "b748d82843950d3ba4ca706881bd5b89be590f55"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/copilot-instructions.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/copilot-instructions.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/copilot-instructions.md."
+
+config_edits:
+  - path: .github/copilot-instructions.md
+    tier: 1
+    gold_added: "# DelegateDecompiler - GitHub Copilot Instructions\n\n## Project Overview\n\nDelegateDecompiler is a .NET library that decompiles delegates and method bodies to their lambda representation. It enables computed properties in LINQ queries by translating `[Computed]` attributes into executable expressions that can be processed by Entity Framework and other ORMs.\n\n## Core Components\n\n- **`ComputedAttribute`**: Marks properties/methods for decompilation\n- **`MethodBodyDecompiler`**: Core IL decompilation engine  \n- **`DecompileExtensions`**: Public API for decompiling delegates/queries\n- **`Processors/`**: Pluggable processors for different IL opcodes\n\n## Build & Test\n\n```bash\n# Restore packages\ndotnet restore\n\n# Build the solution\ndotnet build --no-restore -c Release -p:DisableGitVersionTask=true\n\n# Run tests\ndotnet test --no-build -c Release -f net8.0 src/DelegateDecompiler.Tests\ndotnet test --no-build -c Release -f net8.0 src/DelegateDecompiler.Tests.VB\ndotnet test --no-build -c Release -f net8.0 src/DelegateDecompiler.EntityFramework.Tests\ndotnet test --no-build -c Release -f net8.0 src/DelegateDecompiler.EntityFrameworkCore6.Tests\ndotnet test --no-build -c Release -f net8.0 src/DelegateDecompiler.EntityFrameworkCore8.Tests\ndotnet test --no-build -c Release -f net9.0 src/DelegateDecompiler.EntityFrameworkCore9.Tests\n```\n\n**Development Guidelines:**\n- Use test-first approach when adding new features or fixing bugs\n- Ensure core unit tests pass: `src/DelegateDecompiler.Tests` and `src/DelegateDecompiler.Tests.VB` should have no failures\n- Run unit tests frequently during development to catch regressions early\n\n## Project Structure\n\n```\nsrc/\n├── DelegateDecompiler/                          # Core library\n├── DelegateDecompiler.EntityFramework/          # EF 6.x support\n├── DelegateDecompiler.EntityFrameworkCore5/     # EF Core 5+ support \n├── DelegateDecompiler.Tests/                    # Core library tests\n└── DelegateDecompiler.EntityFramework*.Tests/   # EF integration tests\n```\n\n## Usage Example\n\n```csharp\nclass Employee\n{\n    [Computed]\n    public string FullName => FirstName + \" \" + LastName;\n    public string FirstName { get; set; }\n    public string LastName { get; set; }\n}\n\n// Usage in LINQ - decompiles FullName to FirstName + \" \" + LastName\nvar results = employees\n    .Where(e => e.FullName == \"John Doe\")\n    .Decompile()\n    .ToList();\n```\n\n## Development Notes\n\n- **Target Frameworks**: .NET Framework 4.0/4.5, .NET Standard 2.0/2.1, .NET 8.0/9.0\n- **Key Dependency**: Mono.Reflection for IL reading\n- **Testing**: NUnit with automatic documentation generation for EF tests\n- **Architecture**: Pluggable processor pattern for handling IL opcodes\n- **Performance**: Decompilation results are cached using `ConcurrentDictionary`"
+    gold_removed: ''

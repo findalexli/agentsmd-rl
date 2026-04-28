@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: parcels-add-claudemd
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: Parcels-code/Parcels
+  pr: 2369
+  base_commit: "a24cc9aee167019ab4ce4f3c3bf750f05978ef5d"
+  merge_commit: "ad09f1e517c32eca2ce9cce99f1fd377c0e06940"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+
+config_edits:
+  - path: CLAUDE.md
+    tier: 1
+    gold_added: "## GitHub Interaction Guidelines\n\n- **NEVER impersonate the user on GitHub**, always sign off with something like\n  \"[This is Claude Code on behalf of Jane Doe]\"\n- Never create issues nor pull requests on the GitHub repository unless\n  explicitly instructed\n- Never post \"update\" messages, progress reports, or explanatory comments on\n  GitHub issues/PRs unless specifically instructed\n- When creating commits, always include a co-authorship trailer:\n  `Co-authored-by: Claude <noreply@anthropic.com>`"
+    gold_removed: ''

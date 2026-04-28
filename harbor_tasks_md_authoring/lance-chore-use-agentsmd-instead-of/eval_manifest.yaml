@@ -1,0 +1,140 @@
+version: "2.0"
+
+task:
+  name: lance-chore-use-agentsmd-instead-of
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: lance-format/lance
+  pr: 4851
+  base_commit: "00703be7a2e6ed6bf15d7a473de6137a151da867"
+  merge_commit: "d83ce7f50fe51058152347289ef064224e656607"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in java/AGENTS.md."
+  - id: signal_04
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in java/AGENTS.md."
+  - id: signal_05
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in java/AGENTS.md."
+  - id: signal_06
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in protos/AGENTS.md."
+  - id: signal_07
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in protos/AGENTS.md."
+  - id: signal_08
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in python/AGENTS.md."
+  - id: signal_09
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in python/AGENTS.md."
+  - id: signal_10
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in python/AGENTS.md."
+
+config_edits:
+  - path: AGENTS.md
+    tier: 1
+    gold_added: "# AGENTS.md\n\nThis file provides guidance to coding agents collaborating on this repository.\n\n## Project Overview\n\nLance is a modern columnar data format optimized for ML workflows and datasets. It provides:\n\n- High-performance random access\n- Vector search\n- Zero-copy, automatic versioning\n- Ecosystem integrations\n\n## Project Vision\n\nThe de facto standard columnar data format for machine learning and large language models.\n\n## Project Requirements\n\n- Always use English in code, examples, and comments.\n- Features should be implemented concisely, maintainably, and efficiently.\n- Code is not just for execution, but also for readability.\n- Only add meaingful comments and tests.\n\n## Architecture\n\nThe project is organized as a Rust workspace with Python and Java bindings:\n\n- `rust/lance/` - Main Lance library implementing the columnar format\n- `rust/lance-arrow/` - Apache Arrow integration layer\n- `rust/lance-core/` - Core types, traits, and utilities\n- `rust/lance-encoding/` - Data encoding and compression algorithms\n- `rust/lance-file/` - File format reading/writing\n- `rust/lance-index/` - Vector and scalar indexing implementations\n- `rust/lance-io/` - I/O operations and object store integration\n- `rust/lance-linalg/` - Linear algebra operations for vector search\n- `rust/lance-table/` - Table format and operations\n- `rust/lance-datafusion/` - DataFusion query engine integration\n- `python/` - Python bindings using PyO3/maturin\n- `java/` - Java bindings using JNI\n\n## Common Development Commands\n\n### Rust Development\n\n* Check for build errors: `cargo check --all --tests --benches`\n* Run tests: `cargo test`\n* Run specific test: `cargo test -p <package> <test_name>`\n* Lint: `cargo clippy --all --tests --benches -- -D warnings`\n* Format: `cargo fmt --all`\n\n### Python Development\n\nUse the makefile for most actions:\n\n* Build: `maturin develop`\n* Test: `make test`\n* Run single test: `pytest python/tests/<test_file>.py::<test_name>`\n* Doctest: `make doctest`\n* Lint: `make lint`\n* Format: `make format`\n\n### Integration Testing\n\n```bash\n# Start required services\ncd test_data && docker compose up -d\n\n# Run S3/DynamoDB tests\nAWS_DEFAULT_REGION=us-east-1 pytest --run-integration python/tests/test_s3_ddb.py\n\n# Performance profiling\nmaturin develop --release -m python/Cargo.toml -E benchmarks\npython python/benchmarks/test_knn.py --iterations 100\n```\n\n## Key Technical Details\n\n1. **Async-first Architecture**: Heavy use of tokio and async/await throughout Rust codebase\n2. **Arrow-native**: All data operations work directly with Apache Arrow arrays\n3. **Version Control**: Every write creates a new version with manifest tracking\n4. **Indexing**: Supports both vector indices (for similarity search) and scalar indices (BTree, inverted)\n5. **Encoding**: Custom encodings optimized for ML data patterns\n6. **Object Store**: Unified interface for local, S3, Azure, GCS storage\n\n## Development Notes\n\n- All public APIs should have comprehensive documentation with examples\n- Performance-critical code uses SIMD optimizations where available\n- Always rebuild Python extension after Rust changes using `maturin develop`\n- Integration tests require Docker for local S3/DynamoDB emulation\n- Use feature flags to control dependencies (e.g., `datafusion` for SQL support)\n\n## Development tips\n\nCode standards:\n* Be mindful of memory use:\n  * When dealing with streams of `RecordBatch`, avoid collecting all data into\n    memory whenever possible.\n  * Use `RoaringBitmap` instead `HashSet<u32>`.\n\nTests:\n* When writing unit tests, prefer using the `memory://` URI instead of creating\n  a temporary directory.\n* Use rstest to generate parameterized tests to cover more cases with fewer lines\n  of code.\n    * Use syntax `#[case::{name}(...)]` to provide human-readable names for each case.\n* For backwards compatibility, use the `test_data` directory to check in datasets\n  written with older library version.\n    * Check in a `datagen.py` that creates the test data. It should assert the\n      version of Lance used as part of the script.\n    * Use `pip install pylance=={version}` and then run `python datagen.py` to\n      create the dataset. The data files should be checked into git.\n    * Use `copy_test_data_to_tmp` to read this data in Lance\n* Avoid using `ignore` in doctests. For APIs with complex inputs, like methods on\n  `Dataset`, instead write Rust doctests that just compile a function. This\n  guarantees that the example code compiles and is in sync with the API. For example:\n\n  ```\n  /// ```\n  /// # use lance::{Dataset, Result};\n  /// # async fn test(dataset: &Dataset) -> Result<()> {\n  /// dataset.delete(\"id = 25\").await?;\n  /// # Ok(())\n  /// # }\n  /// ```\n  ```"
+    gold_removed: ''
+  - path: CLAUDE.md
+    tier: 1
+    gold_added: ''
+    gold_removed: ''
+  - path: CLAUDE.md
+    tier: 1
+    gold_added: AGENTS.md
+    gold_removed: ''
+  - path: java/AGENTS.md
+    tier: 1
+    gold_added: '## Structure
+
+      Java code: `core/src`
+
+      Rust JNI bindings: `lance-jni`
+
+
+      ## Commands
+
+      Use `./mvnw` instead of `mvn` to ensure the correct version of Maven is used.
+
+      format: `./mvnw spotless:apply && cargo fmt --manifest-path ./lance-jni/Cargo.toml --all`
+
+      lint rust: `cargo clippy --tests --manifest-path ./lance-jni/Cargo.toml`
+
+      compile: `./mvnw compile`
+
+      test: `./mvnw test`'
+    gold_removed: ''
+  - path: java/CLAUDE.md
+    tier: 1
+    gold_added: ''
+    gold_removed: ''
+  - path: java/CLAUDE.md
+    tier: 1
+    gold_added: AGENTS.md
+    gold_removed: ''
+  - path: protos/AGENTS.md
+    tier: 1
+    gold_added: 'All changes should be backwards compatible. Don''t re-use field numbers of change
+
+      field numbers of existing fields.'
+    gold_removed: ''
+  - path: protos/CLAUDE.md
+    tier: 1
+    gold_added: ''
+    gold_removed: ''
+  - path: protos/CLAUDE.md
+    tier: 1
+    gold_added: AGENTS.md
+    gold_removed: ''
+  - path: python/AGENTS.md
+    tier: 1
+    gold_added: 'Use the makefile for most actions:
+
+
+      * Build: `maturin develop`
+
+      * Test: `make test`
+
+      * Run single test: `pytest python/tests/<test_file>.py::<test_name>`
+
+      * Doctest: `make doctest`
+
+      * Lint: `make lint`
+
+      * Format: `make format`'
+    gold_removed: ''
+  - path: python/CLAUDE.md
+    tier: 1
+    gold_added: ''
+    gold_removed: ''
+  - path: python/CLAUDE.md
+    tier: 1
+    gold_added: AGENTS.md
+    gold_removed: ''

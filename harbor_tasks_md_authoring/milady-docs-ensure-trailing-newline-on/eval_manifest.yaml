@@ -1,0 +1,24 @@
+version: "2.0"
+
+task:
+  name: milady-docs-ensure-trailing-newline-on
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: milady-ai/milady
+  pr: 1998
+  base_commit: "84b41842d0e883d55a26eeee4cd98c199cda9030"
+  merge_commit: "22aca38a650d30c2ea0da8d91f58dcc5eca505c8"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+
+config_edits:
+  - path: AGENTS.md
+    tier: 1
+    gold_added: 'The principle: **every change must end up as a commit on the current branch in the current worktree, and ideally pushed.** No stashes, no branch hopping, no work that exists only in the working tree or in `git stash list`.'
+    gold_removed: ''

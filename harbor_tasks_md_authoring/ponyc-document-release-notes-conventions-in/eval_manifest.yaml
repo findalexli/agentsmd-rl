@@ -1,0 +1,33 @@
+version: "2.0"
+
+task:
+  name: ponyc-document-release-notes-conventions-in
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: ponylang/ponyc
+  pr: 5248
+  base_commit: "791add7dd786b45b8d5cf6a9b1b8aba147499149"
+  merge_commit: "80d6016d5a7adc0e7168879c0dc6a32a465eacbd"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+
+config_edits:
+  - path: CLAUDE.md
+    tier: 1
+    gold_added: '## Release Notes
+
+
+      Use the `/pony-release-notes` skill if available. Otherwise: create `.release-notes/<slug>.md` (e.g., `fix-foo.md`). Do NOT edit `next-release.md` directly — CI aggregates the individual files. Format: `## Title` (matching the PR title exactly) followed by a user-facing description. Include code examples for new API; include before/after for breaking changes.
+
+      '
+    gold_removed: ''

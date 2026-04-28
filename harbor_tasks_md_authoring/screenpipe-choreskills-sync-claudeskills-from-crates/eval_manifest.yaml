@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: screenpipe-choreskills-sync-claudeskills-from-crates
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: screenpipe/screenpipe
+  pr: 3086
+  base_commit: "30afa2e5774b28c494363e7111cc61c917c0f825"
+  merge_commit: "db92d703edbefc346e3a4d365c601853d06016e7"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/screenpipe-cli/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/screenpipe-cli/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/screenpipe-cli/SKILL.md."
+
+config_edits:
+  - path: .claude/skills/screenpipe-cli/SKILL.md
+    tier: 1
+    gold_added: "---\nname: screenpipe-cli\ndescription: Manage screenpipe pipes (scheduled AI automations) and connections (Telegram, Slack, Discord, etc.) via the CLI. Use when the user asks to create, list, enable, disable, run, or debug pipes, or manage service connections from the command line.\n---\n\n# Screenpipe CLI\n\nUse `bun x screenpipe@latest` to run CLI commands. No separate install needed.\n\n**IMPORTANT**: Always run `bun x` commands from a clean temp directory to avoid node_modules conflicts:\n```bash\ncd \"$(mktemp -d)\" && bun x screenpipe@latest <command>\n```\n\n## Shell\n\n- **All platforms** → `bash` (on Windows, the bundled git-portable bash is used automatically)\n\n---\n\n## Pipe Management\n\nPipes are markdown-based AI automations that run on schedule. Each pipe lives at `~/.screenpipe/pipes/<name>/pipe.md`.\n\n### Commands\n\n```bash\nbun x screenpipe@latest pipe list                    # List all pipes (compact table)\nbun x screenpipe@latest pipe enable <name>           # Enable a pipe\nbun x screenpipe@latest pipe disable <name>          # Disable a pipe\nbun x screenpipe@latest pipe run <name>              # Run once immediately (for testing)\nbun x screenpipe@latest pipe logs <name>             # View execution logs\nbun x screenpipe@latest pipe install <url-or-path>   # Install from GitHub or local path\nbun x screenpipe@latest pipe delete <name>           # Delete a pipe\nbun x screenpipe@latest pipe models list             # View AI model presets\n```\n\n### Creating a Pipe\n\nCreate `~/.screenpipe/pipes/<name>/pipe.md` with YAML frontmatter + prompt:\n\n```markdown\n---\nschedule: every 30m\nenabled: true\npreset: [\"Primary\", \"Fallback\"]\n---\n\nYour prompt instructions here. The AI agent executes this on schedule.\n\n## What to do\n\n1. Query screenpipe search API for recent activity\n2. Process results\n3. Output summary / send notification\n```\n\n**Schedule syntax**: `every 30m`, `every 1h`, `every day at 9am`, `every monday at 9am`, or cron: `*/30 * * * *`, `0 9 * * *`\n\n**Config fields**: `schedule`, `enabled` (bool), `preset` (string or array — e.g. `\"Oai\"` or `[\"Primary\", \"Fallback\"]`), `history` (bool — include previous output as context)\n\nScreenpipe prepends a context header with time range, timezone, OS, and API URL before each execution. No template variables needed.\n\nAfter creating:\n```bash\nbun x screenpipe@latest pipe install ~/.screenpipe/pipes/my-pipe\nbun x screenpipe@latest pipe enable my-pipe\nbun x screenpipe@latest pipe run my-pipe   # test immediately\n```\n\n### Editing Config\n\nEdit frontmatter in `~/.screenpipe/pipes/<name>/pipe.md` directly, or use the API:\n\n```bash\ncurl -X POST http://localhost:3030/pipes/<name>/config \\\n  -H \"Content-Type: application/json\" \\\n  -d '{\"config\": {\"schedule\": \"every 1h\", \"enabled\": true}}'\n```\n\n### Rules\n\n1. Use `pipe list` (not `--json`) — table output is compact\n2. Never dump full pipe JSON — can be 15MB+\n3. Check logs first when debugging: `pipe logs <name>`\n4. Use `pipe run <name>` to test before waiting for schedule\n\n---\n\n## Connection Management\n\nManage integrations (Telegram, Slack, Discord, Email, Todoist, Teams) from the CLI.\n\n### Commands\n\n```bash\nbun x screenpipe@latest connection list              # List all connections + status\nbun x screenpipe@latest connection list --json       # JSON output\nbun x screenpipe@latest connection get <id>          # Show saved credentials\nbun x screenpipe@latest connection get <id> --json   # JSON output\nbun x screenpipe@latest connection set <id> key=val  # Save credentials\nbun x screenpipe@latest connection test <id>         # Test a connection\nbun x screenpipe@latest connection remove <id>       # Remove credentials\n```\n\n### Examples\n\n```bash\n# Set up Telegram\nbun x screenpipe@latest connection set telegram bot_token=123456:ABC-DEF chat_id=5776185278\n\n# Set up Slack webhook\nbun x screenpipe@latest connection set slack webhook_url=https://hooks.slack.com/services/...\n\n# Verify it works\nbun x screenpipe@latest connection test telegram\n\n# Check what's connected\nbun x screenpipe@latest connection list\n```\n\nConnection IDs: `telegram`, `slack`, `discord`, `email`, `todoist`, `teams`, `google-calendar`, `apple-intelligence`, `openclaw`\n\nCredentials are stored locally at `~/.screenpipe/connections.json`.\n\n## Publishing pipes to the store\n\n```bash\nscreenpipe pipe publish <pipe-name>\n```\n\nReads `~/.screenpipe/pipes/<pipe-name>/pipe.md`, extracts title/description/icon/category from YAML frontmatter, and publishes to the screenpipe pipe store. Requires auth (SCREENPIPE_API_KEY env var or `~/.screenpipe/auth.json`)."
+    gold_removed: ''

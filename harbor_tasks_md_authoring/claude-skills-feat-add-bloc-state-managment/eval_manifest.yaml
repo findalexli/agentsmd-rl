@@ -1,0 +1,40 @@
+version: "2.0"
+
+task:
+  name: claude-skills-feat-add-bloc-state-managment
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: Jeffallan/claude-skills
+  pr: 117
+  base_commit: "276420ebe1a09d9552020c85e986df327376714a"
+  merge_commit: "8fd100f6e3d4e1b9362b6c339d1c0a7ede6e5651"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/flutter-expert/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/flutter-expert/references/bloc-state.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/flutter-expert/references/bloc-state.md."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/flutter-expert/references/bloc-state.md."
+
+config_edits:
+  - path: skills/flutter-expert/SKILL.md
+    tier: 1
+    gold_added: '| Bloc | `references/bloc-state.md` | Bloc, Cubit, event-driven state, complex business logic |'
+    gold_removed: ''
+  - path: skills/flutter-expert/references/bloc-state.md
+    tier: 1
+    gold_added: "# Bloc State Management\n\n> Reference for: Flutter Expert\n> Load when: Bloc, Cubit, event-driven state, complex business logic\n\n## When to Use Bloc\n\nUse **Bloc/Cubit** when you need:\n\n* Explicit event → state transitions\n* Complex business logic\n* Predictable, testable flows\n* Clear separation between UI and logic\n\n| Use Case               | Recommended |\n| ---------------------- | ----------- |\n| Simple mutable state   | Riverpod    |\n| Event-driven workflows | Bloc        |\n| Forms, auth, wizards   | Bloc        |\n| Feature modules        | Bloc        |\n\n---\n\n## Core Concepts\n\n| Concept | Description            |\n| ------- | ---------------------- |\n| Event   | User/system input      |\n| State   | Immutable UI state     |\n| Bloc    | Event → State mapper   |\n| Cubit   | State-only (no events) |\n\n---\n\n## Basic Bloc Setup\n\n### Event\n\n```dart\nsealed class CounterEvent {}\n\nfinal class CounterIncremented extends CounterEvent {}\n\nfinal class CounterDecremented extends CounterEvent {}\n```\n\n### State\n\n```dart\nclass CounterState {\n  final int value;\n\n  const CounterState({required this.value});\n\n  CounterState copyWith({int? value}) {\n    return CounterState(value: value ?? this.value);\n  }\n}\n```\n\n### Bloc\n\n```dart\nimport 'package:flutter_bloc/flutter_bloc.dart';\n\nclass CounterBloc extends Bloc<CounterEvent, CounterState> {\n  CounterBloc() : super(const CounterState(value: 0)) {\n    on<CounterIncremented>((event, emit) {\n      emit(state.copyWith(value: state.value + 1));\n    });\n\n    on<CounterDecremented>((event, emit) {\n      emit(state.copyWith(value: state.value - 1));\n    });\n  }\n}\n```\n\n---\n\n## Cubit (Recommended for Simpler Logic)\n\n```dart\nclass CounterCubit extends Cubit<int> {\n  CounterCubit() : super(0);\n\n  void increment() => emit(state + 1);\n  void decrement() => emit(state - 1);\n}\n```\n\n---\n\n## Providing Bloc to the Widget Tree\n\n```dart\nBlocProvider(\n  create: (_) => CounterBloc(),\n  child: const CounterScreen(),\n);\n```\n\nMultiple blocs:\n\n```dart\nMultiBlocProvider(\n  providers: [\n    BlocProvider(create: (_) => AuthBloc()),\n    BlocProvider(create: (_) => ProfileBloc()),\n  ],\n  child: const AppRoot(),\n);\n```\n\n---\n\n## Using Bloc in Widgets\n\n### BlocBuilder (UI rebuilds)\n\n```dart\nclass CounterScreen extends StatelessWidget {\n  const CounterScreen({super.key});\n\n  @override\n  Widget build(BuildContext context) {\n    return BlocBuilder<CounterBloc, CounterState>(\n      buildWhen: (prev, curr) => prev.value != curr.value,\n      builder: (context, state) {\n        return Text(\n          state.value.toString(),\n          style: Theme.of(context).textTheme.displayLarge,\n        );\n      },\n    );\n  }\n}\n```\n\n---\n\n### BlocListener (Side Effects)\n\n```dart\nBlocListener<AuthBloc, AuthState>(\n  listenWhen: (prev, curr) => curr is AuthFailure,\n  listener: (context, state) {\n    if (state is AuthFailure) {\n      ScaffoldMessenger.of(context)\n          .showSnackBar(SnackBar(content: Text(state.message)));\n    }\n  },\n  child: const LoginForm(),\n);\n```\n\n---\n\n### BlocConsumer (Builder + Listener)\n\n```dart\nBlocConsumer<FormBloc, FormState>(\n  listener: (context, state) {\n    if (state.status == FormStatus.success) {\n      context.pop();\n    }\n  },\n  builder: (context, state) {\n    return ElevatedButton(\n      onPressed: state.isValid\n          ? () => context.read<FormBloc>().add(FormSubmitted())\n          : null,\n      child: const Text('Submit'),\n    );\n  },\n);\n```\n\n---\n\n## Accessing Bloc Without Rebuilds\n\n```dart\ncontext.read<CounterBloc>().add(CounterIncremented());\n```\n\n⚠️ **Never use `watch` inside callbacks**\n\n---\n\n## Async Bloc Pattern (API Calls)\n\n```dart\non<UserRequested>((event, emit) async {\n  emit(const UserState.loading());\n\n  try {\n    final user = await repository.fetchUser();\n    emit(UserState.success(user));\n  } catch (e) {\n    emit(UserState.failure(e.toString()));\n  }\n});\n```\n\n---\n\n## Bloc + GoRouter (Auth Guard Example)\n\n```dart\nredirect: (context, state) {\n  final authState = context.read<AuthBloc>().state;\n\n  if (authState is Unauthenticated) {\n    return '/login';\n  }\n  return null;\n}\n```\n\n---\n\n## Testing Bloc\n\n```dart\nblocTest<CounterBloc, CounterState>(\n  'emits incremented value',\n  build: () => CounterBloc(),\n  act: (bloc) => bloc.add(CounterIncremented()),\n  expect: () => [\n    const CounterState(value: 1),\n  ],\n);\n```\n\n---\n\n## Best Practices (MUST FOLLOW)\n\n✅ Immutable states\n✅ Small, focused blocs\n✅ One feature = one bloc\n✅ Use Cubit when possible\n✅ Test all blocs\n\n❌ No UI logic inside blocs\n❌ No context usage inside blocs\n❌ No mutable state\n❌ No massive “god blocs”\n\n---\n\n## Quick Reference\n\n| Widget            | Purpose              |\n| ----------------- | -------------------- |\n| BlocBuilder       | UI rebuild           |\n| BlocListener      | Side effects         |\n| BlocConsumer      | Both                 |\n| BlocProvider      | Dependency injection |\n| MultiBlocProvider | Multiple blocs       |\n"
+    gold_removed: ''

@@ -1,0 +1,85 @@
+version: "2.0"
+
+task:
+  name: jay-docs-update-agentsmd
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: mahkoh/jay
+  pr: 883
+  base_commit: "2d9546fb07997c75ec9803d27d0a7373c3aca012"
+  merge_commit: "f24d5bdbde12efcb2c5f42fbcbaf128949eff05b"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in book/AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in book/AGENTS.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in book/AGENTS.md."
+
+config_edits:
+  - path: book/AGENTS.md
+    tier: 1
+    gold_added: 'The table of contents is `SUMMARY.md` — it is the authoritative chapter
+
+      list and must be updated when adding a new chapter. Chapter-to-topic mapping:
+
+      | `configuration/index.md` | Config overview: replacement semantics, `jay config init`, auto-reload |
+
+      | `configuration/startup.md` | Startup hooks (`on-graphics-initialized`, `on-idle`, `on-resume`) |
+
+      | `configuration/keymaps.md` | Keymaps, repeat rate |
+
+      | `configuration/idle.md` | Idle timeout, screen locking |
+
+      | `configuration/gpu.md` | GPU selection, multi-GPU |
+
+      | `configuration/theme.md` | Theme, appearance |
+
+      | `configuration/status-bar.md` | Status bar config |
+
+      | `configuration/xwayland.md` | Xwayland |
+
+      | `configuration/environment.md` | Environment variables |
+
+      | `tiling.md` | i3-like tiling layout, splitting containers |
+
+      | `workspaces.md` | Virtual desktops, workspace management, multi-monitor |
+
+      | `mouse.md` | All mouse-driven interactions (resize, drag, scroll) |
+
+      | `input-modes.md` | Modal keybinding system (push/pop/latch/clear) |
+
+      | `window-rules.md` | Window/client rules, privileges, capabilities |
+
+      | `screen-sharing.md` | Screen sharing via xdg-desktop-portal, PipeWire |
+
+      | `control-center.md` | All control center panes (see pane list below) |
+
+      | `cli.md` | All CLI subcommands, JSON output |
+
+      | `src/control_center/cc_*.rs` | Control center panes: 11 sidebar panes + `cc_window.rs` / `cc_clients.rs` detail panes + `cc_criterion.rs` shared helper. Verify field names/ordering here |
+
+      ### Adding a new book chapter
+
+
+      1. Create the new `.md` file under `book/src/`.
+
+      2. Add an entry in `book/src/SUMMARY.md` under the appropriate section.
+
+      3. Update the chapter-to-topic mapping in this file and `AGENTS.md`.
+
+      '
+    gold_removed: ''
+  - path: book/CLAUDE.md
+    tier: 1
+    gold_added: AGENTS.md
+    gold_removed: ''

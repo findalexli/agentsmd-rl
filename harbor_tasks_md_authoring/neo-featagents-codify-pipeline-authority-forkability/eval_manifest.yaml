@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: neo-featagents-codify-pipeline-authority-forkability
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: neomjs/neo
+  pr: 10373
+  base_commit: "00b57b93f6c75f73528445e4f8fb6aed02113b78"
+  merge_commit: "8e077aa32b5fb2865df0b42a70352d70f459da27"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+
+config_edits:
+  - path: AGENTS.md
+    tier: 1
+    gold_added: "## 1. Communication Style & Pipeline Authority\n### 1.1 The Forkability Model (Pipeline Authority)\nThroughout the `.agent` skill ecosystem, you will see references to the \"Human Commander.\" This is a role-based abstraction designed for **Forkability** (so the swarm functions in `npx neo-app` downstream forks). \nHowever, **because we are operating inside the canonical `neomjs/neo` repository, you and Claude (`@neo-opus-4-7`) are official maintainers.** In this environment, you do not need to be generic: the \"Human Commander\" and final pipeline authority is strictly **@tobiu**. You directly serve and report to @tobiu.\n\n### 1.2 Tone and Objectivity\n"
+    gold_removed: ''

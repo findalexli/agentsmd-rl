@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: fxa-taskfxa-add-claudemd-instructions
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: mozilla/fxa
+  pr: 19787
+  base_commit: "8a0d5caec6ad8d97ddf04e37fb84a50b932af2ab"
+  merge_commit: "360565a902e3454fac84dea3b31064284a59ba5f"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+
+config_edits:
+  - path: CLAUDE.md
+    tier: 1
+    gold_added: "# CLAUDE.md\n\nSecurity takes **absolute precedence**. This repository handles Mozilla authentication, payments, and user data.\n\n## 1) Scope & Writes\n\n- Operate strictly under `<FXA_REPO_ROOT>`; normalize paths; do not follow symlinks outside the repo.\n- **Writes allowed** to working tree; always present a diff for review **before** any staging/commit.\n- **Ask first** for any command (build/test/install, DB ops, git, services). Do **not** run `git add/commit/push/rebase` unless explicitly told to.\n\n## 2) Non-Negotiables\n\n- **Secrets:** never read/print/summarize/transmit secret files/values; use placeholders (`YOUR_API_KEY_HERE`).\n- **External network:** only with explicit approval to a trusted/documented endpoint.\n- **Pipelines & contracts:** flag breaking API/contract changes; do not alter CI/CD or git hooks without explicit, reviewed justification.\n- **Published DB migrations:** **NEVER edit** existing published migration files. Always add a new forward migration and a separate rollback.\n\n## 3) Do-not-touch paths (no read, no write)\n\n_Note:_ This list must mirror `.gitignore`. If there is a discrepancy, `.gitignore` is the source of truth.\n\n- **Secrets:** `.env*`, `**/*.env`, `secrets.json`, `secret*`, `**/*.gpg`, `.keys`, `*-key.json`, `packages/fxa-auth-server/config/key.json`, `packages/fxa-auth-server/config/vapid-keys.json`, `_dev/firebase/.config`\n- **Dependencies:** `**/node_modules/`, `**/browser_modules/`, `**/.yarn/**`, `**/.pnp*/`, `**/vendor/`, `**/fxa-content-server-l10n/`\n- **Generated / Artifacts / Runtime / Cache:**\n  `**/(build|dist|.next|storybook-static)/**`, `**/.nx/cache/**`, `**/.eslintcache`, `**/*.map`,\n  `**/schema.gql`, `**/public/locales/**`, `**/__generated__/**`,\n  `**/config/gql/allowlist/**` (except `gql-playground.json`),\n  `**/(coverage|.nyc_output|artifacts/tests|logs)/**`, `**/*.log*`,\n  `**/.pm2/**`, `pm2/`, `process.yml`, `**/(temp|tmp)/**`,\n  `**/tsconfig.tsbuildinfo`, `**/version.json`, `dump.rdb`\n- **System/Editor:** `.DS_Store`, `Thumbs.db`, swap files, `.idea/`\n\n> If a path matches both allowed and disallowed rules, **Disallowed wins**.\n\n## 4) Repository Layout\n\n- **Apps/Services (`packages/*`):**\n  - `fxa-auth-server` — Core auth API (SRP/OAuth/sessions); talks to MySQL/Redis.\n  - `fxa-settings` — React UI for sign-in/settings; uses `fxa-auth-client` and GraphQL.\n  - `fxa-graphql-api` — NestJS BFF/gateway; aggregates server data for the UI.\n  - `fxa-payments-server` — Subscriptions UI; integrates with Stripe/PayPal (webhooks handled server-side).\n  - `fxa-profile-server` — User profile API.\n\n- **Shared libraries (`libs/*`):**\n  - `libs/shared/*` — errors, logging (mozlog), metrics/telemetry, experiments/feature flags, l10n, types.\n  - `libs/accounts/*` — email sending and rendering, errors, (partial) 2FA, recovery phone, rate limiting.\n  - `libs/payments/*` — Stripe/PayPal clients, billing models, webhook helpers.\n\n- **Conventions:**\n  - **Imports:** use `@fxa/<domain>/<package>` path aliases (e.g., `@fxa/shared/error`); avoid deep relative imports across package boundaries.\n  - **Tests:** co-located `*.test.ts` / `*.spec.ts`.\n  - **Config:** Convict in `config/*.json`; local overrides go in `config/secrets.json` (gitignored; do not read).\n\n### Preferred targets & anti-duplication\n\n- **Prefer `libs/*` over app-local code** for reusable logic. If a refactor touches multiple apps, extract to a library instead of duplicating.\n- **Prefer `fxa-settings` over `fxa-content-server`** for UI work (content-server is legacy). Do not add new features to content-server unless explicitly directed.\n- **Prefer SubPlat 3.0 (sp3)** over `fxa-payments-server` for subscriptions flows. Treat `fxa-payments-server` as legacy; avoid new investments there.\n- **Avoid partial refactors:** when moving logic, complete the path (call sites, tests, docs). If full migration is not feasible, provide a thin adapter and TODO with owner and date.\n- **No duplication:** before adding code, search the monorepo for existing helpers/types; reuse or consolidate.\n\n## 5) How to Run\n\n_Note:_ This is a general overview and may vary per library/package. For authoritative commands and targets, check each package's **`project.json`** (Nx) and **`package.json`**. Test commands in particular tend to vary.\n\n- **Install:** `yarn install`\n- **Infra only (for tests):** `yarn start infrastructure`\n- **All services:** `yarn start`\n- **Core subset:** `yarn start mza`\n- **Ports:** `yarn ports`\n- **Nx:** `nx build <pkg>`, `nx lint <pkg>`, `nx test-unit <pkg>`, `nx test-integration <pkg>`, `nx start <pkg>`\n- **Pkg scripts:** `cd packages/<name> && yarn <script>`\n- **GraphQL allowlist:** `yarn gql:allowlist`\n- **L10N:** `yarn l10n:prime`\n- **DB migrations:** add new SQL under `packages/db-migrations/databases/fxa/patches/` → `nx run db-migrations:migrate`\n  **Never edit existing published migration files.**\n\n> When asked, show the exact minimal command block you intend to run; wait for approval."
+    gold_removed: ''

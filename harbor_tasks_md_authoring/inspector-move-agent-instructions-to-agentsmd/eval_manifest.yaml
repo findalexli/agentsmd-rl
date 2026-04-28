@@ -1,0 +1,40 @@
+version: "2.0"
+
+task:
+  name: inspector-move-agent-instructions-to-agentsmd
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: modelcontextprotocol/inspector
+  pr: 848
+  base_commit: "b025bffc9defee30d4056e7d467c3335f084f6b8"
+  merge_commit: "5c3afda40ba604f3a638aa72f6ceaaab3724c467"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+
+config_edits:
+  - path: AGENTS.md
+    tier: 1
+    gold_added: "# MCP Inspector Development Guide\n\n## Build Commands\n\n- Build all: `npm run build`\n- Build client: `npm run build-client`\n- Build server: `npm run build-server`\n- Development mode: `npm run dev` (use `npm run dev:windows` on Windows)\n- Format code: `npm run prettier-fix`\n- Client lint: `cd client && npm run lint`\n\n## Code Style Guidelines\n\n- Use TypeScript with proper type annotations\n- Follow React functional component patterns with hooks\n- Use ES modules (import/export) not CommonJS\n- Use Prettier for formatting (auto-formatted on commit)\n- Follow existing naming conventions:\n  - camelCase for variables and functions\n  - PascalCase for component names and types\n  - kebab-case for file names\n- Use async/await for asynchronous operations\n- Implement proper error handling with try/catch blocks\n- Use Tailwind CSS for styling in the client\n- Keep components small and focused on a single responsibility\n\n## Project Organization\n\nThe project is organized as a monorepo with workspaces:\n\n- `client/`: React frontend with Vite, TypeScript and Tailwind\n- `server/`: Express backend with TypeScript\n- `cli/`: Command-line interface for testing and invoking MCP server methods directly"
+    gold_removed: ''
+  - path: CLAUDE.md
+    tier: 1
+    gold_added: '@./AGENTS.md'
+    gold_removed: ''

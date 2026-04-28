@@ -1,0 +1,74 @@
+version: "2.0"
+
+task:
+  name: struts-slim-down-claudemd-to-projectspecific
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: apache/struts
+  pr: 1605
+  base_commit: "df97ee23dc05ff91a1d5678669b3a6f0f68df432"
+  merge_commit: "a0d4f21ad42a21d9e51a089c4cfa35a210335aae"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+
+config_edits:
+  - path: CLAUDE.md
+    tier: 1
+    gold_added: '## Build Commands
+
+      # Build without tests (fastest)
+
+      ./mvnw clean install -DskipTests -DskipAssembly
+
+      # Test a single module
+
+      # Full build with tests
+
+      ./mvnw clean install
+
+      # Integration tests
+
+      ./mvnw clean verify -DskipAssembly
+
+      # Coverage report
+
+      ./mvnw clean verify -Pcoverage -DskipAssembly
+
+      ## Project-Specific Rules
+
+      - This is the **6.x.x** branch (`release/struts-6-8-x`).
+
+      - Uses **javax.servlet** (Java EE), not Jakarta EE. Verify imports use `javax.servlet` namespace.
+
+      - Test pattern: `**/*Test.java`. Test classes use JUnit 4 with `@Test` annotations.
+
+      - OGNL expressions have strict security via `SecurityMemberAccess` — test any new OGNL usage against the security sandbox.
+
+      - Each plugin has its own `struts-plugin.xml` descriptor — register new beans there, not in core config.
+
+      - Run `./mvnw clean prepare-package` before committing to verify Apache RAT license headers pass.
+
+      ## Module Layout
+
+      - `core/` — framework core
+
+      - `plugins/` — 20+ plugin modules (spring, json, tiles, velocity, etc.)
+
+      - `apps/showcase/` — feature demo app
+
+      - `apps/rest-showcase/` — REST examples'
+    gold_removed: ''

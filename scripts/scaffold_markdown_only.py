@@ -38,24 +38,15 @@ from pathlib import Path
 
 import httpx
 
-# ---------------------------------------------------------------------------
-# Tier-1 path detection — keep in sync with taskforge.config.AGENT_INSTRUCTION_RE
-# ---------------------------------------------------------------------------
+# Single source of truth for tier-1 path patterns. TIER1_SCAFFOLD_RE is the
+# deterministic scaffolder's accept set (text-only rule/skill files);
+# TIER1_DISCOVERY_RE is broader (any file under skill dirs) and is what the
+# cross-repo discovery + Gemini-judge pipeline uses. See taskforge/config.py.
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+from taskforge.config import TIER1_SCAFFOLD_RE, BINARY_EXT_RE  # noqa: E402
 
-TIER1_RE = re.compile(
-    r"(?:^|/)("
-    r"CLAUDE\.md|CLAUDE\.local\.md|AGENTS\.md|CONVENTIONS\.md|SKILL\.md|"
-    r"\.cursorrules|\.windsurfrules|\.clinerules|\.continuerules"
-    r")$|"
-    r"^\.claude/(rules|skills|agents)/.+\.md$|"
-    r"^\.cursor/rules/.+|"
-    r"^\.github/(copilot-instructions\.md|skills/.+SKILL\.md|prompts/.+\.prompt\.md)$|"
-    r"^\.agents?/skills/.+SKILL\.md$|"
-    r"^\.opencode/skills/.+SKILL\.md$|"
-    r"^\.codex/skills/.+SKILL\.md$|"
-    r"\.mdc$",
-    re.IGNORECASE,
-)
+# Backward-compat alias — older scout/quality_judge code referenced this name.
+TIER1_RE = TIER1_SCAFFOLD_RE
 
 ROOT = Path(__file__).resolve().parents[1]
 GH_TOKEN = os.environ.get("GH_TOKEN") or os.environ.get("GITHUB_TOKEN") or ""
@@ -375,9 +366,18 @@ url = "{pr_url}"
 
 
 def is_pure_markdown(files: list[dict]) -> bool:
+    """Every changed file is a tier-1 text rule/skill file the verbatim-grep
+    scaffolder can build from. Skill-dir adjacent code (scripts/*.py,
+    references/*.md) IS accepted; binary assets (assets/*.png) are not."""
     if not files:
         return False
-    return all(TIER1_RE.search(f["filename"]) for f in files)
+    for f in files:
+        name = f["filename"]
+        if not TIER1_SCAFFOLD_RE.search(name):
+            return False
+        if BINARY_EXT_RE.search(name):
+            return False
+    return True
 
 
 def yaml_quote(s: str) -> str:
@@ -590,11 +590,15 @@ async def process_one(client, sem, pr_record, out_dir, codebearing_path):
         repo = pr_record["repo"]
         pr = pr_record["pr"]
         try:
-            # Fast-path: scout provided file_paths → filter without REST
+            # Fast-path: scout provided file_paths → filter without REST.
+            # Reject if any path isn't tier-1-scaffold-eligible OR is a binary
+            # extension we can't verbatim-grep against.
             scout_paths = pr_record.get("file_paths")
             if scout_paths is not None:
-                if not scout_paths or not all(
-                        TIER1_RE.search(p) for p in scout_paths):
+                ok = bool(scout_paths) and all(
+                    TIER1_SCAFFOLD_RE.search(p) and not BINARY_EXT_RE.search(p)
+                    for p in scout_paths)
+                if not ok:
                     with open(codebearing_path, "a") as f:
                         f.write(json.dumps(pr_record) + "\n")
                     return ("codebearing", repo, pr,

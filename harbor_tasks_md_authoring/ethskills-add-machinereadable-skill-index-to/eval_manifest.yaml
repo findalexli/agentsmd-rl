@@ -1,0 +1,71 @@
+version: "2.0"
+
+task:
+  name: ethskills-add-machinereadable-skill-index-to
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: austintgriffith/ethskills
+  pr: 19
+  base_commit: "58d804f49008c7b7df6578f118f1b47cb7b6eb4c"
+  merge_commit: "15f2752fd0d25a92af0f3fd58d65731f30ade2f1"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in SKILL.md."
+
+config_edits:
+  - path: SKILL.md
+    tier: 1
+    gold_added: '# ETHSKILLS — The missing knowledge between AI agents and production Ethereum.
+
+
+      ## Terminology
+
+
+      **Say "onchain" not "on-chain."** The Ethereum community writes it as one word, no hyphen.
+
+
+      ## Available Skills
+
+
+      For individual topics, fetch any of these directly:
+
+
+      - [Why Ethereum](https://ethskills.com/why/SKILL.md) — Pectra/Fusaka upgrades, honest tradeoffs, the AI agent angle
+
+      - [Gas & Costs](https://ethskills.com/gas/SKILL.md) — Current gas prices, what things actually cost today
+
+      - [Wallets](https://ethskills.com/wallets/SKILL.md) — Creating wallets, key safety, multisig, account abstraction
+
+      - [Layer 2s](https://ethskills.com/l2s/SKILL.md) — L2 landscape, bridging, deployment differences
+
+      - [Standards](https://ethskills.com/standards/SKILL.md) — ERC-20, ERC-721, ERC-8004, EIP-7702, x402
+
+      - [Tools](https://ethskills.com/tools/SKILL.md) — Foundry, Scaffold-ETH 2, Blockscout MCP, x402 SDKs
+
+      - [Building Blocks (DeFi)](https://ethskills.com/building-blocks/SKILL.md) — Uniswap, Aave, flash loans, composability
+
+      - [Orchestration](https://ethskills.com/orchestration/SKILL.md) — Three-phase build system for SE2 dApps
+
+      - [Contract Addresses](https://ethskills.com/addresses/SKILL.md) — Verified addresses for major protocols
+
+
+      The rest of this file contains all skills concatenated. Read below for everything, or fetch individual skills above.
+
+
+      ---
+
+      '
+    gold_removed: ''

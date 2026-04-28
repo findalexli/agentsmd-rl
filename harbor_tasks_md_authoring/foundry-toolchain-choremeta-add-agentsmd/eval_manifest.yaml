@@ -1,0 +1,88 @@
+version: "2.0"
+
+task:
+  name: foundry-toolchain-choremeta-add-agentsmd
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: foundry-rs/foundry-toolchain
+  pr: 101
+  base_commit: "f7ae2104347a737facfa55a0effc0031e0e67773"
+  merge_commit: "10b16701133965df18bc8ee6e3eff10c52cc00d2"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+
+config_edits:
+  - path: AGENTS.md
+    tier: 1
+    gold_added: '# AGENTS.md
+
+
+      ## Commands
+
+
+      ```bash
+
+      npm run build     # Build with ncc to dist/
+
+      npx prettier --check .  # Check formatting
+
+      npx prettier --write .  # Fix formatting
+
+      ```
+
+
+      No test framework configured.
+
+
+      ## Architecture
+
+
+      GitHub Action that installs Foundry (Ethereum development toolkit) and caches RPC responses.
+
+
+      - `src/index.js` - Main entry: downloads Foundry archive, extracts, adds to PATH, restores cache
+
+      - `src/save.js` - Post-action: saves RPC cache
+
+      - `src/cache.js` - Cache logic using @actions/cache
+
+      - `src/utils.js` - Platform detection, download URL construction
+
+      - `src/constants.js` - State key constants
+
+      - `action.yml` - Action definition with inputs (version, network, cache, cache-key)
+
+      - `dist/` - Compiled output (committed)
+
+
+      ## Code Style
+
+
+      - JavaScript (CommonJS with `require`/`module.exports`)
+
+      - Prettier: 2 spaces, double quotes, trailing commas, 120 char line width
+
+      - Use `@actions/*` packages for GitHub Actions APIs
+
+      - JSDoc comments for functions
+
+      - Error handling: wrap main in try/catch, call `core.setFailed(err)` on failure'
+    gold_removed: ''
+  - path: CLAUDE.md
+    tier: 1
+    gold_added: AGENTS.md
+    gold_removed: ''

@@ -1,0 +1,28 @@
+version: "2.0"
+
+task:
+  name: stop-slop-fix-skillmd-frontmatter-to-use
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: hardikpandya/stop-slop
+  pr: 3
+  base_commit: "4f01bca3a47dbdd175dba27081d24a590919abc8"
+  merge_commit: "65d52b35d7243427ac646e83eae5a9b0709aa191"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in SKILL.md."
+
+config_edits:
+  - path: SKILL.md
+    tier: 1
+    gold_added: "metadata:\n  trigger: Writing prose, editing drafts, reviewing content for AI patterns\n  author: Hardik Pandya (https://hvpandya.com)"
+    gold_removed: ''

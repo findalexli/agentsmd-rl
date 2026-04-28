@@ -1,0 +1,24 @@
+version: "2.0"
+
+task:
+  name: supabase-fix-typo-in-writingsupabaseedgefunctionsmdc
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: supabase/supabase
+  pr: 39264
+  base_commit: "2df9d1ebcab625839d5d5461628f4811086bbfe6"
+  merge_commit: "19b68675023ce55b3cb1ea8c82797500c3bbf321"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in apps/ui-library/registry/default/ai-editor-rules/writing-supabase-edge-functions.mdc."
+
+config_edits:
+  - path: apps/ui-library/registry/default/ai-editor-rules/writing-supabase-edge-functions.mdc
+    tier: 1
+    gold_added: 3. Do NOT use bare specifiers when importing dependencies. If you need to use an external dependency, make sure it's prefixed with either `npm:` or `jsr:`. For example, `@supabase/supabase-js` should be written as `npm:@supabase/supabase-js`.
+    gold_removed: ''

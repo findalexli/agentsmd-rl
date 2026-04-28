@@ -1,0 +1,109 @@
+version: "2.0"
+
+task:
+  name: dd-trace-dotnet-convert-claude-commands-to-skills
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: DataDog/dd-trace-dotnet
+  pr: 8158
+  base_commit: "e76a1dc9dae3e3c5519a33fdfcd7d847d5a9ea60"
+  merge_commit: "195371276c843a14c63cd068f6ef1a65cdcf4cd0"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/analyze-crash/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/analyze-crash/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/analyze-crash/SKILL.md."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/analyze-error/SKILL.md."
+  - id: signal_04
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/analyze-error/SKILL.md."
+  - id: signal_05
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/analyze-error/SKILL.md."
+  - id: signal_06
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/review-pr/SKILL.md."
+  - id: signal_07
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/review-pr/SKILL.md."
+  - id: signal_08
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/review-pr/SKILL.md."
+
+config_edits:
+  - path: .claude/skills/analyze-crash/SKILL.md
+    tier: 1
+    gold_added: '---
+
+      name: analyze-crash
+
+      description: Stack Trace Crash Analysis for dd-trace-dotnet
+
+      argument-hint: <paste-stack-trace>
+
+      disable-model-invocation: true
+
+      context: fork
+
+      agent: general-purpose
+
+      ---
+
+      '
+    gold_removed: ''
+  - path: .claude/skills/analyze-error/SKILL.md
+    tier: 1
+    gold_added: '---
+
+      name: analyze-error
+
+      description: Error Stack Trace Analysis for dd-trace-dotnet
+
+      argument-hint: <paste-error-stack-trace>
+
+      disable-model-invocation: true
+
+      context: fork
+
+      agent: general-purpose
+
+      ---
+
+      '
+    gold_removed: ''
+  - path: .claude/skills/review-pr/SKILL.md
+    tier: 1
+    gold_added: 'name: review-pr
+
+      disable-model-invocation: true
+
+      allowed-tools: Bash(gh pr view:*), Bash(gh pr diff:*), Bash(gh pr comment:*), Bash(gh --version), Bash(gh auth status)
+
+      context: fork
+
+      agent: general-purpose
+
+
+      # Review GitHub PR
+
+      '
+    gold_removed: ''

@@ -1,0 +1,88 @@
+version: "2.0"
+
+task:
+  name: claude-code-toolkit-fix-add-missing-agents-and
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: notque/claude-code-toolkit
+  pr: 269
+  base_commit: "1d8cf97feb4b79f20e53bce0a22e77b935277266"
+  merge_commit: "b5b3713c962f27819a2656b17ce8788d487feade"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/do/references/routing-tables.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/do/references/routing-tables.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/do/references/routing-tables.md."
+
+config_edits:
+  - path: skills/do/references/routing-tables.md
+    tier: 1
+    gold_added: '| **kotlin-general-engineer** | User is working on Kotlin code, coroutines, Ktor, Compose Multiplatform, Gradle KTS, or any Kotlin-language task. NOT: tasks that merely mention Kotlin as context. |
+
+      | **swift-general-engineer** | User is working on Swift code, iOS, macOS, SwiftUI, server-side Swift, or any Swift-language task including concurrency and testing. NOT: tasks that merely mention Swift as context. |
+
+      | **php-general-engineer** | User is working on PHP code, Laravel, Symfony, Composer, or any PHP-language task including modern PHP 8.x patterns and security. NOT: tasks that merely mention PHP as context. |
+
+      | **research-subagent-executor** | Subagent that executes delegated research tasks using OODA-loop investigation, intelligence gathering, and source evaluation. Dispatched by research-coordinator-engineer, not invoked directly by users. |
+
+      | **distinctive-frontend-design** | User wants context-driven aesthetic exploration for a frontend project with anti-cliche validation: typography exploration, visual identity, design language. |
+
+      | **do** | Primary entry point for all delegated work: classifies user requests and routes to the correct agent + skill combination. |
+
+      | **e2e-testing** | User wants Playwright-based end-to-end testing: page object models, browser tests, test flakiness reduction. NOT: unit tests or integration tests (use test-driven-development or vitest-runner). |
+
+      | **kotlin-coroutines** | User wants Kotlin structured concurrency patterns: coroutineScope, Flow, Channel, SupervisorJob, or dispatchers. Companion skill for kotlin-general-engineer. |
+
+      | **kotlin-testing** | User wants Kotlin testing patterns: JUnit 5, Kotest, coroutine test dispatchers, MockK. Companion skill for kotlin-general-engineer. |
+
+      | **php-quality** | User wants PHP code quality checks: PSR standards compliance, strict types enforcement, framework idioms. Companion skill for php-general-engineer. |
+
+      | **php-testing** | User wants PHP testing patterns: PHPUnit, test doubles, database testing. Companion skill for php-general-engineer. |
+
+      | **swift-concurrency** | User wants Swift concurrency patterns: async/await, Actor, Task, Sendable, structured concurrency. Companion skill for swift-general-engineer. |
+
+      | **swift-testing** | User wants Swift testing patterns: XCTest, Swift Testing framework, async test patterns. Companion skill for swift-general-engineer. |
+
+      | **systematic-code-review** | User wants a structured 4-phase code review: UNDERSTAND changes, VERIFY claims against actual behavior, ASSESS security/performance/architecture risks, DOCUMENT findings with severity classification. |
+
+      | **test-driven-development** | User wants RED-GREEN-REFACTOR cycle with strict phase gates: write failing test first, make it pass with minimal code, then refactor. Common phrasings: "TDD", "test first", "red green refactor", "write tests before code". |
+
+      | **threejs-builder** | User wants to build a Three.js 3D web application: scenes, WebGL, 3D animation, or 3D graphics in the browser. 4-phase workflow: Design, Build, Animate, Polish. |
+
+      | **verification-before-completion** | User wants defense-in-depth verification before declaring a task complete: run full test suite, validate build, check for stub patterns, confirm artifacts exist. |
+
+      | **worktree-agent** | Mandatory rules for agents operating in git worktree isolation: verify working directory, create feature branches, use absolute paths. Not user-invoked directly. |
+
+      | **github-notification-triage** | User wants to triage GitHub notifications: fetch, classify, and report actions needed. Common phrasings: "check notifications", "github inbox", "triage notifications". |
+
+      | **roast** | User wants constructive critique of a design doc, idea, or code via 5 HackerNews personas with claim validation. Common phrasings: "roast this", "devil''s advocate", "stress test this idea", "poke holes in this". |
+
+      | **security-threat-model** | User wants a security threat model: scan for attack surface, supply-chain risks, injection vectors, or security posture audit. |
+
+      | **content-engine** | User wants to repurpose source assets (articles, demos, docs) into platform-native social content. Common phrasings: "repurpose this", "adapt for social", "turn this into posts", "platform variants". |
+
+      | **frontend-slides** | User wants browser-based HTML presentations: reveal-style slide decks, kiosk presentations, or converting PPTX to web format. |
+
+      | **gemini-image-generator** | User wants to generate images from text prompts via Google Gemini: sprites, character art, or AI-generated visuals. |
+
+      | **video-editing** | User wants to edit video: cut footage, assemble clips, create demo videos, or build screen recordings via FFmpeg and Remotion. |
+
+      | **x-api** | User wants to post tweets, build threads, upload media, read timelines, or search via the X (Twitter) API. |
+
+      | **kubernetes-debugging** | User wants to debug Kubernetes pod failures, networking issues, or resource problems using structured triage: describe, logs, events, exec. Companion skill for kubernetes-helm-engineer. |
+
+      | **kubernetes-security** | User wants to harden Kubernetes clusters: RBAC, PodSecurity standards, network policies, secret management, supply chain controls. Companion skill for kubernetes-helm-engineer. |
+
+      | "roast this design doc" | roast (5 personas) | Multi-persona critique |'
+    gold_removed: ''

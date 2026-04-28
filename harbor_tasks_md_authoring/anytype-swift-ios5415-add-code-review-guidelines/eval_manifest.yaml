@@ -1,0 +1,24 @@
+version: "2.0"
+
+task:
+  name: anytype-swift-ios5415-add-code-review-guidelines
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: anyproto/anytype-swift
+  pr: 4185
+  base_commit: "52de9beafa61c7ef694b909d6bdefbd2915c2d66"
+  merge_commit: "41242d5ca8b74ddcb9fc495d9a7789da449ac0dd"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+
+config_edits:
+  - path: CLAUDE.md
+    tier: 1
+    gold_added: '- **Code Review Guidelines**: `/.github/workflows/code-review-guidelines.md` - Shared review standards for local and automated CI reviews'
+    gold_removed: ''

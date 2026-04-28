@@ -1,0 +1,24 @@
+version: "2.0"
+
+task:
+  name: nx.js-docs-add-stub-pattern-note
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: TooTallNate/nx.js
+  pr: 210
+  base_commit: "21dff617b449406cb0ee852adfced71085f7c944"
+  merge_commit: "02b357956abd48d9763767bffde197c7ba9d6c8c"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+
+config_edits:
+  - path: AGENTS.md
+    tier: 1
+    gold_added: '- **`stub()` does NOT mean unimplemented.** Methods marked with `stub()` in TypeScript (from `./utils`) are placeholders for type generation only. At runtime, the C side overwrites them on the prototype via `NX_DEF_FUNC()` or `NX_DEF_GET()`/`NX_DEF_GETSET()`. If you see `stub()`, check the corresponding C file''s `nx_init_*` or `*_init_class` function — the real implementation is there. Only `throw new Error(''Method not implemented.'')` means actually not implemented.'
+    gold_removed: ''

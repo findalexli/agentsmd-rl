@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: rue-add-preview-feature-gating-instructions
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: rue-language/rue
+  pr: 453
+  base_commit: "020503815ac1117834355320ce3f5954a7470a34"
+  merge_commit: "0aac561773955afc6ab72cd006753a41c778c351"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+
+config_edits:
+  - path: CLAUDE.md
+    tier: 1
+    gold_added: "When adding or changing language features, follow this checklist.\n\n### Preview Features (Gating New Features)\n\n**IMPORTANT**: New language features MUST be gated behind preview flags until complete. See [ADR-0005](docs/designs/0005-preview-features.md) for the full design.\n\n#### When to Use Preview Features\n\nUse preview gating when:\n- Adding new syntax (keywords, operators, constructs)\n- Adding new type system features\n- Any feature that spans multiple implementation phases\n\n#### How to Gate a Feature\n\n1. **Add to PreviewFeature enum** in `rue-error/src/lib.rs`:\n   ```rust\n   pub enum PreviewFeature {\n       MutableStrings,\n       HmInference,\n       Destructors,\n       YourNewFeature,  // Add your feature here\n   }\n   ```\n   Also update `name()`, `adr()`, `all()`, and `FromStr` impl.\n\n2. **Add the gate check in Sema** (`rue-air/src/sema.rs`):\n   ```rust\n   // At the point where the feature is used:\n   self.require_preview(PreviewFeature::YourNewFeature, \"your feature description\", span)?;\n   ```\n\n   **This is the critical step that actually gates the feature!** Without this call, users can use the feature without `--preview`.\n\n3. **Add spec tests with `preview` field**:\n   ```toml\n   [[case]]\n   name = \"your_feature_basic\"\n   spec = [\"X.Y:Z\"]\n   preview = \"your_new_feature\"  # Matches PreviewFeature::name()\n   source = \"\"\"...\"\"\"\n   exit_code = 42\n   ```\n\n4. **Test that the gate works**:\n   - Without `--preview your_new_feature`: Should get \"requires preview feature\" error\n   - With `--preview your_new_feature`: Should compile/run\n\n#### Stabilizing a Feature\n\nWhen all tests pass and the feature is complete:\n\n1. Remove `preview = \"...\"` from spec tests\n2. Remove the `require_preview()` call from Sema\n3. Remove the variant from `PreviewFeature` enum\n4. Update the ADR status to \"Implemented\"\n   - **If this is a new feature**: Add the `require_preview()` gate (see above)\n   - **If this is a preview feature**: Include `preview = \"feature_name\"` field"
+    gold_removed: ''

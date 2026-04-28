@@ -1,0 +1,72 @@
+version: "2.0"
+
+task:
+  name: riverui-add-an-agentsmd
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: riverqueue/riverui
+  pr: 505
+  base_commit: "57a745d45ac752811ae902f8ab5181d440221c22"
+  merge_commit: "180f4c47db251f88a59dec34f0aa3c91ca237de7"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+
+config_edits:
+  - path: AGENTS.md
+    tier: 1
+    gold_added: '# River UI Agent Guidelines
+
+
+      ## Commands
+
+      - Dev: `npm run dev` (pro: `npm run dev:pro`)
+
+      - Lint/format: `npm run lint`, `npm run fmt`
+
+      - Tests: `npm run test`, `npm run test:once`, `npm exec -- vitest --run path/to/file.test.tsx`
+
+      - Build: `npm run build`, `make build`
+
+      - Go lint/test: `make lint`, `make test`
+
+
+      ## Rules
+
+      - No `any`; use `unknown` or specific types.
+
+      - Tests live beside components (`.test.tsx`).
+
+      - Prefix unused variables with `_`.
+
+
+      ## Validate
+
+      - UI/router/search-state: targeted tests + `npm run lint`.
+
+      - Larger changes: `npm run test:once` + `npm run build`.
+
+      - Go changes: `make lint`.
+
+
+      ## Commits
+
+      - Title <= 50 chars (max 72); wrap body ~72.
+
+      - Explain problem, fix, why it works, and tests.
+
+      - Use auto-close keywords; don’t mention "ran lint/tests".'
+    gold_removed: ''

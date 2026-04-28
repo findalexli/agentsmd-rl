@@ -1,0 +1,24 @@
+version: "2.0"
+
+task:
+  name: youtrackdb-require-pr-description-sync-on
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: JetBrains/youtrackdb
+  pr: 1000
+  base_commit: "13f7a70727de9bbefea65ddb37d4c14498743070"
+  merge_commit: "a5f53090243c35b9b81ae68dda6d40bee8a8da5e"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+
+config_edits:
+  - path: CLAUDE.md
+    tier: 1
+    gold_added: '- **Keep the PR title and description in sync with follow-up commits.** The squashed commit message is built from the PR title and description, not from individual commit messages — update them with every push so the merge commit reflects all changes.'
+    gold_removed: ''

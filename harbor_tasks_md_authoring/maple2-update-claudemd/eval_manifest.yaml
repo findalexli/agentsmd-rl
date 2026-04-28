@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: maple2-update-claudemd
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: MS2Community/Maple2
+  pr: 651
+  base_commit: "177470e38af8d10608a7c0e324ae650e0734a90a"
+  merge_commit: "d2ee92ca9ebe25514d752ec27edba8f8997c8eef"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+
+config_edits:
+  - path: CLAUDE.md
+    tier: 1
+    gold_added: "### Logging\n\nUse Serilog for logging throughout the codebase:\n\n```csharp\nusing Serilog;\n\npublic class MyClass {\n    private readonly ILogger logger = Log.Logger.ForContext<MyClass>();\n\n    public void MyMethod() {\n        logger.Debug(\"Debug message with {Parameter}\", value);\n        logger.Information(\"Info message\");\n        logger.Warning(\"Warning message\");\n        logger.Error(exception, \"Error message\");\n    }\n}\n```\n\nFor static contexts or one-off logging:\n\n```csharp\nusing Serilog;\n\nLog.Logger.ForContext<MyClass>().Debug(\"Message\");\n```\n"
+    gold_removed: ''

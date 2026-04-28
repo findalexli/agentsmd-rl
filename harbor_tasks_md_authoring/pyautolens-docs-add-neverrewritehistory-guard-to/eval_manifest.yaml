@@ -1,0 +1,48 @@
+version: "2.0"
+
+task:
+  name: pyautolens-docs-add-neverrewritehistory-guard-to
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: PyAutoLabs/PyAutoLens
+  pr: 478
+  base_commit: "4242060559f56baefec38e137bcf126a136b8fb2"
+  merge_commit: "e25aaeb94817f8f4a761c85328219293913b014d"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_04
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_05
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+
+config_edits:
+  - path: AGENTS.md
+    tier: 1
+    gold_added: "## Never rewrite history\n\nNEVER perform these operations on any repo with a remote:\n\n- `git init` in a directory already tracked by git\n- `rm -rf .git && git init`\n- Commit with subject \"Initial commit\", \"Fresh start\", \"Start fresh\", \"Reset\n  for AI workflow\", or any equivalent message on a branch with a remote\n- `git push --force` to `main` (or any branch tracked as `origin/HEAD`)\n- `git filter-repo` / `git filter-branch` on shared branches\n- `git rebase -i` rewriting commits already pushed to a shared branch\n\nIf the working tree needs a clean state, the **only** correct sequence is:\n\n    git fetch origin\n    git reset --hard origin/main\n    git clean -fd\n\nThis applies equally to humans, local Claude Code, cloud Claude agents, Codex,\nand any other agent. The \"Initial commit — fresh start for AI workflow\" pattern\nthat appeared independently on origin and local for three workspace repos is\nexactly what this rule prevents — it costs ~40 commits of redundant local work\nevery time it happens."
+    gold_removed: ''
+  - path: CLAUDE.md
+    tier: 1
+    gold_added: "## Never rewrite history\n\nNEVER perform these operations on any repo with a remote:\n\n- `git init` in a directory already tracked by git\n- `rm -rf .git && git init`\n- Commit with subject \"Initial commit\", \"Fresh start\", \"Start fresh\", \"Reset\n  for AI workflow\", or any equivalent message on a branch with a remote\n- `git push --force` to `main` (or any branch tracked as `origin/HEAD`)\n- `git filter-repo` / `git filter-branch` on shared branches\n- `git rebase -i` rewriting commits already pushed to a shared branch\n\nIf the working tree needs a clean state, the **only** correct sequence is:\n\n    git fetch origin\n    git reset --hard origin/main\n    git clean -fd\n\nThis applies equally to humans, local Claude Code, cloud Claude agents, Codex,\nand any other agent. The \"Initial commit — fresh start for AI workflow\" pattern\nthat appeared independently on origin and local for three workspace repos is\nexactly what this rule prevents — it costs ~40 commits of redundant local work\nevery time it happens."
+    gold_removed: ''

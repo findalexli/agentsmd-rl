@@ -1,0 +1,24 @@
+version: "2.0"
+
+task:
+  name: prefect-update-agentsmd-files-for-c893fc6
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: PrefectHQ/prefect
+  pr: 21555
+  base_commit: "c893fc6c77e6c0373071fe810e02a78c0546c1fd"
+  merge_commit: "1c970c3bdf8d2674a97eda5f73256fa18258b4e8"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in ui-v2/src/api/AGENTS.md."
+
+config_edits:
+  - path: ui-v2/src/api/AGENTS.md
+    tier: 1
+    gold_added: '- Add `refetchInterval: 30_000` to list, count, and detail query factories that display live operational data (work pools, flow runs, task runs, etc.). Use `60_000` for slower-changing data (events). When callers may need to override the interval, accept it as a parameter with a sensible default rather than hardcoding it.'
+    gold_removed: ''

@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: awesome-emoji-picker-docs-adding-copilot-instructions
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: rugk/awesome-emoji-picker
+  pr: 160
+  base_commit: "5e7824c2fb907ca5b4ae3149f7d02fe5f2a0ad31"
+  merge_commit: "80d9e0f558875a224fa6a1881041a41762d26b05"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/copilot-instructions.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/copilot-instructions.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/copilot-instructions.md."
+
+config_edits:
+  - path: .github/copilot-instructions.md
+    tier: 1
+    gold_added: "# Copilot Instructions for Awesome Emoji Picker\n\nThis project is a cross-browser WebExtension (Firefox, Chromium, Thunderbird) for emoji picking, clipboard, and page insertion. It is modular, uses modern JS, and is structured for maintainability and cross-platform support.\n\n## Architecture & Key Patterns\n- **Modular Structure:**\n  - `src/` contains all extension code, split by context: `background/`, `content_scripts/`, `popup/`, `options/`, `common/`.\n  - Shared logic is in `src/common/modules/` (e.g., `BrowserCommunication`, `AddonSettings`, `Logger`).\n- **Browser Communication:**\n  - Use `BrowserCommunication.addListener(COMMUNICATION_MESSAGE_TYPE.X, callback)` for cross-context messaging.\n  - Message types are defined in `src/common/modules/data/BrowserCommunicationTypes.js` as an object (used like an enum). Always use the exported constants, not raw strings.\n- **Settings:**\n  - Settings are managed via `AddonSettings` in `src/common/modules/AddonSettings/`.\n- **Localization:**\n  - All user-facing strings are localized using `_locales/` and the `Localizer` module (which uses the normal WebExtension function behind).\n- **UI:**\n  - Popup and options UIs are in `src/popup/` and `src/options/`.\n  - Styles are modular and use `common.css` and context-specific CSS.\n\n## Developer Workflows\n- **Build:**\n  - Use `scripts/make.sh [browser]` to build a release ZIP for a specific browser (default: Firefox). This script copies the correct manifest and zips the extension, excluding dev/test files.\n- **Testing:**\n  - Tests are in `src/tests/` and `tests/`. Run them in a browser context; see `CONTRIBUTING.md` for details.\n- **Linting:**\n  - Run ESLint with `eslint` (configured for JSDoc and modern JS).\n- **Debugging:**\n  - Load `src/` as an unpacked extension in your browser for development.\n\n## Project-Specific Conventions\n- **Message Types:**\n  - Never use raw strings for message types; always use `COMMUNICATION_MESSAGE_TYPE` values.\n- **JSDoc:**\n  - Use typedefs for value enums (see `BrowserCommunicationTypes.js`).\n- **No TypeScript:**\n  - The project uses JS with JSDoc for type checking (`checkJs` is enabled in `jsconfig.json`).\n- **No Webpack:**\n  - All code is loaded as-is; no bundling step.\n- **Manifest Management:**\n  - Manifests for each browser are in `scripts/manifests/` and copied by the build script.\n\n## Integration Points\n- **emoji-mart:**\n  - Used for emoji data and search. See `src/common/modules/EmojiMart/`.\n- **WebExtension APIs:**\n  - Use the `browser` namespace for all extension APIs (polyfilled for Chrome).\n\n## Examples\n- Registering a message listener:\n  ```js\n  import { COMMUNICATION_MESSAGE_TYPE } from '../data/BrowserCommunicationTypes.js';\n  BrowserCommunication.addListener(COMMUNICATION_MESSAGE_TYPE.OMNIBAR_TOGGLE, callback);\n  ```\n- Adding a new settings option:\n  - Update the relevant UI in `options/`. Do not forget `DefaultSettings.js` for default values.\n\n## References\n- [README.md](../../README.md)\n- [CONTRIBUTING.md](../../CONTRIBUTING.md)\n- [src/common/modules/BrowserCommunication/README.md](../../src/common/modules/BrowserCommunication/README.md)\n\n---\n\nIf any section is unclear or missing, please provide feedback for further refinement."
+    gold_removed: ''

@@ -1,0 +1,125 @@
+version: "2.0"
+
+task:
+  name: dmarcguard-docs-update-claudemd-with-current
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: dmarcguardhq/dmarcguard
+  pr: 79
+  base_commit: "127cb800f3f285b2d5899561fa390e2894bd52de"
+  merge_commit: "534e640c7906827ddd39807874fad606137752c7"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+
+config_edits:
+  - path: CLAUDE.md
+    tier: 1
+    gold_added: '- **Backend**: Go 1.25.4 (see go.mod for exact version)
+
+      │   ├── stores/                # Pinia-like state management
+
+      │   │   ├── index.js           # Store exports
+
+      │   │   ├── theme.js           # Theme (dark/light/system) store
+
+      │   │   └── settings.js        # API endpoint settings store
+
+      │       ├── settings/
+
+      │       │   └── SettingsModal.vue   # Settings modal (theme, API endpoint)
+
+      │   │   ├── marketplace.yaml   # DO Marketplace metadata
+
+      ├── zeabur.yml                 # Zeabur deployment template
+
+      ├── render.yaml                # Render deployment config
+
+      ├── Northflank.json            # Northflank deployment config
+
+
+      # Update Zeabur template
+
+      just update-zeabur-template
+
+      | Flag                                 | Env Var                                        | Description                                           |
+
+      | ------------------------------------ | ---------------------------------------------- | ----------------------------------------------------- |
+
+      | `--config, -c`                       | `PARSE_DMARC_CONFIG`                           | Config file path (default: config.json)               |
+
+      | `--gen-config`                       | `PARSE_DMARC_GEN_CONFIG`                       | Generate sample config                                |
+
+      | `--fetch-once`                       | `PARSE_DMARC_FETCH_ONCE`                       | Fetch reports once and exit                           |
+
+      | `--serve-only`                       | `PARSE_DMARC_SERVE_ONLY`                       | Dashboard only, no fetching                           |
+
+      | `--fetch-interval`                   | `PARSE_DMARC_FETCH_INTERVAL`                   | Fetch interval in seconds (default: 300)              |
+
+      | `--metrics`                          | `PARSE_DMARC_METRICS`                          | Enable Prometheus metrics (default: true)             |
+
+      | `--mcp`                              | `PARSE_DMARC_MCP`                              | Run as MCP server over stdio                          |
+
+      | `--mcp-http`                         | `PARSE_DMARC_MCP_HTTP`                         | Run MCP over HTTP at address                          |
+
+      | `--mcp-oauth`                        | `PARSE_DMARC_MCP_OAUTH`                        | Enable OAuth2 for MCP HTTP                            |
+
+      | `--mcp-oauth-issuer`                 | `PARSE_DMARC_MCP_OAUTH_ISSUER`                 | OAuth2/OIDC issuer URL                                |
+
+      | `--mcp-oauth-audience`               | `PARSE_DMARC_MCP_OAUTH_AUDIENCE`               | Expected token audience                               |
+
+      | `--mcp-oauth-client-id`              | `PARSE_DMARC_MCP_OAUTH_CLIENT_ID`              | OAuth2 client ID for token introspection              |
+
+      | `--mcp-oauth-client-secret`          | `PARSE_DMARC_MCP_OAUTH_CLIENT_SECRET`          | OAuth2 client secret for token introspection          |
+
+      | `--mcp-oauth-scopes`                 | `PARSE_DMARC_MCP_OAUTH_SCOPES`                 | Required scopes (comma-separated, default: mcp:tools) |
+
+      | `--mcp-oauth-introspection-endpoint` | `PARSE_DMARC_MCP_OAUTH_INTROSPECTION_ENDPOINT` | Token introspection endpoint URL                      |
+
+      | `--mcp-oauth-resource-name`          | `PARSE_DMARC_MCP_OAUTH_RESOURCE_NAME`          | Human-readable name for MCP server metadata           |
+
+      | `--mcp-oauth-insecure`               | `PARSE_DMARC_MCP_OAUTH_INSECURE`               | Skip TLS certificate verification (dev only)          |
+
+      - `src/stores/theme.js` - Theme state management (light/dark/system)
+
+      - `src/stores/settings.js` - API endpoint settings management
+
+      - `src/components/settings/SettingsModal.vue` - Settings dialog (theme, API endpoint)
+
+      - **Settings Modal** - Theme switching (light/dark/system) and custom API endpoint configuration
+
+      - **Zeabur**: `zeabur.yml` - Zeabur platform template
+
+      - **Render**: `render.yaml` - Render.com configuration
+
+      - **Northflank**: `Northflank.json` - Northflank configuration
+
+      - **Phase 1**: Delightful Defaults (dark mode, DNS generator, health score, exports)
+
+      - **Phase 3**: Enterprise Ready (auth, multi-org, RBAC, Prometheus metrics)
+
+      ### State Management
+
+
+      The frontend uses a custom reactive store pattern (similar to Pinia):
+
+
+      - `theme.js` - Manages light/dark/system theme with localStorage persistence
+
+      - `settings.js` - Manages custom API endpoint with validation and connection testing
+
+      '
+    gold_removed: ''

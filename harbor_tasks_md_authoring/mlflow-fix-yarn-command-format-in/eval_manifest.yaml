@@ -1,0 +1,44 @@
+version: "2.0"
+
+task:
+  name: mlflow-fix-yarn-command-format-in
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: mlflow/mlflow
+  pr: 18553
+  base_commit: "fad68cc2848e9c5da4992a3b08010818cf6d365f"
+  merge_commit: "1571ec082f18fece781ee3993306bcac73cf58ac"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+
+config_edits:
+  - path: CLAUDE.md
+    tier: 1
+    gold_added: '(cd mlflow/server/js && yarn test)
+
+      (cd mlflow/server/js && yarn lint)
+
+      (cd mlflow/server/js && yarn prettier:check)
+
+      (cd mlflow/server/js && yarn prettier:fix)
+
+      (cd mlflow/server/js && yarn type-check)
+
+      (cd mlflow/server/js && yarn check-all)
+
+      (cd mlflow/server/js && yarn check-all)'
+    gold_removed: ''

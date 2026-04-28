@@ -1,0 +1,173 @@
+version: "2.0"
+
+task:
+  name: vibe-docs-add-new-cursor-rules
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: mondaycom/vibe
+  pr: 3078
+  base_commit: "14dd2bb14112a07ce3e649937e281a20516ecb71"
+  merge_commit: "a76f2ef6bf58ecb1af7056cee15d9bfc7daa2769"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .cursor/rules/base-components.mdc."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .cursor/rules/base-components.mdc."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .cursor/rules/base-components.mdc."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .cursor/rules/component-internal-structure.mdc."
+  - id: signal_04
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .cursor/rules/component-internal-structure.mdc."
+  - id: signal_05
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .cursor/rules/component-internal-structure.mdc."
+  - id: signal_06
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .cursor/rules/file-structures.mdc."
+  - id: signal_07
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .cursor/rules/file-structures.mdc."
+  - id: signal_08
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .cursor/rules/file-structures.mdc."
+  - id: signal_09
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .cursor/rules/layout-components.mdc."
+  - id: signal_10
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .cursor/rules/layout-components.mdc."
+  - id: signal_11
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .cursor/rules/layout-components.mdc."
+  - id: signal_12
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .cursor/rules/naming-conventions.mdc."
+  - id: signal_13
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .cursor/rules/naming-conventions.mdc."
+  - id: signal_14
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .cursor/rules/naming-conventions.mdc."
+  - id: signal_15
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .cursor/rules/new-component-implementation.mdc."
+  - id: signal_16
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .cursor/rules/new-component-implementation.mdc."
+  - id: signal_17
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .cursor/rules/new-component-implementation.mdc."
+  - id: signal_18
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .cursor/rules/storybook-stories.mdc."
+  - id: signal_19
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .cursor/rules/storybook-stories.mdc."
+  - id: signal_20
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .cursor/rules/storybook-stories.mdc."
+  - id: signal_21
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .cursor/rules/styling-conventions.mdc."
+  - id: signal_22
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .cursor/rules/styling-conventions.mdc."
+  - id: signal_23
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .cursor/rules/styling-conventions.mdc."
+
+config_edits:
+  - path: .cursor/rules/base-components.mdc
+    tier: 1
+    gold_added: '### 1. Use className Prop for Styling Base Components
+
+
+      When styling base components from other components, always use their `className` prop instead of targeting them with CSS selectors like `[data-vibe]` or `[data-testid]`, element selectors, or other attribute selectors. This maintains clear component boundaries and prevents styling conflicts.
+
+
+      ```typescript
+
+      // ✅ Good - Use className prop
+
+      <BaseInput className={styles.myCustomInput} />
+
+
+      // ❌ Bad - Don''t target with element or attribute selectors
+
+      // In CSS: button { ... } or [data-testid] { ... }
+
+      ```
+
+
+      ### 2. Always Provide Labels'
+    gold_removed: ''
+  - path: .cursor/rules/component-internal-structure.mdc
+    tier: 1
+    gold_added: "5. **No Static Properties**: Never use the `withStaticProps` utility or assign static properties to components. Components should remain without attached static properties. This means avoiding patterns like `MyComponent.colors = {...}`, `MyComponent.sizes = {...}`, and even avoiding `MyComponent.displayName = \"...\"`.\n#### Dismissible Component Props Pattern\n\n**If your component can be dismissed/closed**, follow this established pattern to avoid redundant props:\n\n- **Use `onClose` prop as both handler and boolean indicator** - don't add separate `dismissible` or `closable` props\n- **Conditional rendering based on `onClose` presence**: `{onClose && <CloseButton onClick={onClose} />}`\n\n**Implementation Example**:\n\n```typescript\nconst MyComponent = ({ onClose, closeButtonAriaLabel = \"Close\", ...otherProps }: MyComponentProps) => {\n  return (\n    <div>\n      {/* ...Component content */}\n      {onClose && <IconButton ariaLabel={closeButtonAriaLabel} icon={CloseIcon} onClick={onClose} />}\n    </div>\n  );\n};\n```\n\n**Why This Pattern**:\n\n- **Simplifies API**: No need for separate boolean props like `dismissible={true}`\n- **Clear Intent**: If user wants dismissible behavior, they pass `onClose`\n"
+    gold_removed: ''
+  - path: .cursor/rules/file-structures.mdc
+    tier: 1
+    gold_added: "- **`__tests__/`**: Contains unit and integration tests **only for the main component files** in the root directory.\n  - **DO NOT** place tests for subcomponents, hooks, utils, or context in this directory.\n  - **Each subcomponent should have its own `__tests__/` directory** if tests are needed.\n  - Structure: `ComponentName/components/SubComponent/__tests__/SubComponent.test.tsx`\n  - **Should contain a `__tests__/` subdirectory** if hook tests are needed.\n  - Structure: `ComponentName/hooks/__tests__/useHookName.test.ts`\n- **`utils/`**: Utility functions specific to `ComponentName`.\n  - **Should contain a `__tests__/` subdirectory** if utility tests are needed.\n  - Structure: `ComponentName/utils/__tests__/utilityName.test.ts`\n  - **Should contain a `__tests__/` subdirectory** if context tests are needed.\n  - Structure: `ComponentName/context/__tests__/ComponentNameContext.test.ts`\n- **`consts/`**: Component-specific constant values that are not intended for reuse elsewhere.\n  - **DO NOT** place constants files at the root of the component directory.\n  - **Use meaningful file names** that describe the purpose, not generic names like `MyComponentConstants.ts` or `consts.ts`.\n  - Examples: `ComponentName/consts/variants.ts`, `ComponentName/consts/validate-colors.ts`, `ComponentName/consts/sizes.ts`\n  - **Should contain a `__tests__/` subdirectory** if constants tests are needed.\n  - Structure: `ComponentName/consts/__tests__/sizes.test.ts`\n- **Simpler Components**: For simpler components, not all subdirectories (`hooks/`, `utils/`, `components/`, `context/`, `consts/`) are necessary. Files like `ComponentName.tsx`, `ComponentName.types.ts`, `ComponentName.module.scss`, `index.ts`, and directories for tests (`__tests__/`) and stories (`__stories__/`) are sufficient in most of the cases.\n- **Reusability**: If a hook, utility, or constant is reusable across multiple components (not potentially reusable, but actually reused in more than one component), it should be placed in the top-level `packages/core/src/hooks/`, `packages/core/src/utils/`, or `packages/core/src/constants/` directories, respectively."
+    gold_removed: ''
+  - path: .cursor/rules/layout-components.mdc
+    tier: 1
+    gold_added: "---\ndescription: Guidelines for using Box and Flex layout components in the @vibe/core library instead of custom CSS for spacing, borders, and flexbox layouts.\nglobs: *.tsx,*.ts\n---\n\n# Layout Components Guidelines\n\nThis rule provides comprehensive guidelines for using [Box](mdc:packages/core/src/components/Box/Box.tsx) and [Flex](mdc:packages/core/src/components/Flex/Flex.tsx) components from `@vibe/core` instead of custom CSS for layout, spacing, borders, and containers.\n\n## Core Principle: Props Over CSS\n\n**Always prefer component props over custom CSS** for layout properties that Box and Flex provide. This ensures:\n\n- Consistent design token usage\n- Better maintainability\n- Type safety\n- Reduced CSS bundle size\n- Design system compliance\n\n## Box Component Usage\n\n### When to Use Box\n\n- **Container styling**: Backgrounds, borders, shadows, padding, margins\n- **Scrollable containers**: Use `scrollable` prop instead of `overflow: auto` in CSS\n- **Bordered containers**: Use `border` props instead of CSS border\n- **Spacing containers**: Use margin/padding props instead of CSS spacing\n- **Styled wrappers**: Any div that needs visual styling\n\n### Box Props Reference\n\n#### Spacing Props\n\n```tsx\n// ❌ Avoid CSS\n<div className={styles.container}>\n  <Content />\n</div>\n// .container { padding: var(--space-16); margin-bottom: var(--space-24); }\n\n// ✅ Prefer Box props\n<Box padding=\"medium\" marginBottom=\"large\">\n  <Content />\n</Box>\n```\n\n**Available spacing values**: `xs`, `small`, `medium`, `large`, `xl`, `xxl`, `xxxl`.\n\nIf needing for a size that does not exist on `Box` (like `var(--space-12)`), you can use css for this value instead of using a prop.\n\n- Margin props also support: `auto`, `none`\n- Directional props: `marginX`, `marginY`, `marginTop`, `marginEnd`, `marginBottom`, `marginStart`\n- Directional props: `paddingX`, `paddingY`, `paddingTop`, `paddingEnd`, `paddingBottom`, `paddingStart`\n\n#### Border & Visual Props\n\n```tsx\n// ❌ Avoid CSS\n<div className={styles.bordered}>\n  <Content />\n</div>\n// .bordered { border: 1px solid var(--border-color); border-radius: 8px; }\n\n// ✅ Prefer Box props\n<Box border borderColor=\"uiBorderColor\" rounded=\"medium\">\n  <Content />\n</Box>\n```\n\n**Border colors**: `uiBorderColor`, `layoutBorderColor`\n**Rounded values**: `small`, `medium`, `big`\n**Shadow values**: `xs`, `small`, `medium`, `large`\n\n#### Scrollable Containers\n\n```tsx\n// ❌ Avoid CSS\n<div className={styles.scrollableContainer}>\n  <Content />\n</div>\n// .scrollableContainer { overflow: auto; }\n\n// ✅ Prefer Box scrollable prop\n<Box scrollable>\n  <Content />\n</Box>\n```\n\n#### Background & Text Colors\n\n```tsx\n// ❌ Avoid CSS\n<div className={styles.cardContainer}>\n  <Content />\n</div>\n// .cardContainer { background-color: var(--secondary-background-color); }\n\n// ✅ Prefer Box props\n<Box backgroundColor=\"secondaryBackgroundColor\" textColor=\"primaryTextColor\">\n  <Content />\n</Box>\n```\n\n**Background colors**: `primaryBackgroundColor`, `secondaryBackgroundColor`, `greyBackgroundColor`, `allgreyBackgroundColor`, `invertedColorBackground`\n**Text colors**: `primaryTextColor`, `textColorOnInverted`, `secondaryTextColor`\n\n## Flex Component Usage\n\n### When to Use Flex\n\n- **Layout positioning**: Arrange elements horizontally or vertically\n- **Gap spacing**: Space between flex items\n- **Alignment**: Justify and align flex items\n- **Responsive layouts**: Wrapping flex containers\n- **Toolbar/header layouts**: Horizontal arrangements with spacing\n\n### Flex Props Reference\n\n#### Basic Layout\n\n```tsx\n// ❌ Avoid CSS\n<div className={styles.flexContainer}>\n  <Item1 />\n  <Item2 />\n  <Item3 />\n</div>\n// .flexContainer { display: flex; gap: 16px; justify-content: space-between; }\n\n// ✅ Prefer Flex props\n<Flex gap=\"medium\" justify=\"space-between\">\n  <Item1 />\n  <Item2 />\n  <Item3 />\n</Flex>\n```\n\n**Direction values**: `row` (default), `column`\n**Gap values**: `xs` (4px), `small` (8px), `medium` (16px), `large` (24px), or custom number in px\n**Justify values**: `start`, `center`, `end`, `stretch`, `space-around`, `space-between`, `initial`\n**Align values**: `start`, `center`, `end`, `stretch`, `baseline`, `initial`\n\n#### Common Patterns\n\n```tsx\n// Horizontal toolbar\n<Flex gap=\"small\" justify=\"space-between\" align=\"center\">\n  <Button>Action 1</Button>\n  <Button>Action 2</Button>\n</Flex>\n\n// Vertical stack\n<Flex direction=\"column\" gap=\"medium\">\n  <Item1 />\n  <Item2 />\n  <Item3 />\n</Flex>\n\n// Centered content\n<Flex justify=\"center\" align=\"center\">\n  <Content />\n</Flex>\n\n// With custom gap (px value)\n<Flex gap={32} direction=\"column\">\n  <Item1 />\n  <Item2 />\n</Flex>\n```\n\n#### Clickable Flex\n\nWhen providing `onClick`, Flex automatically wraps with Clickable component:\n\n```tsx\n<Flex gap=\"small\" onClick={handleClick} ariaLabel=\"Clickable toolbar\" tabIndex={0}>\n  <Item1 />\n  <Item2 />\n</Flex>\n```\n\n## Component Combination Patterns\n\n### Box + Flex for Complex Layouts\n\n```tsx\n// Container with border and internal flex layout\n<Box border rounded=\"medium\" padding=\"medium\">\n  <Flex gap=\"small\" justify=\"space-between\" align=\"center\">\n    <Text>Title</Text>\n    <Button>Action</Button>\n  </Flex>\n</Box>\n\n// Scrollable flex container\n<Box scrollable>\n  <Flex direction=\"column\" gap=\"small\">\n    {items.map(item => <Item key={item.id} {...item} />)}\n  </Flex>\n</Box>\n```\n\n### Nested Layout Structure\n\n```tsx\n// Page layout example\n<Box padding=\"large\">\n  <Flex direction=\"column\" gap=\"large\">\n    {/* Header */}\n    <Flex justify=\"space-between\" align=\"center\">\n      <Heading>Page Title</Heading>\n      <Button>Action</Button>\n    </Flex>\n\n    {/* Content cards */}\n    <Flex gap=\"medium\" wrap>\n      {cards.map(card => (\n        <Box key={card.id} border rounded=\"medium\" padding=\"medium\" backgroundColor=\"secondaryBackgroundColor\">\n          <Card {...card} />\n        </Box>\n      ))}\n    </Flex>\n  </Flex>\n</Box>\n```\n\n## Migration Guidelines\n\n### From CSS to Box\n\n1. **Replace border CSS**: `border: 1px solid var(--border-color)` → `border` prop\n2. **Replace padding/margin CSS**: `padding: var(--spacing-medium)` → `padding=\"medium\"`\n3. **Replace overflow CSS**: `overflow: auto` → `scrollable` prop\n4. **Replace background CSS**: `background-color: var(--secondary-bg)` → `backgroundColor=\"secondaryBackgroundColor\"`\n\n### From CSS to Flex\n\n1. **Replace display flex**: `display: flex` → `<Flex>`\n2. **Replace gap CSS**: `gap: 16px` → `gap=\"medium\"` or `gap={16}`\n3. **Replace justify-content**: `justify-content: space-between` → `justify=\"space-between\"`\n4. **Replace align-items**: `align-items: center` → `align=\"center\"`\n5. **Replace flex-direction**: `flex-direction: column` → `direction=\"column\"`\n\n## Anti-Patterns to Avoid\n\n### ❌ Don't Use CSS When Props Are Available\n\n```tsx\n// ❌ Bad\n<div className={styles.container}>\n  <Content />\n</div>\n// .container {\n//   display: flex;\n//   gap: 16px;\n//   padding: 24px;\n//   border: 1px solid var(--border-color);\n// }\n\n// ✅ Good\n<Box border padding=\"large\">\n  <Flex gap=\"medium\">\n    <Content />\n  </Flex>\n</Box>\n```\n\n### ❌ Don't Mix CSS Layout with Component Props\n\n```tsx\n// ❌ Bad - mixing CSS flex with Flex props\n<Flex className={styles.customFlex} gap=\"medium\">\n  <Content />\n</Flex>\n// .customFlex { justify-content: space-between; } // Use justify prop instead\n\n// ✅ Good\n<Flex gap=\"medium\" justify=\"space-between\">\n  <Content />\n</Flex>\n```\n\n### ❌ Don't Use Plain Divs for Styled Containers\n\n```tsx\n// ❌ Bad\n<div className={styles.card}>\n  <div className={styles.scrollableContent}>\n    <Content />\n  </div>\n</div>\n\n// ✅ Good\n<Box border rounded=\"medium\" padding=\"medium\">\n  <Box scrollable>\n    <Content />\n  </Box>\n</Box>\n```\n\n## Element Types\n\nBoth Box and Flex support `elementType` prop to render as different HTML elements:\n\n```tsx\n<Box elementType=\"section\" padding=\"large\">\n  <Content />\n</Box>\n\n<Flex elementType=\"header\" justify=\"space-between\">\n  <Logo />\n  <Navigation />\n</Flex>\n```\n\n## Accessibility\n\n- Use `ariaLabel` and `ariaLabelledby` props on Flex when it's a meaningful container\n- Box and Flex support all standard HTML accessibility attributes\n- When using `onClick` on Flex, proper accessibility attributes are automatically handled\n\n## Examples from Codebase\n\nSee usage examples in:\n\n- [Box Stories](mdc:packages/core/src/components/Box/__stories__/Box.stories.tsx)\n- [Flex Stories](mdc:packages/core/src/components/Flex/__stories__/Flex.stories.tsx)"
+    gold_removed: ''
+  - path: .cursor/rules/naming-conventions.mdc
+    tier: 1
+    gold_added: "- **Tests**: Test files SHOULD be co-located with the code they test in respective `__tests__` subdirectories.\n  - **Main Component Tests**: Place in `ComponentName/__tests__/ComponentName.test.tsx`\n  - **Subcomponent Tests**: Place in `ComponentName/components/SubComponent/__tests__/SubComponent.test.tsx`\n  - **Hook Tests**: Place in `ComponentName/hooks/__tests__/useHookName.test.ts`\n  - **Utility Tests**: Place in `ComponentName/utils/__tests__/utilityName.test.ts`\n  - **Context Tests**: Place in `ComponentName/context/__tests__/ComponentNameContext.test.ts`\n  - **DO NOT** centralize all tests in the component root `__tests__` directory.\n- **Custom Hooks**: Component-specific custom hooks SHOULD be placed in a `hooks` subdirectory.\n#### Prop Values\n\n- **String Literals**: Component prop values should use string literals rather than static properties\n  - Example: `<Button size=\"small\" />` instead of `<Button size={Button.sizes.SMALL} />`\n\n### Vibe Standard Types\n\nWhen working with Vibe components, always use the established standard types for common prop patterns:\n\n- **Icon Props**: Always use `SubIcon` type for any prop that accept icons.\n  - Example: `icon?: SubIcon;` instead of generic types like `ReactNode` or custom icon types.\n- **Component Props**: Extend `VibeComponentProps` for component props (to get `className`, `id`, `data-testid`).\n- **Consistent Typing**: Always check existing similar components to see what Vibe standard types they use before creating custom types.\n"
+    gold_removed: ''
+  - path: .cursor/rules/new-component-implementation.mdc
+    tier: 1
+    gold_added: "- **MANDATORY**: Add `[data-vibe]` attribute for component identification\n\n#### Essential `[data-vibe]` Attribute Implementation\n\n**CRITICAL**: Every new component MUST include the `[data-vibe]` attribute on its root element for component identification in the DOM.\n\n**Import Pattern**:\n\n```tsx\nimport { ComponentVibeId } from \"../../tests/constants\";\n```\n\n**Usage Pattern**:\nAdd to the root element's props:\n\n```tsx\ndata-vibe={ComponentVibeId.ATTENTION_BOX}\n```\n\n**Implementation Examples**:\n\n**Enum Naming Pattern**:\nThe `ComponentVibeId` enum follows SCREAMING_SNAKE_CASE format. For example:\n\n- `Button` → `ComponentVibeId.BUTTON`\n- `AttentionBox` → `ComponentVibeId.ATTENTION_BOX`\n- `MenuButton` → `ComponentVibeId.MENU_BUTTON`\n- `LinearProgressBar` → `ComponentVibeId.LINEAR_PROGRESS_BAR`\n### 3. Component Constants (Optional: `consts/` directory)\n\n**If your component needs constant values**, organize them properly:\n\n- **MANDATORY**: Place constants files inside a `consts/` folder, never at the component root\n- **MANDATORY**: Use meaningful file names that describe purpose, not generic names like `MyComponentConstants.ts` or `consts.ts`\n- **Examples of good names**: `variants.ts`, `validate-colors.ts`, `events.ts`, `sizes.ts`\n\n**Reusability Rule**: If constants are used across multiple components, place them in the top-level `packages/core/src/constants/` directory instead.\n\n**Reference**: [file-structures](mdc:.cursor/rules/file-structures.mdc) for detailed constants organization patterns.\n\n### 4. Styles (`ComponentName.module.scss`)\n### 5. Index Exports (`index.ts`)\n### 6. Add to Global Exports\n- **MANDATORY**: Add your component to the `ComponentVibeId` enum in [constants.ts](mdc:packages/core/src/tests/constants.ts)\n\n#### Adding ComponentVibeId Enum Value\n\n**CRITICAL**: Every new component MUST have a corresponding entry in the `ComponentVibeId` enum.\n\n**Steps**:\n\n1. Find the `ComponentVibeId` enum\n2. Add your component in alphabetical order using SCREAMING_SNAKE_CASE format\n\n**Naming Convention**: Use the exact component name as the enum value, but the key should be in SCREAMING_SNAKE_CASE:\n\n- `Button` → `BUTTON = \"Button\"`\n- `MenuButton` → `MENU_BUTTON = \"MenuButton\"`  \n- `LinearProgressBar` → `LINEAR_PROGRESS_BAR = \"LinearProgressBar\"`\n### 7. Tests (`__tests__/ComponentName.test.tsx`)\n- [file-structures](mdc:.cursor/rules/file-structures.mdc) for detailed test organization patterns.\n### 8. Stories (`__stories__/ComponentName.stories.tsx`)\n2. **Test Suite**: `yarn test src/components/ComponentName/` (will recursively run all tests in subdirectories)\n### Modern Prop Patterns\n\n- **Use String Literals**: Define prop values as string literals instead of static properties\n  - ✅ Prefer: `<MyComponent size=\"large\" variant=\"primary\" />`\n  - ❌ Avoid: `<MyComponent size={MyComponent.sizes.LARGE} variant={MyComponent.variants.PRIMARY} />`\n- **Backward Compatibility**: While legacy static properties may exist in the codebase, new components should not include them\n\n6. **Missing `[data-vibe]` Attribute**: Forgetting to add the mandatory `[data-vibe]` attribute or missing the corresponding `ComponentVibeId` enum entry"
+    gold_removed: ''
+  - path: .cursor/rules/storybook-stories.mdc
+    tier: 1
+    gold_added: "#### Prop Value Best Practices\n\nWhen writing stories, always use string literal prop values instead of static properties:\n\n```typescript\n// ✅ Preferred approach\nexport const PrimaryButton: Story = {\n  render: () => <Button kind=\"primary\" size=\"small\">Click me</Button>\n};\n\n// ❌ Avoid (legacy pattern) \nexport const PrimaryButton: Story = {\n  render: () => <Button kind={Button.kinds.PRIMARY} size={Button.sizes.SMALL}>Click me</Button>\n};\n```\n\nThis approach provides better IntelliSense, type safety, and follows modern Vibe conventions.\n"
+    gold_removed: ''
+  - path: .cursor/rules/styling-conventions.mdc
+    tier: 1
+    gold_added: 'description: "Provides comprehensive guidelines for writing CSS Modules specifically for UI components within the `@vibe/core` library (under `packages/core/src/components/`). This rule covers file naming conventions (e.g., `ComponentName.module.scss`), CSS nesting, mandatory browser compatibility, strategies for adopting newer CSS APIs with fallbacks, the exclusive use of design tokens from `monday-ui-style` (via CSS custom properties like `var(--primary-text-color)`), discouraging mixin usage from `monday-ui-style`, typography best practices (using `Text`/`Heading` components instead of direct font tokens), `camelCase` class naming, and common anti-patterns like avoiding theme-specific styles directly in component SCSS, never using `:global`, and never using `!important`. Activate this rule when working with `.module.scss` files in `packages/core/src/components/` or when styling Vibe core components."
+
+      - **Always Use Logical CSS Properties:** Use logical CSS properties instead of physical properties to ensure proper RTL support and internationalization. Logical properties are direction-agnostic and automatically adapt to different writing modes.
+
+
+      - **Never Use :global:** The use of `:global()` in SCSS Modules is strictly prohibited. SCSS Modules are designed to provide scoped styles, and using `:global()` defeats this purpose and can lead to unintended side effects and style conflicts.
+
+      - **Never Use !important:** The use of `!important` in CSS is strictly prohibited. Instead of using `!important`, resolve specificity issues other way.
+
+      - **ALWAYS Use className Prop for Components:** When styling internal reusable components/base components, always use their `className` prop instead of targeting them in the scss file with other selectors such as `[data-vibe]`, element selectors like `button`, or other attribute selectors. This maintains clear component boundaries and prevents unintended styling conflicts.'
+    gold_removed: ''

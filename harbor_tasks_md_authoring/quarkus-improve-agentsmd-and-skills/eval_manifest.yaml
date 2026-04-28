@@ -1,0 +1,86 @@
+version: "2.0"
+
+task:
+  name: quarkus-improve-agentsmd-and-skills
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: quarkusio/quarkus
+  pr: 53672
+  base_commit: "9022bad77d7fd149f8a4b9dd376449945c7ed83c"
+  merge_commit: "adeb2dbbd78bfbddea06b2378dc4aac766375f3e"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .agents/skills/building-and-testing/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .agents/skills/building-and-testing/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .agents/skills/building-and-testing/SKILL.md."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .agents/skills/coding-style/SKILL.md."
+  - id: signal_04
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .agents/skills/coding-style/SKILL.md."
+  - id: signal_05
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .agents/skills/coding-style/SKILL.md."
+  - id: signal_06
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .agents/skills/writing-tests/SKILL.md."
+  - id: signal_07
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .agents/skills/writing-tests/SKILL.md."
+  - id: signal_08
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .agents/skills/writing-tests/SKILL.md."
+  - id: signal_09
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_10
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_11
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+
+config_edits:
+  - path: .agents/skills/building-and-testing/SKILL.md
+    tier: 1
+    gold_added: './mvnw verify -f extensions/<name>/ -Dstart-containers -Dtest-containers
+
+      ./mvnw test -f integration-tests/<name>/ -Dstart-containers -Dtest-containers -Dtest=MyTest
+
+      ./mvnw verify -Dstart-containers -Dtest-containers -Dtest=fully.qualified.ClassName#methodName
+
+      ./mvnw verify -f integration-tests/<name>/ -Dstart-containers -Dtest-containers -Dnative'
+    gold_removed: ''
+  - path: .agents/skills/coding-style/SKILL.md
+    tier: 1
+    gold_added: "- The project enforces formatting via `formatter-maven-plugin` and `impsort-maven-plugin`,\n  let the formatting plugins do their work, never use `-Dno-format`\n- Update existing code comments if your changes make them invalid\n- Never remove existing code comments that are still valid"
+    gold_removed: ''
+  - path: .agents/skills/writing-tests/SKILL.md
+    tier: 1
+    gold_added: "## Assertions\n\n- **Prefer AssertJ** (`org.assertj.core.api.Assertions.assertThat`) over JUnit 5\n  assertions (`org.junit.jupiter.api.Assertions`). AssertJ provides fluent,\n  readable assertions and better failure messages.\n- Use RestAssured for HTTP endpoint testing.\n"
+    gold_removed: ''
+  - path: AGENTS.md
+    tier: 1
+    gold_added: "  tests. Test in both JVM and native mode for non-trivial changes. Prefer\n  AssertJ for assertions.\n./mvnw -Dquickly                                                                          # Quick full build (skip tests/docs/native)\n./mvnw install -f extensions/<name>/                                                      # Build one extension\n./mvnw install -f core/ -DskipTests                                                       # Build core\n./mvnw verify -f extensions/<name>/ -Dtest-containers -Dstart-containers                  # Run extension tests\n./mvnw test -Dtest=MyTest -Dtest-containers -Dstart-containers                            # Run single test\n./mvnw verify -f integration-tests/<name>/ -Dtest-containers -Dstart-containers -Dnative  # Native tests\n| `-Dtest-containers -Dstart-containers` | Auto-start containers for tests (always use when running tests) |\n\n**Do NOT use `-Dno-format`** to skip formatting checks. Formatting and\nimport sorting are applied automatically during compilation — there is no\nneed for a separate step. Let the build fix formatting for you.\n\n## Editing Rules\n\n- **Preserve existing comments.** When editing a section of code, keep all\n  existing comments that are not directly invalidated by your change. Never\n  drop comments from code you are not modifying.\n- **Never manually sort or reorder imports** — `impsort-maven-plugin` handles\n  import ordering automatically. Just add imports where needed; do not make\n  edits whose sole purpose is reorganizing imports."
+    gold_removed: ''

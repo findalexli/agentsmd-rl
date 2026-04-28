@@ -1,0 +1,94 @@
+version: "2.0"
+
+task:
+  name: devoxxgenieideaplugin-chore-improve-claudemd-and-add
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: devoxx/DevoxxGenieIDEAPlugin
+  pr: 851
+  base_commit: "668ee01995cdb4651fb8b29b268b164331c47c11"
+  merge_commit: "555481456914fc0973526054e6101d94aec2515b"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/pr/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/pr/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/pr/SKILL.md."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/release/SKILL.md."
+  - id: signal_04
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/release/SKILL.md."
+  - id: signal_05
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/release/SKILL.md."
+  - id: signal_06
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_07
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_08
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+
+config_edits:
+  - path: .claude/skills/pr/SKILL.md
+    tier: 1
+    gold_added: '# Create PR Workflow
+
+      1. Ensure all changes are on a feature/fix branch (create one if on main/develop)
+
+      2. Run the build: `./gradlew build`
+
+      3. Run tests: `./gradlew test`
+
+      4. If build+tests pass, commit with a conventional commit message
+
+      5. Push the branch
+
+      6. Create a PR with a descriptive title and body summarizing changes
+
+      7. Report the PR URL'
+    gold_removed: ''
+  - path: .claude/skills/release/SKILL.md
+    tier: 1
+    gold_added: '# Release Workflow
+
+      1. ASK the user for the target version number - do not assume
+
+      2. Update version in: build.gradle.kts, plugin.xml, gradle.properties, and any other version files
+
+      3. Skip local config files (e.g., local.properties)
+
+      4. Update CHANGELOG.md with recent PRs/commits since last release
+
+      5. Update plugin history if applicable
+
+      6. Run `./gradlew build` to verify
+
+      7. Commit with message: "chore: bump version to vX.Y.Z"
+
+      8. Push to current branch'
+    gold_removed: ''
+  - path: CLAUDE.md
+    tier: 1
+    gold_added: "DevoxxGenie is a Java-based LLM Code Assistant plugin for IntelliJ IDEA that integrates with both local LLM providers (\nOllama, LMStudio, GPT4All, Llama.cpp, Exo) and cloud-based LLMs (OpenAI, Anthropic, Mistral, Groq, Gemini, DeepInfra,\nDeepSeek, OpenRouter, Azure OpenAI, Amazon Bedrock). The plugin supports advanced features like RAG (Retrieval-Augmented\nGeneration), MCP (Model Context Protocol) servers, web search, and agentic programming capabilities.\n\n## Best Practices\n\nAdd at the top of CLAUDE.md under ## Project Context\\n\\nThis is a JetBrains/IntelliJ plugin project (DevoxxGenie).\nPrimary language is Java with some TypeScript. Be aware of EDT (Event Dispatch Thread) constraints — UI operations must\nrun on EDT, and long-running operations must NOT block EDT. Use `ApplicationManager.getApplication().invokeLater()` or\n`ReadAction`/`WriteAction` as appropriate.\n¬\nAdd under a top-level ## Workflow Rules section in CLAUDE.md\\n\\nWhen asked to investigate or fix an issue, do NOT deeply\nexplore the entire codebase autonomously. Start focused on the specific area mentioned, and ask before expanding scope.\nAvoid unnecessary web searches unless explicitly requested.\n\nAdd under ## Git Workflow section in CLAUDE.md\\n\\nAlways create a feature/fix branch BEFORE making any code changes.\nNever edit code on the current branch without confirming the branch strategy first.\n\nAdd under ## Testing section in CLAUDE.md\\n\\nWhen asked to investigate a bug, write a reproducing test FIRST before\napplying any fix, unless told otherwise.\n\nAdd under ## Release Process section in CLAUDE.md\\n\\nFor version bumps, always ask the user what the target version\nshould be. Do not assume the next version number.\n\nCreate a branch fix/issue-XXX from develop, investigate the bug described in issue #XXX, write a reproducing test first,\nthen implement the fix, run all tests, and create a PR.\n\nInvestigate GitHub issue #[NUMBER]. First, read the issue and explore the relevant code. Then write a minimal failing\ntest that reproduces the exact bug. Run the test to confirm it fails. Now implement the fix. Run the full test suite\nrepeatedly, iterating on your implementation until ALL tests pass — including your new regression test. Do not ask me\nfor feedback until you have a green test suite. Then create a feature branch, commit everything with a descriptive\nmessage, and show me a summary of what you changed and why.\n\n\n\n\n\n\n\n- `UserPromptPanel` → `PromptSubmissionListener.onPromptSubmitted()` →\n  `PromptExecutionController.handlePromptSubmission()`\n\n\n\n\n\n    - `chatmodel/cloud/` - Cloud providers (OpenAI, Anthropic, Gemini, etc.)\n    - `chatmodel/local/` - Local providers (Ollama, GPT4All, LMStudio, etc.)\n**Cloud Providers**: anthropic, azureopenai, bedrock, deepinfra, deepseek, google, grok, groq, mistral, openai,\nopenrouter\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n"
+    gold_removed: ''

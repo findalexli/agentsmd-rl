@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: shardingsphere-enhance-claudemd-with-codeofconductmd-integra
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: apache/shardingsphere
+  pr: 36932
+  base_commit: "7f26badf7174e7061f21c4195566d3b15d93f0db"
+  merge_commit: "0d2bcf868fe3a51c6dba267bc3921db54a5f85f3"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+
+config_edits:
+  - path: CLAUDE.md
+    tier: 1
+    gold_added: "1. Follow CODE_OF_CONDUCT.md (clean code principles, naming conventions, formatting)\n2. **AI-Specific Requirements**:\n   - Generate minimal essential code only\n   - Prioritize readability as highest priority\n   - Consider extreme performance optimization\n3. Prioritize scalability, avoid over-engineering\n\n## Testing Standards\n\n1. Follow CODE_OF_CONDUCT.md (AIR principle, BCDE design, naming conventions)\n2. **AI-Specific Requirements**:\n   - 100% line and branch coverage for all new code\n   - No redundant test cases - each test validates unique behavior\n   - Focus on behavior testing over implementation details"
+    gold_removed: ''

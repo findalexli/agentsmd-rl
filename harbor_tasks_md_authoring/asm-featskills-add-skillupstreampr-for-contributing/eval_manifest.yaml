@@ -1,0 +1,205 @@
+version: "2.0"
+
+task:
+  name: asm-featskills-add-skillupstreampr-for-contributing
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: luongnv89/asm
+  pr: 244
+  base_commit: "4598f1c79de4a3ea390aaa867b1141e9335bda41"
+  merge_commit: "ee34d778f7ba671c6e74d7adabd66f02b9b4833f"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/skill-upstream-pr/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/skill-upstream-pr/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/skill-upstream-pr/SKILL.md."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/skill-upstream-pr/docs/README.md."
+  - id: signal_04
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/skill-upstream-pr/docs/README.md."
+  - id: signal_05
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/skill-upstream-pr/docs/README.md."
+  - id: signal_06
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/skill-upstream-pr/references/pr-template.md."
+  - id: signal_07
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/skill-upstream-pr/references/pr-template.md."
+  - id: signal_08
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/skill-upstream-pr/references/pr-template.md."
+  - id: signal_09
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/skill-upstream-pr/references/tone-guide.md."
+  - id: signal_10
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/skill-upstream-pr/references/tone-guide.md."
+  - id: signal_11
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/skill-upstream-pr/references/tone-guide.md."
+
+config_edits:
+  - path: skills/skill-upstream-pr/SKILL.md
+    tier: 1
+    gold_added: "---\nname: skill-upstream-pr\ndescription: \"Improve an open-source GitHub skill and open a friendly suggestion PR upstream: fork, run skill-auto-improver, attach asm eval before/after metrics. Don't use for local-only skills, authoring from scratch, bulk repos, or registry publish.\"\nlicense: MIT\ncompatibility: Claude Code\nallowed-tools: Bash Read Write Edit Grep Glob\neffort: high\nmetadata:\n  version: 1.0.0\n  author: luongnv89\n---\n\n# Skill Upstream PR\n\nYou are contributing quality improvements to someone else's open-source skill. The workflow is: fork → clone → improve via `skill-auto-improver` → push to fork → open a friendly suggestion PR upstream. You do not own the target repo. Every step assumes you are a polite contributor, not a maintainer.\n\n## Repo Sync Before Edits (mandatory)\n\nBefore any modification to the cloned fork, pull the latest from the fork's tracked branch:\n\n```bash\nbranch=\"$(git rev-parse --abbrev-ref HEAD)\"\ngit fetch origin\ngit pull --rebase origin \"$branch\"\n```\n\nIf the working tree is dirty: stash, sync, pop. If `origin` is missing or conflicts occur: stop and ask the user. A stale fork that PRs yesterday's tree is worse than no PR.\n\n## When to Use\n\n- User shares a GitHub URL to a public skill repo and asks to \"improve\", \"level up\", or \"contribute to\" it\n- User says \"open a PR to this skill\" or \"suggest improvements upstream\"\n- The target skill scores below 85/8 on `asm eval` and the user wants the upstream author to benefit\n\nDo **not** trigger for: editing a local skill with no upstream, authoring a brand-new skill, publishing to the ASM registry, or bulk-improving many repos in one pass. One skill → one PR.\n\n## Prerequisites\n\nVerify each before cloning anything. Stop and tell the user if any fails.\n\n- `asm` on PATH (`command -v asm`)\n- `gh` on PATH and authenticated (`gh auth status`)\n- `git` on PATH\n- Network access to GitHub\n- Write access to your own GitHub account (for the fork)\n\n## Input\n\nThe user provides a GitHub reference to a skill. Accept any of:\n\n- `https://github.com/owner/repo`\n- `https://github.com/owner/repo/tree/<branch>/<path/to/skill>`\n- `github:owner/repo[#ref][:path]`\n\nNormalize to `owner`, `repo`, optional `ref`, optional `path`. If `path` is not given and the repo has multiple `SKILL.md` files, ask the user which one.\n\n## Workflow\n\nExecute phases in order. Do not skip or reorder.\n\n### Phase 0 — Fork and clone\n\n```bash\ncd \"$(mktemp -d)\"\ngh repo fork \"$OWNER/$REPO\" --clone --remote\ncd \"$REPO\"\n# If a ref was provided:\ngit checkout \"$REF\"\n```\n\n`gh repo fork --clone --remote` creates the fork under your account, clones it locally, sets `origin` to your fork and `upstream` to the original repo. Verify with `git remote -v` before continuing.\n\nCreate a dedicated branch for the improvement:\n\n```bash\ngit checkout -b \"skill-upstream-pr/improve-$(date +%Y%m%d-%H%M%S)\"\n```\n\n### Phase 1 — Locate the target SKILL.md\n\nIf the user gave a `path`, use it. Otherwise:\n\n```bash\nfind . -maxdepth 5 -name \"SKILL.md\" -type f\n```\n\nIf more than one match and no `path` was given, list the candidates and ask the user to pick. Never guess — a wrong PR is worse than a delayed one.\n\nSet `SKILL_PATH` to the **directory** containing the chosen SKILL.md (not the file itself) — `asm eval` takes a directory.\n\n### Phase 2 — Delegate to skill-auto-improver\n\nThis skill does not reimplement the improvement loop. Follow the workflow in `skills/skill-auto-improver/SKILL.md` with `$SKILL_PATH` as the target:\n\n1. Phase 0 of that skill: capture `.asm-improver/baseline.json`\n2. Phase 1: `asm eval --fix`\n3. Phases 2-4: category-by-category loop with the 85/8 floor\n4. Phase 5: `.asm-improver/report.md`\n\nIf the baseline already passes 85/8, stop and tell the user — no PR needed for a skill that already meets the floor. Offer to find a different skill or a different target.\n\n### Phase 3 — Harvest metrics for the PR\n\nRead two files produced by the auto-improver:\n\n- `.asm-improver/baseline.json` — the before snapshot\n- The latest `.asm-improver/iter-N.json` — the after snapshot\n\nExtract for both:\n\n- `overallScore`, `grade`\n- Every `categories[].score` (7 categories)\n- `topSuggestions` summary (for context, not quoted verbatim)\n\nCompute deltas. If the overall score did not improve by at least 3 points **or** no category moved from below 8 to at least 8, stop and tell the user — the change isn't meaningful enough to justify a PR. Offer the auto-improver report as feedback they can share informally instead.\n\n### Phase 4 — Build the PR body\n\nRead `references/pr-template.md` and fill it in. The template enforces friendly, suggestion-style tone. Key sections:\n\n- **What changed** — one-sentence summary\n- **Before/after metrics** — table with overallScore, grade, and all 7 categories\n- **Files touched** — list every modified path under `$SKILL_PATH`\n- **Iterations taken** — N of 8 from the auto-improver loop\n- **How to verify** — the `asm eval` command the maintainer can run locally\n\nTone rules (read `references/tone-guide.md`):\n\n- Lead with \"Hi — noticed X, wanted to share Y\"\n- Frame as a suggestion, not a fix: \"happy to adjust if the direction doesn't fit\"\n- Never imply the maintainer did something wrong\n- Thank them for open-sourcing the skill\n- Close with \"no obligation to merge — totally fine to close if this isn't the right direction\"\n\n### Phase 5 — Last-mile confirmation (mandatory)\n\nOpening a PR on someone else's repo is public and hard to reverse. Before pushing anything, show the user:\n\n1. The PR title\n2. The full PR body (rendered markdown)\n3. The exact diff (`git diff upstream/<default-branch>`)\n4. The commands you are about to run\n\nAsk the user to confirm. If they want edits, apply them and re-preview. Do not push until the user says \"go\" or equivalent.\n\n### Phase 6 — Push and open the PR\n\nAfter approval:\n\n```bash\n# Commit the changes\ngit add -A\ngit commit -m \"$(cat <<'EOF'\nimprove SKILL.md: clarify triggers, add acceptance criteria, fix frontmatter\n\nSuggested via skill-upstream-pr. See PR body for before/after metrics.\nEOF\n)\"\n\n# Push to the fork\ngit push -u origin \"$(git rev-parse --abbrev-ref HEAD)\"\n\n# Open the PR upstream\ngh pr create \\\n  --repo \"$OWNER/$REPO\" \\\n  --title \"$PR_TITLE\" \\\n  --body-file .asm-improver/pr-body.md\n```\n\nNever push to `upstream`. Never use `--no-verify` or other hook-skip flags. If `gh pr create` fails, stop and report — do not retry in a loop.\n\nPrint the PR URL returned by `gh pr create` so the user can open it.\n\n## Step Completion Reports (mandatory)\n\nEmit a compact status block after each phase:\n\n```\n◆ Phase N — [phase name] ([N of 6])\n··································································\n  [check 1]:         √ pass\n  [check 2]:         √ pass (note if relevant)\n  [check 3]:         × fail — [reason]\n  Criteria:          √ M/K met\n  ______________________________\n  Result:            PASS | FAIL | PARTIAL\n```\n\nChecks per phase:\n\n- **Phase 0** — `Fork created`, `Clone succeeded`, `Branch created`, `Remotes correct`\n- **Phase 1** — `SKILL.md located`, `Path unambiguous`\n- **Phase 2** — `Baseline captured`, `Auto-improver ran`, `Final score >= 85`, `All categories >= 8`\n- **Phase 3** — `Before/after delta >= 3 points OR category promoted`\n- **Phase 4** — `PR body rendered`, `Tone checks passed`\n- **Phase 5** — `User approved`\n- **Phase 6** — `Push succeeded`, `PR opened`, `URL printed`\n\n## Acceptance Criteria\n\n- Fork + clone done via `gh repo fork --clone --remote` — never a direct clone of upstream\n- Dedicated feature branch created before any edits\n- `skill-auto-improver` workflow run on the target; baseline + final JSON captured under `.asm-improver/`\n- Overall score improved by ≥ 3 points, OR at least one category moved from below 8 to ≥ 8\n- PR body built from `references/pr-template.md` with the full before/after table\n- User explicitly approved the PR preview before push\n- `git push` targets `origin` (the fork), never `upstream`\n- `gh pr create --repo $OWNER/$REPO` used — the PR targets the upstream repo\n- PR URL printed to the user at the end\n\n### Expected output\n\n- A new branch on the user's fork of `$OWNER/$REPO`\n- A public PR on `$OWNER/$REPO` with a before/after metrics table and friendly tone\n- A local `.asm-improver/` directory with baseline, iterations, report, and `pr-body.md`\n\n## Edge Cases\n\n- **Skill already passes 85/8** — stop at Phase 2; do not open a PR for a skill that already meets the floor\n- **Improvement too small** (< 3 point overall delta AND no category promoted) — stop at Phase 3; offer the auto-improver report as informal feedback instead\n- **Multiple SKILL.md files in the repo** — ask the user which one; never batch\n- **Fork already exists from a prior run** — `gh repo fork --clone --remote` reuses it; rebase on upstream's default branch before editing\n- **Upstream force-pushed or rewrote history** — stop and ask the user; do not force-push the fork to \"catch up\"\n- **`asm eval --fix` writes changes you disagree with** — revert `SKILL.md.bak` and do targeted edits only; don't ship the auto-fix if it harms the skill\n- **Maintainer has a CONTRIBUTING.md or PR template** — read it before Phase 4 and align the PR body with their conventions; their template wins over ours\n\n## References\n\n- `references/pr-template.md` — PR title + body template with before/after table\n- `references/tone-guide.md` — wording patterns for friendly, suggestion-style contributions\n- `skills/skill-auto-improver/SKILL.md` — the improvement loop this skill delegates to\n- `asm eval --help` — flag reference for the evaluator"
+    gold_removed: ''
+  - path: skills/skill-upstream-pr/docs/README.md
+    tier: 1
+    gold_added: "<!--\n  DO NOT READ THIS FILE — This README.md is for human catalog browsing only.\n  It ships inside the .skill package but is NEVER auto-loaded into agent context.\n  The runtime loader only reads SKILL.md + references/ + scripts/ + agents/ when the skill triggers.\n  If you're an AI agent, read the SKILL.md file instead for skill instructions.\n-->\n\n# Skill Upstream PR\n\n> Contribute improvements to an open-source skill on GitHub: evaluate it, lift its scores via `skill-auto-improver`, and open a friendly suggestion PR back to the upstream author with a before/after metrics table.\n\n## Highlights\n\n- Forks the target repo via `gh`, never pushes to upstream\n- Delegates the improvement loop to `skill-auto-improver` — no logic duplication\n- Builds a PR body from a template with the full `asm eval` before/after table\n- Enforces a \"preview and confirm\" step before any public action\n- Friendly, suggestion-style tone — maintainers can close without guilt\n\n## When to Use\n\n| Say this...                                               | Skill will...                                           |\n| --------------------------------------------------------- | ------------------------------------------------------- |\n| \"Improve this skill and open a PR: github.com/owner/repo\" | Fork, clone, auto-improve, preview PR, push on approval |\n| \"Contribute to this upstream skill\"                       | Same flow with preview before any push                  |\n| \"Suggest improvements to github:owner/repo\"               | Runs eval → improves → drafts suggestion PR             |\n\nDon't use for: local skills you own (use `skill-auto-improver` directly), authoring new skills (use `skill-creator`), or publishing to the ASM registry (use `asm publish`).\n\n## How It Works\n\n```mermaid\ngraph TD\n    A[\"Fork & clone via gh\"] --> B[\"Locate target SKILL.md\"]\n    B --> C[\"Run skill-auto-improver loop\"]\n    C --> D[\"Harvest before/after metrics\"]\n    D --> E[\"Build PR body from template\"]\n    E --> F[\"Preview & wait for user OK\"]\n    F --> G[\"Push fork + gh pr create\"]\n    style A fill:#4CAF50,color:#fff\n    style G fill:#2196F3,color:#fff\n```\n\n## Usage\n\n```\n/skill-upstream-pr github.com/owner/repo\n```\n\n## Resources\n\n| Path                        | Description                                                    |\n| --------------------------- | -------------------------------------------------------------- |\n| `references/pr-template.md` | PR title + body template with the before/after metrics table   |\n| `references/tone-guide.md`  | Friendly, suggestion-style wording patterns for the PR comment |\n\n## Output\n\n- A dedicated branch on your GitHub fork of the target repo\n- A public pull request on the upstream repo with an `asm eval` before/after metrics table and suggestion-style tone\n- A local `.asm-improver/` directory containing `baseline.json`, per-iteration JSON, `report.md`, and `pr-body.md`"
+    gold_removed: ''
+  - path: skills/skill-upstream-pr/references/pr-template.md
+    tier: 1
+    gold_added: '# PR Template
+
+
+      Fill in the placeholders below. Write the final body to `.asm-improver/pr-body.md` and pass it to `gh pr create --body-file`.
+
+
+      ## Title
+
+
+      ```
+
+      Suggest SKILL.md improvements for <skill-name> (+<N> overall, <weakest-category> +<M>)
+
+      ```
+
+
+      Keep it under 72 chars. Lead with "Suggest" so the reader immediately sees this is a suggestion PR, not a drive-by rewrite.
+
+
+      ## Body
+
+
+      ````markdown
+
+      Hi! 👋 I came across **<skill-name>** while browsing skills and really appreciated <one specific thing you liked>. Wanted to share a few suggestions that surfaced when I ran the skill through [`asm eval`](https://github.com/luongnv89/agent-skill-manager) — totally happy to adjust or drop any of this if it doesn''t fit your direction.
+
+
+      ## What I suggested
+
+
+      <One or two sentences describing the main focus of the changes. E.g. "Tightened the description for better triggering, added an Acceptance Criteria section, and moved the long example list into `references/` to keep the body under the context-efficiency budget.">
+
+
+      ## Before / after metrics (`asm eval`)
+
+
+      | Metric              | Before  | After   | Δ           |
+
+      | ------------------- | ------- | ------- | ----------- |
+
+      | **Overall score**   | <X>/100 | <Y>/100 | **+<Y-X>**  |
+
+      | **Grade**           | <old>   | <new>   | <old → new> |
+
+      | Structure           | <a>/10  | <b>/10  | <b-a>       |
+
+      | Description quality | <a>/10  | <b>/10  | <b-a>       |
+
+      | Prompt engineering  | <a>/10  | <b>/10  | <b-a>       |
+
+      | Context efficiency  | <a>/10  | <b>/10  | <b-a>       |
+
+      | Safety              | <a>/10  | <b>/10  | <b-a>       |
+
+      | Testability         | <a>/10  | <b>/10  | <b-a>       |
+
+      | Naming conventions  | <a>/10  | <b>/10  | <b-a>       |
+
+
+      <Note: delete category rows that didn''t change, or keep the full table — maintainer''s call. Bold the ones that moved.>
+
+
+      ## Files touched
+
+
+      - `<path/to/SKILL.md>`
+
+      - `<path/to/references/new-file.md>` (new)
+
+      - `<path/to/other-file>`
+
+
+      ## How to verify locally
+
+
+      ```bash
+
+      # From the repo root
+
+      asm eval <path-to-skill>          # human-readable score
+
+      asm eval <path-to-skill> --json   # full JSON report
+
+      ```
+
+      ````
+
+
+      The full iteration log and before/after JSON snapshots are attached as commits on this branch under `.asm-improver/` — feel free to delete them before merging if you don''t want them in the repo.
+
+
+      ## Why these changes
+
+
+      <One short paragraph per category that moved, in plain language. Avoid quoting the evaluator verbatim — translate the finding into human terms.>
+
+
+      - **<category>** — <human-readable reason, e.g. "The description was missing a ''Don''t use for'' clause, which helps Claude skip the skill on adjacent queries. Added one naming the nearby domains.">
+
+
+      ## Notes
+
+
+      - These are suggestions, not prescriptions — happy to revise based on your preferences, or close this if the direction isn''t right for the project.
+
+      - Thanks for open-sourcing <skill-name>! It''s a useful skill and hope this is helpful.
+
+
+      _Opened via [skill-upstream-pr](https://github.com/luongnv89/asm/tree/main/skills/skill-upstream-pr). No obligation to merge._
+
+
+      ```
+
+
+      ## Rendering rules
+
+
+      - Always render the full metrics table, even when only one or two categories changed — maintainers appreciate the complete picture
+
+      - Bold the **Overall score** row; bold any category that moved more than 1 point
+
+      - If `overallScore` dropped on any category, mention it up front in "What I suggested" so the maintainer isn''t surprised — honesty beats tidy numbers
+
+      - Strip trailing whitespace and ensure one trailing newline in `pr-body.md` before passing it to `gh`
+
+      ```'
+    gold_removed: ''
+  - path: skills/skill-upstream-pr/references/tone-guide.md
+    tier: 1
+    gold_added: "# Tone Guide\n\nYou are a contributor to someone else's public project. They did not ask you to submit this PR. The tone must reflect that.\n\n## Core principles\n\n1. **Frame as a suggestion, not a correction.** Never imply the author made a mistake.\n2. **Acknowledge the author's work first.** Call out one specific thing you liked before suggesting changes.\n3. **Offer an easy exit.** Make it obvious they can close the PR without explanation and nobody will be upset.\n4. **Be specific.** \"Improved prompt engineering\" is noise. \"Added a negative-trigger clause to skip Vue/Svelte queries\" is signal.\n5. **No jargon dumps.** Translate eval-speak into plain English. A maintainer may not know what \"context efficiency\" means in `asm eval` terms.\n\n## Phrases to use\n\n- \"Hi \U0001F44B — noticed X while browsing skills\"\n- \"Wanted to share a few suggestions\"\n- \"Happy to adjust if the direction doesn't fit\"\n- \"Totally fine to close this if it's not the right direction for the project\"\n- \"Thanks for open-sourcing this\"\n- \"No obligation to merge\"\n- \"Really appreciated <specific thing>\"\n- \"Let me know what you think\"\n\n## Phrases to avoid\n\n- \"You should\" / \"You need to\"\n- \"This is wrong\" / \"This is broken\"\n- \"Best practices\" (preachy — name the concrete benefit instead)\n- \"Required\" / \"Must\" (they don't owe you anything)\n- \"I noticed some issues\" (frame positively — \"a few things that might tighten the triggering\")\n- \"Before my changes it was bad\" (never put the baseline down)\n\n## Example openers\n\n**Good:**\n\n> Hi! \U0001F44B I came across **code-review** while browsing the collection and really liked how the detail-level tiers are structured. Wanted to share a few small suggestions that came up when I ran it through `asm eval` — totally happy to adjust or drop any of these.\n\n**Bad:**\n\n> Your SKILL.md has several issues that need fixing. I've applied the fixes in this PR.\n\n## Handling the score table\n\nThe before/after table is the heart of the PR, but it can feel like a report card. Soften it:\n\n- Keep the \"Before\" numbers in the table — no need to hide them — but never narrate them (\"was only 62/100\" is rude)\n- In the \"Why these changes\" section, focus on **what the fix unlocks for users** of the skill, not what was \"wrong\"\n  - Good: \"Added a 'Don't use for' clause — helps Claude skip this skill on Vue/Svelte queries so it triggers more reliably on the React ones you actually want.\"\n  - Bad: \"The description was missing negative triggers, which lowered the description score.\"\n\n## Closing\n\nEnd with a short, human line — not a sales pitch. One of:\n\n- \"Let me know what you think — happy to iterate.\"\n- \"No obligation to merge; feel free to cherry-pick or rework.\"\n- \"Hope this is useful — thanks again for the skill.\""
+    gold_removed: ''

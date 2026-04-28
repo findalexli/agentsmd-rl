@@ -1,0 +1,21 @@
+# feat(ai): Add Copilot Instructions
+
+Source: [helius-labs/helius-sdk#285](https://github.com/helius-labs/helius-sdk/pull/285)
+
+This task is a **markdown_authoring** task. The repository's agent-instruction file(s)
+need to be updated. Read the existing content and add or modify the rules so that
+the file matches the intent described below.
+
+## Files to update
+
+- `.github/copilot-instructions.md`
+
+## What to add / change
+
+This PR adds GitHub Copilot workspace instructions so contributors using Copilot get accurate in-editor suggestions tailored to the SDK
+
+## Acceptance
+
+The grader runs `pytest /tests/test_outputs.py` which checks that distinctive
+literal strings from the intended update are present in the target file(s).
+You do not need to write any code outside of the markdown file(s).

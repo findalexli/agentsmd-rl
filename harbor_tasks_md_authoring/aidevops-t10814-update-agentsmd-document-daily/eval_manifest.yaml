@@ -1,0 +1,41 @@
+version: "2.0"
+
+task:
+  name: aidevops-t10814-update-agentsmd-document-daily
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: marcusquinn/aidevops
+  pr: 1639
+  base_commit: "eae0d834a12b31b18c68edafd583a3d29f89d6a5"
+  merge_commit: "16c1f99302f0930102d02a0a95d80ba11f3f646b"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .agents/AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .agents/AGENTS.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .agents/AGENTS.md."
+
+config_edits:
+  - path: .agents/AGENTS.md
+    tier: 1
+    gold_added: '**Daily skill refresh**: Each auto-update check also runs a 24h-gated skill freshness check. If >24h have passed since the last check, `skill-update-helper.sh --auto-update --quiet` pulls upstream changes for all imported skills. State is tracked in `~/.aidevops/cache/auto-update-state.json` (`last_skill_check`, `skill_updates_applied`). Disable with `AIDEVOPS_SKILL_AUTO_UPDATE=false`; adjust frequency with `AIDEVOPS_SKILL_FRESHNESS_HOURS=<hours>` (default: 24). View skill check status with `aidevops auto-update status`.
+
+
+      **Repo version wins on update**: When `aidevops update` runs, shared agents in `~/.aidevops/agents/` are overwritten by the repo version. Only `custom/` and `draft/` directories are preserved. Imported skills stored outside these directories will be overwritten. To keep a skill across updates, either re-import it after each update or move it to `custom/`.
+
+
+      **Cross-tool**: Claude marketplace plugin, Agent Skills (SKILL.md), Claude Code agents, manual AGENTS.md reference.
+
+
+      **Skill persistence**: Imported skills are stored in `~/.aidevops/agents/` and tracked in `configs/skill-sources.json`. The daily auto-update skill refresh (see Auto-Update above) keeps them current from upstream. Note: `aidevops update` overwrites shared agent files — only `custom/` and `draft/` survive. Re-import skills after an update, or place them in `custom/` for persistence.'
+    gold_removed: ''

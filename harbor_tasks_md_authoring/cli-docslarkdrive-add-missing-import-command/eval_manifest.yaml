@@ -1,0 +1,58 @@
+version: "2.0"
+
+task:
+  name: cli-docslarkdrive-add-missing-import-command
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: larksuite/cli
+  pr: 669
+  base_commit: "1e2144ee08449c4cf7b0fa6a79da45ad36fe4557"
+  merge_commit: "8ec95a4e393c629d9cced98fe22e1ee64d990a4f"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/lark-drive/references/lark-drive-import.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/lark-drive/references/lark-drive-import.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/lark-drive/references/lark-drive-import.md."
+
+config_edits:
+  - path: skills/lark-drive/references/lark-drive-import.md
+    tier: 1
+    gold_added: '# 导入 Word 为新版文档 (docx)
+
+      lark-cli drive +import --file ./report.docx --type docx
+
+      lark-cli drive +import --file ./legacy.doc --type docx
+
+
+      # 导入纯文本为新版文档 (docx)
+
+      lark-cli drive +import --file ./notes.txt --type docx
+
+
+      # 导入 HTML 为新版文档 (docx)
+
+      lark-cli drive +import --file ./page.html --type docx
+
+
+      # 导入 Excel 97-2003 (.xls) 为电子表格 (sheet)
+
+      lark-cli drive +import --file ./legacy.xls --type sheet
+
+
+      # 导入 CSV 为电子表格 (sheet)
+
+      lark-cli drive +import --file ./data.csv --type sheet
+
+      '
+    gold_removed: ''

@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: easy-dotnet.nvim-chore-add-copilot-instructions
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: GustavEikaas/easy-dotnet.nvim
+  pr: 879
+  base_commit: "c7de3813184a69b0eeb5b41581dd49dcfe1e8587"
+  merge_commit: "d54b610ad8cdb37c53150a9b95b920f10002b382"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/copilot-instructions.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/copilot-instructions.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/copilot-instructions.md."
+
+config_edits:
+  - path: .github/copilot-instructions.md
+    tier: 1
+    gold_added: "# easy-dotnet.nvim — Copilot Instructions\n\n## What This Repo Is\n\nThis is the **Lua Neovim client** for the easy-dotnet plugin. It is intentionally dumb. Its only responsibilities are:\n\n- Spawning and managing the server process lifecycle\n- Dispatching outgoing JSON-RPC calls via `./lua/easy-dotnet/rpc/`\n- Handling reverse requests from the server (show a picker, prompt for input, display a float)\n- Rendering data the server returns into Neovim buffers and windows\n\nAll intelligence, state, and business logic lives in the server (`easy-dotnet-server`). If you find yourself writing conditional logic about .NET concepts, project state, or build output in Lua — stop and move it to the server instead.\n\n> **If you are about to make changes that affect the JSON-RPC wire contract** (adding, removing, or changing any method name, parameter shape, or return type), you must read the server repo's instructions first:\n> `$HOME/repo/easy-dotnet-server/.github/copilot-instructions.md`\n> Both sides must be updated atomically. The protocol is the contract.\n\n---\n\n## Architecture Principles\n\n### The Client Is Dumb by Design\n\n> **Lua is hard to maintain. C# is not.** Resist the urge to add logic here. The server decides what to show and when; the client just shows it.\n\n- No knowledge of MSBuild, NuGet, Roslyn, solution structure, or .NET tooling belongs in this repo.\n- The server drives complex workflows via **reverse requests** — it sends requests to the client mid-operation to collect input or display progress. The client fulfills them and replies.\n\n### Reverse Requests\n\nThe server initiates requests to the client during long-running operations. Study the existing handlers in `./lua/easy-dotnet/rpc/` before adding new ones — all reverse request handlers live there.\n\nThe flow:\n\n```\nClient calls server  →  server does async work\n  →  server sends reverse request (\"pick a project\")\n  →  client shows picker, replies with selection\n  →  server continues, sends progress notifications\n  →  server sends final result\n```\n\n### JSON-RPC Contract\n\n- **JSON-RPC 2.0** over stdin/stdout.\n- Method names use **dot notation** by domain: `testRunner.run`, `project.restore`, `editor.navigate`.\n- `rpcDoc.md` (in the server repo) is the hand-maintained wire contract. Read it before implementing any new RPC call.\n\n---\n\n## Code Guidelines\n\n- **No business logic.** Rendering, picking, and prompting only.\n- Follow the dispatcher pattern in `./lua/easy-dotnet/rpc/`. New reverse request handlers belong there.\n- Use `vim.schedule()` to re-enter the Neovim event loop from async/RPC callbacks.\n- Prefer Neovim built-in APIs (`vim.ui.select`, `vim.ui.input`) for simple interactions — keeps the client thin and theme-compatible.\n- All `require()` calls use the `easy-dotnet` namespace prefix.\n- When working with Neovim-specific APIs (extmarks, `vim.ui`, floating windows, treesitter, etc.), **searching the internet is encouraged**. The Neovim docs and source are dense — community examples and GitHub issues often clarify real behavior faster than the reference docs.\n\n---\n\n## Key Files\n\n| File | What it teaches |\n|---|---|\n| `lua/easy-dotnet/rpc/` | RPC dispatcher and all reverse request handlers |\n\nWhen adding a new user-facing feature, the workflow is: define the RPC contract → implement it in the server → add only the render/input handler here."
+    gold_removed: ''

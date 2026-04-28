@@ -1,0 +1,86 @@
+version: "2.0"
+
+task:
+  name: qtpass-docs-clarify-squash-merge-options
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: IJHack/QtPass
+  pr: 1177
+  base_commit: "ecef4e7849e55e2abffac95d9fc7be965822d4ca"
+  merge_commit: "780e4ac570ec2c47bab81e5a9176802b9bcbb87d"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .opencode/skills/qtpass-github/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .opencode/skills/qtpass-github/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .opencode/skills/qtpass-github/SKILL.md."
+
+config_edits:
+  - path: .opencode/skills/qtpass-github/SKILL.md
+    tier: 1
+    gold_added: '# Force push if needed (safer)
+
+      git push --force-with-lease <push-remote> <branch>
+
+      ### Squash merge now via GitHub CLI
+
+
+      When all CI checks pass and you want to merge immediately:
+
+
+      # Squash merge immediately (all checks passed)
+
+      gh pr merge <PR_NUMBER> --squash --delete-branch --subject "fix: description"
+
+      ```
+
+      ### Schedule squash merge (waits for CI)
+
+
+      When you want to wait for CI to pass before merging:
+
+
+      ```bash
+
+      # Squash merge that waits for CI checks to pass
+
+      **Avoid force pushing to shared branches**
+
+
+      Only force push to feature branches when absolutely necessary (e.g., resolving merge conflicts, cleaning up commits). Prefer `--force-with-lease` over `-f` because it fails if someone else pushed to the branch, preventing accidental overwrites of others'' work. Never use `-f` or `--force` on main or shared branches:
+
+
+      ```bash
+
+      # Safe force push (recommended)
+
+      git push --force-with-lease <push-remote> <branch>
+
+
+      # Never use on main or shared branches
+
+      git push --force origin main  # AVOID THIS
+
+      ```
+
+
+      Never force push to main or branches that others may be working from.
+
+      # Force push (since we rewrote history; safer)
+
+      git push --force-with-lease <push-remote> <branch>
+
+      git push --force-with-lease <push-remote> <branch-name>
+
+      git push --force-with-lease <push-remote> <branch>'
+    gold_removed: ''

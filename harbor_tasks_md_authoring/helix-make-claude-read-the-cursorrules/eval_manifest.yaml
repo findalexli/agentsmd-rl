@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: helix-make-claude-read-the-cursorrules
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: helixml/helix
+  pr: 1327
+  base_commit: "f63971557a22178d43b2f4e7c575cae03fcdef37"
+  merge_commit: "4c9234a338b68d525bfefe84499f9b13d5278ab7"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+
+config_edits:
+  - path: CLAUDE.md
+    tier: 1
+    gold_added: "# Claude Rules for Helix Development\n\nThe following rule files should be consulted when working on the codebase:\n\n@.cursor/rules/helix.mdc\n@.cursor/rules/go-api-handlers.mdc\n@.cursor/rules/use-gorm-for-database.mdc\n@.cursor/rules/use-frontend-api-client.mdc\n\nThis file contains critical development guidelines and context that MUST be followed at all times during Helix development.\n\n## Documentation Organization\n\n**CRITICAL: LLM-generated design documents MUST live in `design/` folder ONLY**\n\n- **`design/`**: All LLM-generated design docs, architecture decisions, status reports, debugging logs\n  - These are internal development artifacts created during the feature development process\n  - Naming convention: `YYYY-MM-DD-descriptive-name.md` (e.g., `2025-09-23-wolf-streaming-architecture.md`)\n  - Date should reflect when the document was written, enabling chronological navigation\n\n- **`docs/`**: External user-facing documentation ONLY\n  - User guides, API documentation, deployment instructions\n  - Documentation meant for external consumption\n  - Should NOT contain LLM-generated design artifacts\n\n- **Root level**: Only `README.md`, `CONTRIBUTING.md`, and `CLAUDE.md` (this file)\n\n**Why this matters:**\n- Keeps internal design artifacts separate from user-facing documentation\n- Dates in filenames provide clear chronological history of development decisions\n- Makes it easy to follow the evolution of architectural decisions over time\n\n## Hot Reloading Development Stack\n\nThe Helix development stack has hot reloading enabled in multiple components for fast iteration:\n\n- **Frontend**: Vite-based hot reloading for React/TypeScript changes\n- **API Server**: Air-based hot reloading for Go API changes\n- **GPU Runner**: Live code reloading for runner modifications\n\nThis means you often don't need to rebuild containers - just save files and changes are picked up automatically."
+    gold_removed: ''

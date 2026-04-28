@@ -1,0 +1,36 @@
+version: "2.0"
+
+task:
+  name: change-lenses-and-actions-add-missing-frontmatter-block-to
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: johnpcutler/change-lenses-and-actions
+  pr: 1
+  base_commit: "fd839ec081160d1dd3eedba7ec0b294124efd03f"
+  merge_commit: "3d1c1e222075cd5f44b7d9afd00cb8ec25f3ff31"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in SKILL.md."
+
+config_edits:
+  - path: SKILL.md
+    tier: 1
+    gold_added: '---
+
+      name: com-b-diagnostic
+
+      description: Run a structured behavioral diagnosis using COM-B, the Behavior Change Wheel, and BCT Taxonomy v1. Activate when the user describes a stuck or problematic behavior, or uses phrases like "Why aren''t people doing X?", "Run a COM-B analysis", "Diagnose this behavior", or "What''s blocking adoption of X?"
+
+      ---
+
+      '
+    gold_removed: ''

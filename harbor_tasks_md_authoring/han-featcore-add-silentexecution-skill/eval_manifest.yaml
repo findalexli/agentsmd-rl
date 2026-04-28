@@ -1,0 +1,97 @@
+version: "2.0"
+
+task:
+  name: han-featcore-add-silentexecution-skill
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: TheBushidoCollective/han
+  pr: 81
+  base_commit: "660569155973e511d7cf501dfda880309ba68b7d"
+  merge_commit: "dc31a0bac7fde1a900699d058d7a373b2b118135"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in plugins/core/skills/silent-execution/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in plugins/core/skills/silent-execution/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in plugins/core/skills/silent-execution/SKILL.md."
+
+config_edits:
+  - path: plugins/core/skills/silent-execution/SKILL.md
+    tier: 1
+    gold_added: '---
+
+      name: silent-execution
+
+      user-invocable: false
+
+      description: Reduce token waste by batching tool calls and avoiding narration between sequential operations
+
+      allowed-tools: []
+
+      ---
+
+
+      # Silent Execution
+
+
+      ## Name
+
+      han-core:silent-execution
+
+
+      ## Description
+
+
+      When executing a sequence of related tool calls (running tests, fixing lint, applying edits), batch operations and report results only when complete.
+
+
+      ## The Pattern
+
+
+      **Anti-pattern (wasteful):**
+
+      > "Now I''ll run the tests..."
+
+      > [runs tests]
+
+      > "Tests passed. Now I''ll run the linter..."
+
+      > [runs linter]
+
+      > "Linting clean. Let me check types..."
+
+
+      **Pattern (efficient):**
+
+      > [runs tests, linter, type-check]
+
+      > "All quality gates pass: tests (42 passed), lint (clean), types (no errors)."
+
+
+      ## Rules
+
+
+      1. **Batch independent operations** — if operations don''t depend on each other, run them all before commenting
+
+      2. **No narration** — don''t describe what you''re about to do for each tool call
+
+      3. **Report results** — speak only when the batch is complete or something unexpected happens
+
+      4. **Exception: interactive debugging** — when the user is watching you debug, narration helps them follow along
+
+
+      ## Token Savings
+
+
+      ~50-100 tokens per batch cycle. Over a typical session with 20+ build cycles, this saves 1,000-2,000 tokens.'
+    gold_removed: ''

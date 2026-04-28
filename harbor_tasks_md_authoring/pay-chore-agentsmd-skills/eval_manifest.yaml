@@ -1,0 +1,113 @@
+version: "2.0"
+
+task:
+  name: pay-chore-agentsmd-skills
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: yansongda/pay
+  pr: 1150
+  base_commit: "f299db85994f2eb5f2069e99ae58ef3a74998d88"
+  merge_commit: "78e494744e689bafe4d1d6d161c14ab8b60faa72"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .agents/skills/container-dev/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .agents/skills/container-dev/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .agents/skills/container-dev/SKILL.md."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .agents/skills/pr-review-provider/SKILL.md."
+  - id: signal_04
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .agents/skills/pr-review-provider/SKILL.md."
+  - id: signal_05
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .agents/skills/pr-review-provider/SKILL.md."
+  - id: signal_06
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_07
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_08
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+
+config_edits:
+  - path: .agents/skills/container-dev/SKILL.md
+    tier: 1
+    gold_added: "description: \"Use when local PHP environment is unavailable. Fallback container-based development environment for yansongda/pay project.\"\n**容器作为备选**：仅在本地环境不可用时使用容器。\n## 快速参考\n\n### 镜像\n### 常用命令\n\n| 任务 | 命令 |\n|------|------|\n| 运行测试 | `composer test` |\n| PHPStan 分析 | `composer analyse` |\n| 代码风格检查 | `composer cs-fix`（**仅检查，不修复**） |\n| 代码风格修复 | `php-cs-fixer fix ./src` |\n| Composer 更新 | `composer update --with-all-dependencies` |\n| 安装依赖 | `composer install` |\n| Web 文档开发 | `pnpm web:dev`（需本地 Node 或 Node 容器） |\n| Web 文档构建 | `pnpm web:build`（需本地 Node 或 Node 容器） |\n\n---\n\n## Apple Container\n### 基本模板\n  COMMAND\n### DNS 问题处理\n若出现 DNS 解析失败（`198.18.0.x` 地址、连接超时），添加 DNS fix：\n  sh -c \"echo 'nameserver 8.8.8.8' > /etc/resolv.conf && COMMAND\"\n### PHP 命令示例\n# 测试（需 DNS fix + COMPOSER_ALLOW_SUPERUSER）\n# 代码风格检查（仅查看差异）\n\n# 代码风格修复\ncontainer run --rm -v \"$(pwd)\":/app -w /app \\\n  registry.cn-shenzhen.aliyuncs.com/yansongda/php:cli-8.3-alpine \\\n  sh -c \"echo 'nameserver 8.8.8.8' > /etc/resolv.conf && COMPOSER_ALLOW_SUPERUSER=1 php-cs-fixer fix ./src\"\n\n# Composer update\ncontainer run --rm -v \"$(pwd)\":/app -w /app \\\n  registry.cn-shenzhen.aliyuncs.com/yansongda/php:cli-8.3-alpine \\\n  sh -c \"echo 'nameserver 8.8.8.8' > /etc/resolv.conf && composer update --with-all-dependencies\"\n### Web 文档命令\n\nWeb 文档使用 pnpm，镜像中无 Node.js，需使用 Node 镜像或本地运行。\n**注意**：`web/package.json` 要求 Node `>=20.12.0`，请确保使用的镜像版本满足此约束。\n# 方案1: 本地运行（推荐）\ncd web && pnpm web:dev\n# 方案2: 使用 Node 容器（版本 >=20.12.0）\ndocker run --rm -v \"$(pwd)/web\":/app -w /app \\\n  node:20-alpine \\\n  sh -c \"npm install -g pnpm && pnpm install && pnpm web:dev\"\n```\n\n---\n\n## Docker\n\nDocker 命令类似，通常不需要 DNS fix：\n\n```bash\n# 测试\n  composer test\n# 代码风格检查\n\n# 代码风格修复\ndocker run --rm -v \"$(pwd)\":/app -w /app \\\n  registry.cn-shenzhen.aliyuncs.com/yansongda/php:cli-8.3-alpine \\\n  php-cs-fixer fix ./src\n---\n**原因**：Container 系统 DNS 解析器异常。\n---\n\n- `COMPOSER_ALLOW_SUPERUSER=1`：容器内运行 composer 脚本必须\n- `composer cs-fix`：**仅检查并显示差异**，不自动修复\n- `php-cs-fixer fix ./src`：实际修复代码风格\n- Apple Container 需先启动：`container system start`\n- Docker 需确保 Docker Desktop 或 daemon 已启动\n- 容器内网络可能无法访问某些 CDN，测试中可能出现 PHP warning（不影响核心功能）"
+    gold_removed: ''
+  - path: .agents/skills/pr-review-provider/SKILL.md
+    tier: 1
+    gold_added: "## Review 流程\n按以下阶段顺序审查，确保覆盖完整：\n\n1. **Phase 1**: Provider 结构完整性\n2. **Phase 2**: 代码规范检查\n3. **Phase 3**: 安全性检查（签名验证、加密解密）\n4. **Phase 4**: 架构一致性（管道、Trait、Event）\n5. **Phase 5**: 官方文档对照\n6. **Phase 6**: 测试覆盖\n7. **Phase 7**: 文档完整性\n\n---\n\n## Phase 1: Provider 结构完整性\n\n对照以下清单逐项检查：\n\n| # | 检查项 | 位置 | 说明 |\n|---|--------|------|------|\n| 1 | 插件 | `src/Plugin/{Provider}/V{n}/` | 按版本组织 |\n| 2 | Provider 类 | `src/Provider/{Provider}.php` | 实现 `ProviderInterface` |\n| 3 | 服务提供者 | `src/Service/{Provider}ServiceProvider.php` | 服务注册 |\n| 4 | 快捷方式 | `src/Shortcut/{Provider}/` | `{Method}Shortcut.php` |\n| 5 | Trait 方法 | `src/Traits/{Provider}Trait.php` | `get{Provider}Url`、`verify{Provider}WebhookSign` 等 |\n| 6 | Provider 注册 | `src/Pay.php` | 添加 `{Provider}::class` 和入口方法 |\n| 7 | 异常常量 | `src/Exception/Exception.php` | `PARAMS_{PROVIDER}_*`、`CONFIG_{PROVIDER}_*` |\n| 8 | 测试 | `tests/` | 与源码结构对应 |\n| 9 | 文档 | `web/docs/v3/{provider}/` | VitePress 文档 |\n| 10 | 侧边栏/CHANGELOG | `web/.vitepress/sidebar/v3.js`、`CHANGELOG.md` | 更新配置 |\n\n**注意**：`src/Functions.php` 已不存在，URL/签名等方法已下沉到 `src/Traits/*Trait.php`。\n\n---\n\n## Phase 2: 代码规范检查\n\n### 基本规范\n\n| 检查项 | 要求 |\n|--------|------|\n| `declare(strict_types=1)` | 每个文件必须有 |\n| `use` 导入 | 除动态类名字符串/反射场景外，禁止直接写完整命名空间（如 `\\Yansongda\\Pay\\...`） |\n| 多行条件 | `&&` / `||` 放在续行开头 |\n### 命名规范\n| 类型 | 格式 | 示例 |\n|------|------|------|\n| 插件 | `{Action}Plugin.php` | `PayPlugin`、`RefundPlugin` |\n| 快捷方式 | `{Method}Shortcut.php` | `WebShortcut`、`QueryShortcut` |\n| Provider | `{ProviderName}.php` | `Paypal.php`、`Stripe.php` |\n| ServiceProvider | `{ProviderName}ServiceProvider.php` | `PaypalServiceProvider.php` |\n| Trait | `{Provider}Trait.php` | `WechatTrait`、`StripeTrait` |\n| 命名空间 | `Yansongda\\Pay\\Plugin\\{Provider}\\V{n}\\Pay\\{Plugin}` | 版本号与 API 版本一致 |\n\n### 日志与异常\n\n- 日志格式：`[Provider][V{n}][Category][Plugin]`，使用中文消息\n- 异常常量：`PARAMS_{PROVIDER}_*`、`CONFIG_{PROVIDER}_*`\n- 异常消息：中文，附带上下文参数\n\n---\n\n## Phase 3: 安全性检查\n**高危**：`Artful::artful()` 第二参数必须是 `params`（含 `_config`），不能是 `payload`。\n**检查方法**：搜索 `Artful::artful(` 调用，追踪第二参数来源。\n\n### 2. 空值处理\n检查最终发送的 body/query 是否包含不应出现的 `null`/空字段。\n**推荐方式**：\n- 优先使用 `filter_params()` 函数（artful 库提供）\n- 嵌套数组场景补充 `array_filter()`\n// ✅ 优先方式 — filter_params\n$body = http_build_query(filter_params($payload)->toArray());\n// ✅ 嵌套场景 — array_filter\n    'application_context' => $payload->get('application_context'),\n**检查位置**：`AddRadarPlugin::getBody()`、`getQueryString()`、业务 Plugin 的 `mergePayload()`。\n**安全强制**：所有 CallbackPlugin 必须验签。\n| Provider | Trait 方法 | 必需配置字段 |\n|----------|------------|--------------|\n| Stripe | `StripeTrait::verifyStripeWebhookSign()` | `webhook_secret` |\n| PayPal | `PaypalTrait::verifyPaypalWebhookSign()` | `webhook_id` + OAuth |\n| 微信 | `WechatTrait::verifyWechatSign()` | `mch_secret_cert`、`wechat_public_cert_path`（可预置或运行时拉取） |\n| 抖音 | —（在 `CallbackPlugin::verifySign()` 中实现） | `mch_secret_token`、`mch_secret_salt` |\n| 银联 | `UnipayTrait::verifyUnipaySign()` | `unipay_public_cert_path` |\n| 支付宝 | `AlipayTrait::verifyAlipaySign()` | `alipay_public_cert_path` |\n**检查点**：\n- CallbackPlugin 是否调用 Trait 提供或 Plugin 自身实现的签名验证方法\n- 签名算法是否与官方文档一致（对照 `@see` 链接）\n- 配置缺失时抛异常\n- 签名为空时抛异常\n- 使用 `hash_equals` 防时序攻击\n### 4. 数组回调的处理\n**仅适用于 Stripe/Wechat/Paypal**（构造 `ServerRequest` 并验签）：\n`getCallbackParams()` 处理逻辑：\n| 输入类型 | 行为 |\n|----------|------|\n| `['body' => ..., 'headers' => ...]` | 构造带 headers 的 `ServerRequest`，**会验签** |\n| 纯数组（无 headers） | 构造无 headers 的 `ServerRequest`，验签时会抛 `SIGN_EMPTY` |\n| `ServerRequestInterface` | 直接使用，验签 |\n| `null` | 从 `ServerRequest::fromGlobals()` 获取 |\n**结论**：数组回调只有提供完整 `headers` + `body` 才能通过验签；否则验签阶段抛异常。\n**Alipay/Douyin/Unipay 不同**：\n- `getCallbackParams()` 返回 `Collection`（从 query/parsedBody 取值）\n- 直接 merge 到 params，不构造 `ServerRequest`\n- CallbackPlugin 从 params 中取值验签\n### 5. 加密资源解密（微信）\n\n微信回调的 `resource` 字段需解密：\n$body['resource'] = self::decryptWechatResource($body['resource'] ?? [], $config);\n检查 `CallbackPlugin` 是否调用此方法。\n\n---\n## Phase 4: 架构一致性\n### 1. 插件管道骨架\n**通用骨架**：\n```\nStartPlugin → [前置插件] → 业务插件 → [后置插件] → ParserPlugin\n```\n**各 Provider 差异**：\n| Provider | 前置插件 | 后置插件 |\n|----------|----------|----------|\n| Stripe | 无 | `AddRadarPlugin` → `ResponsePlugin` |\n| PayPal | `ObtainAccessTokenPlugin` | `AddPayloadBodyPlugin` → `AddRadarPlugin` → `ResponsePlugin` |\n| 微信 | 无 | `AddPayloadBodyPlugin` → `AddPayloadSignaturePlugin` → `AddRadarPlugin` → `VerifySignaturePlugin` → `ResponsePlugin` |\n| 支付宝 | 无 | `FormatPayloadBizContentPlugin` → `AddPayloadSignaturePlugin` → `AddRadarPlugin` → `VerifySignaturePlugin` → `ResponsePlugin` |\n**注意**：不同 Provider 管道差异较大，不要按固定模板审查。\n### 2. mergeCommonPlugins 实现\nProvider 类必须实现此方法，返回完整管道：\n\n```php\npublic function mergeCommonPlugins(array $plugins): array\n{\n    return array_merge(\n        [StartPlugin::class, /* 前置插件 */],\n        $plugins,\n        [/* 后置插件 */, ParserPlugin::class],\n    );\n}\n```\n\n### 3. Trait 方法复用\n\n新增 Provider 应复用 Trait 方法而非重新实现：\n\n| 功能 | Trait 方法 |\n|------|------------|\n| URL 构建 | `get{Provider}Url()` |\n| 签名验证 | `verify{Provider}WebhookSign()` / `verify{Provider}Sign()` |\n| 配置获取 | `ProviderConfigTrait::getProviderConfig()`、`getTenant()` |\n| 加密解密 | `WechatTrait::decryptWechatResource()` |\n\n### 4. Provider 常量定义\n\n必须定义 `URL` 常量：\n\n```php\npublic const URL = [\n    Pay::MODE_NORMAL => 'https://api.xxx.com/',\n    Pay::MODE_SANDBOX => 'https://sandbox.api.xxx.com/',\n    Pay::MODE_SERVICE => 'https://api.xxx.com/',\n];\n```\n\n特殊常量（如微信）：\n- `AUTH_TAG_LENGTH_BYTE`\n- `MCH_SECRET_KEY_LENGTH_BYTE`\n\n### 5. Event 调用\n\ncallback 方法必须触发事件：\n\n```php\n// Stripe/Wechat/Paypal（ServerRequestInterface）\nEvent::dispatch(new CallbackReceived('provider', clone $request, $params, null));\n\n// Alipay/Douyin/Unipay/Jsb（Collection）\nEvent::dispatch(new CallbackReceived('provider', $request->all(), $params, null));\n```\n\n其他方法触发：\n```php\nEvent::dispatch(new MethodCalled('provider', __METHOD__, $order, null));\n```\n\n### 6. PHPStan ignore 注释\n\nTrait 静态方法调用需添加注释：\n\n```php\n/* @phpstan-ignore-next-line */\nself::verifyWechatSign(...);\n```\n\n这是 PHPStan 对 Trait 静态调用的已知限制，非代码质量问题。\n\n---\n\n## Phase 5: 官方文档对照\n\n结合代码中的 `@see` 链接验证：\n\n| # | 检查点 |\n|---|--------|\n| 1 | API 端点 URL 是否与官方一致 |\n| 2 | HTTP 方法（GET/POST）是否正确 |\n| 3 | 认证 Header 名称、格式是否正确 |\n| 4 | 请求/响应字段（必填/可选）是否正确 |\n| 5 | 签名算法、拼接顺序是否与官方完全一致 |\n| 6 | Base URL（production/sandbox）是否正确 |\n\n---\n\n## Phase 6: 测试覆盖\n\n| # | 检查项 |\n|---|--------|\n| 1 | 每个 Plugin 有对应测试 |\n| 2 | 必填参数缺失的异常测试 |\n| 3 | 可选参数缺失的边界测试 |\n| 4 | 多租户场景（`_config` 参数） |\n| 5 | HTTP client mock，禁止真实 API 调用 |\n| 6 | Callback 签名验证的正向/反向测试 |\n\n---\n\n## Phase 7: 文档完整性\n\n| # | 检查项 |\n|---|--------|\n| 1 | 官方链接可访问且指向正确端点 |\n| 2 | 示例代码使用原生 PHP，框架无关 |\n| 3 | 侧边栏已更新 |\n| 4 | CHANGELOG 已更新 |\n\n---\n### null-safe 操作符\nPHP 8.0 的 null-safe 实现了 **full short-circuiting**：当 `$payload` 为 `null` 时，右侧参数不会被求值。这不是 bug。\n---\n\n## 避免重复造轮子\n\n检查新增功能是否在 `yansongda/supports` 或 `yansongda/artful` 中已有实现：\n\n| 功能 | 已有实现 |\n|------|----------|\n| UUID 生成 | `Str::uuidV4()` |\n| 字符串处理 | `Str::*` |\n| 集合操作 | `Collection::*` |\n| 空值过滤 | `filter_params()` (artful) |\n| HTTP 方法获取 | `get_radar_method()` (artful) |\n| Body 获取 | `get_radar_body()` (artful) |\n"
+    gold_removed: ''
+  - path: AGENTS.md
+    tier: 1
+    gold_added: 'PHP 支付 SDK，支持支付宝、微信、银联、抖音、江苏银行、PayPal、Stripe 等多服务商。项目基于插件管道架构，重点关注支付流程、回调验签和 Provider 扩展一致性。
+
+      - 插件管道：`StartPlugin → [前置插件] → 业务插件 → [后置插件] → ParserPlugin`（各 Provider 差异较大，详见各 Provider 的 `mergeCommonPlugins`）
+
+      | Provider | `{ProviderName}.php` | `Paypal.php`、`Stripe.php` |
+
+      | Trait | `{Provider}Trait.php` | `WechatTrait`、`StripeTrait` |
+
+      | ServiceProvider | `{ProviderName}ServiceProvider.php` | `PaypalServiceProvider.php` |
+
+      ### Trait 方法
+
+      | 功能类型 | Trait 方法 |
+
+      | 配置/租户 | `ProviderConfigTrait::getProviderConfig()`、`ProviderConfigTrait::getTenant()` |
+
+      | URL 构建 | `AlipayTrait::getAlipayUrl()`、`WechatTrait::getWechatUrl()`、`UnipayTrait::getUnipayUrl()`、`StripeTrait::getStripeUrl()` |
+
+      | 签名验证 | `AlipayTrait::verifyAlipaySign()`、`WechatTrait::verifyWechatSign()`、`StripeTrait::verifyStripeWebhookSign()` |
+
+      | 证书处理 | `CertManager::getPublicCert()`、`CertManager::getPrivateCert()` |
+
+      | 微信专用 | `WechatTrait::decryptWechatResource()`、`WechatTrait::reloadWechatPublicCerts()` |
+
+      | Provider | 验证方式 | Trait 方法 |
+
+      |---|---|---|
+
+      | 支付宝 | 本地 RSA 验证 | `AlipayTrait::verifyAlipaySign()` |
+
+      | 微信 | 本地证书签名验证 | `WechatTrait::verifyWechatSign()` |
+
+      | PayPal | 调用 `verify-webhook-signature` API | `PaypalTrait::verifyPaypalWebhookSign()` |
+
+      | Stripe | 本地 HMAC-SHA256 验证 | `StripeTrait::verifyStripeWebhookSign()` |
+
+      | 抖音 | 本地 SHA1 验证 | —（在 `CallbackPlugin::verifySign()` 中实现） |
+
+      | 银联 | 本地证书签名验证 | `UnipayTrait::verifyUnipaySign()` |
+
+
+      回调处理：
+
+      - **Stripe/Wechat/Paypal**：`callback()` 传递 `_request`（`ServerRequestInterface`）和 `_params` 到 `CallbackPlugin`
+
+      - **Alipay/Douyin/Unipay/Jsb**：通过 `getCallbackParams()` 获取 `Collection`，并 merge 到 params
+
+      由 `CallbackPlugin` 负责签名验证。
+
+      5. 在 `src/Traits/{Provider}Trait.php` 中添加 Trait 方法（`get{Provider}Url`、`verify{Provider}WebhookSign` 等）'
+    gold_removed: ''

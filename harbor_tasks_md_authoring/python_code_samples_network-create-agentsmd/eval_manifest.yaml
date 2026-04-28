@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: python_code_samples_network-create-agentsmd
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: CiscoDevNet/python_code_samples_network
+  pr: 95
+  base_commit: "a9f38e4e9cb291a629fc484e34c096fb6b91e627"
+  merge_commit: "fb514124e3ab70acfbf6c7aa97bebe68abbe911a"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+
+config_edits:
+  - path: AGENTS.md
+    tier: 1
+    gold_added: "## Dev environment tips\n\n- **Python version**: Use Python 3.9+.\n- **Virtual env (recommended)**:\n  ```bash\n  python3 -m venv .venv\n  source .venv/bin/activate\n  python -m pip install -U pip\n  ```\n- **Each sample is standalone**: cd into a sample directory, read its `README.md`, install that folder’s `requirements.txt` if present, then run the script.\n- **Install dependencies (pattern)**:\n  ```bash\n  cd /python_code_samples_network/<sample-folder>\n  [ -f requirements.txt ] && python -m pip install -r requirements.txt\n  ```\n- **Common packages**: Some samples use `requests`, `ncclient`, `pysnmp`, or `netmiko`. If a folder has no `requirements.txt`, install what the `README.md` mentions, e.g.:\n  ```bash\n  python -m pip install requests ncclient netmiko pysnmp\n  ```\n- **Secrets and device access**: Most scripts expect you to edit device/controller IP, username, and password inside the script (or helper files like `device_info.py`). Ensure network reachability and open ports (SSH/NETCONF/RESTCONF/HTTPS).\n\n### Quick run examples\n\n- **Netmiko interface example**\n  ```bash\n  cd /python_code_samples_network/netmiko-interface-example\n  python -m pip install -r requirements.txt\n  # Set device details in device_info.py\n  python netmiko-get-interface.py\n  python netmiko-create-interface.py\n  python netmiko-delete-interface.py\n  ```\n\n- **RESTCONF – update IP address**\n  ```bash\n  cd /python_code_samples_network/restconf_update_ipaddress\n  python -m pip install -r requirements.txt\n  python updateip.py\n  ```\n\n- **NETCONF – get/edit config**\n  ```bash\n  cd /python_code_samples_network/NC-get-config\n  python -m pip install ncclient\n  python NC-get-config.py\n  ```\n\n## Testing instructions\n\n- **There is no unified test suite** in this repository. Most folders contain minimal examples meant to run directly against real devices/controllers.\n- **Smoke test** a change by running the sample(s) you touched:\n  ```bash\n  cd /python_code_samples_network/<sample-folder>\n  [ -f requirements.txt ] && python -m pip install -r requirements.txt\n  python <script>.py\n  ```\n- **Static checks (optional)**: If you add new Python code, you can run lightweight checks:\n  ```bash\n  python -m pip install ruff mypy\n  ruff check .\n  mypy --ignore-missing-imports .\n  ```\n\n- **Test the code with the Cisco DevNet sandbox**\n  Visit https://devnetsandbox.cisco.com/DevNet to book a related sandbox\n  \n- **Latest Cisco API documentation**:\n  https://developer.cisco.com/docs/\n\n\n## PR instructions\n\n- **Title format**: `[sample-folder] <Short description>` (e.g., `[RESTCONF] fix hostname PUT example`).\n- **Scope**: Keep changes limited to one sample folder when possible. If you cross-cut multiple folders, explain why in the PR description.\n- **Before committing**:\n  - Run the modified script(s) to ensure they work end-to-end.\n  - If you added deps, include or update that folder’s `requirements.txt`.\n  - Update `README.md` within the affected folder.\n  - Run optional linters:\n    ```bash\n    ruff check .\n    ```\n- **Security**: Do not commit real credentials or tokens. Use placeholders and document required env vars or files.\n\n## Contribution conventions\n\n- **Coding style**: Prefer clear, readable Python with descriptive variable names and early returns. Avoid catching exceptions without handling.\n- **Inputs**: Use constants or a small config block at the top of the script for device IP/credentials. Consider reading from environment variables if it improves UX.\n- **Outputs**: Print concise results or JSON. Avoid noisy logs; add `-v/--verbose` only if needed.\n- **Dependencies**: Pin major versions when practical; keep per-folder `requirements.txt` minimal.\n- **Backward compatibility**: Do not change existing sample behavior unless clearly improving or fixing a bug; document changes.\n\n"
+    gold_removed: ''

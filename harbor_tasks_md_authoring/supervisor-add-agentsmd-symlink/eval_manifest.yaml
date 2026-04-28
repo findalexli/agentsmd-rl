@@ -1,0 +1,24 @@
+version: "2.0"
+
+task:
+  name: supervisor-add-agentsmd-symlink
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: home-assistant/supervisor
+  pr: 6237
+  base_commit: "559b6982a3773df68683d7f70add690fe09b76c7"
+  merge_commit: "c71553f37de7ccfd6145aa4afd9ff03dc9255220"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+
+config_edits:
+  - path: AGENTS.md
+    tier: 1
+    gold_added: .github/copilot-instructions.md
+    gold_removed: ''

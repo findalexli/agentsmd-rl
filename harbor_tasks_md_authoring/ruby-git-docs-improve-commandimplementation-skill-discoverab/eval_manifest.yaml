@@ -1,0 +1,24 @@
+version: "2.0"
+
+task:
+  name: ruby-git-docs-improve-commandimplementation-skill-discoverab
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: ruby-git/ruby-git
+  pr: 1223
+  base_commit: "472cb346f88af4218963bff9c2b2281e2fe2789a"
+  merge_commit: "20ee14324df9701ea7a732b439af78533dff3a10"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/skills/command-implementation/SKILL.md."
+
+config_edits:
+  - path: .github/skills/command-implementation/SKILL.md
+    tier: 1
+    gold_added: 'description: "Scaffolds new and reviews existing Git::Commands::* classes with unit tests, integration tests, and YARD docs using the Base architecture. Use when creating a new command class from scratch, updating an existing command class, or reviewing a command class for correctness."'
+    gold_removed: ''

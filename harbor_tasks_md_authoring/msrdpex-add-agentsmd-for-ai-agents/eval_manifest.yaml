@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: msrdpex-add-agentsmd-for-ai-agents
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: Devolutions/MsRdpEx
+  pr: 165
+  base_commit: "df015e3b2735c29fd86a7df3d8ffa4787aeaf490"
+  merge_commit: "5a64c5d5b6bc204e2ef40a480926b2bb616554f0"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+
+config_edits:
+  - path: AGENTS.md
+    tier: 1
+    gold_added: "# AGENTS.md\n\nThis file contains repo-specific guidance for *any* AI agent (Copilot, Claude, Cursor, etc.) working in this repository.\n\n## What this repo is\n\n**MsRdpEx** (“Microsoft RDP Extensions”) is a Windows-focused project that:\n\n- Builds a native hooking DLL: `MsRdpEx.dll` (Detours-based)\n- Builds launcher EXEs: `mstscex.exe`, `msrdcex.exe`, `vmconnectex.exe`\n- Includes an optional .NET package: `Devolutions.MsRdpEx` (NuGet)\n- Includes an MSI installer built with WiX v4\n\nKey folders:\n\n- `dll/`: native DLL implementation\n- `exe/`: native launcher EXEs\n- `channels/`: DVC-related code (e.g., `DvcServer`)\n- `dotnet/`: C# projects + NuGet packaging\n- `installer/`: WiX v4 project + sources\n- `dependencies/detours/`: **prebuilt** Detours package used by CMake\n- `scripts/`: PowerShell build helpers (notably Detours regeneration)\n\n## Agent operating rules (keep diffs safe)\n\n- Prefer **small, targeted** changes. Avoid mass reformatting or mechanical renames.\n- Don’t change packaging/versioning unless the task explicitly asks for it.\n- Treat any credential-like strings as secrets:\n  - Do not add logging that could capture passwords/tokens.\n  - The `.RDP` options `ClearTextPassword`/`GatewayPassword` are “testing only”; avoid persisting them.\n- Avoid editing `.github/workflows/*` unless explicitly requested (they’re owned by DevOps).\n- Keep Windows compatibility in mind (this is not a cross-platform repo).\n\n## Build prerequisites (local)\n\nTypical local prerequisites:\n\n- Windows 10/11\n- Visual Studio 2022 (MSVC v143) or newer with “Desktop development with C++”\n- CMake (Visual Studio generator)\n- PowerShell 7 (`pwsh`) for scripts\n- For managed builds: .NET SDK 8.x (and .NET Framework targeting packs if building `net48`)\n\n## Build: native (DLL + EXEs)\n\nCMake expects a **prebuilt Detours package** in `dependencies/detours/`.\n\nExample x64 build:\n\n```powershell\ncmake -G \"Visual Studio 17 2022\" -A x64 -DWITH_DOTNET=OFF -B build-x64\ncmake --build build-x64 --config Release\n```\n\nOutputs are placed under the build directory (e.g. `build-x64/Release/`).\n\nArchitectures:\n\n- `-A Win32` (x86)\n- `-A x64`\n- `-A ARM64`\n\n## Detours dependency (important)\n\nThis repo *commits* a prebuilt Detours layout under `dependencies/detours/` and ignores other `dependencies/*` content.\n\n- `dependencies/*` is ignored by `.gitignore`\n- `dependencies/detours/` is explicitly **not** ignored (it’s meant to be present)\n- `dependencies/sources/` is ignored (Detours source clone lives here)\n\nIf Detours is missing or needs updating, regenerate it from the repo root:\n\n```powershell\npwsh -ExecutionPolicy Bypass -File .\\scripts\\detours-all.ps1\n```\n\nNotes:\n\n- `scripts/detours.ps1` expects a Visual Studio developer environment (via `VSCMD_ARG_TGT_ARCH`).\n- `scripts/detours-all.ps1` can optionally install `VsDevShell` for the current user (`-InstallVsDevShell`).\n\n## Build: managed (NuGet package)\n\nThe .NET build is wired through CMake as *external MSBuild projects*.\n\nManaged-only CMake build (used by CI):\n\n```powershell\ncmake -G \"Visual Studio 17 2022\" -A x64 -DWITH_DOTNET=ON -DWITH_NATIVE=OFF -B build-dotnet\ncmake --build build-dotnet --config Release\ndotnet pack .\\dotnet\\Devolutions.MsRdpEx -o package\n```\n\nPackaging note:\n\n- The NuGet package includes native `MsRdpEx.dll` for `win-x86`, `win-x64`, `win-arm64` from `dependencies/MsRdpEx/<arch>/MsRdpEx.dll`.\n- If you’re producing a NuGet package locally, ensure those native binaries are present (CI populates them by building native per-arch first).\n\n## Build: MSI installer (WiX v4)\n\nThe MSI build consumes the native binaries from `dependencies/MsRdpEx/<arch>/` and is driven by `installer/MsRdpEx.sln`.\n\nCI-style build (per arch):\n\n```powershell\n# x64 example\n$platform = 'x64' # Win32, x64, ARM64\ndotnet build /p:Configuration=Release /p:Platform=$platform installer/MsRdpEx.sln\n```\n\nThe workflow also rewrites `installer/Variables.wxi` to set `ProductVersion` (MSI short version) during packaging. Avoid manual edits unless asked.\n\n## Versioning (very important)\n\n- The canonical version is `dotnet/Devolutions.MsRdpEx/Devolutions.MsRdpEx.csproj` `<Version>`.\n- The top-level `CMakeLists.txt` parses that `<Version>` to define `MSRDPEX_VERSION`.\n- CI may rewrite `<Version>` during release packaging.\n\nGuideline for agents: **don’t bump `<Version>`** unless the task explicitly requests it.\n\n## COM interop / generated artifacts\n\nThe `com/` folder contains generated artifacts related to `mstscax.dll` / `rdclientax.dll` interop.\n\n- Follow `com/README.md` if you need to regenerate `.tlh/.tli`, `mstscax.idl`, or C# interop assemblies.\n- Prefer not to hand-edit generated outputs unless regeneration is part of the task.\n\n## Debugging / runtime notes\n\nExtended logging is controlled via environment variables (examples):\n\n```powershell\n$Env:MSRDPEX_LOG_ENABLED=\"1\"\n$Env:MSRDPEX_LOG_LEVEL=\"DEBUG\"  # TRACE is extremely verbose\n```\n\nDefault log location is under `%LocalAppData%\\MsRdpEx\\MsRdpEx.log` unless overridden.\n\n## If you change build/packaging behavior\n\nWhen a task touches build logic, try to validate locally:\n\n- Native: `cmake --build <builddir> --config Release`\n- Managed: `dotnet pack .\\dotnet\\Devolutions.MsRdpEx -o package`\n\nIf you can’t run a full build (missing toolchain), keep the changes minimal and explain what should be validated by a human (arch matrix, MSI packaging, etc.)."
+    gold_removed: ''

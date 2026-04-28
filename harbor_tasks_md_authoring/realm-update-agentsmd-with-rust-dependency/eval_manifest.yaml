@@ -1,0 +1,29 @@
+version: "2.0"
+
+task:
+  name: realm-update-agentsmd-with-rust-dependency
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: spellshift/realm
+  pr: 1398
+  base_commit: "698d91ca0ac0b8f39b06057b1e4ca7fa219ea0de"
+  merge_commit: "2211147d872c8ffbd416604e85d3b45551ca657c"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+
+config_edits:
+  - path: AGENTS.md
+    tier: 1
+    gold_added: '## Rust
+
+
+      The majority of our rust codebase is in the `implants/` directory & workspaces. When adding dependencies to crates within this workspace, please add them to the workspace root and have the crate use the workspace dependency, in order to centralize version management. ALWAYS RUN `cargo fmt` WHEN MAKING RUST CHANGES, OR CI WILL FAIL.
+
+      '
+    gold_removed: ''

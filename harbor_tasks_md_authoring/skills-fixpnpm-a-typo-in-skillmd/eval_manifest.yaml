@@ -1,0 +1,24 @@
+version: "2.0"
+
+task:
+  name: skills-fixpnpm-a-typo-in-skillmd
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: antfu/skills
+  pr: 5
+  base_commit: "b4775da51b6a58acaf4e0ef4f9a42d4896fbf4ca"
+  merge_commit: "70cc91aa3972bc943c54858210ba2e4eab5d79e0"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/pnpm/SKILL.md."
+
+config_edits:
+  - path: skills/pnpm/SKILL.md
+    tier: 1
+    gold_added: pnpm is a fast, disk space efficient package manager. It uses a content-addressable store to deduplicate packages across all projects on a machine, saving significant disk space. pnpm enforces strict dependency resolution by default, preventing phantom dependencies. Configuration should preferably be placed in `pnpm-workspace.yaml` for pnpm-specific settings.
+    gold_removed: ''

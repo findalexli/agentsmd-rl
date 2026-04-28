@@ -1,0 +1,133 @@
+version: "2.0"
+
+task:
+  name: sundials-add-a-agentsmd-and-a
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: llnl/sundials
+  pr: 893
+  base_commit: "bcb4124abc35eea28894e596b1d0616fe99e7c82"
+  merge_commit: "00da703d4b183b3141ee360da8341f58c6c70a3b"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .agents/skills/building/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .agents/skills/building/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .agents/skills/building/SKILL.md."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .agents/skills/new-module/SKILL.md."
+  - id: signal_04
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .agents/skills/new-module/SKILL.md."
+  - id: signal_05
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .agents/skills/new-module/SKILL.md."
+  - id: signal_06
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_07
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_08
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+
+config_edits:
+  - path: .agents/skills/building/SKILL.md
+    tier: 1
+    gold_added: "---\nname: building\ndescription: Build, install, and test SUNDIALS from source as an end user or as a SUNDIALS developer. Use when a request involves configuring CMake, selecting compilers/options (MPI, GPU backends, Fortran), building/installing, running CTest, enabling dev/unit tests, or troubleshooting common build/test issues.\n---\n\n# Build SUNDIALS (user then developer)\n\nPrefer out-of-source CMake builds. Never build in the source tree.\n\nIf you need full option details or platform-specific notes, open `doc/shared/sundials/Install.rst` (search for “Configuration options”, “Build Type”, “Compilers”, and “Example Programs”).\n\nFor CI-like, multi-config testing use `test/test_driver.sh` (supports `--testtype pr|release|branch` and `--buildjobs/--testjobs`).\n\nPython bindings (sundials4py) are driven by `pyproject.toml` and `scikit-build-core`:\n`python -m pip install -e \".[dev]\"` then `pytest`.\n\n## User build (install + consume)\n\n1) Configure (choose an install prefix):\n\n```bash\ncmake -S . -B build \\\n  -DCMAKE_BUILD_TYPE=Release \\\n  -DCMAKE_INSTALL_PREFIX=\"$PWD/install\"\n```\n\n2) Build and install:\n\n```bash\ncmake --build build -j\ncmake --install build\n```\n\n3) Use SUNDIALS from another CMake project:\n\n- Set `SUNDIALS_DIR` to the SUNDIALS install tree (or to the installed CMake package dir) and use `find_package(SUNDIALS REQUIRED)`; link with exported targets like `SUNDIALS::cvode`. If you link via CMake targets, the required `libsundials_core` dependency is handled automatically.\n\n### Common user options\n\n- **Examples**: examples are usually enabled by default for C; enable others as needed:\n  - `-DSUNDIALS_ENABLE_C_EXAMPLES=ON`\n  - `-DSUNDIALS_ENABLE_CXX_EXAMPLES=ON`\n  - `-DSUNDIALS_ENABLE_FORTRAN_EXAMPLES=ON` (requires Fortran)\n  - `-DSUNDIALS_ENABLE_CUDA_EXAMPLES=ON` (requires CUDA enabled)\n  - If working with older option names, note that `EXAMPLES_ENABLE_C`/`EXAMPLES_ENABLE_CXX`/etc. are deprecated in favor of the `SUNDIALS_ENABLE_*_EXAMPLES` options.\n- **MPI**: `-DSUNDIALS_ENABLE_MPI=ON`\n- **Fortran interfaces**: `-DSUNDIALS_ENABLE_FORTRAN=ON`\n- **Build type**: `Debug` (slow, checks), `Release` (fast), `RelWithDebInfo` (good default)\n\n## Developer build (iterate + test)\n\nUse a separate build directory per configuration (e.g., `build-debug`, `build-gcc`, `build-mpi`).\n\n### Configure for development\n\n```bash\ncmake -S . -B build-dev \\\n  -DCMAKE_BUILD_TYPE=Debug \\\n  -DBUILD_TESTING=ON \\\n  -DSUNDIALS_TEST_ENABLE_DEV_TESTS=ON \\\n  -DSUNDIALS_TEST_ENABLE_UNIT_TESTS=ON\n```\n\nOptional tightening (CI-like):\n\n- Warnings: `-DSUNDIALS_ENABLE_ALL_WARNINGS=ON`\n- Warnings as errors: `-DCMAKE_COMPILE_WARNING_AS_ERROR=ON`\n- Sanitizers (compiler support required): `-DSUNDIALS_ENABLE_ADDRESS_SANITIZER=ON` (and/or leak/undefined/thread variants)\n\n### Build and run tests\n\n```bash\ncmake --build build-dev -j\nctest --test-dir build-dev --output-on-failure\n```\n\nNotes:\n\n- If tests that compare against “answer files” fail due to platform differences, consider rerunning with a locally-generated answer directory using `SUNDIALS_TEST_ANSWER_DIR` (see `doc/superbuild/source/developers/testing/CTest.rst`).\n- To focus on a subset, use CTest filters (e.g., `ctest --test-dir build-dev -R <regex>`).\n\n## Troubleshooting checklist\n\n- **CMake refuses in-source build**: delete any accidental `CMakeCache.txt` in the source tree; configure with `-B <builddir>`.\n- **Changed options not taking effect**: start from a fresh build directory or clear cache (`rm -rf build-dev`).\n- **Wrong compiler/MPI wrapper**: set `CC`, `CXX`, `FC` env vars before configuring, or pass `-DCMAKE_<LANG>_COMPILER=...`.\n- **Link errors after enabling a backend/TPL**: confirm that the corresponding `SUNDIALS_ENABLE_*` option is ON and that required dependencies are discoverable (use `CMAKE_PREFIX_PATH`)."
+    gold_removed: ''
+  - path: .agents/skills/new-module/SKILL.md
+    tier: 1
+    gold_added: "---\nname: new-module\ndescription: Add a new SUNDIALS module (e.g., NVECTOR_*, SUNMATRIX_*, SUNLINSOL_*, SUNNONLINSOL_*, SUNMEMORY_*, or a new shared component) including source/header layout, CMake wiring, enable/disable options, exported CMake targets, installed component registration, and developer tests/examples/docs updates.\n---\n\n# Create a new SUNDIALS module\n\nFollow existing module patterns; copy the closest neighbor (same category + similar dependencies) and adapt minimally.\n\nOpen these files as references when needed:\n\n- `src/<category>/CMakeLists.txt` (how modules are conditionally added)\n- `cmake/SundialsBuildOptionsPost.cmake` (module enable options + `SUNDIALS_BUILD_LIST`)\n- `cmake/macros/SundialsAddLibrary.cmake` (how `sundials_add_library` installs headers and registers components)\n- `doc/shared/sundials/Install.rst` (user-visible options / CMake targets)\n- `test/unit_tests/<category>/` (how unit tests are wired)\n\n## 1) Decide what “module” means\n\nPick one of these patterns; it determines naming, options, and wiring:\n\n- **Native always-built module** (e.g., `SUNMATRIX_BAND`, `SUNLINSOL_SPGMR`): always enabled; no user option.\n- **Optional module gated by a TPL/backend** (e.g., CUDA/HIP/Kokkos/Ginkgo): add `SUNDIALS_ENABLE_<CATEGORY>_<NAME>` option with `DEPENDS_ON ...`.\n- **Header-only / interface-only module** (rare): uses an `INTERFACE` library; you must manually register it as an installed component.\n- **Internal-only helper**: can be `OBJECT_LIB_ONLY` (no installed component/target intended for end users).\n\nIf the module is user-visible, prefer “optional module” (with a CMake option) over ad-hoc logic.\n\n## 2) Choose names (directory, library, headers, CMake target)\n\nKeep names consistent with existing modules in the same category:\n\n- **Source dir**: `src/<category>/<name>/` (e.g., `src/sunlinsol/spgmr/`)\n- **Public header(s)**: `include/<category>/<category>_<name>.<h|hpp>` (e.g., `include/sunlinsol/sunlinsol_spgmr.h`)\n- **CMake/Library target**: `sundials_<category><name>` (e.g., `sundials_sunlinsolspgmr`)\n- **Exported target for consumers**: `SUNDIALS::<category><name>` (auto-created by `sundials_add_library`)\n- **Enable option** (if optional): `SUNDIALS_ENABLE_<CATEGORY>_<NAME>` (e.g., `SUNDIALS_ENABLE_SUNMATRIX_CUSPARSE`)\n\nUse existing capitalization conventions:\n\n- options use `SUNDIALS_ENABLE_<...>` with category in uppercase (NVECTOR/SUNMATRIX/SUNLINSOL/…)\n- messages often say `Added <CATEGORY>_<NAME> module`\n\n## 3) Add sources + headers\n\nCreate:\n\n- `src/<category>/<name>/<implementation>.c` (and/or `.cpp` if needed)\n- `include/<category>/<category>_<name>.h` (public API; installable)\n- `src/<category>/<name>/CMakeLists.txt` (module build rules)\n\nAvoid installing “private” headers. If a header is only for the module implementation, keep it under `src/<category>/<name>/` and do not list it in `HEADERS`.\n\n## 4) Add the module CMakeLists.txt\n\nFor standard compiled modules, use `sundials_add_library` (preferred):\n\n- `SOURCES ...`\n- `HEADERS ${SUNDIALS_SOURCE_DIR}/include/<category>/<category>_<name>.h`\n- `INCLUDE_SUBDIR <category>`\n- `LINK_LIBRARIES PUBLIC sundials_core` (+ any TPL targets)\n- `OUTPUT_NAME sundials_<category><name>`\n- `VERSION`/`SOVERSION` using the category’s variables (see neighboring modules)\n\nReference examples:\n\n- `src/nvector/serial/CMakeLists.txt`\n- `src/sunmatrix/band/CMakeLists.txt`\n- `src/sunlinsol/spgmr/CMakeLists.txt`\n\nNotes:\n\n- `sundials_add_library` automatically:\n  - installs the listed headers to `${CMAKE_INSTALL_INCLUDEDIR}/<category>`\n  - registers the module as an installed component for `SUNDIALSConfig.cmake`\n  - creates the `SUNDIALS::<...>` alias for build-tree usage\n- If you add Fortran 2003 wrappers like other modules do, gate them under `if(SUNDIALS_ENABLE_FORTRAN)` and mirror the existing `fmod_int${SUNDIALS_INDEX_SIZE}` pattern.\n\n## 5) Wire the module into the build (add_subdirectory)\n\nEdit `src/<category>/CMakeLists.txt` to include your module:\n\n- Always-built: `add_subdirectory(<name>)`\n- Optional: wrap with `if(SUNDIALS_ENABLE_<CATEGORY>_<NAME>) ... endif()`\n\nFor categories that are listed in `src/CMakeLists.txt` (e.g., `nvector`, `sunmatrix`, `sunlinsol`, …), you usually only need to change the category-level `CMakeLists.txt`.\n\n## 6) Add/adjust the enable option and build-list registration\n\nIf the module is optional and should appear in `sundials_config.h` (and in build summaries), add an option in `cmake/SundialsBuildOptionsPost.cmake`:\n\n- Add `sundials_option(SUNDIALS_ENABLE_<CATEGORY>_<NAME> BOOL \"... module ...\" <default> DEPENDS_ON ...)`\n- Append to build list: `list(APPEND SUNDIALS_BUILD_LIST \"SUNDIALS_ENABLE_<CATEGORY>_<NAME>\")`\n\nPick appropriate dependencies:\n\n- CUDA modules: `DEPENDS_ON SUNDIALS_ENABLE_CUDA` (and sometimes `CMAKE_CUDA_COMPILER`)\n- MPI modules: `DEPENDS_ON SUNDIALS_ENABLE_MPI`\n- TPL modules: depend on the corresponding `SUNDIALS_ENABLE_<TPL>` option\n\nIf the module is required and must not be disabled, follow the pattern:\n\n```cmake\nset(SUNDIALS_ENABLE_<CATEGORY>_<NAME> TRUE)\nlist(APPEND SUNDIALS_BUILD_LIST \"SUNDIALS_ENABLE_<CATEGORY>_<NAME>\")\n```\n\n## 7) Handle “installed components” for INTERFACE-only modules\n\nIf you implement a module as an `INTERFACE` library (no `sundials_add_library`), you must manually add it to `_SUNDIALS_INSTALLED_COMPONENTS` so that `find_package(SUNDIALS COMPONENTS ...)` can work.\n\nReference patterns:\n\n- `src/sunmatrix/CMakeLists.txt` (Ginkgo/KokkosDense interface modules)\n- `src/sunlinsol/CMakeLists.txt` (Ginkgo/KokkosDense interface modules)\n\n## 8) Tests, examples, and docs (when user-visible)\n\nDo the smallest set that proves correctness and prevents regressions:\n\n- **Unit tests**: add under `test/unit_tests/<category>/...` and gate by your enable option if optional.\n- **Examples**: add under `examples/<package>/<lang>_<backend>/...` only if it materially helps users.\n- **Docs**:\n  - If users must know about a new option/target, update `doc/shared/sundials/Install.rst`.\n  - If it’s a user-visible feature, also update `doc/shared/RecentChanges.rst` and/or `CHANGELOG.md` per repo conventions.\n\n## 9) Local validation commands\n\nConfigure/build (pick options that enable your module), then run focused tests first:\n\n```bash\ncmake -S . -B build-dev -DCMAKE_BUILD_TYPE=Debug -DBUILD_TESTING=ON\ncmake --build build-dev -j\nctest --test-dir build-dev --output-on-failure -R <your-module-regex>\n```\n\nIf you added a new enable option, confirm it shows up in `build-dev/include/sundials/sundials_config.h`.\n\n## 10) Language bindings\n\nOnly add language bindings when they are applicable:\n\n- The module is user-visible (i.e., part of the public API users are expected to call), and\n- The module’s category already has existing Fortran and/or Python bindings.\n\nIf Fortran bindings are applicable:\n\n- Add the SWIG interface file in `swig/` and add it to `swig/Makefile` appropriately.\n- Generate the Fortran interface code and commit the generated sources.\n\nIf Python bindings are applicable:\n\n- Add the module as a neighbor to the other modules of the same type in `bindings/sundials4py`.\n- Add it to the `generate.yaml` with the appropriate neighbors.\n- Generate the Python binding code to commit, and always format it first."
+    gold_removed: ''
+  - path: AGENTS.md
+    tier: 1
+    gold_added: '# Repository Guidelines
+
+
+      ## Project Structure
+
+
+      - `src/` and `include/`: core SUNDIALS C/C++ sources and public headers, organized by package (e.g., `cvode/`, `ida/`) or module (e.g., `nvector/`, `sunlinsol/`).
+
+      - `examples/`: buildable examples (C, C++, CUDA, etc.) wired into CMake.
+
+      - `test/`: test infrastructure, answer files, and `test/unit_tests/` (optionally includes GoogleTest-based tests).
+
+      - `cmake/`: CMake modules and option definitions (e.g., example/test toggles).
+
+      - `bindings/` and `swig/`: language bindings (notably `bindings/sundials4py`).
+
+      - `doc/`: user/developer documentation sources.
+
+
+      ## Build, Test, and Development Commands
+
+
+      Refer to [`.agents/skills/building/SKILL.md`](.agents/skills/building/SKILL.md).
+
+
+      ## Coding Style & Naming
+
+
+      - C/C++: follow `.clang-format` (2-space indent); format before pushing.
+
+      - CMake: keep listfile style consistent with `.cmake-format.py`.
+
+      - Fortran: formatted via `fprettify --indent 2`.
+
+      - Python: formatted with Black (configured in `pyproject.toml`).
+
+
+      Formatting helpers:
+
+      `./scripts/format.sh src include cmake test bindings`
+
+      `./scripts/spelling.sh` (uses `codespell` and may edit files).
+
+
+      ## Testing Guidelines
+
+
+      - Primary harness: CTest (`ctest --test-dir build`).
+
+      - Unit tests: enable with `-DSUNDIALS_TEST_ENABLE_UNIT_TESTS=ON` (and optionally `-DSUNDIALS_TEST_ENABLE_GTEST=ON`).
+
+      - Keep new features paired with targeted tests; update answer files under `test/answers/` only when output changes are intended.
+
+
+      ## Commits & Pull Requests
+
+
+      - Target the `develop` branch.
+
+      - Use clear, scoped subjects; common patterns in history include `CMake: ...`, `CI: ...`, `Docs: ...`, `Tools: ...`.
+
+      - All commits must include a DCO sign-off: use `git commit -s`.
+
+      - PRs should include: what/why, how it was tested, and updates to `CHANGELOG.md` and `doc/shared/RecentChanges.rst` when user-visible.
+
+      '
+    gold_removed: ''
+  - path: CLAUDE.md
+    tier: 1
+    gold_added: AGENTS.md
+    gold_removed: ''

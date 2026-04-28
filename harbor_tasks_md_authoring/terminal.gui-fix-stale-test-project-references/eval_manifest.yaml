@@ -1,0 +1,54 @@
+version: "2.0"
+
+task:
+  name: terminal.gui-fix-stale-test-project-references
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: gui-cs/Terminal.Gui
+  pr: 5070
+  base_commit: "052d5c0b0a36a50fa64f6667cc25c382a4b21b38"
+  merge_commit: "2cbfb9298efe07d8fc1134203e265bdbfa948491"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+
+config_edits:
+  - path: CLAUDE.md
+    tier: 1
+    gold_added: '
+
+      # Preferred: parallelizable tests (no static state)
+
+
+      # Tests that require process-wide static state (Application.Init, etc.)
+
+      dotnet test --project Tests/UnitTests.NonParallelizable --no-build
+
+
+      # Legacy tests — do NOT add new tests here; candidates for rewrite/deletion
+
+      dotnet test --project Tests/UnitTests.Legacy --no-build
+
+
+      # Run a single test by fully-qualified name
+
+      dotnet test --project Tests/UnitTestsParallelizable --no-build --filter "FullyQualifiedName~MyTestClass.MyTestMethod"
+
+      See `Tests/README.md` for the full list of test projects (including `IntegrationTests`, `StressTests`, `Benchmarks`) and the static-state classification that determines where a new test belongs.
+
+
+      - Add new tests to `UnitTestsParallelizable`; use `UnitTests.NonParallelizable` only when static state is unavoidable. Never add to `UnitTests.Legacy`.'
+    gold_removed: ''

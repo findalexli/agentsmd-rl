@@ -1,0 +1,74 @@
+version: "2.0"
+
+task:
+  name: lobehub-docsskills-rename-codereview-to-reviewchecklist
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: lobehub/lobehub
+  pr: 14229
+  base_commit: "ee55d74dd4be1b036787e9a7088ababd26c422b7"
+  merge_commit: "9acb128943d859f9dd6239e7e5cd51cfd2d427e3"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .agents/skills/review-checklist/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .agents/skills/review-checklist/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .agents/skills/review-checklist/SKILL.md."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_04
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_05
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+
+config_edits:
+  - path: .agents/skills/review-checklist/SKILL.md
+    tier: 1
+    gold_added: 'name: review-checklist
+
+      description: ''Common recurring mistakes in LobeHub code review — console leftovers, missing return await, hardcoded secrets, hardcoded i18n strings, desktop router pair drift, antd vs @lobehub/ui, non-idempotent migrations, cloud impact red flags. Use as a quick checklist when reviewing PRs, diffs, or branch changes.''
+
+      # Review Checklist
+
+      ## Correctness
+
+      ## Security
+
+      ## Testing
+
+      ## i18n
+
+      ## SPA / routing
+
+      ## Reuse
+
+      ## Database
+
+      ## Cloud Impact'
+    gold_removed: ''
+  - path: AGENTS.md
+    tier: 1
+    gold_added: '- `pnpm i18n` is slow; run it manually when locale keys need updating (e.g. before opening a PR).
+
+
+      ### Code Review
+
+
+      Before reviewing a PR / diff / branch change, read the **review-checklist** skill (`.agents/skills/review-checklist/SKILL.md`) — it lists the recurring mistakes specific to this codebase.'
+    gold_removed: ''

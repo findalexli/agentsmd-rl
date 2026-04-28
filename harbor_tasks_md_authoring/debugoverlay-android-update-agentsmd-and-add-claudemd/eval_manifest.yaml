@@ -1,0 +1,48 @@
+version: "2.0"
+
+task:
+  name: debugoverlay-android-update-agentsmd-and-add-claudemd
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: Manabu-GT/DebugOverlay-Android
+  pr: 36
+  base_commit: "d7d4312d5d3c7db3c4b5568955aa378e49123add"
+  merge_commit: "e4095a8d0cf571eb9b806e25d1ecc220b9caf020"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_04
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_05
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+
+config_edits:
+  - path: AGENTS.md
+    tier: 1
+    gold_added: "    - Project tracks tool versions via `gradle/wrapper/gradle-wrapper.properties` (Gradle) and `gradle/libs.versions.toml` (AGP, plugins, dependencies). Keep those files as the single sources of truth; any wrapper or plugin change must remain compatible with JDK 17+.\n    - When upgrading dependencies or plugins, update the catalog (`gradle/libs.versions.toml`) and keep repository definitions centralised in `settings.gradle.kts`. Avoid reintroducing deprecated repositories (e.g., JCenter).\n| Gradle/build logic | `./gradlew help`; run the smallest assemble task that exercises your change when artifact wiring is affected |\nDocument all executed commands in the hand-off message. If a test is skipped, state why and note the risk. For script/config changes (Gradle `.kts`, `libs.versions.toml`, wrapper updates), run a lightweight task such as `./gradlew help` to ensure the configuration still loads.\nKeep this guide visible during sessions. Deviations must be justified in the task notes. Happy debugging!"
+    gold_removed: ''
+  - path: CLAUDE.md
+    tier: 1
+    gold_added: "# DebugOverlay Guide for Claude\n\nThis repository already contains `AGENTS.md`. Claude should use that document as the canonical reference and treat this file as a Claude-specific companion that highlights preferred behaviours and common pitfalls. Follow every directive below unless a higher-priority instruction (system > developer > user) explicitly overrides it.\n\n---\n\n## 1. Core Principles\n\n1. **Pause and align** – read the full request, open tasks, and any referenced files before taking action. When requirements are ambiguous or contradictory, ask for clarification instead of guessing.\n2. **Follow instruction priority** – system > developer > user > repo docs (`AGENTS.md`, `CLAUDE.md`) > task context. Resolve conflicts in that order and call them out when they appear.\n3. **Stay conservative** – prefer the minimal change that satisfies the request and avoid speculative edits.\n\n---\n\n## 2. Workflow Checklist\n\n1. `git status -sb` to understand the current branch and pending work.\n2. Review `AGENTS.md` for baseline policies (testing expectations, coding standards, communication style).\n3. Form a short plan (2–5 steps) for any non-trivial task. Update or restate the plan after completing each major step.\n4. Execute changes incrementally. After each significant edit, re-run `git status` to confirm only intended files changed.\n5. Keep notes about commands run, decisions taken, and any blockers—these will feed into the final hand-off.\n\nUse tools deliberately:\n- Prefer `rg`/`fd`/`ls` for discovery.\n- Use `apply_patch` for manual edits; avoid auto-format commands that could produce large style-only diffs unless requested.\n\n---\n\n## 3. Code & Build Expectations (Quick Reference)\n\n- Gradle & AGP versions are defined in `gradle/wrapper/gradle-wrapper.properties` and `gradle/libs.versions.toml`. Update both when tool upgrades are required.\n- All modules now use Kotlin DSL (`*.gradle.kts`) and the central version catalog. When modifying dependencies or plugins:\n  - Add or update aliases in `gradle/libs.versions.toml`.\n  - Reference them via `libs.*` or `libs.plugins.*` in module build scripts.\n- Java/Kotlin toolchains default to Java 17; keep `java { toolchain { languageVersion = JavaLanguageVersion.of(17) } }` unless the user requests a change.\n- Preserve resource prefixes (`resourcePrefix 'debugoverlay_'`) and do not remove default resource directories when adding extra paths (use `res.srcDir(...)` instead of overwriting `srcDirs`).\n- Honour the module list in `AGENTS.md` and avoid creating new modules without approval.\n\n---\n\n## 4. Testing Guidance\n\n| Scenario | Minimum Verification |\n|----------|----------------------|\n| Gradle/build logic or catalog edits | `./gradlew help`; add the smallest assemble task that exercises the affected wiring if artifacts could be impacted |\n| Library runtime changes | `./gradlew :debugoverlay:check` (or narrower unit/integration tasks if only part of the module is touched) |\n| Extension modules | `./gradlew :debugoverlay-ext-timber:check` / `:debugoverlay-ext-netstats:check` as appropriate |\n| Sample app UI/UX | `./gradlew :sample:assembleDebug`, plus manual interaction notes if feasible |\n| Documentation-only edits | No build required, but confirm code snippets compile conceptually |\n\nAlways document executed commands and outcomes in the final response. When a test cannot be run (e.g., tooling restriction), explain why and call out the residual risk.\n\n---\n\n## 5. Communication Defaults\n\n- Keep updates short, friendly, and actionable.\n- Reference files using clickable paths with line numbers when possible (e.g., ``debugoverlay/build.gradle.kts:42`` or ``gradle/libs.versions.toml``).\n- Present options as numbered lists when offering alternatives.\n- If blocked (permissions, sandbox limits, missing context), report the issue, propose workarounds, and wait for guidance.\n\n---\n\n## 6. Review Mindset (When Asked to Review)\n\n1. Identify issues first, ordered by severity (critical → major → minor), citing file paths and line numbers.\n2. Focus on functionality, security/privacy, reliability/performance, maintainability, testing coverage, and consistency with project patterns.\n3. Provide concrete remediation suggestions or questions. Mention residual risks or testing gaps even when approving.\n\n---\n\n## 7. Safety & Incident Handling\n\n- Never run destructive Git commands (`git reset --hard`, `git clean -fd`) unless explicitly instructed by the user.\n- If unexpected file changes appear (e.g., unrelated modifications, generated files), stop, describe the observation, and request direction.\n- Preserve secrets: do not print or store contents of `local.properties`, keystores, or other sensitive files.\n\n---\n\n## 8. Final Response Template\n\nUnless the user specifies otherwise, final messages should include:\n1. **Outcome summary** – what was changed, fixed, or investigated.\n2. **Validation** – list commands/tests run, including failures or skipped checks with reasons.\n3. **Follow-ups/Risks** – mention remaining issues, suggested next steps, or verification the user should perform.\n\n---\n\nKeep both `AGENTS.md` and this guide open during sessions. If new conventions emerge (e.g., tool upgrades, testing matrix changes), update both documents in a coordinated PR. Happy collaborating, Claude!"
+    gold_removed: ''

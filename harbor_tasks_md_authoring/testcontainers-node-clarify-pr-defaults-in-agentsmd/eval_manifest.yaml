@@ -1,0 +1,39 @@
+version: "2.0"
+
+task:
+  name: testcontainers-node-clarify-pr-defaults-in-agentsmd
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: testcontainers/testcontainers-node
+  pr: 1303
+  base_commit: "b162a2235d5cde5e02c96267fb3affe026ed55bb"
+  merge_commit: "38fb3973602ebe3620f536d59e18572727d9fe3e"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+
+config_edits:
+  - path: AGENTS.md
+    tier: 1
+    gold_added: '## Instruction precedence
+
+
+      - Repository-specific instructions in this file override generic coding-agent defaults, skills, and templates.
+
+      - If a generic workflow conflicts with this file, follow this file.
+
+      '
+    gold_removed: ''

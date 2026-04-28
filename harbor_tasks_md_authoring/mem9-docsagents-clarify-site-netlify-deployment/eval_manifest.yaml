@@ -1,0 +1,66 @@
+version: "2.0"
+
+task:
+  name: mem9-docsagents-clarify-site-netlify-deployment
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: mem9-ai/mem9
+  pr: 86
+  base_commit: "713e34525b01dbbba5436657e19510b8c2814517"
+  merge_commit: "6c610f191e8d6b1186af537bd7b347653f4bc723"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+
+config_edits:
+  - path: AGENTS.md
+    tier: 1
+    gold_added: '| `site/`              | Astro static site — deployed to Netlify from `main` branch   |
+
+      | Production SKILL.md  | `site/public/SKILL.md`                      |
+
+      | Beta SKILL.md        | `site/public/beta/SKILL.md`                 |
+
+
+      ## site/ — Netlify deployment
+
+
+      `/site/` is the deployment directory for the mem9.ai static website.
+
+      It is hosted on Netlify and **automatically deployed from the `main` branch**.
+
+
+      | File | Purpose |
+
+      |---|---|
+
+      | `site/public/SKILL.md` | **Production** SKILL.md — served at `https://mem9.ai/SKILL.md` |
+
+      | `site/public/beta/SKILL.md` | **Beta** SKILL.md — served at `https://mem9.ai/beta/SKILL.md` |
+
+
+      When updating the SKILL.md that agents fetch, edit **only** these two files:
+
+
+      - `site/public/SKILL.md` — production, changes go live within seconds after merging to `main`
+
+      - `site/public/beta/SKILL.md` — beta, same deployment pipeline
+
+
+      Do **not** edit any other copy (e.g. `clawhub-skill/mem9/SKILL.md` has been removed).
+
+      Do **not** manually sync to clawhub — Netlify handles publishing automatically.'
+    gold_removed: ''

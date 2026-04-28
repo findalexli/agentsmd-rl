@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: xurl-renamed-skillsmd-to-skillmd
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: xdevplatform/xurl
+  pr: 33
+  base_commit: "33daf12733772c476c3299052ee39389f7567df0"
+  merge_commit: "09a173cb6d9eab042fd239b87ca35feb84cde1d2"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in SKILL.md."
+
+config_edits:
+  - path: SKILL.md
+    tier: 1
+    gold_added: '---
+
+      name: xurl
+
+      description: A curl-like CLI tool for making authenticated requests to the X (Twitter) API. Use this skill when you need to post tweets, reply, quote, search, read posts, manage followers, send DMs, upload media, or interact with any X API v2 endpoint. Supports OAuth 2.0, OAuth 1.0a, and app-only auth.
+
+      ---
+
+      '
+    gold_removed: ''

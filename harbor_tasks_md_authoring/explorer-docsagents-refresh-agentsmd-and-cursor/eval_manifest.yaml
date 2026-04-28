@@ -1,0 +1,251 @@
+version: "2.0"
+
+task:
+  name: explorer-docsagents-refresh-agentsmd-and-cursor
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: aptos-labs/explorer
+  pr: 1599
+  base_commit: "9152d8be1023755a4d1fd524c4ac1b6471bcb1ed"
+  merge_commit: "6e49dd921704a8e1a0f3c1e92ecd2d52ae3a34d9"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .cursor/rules/architect.mdc."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .cursor/rules/architect.mdc."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .cursor/rules/architect.mdc."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .cursor/rules/coder.mdc."
+  - id: signal_04
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .cursor/rules/coder.mdc."
+  - id: signal_05
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .cursor/rules/coder.mdc."
+  - id: signal_06
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .cursor/rules/cost-cutter.mdc."
+  - id: signal_07
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .cursor/rules/cost-cutter.mdc."
+  - id: signal_08
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .cursor/rules/modernizer.mdc."
+  - id: signal_09
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .cursor/rules/modernizer.mdc."
+  - id: signal_10
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .cursor/rules/modernizer.mdc."
+  - id: signal_11
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .cursor/rules/tester.mdc."
+  - id: signal_12
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .cursor/rules/tester.mdc."
+  - id: signal_13
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .cursor/rules/tester.mdc."
+  - id: signal_14
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_15
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_16
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+
+config_edits:
+  - path: .cursor/rules/architect.mdc
+    tier: 1
+    gold_added: '- `app/routing.tsx` - `Link` / `useNavigate` wrappers that preserve `?network=`
+
+      - `app/routes/` - File-based route definitions (run `pnpm routes:generate` after changes)
+
+      - `app/settings/` - Settings page screen + per-network API key / decompilation opt-in storage
+
+      - `docs/FEATURES_SPECIFICATION.md` - Canonical feature catalog (`FEAT-*` IDs) — keep in sync
+
+      - `docs/LLM_ACCESS.md` - LLM/SEO contributor reference
+
+      - `CONTEXT_OPTIMIZATION.md`, `CACHING.md`, `RATE_LIMITING.md` - Performance and rate-limit considerations'
+    gold_removed: ''
+  - path: .cursor/rules/coder.mdc
+    tier: 1
+    gold_added: '4. Check `docs/FEATURES_SPECIFICATION.md` for any `FEAT-*` entry your change touches and keep it in sync
+
+      5. If you touch routes/tabs or page metadata, follow `.cursor/skills/aptos-explorer-llm-seo/SKILL.md` (and update `public/llms.txt`, `public/llms-full.txt`, `public/sitemap.xml`, and `app/components/hooks/usePageMetadata.tsx` as needed)
+
+      pnpm lint             # TypeScript + Biome lint checks
+
+      pnpm test --run       # Vitest single run (CI mode)
+
+      pnpm dev              # Dev server on port 3030
+
+      pnpm ci:verify        # Local CI: routes:generate + lint + test + build'
+    gold_removed: ''
+  - path: .cursor/rules/cost-cutter.mdc
+    tier: 1
+    gold_added: "  # Match `.node-version` (currently Node 24)\n  NODE_VERSION = \"24\""
+    gold_removed: ''
+  - path: .cursor/rules/modernizer.mdc
+    tier: 1
+    gold_added: 'The `src/` folder is nearly drained — only `src/components/IndividualPageContent` remains. Finishing this migration retires `src/`:
+
+      - `src/components/IndividualPageContent` → `app/components/`
+
+      - `src/components/IndividualPageContent` — last legacy component blocking removal of `src/`'
+    gold_removed: ''
+  - path: .cursor/rules/tester.mdc
+    tier: 1
+    gold_added: '- **Unit/Component**: Vitest + React Testing Library (`*.test.ts(x)` next to the implementation, run via `pnpm test`).
+
+      - **E2E**: Playwright (`e2e/smoke.spec.ts`, `playwright.config.ts`). Run with `pnpm test:e2e` against a `vite preview` build (port 4173). One-time setup: `pnpm test:e2e:install` to install Chromium + system deps. CI runs Playwright after `pnpm ci:verify`.
+
+      - **Visual**: Chromatic or similar (not yet wired up).
+
+      pnpm test                # Watch mode (Vitest)
+
+      pnpm test --run          # Single run (CI mode)
+
+      pnpm test <pattern>      # Run matching tests
+
+      pnpm test --coverage     # With coverage report
+
+      pnpm test:e2e            # Playwright smoke tests (vite preview on :4173)
+
+      pnpm test:e2e:install    # One-time: install Chromium + system deps'
+    gold_removed: ''
+  - path: AGENTS.md
+    tier: 1
+    gold_added: 'pnpm install            # Install dependencies
+
+      pnpm routes:generate    # TanStack route tree (also runs before dev/build/lint/test via pre* scripts)
+
+      pnpm dev                # Dev server on port 3030
+
+      pnpm start              # Dev server on port 3000
+
+      pnpm build              # Production build
+
+      pnpm ci:verify          # Local CI: generate routes, lint, test, production build
+
+      pnpm test               # Run Vitest (watch mode)
+
+      pnpm test --run         # Vitest single run (CI mode)
+
+      pnpm test:e2e           # Playwright smoke tests against `vite preview` (port 4173)
+
+      pnpm test:e2e:install   # Install Playwright Chromium browser + system deps
+
+      pnpm lint               # TypeScript + Biome lint checks
+
+      pnpm fmt                # Apply Biome formatting
+
+      pnpm check              # Biome lint + format + organize imports
+
+      │   ├── routes/             # File-based routing (TanStack Router)
+
+      │   ├── components/         # Shared UI components (incl. `components/hooks/`)
+
+      │   ├── api/                # Aptos clients + React Query hooks (`api/hooks/`)
+
+      │   ├── pages/              # Page-level screens used by route components
+
+      │   ├── settings/           # Settings page screen + storage utilities
+
+      │   ├── data/               # Per-network static data (known addresses, branding)
+
+      │   ├── hooks/              # App-wide hooks not tied to data fetching
+
+      │   ├── lib/                # Cross-cutting helpers (e.g. wallet, Decibel parsers)
+
+      │   ├── utils/              # Utility functions (incl. drift tests)
+
+      │   ├── themes/             # MUI theme configuration
+
+      │   ├── wasm/               # Move decompiler / disassembler WASM bindings
+
+      │   └── global-config/      # Static runtime configuration
+
+      ├── src/                    # Legacy/compat code (prefer app/) — only `IndividualPageContent` remains
+
+      ├── public/                 # Static assets, `llms*.txt`, `sitemap.xml`, `robots.txt`
+
+      ├── docs/                   # Contributor docs (`FEATURES_SPECIFICATION.md`, `LLM_ACCESS.md`)
+
+      ├── e2e/                    # Playwright smoke tests (`smoke.spec.ts`)
+
+      ├── scripts/                # One-off shell scripts (e.g. `generate-icons.sh`)
+
+      ├── typings/                # Ambient type declarations
+
+      ├── .agents/                # Task management (Kanban) and issue tracker
+
+      ├── .cursor/                # Cursor IDE configuration (rules, notepads, skills)
+
+      - Unit tests live next to the implementation as `*.test.ts(x)` and run with **Vitest**. The `pretest` script regenerates the route tree first.
+
+      - End-to-end smoke tests live in `e2e/` and run with **Playwright** against a `vite preview` build (`pnpm test:e2e`). The `e2e/**` glob is excluded from Vitest. CI runs Playwright after `pnpm ci:verify` and maps each `APTOS_<NETWORK>_API_KEY` repository secret to both `VITE_APTOS_<NETWORK>_API_KEY` (client bundle) and `APTOS_<NETWORK>_API_KEY` (SSR) so client and server share one identity.
+
+      - Legacy component migration from `src/components/` (only `IndividualPageContent` remains — finishing this migration retires `src/`)
+
+      Copy `.env.example` to `.env.local` and uncomment the variables you need. Common overrides:
+
+      # Per-network Aptos API Gateway keys (client bundle).
+
+      # VITE_APTOS_MAINNET_API_KEY=AG-...
+
+      # VITE_APTOS_TESTNET_API_KEY=AG-...
+
+      # VITE_APTOS_DEVNET_API_KEY=AG-...
+
+
+      # Per-network Aptos API Gateway keys (SSR / server). Set the same value as the
+
+      # matching VITE_* variable so the browser and server share one identity.
+
+      # APTOS_MAINNET_API_KEY=AG-...
+
+      # APTOS_TESTNET_API_KEY=AG-...
+
+
+      # Optional custom endpoints / analytics.
+
+      # APTOS_DEVNET_URL=https://api.devnet.staging.aptoslabs.com/v1
+
+      # REACT_APP_GTM_ID=GTM-XXXXXXX
+
+
+      # Feature tier banner — also overridable at runtime via the `feature_name` cookie.
+
+      # VITE_FEATURE_NAME=prod   # values: prod | dev | earlydev
+
+      Vite exposes variables prefixed with `VITE_` (and `REACT_APP_` for compatibility) to the client bundle; everything else is server-only. Users can also set per-network API keys at runtime via **Settings** (`/settings`). **Never commit secrets** — use runtime environment variables.'
+    gold_removed: ''

@@ -1,0 +1,50 @@
+version: "2.0"
+
+task:
+  name: eas-build-add-agentsmd
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: expo/eas-build
+  pr: 642
+  base_commit: "8b39aeddd07c02294fbcb9a8919484017b2c5fef"
+  merge_commit: "c89f70583a15d7c609aa331f30131bb2d5334073"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_04
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+
+config_edits:
+  - path: AGENTS.md
+    tier: 1
+    gold_added: '# AGENTS.md
+
+
+      When working with this repository follow instructions from CLAUDE.md.
+
+
+      - [./CLAUDE.md](./CLAUDE.md)'
+    gold_removed: ''
+  - path: CLAUDE.md
+    tier: 1
+    gold_added: "# Codebase Guidelines\n\nThis file provides guidance to AI agents when working with code in this repository.\n\n## Project Overview\n\nEAS Build is a cloud-based build system for Expo/React Native applications. This monorepo contains libraries used by the EAS Build service to process Android and iOS builds, supporting both traditional builds and custom builds with user-defined workflows.\n\n## Development Commands\n\n### Setup\n\n```bash\nyarn && yarn start              # Install dependencies and start development mode\nyarn build                      # Build all packages (required for interdependencies)\n```\n\n### Development Workflow\n\n```bash\nyarn start                      # Watch mode for all packages (parallel)\nyarn watch                      # Same as start\nyarn build                 # Build all packages\n```\n\n### Testing\n\n```bash\nyarn test                       # Run tests for all packages\nyarn test:coverage              # Run tests with coverage\nyarn test --scope=@expo/build-tools  # Run tests for specific package\n```\n\nFor a single package (which is usually more convenient), you can also:\n\n```bash\ncd packages/build-tools\nyarn test                       # Run tests in this package\nyarn test --watch              # Watch mode\nyarn test path/to/test.test.ts # Run specific test file\n```\n\n### Linting\n\n```bash\nyarn lint                       # Lint all packages\nyarn lint --fix                 # Lint all packages and fix the lint issues\n```\n\n### Local Build Testing\n\nSet up environment variables for testing local builds:\n\n```bash\nexport EAS_LOCAL_BUILD_PLUGIN_PATH=$HOME/expo/eas-build/bin/eas-cli-local-build-plugin\nexport EAS_LOCAL_BUILD_WORKINGDIR=$HOME/expo/eas-build-workingdir\nexport EAS_LOCAL_BUILD_SKIP_CLEANUP=1\nexport EAS_LOCAL_BUILD_ARTIFACTS_DIR=$HOME/expo/eas-build-workingdir/results\n\n# Then run build with --local flag in eas-cli\neas build --local\n```\n\n### Releasing\n\n```bash\nyarn release                    # Release new version (runs on GHA)\n```\n\n## Monorepo Architecture\n\nThis is a Lerna-based monorepo.\n\n### Core Packages\n\n**@expo/eas-build-job** - The foundation that all other packages depend on\n\n- Defines all data structures for build operations (Job, BuildPhase, BuildMode, Platform, Workflow)\n- Provides type definitions and validation schemas (Zod, Joi)\n- Contains BuildPhase enum that defines the traditional build pipeline stages\n- Key exports: `Job`, `BuildPhase`, `BuildMode`, `BuildTrigger`, `Workflow`, `ArchiveSource`\n\n**@expo/build-tools** - The main build execution engine\n\n- Orchestrates all build operations through `BuildContext<T extends Job>`\n- Contains platform-specific builders: `androidBuilder()`, `iosBuilder()`, `runCustomBuildAsync()`\n- Manages build phases, artifact uploading, caching, credentials\n- Provides functions for custom builds\n- Integrates with GraphQL API\n\n**@expo/steps** - Custom build workflow engine (ESM module)\n\n- Framework for defining and executing custom build steps\n- Key abstractions:\n  - `BuildWorkflow`: Orchestrates sequential step execution\n  - `BuildStep`: Individual executable unit with inputs/outputs\n  - `BuildStepGlobalContext`: Manages shared state and interpolation\n  - `BuildStepContext`: Per-step execution context\n- Supports conditional execution with `if` expressions (using jsep)\n- Template interpolation: `${{ steps.step-id.outputs.outputName }}`\n- Parses build configs from YAML/JSON\n\n**eas-cli-local-build-plugin** - Local build execution\n\n- Allows running EAS builds locally on developer machines\n- Entry point: `packages/local-build-plugin/src/index.ts`\n- Sets `EAS_BUILD_RUNNER=local-build-plugin` environment variable\n- Reuses all build-tools logic for consistency with cloud builds\n\n### Supporting Packages\n\n**@expo/logger** - Bunyan-based structured logging (used by all packages)\n**@expo/downloader** - HTTP file downloading with retry logic\n**@expo/turtle-spawn** - Child process spawning with error handling\n**@expo/template-file** - Lodash-based template string interpolation\n**create-eas-build-function** - CLI scaffolding tool for custom build functions\n**template-file** - Simple template file utility\n\n## Key Architectural Patterns\n\n### Build Phases\n\nMost traditional build operations are wrapped in phases for tracking:\n\n```typescript\nawait ctx.runBuildPhase(BuildPhase.INSTALL_DEPENDENCIES, async () => {\n  // Phase logic here\n});\n```\n\nPhases can be marked as skipped, warning, or failed for granular reporting.\n\n### Context Objects\n\n- **BuildContext** (`build-tools`): For traditional builds, wraps Job, manages phases/artifacts/caching\n- **CustomBuildContext** (`build-tools`): Implements `ExternalBuildContextProvider`, bridges BuildContext to steps framework, used in custom builds and generic jobs\n- **BuildStepGlobalContext** (`steps`): Manages step outputs, interpolation, shared state\n- **BuildStepContext** (`steps`): Per-step context with working directory and logger\n\n### Custom Build Steps\n\nSteps are defined with:\n\n- `id`: Unique identifier\n- `name`: Display name\n- `run`: Command or function reference\n- `if`: Optional condition (`${{ always() }}`, `${{ success() }}`, etc.)\n- `inputs`: Key-value inputs to the step\n- `outputs`: Named outputs accessible to later steps\n\nBuilt-in step functions are in `packages/build-tools/src/steps/functions/`\n\n### Conditional Execution\n\nUses jsep for expression evaluation:\n\n```yaml\nif: ${{ steps.previous_step.outputs.success == 'true' && env.ENVIRONMENT == 'production' }}\n```\n\n### Artifact Management\n\nArtifacts tracked as `ArtifactToUpload`:\n\n- Managed artifacts (APK, IPA, AAB) with specific handling\n- Generic artifacts for any file\n- Upload via `ctx.uploadArtifact()` or `upload-artifact` step\n\n## Package Interdependencies\n\n```\neas-cli-local-build-plugin → @expo/build-tools → @expo/eas-build-job\n                           ↘                   ↗ @expo/steps\n                             @expo/turtle-spawn\n```\n\nMost packages depend on `@expo/eas-build-job` as the source of truth for types.\n\n## Common Development Scenarios\n\n### Adding a Built-in Step Function\n\n1. Create file in `packages/build-tools/src/steps/functions/yourFunction.ts`\n2. Export `createYourFunctionBuildFunction()` following existing patterns\n3. Add to `getEasFunctions()` in `packages/build-tools/src/steps/functions/easFunctions.ts`\n4. Function receives `BuildStepContext` and input/output maps\n\n### Adding Error Detection\n\n1. Add pattern detection in `packages/build-tools/src/buildErrors/detectError.ts`\n2. Implement resolver for better error messages\n3. Helps users understand and fix build failures\n\n### Working with Platform-Specific Builders\n\n- **Android builder** (`packages/build-tools/src/builders/android.ts`): Gradle-based, handles APK/AAB generation, also see `functionGroups/build.ts`\n- **iOS builder** (`packages/build-tools/src/builders/ios.ts`): Fastlane/Xcode-based, handles IPA generation, also see `functionGroups/build.ts`\n- Both use `runBuilderWithHooksAsync()` which runs build result hooks (on-success, on-error, on-complete) from package.json\n\n## Testing Strategy\n\n- Unit tests with Jest in each package\n- Integration tests for build-tools and steps packages\n- Mock filesystem (memfs) for testing file operations\n- Mock git operations for testing checkout scenarios\n- Run tests before submitting PRs\n\n## Environment Requirements\n\nNode and Yarn versions are managed by Volta."
+    gold_removed: ''

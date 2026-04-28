@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: xint-fix-shorten-skillmd-description-metadata
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: 0xNyk/xint
+  pr: 23
+  base_commit: "1f14ff53c1c5655fbc05827ee706c612063e356b"
+  merge_commit: "c63394dc9966542db2ad57682696a94fcfa524bf"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in SKILL.md."
+
+config_edits:
+  - path: SKILL.md
+    tier: 1
+    gold_added: "  X Intelligence CLI for searching, monitoring, and analyzing X/Twitter from the terminal.\n  Use for X/Twitter research prompts such as \"search x\", \"find tweets about\", \"what's X saying\",\n  trend checks, follower diffs, real-time watch tasks, sentiment/report analysis, and bookmark-sync workflows.\n  Best when recent community discourse matters (library/API changes, launches, market or cultural events).\n  Supports search, watch, trends, bookmarks, likes/following (OAuth), Grok analysis, and JSON/JSONL/CSV/Markdown export.\n  Non-goals: posting original tweets, DMs, or enterprise-only features."
+    gold_removed: ''

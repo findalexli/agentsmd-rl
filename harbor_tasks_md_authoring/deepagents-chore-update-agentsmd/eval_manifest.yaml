@@ -1,0 +1,79 @@
+version: "2.0"
+
+task:
+  name: deepagents-chore-update-agentsmd
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: langchain-ai/deepagents
+  pr: 1199
+  base_commit: "5633c825832a0e8bd645681db23e97af31879b65"
+  merge_commit: "a9c807cbc46779cf7e89c22648997c89c4d4ce39"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+
+config_edits:
+  - path: AGENTS.md
+    tier: 1
+    gold_added: '│   └── partners/    # Integration packages
+
+      │       └── daytona/
+
+      │       └── ...
+
+
+      #### Suppressing ruff lint rules
+
+
+      Prefer inline `# noqa: RULE` over `[tool.ruff.lint.per-file-ignores]` for individual exceptions. `per-file-ignores` silences a rule for the *entire* file — If you add it for one violation, all future violations of that rule in the same file are silently ignored. Inline `# noqa` is precise to the line, self-documenting, and keeps the safety net intact for the rest of the file.
+
+
+      Reserve `per-file-ignores` for **categorical policy** that applies to a whole class of files (e.g., `"tests/**" = ["D1", "S101"]` — tests don''t need docstrings, `assert` is expected). These are not exceptions; they are different rules for a different context.
+
+
+      ```toml
+
+      # GOOD – categorical policy in pyproject.toml
+
+      [tool.ruff.lint.per-file-ignores]
+
+      "tests/**" = ["D1", "S101"]
+
+
+      # BAD – single-line exception buried in pyproject.toml
+
+      "deepagents_cli/agent.py" = ["PLR2004"]
+
+      ```
+
+
+      ```python
+
+      # GOOD – precise, self-documenting inline suppression
+
+      timeout = 30  # noqa: PLR2004  # default HTTP timeout, not arbitrary
+
+      ```
+
+
+      Ensure the following:
+
+      - Does the test suite fail if your new logic is broken?
+
+      - Edge cases and error conditions are tested
+
+      - Tests are deterministic (no flaky tests)'
+    gold_removed: ''

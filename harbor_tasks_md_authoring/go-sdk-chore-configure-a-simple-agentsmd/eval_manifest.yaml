@@ -1,0 +1,70 @@
+version: "2.0"
+
+task:
+  name: go-sdk-chore-configure-a-simple-agentsmd
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: modelcontextprotocol/go-sdk
+  pr: 810
+  base_commit: "ac65640a6841112cb7c08c48f903a903942b6351"
+  merge_commit: "9f22cf142e37040c33a3e6a8561fda9d77a6cef6"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .agents/skills/fix-bug/SKILLS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .agents/skills/fix-bug/SKILLS.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .agents/skills/fix-bug/SKILLS.md."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_04
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_05
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+
+config_edits:
+  - path: .agents/skills/fix-bug/SKILLS.md
+    tier: 1
+    gold_added: '---
+
+      name: fix-bug
+
+      description: Confirm, debug and fix bugs reported via GitHub issues.
+
+      ---
+
+
+      # Step-by-step instructions
+
+
+      1.  Use the `gh` CLI to fetch information about the issue.
+
+      2.  Create a reproduction test case.
+
+      3.  Create an implementation plan that describes how you intend to fix the bug. Don''t proceed without approval.
+
+      4.  Implement the fix.
+
+      5.  Verify the fix with the test case and run all tests to ensure no regressions.
+
+      6.  Provide a summary of the changes.'
+    gold_removed: ''
+  - path: AGENTS.md
+    tier: 1
+    gold_added: "# AGENTS.md\n\n## Project Overview\n\nThis repository contains the official Go SDK for the Model Context Protocol (MCP).\nThe SDK is designed to be idiomatic, future-proof, and extensible.\n\n### Key Packages\n\n-   `mcp`: The core package defining the primary APIs for constructing and using MCP clients and servers. This is where most logic resides.\n-   `jsonrpc`: Provides the JSON-RPC 2.0 transport layer. Use this if implementing custom transports.\n-   `auth`: Primitives for supporting OAuth.\n-   `oauthex`: Extensions to the OAuth protocol, such as Protected Resource Metadata.\n-   `internal`: Internal implementation details not exposed to users.\n-   `examples`: Example clients and servers. Use these as references for usage patterns.\n\n## Development Setup\n\nThe project uses the standard Go toolchain.\n\n-   **Build**: `go build ./...`\n-   **Test**: `go test ./...`\n\n## Testing\n\n-   **Unit Tests**: Run `go test ./...` to run all unit tests.\n-   **Conformance Tests**: Use the following scripts to run the official MCP conformance tests against the SDK.\n    -   `./scripts/server-conformance.sh` for server tests.\n    -   `./scripts/client-conformance.sh` for client tests.\n    -   The scripts download the latest conformance suite from npm by default.\n    -   To get possible options pass the `--help` flag to the script.\n\n## Development Guidelines\n\n### Code Style\n\n-   Follow standard Go conventions (Effective Go).\n-   Use `gofmt` to format code.\n-   Add copyright headers to all new Go files:\n    ```go\n    // Copyright 2025 The Go MCP SDK Authors. All rights reserved.\n    // Use of this source code is governed by the license\n    // that can be found in the LICENSE file.\n    ```\n-  Do not add comments to the code unless they are really necessary:\n    -   Prefer self-documenting code.\n    -   Focus on the \"why\" not the \"what\" in comments.\n\n### Documentation\n\n-   **README.md**: Do NOT edit `README.md` directly. It is generated from `internal/readme/README.src.md`.\n    -   Edit `internal/readme/README.src.md`.\n    -   Run `go generate ./internal/readme` to regenerate.\n    -   Commit both files.\n-   **docs/**: Do NOT edit `docs/` directory directly. It is generated from files in `internal/docs`.\n    -   Edit `internal/docs/*.src.md`.\n    -   Run `go generate ./internal/docs` to regenerate.\n    -   Commit files from both directories."
+    gold_removed: ''

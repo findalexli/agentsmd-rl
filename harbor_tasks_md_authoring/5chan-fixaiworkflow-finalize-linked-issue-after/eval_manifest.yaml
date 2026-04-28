@@ -1,0 +1,48 @@
+version: "2.0"
+
+task:
+  name: 5chan-fixaiworkflow-finalize-linked-issue-after
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: bitsocialnet/5chan
+  pr: 1047
+  base_commit: "a92b185a661638300158b59feb18d60a3ce95e64"
+  merge_commit: "248a38d71c1b89dfaf8198fc04fa8b3732169e48"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .codex/skills/review-and-merge-pr/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .codex/skills/review-and-merge-pr/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .codex/skills/review-and-merge-pr/SKILL.md."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .cursor/skills/review-and-merge-pr/SKILL.md."
+  - id: signal_04
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .cursor/skills/review-and-merge-pr/SKILL.md."
+  - id: signal_05
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .cursor/skills/review-and-merge-pr/SKILL.md."
+
+config_edits:
+  - path: .codex/skills/review-and-merge-pr/SKILL.md
+    tier: 1
+    gold_added: "description: Review an open GitHub pull request, inspect feedback from Cursor Bugbot, CodeRabbit, CI, and human reviewers, decide which findings are valid, implement fixes on the PR branch, merge the PR into master when it is ready, and finalize the linked GitHub issue and project status after merge. Use when the user says \"check the PR\", \"address bugbot comments\", \"handle CodeRabbit feedback\", \"review PR feedback\", or \"merge this PR\".\n### 7. Finalize the linked issue and project item\n\nAfter merge, inspect the PR's linked closing issue.\nIf the merge did not close the issue automatically, close it manually.\nThen ensure the linked issue is on the `5chan` project and its status is `Done`.\n\nUseful commands:\n\n```bash\nISSUE_NUMBER=$(gh pr view <pr-number> --repo bitsocialnet/5chan --json closingIssuesReferences --jq '.closingIssuesReferences[0].number // empty')\n\nif [ -n \"$ISSUE_NUMBER\" ]; then\n  ISSUE_STATE=$(gh issue view \"$ISSUE_NUMBER\" --repo bitsocialnet/5chan --json state --jq '.state')\n  if [ \"$ISSUE_STATE\" != \"CLOSED\" ]; then\n    gh issue close \"$ISSUE_NUMBER\" --repo bitsocialnet/5chan\n  fi\n\n  ITEM_ID=$(gh project item-list 1 --owner bitsocialnet --format json --jq \".items[] | select(.content.number == $ISSUE_NUMBER) | .id\" | head -n1)\n  if [ -z \"$ITEM_ID\" ]; then\n    ITEM_JSON=$(gh project item-add 1 --owner bitsocialnet --url \"https://github.com/bitsocialnet/5chan/issues/$ISSUE_NUMBER\" --format json)\n    ITEM_ID=$(echo \"$ITEM_JSON\" | jq -r '.id')\n  fi\n\n  FIELD_JSON=$(gh project field-list 1 --owner bitsocialnet --format json)\n  STATUS_FIELD_ID=$(echo \"$FIELD_JSON\" | jq -r '.fields[] | select(.name==\"Status\") | .id')\n  DONE_OPTION_ID=$(echo \"$FIELD_JSON\" | jq -r '.fields[] | select(.name==\"Status\") | .options[] | select(.name==\"Done\") | .id')\n\n  gh project item-edit --id \"$ITEM_ID\" --project-id PVT_kwDODohK7M4BM4wg --field-id \"$STATUS_FIELD_ID\" --single-select-option-id \"$DONE_OPTION_ID\"\nfi\n```\n\n### 8. Clean up local state after merge\n### 9. Report the outcome\n- whether the linked issue was confirmed closed\n- whether the linked project item was confirmed `Done`"
+    gold_removed: ''
+  - path: .cursor/skills/review-and-merge-pr/SKILL.md
+    tier: 1
+    gold_added: "description: Review an open GitHub pull request, inspect feedback from Cursor Bugbot, CodeRabbit, CI, and human reviewers, decide which findings are valid, implement fixes on the PR branch, merge the PR into master when it is ready, and finalize the linked GitHub issue and project status after merge. Use when the user says \"check the PR\", \"address bugbot comments\", \"handle CodeRabbit feedback\", \"review PR feedback\", or \"merge this PR\".\n### 7. Finalize the linked issue and project item\n\nAfter merge, inspect the PR's linked closing issue.\nIf the merge did not close the issue automatically, close it manually.\nThen ensure the linked issue is on the `5chan` project and its status is `Done`.\n\nUseful commands:\n\n```bash\nISSUE_NUMBER=$(gh pr view <pr-number> --repo bitsocialnet/5chan --json closingIssuesReferences --jq '.closingIssuesReferences[0].number // empty')\n\nif [ -n \"$ISSUE_NUMBER\" ]; then\n  ISSUE_STATE=$(gh issue view \"$ISSUE_NUMBER\" --repo bitsocialnet/5chan --json state --jq '.state')\n  if [ \"$ISSUE_STATE\" != \"CLOSED\" ]; then\n    gh issue close \"$ISSUE_NUMBER\" --repo bitsocialnet/5chan\n  fi\n\n  ITEM_ID=$(gh project item-list 1 --owner bitsocialnet --format json --jq \".items[] | select(.content.number == $ISSUE_NUMBER) | .id\" | head -n1)\n  if [ -z \"$ITEM_ID\" ]; then\n    ITEM_JSON=$(gh project item-add 1 --owner bitsocialnet --url \"https://github.com/bitsocialnet/5chan/issues/$ISSUE_NUMBER\" --format json)\n    ITEM_ID=$(echo \"$ITEM_JSON\" | jq -r '.id')\n  fi\n\n  FIELD_JSON=$(gh project field-list 1 --owner bitsocialnet --format json)\n  STATUS_FIELD_ID=$(echo \"$FIELD_JSON\" | jq -r '.fields[] | select(.name==\"Status\") | .id')\n  DONE_OPTION_ID=$(echo \"$FIELD_JSON\" | jq -r '.fields[] | select(.name==\"Status\") | .options[] | select(.name==\"Done\") | .id')\n\n  gh project item-edit --id \"$ITEM_ID\" --project-id PVT_kwDODohK7M4BM4wg --field-id \"$STATUS_FIELD_ID\" --single-select-option-id \"$DONE_OPTION_ID\"\nfi\n```\n\n### 8. Clean up local state after merge\n### 9. Report the outcome\n- whether the linked issue was confirmed closed\n- whether the linked project item was confirmed `Done`"
+    gold_removed: ''

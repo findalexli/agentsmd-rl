@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: win-codexbar-update-agentsmd-for-rust-windows
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: Finesssee/Win-CodexBar
+  pr: 3
+  base_commit: "4f155aa0d96327e65edc1c3107364cead1b3ded2"
+  merge_commit: "0e62cf2d3e1ac13aae77cf46303be1b24793f037"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+
+config_edits:
+  - path: AGENTS.md
+    tier: 1
+    gold_added: "## Current Project State\n- This repository currently ships a Windows port of CodexBar implemented in Rust (`rust/`).\n- Many files in `docs/` and some workflows reference the upstream macOS/Swift project. Treat those as historical or\n  upstream-sync material unless the task is explicitly about upstream parity.\n- When repo docs conflict, trust the active Rust sources in `rust/src` and the Rust manifests (`rust/Cargo.toml`).\n\n- `rust/src`: Main application code (CLI, providers, tray, native UI, browser cookie extraction, settings).\n- `rust/src/providers`: Provider-specific fetch/parsing/auth logic. Keep provider boundaries clean.\n- `rust/src/native_ui` and `rust/src/tray`: egui UI and tray integration.\n- `rust/src/browser`: Browser detection + cookie extraction for Windows.\n- `rust/assets`, `rust/icons`, `rust/gen`, `rust/wix`: UI assets, generated schemas, installer packaging.\n- `docs`: Mixed documentation (Windows port docs plus upstream/macOS references). Update only the relevant docs.\n- Work from `rust/` for most tasks: `cd rust`.\n- Build: `cargo build` (debug) or `cargo build --release`.\n- Test: `cargo test`.\n- Run CLI locally: `cargo run -- --help`, `cargo run -- -p claude`, `cargo run -- cost`.\n- Run the tray app (Windows): `cargo run -- menubar`.\n- Format/lint before handoff when code changed: `cargo fmt --all` and `cargo clippy --all-targets -- -D warnings`\n  (or explain why not run).\n- There is no active root-level `Scripts/` build pipeline in this port. Do not rely on legacy `Scripts/*.sh` commands.\n- Prefer small, typed structs/enums and focused modules; keep changes local.\n- Keep provider-specific logic inside the provider module instead of adding cross-provider branching.\n- Preserve clear error handling and user-facing diagnostics (`anyhow`/`thiserror` + friendly messages where applicable).\n- Use `tracing` for diagnostics; do not log raw secrets, cookies, or tokens.\n- Avoid adding dependencies/tooling without confirmation.\n- Add or extend focused Rust tests near the changed module (`#[cfg(test)]` unit tests are common in this repo).\n- For parser/fetcher changes, add deterministic samples/fixtures where practical.\n- Run `cargo test` after code changes; include any skipped checks in handoff.\n- If UI/tray behavior changed, do a manual Windows validation when possible (`codexbar menubar`).\n- Use short imperative commit messages (for example: `Fix Claude CLI parser`, `Improve cookie import errors`).\n- Keep commits scoped to one change.\n- In PRs/patches, include:\n  - Summary of behavior changes\n  - Commands run (`cargo test`, `cargo fmt`, etc.)\n  - Screenshots/GIFs for UI changes (Windows)\n  - Linked issue/reference when relevant\n- Active implementation is the Rust Windows port. Root Swift/macOS docs and scripts are not the default workflow here.\n- Keep provider data siloed: never show identity/plan/email fields from provider A in provider B UI.\n- Claude CLI output is user-configurable; do not depend on a customizable status line for usage parsing.\n- Cookie import UX uses explicit browser selection in Preferences. Do not assume Chrome-only in general UI flows.\n- Be conservative with secret handling (manual cookies, API keys, token accounts); use existing redaction/storage helpers.\n- Prefer Windows-native validation for tray/DPAPI/browser-cookie behavior; WSL/Linux can be insufficient for those paths."
+    gold_removed: ''

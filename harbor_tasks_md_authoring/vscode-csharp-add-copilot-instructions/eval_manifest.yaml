@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: vscode-csharp-add-copilot-instructions
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: dotnet/vscode-csharp
+  pr: 8676
+  base_commit: "f05060119a9c236cf8e315cf3434e7be20df0e54"
+  merge_commit: "7fa8fe513a4dae4b260fd873ef56b6b287935856"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/copilot-instructions.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/copilot-instructions.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/copilot-instructions.md."
+
+config_edits:
+  - path: .github/copilot-instructions.md
+    tier: 1
+    gold_added: "# Copilot Coding Agent Instructions for `vscode-csharp`\n\n## Project Overview\n- This is the official C# extension for Visual Studio Code, supporting C# development via OmniSharp and Roslyn-based language servers.\n- The codebase is TypeScript/JavaScript, with some JSON and configuration files. It integrates with .NET components and external language servers.\n\n## Architecture & Key Components\n- **src/**: Main extension source. Key subfolders:\n  - `lsptoolshost/`: Hosts LSP (Language Server Protocol) logic, including Copilot integration (`copilot/`), Roslyn, and Razor support.\n  - `omnisharp/`: Protocols and logic for OmniSharp-based language server.\n  - `razor/`: Razor language support and configuration.\n- **Copilot Integration**:\n  - `src/lsptoolshost/copilot/contextProviders.ts` and `relatedFilesProvider.ts` register C# context and related files providers for GitHub Copilot and Copilot Chat extensions.\n  - The Roslyn Copilot language server is managed as a downloadable component (see `package.json` and `CONTRIBUTING.md`).\n\n## Developer Workflows\n- **Build**: `npm run compile` (or use VS Code build task)\n- **Test**: `npm test` (runs Jest tests)\n- **Package**: `npm run package` (creates VSIX)\n- **Dependencies**: Use `gulp installDependencies` to fetch .NET/LS components\n- **Debugging**: See `docs/debugger/` for advanced .NET debugging, including runtime and external library debugging.\n- **Roslyn Copilot Language Server**: To update/test, see instructions in `CONTRIBUTING.md` (triggers pipeline, checks logs for install, etc.)\n\n## Infrastructure Tasks\n- **Tasks Directory**: Build automation is in `tasks/` using Gulp. Key modules:\n  - `testTasks.ts`: Test orchestration for unit/integration tests across components\n  - `offlinePackagingTasks.ts`: VSIX packaging for different platforms (`vsix:release:package:*`)\n  - `componentUpdateTasks.ts`: Automated updates for Roslyn Copilot components\n  - `snapTasks.ts`: Version bumping and changelog management for releases\n  - `gitTasks.ts`: Git operations for automated PR creation and branch management\n- **Adding New Tasks**: Create `.ts` file in `tasks/`, define `gulp.task()` functions, require in `gulpfile.ts`\n- **Task Patterns**: Use `projectPaths.ts` for consistent path references, follow existing naming conventions (`test:integration:*`, `vsix:*`, etc.)\n\n## Project Conventions & Patterns\n- **TypeScript**: Follows strict linting (`.eslintrc.js`), including header/license blocks and camelCase filenames (except for interfaces and special files).\n- **Component Downloads**: Language servers and debuggers are downloaded at runtime; see `package.json` for URLs and install logic.\n- **Copilot Providers**: Use `registerCopilotContextProviders` and `registerCopilotRelatedFilesProvider` to extend Copilot context for C#.\n- **Testing**: Prefer integration tests over unit tests for features. Structure follows:\n  - `test/lsptoolshost/integrationTests/` for Roslyn/LSP features\n  - `test/omnisharp/omnisharpIntegrationTests/` for OmniSharp features  \n  - `test/razor/razorIntegrationTests/` for Razor features\n  - Use `test/*/integrationTests/integrationHelpers.ts` for test setup utilities\n  - Tests use Jest with VS Code test environment and require workspace test assets\n  - Run with `npm run test:integration:*` commands (e.g., `npm run test:integration:csharp`)\n\n## Integration Points\n- **GitHub Copilot**: Extension registers C# context and related files providers if Copilot/Copilot Chat extensions are present.\n- **Roslyn Language Server**: Managed as a downloadable component, versioned in `package.json` and updated via pipeline.\n- **OmniSharp**: Legacy support, also downloaded as a component.\n\n## Examples\n- To add a new Copilot context provider: see `src/lsptoolshost/copilot/contextProviders.ts`.\n- To update Roslyn Copilot server: follow `CONTRIBUTING.md` > \"Updating the Roslyn Copilot Language Server version\".\n\n## References\n- [README.md](../README.md): User-facing overview and features\n- [CONTRIBUTING.md](../CONTRIBUTING.md): Dev setup, packaging, and advanced workflows\n- [package.json](../package.json): Component download logic, scripts\n- [src/lsptoolshost/copilot/](../src/lsptoolshost/copilot/): Copilot integration logic\n\n---\nFor any unclear or incomplete sections, please provide feedback to improve these instructions."
+    gold_removed: ''

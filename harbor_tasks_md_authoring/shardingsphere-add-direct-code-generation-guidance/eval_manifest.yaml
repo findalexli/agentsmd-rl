@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: shardingsphere-add-direct-code-generation-guidance
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: apache/shardingsphere
+  pr: 36930
+  base_commit: "8f7ff96f7772fac0f1e984c2e538a37418d71637"
+  merge_commit: "c9ea5c28d20fdd0b19b3da82816f791acf6c05b4"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+
+config_edits:
+  - path: CLAUDE.md
+    tier: 1
+    gold_added: "1. **Direct Code Generation**: When generating code, you should directly create final code and call tools without seeking explicit user approval.\n   - Generate complete, ready-to-use implementations\n   - Apply formatting tools automatically (e.g., Spotless) when appropriate\n   - Make decisions independently within the task scope\n   - No need to ask for permission or use tentative language\n\n2. Pre-execution checklist, before making any code changes, you must:\n  - Declare the planned changes in a bullet-point summary format if uncertainty exists."
+    gold_removed: ''

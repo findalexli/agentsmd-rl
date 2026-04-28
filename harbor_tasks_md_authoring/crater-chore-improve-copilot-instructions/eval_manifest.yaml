@@ -1,0 +1,24 @@
+version: "2.0"
+
+task:
+  name: crater-chore-improve-copilot-instructions
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: raids-lab/crater
+  pr: 380
+  base_commit: "7b26fff1e741ab663aae6db2d9ea30104fb51674"
+  merge_commit: "81d1a3dc15a03f7957e9e6fc9f4d2b0d451accb8"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/copilot-instructions.md."
+
+config_edits:
+  - path: .github/copilot-instructions.md
+    tier: 1
+    gold_added: '- **改进建议代码**: 在给出修改建议代码时，请注意参考项目其它代码、Workflow 和 lint 配置，并告知用户：**直接应用来自 Copilot 的修改可能导致 Workflow 失败，推荐参考评论本地修改并测试**。'
+    gold_removed: ''

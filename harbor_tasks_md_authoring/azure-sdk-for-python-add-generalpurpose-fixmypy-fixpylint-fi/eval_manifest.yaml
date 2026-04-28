@@ -1,0 +1,459 @@
+version: "2.0"
+
+task:
+  name: azure-sdk-for-python-add-generalpurpose-fixmypy-fixpylint-fi
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: Azure/azure-sdk-for-python
+  pr: 45809
+  base_commit: "9011bd1ff2d96f50d6508fc030b35b36bb4cd7e9"
+  merge_commit: "fd2f4c46b1febe7e9cf8235a2e2e55e0fe48da40"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/skills/fix-black/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/skills/fix-black/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/skills/fix-black/SKILL.md."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/skills/fix-mypy/SKILL.md."
+  - id: signal_04
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/skills/fix-mypy/SKILL.md."
+  - id: signal_05
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/skills/fix-mypy/SKILL.md."
+  - id: signal_06
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/skills/fix-pylint/SKILL.md."
+  - id: signal_07
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/skills/fix-pylint/SKILL.md."
+  - id: signal_08
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/skills/fix-pylint/SKILL.md."
+  - id: signal_09
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/skills/fix-sphinx/SKILL.md."
+  - id: signal_10
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/skills/fix-sphinx/SKILL.md."
+  - id: signal_11
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/skills/fix-sphinx/SKILL.md."
+
+config_edits:
+  - path: .github/skills/fix-black/SKILL.md
+    tier: 1
+    gold_added: '---
+
+      name: fix-black
+
+      description: Automatically fix black code formatting issues in any Azure SDK for Python package
+
+      ---
+
+
+      # Fix Black Formatting Issues Skill
+
+
+      This skill automatically fixes black code formatting issues in any Azure SDK for Python package.
+
+
+      ## Instructions
+
+
+      1. Activate virtual environment FIRST
+
+      2. Install `eng/tools/azure-sdk-tools[build]`
+
+      3. Navigate to the package path
+
+      4. Run `azpysdk --isolate black .`
+
+      5. Review the changes with `git diff`
+
+      6. Commit the changes
+
+
+      ## Notes
+
+
+      - The Azure SDK uses `eng/black-pyproject.toml` for repo-wide configuration'
+    gold_removed: ''
+  - path: .github/skills/fix-mypy/SKILL.md
+    tier: 1
+    gold_added: "---\nname: fix-mypy\ndescription: Automatically fix mypy type checking issues in any Azure SDK for Python package following Azure SDK Python patterns.\n---\n\n# Fix MyPy Issues Skill\n\nThis skill automatically fixes mypy type checking errors in any Azure SDK for Python package by analyzing existing code patterns and applying fixes with 100% confidence.\n\n## Overview\n\nIntelligently fixes mypy issues by:\n1. Getting the package path or GitHub issue URL from the user\n2. Reading and analyzing the issue details (if issue URL provided)\n3. Setting up or using existing virtual environment\n4. Installing required dependencies\n5. Running mypy on the package\n6. Analyzing the mypy output to identify type errors\n7. Searching codebase for existing type annotation patterns\n8. Applying fixes only with 100% confidence\n9. Re-running mypy to verify fixes\n10. Creating a pull request\n11. Providing a summary of what was fixed\n\n## Running MyPy\n\n**Command:**\n```powershell\ncd <package-path>\nazpysdk --isolate mypy .\n```\n\n> **Note:** `azpysdk mypy` runs with a pinned version of mypy at the package level only. To focus on specific files, run the full check and filter the output by file path.\n\n**Using Latest MyPy:**\n```powershell\nazpysdk --isolate next-mypy .\n```\n\n> Use `azpysdk next-mypy` to run with the latest version of mypy. This is useful for catching issues that may be flagged by newer mypy versions.\n\n## Reference Documentation\n\n- [Azure SDK Python MyPy Guide](https://github.com/Azure/azure-sdk-for-python/blob/main/doc/dev/static_type_checking_cheat_sheet.md)\n- [Official MyPy Documentation](https://mypy.readthedocs.io/en/stable/)\n- [MyPy Common Issues](https://mypy.readthedocs.io/en/stable/common_issues.html)\n\n## Fixing Strategy\n\n### Step 0: Get Package and Issue Details\n\n**Check if user provided in their request:**\n- GitHub issue URL (look for `https://github.com/Azure/azure-sdk-for-python/issues/...` in user's message)\n- Package path or name (e.g. `sdk/storage/azure-storage-blob` or `azure-storage-blob`)\n- Virtual environment path (look for phrases like \"using venv\", \"use env\", \"virtual environment at\", or just the venv name)\n\n**If both GitHub issue URL and package path are missing:**\nAsk: \"Please provide either the GitHub issue URL or the package path (e.g. sdk/storage/azure-storage-blob) for the mypy type checking problems you want to fix.\"\n\n**If a GitHub issue URL is provided:**\nRead the issue to understand which package and files/modules are affected, and the specific error codes to fix.\n\n**If only a package path is provided:**\nRun mypy checks directly on the package.\n\n**If virtual environment is missing:**\nAsk: \"Do you have an existing virtual environment path, or should I create 'env'?\"\n\n### Step 1: CRITICAL - Activate Virtual Environment FIRST\n\n**IMMEDIATELY activate the virtual environment before ANY other command:**\n\n```powershell\n# Activate the provided virtual environment (e.g., env, venv)\n.\\<venv-name>\\Scripts\\Activate.ps1\n\n# If creating new virtual environment\npython -m venv env\n.\\env\\Scripts\\Activate.ps1\n```\n\n**⚠️ IMPORTANT: ALL subsequent commands MUST run within the activated virtual environment. Never run commands outside the venv.**\n\n### Step 2: Install Dependencies (within activated venv)\n\n```powershell\n# Navigate to the package directory (within activated venv)\ncd <package-path>\n\n# Install dev dependencies from dev_requirements.txt (within activated venv)\npip install -r dev_requirements.txt\n\n# Install the package in editable mode (within activated venv)\npip install -e .\n```\n\n### Step 3: Identify Target Files (within activated venv)\n\nBased on the GitHub issue details, determine which files to check:\n\n**Option A - Run mypy on the package and filter output:**\n```powershell\n# Ensure you're in the package directory (within activated venv)\ncd <package-path>\n\n# Run mypy on the full package, then filter output for files from the issue\nazpysdk --isolate mypy .\n# Review output for errors in the specific files/modules mentioned in the issue\n```\n\n**Option B - Check modified files (if no specific target):**\n```powershell\ngit diff --name-only HEAD | Select-String \"<package-path>\"\ngit diff --cached --name-only | Select-String \"<package-path>\"\n```\n\n### Step 4: Run MyPy (within activated venv)\n\n**⚠️ Ensure virtual environment is still activated before running:**\n\n```powershell\n# Navigate to the package directory\ncd <package-path>\n\n# Run mypy on the package (within activated venv)\nazpysdk --isolate mypy .\n# Filter output for the specific files/modules from the issue\n```\n\n### Step 5: Analyze Type Errors\n\nParse the mypy output to identify:\n- Error type and code (e.g., [arg-type], [return-value], [assignment])\n- File path and line number\n- Specific error description\n- Expected vs actual types\n- **Cross-reference with the GitHub issue** (if provided) to ensure you're fixing the right problems\n\n### Step 6: Search for Existing Type Annotation Patterns\n\nBefore fixing, search the codebase for how similar types are annotated:\n```powershell\n# Example: Search for similar function signatures\ngrep -r \"def similar_function\" <package-path>/ -A 5\n\n# Search for type imports\ngrep -r \"from typing import\" <package-path>/\n```\n\nUse the existing type annotation patterns to ensure consistency.\n\n### Step 7: Apply Fixes (ONLY if 100% confident)\n\n**ALLOWED ACTIONS:**\n Fix type errors with 100% confidence\n Use existing type annotation patterns as reference\n Follow Azure SDK Python type checking guidelines\n Add missing type hints\n Fix incorrect type annotations\n Make minimal, targeted changes\n\n**FORBIDDEN ACTIONS:**\n Fix errors without complete confidence\n Create new files for solutions\n Import non-existent types or modules\n Add new dependencies or imports outside typing module\n Use `# type: ignore` without clear justification\n Change code logic to avoid type errors\n Delete code without clear justification\n\n### Step 8: Verify Fixes\n\nRe-run mypy to ensure:\n- The type error is resolved\n- No new errors were introduced\n- The code still functions correctly\n\n### Step 9: Summary\n\nProvide a summary:\n- GitHub issue being addressed\n- Number of type errors fixed\n- Number of errors remaining\n- Types of fixes applied (e.g., added type hints, fixed return types)\n- Any errors that need manual review\n\n### Step 10: Create Pull Request\n\n> **⚠️ REQUIRED when a GitHub issue URL was provided:** You MUST create a pull request after validating fixes. This is not optional.\n\nCreate a pull request with a descriptive title and body referencing the issue. Include what was fixed and confirm all mypy checks pass. The PR title should follow the format: \"fix(<package-name>): Resolve mypy type errors (#<issue-number>)\".\n\n## Notes\n\n- Always read the existing code to understand type annotation patterns before making changes\n- Prefer following existing patterns over adding new complex types\n- Use Python 3.10+ compatible type hints (use `Optional[X]` instead of `X | None`)\n- If unsure about a fix, mark it for manual review\n- Some errors may require architectural changes - don't force fixes\n- Test the code after fixing to ensure functionality is preserved\n- Avoid using `# type: ignore` unless absolutely necessary and document why"
+    gold_removed: ''
+  - path: .github/skills/fix-pylint/SKILL.md
+    tier: 1
+    gold_added: "---\nname: fix-pylint\ndescription: Automatically fix pylint issues in any Azure SDK for Python package following Azure SDK Python guidelines and existing code patterns.\n---\n\n# Fix Pylint Issues Skill\n\nThis skill automatically fixes pylint warnings in any Azure SDK for Python package by analyzing existing code patterns and applying fixes with 100% confidence.\n\n## Overview\n\nIntelligently fixes pylint issues by:\n1. Getting the package path or GitHub issue URL from the user\n2. Reading and analyzing the issue details (if issue URL provided)\n3. Setting up or using existing virtual environment\n4. Installing required dependencies\n5. Running pylint on the package\n6. Analyzing the pylint output to identify warnings\n7. Searching codebase for existing patterns to follow\n8. Applying fixes only with 100% confidence\n9. Re-running pylint to verify fixes\n10. Creating a pull request\n11. Providing a summary of what was fixed\n\n## Running Pylint\n\n**Command:**\n```powershell\ncd <package-path>\nazpysdk --isolate pylint .\n```\n\n> **Note:** `azpysdk pylint` runs with a pinned version of pylint at the package level only. To focus on specific files, run the full check and filter the output by file path.\n\n**Using Latest Pylint:**\n```powershell\nazpysdk --isolate next-pylint .\n```\n\n> Use `azpysdk next-pylint` to run with the latest version of pylint. This is useful for catching issues that may be flagged by newer pylint versions.\n\n## Reference Documentation\n\n- [Azure SDK Python Pylint Guidelines](https://github.com/Azure/azure-sdk-tools/blob/main/tools/pylint-extensions/azure-pylint-guidelines-checker/README.md)\n- [Official Pylint Documentation](https://pylint.readthedocs.io/en/stable/user_guide/checkers/features.html)\n- [Azure SDK Python Pylint Guide](https://github.com/Azure/azure-sdk-for-python/blob/main/doc/dev/pylint_checking.md)\n\n## Fixing Strategy\n\n### Step 0: Get Package and Issue Details\n\n**Check if user provided in their request:**\n- GitHub issue URL (look for `https://github.com/Azure/azure-sdk-for-python/issues/...` in user's message)\n- Package path or name (e.g. `sdk/storage/azure-storage-blob` or `azure-storage-blob`)\n- Virtual environment path (look for phrases like \"using venv\", \"use env\", \"virtual environment at\", or just the venv name)\n\n**If both GitHub issue URL and package path are missing:**\nAsk: \"Please provide either the GitHub issue URL or the package path (e.g. sdk/storage/azure-storage-blob) for the pylint problems you want to fix.\"\n\n**If a GitHub issue URL is provided:**\nRead the issue to understand which package and files/modules are affected, and the specific warnings to fix.\n\n**If only a package path is provided:**\nRun pylint checks directly on the package.\n\n**If virtual environment is missing:**\nAsk: \"Do you have an existing virtual environment path, or should I create 'env'?\"\n\n### Step 1: CRITICAL - Activate Virtual Environment FIRST\n\n**IMMEDIATELY activate the virtual environment before ANY other command:**\n\n```powershell\n# Activate the provided virtual environment (e.g., env, venv)\n.\\<venv-name>\\Scripts\\Activate.ps1\n\n# If creating new virtual environment:\npython -m venv env\n.\\env\\Scripts\\Activate.ps1\n```\n\n**⚠️ IMPORTANT: ALL subsequent commands MUST run within the activated virtual environment. Never run commands outside the venv.**\n\n### Step 2: Install Dependencies (within activated venv)\n\n```powershell\n# Navigate to the package directory (within activated venv)\ncd <package-path>\n\n# Install dev dependencies from dev_requirements.txt (within activated venv)\npip install -r dev_requirements.txt\n\n# Install the package in editable mode (within activated venv)\npip install -e .\n```\n\n### Step 3: Identify Target Files (within activated venv)\n\nBased on the GitHub issue details, determine which files to check:\n\n**Option A - Run pylint on the package and filter output:**\n```powershell\n# Ensure you're in the package directory (within activated venv)\ncd <package-path>\n\n# Run pylint on the full package, then filter output for files from the issue\nazpysdk --isolate pylint .\n# Review output for warnings in the specific files/modules mentioned in the issue\n```\n\n**Option B - Check modified files (if no specific target):**\n```powershell\ngit diff --name-only HEAD | Select-String \"<package-path>\"\ngit diff --cached --name-only | Select-String \"<package-path>\"\n```\n\n### Step 4: Run Pylint (within activated venv)\n\n**Important: Do not run black as part of the pylint fix workflow.** Running black will reformat the code and may mask or change the pylint warnings you are trying to fix. Only run pylint to identify and fix the specific warnings.\n\n**⚠️ Ensure virtual environment is still activated before running:**\n\n```powershell\n# Navigate to the package directory\ncd <package-path>\n\n# Run pylint on the package (within activated venv)\nazpysdk --isolate pylint .\n# Filter output for the specific files/modules from the issue\n```\n\n### Step 5: Analyze Warnings\n\nParse the pylint output to identify:\n- Warning type and code (e.g., C0103, W0212, R0913)\n- File path and line number\n- Specific issue description\n- **Cross-reference with the GitHub issue** (if provided) to ensure you're fixing the right problems\n\n### Step 6: Search for Existing Patterns\n\nBefore fixing, search the codebase for how similar issues are handled:\n```powershell\n# Example: Search for similar function patterns\ngrep -r \"pattern\" <package-path>/\n```\n\nUse the existing code patterns to ensure consistency.\n\n### Step 7: Apply Fixes (ONLY if 100% confident)\n\n**ALLOWED ACTIONS:**\n Fix warnings with 100% confidence\n Use existing file patterns as reference\n Follow Azure SDK Python guidelines\n Make minimal, targeted changes\n\n**FORBIDDEN ACTIONS:**\n Fix warnings without complete confidence\n Create new files for solutions\n Import non-existent modules\n Add new dependencies or imports\n Make unnecessary large changes\n Change code style without clear reason\n Delete code without clear justification\n\n### Step 8: Verify Fixes\n\nRe-run pylint to ensure:\n- The warning is resolved\n- No new warnings were introduced\n- The code still functions correctly\n\n### Step 9: Summary\n\nProvide a summary:\n- GitHub issue being addressed\n- Number of warnings fixed\n- Number of warnings remaining\n- Types of fixes applied\n- Any warnings that need manual review\n\n### Step 10: Create Pull Request\n\n> **⚠️ REQUIRED when a GitHub issue URL was provided:** You MUST create a pull request after validating fixes. This is not optional.\n\nCreate a pull request with a descriptive title and body referencing the issue. Include what was fixed and confirm all pylint checks pass. The PR title should follow the format: \"fix(<package-name>): Resolve pylint errors (#<issue-number>)\".\n\n## Notes\n\n- Always read the existing code to understand patterns before making changes\n- Prefer following existing patterns over strict rule compliance\n- If unsure about a fix, mark it for manual review\n- Some warnings may require architectural changes - don't force fixes\n- Test the code after fixing to ensure functionality is preserved"
+    gold_removed: ''
+  - path: .github/skills/fix-sphinx/SKILL.md
+    tier: 1
+    gold_added: '---
+
+      name: fix-sphinx
+
+      description: Automatically fix Sphinx documentation issues in any Azure SDK for Python package following Azure SDK Python documentation standards.
+
+      ---
+
+
+      # Fix Sphinx Documentation Issues Skill
+
+
+      This skill automatically fixes Sphinx documentation warnings and errors in any Azure SDK for Python package by analyzing existing documentation patterns and applying fixes with 100% confidence.
+
+
+      ## Overview
+
+
+      Intelligently fixes Sphinx documentation issues by:
+
+      1. Getting the package path or GitHub issue URL from the user
+
+      2. Reading and analyzing the issue details (if issue URL provided)
+
+      3. Setting up or using existing virtual environment
+
+      4. Installing required documentation dependencies
+
+      5. Running Sphinx build on the package
+
+      6. Analyzing the Sphinx output to identify warnings and errors
+
+      7. Searching codebase for existing documentation patterns to follow
+
+      8. Applying fixes only with 100% confidence
+
+      9. Re-running Sphinx build to verify fixes
+
+      10. Creating a pull request
+
+      11. Providing a summary of what was fixed
+
+
+      ## Running Sphinx
+
+
+      **Command:**
+
+      ```powershell
+
+      cd <package-path>
+
+      azpysdk --isolate sphinx .
+
+      ```
+
+
+      > **Note:** `azpysdk sphinx` runs Sphinx documentation build for the package. This checks for documentation warnings and errors.
+
+
+      **Using Latest Sphinx:**
+
+      ```powershell
+
+      azpysdk --isolate next-sphinx .
+
+      ```
+
+
+      > Use `azpysdk next-sphinx` to run with the latest version of Sphinx. This is useful for catching issues that may be flagged by newer Sphinx versions.
+
+
+      ## Reference Documentation
+
+
+      - [Azure SDK Python Documentation Guide](https://azure.github.io/azure-sdk/python_documentation.html)
+
+      - [Sphinx Documentation](https://www.sphinx-doc.org/en/master/)
+
+      - [Azure SDK Python Tool Usage Guide](https://github.com/Azure/azure-sdk-for-python/blob/main/doc/tool_usage_guide.md)
+
+
+      ## Fixing Strategy
+
+
+      ### Step 0: Get Package and Issue Details
+
+
+      **Check if user provided in their request:**
+
+      - GitHub issue URL (look for `https://github.com/Azure/azure-sdk-for-python/issues/...` in user''s message)
+
+      - Package path or name (e.g. `sdk/storage/azure-storage-blob` or `azure-storage-blob`)
+
+      - Virtual environment path (look for phrases like "using venv", "use env", "virtual environment at", or just the venv name)
+
+
+      **If both GitHub issue URL and package path are missing:**
+
+      Ask: "Please provide either the GitHub issue URL or the package path (e.g. sdk/storage/azure-storage-blob) for the Sphinx documentation problems you want to fix."
+
+
+      **If a GitHub issue URL is provided:**
+
+      Read the issue to understand which package and documentation files/modules are affected, and the specific warnings to fix.
+
+
+      **If only a package path is provided:**
+
+      Run Sphinx checks directly on the package.
+
+
+      **If virtual environment is missing:**
+
+      Ask: "Do you have an existing virtual environment path, or should I create ''env''?"
+
+
+      ### Step 1: CRITICAL - Activate Virtual Environment FIRST
+
+
+      **IMMEDIATELY activate the virtual environment before ANY other command:**
+
+
+      ```powershell
+
+      # Activate the provided virtual environment (e.g., env, venv)
+
+      .\<venv-name>\Scripts\Activate.ps1
+
+
+      # If creating new virtual environment:
+
+      python -m venv env
+
+      .\env\Scripts\Activate.ps1
+
+      ```
+
+
+      **⚠️ IMPORTANT: ALL subsequent commands MUST run within the activated virtual environment. Never run commands outside the venv.**
+
+
+      ### Step 2: Install Dependencies (within activated venv)
+
+
+      ```powershell
+
+      # Navigate to the package directory (within activated venv)
+
+      cd <package-path>
+
+
+      # Install dev dependencies from dev_requirements.txt (within activated venv)
+
+      pip install -r dev_requirements.txt
+
+
+      # Install the package in editable mode (within activated venv)
+
+      pip install -e .
+
+      ```
+
+
+      ### Step 3: Identify Target Files (within activated venv)
+
+
+      Based on the GitHub issue details, determine which documentation files to check:
+
+
+      **Option A - Run Sphinx on the package and review output:**
+
+      ```powershell
+
+      # Ensure you''re in the package directory (within activated venv)
+
+      cd <package-path>
+
+
+      # Run Sphinx build on the package
+
+      azpysdk --isolate sphinx .
+
+      # Review output for warnings/errors in the specific files/modules mentioned in the issue
+
+      ```
+
+
+      **Option B - Check modified documentation files (if no specific target):**
+
+      ```powershell
+
+      git diff --name-only HEAD | Select-String "\.py$|\.rst$|\.md$" | Select-String "<package-path>"
+
+      git diff --cached --name-only | Select-String "\.py$|\.rst$|\.md$" | Select-String "<package-path>"
+
+      ```
+
+
+      ### Step 4: Run Sphinx (within activated venv)
+
+
+      **⚠️ Ensure virtual environment is still activated before running:**
+
+
+      ```powershell
+
+      # Navigate to the package directory
+
+      cd <package-path>
+
+
+      # Run Sphinx build on the package (within activated venv)
+
+      azpysdk --isolate sphinx .
+
+      # Review output for the specific files/modules from the issue
+
+      ```
+
+
+      ### Step 5: Analyze Warnings and Errors
+
+
+      Parse the Sphinx output to identify:
+
+      - Warning/error type (e.g., missing docstring, invalid reference, malformed docstring)
+
+      - File path and line number
+
+      - Specific issue description
+
+      - **Cross-reference with the GitHub issue** (if provided) to ensure you''re fixing the right problems
+
+
+      ### Step 6: Search for Existing Patterns
+
+
+      Before fixing, search the codebase for how similar documentation is handled:
+
+      ```powershell
+
+      # Example: Search for similar docstring patterns
+
+      grep -r "docstring_pattern" <package-path>/
+
+      grep -r ":param" <package-path>/
+
+      grep -r ":return:" <package-path>/
+
+      ```
+
+
+      Use the existing documentation patterns to ensure consistency.
+
+
+      ### Step 7: Apply Fixes (ONLY if 100% confident)
+
+
+      **ALLOWED ACTIONS:**
+
+      ✅ Fix documentation warnings/errors with 100% confidence
+
+      ✅ Use existing documentation patterns as reference
+
+      ✅ Follow Azure SDK Python documentation guidelines
+
+      ✅ Make minimal, targeted changes to docstrings
+
+      ✅ Add missing docstrings following existing patterns
+
+      ✅ Fix malformed docstring syntax
+
+      ✅ Correct parameter and return type documentation
+
+
+      **FORBIDDEN ACTIONS:**
+
+      ❌ Fix warnings without complete confidence
+
+      ❌ Create new documentation files for solutions
+
+      ❌ Import non-existent modules in documentation
+
+      ❌ Add new dependencies or imports
+
+      ❌ Make unnecessary large changes
+
+      ❌ Change code logic without clear reason
+
+      ❌ Delete documentation without clear justification
+
+
+      ### Step 8: Verify Fixes
+
+
+      Re-run Sphinx to ensure:
+
+      - The warning/error is resolved
+
+      - No new warnings were introduced
+
+      - The documentation builds successfully
+
+      - The generated documentation looks correct
+
+
+      ### Step 9: Summary
+
+
+      Provide a summary:
+
+      - GitHub issue being addressed
+
+      - Number of warnings/errors fixed
+
+      - Number of warnings/errors remaining
+
+      - Types of fixes applied
+
+      - Any documentation issues that need manual review
+
+
+      ### Step 10: Create Pull Request
+
+
+      > **⚠️ REQUIRED when a GitHub issue URL was provided:** You MUST create a pull request after validating fixes. This is not optional.
+
+
+      Create a pull request with a descriptive title and body referencing the issue. Include what was fixed and confirm all Sphinx documentation checks pass. The PR title should follow the format: "fix(<package-name>): Resolve sphinx errors (#<issue-number>)".
+
+
+      ## Notes
+
+
+      - Always read existing documentation patterns to understand the style before making changes
+
+      - Prefer following existing documentation patterns over strict rule compliance
+
+      - If unsure about a fix, mark it for manual review
+
+      - Some warnings may require architectural changes - don''t force fixes
+
+      - Test the documentation build after fixing to ensure it renders correctly
+
+      - Focus on documentation clarity and completeness for end users'
+    gold_removed: ''

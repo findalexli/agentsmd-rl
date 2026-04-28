@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: eliza-docs-add-agentsmd-contributor-guide
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: elizaOS/eliza
+  pr: 5898
+  base_commit: "b089e5e905cc68baaa24e13d360b05ebd0e69d2e"
+  merge_commit: "f5c5124e40d00497071f42b53353949620bdfe48"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+
+config_edits:
+  - path: AGENTS.md
+    tier: 1
+    gold_added: "# Repository Guidelines\n\n## Project Structure & Module Organization\n- Monorepo managed by `turbo` and `lerna`; scripts run with `bun`.\n- Source lives under `packages/*`:\n  - `core` (runtime, shared types), `server` (Express API), `client` (React UI), `cli` (elizaos CLI).\n  - Plugins and starters: `plugin-*`, `project-*`.\n- Other roots: `examples/` (standalone samples), `scripts/` (automation), `plugin-specification/*` (specs).\n\n## Build, Test, and Development Commands\n- Install: `bun install` (use Bun only).\n- Build all: `bun run build` (filters exclude app/config). Examples: `bun run build:core`, `bun run build:client`.\n- Dev/watch: `bun run dev` (monorepo), package-local: `cd packages/core && bun run dev`.\n- Start CLI locally: `bun run start` or `bun run start:app` for the app.\n- Tests (top level): `bun run test`, or per package:\n  - Core: `bun run test:core`\n  - Server: `cd packages/server && bun run test`\n  - Client unit: `cd packages/client && bun run test:unit`\n  - Client e2e: `cd packages/client && bun run test:e2e` (or `test:e2e:with-server`).\n\n## Coding Style & Naming Conventions\n- Language: TypeScript (ESM). Prefer Bun APIs; avoid Node-only modules where Bun equivalents exist.\n- Formatting: Prettier (2 spaces, semicolons, single quotes, trailing comma es5, width 100). Run `bun run format` or `format:check`.\n- Linting: `bun run lint` (Prettier; ESLint used in `client`).\n- Naming: camelCase (vars/functions), PascalCase (types/components), kebab-case for package folders.\n\n## Testing Guidelines\n- Unit tests with Bun test runner; name files `*.test.ts(x)` near sources.\n- Use `--coverage` when changing core/server: `bun run test:core` or `cd packages/server && bun run test:coverage`.\n- Client: component/unit via Bun/Testing Library; e2e via Cypress (`bun run cypress:open`).\n\n## Commit & Pull Request Guidelines\n- Conventional Commits: `feat:`, `fix:`, `chore:`, optional scope (e.g., `fix(server): ...`). Use `[skip ci]` for docs-only.\n- PRs must include: clear description, linked issues, test plan, screenshots for UI changes, and pass build/lint/tests.\n- Update docs/examples when behavior changes. Keep changes scoped to one concern.\n\n## Security & Config\n- Copy `.env.example` to `.env`; never commit secrets. Required: Node `23.x`, Bun `1.2.x`.\n- Post-install initializes submodules; if needed, rerun `bash ./scripts/init-submodules.sh`.\n"
+    gold_removed: ''

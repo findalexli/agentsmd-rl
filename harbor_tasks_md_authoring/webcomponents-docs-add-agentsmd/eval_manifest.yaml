@@ -1,0 +1,52 @@
+version: "2.0"
+
+task:
+  name: webcomponents-docs-add-agentsmd
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: UI5/webcomponents
+  pr: 13041
+  base_commit: "90e617bb34569a9d0a1decb3489aee31d9726126"
+  merge_commit: "c8647053f12e51ff13e610fdebfa4606e2bbd067"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in packages/base/AGENTS.md."
+  - id: signal_04
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in packages/base/AGENTS.md."
+
+config_edits:
+  - path: AGENTS.md
+    tier: 1
+    gold_added: "# AGENTS.md - AI Coding Assistant Guide\n\nThis file provides guidance for AI coding assistants (Claude, Copilot, Cursor, etc.) when working with this repository.\n\n## Project Overview\n\nUI5 Web Components is an enterprise-grade, framework-agnostic web components library implementing SAP Fiori design. It's a Yarn-based monorepo using Lerna and Yarn Workspaces.\n\n**Requirements:** Node.js ^20.19.0 or >=22.12.0, Yarn v4 (via Corepack: `corepack enable`)\n\n## Monorepo Structure\n\n```\npackages/\n├── base/       # Core framework, UI5Element base class, decorators, rendering\n├── main/       # Primary components (Button, Input, Table, etc.)\n├── fiori/      # SAP Fiori-specific components (ShellBar, SideNavigation)\n├── ai/         # AI-related components\n├── theming/    # Theming assets and base themes\n├── localization/ # i18n and CLDR assets\n├── icons*/     # Icon collections\n├── tools/      # Build tools, dev server, CLI\n└── website/    # Documentation website\n```\n\n## Essential Commands\n\n### Root Level (Always run from repo root)\n```bash\nyarn start       # Start dev server with watch mode (recommended for development)\nyarn build       # Full production build\nyarn lint        # Lint all packages\n```\n\n### Package Level (Run from specific package folder)\n```bash\ncd packages/main\nyarn test:cypress:single cypress/specs/Button.cy.tsx  # Single test file\n```\n\n### Build & Test Flow\n\n**Build steps** (always run from root folder):\n1. `yarn generate` - Generates `.ts` files (in `src/generated`) from `.css` and `.properties` files. Run once on clean state, or when these files change. The dev server runs this in watch mode automatically.\n2. `yarn ts` - TypeScript compilation, populates `dist/` with `.js` and `.d.ts` files. Use to check for TypeScript errors.\n\n**Test steps** (run from package folder):\n```bash\ncd packages/main  # or fiori, etc.\nyarn test:cypress:single cypress/specs/<Component>.cy.tsx\n```\n\nTests consume `.ts` files directly and detect TypeScript errors - no need to run `yarn ts` first.\n\n**Running a single test case:**\nWhen fixing a failing test, use `.only` to run just that case:\n```tsx\nit.only(\"should set correct tooltip\", () => {  // Add .only\n```\nRemove `.only` before committing and run the full test file for final verification.\n\n**Dev server:** When running, the dev server executes `yarn generate` in watch mode. This won't interfere with running other commands.\n\n**Important:** Never run all tests locally. Only run tests for the component being modified.\n\n## Component Development\n\nFor detailed component architecture, development rules, and testing patterns, see [`packages/base/AGENTS.md`](./packages/base/AGENTS.md).\n\n### Quick Reference\n\n| Rule | Bad | Good |\n|------|-----|------|\n| Enum imports | `import Enum from \"...\"` | `import type Enum from \"...\"` |\n| Enum types | `prop: Enum` | `prop: \\`${Enum}\\`` |\n| Enum values | `Enum.Value` | `\"Value\"` |\n| DOM queries | `querySelector(\"ui5-tag\")` | `querySelector(\"[ui5-tag]\")` |\n| CSS selectors | `ui5-tag { }` | `[ui5-tag] { }` |\n| Type checks | `instanceof Component` | `isInstanceOfComponent(el)` |\n| DOM mutation | `this._ref.value = x` | Template: `<Comp value={x} />` |\n\n## Commit Message Format\n\nFollow [Conventional Commits](https://conventionalcommits.org):\n\n```\n<type>(<scope>): <description>\n\n[body]\n\n[footer]\n```\n\n**Types:** `fix`, `feat`, `docs`, `style`, `refactor`, `perf`, `test`, `chore`, `revert`\n**Scope:** Component name (e.g., `ui5-button`, `ui5-table`)\n\n```\nfix(ui5-button): correct focus outline on tab key\n\nThe button now receives proper focus outline when\nnavigating with the tab key.\n\nFixes #42\n```\n\n## Website Samples\n\nComponent samples for the documentation website follow this structure:\n\n```\npackages/website/docs/_samples/\n├── main/           # For @ui5/webcomponents\n│   └── Button/\n│       └── Basic/\n│           ├── sample.html   # HTML with component usage\n│           ├── main.js       # JS imports\n│           ├── main.css      # Optional CSS\n│           └── Basic.md      # Markdown wrapper\n└── fiori/          # For @ui5/webcomponents-fiori\n    └── ShellBar/\n        └── Basic/\n            └── ...\n```\n\n### Sample Files\n\n**`sample.html`** - Component usage wrapped in HTML boilerplate:\n```html\n<!-- playground-fold -->\n<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n    <meta charset=\"UTF-8\">\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n    <title>Sample</title>\n</head>\n<body style=\"background-color: var(--sapBackgroundColor)\">\n<!-- playground-fold-end -->\n\n    <ui5-button>Press</ui5-button>\n    <ui5-button icon=\"sap-icon://edit\">Edit</ui5-button>\n\n<!-- playground-fold -->\n    <script type=\"module\" src=\"main.js\"></script>\n</body>\n</html>\n<!-- playground-fold-end -->\n```\n\n**`main.js`** - Required imports for the sample:\n```javascript\nimport \"@ui5/webcomponents/dist/Button.js\";\nimport \"@ui5/webcomponents-icons/dist/edit.js\";\n```\n\n**`<SampleName>.md`** - Wrapper that loads the sample into the Editor:\n```markdown\nimport html from '!!raw-loader!./sample.html';\nimport js from '!!raw-loader!./main.js';\n\n<Editor html={html} js={js} />\n```\n\nIf the sample has CSS, include it:\n```markdown\nimport html from '!!raw-loader!./sample.html';\nimport js from '!!raw-loader!./main.js';\nimport css from '!!raw-loader!./main.css';\n\n<Editor html={html} js={js} css={css} />\n```\n\n### Playground Fold Comments\n\nUse `<!-- playground-fold -->` and `<!-- playground-fold-end -->` to hide boilerplate code in the interactive playground. Only the component usage (between fold comments) is shown to users.\n\n## GitHub Actions & Release\n\nThe release workflow (`release.yaml`) follows this order:\n1. **Version Bump** - `lerna version --no-push` (local only)\n2. **Build** - `yarn ci:releasebuild` (has correct version)\n3. **Push & Release** - Push tags, create GitHub release\n4. **Publish** - `lerna publish from-git`\n\nThis ensures `VersionInfo.js` has the correct version and nothing is pushed if build fails."
+    gold_removed: ''
+  - path: CLAUDE.md
+    tier: 1
+    gold_added: '@AGENTS.md'
+    gold_removed: ''
+  - path: packages/base/AGENTS.md
+    tier: 1
+    gold_added: '# AGENTS.md - UI5 Web Components Development Guide
+
+      > **Working in the ui5-webcomponents monorepo?** See the [root AGENTS.md](../../AGENTS.md) for repository commands, build flow, and commit guidelines.
+
+      '
+    gold_removed: ''

@@ -1,0 +1,40 @@
+version: "2.0"
+
+task:
+  name: handy-docs-unify-claudemd-and-agentsmd
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: cjpais/Handy
+  pr: 1272
+  base_commit: "11311bee0e5022170e4db0bea4056062b9d4aa05"
+  merge_commit: "564fbc84dfe529afeb2cc71f626020a4802721f2"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+
+config_edits:
+  - path: AGENTS.md
+    tier: 1
+    gold_added: "This file provides guidance to AI coding assistants working with code in this repository.\n**Linting and Formatting (run before committing):**\n\n```bash\nbun run lint              # ESLint for frontend\nbun run lint:fix          # ESLint with auto-fix\nbun run format            # Prettier + cargo fmt\nbun run format:check      # Check formatting without changes\nbun run format:frontend   # Prettier only\nbun run format:backend    # cargo fmt only\n```\n\nFor detailed platform-specific build setup, see [BUILD.md](BUILD.md).\n## Architecture Overview\nHandy is a cross-platform desktop speech-to-text application built with Tauri 2.x (Rust backend + React/TypeScript frontend).\n### Backend Structure (src-tauri/src/)\n- `lib.rs` - Main entry point, Tauri setup, manager initialization\n- `managers/` - Core business logic:\n  - `model.rs` - Model downloading and management\n  - `history.rs` - Transcription history storage\n  - `vad/` - Voice Activity Detection (Silero VAD)\n- `cli.rs` - CLI argument definitions (clap derive)\n- `overlay.rs` - Recording overlay window (platform-specific)\n- `signal_handle.rs` - `send_transcription_input()` reusable function\n- `utils.rs` - Platform detection helpers\n\n### Frontend Structure (src/)\n\n- `App.tsx` - Main component with onboarding flow\n- `components/` - React UI components:\n  - `settings/` - Settings UI\n  - `model-selector/` - Model management interface\n  - `onboarding/` - First-run experience\n  - `overlay/` - Recording overlay UI\n  - `update-checker/` - App update notifications\n  - `shared/`, `ui/`, `icons/`, `footer/` - Shared components\n- `hooks/useSettings.ts` - Settings state management hook\n- `stores/settingsStore.ts` - Zustand store for settings\n- `bindings.ts` - Auto-generated Tauri type bindings (via tauri-specta)\n- `overlay/` - Recording overlay window entry point\n**Manager Pattern:** Core functionality organized into managers (Audio, Model, Transcription) initialized at startup and managed via Tauri state.\n**Command-Event Architecture:** Frontend → Backend via Tauri commands; Backend → Frontend via events.\n**Pipeline Processing:** Audio → VAD → Whisper/Parakeet → Text output → Clipboard/Paste\n\n**State Flow:** Zustand → Tauri Command → Rust State → Persistence (tauri-plugin-store)\nThe app enforces single instance behavior — launching when already running brings the settings window to front rather than creating a new process. Remote control flags (`--toggle-transcription`, etc.) work by launching a second instance that sends args to the running instance via `tauri_plugin_single_instance`, then exits.\n\n## Internationalization (i18n)\n\nAll user-facing strings must use i18next translations. ESLint enforces this (no hardcoded strings in JSX).\n\n**Adding new text:**\n\n1. Add key to `src/i18n/locales/en/translation.json`\n2. Use in component: `const { t } = useTranslation(); t('key.path')`\n\n**File structure:**\n\n```\nsrc/i18n/\n├── index.ts           # i18n setup\n├── languages.ts       # Language metadata\n└── locales/\n    ├── en/translation.json  # English (source)\n    ├── de/, es/, fr/, ja/, ru/, zh/, ...\n    └── ...\n```\n\nFor translation contribution guidelines, see [CONTRIBUTING_TRANSLATIONS.md](CONTRIBUTING_TRANSLATIONS.md).\n\n## Code Style\n\n**Rust:**\n\n- Run `cargo fmt` and `cargo clippy` before committing\n- Handle errors explicitly (avoid unwrap in production)\n- Use descriptive names, add doc comments for public APIs\n\n**TypeScript/React:**\n\n- Strict TypeScript, avoid `any` types\n- Functional components with hooks\n- Tailwind CSS for styling\n- Path aliases: `@/` → `./src/`\n\n## Commit Guidelines\n\nUse conventional commits: `feat:`, `fix:`, `docs:`, `refactor:`, `chore:`\n\n## CLI Parameters\n\nHandy supports command-line parameters on all platforms for integration with scripts, window managers, and autostart configurations.\n\n**Implementation:** `cli.rs` (definitions), `main.rs` (parsing), `lib.rs` (applying), `signal_handle.rs` (shared logic)\n\n| Flag                     | Description                                                    |\n| ------------------------ | -------------------------------------------------------------- |\n| `--toggle-transcription` | Toggle recording on/off on a running instance                  |\n| `--toggle-post-process`  | Toggle recording with post-processing on/off                   |\n| `--cancel`               | Cancel the current operation on a running instance             |\n| `--start-hidden`         | Launch without showing the main window (tray icon visible)     |\n| `--no-tray`              | Launch without system tray (closing window quits the app)      |\n| `--debug`                | Enable debug mode with verbose (Trace) logging                 |\n\n**Key design decisions:**\n\n- CLI flags are runtime-only overrides — they do NOT modify persisted settings\n- Remote control flags work via `tauri_plugin_single_instance`: second instance sends args, then exits\n- `send_transcription_input()` in `signal_handle.rs` is shared between signal handlers and CLI\n\n## Debug Mode\n\nAccess debug features: `Cmd+Shift+D` (macOS) or `Ctrl+Shift+D` (Windows/Linux)\n\n## Platform Notes\n\n- **macOS**: Metal acceleration, accessibility permissions required for keyboard shortcuts\n- **Windows**: Vulkan acceleration, code signing\n- **Linux**: OpenBLAS + Vulkan, limited Wayland support, overlay uses GTK layer shell (disable with `HANDY_NO_GTK_LAYER_SHELL=1`)\n\n## Troubleshooting\n\nSee the [Troubleshooting](README.md#troubleshooting) section in README.md.\n\n## Contributing & PR Guidelines\n\nFollow [CONTRIBUTING.md](CONTRIBUTING.md) for the full workflow and [PR template](.github/PULL_REQUEST_TEMPLATE.md) when submitting pull requests. For translations, see [CONTRIBUTING_TRANSLATIONS.md](CONTRIBUTING_TRANSLATIONS.md).\n\n**Note:** Feature freeze is active — bug fixes are top priority. New features require community support via [Discussions](https://github.com/cjpais/Handy/discussions)."
+    gold_removed: ''
+  - path: CLAUDE.md
+    tier: 1
+    gold_added: Read @AGENTS.md
+    gold_removed: ''

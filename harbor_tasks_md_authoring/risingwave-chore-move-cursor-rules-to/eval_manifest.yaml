@@ -1,0 +1,48 @@
+version: "2.0"
+
+task:
+  name: risingwave-chore-move-cursor-rules-to
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: risingwavelabs/risingwave
+  pr: 24709
+  base_commit: "fc8819f6bd3695ecf3d51bca7b2ab15f084cbbae"
+  merge_commit: "77db855d18a8cb4a198b6c1601371420cd6fbb10"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+
+config_edits:
+  - path: .cursor/rules/coding-style.mdc
+    tier: 1
+    gold_added: ''
+    gold_removed: ''
+  - path: .github/copilot-instructions.md
+    tier: 1
+    gold_added: ''
+    gold_removed: ''
+  - path: AGENTS.md
+    tier: 1
+    gold_added: "# Coding Agent Instructions for RisingWave\n\n## Project Overview\n\nRisingWave is a Postgres-compatible streaming database that offers the simplest and most cost-effective way to process, analyze, and manage real-time event data — with built-in support for the Apache Iceberg™ open table format.\n\nRisingWave components are developed in Rust and split into several crates:\n\n1. `config` - Default configurations for servers\n2. `prost` - Generated protobuf rust code (grpc and message definitions)\n3. `stream` - Stream compute engine\n4. `batch` - Batch compute engine for queries against materialized views\n5. `frontend` - SQL query planner and scheduler\n6. `storage` - Cloud native storage engine\n7. `meta` - Meta engine\n8. `utils` - Independent util crates\n9. `cmd` - All binaries, `cmd_all` contains the all-in-one binary `risingwave`\n10. `risedevtool` - Developer tool for RisingWave\n\n## Coding Style\n\n- Always write code comments in English.\n- Write simple, easy-to-read and easy-to-maintain code.\n- Use `cargo fmt` to format the code if needed.\n- Follow existing code patterns and conventions in the repository.\n\n## Build, Run, Test\n### Build & Check\n### Unit Test\n### End-to-End Test\n  - It builds RisingWave binaries if necessary. The build process can take up to 10 minutes, depending on the incremental build results. Use a large timeout for this step, and be patient.\n  - It kills the previous instance, if exists.\n  - Optionally pass a profile name (see `risedev.yml`) to choose external services or components. By default it uses `default`.\n  - This runs in the background so you do not need a separate terminal.\n  - You can connect right after the command finishes.\n  - Logs are written to files in `.risingwave/log` folder.\n  - File globs like `/**/*.slt` is allowed.\n  - Failed run may leave some objects in the database that interfere with next run. Use `./risedev slt-clean ./path/to/e2e-test-file.slt` to reset the database before running tests.\n### Sandbox escalation\n\n## Connector Development\n\nSee `docs/dev/src/connector/intro.md`."
+    gold_removed: ''
+  - path: CLAUDE.md
+    tier: 1
+    gold_added: ''
+    gold_removed: ''
+  - path: CLAUDE.md
+    tier: 1
+    gold_added: AGENTS.md
+    gold_removed: ''

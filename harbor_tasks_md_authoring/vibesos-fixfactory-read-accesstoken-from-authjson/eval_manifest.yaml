@@ -1,0 +1,30 @@
+version: "2.0"
+
+task:
+  name: vibesos-fixfactory-read-accesstoken-from-authjson
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: popmechanic/VibesOS
+  pr: 62
+  base_commit: "87d634f9a437ed8a786b7db67981c93f662bf74e"
+  merge_commit: "67f424b999d322e7ff764175ecaf54b0fc96a221"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/factory/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/factory/SKILL.md."
+
+config_edits:
+  - path: skills/factory/SKILL.md
+    tier: 1
+    gold_added: '    -H "Authorization: Bearer $(cat ~/.vibes/auth.json | python3 -c "import sys,json; print(json.load(sys.stdin)[''accessToken''])")" 2>/dev/null
+
+      TOKEN=$(cat ~/.vibes/auth.json | python3 -c "import sys,json; print(json.load(sys.stdin)[''accessToken''])" 2>/dev/null || echo "")'
+    gold_removed: ''

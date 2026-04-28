@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: supabase-fix-added-cursor-rules-for
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: supabase/supabase
+  pr: 41993
+  base_commit: "472ef2d0628805249c46039555b4d53f1f40e02c"
+  merge_commit: "680b30a04541caa087256dea6122183c71581bc4"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .cursor/rules/studio-useStaticEffectEvent.mdc."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .cursor/rules/studio-useStaticEffectEvent.mdc."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .cursor/rules/studio-useStaticEffectEvent.mdc."
+
+config_edits:
+  - path: .cursor/rules/studio-useStaticEffectEvent.mdc
+    tier: 1
+    gold_added: "---\ndescription: Guidelines for using the useStaticEffectEvent hook in Studio - a polyfill for React's useEffectEvent pattern\nalwaysApply: false\n---\n\n# useStaticEffectEvent Hook\n\nThe `useStaticEffectEvent` hook (located at `apps/studio/hooks/useStaticEffectEvent.ts`) is a userland implementation of React's `useEffectEvent` pattern. It solves the stale closure problem by providing a stable callback reference that always accesses the latest props and state values.\n\n## What Problem Does It Solve?\n\nWhen using `useEffect`, you often need to access props or state inside your Effect, but you don't want changes to those values to re-run the Effect. Without `useStaticEffectEvent`, you'd face two bad options:\n\n1. **Add them to dependencies** - causes unnecessary Effect re-runs (teardown/reconnect cycles)\n2. **Omit from dependencies** - causes stale closure bugs where your callback uses outdated values\n\n```tsx\n// Problem: This Effect re-runs every time `theme` changes, even though\n// we only want to reconnect when `roomId` changes\nuseEffect(() => {\n  const connection = createConnection(roomId)\n  connection.on('connected', () => {\n    showNotification('Connected!', theme) // `theme` causes unwanted re-runs\n  })\n  return () => connection.disconnect()\n}, [roomId, theme]) // Adding theme causes unnecessary reconnections\n```\n\n## When to Use useStaticEffectEvent\n\nUse `useStaticEffectEvent` when you need to:\n\n1. **Read latest state/props inside an Effect without re-triggering it**\n2. **Create stable callbacks that always use current values**\n3. **Avoid stale closure bugs in event handlers used within Effects**\n\n### Pattern 1: Syncing data without re-running on every change\n\n```tsx\n// ✅ Good - sync data when status changes, but always read latest state\nconst syncApiPrivileges = useStaticEffectEvent(() => {\n  if (hasLoadedInitialData.current) return\n  if (!apiAccessStatus.isSuccess) return\n  if (!privilegesForTable) return\n\n  hasLoadedInitialData.current = true\n  setPrivileges(privilegesForTable.privileges)\n})\n\nuseEffect(() => {\n  syncApiPrivileges()\n}, [apiAccessStatus.status, syncApiPrivileges])\n```\n\n### Pattern 2: Stable callbacks for async operations\n\n```tsx\n// ✅ Good - wrap complex async logic that reads many values\nconst exportInternal = useStaticEffectEvent(\n  async ({ bypassConfirmation }: { bypassConfirmation: boolean }): Promise<void> => {\n    if (!params.enabled) return\n    const { projectRef, connectionString, entity, totalRows } = params\n    // ... complex async logic using latest params\n  }\n)\n\n// This callback is stable and can be safely used in useCallback\nconst exportInDesiredFormat = useCallback(\n  () => exportInternal({ bypassConfirmation: false }),\n  [exportInternal]\n)\n```\n\n### Pattern 3: Infinite scroll / pagination triggers\n\n```tsx\n// ✅ Good - always read latest pagination state when scrolling triggers fetch\nconst fetchNext = useStaticEffectEvent(() => {\n  if (lastItem && lastItem.index >= items.length - 1 && hasNextPage && !isFetchingNextPage) {\n    fetchNextPage()\n  }\n})\n\nuseEffect(fetchNext, [lastItem, fetchNext])\n```\n\n## When NOT to Use useStaticEffectEvent\n\n### Don't use it to avoid specifying legitimate dependencies\n\n```tsx\n// ❌ Bad - hiding the fact that this should re-run when roomId changes\nconst connect = useStaticEffectEvent(() => {\n  const connection = createConnection(roomId)\n  connection.connect()\n})\n\nuseEffect(() => {\n  connect() // BUG: Won't reconnect when roomId changes!\n}, [connect])\n\n// ✅ Good - roomId is a legitimate dependency\nuseEffect(() => {\n  const connection = createConnection(roomId)\n  connection.connect()\n  return () => connection.disconnect()\n}, [roomId])\n```\n\n### Don't use it for simple event handlers outside Effects\n\n```tsx\n// ❌ Unnecessary - not used inside an Effect\nconst handleClick = useStaticEffectEvent(() => {\n  console.log(count)\n})\n\n// ✅ Good - regular function or useCallback is fine\nconst handleClick = () => {\n  console.log(count)\n}\n```\n\n## How It Works\n\nThe hook uses a ref to store the latest callback and returns a stable wrapper function:\n\n```tsx\nexport const useStaticEffectEvent = <Callback extends Function>(callback: Callback) => {\n  const callbackRef = useRef(callback)\n\n  // Update the ref on every render with the latest callback\n  useLayoutEffect(() => {\n    callbackRef.current = callback\n  })\n\n  // Return a stable function that calls the latest callback\n  const eventFn = useCallback((...args: any) => {\n    return callbackRef.current(...args)\n  }, [])\n\n  return eventFn as unknown as Callback\n}\n```\n\n## Relationship to React's useEffectEvent\n\nThis hook is a polyfill for React's experimental `useEffectEvent` (now stable in React 19.2). The core concept is identical:\n\n- Extract non-reactive logic into a stable function\n- Always access the latest props/state without adding them as Effect dependencies\n- Should only be called from within Effects\n\nWhen React's `useEffectEvent` becomes widely available, this hook can be replaced with the official API.\n\n## Rules\n\n1. **Only call the returned function inside Effects** (useEffect, useLayoutEffect)\n2. **Don't pass the function to other components or hooks** as a callback prop\n3. **Use for non-reactive logic only** - logic that reads values but shouldn't trigger re-runs\n4. **Include it in dependency arrays** when used in useEffect (the function is stable, so it won't cause re-runs)"
+    gold_removed: ''

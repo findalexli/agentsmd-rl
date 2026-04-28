@@ -1,0 +1,24 @@
+version: "2.0"
+
+task:
+  name: temporal-update-agentmd
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: temporalio/temporal
+  pr: 8881
+  base_commit: "1ac80b326cef0040c6d617063b9cfb5219d5c935"
+  merge_commit: "f3d37d9067613ef9869199355c755b4df70ba9bc"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+
+config_edits:
+  - path: AGENTS.md
+    tier: 1
+    gold_added: '- Prefer `require` over `assert`, avoid testify suites in unit tests (functional tests require suites for test cluster setup), use `require.Eventually` instead of `time.Sleep` (forbidden by linter)'
+    gold_removed: ''

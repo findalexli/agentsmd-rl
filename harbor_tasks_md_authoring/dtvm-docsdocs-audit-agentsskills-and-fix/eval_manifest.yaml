@@ -1,0 +1,141 @@
+version: "2.0"
+
+task:
+  name: dtvm-docsdocs-audit-agentsskills-and-fix
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: DTVMStack/DTVM
+  pr: 479
+  base_commit: "a21b40fd9fc64e9928f066551767e396d8198863"
+  merge_commit: "5f4cd2fd0f3f65709ed63c104d4f906a0a39e7b3"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .agents/skills/archive/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .agents/skills/archive/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .agents/skills/archive/SKILL.md."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .agents/skills/dmir-compiler-analysis/SKILL.md."
+  - id: signal_04
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .agents/skills/dmir-compiler-analysis/SKILL.md."
+  - id: signal_05
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .agents/skills/dmir-compiler-analysis/SKILL.md."
+  - id: signal_06
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .agents/skills/dmir-compiler-analysis/cost-model.md."
+  - id: signal_07
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .agents/skills/dmir-compiler-analysis/cost-model.md."
+  - id: signal_08
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .agents/skills/dmir-compiler-analysis/cost-model.md."
+  - id: signal_09
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .agents/skills/dmir-compiler-analysis/evm-to-dmir.md."
+  - id: signal_10
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .agents/skills/dmir-compiler-analysis/evm-to-dmir.md."
+  - id: signal_11
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .agents/skills/dmir-compiler-analysis/evm-to-dmir.md."
+  - id: signal_12
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .agents/skills/dtvm-perf-profile/SKILL.md."
+  - id: signal_13
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .agents/skills/dtvm-perf-profile/SKILL.md."
+  - id: signal_14
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .agents/skills/dtvm-perf-profile/SKILL.md."
+
+config_edits:
+  - path: .agents/skills/archive/SKILL.md
+    tier: 1
+    gold_added: '3. Add a row to the "Current Entries" table in `docs/_archive/README.md`
+
+      Branch and worktree cleanup are out of scope for this skill — leave them
+
+      to the user.'
+    gold_removed: ''
+  - path: .agents/skills/dev-workflow/SKILL.md
+    tier: 1
+    gold_added: ''
+    gold_removed: ''
+  - path: .agents/skills/dmir-compiler-analysis/SKILL.md
+    tier: 1
+    gold_added: '1. **Dispatch**: `EVMByteCodeVisitor::decode()` in `src/action/evm_bytecode_visitor.h`
+
+      3. **x86 lowering**: `X86CgLowering::lower*()` in `src/compiler/target/x86/x86lowering.cpp` (definitions) and `x86lowering.h` (class)
+
+      - **Other exprs**: `phi`, `dread`, `const`, `cmp`, `adc`, `sbb`, `select`, `load`, `wasm_sadd128_overflow`, `wasm_uadd128_overflow`, `wasm_ssub128_overflow`, `wasm_usub128_overflow`
+
+      - **EVM-specific**: `evm_umul128_lo` (64×64→64, low half) and `evm_umul128_hi` (extracts the high half from the preceding `evm_umul128_lo`); `evm_u256_mul` (256×256→256 pseudo-op) and `evm_u256_mul_result` (extracts extra limb from the preceding `evm_u256_mul`); `evm_udiv128_by64` (128/64 unsigned quotient) and `evm_urem128_by64` (remainder of the same 128/64 division).
+
+      Condition codes (`src/compiler/mir/cond_codes.def`): `ieq`, `ine`, `iugt`, `iuge`, `iult`, `iule`, `isgt`, `isge`, `islt`, `isle` (integer); `ffalse`, `foeq`, `fogt`, `foge`, `folt`, `fole`, `fone`, `ford`, `funo`, `fueq`, `fugt`, `fuge`, `fult`, `fule`, `fune`, `ftrue` (float; `ffalse`/`ftrue` are always folded).
+
+      | x86 lowering class | `src/compiler/target/x86/x86lowering.h` |
+
+      | x86 lowering impl | `src/compiler/target/x86/x86lowering.cpp` (core), `x86lowering_wasm.cpp` (wasm-specific), `x86lowering_fallback.cpp` (fallback paths) |
+
+      - For detailed EVM-to-dMIR pseudocode per opcode with its **source file and handler symbol**, see [evm-to-dmir.md](evm-to-dmir.md)
+
+      - For dMIR-to-x86 lowering patterns with the **lowering function symbol**, see [dmir-to-x86.md](dmir-to-x86.md)'
+    gold_removed: ''
+  - path: .agents/skills/dmir-compiler-analysis/cost-model.md
+    tier: 1
+    gold_added: '| EVM Opcode | Why RA-Expensive |
+
+      |---|---|
+
+      | SIGNEXTEND (0x0B) | ~21 Selects, two dependency chain loops |
+
+      | SHL (0x1B) | ~92 Selects, nested J,K loops |
+
+      | SHR (0x1C) | ~96 Selects, nested J,K loops |
+
+      | SAR (0x1D) | ~52 Selects, sign-extended variant |
+
+
+      Source: `isRAExpensiveOpcode()` in `src/compiler/evm_frontend/evm_analyzer.h`.
+
+      MUL (0x02) has a heavy partial-product fan-out (~80 dMIR) but is excluded
+
+      from this heuristic: its `evm_umul128_*` schoolbook pattern does not generate
+
+      the dense Select chains that drive superlinear greedy RA cost.
+
+      `MIR_OPCODE_WEIGHT[256]` in `src/compiler/evm_frontend/evm_analyzer.h`.'
+    gold_removed: ''
+  - path: .agents/skills/dmir-compiler-analysis/evm-to-dmir.md
+    tier: 1
+    gold_added: "Every EVM opcode is dispatched from `EVMByteCodeVisitor::decode()` in\n`src/action/evm_bytecode_visitor.h` (a big `switch` over `evmc_opcode`). Each\nopcode ends up in a handler on `EVMMirBuilder`. Unless noted:\n\n- Non-template handlers live in `src/compiler/evm_frontend/evm_mir_compiler.cpp`.\n- Templated handlers `handleBinaryArithmetic<...>`, `handleBitwiseOp<...>`,\n  `handleShift<...>`, `handleCompareOp<...>` are defined inline in\n  `src/compiler/evm_frontend/evm_mir_compiler.h`. `handleLogWithTopics<N>`\n  is a template but its definition lives in the `.cpp`.\n\nGrep the symbol name to find the current definition; line numbers drift.\n| EVM Opcode | Hex | Builder Function |\n|---|---|---|\n| STOP | 0x00 | `handleStop` |\n| ADD | 0x01 | `handleBinaryArithmetic<BO_ADD>` |\n| MUL | 0x02 | `handleMul` |\n| SUB | 0x03 | `handleBinaryArithmetic<BO_SUB>` |\n| DIV | 0x04 | `handleDiv` |\n| SDIV | 0x05 | `handleSDiv` |\n| MOD | 0x06 | `handleMod` |\n| SMOD | 0x07 | `handleSMod` |\n| ADDMOD | 0x08 | `handleAddMod` |\n| MULMOD | 0x09 | `handleMulMod` |\n| EXP | 0x0A | `handleExp` |\n| SIGNEXTEND | 0x0B | `handleSignextend` |\nAll six opcodes go through `handleCompareOp<Op>` (template in `.h`) which\ndispatches to one of three concrete handlers in `.cpp`:\n\n| EVM Opcode | Hex | Dispatcher → Concrete handler |\n|---|---|---|\n| LT | 0x10 | `handleCompareOp<CO_LT>` → `handleCompareGT_LT` |\n| GT | 0x11 | `handleCompareOp<CO_GT>` → `handleCompareGT_LT` |\n| SLT | 0x12 | `handleCompareOp<CO_LT_S>` → `handleCompareGT_LT` |\n| SGT | 0x13 | `handleCompareOp<CO_GT_S>` → `handleCompareGT_LT` |\n| EQ | 0x14 | `handleCompareOp<CO_EQ>` → `handleCompareEQ` |\n| ISZERO | 0x15 | `handleCompareOp<CO_EQZ>` → `handleCompareEQZ` |\n| EVM Opcode | Hex | Builder Function |\n|---|---|---|\n| AND | 0x16 | `handleBitwiseOp<BO_AND>` |\n| OR | 0x17 | `handleBitwiseOp<BO_OR>` |\n| XOR | 0x18 | `handleBitwiseOp<BO_XOR>` |\n| NOT | 0x19 | `handleNot` |\n| BYTE | 0x1A | `handleByte` |\n| SHL | 0x1B | `handleShift<BO_SHL>` → `handleLeftShift` |\n| SHR | 0x1C | `handleShift<BO_SHR_U>` → `handleLogicalRightShift` |\n| SAR | 0x1D | `handleShift<BO_SHR_S>` → `handleArithmeticRightShift` |\n| CLZ | 0x1E | `handleClz` |\nPOP is visitor-level only (pops the eval stack). PUSH/DUP/SWAP route through\n`handlePush` / `stackGet` / `stackSet` in the builder.\n| EVM Opcode | Hex | Builder Function |\n|---|---|---|\n| POP | 0x50 | (visitor-level only) |\n| PUSH0-32 | 0x5F-0x7F | `handlePush` |\n| DUP1-16 | 0x80-0x8F | `stackGet` |\n| SWAP1-16 | 0x90-0x9F | `stackGet` / `stackSet` |\n### Memory / Storage\nThese opcodes are called directly from the visitor switch (no `handle*()`\nwrapper) into `Builder.handle*()`.\n| EVM Opcode | Hex | Builder Function |\n|---|---|---|\n| MLOAD | 0x51 | `handleMLoad` |\n| MSTORE | 0x52 | `handleMStore` |\n| MSTORE8 | 0x53 | `handleMStore8` |\n| MSIZE | 0x59 | `handleMSize` |\n| MCOPY | 0x5E | `handleMCopy` |\n| SLOAD | 0x54 | `handleSLoad` |\n| SSTORE | 0x55 | `handleSStore` |\n| TLOAD | 0x5C | `handleTLoad` |\n| TSTORE | 0x5D | `handleTStore` |\n| EVM Opcode | Hex | Builder Function |\n|---|---|---|\n| ADDRESS | 0x30 | `handleAddress` |\n| BALANCE | 0x31 | `handleBalance` |\n| ORIGIN | 0x32 | `handleOrigin` |\n| CALLER | 0x33 | `handleCaller` |\n| CALLVALUE | 0x34 | `handleCallValue` |\n| CALLDATALOAD | 0x35 | `handleCallDataLoad` |\n| CALLDATASIZE | 0x36 | `handleCallDataSize` |\n| CALLDATACOPY | 0x37 | `handleCallDataCopy` |\n| CODESIZE | 0x38 | `handleCodeSize` |\n| CODECOPY | 0x39 | `handleCodeCopy` |\n| GASPRICE | 0x3A | `handleGasPrice` |\n| EXTCODESIZE | 0x3B | `handleExtCodeSize` |\n| EXTCODECOPY | 0x3C | `handleExtCodeCopy` |\n| RETURNDATASIZE | 0x3D | `handleReturnDataSize` |\n| RETURNDATACOPY | 0x3E | `handleReturnDataCopy` |\n| EXTCODEHASH | 0x3F | `handleExtCodeHash` |\n| BLOCKHASH | 0x40 | `handleBlockHash` |\n| COINBASE | 0x41 | `handleCoinBase` |\n| TIMESTAMP | 0x42 | `handleTimestamp` |\n| NUMBER | 0x43 | `handleNumber` |\n| PREVRANDAO | 0x44 | `handlePrevRandao` |\n| GASLIMIT | 0x45 | `handleGasLimit` |\n| CHAINID | 0x46 | `handleChainId` |\n| SELFBALANCE | 0x47 | `handleSelfBalance` |\n| BASEFEE | 0x48 | `handleBaseFee` |\n| BLOBHASH | 0x49 | `handleBlobHash` |\n| BLOBBASEFEE | 0x4A | `handleBlobBaseFee` |\n| PC | 0x58 | `handlePC` |\n| GAS | 0x5A | `handleGas` |\n| EVM Opcode | Hex | Builder Function |\n|---|---|---|\n| JUMP | 0x56 | `handleJump` |\n| JUMPI | 0x57 | `handleJumpI` |\n| JUMPDEST | 0x5B | `handleJumpDest` |\n| Jump table setup | -- | `createJumpTable` |\n| Constant jump | -- | `implementConstantJump` |\n| Indirect jump | -- | `implementIndirectJump` |\n| EVM Opcode | Hex | Builder Function |\n|---|---|---|\n| CREATE | 0xF0 | `handleCreate` |\n| CALL | 0xF1 | `handleCall` |\n| CALLCODE | 0xF2 | `handleCallCode` |\n| RETURN | 0xF3 | `handleReturn` |\n| DELEGATECALL | 0xF4 | `handleDelegateCall` |\n| CREATE2 | 0xF5 | `handleCreate2` |\n| STATICCALL | 0xFA | `handleStaticCall` |\n| REVERT | 0xFD | `handleRevert` |\n| INVALID | 0xFE | `handleInvalid` |\n| SELFDESTRUCT | 0xFF | `handleSelfDestruct` |\n| EVM Opcode | Hex | Builder Function |\n|---|---|---|\n| KECCAK256 | 0x20 | `handleKeccak256` |\n| LOG0-LOG4 | 0xA0-A4 | `handleLogWithTopics<N>` (template) |\n### Gas Metering (injected at chunk boundaries)\n`EVMMirBuilder::meterOpcode`, `meterOpcodeRange`, `meterGas` — all in\n`evm_mir_compiler.cpp`.\nMost `X86CgLowering::*` definitions live in\n`src/compiler/target/x86/x86lowering.cpp`. A smaller set lives in\n`x86lowering_wasm.cpp` (wasm-specific lowerings) and\n`x86lowering_fallback.cpp` (fallback / slow paths). The generic base\nlives in `src/compiler/cgir/lowering.h`.\n| dMIR opcode | x86 Lowering Function |\n|---|---|\n| add/sub/mul/and/or/xor | `CgLowering::lowerBinaryOpExpr` (base in `lowering.h`) → `fastEmit_rr` |\n| not | `X86CgLowering::lowerNotExpr` |\n| sdiv/udiv/srem/urem | `X86CgLowering::lowerDivRemExpr` |\n| shl/sshr/ushr/rotl/rotr | `X86CgLowering::lowerShiftExpr` |\n| cmp | `X86CgLowering::lowerCmpExpr` |\n| adc | `X86CgLowering::lowerAdcExpr` |\n| evm_umul128_lo | `X86CgLowering::lowerEvmUmul128Expr` |\n| evm_umul128_hi | `X86CgLowering::lowerEvmUmul128HiExpr` |\n| select | `X86CgLowering::lowerSelectExpr` |\n| load | `X86CgLowering::lowerLoadExpr` |\n| store | `X86CgLowering::lowerStoreStmt` |\n| br | `X86CgLowering::lowerBrStmt` |\n| br_if | `X86CgLowering::lowerBrIfStmt` |\n| switch | `X86CgLowering::lowerSwitchStmt` |\n| call/icall | `X86CgLowering::lowerCall` |\n| return | `X86CgLowering::lowerReturnStmt` |\n| trunc | `X86CgLowering::lowerIntTruncExpr` |\n| uext | `X86CgLowering::lowerUExtExpr` |\n| fpabs | `X86CgLowering::lowerFPAbsExpr` |\n| fpneg | `X86CgLowering::lowerFPNegExpr` |\n| fpsqrt | `X86CgLowering::lowerFPSqrtExpr` |\n| fpround_* | `X86CgLowering::lowerFPRoundExpr` |\n| fpmin/fpmax | `X86CgLowering::lowerFPMinMaxExpr` |\n| fpcopysign | `X86CgLowering::lowerFPCopySignExpr` |\n| sitofp | `X86CgLowering::lowerSIToFPExpr` |\n| uitofp | `X86CgLowering::lowerUIToFPExpr` |\n| fpext | `X86CgLowering::lowerFPExtExpr` |\n| fptrunc | `X86CgLowering::lowerFPTruncExpr` |\n| dread (variable) | `X86CgLowering::lowerVariable` |\n| const (int) | `X86CgLowering::X86MaterializeInt` |\n| const (float) | `X86CgLowering::X86MaterializeFP` |\nHandler: `handlePop` (visitor-level only; the builder is not called)\nThe visitor just pops the evaluation stack and returns. Emits 0 dMIR\ninstructions."
+    gold_removed: ''
+  - path: .agents/skills/dtvm-perf-profile/SKILL.md
+    tier: 1
+    gold_added: ".agents/skills/dtvm-perf-profile/scripts/perf_profile.sh \\\n  --perf ./perf --output-dir perf_results -- \\\nThe script lives under the skill SSOT at\n`<repo>/.agents/skills/dtvm-perf-profile/scripts/perf_profile.sh` — not\nunder the `.claude/skills/` mirror."
+    gold_removed: ''

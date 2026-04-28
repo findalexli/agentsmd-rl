@@ -1,0 +1,24 @@
+version: "2.0"
+
+task:
+  name: jabref-add-code-style-reference-to
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: JabRef/jabref
+  pr: 14638
+  base_commit: "1189824e1ed3af98b55147f9cdfa3c9c73fd9a46"
+  merge_commit: "009417dc2d904d1ae015a4c285b980b56dc39574"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+
+config_edits:
+  - path: AGENTS.md
+    tier: 1
+    gold_added: '- Follow JabRef''s code style rules as documented in [docs/getting-into-the-code/guidelines-for-setting-up-a-local-workspace/intellij-13-code-style.md](docs/getting-into-the-code/guidelines-for-setting-up-a-local-workspace/intellij-13-code-style.md)'
+    gold_removed: ''

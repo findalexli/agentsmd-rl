@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: calendr-add-copilot-coding-agent-instructions
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: pakerwreah/Calendr
+  pr: 592
+  base_commit: "b83bc947d6d97b6c8eaf13bae8ed4d4bd4020055"
+  merge_commit: "c902fd36eab3ec0e6bbbb169af19c69a184f5d19"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/copilot-instructions.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/copilot-instructions.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/copilot-instructions.md."
+
+config_edits:
+  - path: .github/copilot-instructions.md
+    tier: 1
+    gold_added: "# Copilot Instructions for Calendr\n\n## Project Overview\n\nCalendr is a **macOS menu bar calendar application** built in Swift targeting macOS 14+. It displays calendar events and reminders from the system calendar and supports weather integration, time zone display, keyboard shortcuts, and a URL scheme for opening specific dates.\n\n## Architecture\n\nThe project follows **MVVM (Model-View-ViewModel)** with **RxSwift** for reactive bindings.\n\n- **Models** – Plain data structures in `Calendr/Models/` (e.g. `CalendarModel`, `EventModel`)\n- **ViewModels** – Reactive state/logic classes named `*ViewModel` (e.g. `CalendarViewModel`, `EventViewModel`)\n- **ViewControllers / Views** – AppKit `NSViewController` / `NSView` subclasses for UI, with some SwiftUI components\n- **Providers** – Service abstractions named `*Provider` in `Calendr/Providers/` (e.g. `CalendarServiceProvider`, `WeatherServiceProvider`)\n- **Mocks** – Test doubles prefixed with `Mock` and stored in `CalendrTests/Mocks/`\n\n## Key Dependencies (Package.swift)\n\n| Package | Purpose |\n|---------|---------|\n| RxSwift / RxCocoa / RxTest | Reactive programming and bindings |\n| swift-collections | Additional collection types |\n| swift-clocks | Testable clocks for time-dependent logic |\n| sentry-cocoa | Error tracking |\n| KeyboardShortcuts | Global keyboard shortcut support |\n| ZIPFoundation | ZIP file handling |\n\n## Coding Conventions\n\n- **Swift** is the primary language; a small `CalendrObjC` target handles Objective-C bridging\n- Use `BehaviorSubject` and `PublishSubject` for ViewModel state; expose read-only `Observable` to consumers\n- Inject all services (providers) into ViewModels via initialiser parameters — do not reference singletons directly from ViewModels\n- Dispose RxSwift subscriptions with a `DisposeBag` stored on the owner\n- Localised strings are code-generated via **swiftgen** into `Calendr/Constants/Strings.generated.swift` — always reference `Strings.*` constants instead of raw string literals for UI text\n- Use factory helpers (`*.make(...)`) defined in `Calendr/Mocks/Factories/` when constructing model objects in tests\n\n## File / Folder Organisation\n\n```\nCalendr/\n  Assets/          – Images and .lproj localization files\n  Calendar/        – Calendar grid view + ViewModel\n  Components/      – Reusable UI components\n  Constants/       – Auto-generated string constants (Strings.generated.swift)\n  Editors/         – Reminder / event editor ViewControllers and ViewModels\n  Enums/           – App-wide Swift enums\n  Events/          – Event list, event details, context menu\n  Extensions/      – Swift standard library and AppKit extensions\n  Main/            – App entry point and root ViewController\n  MenuBar/         – Menu bar status item components\n  Models/          – Shared data models (CalendarModel, EventModel, …)\n  Mocks/           – Shared mock objects (also used in tests via @testable import)\n  Providers/       – System service abstractions\n  Schedulers/      – Custom RxSwift schedulers\n  Settings/        – Settings UI and ViewModels\n  Utils/           – Utility functions\n\nCalendrTests/      – XCTest unit tests\n  Mocks/           – Mock providers used in tests\n  Schedulers/      – Scheduler utilities for tests\n```\n\n## Building and Testing\n\n**Build for testing** (used in CI):\n```bash\nxcodebuild build-for-testing -scheme \"Calendr\" \\\n  COMPILER_INDEX_STORE_ENABLE=NO CODE_SIGNING_ALLOWED=NO\n```\n\n**Run tests** (requires a prior build step):\n```bash\nxcodebuild test-without-building -scheme \"Calendr\" | xcbeautify\n```\n\nTests use **XCTest** with **RxTest** (`HistoricalScheduler`, `TestableObserver`) for testing reactive streams. Always write tests in `CalendrTests/` using mock providers from `CalendrTests/Mocks/`.\n\n## Testing Patterns\n\n- Each test class creates subjects, mock providers, and a `lazy var viewModel` in `setUp`\n- Use `HistoricalScheduler` to control RxSwift time in tests\n- Assert using `XCTAssert*` on values collected from observable streams\n- Mock providers expose mutable `m_*` properties (e.g. `calendarService.m_events`) that tests configure before observing\n\n## Localization\n\n- All user-visible strings must be added to `Calendr/Assets/en.lproj/Localizable.strings`\n- After editing localisation files, regenerate `Strings.generated.swift` with the **Generate Strings** VS Code task (uses `swiftgen`)\n- Track missing translations in `MISSING_TRANSLATIONS.md`\n\n## Important Notes\n\n- The app requires macOS 14+ and must not use deprecated APIs removed before that version\n- Code signing is disabled during CI (`CODE_SIGNING_ALLOWED=NO`)\n- Entitlements (`Calendr.entitlements`) include WeatherKit, Apple Events, and executable-file access — avoid adding entitlements without a clear functional requirement"
+    gold_removed: ''

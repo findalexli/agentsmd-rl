@@ -1,0 +1,374 @@
+version: "2.0"
+
+task:
+  name: jollyday-agents-md-and-split-skill
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: focus-shift/jollyday
+  pr: 1042
+  base_commit: "1aaef7cea6af7c1cb3d31c36beb7aac47479bca6"
+  merge_commit: "f867177fdff727f5e7d28dda87ee6cea76670450"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .agents/skills/add-holiday-calendar-xml/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .agents/skills/add-holiday-calendar-xml/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .agents/skills/add-holiday-calendar-xml/SKILL.md."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .agents/skills/add-holiday-description-properties/SKILL.md."
+  - id: signal_04
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .agents/skills/add-holiday-description-properties/SKILL.md."
+  - id: signal_05
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .agents/skills/add-holiday-description-properties/SKILL.md."
+  - id: signal_06
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .agents/skills/add-subdivision/SKILL.md."
+  - id: signal_07
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .agents/skills/add-subdivision/SKILL.md."
+  - id: signal_08
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .agents/skills/add-subdivision/SKILL.md."
+  - id: signal_09
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .agents/skills/register-holiday-calendar/SKILL.md."
+  - id: signal_10
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .agents/skills/register-holiday-calendar/SKILL.md."
+  - id: signal_11
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .agents/skills/register-holiday-calendar/SKILL.md."
+  - id: signal_12
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .agents/skills/write-holiday-tests/SKILL.md."
+  - id: signal_13
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .agents/skills/write-holiday-tests/SKILL.md."
+  - id: signal_14
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .agents/skills/write-holiday-tests/SKILL.md."
+  - id: signal_15
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in agents.md."
+  - id: signal_16
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in agents.md."
+  - id: signal_17
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in agents.md."
+
+config_edits:
+  - path: .agents/skills/add-holiday-calendar-xml/SKILL.md
+    tier: 1
+    gold_added: "---\nname: add-holiday-calendar-xml\ndescription: Create XML holiday calendar configuration files for a new country or region\n---\n\n# How to Add Holiday Calendar XML\n\nThis guide explains how to create XML holiday calendar files for countries in Jollyday.\n\n## File Location\n\nCreate a new file at: `jollyday-core/src/main/resources/holidays/Holidays_[country_code].xml`\n\n## Root Structure\n\n```xml\n<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n\n<Configuration hierarchy=\"[country_code]\" description=\"[Country Name]\"\n               xmlns=\"https://focus_shift.de/jollyday/schema/holiday\"\n               xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n               xsi:schemaLocation=\"https://focus_shift.de/jollyday/schema/holiday https://focus_shift.de/jollyday/schema/holiday/holiday.xsd\">\n  <Holidays>\n    <!-- Add your holidays here -->\n  </Holidays>\n\n  <Sources>\n    <Source>https://en.wikipedia.org/wiki/Public_holidays_in_[Country]</Source>\n    <Source of=\"ISO 3166\">https://www.iso.org/obp/ui/#iso:code:3166:[country_code]</Source>\n    <Source of=\"ISO 3166-2\">https://en.wikipedia.org/wiki/ISO_3166-2:[country_code]</Source>\n  </Sources>\n</Configuration>\n```\n\n### Root Element Attributes\n\n| Attribute     | Description                                              |\n|---------------|----------------------------------------------------------|\n| `hierarchy`   | ISO 3166-1 alpha-2 country code (e.g., \"de\", \"us\", \"fr\") |\n| `description` | Full country name in English                             |\n\n## Holiday Types\n\n### Fixed Date Holidays\n\nFor holidays on a fixed calendar date:\n\n```xml\n<Fixed month=\"JANUARY\" day=\"1\" descriptionPropertiesKey=\"NEW_YEAR\"/>\n```\n\nWith validity period:\n\n```xml\n<Fixed month=\"OCTOBER\" day=\"31\" validFrom=\"2017\" descriptionPropertiesKey=\"REFORMATION_DAY\"/>\n<Fixed month=\"JUNE\" day=\"19\" validFrom=\"2021\" descriptionPropertiesKey=\"JUNETEENTH\"/>\n```\n\n### Fixed Weekday Holidays\n\nFor holidays on a specific weekday occurrence in a month:\n\n```xml\n<FixedWeekday which=\"FIRST\" weekday=\"MONDAY\" month=\"SEPTEMBER\" descriptionPropertiesKey=\"LABOUR_DAY\"/>\n<FixedWeekday which=\"THIRD\" weekday=\"MONDAY\" month=\"JANUARY\" descriptionPropertiesKey=\"MARTIN_LUTHER_KING\"/>\n<FixedWeekday which=\"FOURTH\" weekday=\"THURSDAY\" month=\"NOVEMBER\" descriptionPropertiesKey=\"THANKSGIVING\"/>\n<FixedWeekday which=\"LAST\" weekday=\"MONDAY\" month=\"MAY\" descriptionPropertiesKey=\"MEMORIAL_DAY\"/>\n```\n\n**`which` values**: `FIRST`, `SECOND`, `THIRD`, `FOURTH`, `LAST`\n\n### Christian (Easter-based) Holidays\n\nFor Christian holidays that depend on Easter:\n\n```xml\n<ChristianHoliday type=\"GOOD_FRIDAY\"/>\n<ChristianHoliday type=\"EASTER_MONDAY\"/>\n<ChristianHoliday type=\"ASCENSION_DAY\"/>\n<ChristianHoliday type=\"WHIT_MONDAY\"/>\n<ChristianHoliday type=\"CORPUS_CHRISTI\"/>\n<ChristianHoliday type=\"PENTECOST\"/>\n```\n\nWith optional `localizedType`:\n\n```xml\n<ChristianHoliday type=\"GOOD_FRIDAY\" localizedType=\"OBSERVANCE\"/>\n```\n\n### Islamic Calendar Holidays\n\nFor Islamic calendar-based holidays:\n\n```xml\n<IslamicHoliday type=\"ID_AL_FITR\"/>\n<IslamicHoliday type=\"ID_AL_FITR_2\"/>\n<IslamicHoliday type=\"ID_AL_FITR_3\"/>\n<IslamicHoliday type=\"ID_UL_ADHA\"/>\n<IslamicHoliday type=\"ARAFAAT\"/>\n<IslamicHoliday type=\"NEWYEAR\"/>\n<IslamicHoliday type=\"MAWLID_AN_NABI\"/>\n```\n\n### Relative to Fixed Date\n\nFor holidays calculated relative to a fixed date:\n\n```xml\n<RelativeToFixed validFrom=\"1990\" descriptionPropertiesKey=\"REPENTANCE_PRAYER\">\n  <Weekday>WEDNESDAY</Weekday>\n  <When>BEFORE</When>\n  <Date month=\"NOVEMBER\" day=\"23\"/>\n</RelativeToFixed>\n```\n\n**`When` values**: `BEFORE`, `AFTER`\n\n### Moving Conditions\n\nFor holidays that shift to weekdays when falling on weekends:\n\n```xml\n<Fixed month=\"JANUARY\" day=\"1\" descriptionPropertiesKey=\"NEW_YEAR\">\n  <MovingCondition substitute=\"SATURDAY\" with=\"PREVIOUS\" weekday=\"FRIDAY\"/>\n  <MovingCondition substitute=\"SUNDAY\" with=\"NEXT\" weekday=\"MONDAY\"/>\n</Fixed>\n```\n\n## Regional/Subdivision Holidays\n\nFor countries with regional holidays (states, provinces):\n\n```xml\n<SubConfigurations hierarchy=\"[region_code]\" description=\"[Region Name]\">\n  <Holidays>\n    <Fixed month=\"MARCH\" day=\"8\" descriptionPropertiesKey=\"INTERNATIONAL_WOMAN\"/>\n  </Holidays>\n</SubConfigurations>\n```\n\nExample with nested subdivisions:\n\n```xml\n<SubConfigurations hierarchy=\"by\" description=\"Bavaria\">\n  <Holidays>\n    <Fixed month=\"JANUARY\" day=\"6\" descriptionPropertiesKey=\"EPIPHANY\"/>\n  </Holidays>\n\n  <SubConfigurations hierarchy=\"mu\" description=\"Munich\">\n    <Holidays>\n      <Fixed day=\"15\" month=\"AUGUST\" descriptionPropertiesKey=\"ASSUMPTION_DAY\"/>\n    </Holidays>\n  </SubConfigurations>\n</SubConfigurations>\n```\n\n## Common Attributes Reference\n\n| Attribute                  | Description                | Example                  |\n|----------------------------|----------------------------|--------------------------|\n| `month`                    | Month (English, uppercase) | `JANUARY`, `DECEMBER`    |\n| `day`                      | Day of month               | `1`, `25`                |\n| `weekday`                  | Day of week                | `MONDAY`, `FRIDAY`       |\n| `which`                    | Which occurrence           | `FIRST`, `LAST`, `THIRD` |\n| `validFrom`                | Start year                 | `1990`, `2021`           |\n| `validTo`                  | End year                   | `1990`, `2020`           |\n| `descriptionPropertiesKey` | Key for description        | `NEW_YEAR`               |\n| `localizedType`            | Holiday type variant       | `OBSERVANCE`             |\n\n## Available Values\n\n### Months\n`JANUARY`, `FEBRUARY`, `MARCH`, `APRIL`, `MAY`, `JUNE`, `JULY`, `AUGUST`, `SEPTEMBER`, `OCTOBER`, `NOVEMBER`, `DECEMBER`\n\n### Weekdays\n`MONDAY`, `TUESDAY`, `WEDNESDAY`, `THURSDAY`, `FRIDAY`, `SATURDAY`, `SUNDAY`\n\n### ChristianHoliday Types\n- `GOOD_FRIDAY`, `EASTER`, `EASTER_MONDAY`, `EASTER_SATURDAY`, `EASTER_TUESDAY`\n- `ASCENSION_DAY`, `WHIT_MONDAY`, `PENTECOST`, `PENTECOST_MONDAY`\n- `CORPUS_CHRISTI`, `CARNIVAL`, `MARDI_GRAS`, `MAUNDY_THURSDAY`, `ASH_WEDNESDAY`\n\n### IslamicHoliday Types\n- `NEWYEAR`, `MAWLID_AN_NABI`, `LAILAT_AL_BARAT`, `LAILAT_AL_MIRAJ`, `LAILAT_AL_QADR`\n- `ASCHURA`, `RAMADAN`, `RAMADAN_END`\n- `ID_AL_FITR`, `ID_AL_FITR_2`, `ID_AL_FITR_3`\n- `ARAFAAT`, `ID_UL_ADHA`, `ID_UL_ADHA_2`, `ID_UL_ADHA_3`\n\n## Complete Example: Germany (Simplified)\n\n```xml\n<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n\n<Configuration hierarchy=\"de\" description=\"Germany\"\n               xmlns=\"https://focus_shift.de/jollyday/schema/holiday\"\n               xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n               xsi:schemaLocation=\"https://focus_shift.de/jollyday/schema/holiday https://focus_shift.de/jollyday/schema/holiday/holiday.xsd\">\n  <Holidays>\n    <Fixed month=\"JANUARY\" day=\"1\" descriptionPropertiesKey=\"NEW_YEAR\"/>\n    <Fixed month=\"MAY\" day=\"1\" descriptionPropertiesKey=\"LABOUR_DAY\"/>\n    <Fixed month=\"DECEMBER\" day=\"25\" descriptionPropertiesKey=\"FIRST_CHRISTMAS_DAY\"/>\n    <Fixed month=\"DECEMBER\" day=\"26\" descriptionPropertiesKey=\"SECOND_CHRISTMAS_DAY\"/>\n    <ChristianHoliday type=\"GOOD_FRIDAY\"/>\n    <ChristianHoliday type=\"EASTER_MONDAY\"/>\n    <ChristianHoliday type=\"ASCENSION_DAY\"/>\n    <ChristianHoliday type=\"WHIT_MONDAY\"/>\n  </Holidays>\n\n  <Sources>\n    <Source>https://en.wikipedia.org/wiki/Public_holidays_in_Germany</Source>\n    <Source of=\"ISO 3166\">https://www.iso.org/obp/ui/#iso:code:3166:DE</Source>\n    <Source of=\"ISO 3166-2\">https://en.wikipedia.org/wiki/ISO_3166-2:DE</Source>\n  </Sources>\n</Configuration>\n```\n\n## References\n\n- **Schema XSD**: `jollyday-core/src/main/resources/focus_shift.de/jollyday/schema/holiday/holiday.xsd`\n- **Online Schema**: `https://focus_shift.de/jollyday/schema/holiday/holiday.xsd`\n- **Examples**: Review existing `Holidays_*.xml` files in `jollyday-core/src/main/resources/holidays/`"
+    gold_removed: ''
+  - path: .agents/skills/add-holiday-description-properties/SKILL.md
+    tier: 1
+    gold_added: '---
+
+      name: add-holiday-description-properties
+
+      description: Add holiday and country description properties for localization
+
+      ---
+
+
+      # How to Add Holiday Description Properties
+
+
+      This guide explains how to add holiday descriptions to the properties files in Jollyday.
+
+
+      ## Holiday Descriptions
+
+
+      ### Base English Descriptions
+
+
+      Add entries to `jollyday-core/src/main/resources/descriptions/holiday_descriptions.properties`:
+
+
+      ```properties
+
+      holiday.description.NEW_YEAR                    = New Year''s Day
+
+      holiday.description.LABOUR_DAY                  = Labour Day
+
+      holiday.description.CHRISTMAS                   = Christmas
+
+      holiday.description.INDEPENDENCE_DAY            = Independence Day
+
+      holiday.description.NATIONAL_DAY                = National Day
+
+      holiday.description.GOOD_FRIDAY                 = Good Friday
+
+      holiday.description.EASTER_MONDAY               = Easter Monday
+
+      holiday.description.FIRST_CHRISTMAS_DAY         = First Day of Christmas
+
+      holiday.description.SECOND_CHRISTMAS_DAY        = Second Day of Christmas
+
+      ```
+
+
+      ### Key Naming Conventions
+
+
+      - Use **UPPERCASE** with underscores: `NEW_YEAR`, `LABOUR_DAY`, `GOOD_FRIDAY`
+
+      - For multi-word holidays: `FIRST_CHRISTMAS_DAY`, `SECOND_CHRISTMAS_DAY`
+
+      - Country-specific: `REFORMATION_DAY`, `UNIFICATION_GERMANY`, `MARTIN_LUTHER_KING`
+
+      - Always prefix with `holiday.description.`
+
+
+      ### Localized Descriptions
+
+
+      Add entries to locale-specific files:
+
+
+      | File                                 | Language   |
+
+      |--------------------------------------|------------|
+
+      | `holiday_descriptions_de.properties` | German     |
+
+      | `holiday_descriptions_el.properties` | Greek      |
+
+      | `holiday_descriptions_fr.properties` | French     |
+
+      | `holiday_descriptions_nl.properties` | Dutch      |
+
+      | `holiday_descriptions_pt.properties` | Portuguese |
+
+      | `holiday_descriptions_sv.properties` | Swedish    |
+
+
+      **Example - German:**
+
+
+      ```properties
+
+      holiday.description.NEW_YEAR            = Neujahr
+
+      holiday.description.LABOUR_DAY          = Tag der Arbeit
+
+      holiday.description.CHRISTMAS           = 1. Weihnachtstag
+
+      holiday.description.GOOD_FRIDAY         = Karfreitag
+
+      holiday.description.EASTER_MONDAY       = Ostermontag
+
+      ```
+
+
+      ## Country Descriptions
+
+
+      ### Base English Country Descriptions
+
+
+      Add entries to `jollyday-core/src/main/resources/descriptions/country_descriptions.properties`:
+
+
+      ```properties
+
+      country.description.de = Germany
+
+      country.description.us = United States
+
+      country.description.fr = France
+
+      ```
+
+
+      ### Localized Country Descriptions
+
+
+      Add entries to locale-specific files:
+
+
+      ```properties
+
+      # country_descriptions_de.properties
+
+      country.description.de = Deutschland
+
+      country.description.us = Vereinigte Staaten
+
+      country.description.fr = Frankreich
+
+      ```
+
+
+      ## Property File Locations
+
+
+      | File                                                    | Purpose                 |
+
+      |---------------------------------------------------------|-------------------------|
+
+      | `descriptions/holiday_descriptions.properties`          | English holiday names   |
+
+      | `descriptions/holiday_descriptions_[locale].properties` | Localized holiday names |
+
+      | `descriptions/country_descriptions.properties`          | English country names   |
+
+      | `descriptions/country_descriptions_[locale].properties` | Localized country names |
+
+
+      ## Complete Example
+
+
+      For adding a new holiday key `REFORMATION_DAY`:
+
+
+      **1. Base properties:**
+
+      ```properties
+
+      # holiday_descriptions.properties
+
+      holiday.description.REFORMATION_DAY = Reformation Day
+
+
+      # country_descriptions.properties
+
+      country.description.xx = Your Country Name
+
+      ```
+
+
+      **2. German localization:**
+
+      ```properties
+
+      # holiday_descriptions_de.properties
+
+      holiday.description.REFORMATION_DAY = Reformationsfest
+
+
+      # country_descriptions_de.properties
+
+      country.description.xx = Ihr Landname
+
+      ```
+
+
+      **3. French localization:**
+
+      ```properties
+
+      # holiday_descriptions_fr.properties
+
+      holiday.description.REFORMATION_DAY = Jour de la Réformation
+
+
+      # country_descriptions_fr.properties
+
+      country.description.xx = Votre nom de pays
+
+      ```
+
+
+      ## Best Practices
+
+
+      1. **Consistent naming**: Use the same key across all locale files
+
+      2. **English first**: Always add the English description first
+
+      3. **Localized when available**: Add translations for supported locales
+
+      4. **No empty values**: Leave out the line entirely if translation unavailable
+
+      5. **Follow existing patterns**: Review existing descriptions for style consistency
+
+
+      ## Common Holiday Keys
+
+
+      | Key                          | Description             |
+
+      |-------------------------------|---------------- --------|
+
+      | `NEW_YEAR`                   | New Year''s Day          |
+
+      | `CHRISTMAS`                  | Christmas Day           |
+
+      | `FIRST_CHRISTMAS_DAY`        | First Day of Christmas  |
+
+      | `SECOND_CHRISTMAS_DAY`       | Second Day of Christmas |
+
+      | `GOOD_FRIDAY`                | Good Friday             |
+
+      | `EASTER_MONDAY`              | Easter Monday           |
+
+      | `LABOUR_DAY`                 | Labour/May Day          |
+
+      | `NATIONAL_DAY`               | National Day            |
+
+      | `INDEPENDENCE_DAY`           | Independence Day        |
+
+      | `ASCENSION_DAY`              | Ascension Day           |
+
+      | `WHIT_MONDAY`                | Whit Monday/Pentecost   |
+
+      | `CORPUS_CHRISTI`             | Corpus Christi          |
+
+      | `EPIPHANY`                   | Epiphany/Bright Tuesday |
+
+      | `REPELLENCE_PRAYER`          | Repentance Prayer       |'
+    gold_removed: ''
+  - path: .agents/skills/add-subdivision/SKILL.md
+    tier: 1
+    gold_added: "---\nname: add-subdivision\ndescription: Add regional/subdivision holiday configurations based on ISO 3166-2 codes\n---\n\n# How to Add Subdivisions\n\nThis guide explains how to add regional holiday configurations for subdivisions (states, provinces, regions) based on ISO 3166-2 codes.\n\n## Overview\n\nSubdivisions allow you to define holidays that are specific to certain regions within a country. For example, in Germany, Bavaria (BY) has different holidays than Berlin (BE).\n\n## File Location\n\nEdit the country's XML file: `jollyday-core/src/main/resources/holidays/Holidays_[country_code].xml`\n\n## ISO 3166-2 Codes\n\nSubdivision codes follow the ISO 3166-2 standard:\n\n| Format  | Example | Meaning                    |\n|---------|---------|----------------------------|\n| `XX-YY` | `DE-BY` | Germany - Bavaria          |\n| `XXYY`  | `USCA`  | United States - California |\n\nThe subdivision `hierarchy` attribute uses **only the regional part** (without the country prefix).\n\n## Basic Structure\n\n```xml\n<SubConfigurations hierarchy=\"[region_code]\" description=\"[Region Name]\">\n  <Holidays>\n    <!-- Regional-specific holidays go here -->\n  </Holidays>\n</SubConfigurations>\n```\n\n### Example - Germany (Baden-Württemberg)\n\n```xml\n<SubConfigurations hierarchy=\"bw\" description=\"Baden-Württemberg\">\n  <Holidays>\n    <Fixed month=\"JANUARY\" day=\"6\" descriptionPropertiesKey=\"EPIPHANY\"/>\n    <Fixed month=\"NOVEMBER\" day=\"1\" descriptionPropertiesKey=\"ALL_SAINTS\"/>\n    <ChristianHoliday type=\"CORPUS_CHRISTI\"/>\n  </Holidays>\n</SubConfigurations>\n```\n\n## Adding a New Subdivision\n\n### Step 1: Find the ISO 3166-2 Code\n\nLook up the subdivision code:\n\n| Country       | Source                                      |\n|---------------|---------------------------------------------|\n| Germany       | https://en.wikipedia.org/wiki/ISO_3166-2:DE |\n| United States | https://en.wikipedia.org/wiki/ISO_3166-2:US |\n| France        | https://en.wikipedia.org/wiki/ISO_3166-2:FR |\n\n**Example - Germany codes:**\n\n| Code | Region                 |\n|------|------------------------|\n| `bw` | Baden-Württemberg      |\n| `by` | Bavaria                |\n| `be` | Berlin                 |\n| `bb` | Brandenburg            |\n| `he` | Hesse                  |\n| `nw` | North Rhine-Westphalia |\n\n### Step 2: Add SubConfigurations Element\n\nInsert the subdivision in your country's XML file:\n\n```xml\n<!-- Inside the root Configuration element, after <Holidays> and before closing </Configuration> -->\n\n<SubConfigurations hierarchy=\"xx\" description=\"Your Region Name\">\n  <Holidays>\n    <Fixed month=\"JANUARY\" day=\"6\" descriptionPropertiesKey=\"EPIPHANY\"/>\n  </Holidays>\n</SubConfigurations>\n```\n\n### Step 3: Add Sources (Optional)\n\nDocument the source of regional holiday information:\n\n```xml\n<SubConfigurations hierarchy=\"xx\" description=\"Your Region Name\">\n  <Holidays>\n    <Fixed month=\"JANUARY\" day=\"6\" descriptionPropertiesKey=\"EPIPHANY\"/>\n  </Holidays>\n  <Sources>\n    <Source>https://www.region-official-website.gov/holidays</Source>\n  </Sources>\n</SubConfigurations>\n```\n\n## Nested Subdivisions\n\nSubdivisions can be nested for more granular regions (cities within states):\n\n```xml\n<SubConfigurations hierarchy=\"by\" description=\"Bavaria\">\n  <Holidays>\n    <Fixed month=\"JANUARY\" day=\"6\" descriptionPropertiesKey=\"EPIPHANY\"/>\n  </Holidays>\n\n  <!-- Munich - city within Bavaria -->\n  <SubConfigurations hierarchy=\"mu\" description=\"Munich\">\n    <Holidays>\n      <Fixed month=\"AUGUST\" day=\"15\" descriptionPropertiesKey=\"ASSUMPTION_DAY\"/>\n    </Holidays>\n  </SubConfigurations>\n\n  <!-- Augsburg - city within Bavaria -->\n  <SubConfigurations hierarchy=\"ag\" description=\"Augsburg\">\n    <Holidays>\n      <Fixed month=\"AUGUST\" day=\"8\" descriptionPropertiesKey=\"PEACE\"/>\n      <Fixed month=\"AUGUST\" day=\"15\" descriptionPropertiesKey=\"ASSUMPTION_DAY\"/>\n    </Holidays>\n  </SubConfigurations>\n</SubConfigurations>\n```\n\n## Complete Example - Germany\n\n```xml\n<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n\n<Configuration hierarchy=\"de\" description=\"Germany\"\n       xmlns=\"https://focus_shift.de/jollyday/schema/holiday\"\n       xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n       xsi:schemaLocation=\"https://focus_shift.de/jollyday/schema/holiday https://focus_shift.de/jollyday/schema/holiday/holiday.xsd\">\n  <!-- National holidays apply to all Germany -->\n  <Holidays>\n    <Fixed month=\"JANUARY\" day=\"1\" descriptionPropertiesKey=\"NEW_YEAR\"/>\n    <Fixed month=\"MAY\" day=\"1\" descriptionPropertiesKey=\"LABOUR_DAY\"/>\n    <Fixed month=\"DECEMBER\" day=\"25\" descriptionPropertiesKey=\"FIRST_CHRISTMAS_DAY\"/>\n    <Fixed month=\"DECEMBER\" day=\"26\" descriptionPropertiesKey=\"SECOND_CHRISTMAS_DAY\"/>\n    <ChristianHoliday type=\"GOOD_FRIDAY\"/>\n    <ChristianHoliday type=\"EASTER_MONDAY\"/>\n    <ChristianHoliday type=\"ASCENSION_DAY\"/>\n    <ChristianHoliday type=\"WHIT_MONDAY\"/>\n  </Holidays>\n\n  <!-- Regional holidays for Bavaria only -->\n  <SubConfigurations hierarchy=\"by\" description=\"Bavaria\">\n    <Holidays>\n      <Fixed month=\"JANUARY\" day=\"6\" descriptionPropertiesKey=\"EPIPHANY\"/>\n      <Fixed month=\"NOVEMBER\" day=\"1\" descriptionPropertiesKey=\"ALL_SAINTS\"/>\n      <ChristianHoliday type=\"CORPUS_CHRISTI\"/>\n    </Holidays>\n  </SubConfigurations>\n\n  <!-- Regional holidays for Berlin only -->\n  <SubConfigurations hierarchy=\"be\" description=\"Berlin\">\n    <Holidays>\n      <Fixed month=\"MARCH\" day=\"8\" descriptionPropertiesKey=\"INTERNATIONAL_WOMAN\" validFrom=\"2019\"/>\n    </Holidays>\n  </SubConfigurations>\n\n  <Sources>\n    <Source>https://en.wikipedia.org/wiki/Public_holidays_in_Germany</Source>\n    <Source of=\"ISO 3166-2\">https://en.wikipedia.org/wiki/ISO_3166-2:DE</Source>\n  </Sources>\n</Configuration>\n```\n\n## Holiday Types in Subdivisions\n\nAll holiday types can be used in subdivisions:\n\n```xml\n<SubConfigurations hierarchy=\"xx\" description=\"Example Region\">\n  <Holidays>\n    <!-- Fixed date -->\n    <Fixed month=\"JANUARY\" day=\"6\" descriptionPropertiesKey=\"EPIPHANY\"/>\n\n    <!-- Fixed weekday -->\n    <FixedWeekday which=\"FIRST\" weekday=\"MONDAY\" month=\"MAY\" descriptionPropertiesKey=\"LABOUR_DAY\"/>\n\n    <!-- Christian (Easter-based) -->\n    <ChristianHoliday type=\"CORPUS_CHRISTI\"/>\n\n    <!-- Relative to fixed date -->\n    <RelativeToFixed descriptionPropertiesKey=\"REPENTANCE_PRAYER\">\n      <Weekday>WEDNESDAY</Weekday>\n      <When>BEFORE</When>\n      <Date month=\"NOVEMBER\" day=\"23\"/>\n    </RelativeToFixed>\n  </Holidays>\n</SubConfigurations>\n```\n\n## Validity Periods\n\nRegional holidays can have validity periods:\n\n```xml\n<SubConfigurations hierarchy=\"xx\" description=\"Example Region\">\n  <Holidays>\n    <!-- Only valid from 2019 onwards -->\n    <Fixed month=\"MARCH\" day=\"8\" descriptionPropertiesKey=\"INTERNATIONAL_WOMAN\" validFrom=\"2019\"/>\n\n    <!-- Only valid for specific year -->\n    <Fixed month=\"MAY\" day=\"8\" descriptionPropertiesKey=\"LIBERATION\" validFrom=\"2020\" validTo=\"2020\"/>\n\n    <!-- Only valid in specific range -->\n    <Fixed month=\"OCTOBER\" day=\"31\" descriptionPropertiesKey=\"REFORMATION_DAY\" validFrom=\"2018\"/>\n  </Holidays>\n</SubConfigurations>\n```\n\n## Testing Subdivisions\n\nTests for subdivisions use the `.inSubdivision()` method chained after the holiday assertion:\n\n```java\nimport static de.focus_shift.jollyday.core.HolidayCalendar.GERMANY;\nimport static de.focus_shift.jollyday.tests.CalendarCheckerApi.assertFor;\nimport static java.time.Month.JANUARY;\n\n@Test\nvoid ensuresBavarianHolidays() {\n  assertFor(GERMANY)\n    .hasFixedHoliday(\"EPIPHANY\", JANUARY, 6).inSubdivision(\"by\").and()\n    .hasFixedHoliday(\"ALL_SAINTS\", NOVEMBER, 1).inSubdivision(\"by\").and()\n    .hasChristianHoliday(\"CORPUS_CHRISTI\").inSubdivision(\"by\").and()\n    .check();\n}\n\n@Test\nvoid ensuresBadenWurttembergHolidays() {\n  assertFor(GERMANY)\n    .hasFixedHoliday(\"EPIPHANY\", JANUARY, 6).inSubdivision(\"bw\").and()\n    .check();\n}\n\n@Test\nvoid ensuresNestedSubdivisions() {\n  // Munich is nested within Bavaria (by)\n  assertFor(GERMANY)\n    .hasFixedHoliday(\"ASSUMPTION_DAY\", AUGUST, 15).inSubdivision(\"by\", \"mu\").and()\n    .check();\n}\n\n@Test\nvoid ensuresMultipleSubdivisions() {\n  // A holiday can be valid in multiple subdivisions\n  assertFor(GERMANY)\n    .hasFixedHoliday(\"ALL_SAINTS\", NOVEMBER, 1)\n      .inSubdivision(\"bw\")\n      .inSubdivision(\"by\")\n      .inSubdivision(\"nw\")\n      .and()\n    .check();\n}\n```\n\n### inSubdivision() Method Details\n\n- **Signature**: `Properties inSubdivision(final String... subdivisions)`\n- **Usage**: Chain after any holiday assertion method\n- **Multiple subdivisions**: Pass multiple codes as varargs (e.g., `inSubdivision(\"bw\", \"by\", \"nw\")`)\n- **Nested subdivisions**: For cities within states, include both codes (e.g., `inSubdivision(\"by\", \"mu\")` for Munich in Bavaria)\n- **Valid in subdivision**: The method checks that a holiday is present in the specified subdivision(s)\n\n### Example from HolidayDETest.java\n\n```java\n@Test\nvoid ensuresAllHolidaysFor2024() {\n  assertFor(GERMANY)\n    // National holidays (all of Germany)\n    .hasFixedHoliday(\"NEW_YEAR\", JANUARY, 1).and()\n    .hasFixedHoliday(\"LABOUR_DAY\", MAY, 1).and()\n    .hasFixedHoliday(\"CHRISTMAS\", DECEMBER, 25).and()\n    \n    // Baden-Württemberg specific holidays\n    .hasFixedHoliday(\"EPIPHANY\", JANUARY, 6).inSubdivision(\"bw\").and()\n    .hasFixedHoliday(\"ALL_SAINTS\", NOVEMBER, 1).inSubdivision(\"bw\").and()\n    .hasChristianHoliday(\"CORPUS_CHRISTI\").inSubdivision(\"bw\").and()\n    \n    // Bavaria specific holidays\n    .hasFixedHoliday(\"EPIPHANY\", JANUARY, 6).inSubdivision(\"\
+      by\").and()\n    .hasFixedHoliday(\"ALL_SAINTS\", NOVEMBER, 1).inSubdivision(\"by\").and()\n    .hasChristianHoliday(\"CORPUS_CHRISTI\").inSubdivision(\"by\").and()\n    \n    // Munich (nested within Bavaria)\n    .hasFixedHoliday(\"ASSUMPTION_DAY\", AUGUST, 15).inSubdivision(\"by\", \"mu\").and()\n    \n    .check();\n}\n```\n\n## Best Practices\n\n1. **Use ISO codes**: Always use official ISO 3166-2 subdivision codes\n2. **Clear descriptions**: Include the full region name in the `description` attribute\n3. **Document sources**: Add `<Sources>` elements for regional holiday references\n4. **Nested when appropriate**: Use nested SubConfigurations for cities within states\n5. **Consistent ordering**: Place SubConfigurations after the main `<Holidays>` section\n6. **Validity periods**: Use `validFrom`/`validTo` for historical accuracy\n\n## Common Subdivision Examples\n\n### United States (California)\n\n```xml\n<SubConfigurations hierarchy=\"CA\" description=\"California\">\n  <Holidays>\n    <Fixed month=\"JANUARY\" day=\"1\" descriptionPropertiesKey=\"NEW_YEAR\"/>\n    <FixedWeekday which=\"THIRD\" weekday=\"MONDAY\" month=\"JANUARY\" descriptionPropertiesKey=\"MLK_DAY\"/>\n  </Holidays>\n</SubConfigurations>\n```\n\n### Germany (Bavaria)\n\n```xml\n<SubConfigurations hierarchy=\"by\" description=\"Bavaria\">\n  <Holidays>\n    <Fixed month=\"JANUARY\" day=\"6\" descriptionPropertiesKey=\"EPIPHANY\"/>\n    <Fixed month=\"NOVEMBER\" day=\"1\" descriptionPropertiesKey=\"ALL_SAINTS\"/>\n    <ChristianHoliday type=\"CORPUS_CHRISTI\"/>\n  </Holidays>\n</SubConfigurations>\n```\n\n### France (Corsica)\n\n```xml\n<SubConfigurations hierarchy=\"2C\" description=\"Corsica\">\n  <Holidays>\n    <Fixed month=\"MAY\" day=\"15\" descriptionPropertiesKey=\"CORSICA_LIBERATION\"/>\n  </Holidays>\n</SubConfigurations>\n```\n\n## ISO 3166-2 Reference\n\n| Country       | ISO Code | Subdivision Codes                                              |\n|---------------|----------|----------------------------------------------------------------|\n| Germany       | DE       | be, bb, bw, by, hb, he, hh, mv, ni, nw, rp, sl, sn, st, sh, th |\n| United States | US       | CA, NY, TX, FL, ... (state codes)                              |\n| France        | FR       | 01, 02, ... (department codes)                                 |\n| Austria       | AT       | WI, B, K, ... (state codes)                                    |\n\n**Sources**: https://en.wikipedia.org/wiki/ISO_3166-2"
+    gold_removed: ''
+  - path: .agents/skills/how-to-add-a-new-holiday-calendar-for-a-country/SKILL.md
+    tier: 1
+    gold_added: ''
+    gold_removed: ''
+  - path: .agents/skills/register-holiday-calendar/SKILL.md
+    tier: 1
+    gold_added: "---\nname: register-holiday-calendar\ndescription: Register a new holiday calendar in the HolidayCalendar enum\n---\n\n# How to Register a Holiday Calendar\n\nThis guide explains how to register a new country calendar in the `HolidayCalendar` enum.\n\n## File Location\n\nEdit: `jollyday-core/src/main/java/de/focus_shift/jollyday/core/HolidayCalendar.java`\n\n## Organization Pattern\n\nThe `HolidayCalendar` enum follows a strict organization pattern:\n\n1. Calendars are listed in **alphabetical order** by their ISO country code\n2. Each line starts with calendars beginning with a specific letter (A, B, C, etc.)\n3. Multiple calendars sharing the same starting letter are grouped on the same line\n\n## Example Structure\n\n```java\npublic enum HolidayCalendar {\n  ANTARCTICA(\"AQ\"), ALBANIA(\"AL\"), ANDORRA(\"AD\"), ARGENTINA(\"AR\"), ARMENIA(\"AM\"), AUSTRALIA(\"AU\"), AUSTRIA(\"AT\"),\n  BAHAMAS(\"BS\"), BELARUS(\"BY\"), BELGIUM(\"BE\"), BERMUDA(\"BM\"), BOLIVIA(\"BO\"), BRAZIL(\"BR\"), ...\n  CANADA(Locale.CANADA.getCountry()), CAYMAN_ISLANDS(\"KY\"), ...\n  GERMANY(\"DE\"), GREECE(\"GR\"), ...\n  UNITED_STATES(Locale.US.getCountry()), ...\n}\n```\n\n## Steps to Add Your Calendar\n\n### 1. Find the Correct Line\n\nIdentify which line your country code should appear on based on the first letter:\n\n| First Letter | Example Calendars                                  |\n|--------------|----------------------------------------------------|\n| A            | ANTARCTICA, ALBANIA, ANDORRA, ARGENTINA, AUSTRALIA |\n| B            | BELARUS, BELGIUM, BERMUDA, BRAZIL                  |\n| D            | DENMARK, DOMINICAN, ECUADAR (E starts D line)      |\n\n### 2. Insert in Alphabetical Order\n\nAdd your calendar in alphabetical position within that letter group:\n\n**Before:**\n```java\nALBANIA(\"AL\"), ANDORRA(\"AD\"), ARGENTINA(\"AR\"),\n```\n\n**Adding Antarctica (AQ) - after ARGENTINA:**\n```java\nALBANIA(\"AL\"), ANDORRA(\"AD\"), ARGENTINA(\"AR\"), ANTARCTICA(\"AQ\"),\n```\n\n### 3. Use Correct Format\n\nFormat: `COUNTRY_NAME(\"ISO_CODE\")`\n\n**Examples:**\n```java\nGERMANY(\"DE\"),                    // Direct ISO code\nCANADA(Locale.CANADA.getCountry()), // Java Locale for special cases\nUNITED_STATES(Locale.US.getCountry()), // Java Locale for US\n```\n\n## Complete Example\n\nAdding a fictional \"Zebra\" country with code \"ZB\":\n\n**Before:**\n```java\n  ZIMBABWE(\"ZW\");\n}\n```\n\n**After:**\n```java\n  ZEBRA(\"ZB\"), ZIMBABWE(\"ZW\");\n}\n```\n\n## Special Cases\n\nSome countries use Java Locale instead of string codes:\n\n```java\nCANADA(Locale.CANADA.getCountry()),  // Returns \"CA\"\nUNITED_STATES(Locale.US.getCountry()),  // Returns \"US\"\n```\n\n## Best Practices\n\n1. **Alphabetical order**: Always maintain alphabetical order by ISO code\n2. **Proper naming**: Use full country name in uppercase with underscores\n3. **ISO code**: Use the official ISO 3166-1 alpha-2 code\n4. **Comma placement**: Add comma after each entry except the last\n5. **Semicolon**: Last entry ends with semicolon before closing brace\n\n## Verification\n\nAfter adding your calendar, verify:\n1. The calendar is in the correct alphabetical position\n2. The ISO code matches the XML file's hierarchy attribute\n3. The Java file compiles without errors"
+    gold_removed: ''
+  - path: .agents/skills/write-holiday-tests/SKILL.md
+    tier: 1
+    gold_added: "---\nname: write-holiday-tests\ndescription: Write country-specific holiday tests using CalendarCheckerApi\n---\n\n# How to Write Holiday Tests\n\nThis guide explains how to write tests for new or modified holiday calendars using the `CalendarCheckerApi`.\n\n## File Location\n\nCreate test file at: `jollyday-tests/src/test/java/de/focus_shift/jollyday/tests/[CountryName]Test.java`\n\n**Example naming:**\n- Germany: `HolidayDETest.java`\n- United States: `HolidayUSTest.java`\n- France: `HolidayFRTest.java`\n\n## CalendarCheckerApi\n\nThe `CalendarCheckerApi` provides fluent assertions for testing holidays:\n\n```java\nimport static de.focus_shift.jollyday.tests.CalendarCheckerApi.assertFor;\nimport static de.focus_shift.jollyday.core.HolidayCalendar.GERMANY;\nimport static java.time.Month.JANUARY;\nimport static java.time.Month.FEBRUARY;\n```\n\n### Basic Usage\n\n```java\n@Test\nvoid ensuresHolidays() {\n  assertFor(GERMANY)\n    .hasFixedHoliday(\"NEW_YEAR\", JANUARY, 1).and()\n    .hasChristianHoliday(\"GOOD_FRIDAY\").and()\n    .check();\n}\n```\n\n## Assertion Methods\n\n### Fixed Date Holidays\n\n```java\n// Basic fixed holiday\n.hasFixedHoliday(\"NEW_YEAR\", JANUARY, 1)\n\n// With validFrom year\n.hasFixedHoliday(\"JUNETEENTH\", JUNE, 19, 2021)\n\n// With validFrom and validTo\n.hasFixedHoliday(\"REFORMATION_DAY\", OCTOBER, 31, 2017, null)\n```\n\n### Fixed Weekday Holidays\n\n```java\n// First Monday in September\n.hasFixedWeekdayHoliday(\"LABOUR_DAY\", java.time.DayOfWeek.MONDAY, SEPTEMBER, java.time.temporal.TemporalAdjusters.firstInMonth(java.time.DayOfWeek.MONDAY))\n\n// Third Monday in January (MLK Day)\n.hasFixedWeekdayHoliday(\"MARTIN_LUTHER_KING\", JANUARY, 3)\n```\n\n### Christian (Easter-based) Holidays\n\n```java\n.hasChristianHoliday(\"GOOD_FRIDAY\")\n.hasChristianHoliday(\"EASTER_MONDAY\")\n.hasChristianHoliday(\"ASCENSION_DAY\")\n.hasChristianHoliday(\"WHIT_MONDAY\")\n.hasChristianHoliday(\"CORPUS_CHRISTI\")\n```\n\n### Islamic Calendar Holidays\n\n```java\n.hasIslamicHoliday(\"ID_AL_FITR\", 2024, 10, 10)  // type, year, month, day\n.hasIslamicHoliday(\"ID_UL_ADHA\", 2024, 6, 16)\n.hasIslamicHoliday(\"NEWYEAR\", 2024, 7, 7)\n```\n\n### Regional/Subdivision Holidays\n\n```java\n// Holiday in specific region\n.hasSubConfig(\"bw\")\n  .hasFixedHoliday(\"REPELLENCE_PRAYER\", NOVEMBER, 20)\n  .and()\n.check();\n\n// Multiple regions\n.hasSubConfig(\"by\")\n  .hasFixedHoliday(\"EPIPHANY\", JANUARY, 6)\n  .and()\n.hasSubConfig(\"bw\")\n  .hasFixedHoliday(\"EPIPHANY\", JANUARY, 6)\n  .and()\n.check();\n```\n\n### Not a Holiday\n\n```java\n.notHasHoliday(DECEMBER, 31)\n.notHasSubConfig(\"bw\")\n  .hasFixedHoliday(\"SOME_HOLIDAY\", DECEMBER, 24)\n  .and()\n.check();\n```\n\n## Complete Test Example\n\n```java\npackage de.focus_shift.jollyday.tests;\n\nimport de.focus_shift.jollyday.core.HolidayCalendar;\nimport org.junit.jupiter.api.Test;\n\nimport static de.focus_shift.jollyday.tests.CalendarCheckerApi.assertFor;\nimport static java.time.Month.*;\n\nclass HolidayGETest {\n\n  @Test\n  void ensuresHolidays() {\n    assertFor(HolidayCalendar.GERMANY)\n      // National holidays\n      .hasFixedHoliday(\"NEW_YEAR\", JANUARY, 1)\n      .hasChristianHoliday(\"GOOD_FRIDAY\")\n      .hasChristianHoliday(\"EASTER_MONDAY\")\n      .hasFixedHoliday(\"LABOUR_DAY\", MAY, 1)\n      .hasChristianHoliday(\"ASCENSION_DAY\")\n      .hasChristianHoliday(\"WHIT_MONDAY\")\n      .hasFixedHoliday(\"CHRISTMAS\", DECEMBER, 25)\n      .hasFixedHoliday(\"SECOND_CHRISTMAS_DAY\", DECEMBER, 26)\n      .and()\n      // Regional holidays - Bavaria\n      .hasSubConfig(\"by\")\n      .hasFixedHoliday(\"EPIPHANY\", JANUARY, 6)\n      .hasFixedHoliday(\"ASCENSION_DAY\", MAY)\n      .and()\n      // Regional holidays - Baden-Württemberg\n      .hasSubConfig(\"bw\")\n      .hasFixedHoliday(\"EPIPHANY\", JANUARY, 6)\n      .hasFixedHoliday(\"REPELLENCE_PRAYER\", NOVEMBER)\n      .and()\n      .check();\n  }\n}\n```\n\n## Testing Edge Cases\n\n### Moving Conditions (Weekend Shift)\n\n```java\n@Test\nvoid ensuresMovingCondition() {\n  assertFor(HolidayCalendar.US)\n    // New Year falls on Saturday, shifts to Friday\n    .hasFixedHoliday(\"NEW_YEAR\", JANUARY, 1, 2023)\n    .check();\n}\n```\n\n### Historical Changes\n\n```java\n@Test\nvoid ensuresHistoricalChanges() {\n  assertFor(HolidayCalendar.GERMANY)\n    // Reformation Day only since 2017\n    .hasFixedHoliday(\"REFORMATION_DAY\", OCTOBER, 31, 2017)\n    .notHasHoliday(OCTOBER, 31, 2016)\n    .check();\n}\n```\n\n## Best Practices\n\n1. **Comprehensive coverage**: Test all holidays including regional ones\n2. **Valid ranges**: Test holidays with `validFrom`/`validTo` constraints\n3. **Edge cases**: Test years where holidays fall on weekends\n4. **Clear naming**: Use descriptive test method names\n5. **Group related tests**: Use `.and()` to chain related assertions\n"
+    gold_removed: ''
+  - path: agents.md
+    tier: 1
+    gold_added: "---\nname: jollyday\ndescription: A Java library for querying public holidays supporting 110+ countries with XML-based holiday calendar configuration\n---\n\n# Jollyday - Public Holiday Library\n\n## Project Overview\n\n**Jollyday** is a Java library to query public holidays. It currently supports **over 110 countries**. The holiday data is stored in XML files (one for each country) and will be read from the classpath.\n\n### Key Features\n\n- Supports 110+ countries with public holiday data\n- ISO 3166-1 alpha-2 country code support\n- ISO 3166-2 subdivision support (states, provinces, regions)\n- Multiple holiday types: Fixed dates, moving holidays (Easter-based, Islamic calendar, etc.)\n- XML-based configuration with validation via XSD\n- Supports JAXB and Jackson for XML unmarshalling\n- Java 17+ required\n\n### Modules\n\n| Module             | Description                                    |\n|--------------------|------------------------------------------------|\n| `jollyday-core`    | Core API, holiday data, parser implementations |\n| `jollyday-jackson` | Jackson XML binding implementation             |\n| `jollyday-jaxb`    | Jakarta XML Binding implementation             |\n| `jollyday-tests`   | Integration and country-specific tests         |\n\n## Architecture\n\n```\njollyday/\n├── jollyday-core/\n│   ├── src/main/java/de/focus_shift/jollyday/core/\n│   │   ├── Holiday.java                 # Holiday value object\n│   │   ├── HolidayManager.java          # Main API entry point\n│   │   ├── HolidayCalendar.java         # Enum of all supported countries\n│   │   ├── ManagerParameters.java       # Configuration builder\n│   │   ├── impl/                        # Manager implementations\n│   │   ├── parser/                      # Holiday parsing API\n│   │   │   └── impl/                    # Parser implementations\n│   │   └── spi/                         # Holiday configuration interfaces\n│   └── src/main/resources/\n│       ├── holidays/                    # Country holiday XML files\n│       ├── descriptions/                # Localized holiday descriptions\n│       ├── focus_shift.de/jollyday/     # XSD schema definition\n│       └── jollyday.properties          # Default configuration\n├── jollyday-jackson/                    # Jackson XML unmarshalling\n├── jollyday-jaxb/                       # JAXB XML unmarshalling\n└── jollyday-tests/                      # Test suite\n```\n\n## Key Concepts\n\n### Holiday Types\n\n| Type                         | Description                          | Examples                                        |\n|------------------------------|--------------------------------------|-------------------------------------------------|\n| **Fixed**                    | Same calendar date every year        | New Year (Jan 1), Christmas (Dec 25)            |\n| **FixedWeekday**             | Specific weekday occurrence in month | Labor Day (first Monday in Sept)                |\n| **ChristianHoliday**         | Easter-based moving holidays         | Good Friday, Easter Monday, Ascension           |\n| **IslamicHoliday**           | Islamic calendar holidays            | Eid al-Fitr, Eid al-Adha                        |\n| **EthiopianOrthodoxHoliday** | Ethiopian Orthodox holidays          | Timkat, Meskel                                  |\n| **RelativeToFixed**          | Relative to a fixed date             | German Repentance Day (Wednesday before Nov 23) |\n| **RelativeToWeekdayInMonth** | Relative to a moving holiday         | Various country-specific holidays               |\n\n### Holiday Categories\n\n| Category           | Description                                 |\n|--------------------|---------------------------------------------|\n| **Public Holiday** | Official non-working days (paid time off)   |\n| **Bank Holiday**   | Days when financial institutions are closed |\n| **Observance**     | Celebrations without official time off      |\n\n### ISO Standards\n\n- **ISO 3166-1 alpha-2**: Country codes (e.g., `DE`, `US`, `FR`)\n- **ISO 3166-2**: Subdivision codes (e.g., `DE-BY` for Bavaria, Germany)\n\n## XML Holiday Configuration\n\n### Root Structure\n\n```xml\n<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n\n<Configuration hierarchy=\"[country_code]\" description=\"[Country Name]\"\n               xmlns=\"https://focus_shift.de/jollyday/schema/holiday\"\n               xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n               xsi:schemaLocation=\"https://focus_shift.de/jollyday/schema/holiday https://focus_shift.de/jollyday/schema/holiday/holiday.xsd\">\n  <Holidays>\n    <!-- National holidays -->\n  </Holidays>\n\n  <Sources>\n    <Source>https://en.wikipedia.org/wiki/Public_holidays_in_[Country]</Source>\n    <Source of=\"ISO 3166\">https://www.iso.org/obp/ui/#iso:code:3166:[CODE]</Source>\n  </Sources>\n</Configuration>\n```\n\n### Holiday Elements\n\n#### Fixed Date\n```xml\n<Fixed month=\"JANUARY\" day=\"1\" descriptionPropertiesKey=\"NEW_YEAR\"/>\n<Fixed month=\"DECEMBER\" day=\"25\" validFrom=\"1990\" descriptionPropertiesKey=\"CHRISTMAS\"/>\n```\n\n#### Fixed Weekday in Month\n```xml\n<FixedWeekday which=\"FIRST\" weekday=\"MONDAY\" month=\"SEPTEMBER\" descriptionPropertiesKey=\"LABOUR_DAY\"/>\n<FixedWeekday which=\"LAST\" weekday=\"MONDAY\" month=\"MAY\" descriptionPropertiesKey=\"MEMORIAL_DAY\"/>\n```\n- `which`: FIRST, SECOND, THIRD, FOURTH, LAST\n\n#### Christian (Easter-based)\n```xml\n<ChristianHoliday type=\"GOOD_FRIDAY\"/>\n<ChristianHoliday type=\"EASTER_MONDAY\"/>\n<ChristianHoliday type=\"ASCENSION_DAY\"/>\n<ChristianHoliday type=\"WHIT_MONDAY\"/>\n<ChristianHoliday type=\"CORPUS_CHRISTI\"/>\n```\n\n#### Islamic Calendar\n```xml\n<IslamicHoliday type=\"ID_AL_FITR\"/>\n<IslamicHoliday type=\"ID_UL_ADHA\"/>\n<IslamicHoliday type=\"NEWYEAR\"/>\n```\n\n#### Relative to Fixed Date\n```xml\n<RelativeToFixed descriptionPropertiesKey=\"REPENTANCE_PRAYER\">\n  <Weekday>WEDNESDAY</Weekday>\n  <When>BEFORE</When>\n  <Date month=\"NOVEMBER\" day=\"23\"/>\n</RelativeToFixed>\n```\n\n#### Subdivisions (Regional Holidays)\n```xml\n<SubConfigurations hierarchy=\"bw\" description=\"Baden-Württemberg\">\n  <Holidays>\n    <Fixed month=\"MARCH\" day=\"19\" descriptionPropertiesKey=\"ST_JOSEPH\"/>\n  </Holidays>\n</SubConfigurations>\n```\n\n### Common Attributes\n\n| Attribute                  | Description     | Values                             |\n|----------------------------|-----------------|------------------------------------|\n| `month`                    | Month name      | JANUARY, FEBRUARY, ... DECEMBER    |\n| `day`                      | Day of month    | 1-31                               |\n| `weekday`                  | Day of week     | MONDAY, TUESDAY, ... SUNDAY        |\n| `which`                    | Occurrence      | FIRST, SECOND, THIRD, FOURTH, LAST |\n| `validFrom`                | Start year      | e.g., 1990                         |\n| `validTo`                  | End year        | e.g., 2020                         |\n| `descriptionPropertiesKey` | Description key | UPPERCASE_WITH_UNDERSCORES         |\n\n## API Usage\n\n### Basic Usage\n\n```java\nimport de.focus_shift.jollyday.core.Holiday;\nimport de.focus_shift.jollyday.core.HolidayManager;\nimport de.focus_shift.jollyday.core.ManagerParameters;\nimport de.focus_shift.jollyday.core.HolidayCalendar;\n\nimport java.util.Set;\nimport java.time.Year;\n\n// Get all German holidays for 2024\nHolidayManager manager = HolidayManager.getInstance(ManagerParameters.create(HolidayCalendar.GERMANY));\nSet<Holiday> holidays = manager.getHolidays(Year.of(2024));\n\n// Check if a date is a holiday\nboolean isHoliday = manager.isHoliday(LocalDate.of(2024, 12, 25));\n\n// Get holidays for a subdivision (Baden-Württemberg)\nboolean isHolidayInBW = manager.isHoliday(LocalDate.of(2024, 3, 19), \"bw\");\n```\n\n### Holiday Object\n\n```java\nHoliday holiday = holidays.iterator().next();\nholiday.getDate();           // LocalDate\nholiday getDescription();    // Holiday name\nholiday.getDescription(Locale.GERMAN);  // Localized name\nholiday getType();           // HolidayType (PUBLIC_HOLIDAY, BANK_HOLIDAY, OBSERVANCE)\n```\n\n## Configuration\n\n### Default Properties\n\nLocated in `jollyday-core/src/main/resources/jollyday.properties`:\n\n```properties\nmanager.impl=de.focus_shift.jollyday.core.impl.DefaultHolidayManager\nconfiguration.service.impl=de.focus_shift.jollyday.jackson.JacksonConfigurationService\n```\n\n### Parser Implementations\n\n```properties\nparser.impl.de.focus_shift.jollyday.core.spi.FixedHolidayConfiguration = de.focus_shift.jollyday.core.parser.impl.FixedParser\nparser.impl.de.focus_shift.jollyday.core.spi.ChristianHolidayConfiguration = de.focus_shift.jollyday.core.parser.impl.ChristianHolidayParser\nparser.impl.de.focus_shift.jollyday.core.spi.IslamicHolidayConfiguration = de.focus_shift.jollyday.core.parser.impl.IslamicHolidayParser\n```\n\n### Override Configuration\n\n```java\nManagerParameters params = ManagerParameters.create(HolidayCalendar.GERMANY);\nparams.setProperty(\"manager.impl\", \"de.focus_shift.jollyday.core.impl.SpecialHolidayManager\");\nHolidayManager manager = HolidayManager.getInstance(params);\n```\n\n## Code Structure Details\n\n### HolidayCalendar Enum\n\nLocated in `jollyday-core/src/main/java/de/focus_shift/jollyday/core/HolidayCalendar.java`:\n\n- Organized alphabetically by ISO country code\n- Each entry: `COUNTRY_NAME(\"ISO_CODE\")`\n- Grouped by starting letter on same line\n\n```java\npublic enum HolidayCalendar {\n  ANTARCTICA(\"AQ\"), ALBANIA(\"AL\"), ANDORRA(\"AD\"), ARGENTINA(\"AR\"), ...\n  GERMANY(\"DE\"), GREECE(\"GR\"), ...\n  UNITED_STATES(\"US\"), ...\n}\n```\n\n### Parser Interface\n\nAll parsers implement `HolidayParser`:\n\n```java\npublic interface HolidayParser {\n  Set<Holiday> parse(HolidayConfiguration configuration);\n}\n```\n\n### Directory Organization\n\n| Directory                          \
+      \               | Purpose                                                  |\n|---------------------------------------------------|----------------------------------------------------------|\n| `holidays/`                                       | Country XML files (`Holidays_de.xml`, `Holidays_us.xml`) |\n| `descriptions/`                                   | Localized holiday and country names                      |\n| `descriptions/holiday_descriptions.properties`    | English holiday names                                    |\n| `descriptions/holiday_descriptions_de.properties` | German holiday names                                     |\n| `descriptions/country_descriptions.properties`    | English country names                                    |\n\n## Skills\n\n### add-holiday-calendar-xml\n\n**Location**: `.agents/skills/add-holiday-calendar-xml/SKILL.md`\n\nCreate XML holiday calendar configuration files for a new country or region. Covers:\n- Root structure with namespace declarations\n- Holiday types: Fixed, FixedWeekday, Christian, Islamic, RelativeToFixed\n- Moving conditions and validity periods\n- Regional/subdivision configurations\n\n### add-holiday-description-properties\n\n**Location**: `.agents/skills/add-holiday-description-properties/SKILL.md`\n\nAdd holiday and country description properties for localization. Covers:\n- Base English descriptions in `holiday_descriptions.properties`\n- Localized descriptions (de, el, fr, nl, pt, sv)\n- Country descriptions in `country_descriptions.properties`\n- Key naming conventions\n\n### register-holiday-calendar\n\n**Location**: `.agents/skills/register-holiday-calendar/SKILL.md`\n\nRegister a new holiday calendar in the `HolidayCalendar` enum. Covers:\n- Alphabetical organization by ISO country code\n- File location: `jollyday-core/src/main/java/de/focus_shift/jollyday/core/HolidayCalendar.java`\n- Entry format: `COUNTRY_NAME(\"ISO_CODE\")`\n\n### write-holiday-tests\n\n**Location**: `.agents/skills/write-holiday-tests/SKILL.md`\n\nWrite country-specific holiday tests using `CalendarCheckerApi`. Covers:\n- Test file location and naming conventions\n- Assertion methods for all holiday types\n- Testing regional/subdivision holidays\n- Testing edge cases (moving conditions, historical changes)\n\n### add-subdivision\n\n**Location**: `.agents/skills/add-subdivision/SKILL.md`\n\nAdd regional/subdivision holiday configurations based on ISO 3166-2 codes. Covers:\n- ISO 3166-2 subdivision codes and format\n- SubConfigurations XML structure\n- Nested subdivisions (cities within states)\n- Validity periods for regional holidays\n- Testing subdivisions with CalendarCheckerApi\n\n## Best Practices\n\n### Adding New Countries\n\n1. Follow existing XML file structure\n2. Use official sources for holiday data\n3. Include `validFrom`/`validTo` for historical accuracy\n4. Add comprehensive test coverage\n5. Register in `HolidayCalendar` enum alphabetically\n\n### Localization\n\n- Use `descriptionPropertiesKey` for all holidays\n- Provide English descriptions in base properties file\n- Add localized descriptions for supported languages: de, el, fr, nl, pt, sv\n\n### Holiday Type Conventions\n\n| Type           | Usage                             |\n|----------------|-----------------------------------|\n| `NEW_YEAR`     | January 1st                       |\n| `CHRISTMAS`    | December 25th                     |\n| `GOOD_FRIDAY`  | Easter Friday                     |\n| `LABOUR_DAY`   | May 1st                           |\n| `NATIONAL_DAY` | Country-specific national holiday |\n\n## Version Requirements\n\n| Component    | Version           |\n|--------------|-------------------|\n| Java         | 17+               |\n| Maven        | 3.8.5+            |\n| JUnit        | 6.0.3+            |\n| Jackson/JAXB | As defined in POM |\n\n## External Resources\n\n- **Schema XSD**: `jollyday-core/src/main/resources/focus_shift.de/jollyday/schema/holiday/holiday.xsd`\n- **GitHub**: https://github.com/focus-shift/jollyday\n- **Maven Central**: https://central.sonatype.com/artifact/de.focus-shift/jollyday-core\n- **Javadoc**: https://www.javadoc.io/doc/de.focus-shift/jollyday-core\n- **Issues**: https://github.com/focus-shift/jollyday/issues\n- **Discussions**: https://github.com/focus-shift/jollyday/discussions\n\n## License\n\nApache License, Version 2.0"
+    gold_removed: ''

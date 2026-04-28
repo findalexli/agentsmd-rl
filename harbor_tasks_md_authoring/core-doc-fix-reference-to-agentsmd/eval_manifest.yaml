@@ -1,0 +1,24 @@
+version: "2.0"
+
+task:
+  name: core-doc-fix-reference-to-agentsmd
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: api-platform/core
+  pr: 7743
+  base_commit: "6ed35e194db4f465c0a328c1b3729c4c11669d5d"
+  merge_commit: "ecf0d5eb2e41731499e306fc03fc68a0a7ed6717"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+
+config_edits:
+  - path: AGENTS.md
+    tier: 1
+    gold_added: For advanced configurations (Event Listeners, MongoDB, Behat tuning), refer to `tests/AGENTS.md`.
+    gold_removed: ''

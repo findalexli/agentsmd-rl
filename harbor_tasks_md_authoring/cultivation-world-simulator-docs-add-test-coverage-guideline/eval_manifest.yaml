@@ -1,0 +1,53 @@
+version: "2.0"
+
+task:
+  name: cultivation-world-simulator-docs-add-test-coverage-guideline
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: 4thfever/cultivation-world-simulator
+  pr: 99
+  base_commit: "0d8a001f8c68b3304973c00225afdaa3d8356391"
+  merge_commit: "5fa801633499876db8c591c563b2f5ff5a771918"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/test-validate/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/test-validate/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/test-validate/SKILL.md."
+
+config_edits:
+  - path: .claude/skills/test-validate/SKILL.md
+    tier: 1
+    gold_added: '
+
+      ## Test Coverage Guidelines
+
+
+      After making code changes, consider whether tests are needed:
+
+
+      | Change Type | Test Recommendation |
+
+      |-------------|---------------------|
+
+      | Bug fix | Add regression test to prevent recurrence |
+
+      | New feature | Unit tests + integration test if affects multiple modules |
+
+      | Refactor | Existing tests should pass; add tests if behavior changes |
+
+      | Config/docs | Usually no tests needed |
+
+
+      For bug fixes, ensure the test would have **failed before the fix** and **passes after**.'
+    gold_removed: ''

@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: dotnet-skills-fix-api-design-optional-params
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: Aaronontheweb/dotnet-skills
+  pr: 59
+  base_commit: "e406fe58e27fe57ce040b1d5bb35c345e8c24367"
+  merge_commit: "64def2a9101b505be1cf5314f467c4dfc1ea9999"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/csharp-api-design/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/csharp-api-design/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/csharp-api-design/SKILL.md."
+
+config_edits:
+  - path: skills/csharp-api-design/SKILL.md
+    tier: 1
+    gold_added: "// SAFE: Add NEW overload methods that delegate to existing methods\n// Existing method - do not modify its signature\npublic void Process(Order order) { ... }\n// New overload - safe to add\npublic void Process(Order order, CancellationToken ct)\n{\n    // implementation that handles cancellation\n}\n// SAFE: Add NEW overloads for additional functionality\n// Existing method - do not modify\npublic void Send(Message msg) { ... }\n// New overload - safe to add\npublic void Send(Message msg, Priority priority)\n{\n    // implementation that handles priority\n}\n// ADD optional parameters to EXISTING methods (binary incompatible!)\n// The compiled IL method signature changes - callers compiled against\n// the old signature will get MissingMethodException at runtime.\n// Optional parameter defaults are baked into the CALLER's assembly at compile time.\npublic void Process(Order order, CancellationToken ct = default);  // Breaks binary compat!\npublic void Send(Message msg, Priority priority = Priority.Normal);  // Breaks binary compat!\n// Correct approach: add a NEW overload method instead (see Safe Changes above)\n"
+    gold_removed: ''

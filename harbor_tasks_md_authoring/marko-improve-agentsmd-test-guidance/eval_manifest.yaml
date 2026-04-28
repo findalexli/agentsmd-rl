@@ -1,0 +1,39 @@
+version: "2.0"
+
+task:
+  name: marko-improve-agentsmd-test-guidance
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: marko-js/marko
+  pr: 3163
+  base_commit: "6bf16167ecac61aebf70b05acc39fc4cd78c4d3d"
+  merge_commit: "1989da3501a8fafa9184ebc048ab73f4cb2f05af"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in packages/runtime-tags/AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in packages/runtime-tags/AGENTS.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in packages/runtime-tags/AGENTS.md."
+
+config_edits:
+  - path: packages/runtime-tags/AGENTS.md
+    tier: 1
+    gold_added: '
+
+      npm test -- --grep "runtime-tags.*" --update # all tests snapshot update
+
+      npm test -- --grep "runtime-tags.* <fixture> " --update # fixture snapshot update
+
+
+      Prefer running specific fixtures when possible. Running the entire suite takes time!'
+    gold_removed: ''

@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: android-libraries-copilot-updatesimplify-instructions
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: dotnet/android-libraries
+  pr: 1330
+  base_commit: "f0f81d4fe826c549308be9ef5f6d9cea11d05771"
+  merge_commit: "9c188b425d4f3bb81826a3a82f69a358ee49cb81"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/copilot-instructions.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/copilot-instructions.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/copilot-instructions.md."
+
+config_edits:
+  - path: .github/copilot-instructions.md
+    tier: 1
+    gold_added: "**Note**: Update this file with new learnings to keep suggestions accurate.\nCreates .NET for Android bindings for Google's Java/Kotlin libraries (AndroidX, Play Services, Firebase, ML Kit, etc.) using a **config-driven approach** with `config.json` and the \"binderator\" tool.\n## Key Files & Directories\n- **`config.json`**: Master config for 600+ Maven artifacts → NuGet packages. Update via `dotnet cake --target=update-config` or `bump-config`, not manually.\n- **`build.cake`**: Main Cake build script\n- **`source/{groupId}/{artifactId}/`**: Binding customizations (Additions/, Transforms/, Metadata.xml)\n- **`generated/`**: Auto-generated projects (not in source control)\n- **`source/AssemblyInfo.cs`**: **DO NOT EDIT** - contains placeholder tokens\n## Target Frameworks\n- `net9.0-android` (API 35) and `net10.0-android` (API 36)\n- Legacy Xamarin.Android support ended May 1, 2024\n## Common Build Commands\ndotnet cake                        # Full build\ndotnet cake -t=ci                  # CI build\ndotnet cake --target=libs          # Build libraries only\ndotnet cake --target=binderate     # Regenerate projects from config\ndotnet cake --target=update-config # Update to latest Maven versions\ndotnet cake --target=bump-config   # Increment NuGet revision (4th component)\n## config.json Entry Structure\n  \"version\": \"1.10.1\",           // Maven version\n  \"nugetVersion\": \"1.10.1.2\",    // 4th component for NuGet-only changes\n  \"dependencyOnly\": false        // true = transitive dep, no standalone package\n## Binding Customizations (in `source/{groupId}/{artifactId}/`)\n- **`Additions/*.cs`**: Extra C# code added to bindings\n- **`Metadata.xml`**: Fix parameter names, remove problematic APIs\n- **`Transforms/`**: XML transforms for generated API\n- **`merge.targets`**: Custom MSBuild targets\n<!-- Remove problematic API -->\n<remove-node path=\"/api/package[@name='com.example']/class[@name='Problematic']\" />\n<!-- Fix parameter name -->\n<attr path=\"//method[@name='example']/parameter[@name='p0']\" name=\"name\">properName</attr>\n<!-- Change managed namespace -->\n<attr path=\"/api/package[@name='androidx.example']\" name=\"managedName\">AndroidX.Example</attr>\nReference: https://github.com/dotnet/java-interop/wiki/Troubleshooting-Android-Bindings-Issues\n## Common Issues and Fixes\n### CS0535: Interface Implementation Mismatch\nWhen Java method overloading doesn't map to C# interface requirements:\n// Add in source/{groupId}/{artifactId}/Additions/ClassName.cs\n        => this.Method(encoder, (SpecificType?) value);\n### Build File Locking Errors (XARLP7024)\nTransient parallel build issue. Usually resolves on retry. If persistent, may need to reduce build parallelism in `build/cake/build-and-package.cake`.\n### Identifying Failing Package from Build Logs\nLook for the `.csproj` path in error messages:\n```\n[C:\\...\\generated\\{groupId}.{artifactId}\\{groupId}.{artifactId}.csproj::TargetFramework=net10.0-android36.0]\n```\nThe `{groupId}.{artifactId}` maps to the Maven coordinates and customization folder.\n## Validation Commands\n```bash\ndotnet cake utilities.cake -t=namespace-check\ndotnet cake utilities.cake -t=spell-check  \ndotnet cake --target=metadata-verify\ndotnet cake --target=binderate-config-verify\n```\n## Internal Documentation\n- **`BUILDING.md`**: Full build prerequisites and setup\n- **`docs/development-tips.md`**: Workflow tips, release procedures\n- **`docs/artifact-list.md`**: Complete Maven → NuGet mappings\n## External Resources\n- [.NET for Android Docs](https://learn.microsoft.com/en-us/dotnet/android/)\n- [AndroidX Release Notes](https://developer.android.com/jetpack/androidx/versions/stable-channel)\n- [Google Play Services Release Notes](https://developers.google.com/android/guides/releases)\n- [Java Interop Troubleshooting](https://github.com/dotnet/java-interop/wiki/Troubleshooting-Android-Bindings-Issues)"
+    gold_removed: ''

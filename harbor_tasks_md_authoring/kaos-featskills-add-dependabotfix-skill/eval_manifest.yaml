@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: kaos-featskills-add-dependabotfix-skill
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: axsaucedo/kaos
+  pr: 148
+  base_commit: "6891ba764de40c5f95cbaee9c1339dcdecce2509"
+  merge_commit: "43c563070a611f54fd122630250cb9d4f413437e"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/skills/dependabot-fix/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/skills/dependabot-fix/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/skills/dependabot-fix/SKILL.md."
+
+config_edits:
+  - path: .github/skills/dependabot-fix/SKILL.md
+    tier: 1
+    gold_added: "---\nname: dependabot-fix\ndescription: Systematically diagnose and fix a failing Dependabot PR. Use this skill when asked to run /dependabot-fix <pr-number>. The user provides the PR number in their prompt. The skill fetches PR metadata, classifies updates (version vs security), pulls failing-job logs, root-causes the failure, applies targeted fixes on a new branch, runs local validation, opens a replacement PR, and monitors CI until green.\nallowed-tools: shell\n---\n\n# Dependabot Fix\n\nSystematically fix a failing Dependabot PR. The user provides a PR number (e.g., `/dependabot-fix 142`).\n\n## Step 1: Extract PR Number and Load Context\n\n```bash\nPR_NUM=<from user prompt>\n\ngh pr view $PR_NUM --repo axsaucedo/kaos --json title,body,headRefName,files,mergeable\ngh pr checks $PR_NUM --repo axsaucedo/kaos\ngh pr diff $PR_NUM --repo axsaucedo/kaos | head -200\n```\n\nClassify the PR:\n- **Ecosystem**: github-actions / npm / uv / go_modules\n- **Type**: version-update vs security-update\n- **Scope**: single dep vs grouped (patterns, `applies-to`)\n\n## Step 2: Extract Failure Logs\n\nFor every failing check, pull logs and identify the first error:\n\n```bash\ngh pr checks $PR_NUM --repo axsaucedo/kaos | grep -iE \"fail|X\"\n\ngh run view --job <JOB_ID> --repo axsaucedo/kaos --log 2>&1 \\\n  | grep -iE \"error|exit code|##\\[error\\]|FAILED|assert|timed ?out\" \\\n  | head -30\n```\n\nClassify the root cause:\n\n| Pattern | Diagnosis | Fix |\n|---------|-----------|-----|\n| `requires go >= X.Y.Z (running go A.B.C)` | Unpinned `@latest` tool install pulled newer version requiring bumped toolchain | Pin to last version compatible with current `go.mod` |\n| `Node.js X is not supported` | Action bumped requires newer Node runner | Verify runner Node version; revert major if needed |\n| `upload-artifact: name already exists` | v4+ requires unique names | Add matrix suffix to artifact name |\n| CRD / generate drift | API bump changed codegen | `make generate manifests` and commit |\n| Test assertion mismatch | Upstream behavior change | Adjust test or pin dep to previous major |\n| Post-job cancellation after tests passed | Flaky infra | Rerun failed jobs once |\n\n## Step 3: Branch From Latest Main\n\n```bash\ngit checkout main && git pull origin main\ngit checkout -b ci/fix-pr-${PR_NUM}\n```\n\n## Step 4: Apply Dependabot's Change\n\n```bash\nDB_BRANCH=$(gh pr view $PR_NUM --repo axsaucedo/kaos --json headRefName -q .headRefName)\ngit fetch origin $DB_BRANCH\nDB_SHA=$(git log -1 --format=%H origin/$DB_BRANCH)\ngit cherry-pick $DB_SHA\n```\n\n## Step 5: Apply Targeted Fix\n\n### Unpinned `@latest` Go tool installs\n\n```bash\ngrep -rn \"@latest\" .github/workflows operator/Makefile\n# Pin to known-good versions, e.g.:\n#   controller-tools/cmd/controller-gen@v0.19.0\n#   controller-runtime/tools/setup-envtest@release-0.22\n#   arttor/helmify/cmd/helmify@v0.4.18\n```\n\n### Transitive dep breaking test\n\nPin the transitive in `pyproject.toml` / `package.json` to the last compatible major.\n\n### CRD drift\n\n```bash\ncd operator && make generate manifests && git add -A\n```\n\n## Step 6: Local Validation\n\n```bash\nmkdir -p ./tmp && touch ./tmp/null\n\n# Go changes\ncd operator && make test-unit 2>./tmp/null\n\n# Python changes\ncd pydantic-ai-server && source .venv/bin/activate && python -m pytest tests/ -v\n\n# CLI changes\ncd kaos-cli && source .venv/bin/activate && python -m pytest tests/ -v\n\n# UI changes\ncd kaos-ui && npm run test:unit\n```\n\nOnly run 1-3 E2E tests locally if CI is showing broad E2E failures; otherwise let CI run the full matrix.\n\n## Step 7: Commit and Open Replacement PR\n\n```bash\ngit add -A\ngit commit -m \"ci(<scope>): <one-line summary>\n\n<body explaining root cause and fix>\n\nCo-authored-by: Copilot <223556219+Copilot@users.noreply.github.com>\"\n\ngit push -u origin ci/fix-pr-${PR_NUM}\n\ngh pr create --title \"ci: fix #${PR_NUM} — <summary>\" \\\n  --body \"Replaces #${PR_NUM} with <fix description>. Closes #${PR_NUM} once merged.\" \\\n  --base main\n```\n\n## Step 8: Monitor CI\n\n```bash\nNEW_PR=$(gh pr list --repo axsaucedo/kaos --head ci/fix-pr-${PR_NUM} --json number -q .[0].number)\n\nwhile true; do\n  STATUS=$(gh pr checks $NEW_PR --repo axsaucedo/kaos 2>&1 | awk -F'\\t' '{print $2}' | sort -u)\n  echo \"$STATUS\"\n  echo \"$STATUS\" | grep -qE \"pending|queued\" || break\n  sleep 60\ndone\n```\n\nIf any job fails:\n1. Get logs for that job\n2. Re-diagnose (Step 2)\n3. If flake (e.g. \"operation was canceled\" after tests passed), rerun: `gh run rerun <run-id> --failed`\n4. If real regression, apply next fix and push\n\n## Step 9: Merge and Close Original\n\n```bash\ngh pr merge $NEW_PR --repo axsaucedo/kaos --merge --delete-branch\n\ngh pr close $PR_NUM --repo axsaucedo/kaos \\\n  --comment \"Superseded by #${NEW_PR} (merged).\"\n```\n\n## Step 10: Report\n\nPrint a summary containing:\n- PR number fixed\n- Root cause (one line)\n- Fix applied (files + change)\n- CI result\n- Replacement PR number and merge status\n\n## Invariants\n\n- Always branch from latest `main`, never from the dependabot branch directly\n- Always cherry-pick dependabot's commit to preserve authorship\n- Prefer version pinning over version rollback when dealing with `@latest` drift\n- Never push directly to `main`\n- Use `./tmp/` (not `/tmp/`) for any local scratch files\n- Keep commit messages in conventional-commit format with a body"
+    gold_removed: ''

@@ -1,0 +1,122 @@
+version: "2.0"
+
+task:
+  name: cms-6x-adds-agentsmd-and-testing
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: craftcms/cms
+  pr: 18388
+  base_commit: "fa85e29ad7b6741bcbd47213ba93a4ae987ec665"
+  merge_commit: "67ca04a4e346729ad8bbfeacd3088b8989a9e492"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .agents/skills/testing-guidelines/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .agents/skills/testing-guidelines/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .agents/skills/testing-guidelines/SKILL.md."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .agents/skills/testing-guidelines/references/testing-guidelines.md."
+  - id: signal_04
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .agents/skills/testing-guidelines/references/testing-guidelines.md."
+  - id: signal_05
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .agents/skills/testing-guidelines/references/testing-guidelines.md."
+  - id: signal_06
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_07
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_08
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+
+config_edits:
+  - path: .agents/skills/testing-guidelines/SKILL.md
+    tier: 1
+    gold_added: '---
+
+      name: testing-guidelines
+
+      description: Guidance for writing and updating Craft CMS 6 tests (Pest/Laravel) including element factories, CP URL rules, custom field setup, trait testing, and event assertions. Use when creating or modifying tests, debugging test patterns, or aligning new tests with repository testing standards.
+
+      ---
+
+
+      # Testing Guidelines
+
+
+      ## Overview
+
+
+      Apply Craft CMS 6 testing patterns consistently and avoid common pitfalls around elements, CP URLs, and event assertions. Use the quick rules below, then load the reference file for full examples and code snippets.
+
+
+      ## Workflow
+
+
+      1. Identify the test scope (CP URL, element behavior, trait, event, custom field).
+
+      2. Follow the matching rule set below.
+
+      3. Pull detailed examples from `references/testing-guidelines.md` when needed.
+
+      4. Implement tests using Pest and repo conventions.
+
+
+      ## Core Rules
+
+
+      - Use `CraftCms\Cms\Cms::config()->cpTrigger` when asserting CP URLs; never hard-code `/admin`.
+
+      - Do not instantiate element classes directly with `new` in tests; use factories to ensure database state.
+
+      - Prefer factories and element queries over Eloquent models when asserting element behavior.
+
+      - For element traits, create minimal test elements that override only what is needed.
+
+      - Use Laravel event fakes/listeners to assert dispatch, cancellation, or data changes.
+
+
+      ## When to Load References
+
+
+      - Need code samples for entry creation, custom fields, or event tests.
+
+      - Need the minimal trait-testing element example.
+
+      - Unsure about the exact factory + query pattern for elements.
+
+
+      See `references/testing-guidelines.md` for full examples and snippets.'
+    gold_removed: ''
+  - path: .agents/skills/testing-guidelines/references/testing-guidelines.md
+    tier: 1
+    gold_added: "# Testing Guidelines Reference\n\n## Table of Contents\n\n1. CP URLs\n2. Elements\n3. Creating test elements\n4. Creating an entry with a custom field\n5. Testing element concerns (traits)\n6. Testing Laravel events\n\n## CP URLs\n\n- When testing CP URLs, always use `CraftCms\\Cms\\Cms::config()->cpTrigger` instead of testing for `/admin`.\n\n## Elements\n\nImportant: Do not instantiate element classes directly with `new Entry()` in tests. Use factories to ensure proper database state.\n\n## Creating test elements\n\n```php\nuse CraftCms\\Cms\\Entry\\Elements\\Entry as EntryElement;\nuse CraftCms\\Cms\\Entry\\Models\\Entry;\nuse CraftCms\\Cms\\User\\Elements\\User;\nuse function Pest\\Laravel\\actingAs;\n\n// Authenticate as user (required for most element operations)\nactingAs(User::findOne());\n\n// Create an entry using the Eloquent model factory, then query the element\nEntry::factory()->create();\n$entry = EntryElement::findOne();\n\n// With specific attributes\nEntry::factory()->create(['title' => 'Test Entry']);\n```\n\n## Creating an entry with a custom field\n\n```php\nuse craft\\behaviors\\CustomFieldBehavior;\nuse CraftCms\\Cms\\Field\\Models\\Field;\nuse CraftCms\\Cms\\FieldLayout\\Models\\FieldLayout;\nuse CraftCms\\Cms\\Entry\\Models\\Entry as EntryModel;\nuse CraftCms\\Cms\\Support\\Facades\\Fields;\n\n$field = Field::factory()->create([\n    'handle' => 'textField',\n    'type' => CraftCms\\Cms\\Field\\PlainText::class,\n]);\n\n$fieldLayout = FieldLayout::factory()->forField($field)->create();\n$entry = EntryModel::factory()->create();\n\n$entry->element->update([\n    'fieldLayoutId' => $fieldLayout->id,\n]);\n\nCustomFieldBehavior::$fieldHandles[$field->handle] = true;\nFields::refreshFields();\n\n$entry = entryQuery()->id($entry->id)->firstOrFail();\n$entry->title = 'Test entry';\n$entry->setFieldValue('textField', 'Foo');\n\nCraft::$app->getElements()->saveElement($entry);\n```\n\n## Testing element concerns (traits)\n\nWhen testing element traits/concerns, create a minimal test element class that extends `Element` and overrides only the methods you need to test:\n\n```php\nuse CraftCms\\Cms\\Element\\Element;\n\nclass TestRoutableElement extends Element\n{\n    protected ?string $customRoute = null;\n\n    #[Override]\n    public static function displayName(): string\n    {\n        return 'Test Element';\n    }\n\n    public function setCustomRoute(?string $route): void\n    {\n        $this->customRoute = $route;\n    }\n\n    #[Override]\n    protected function route(): array|string|null\n    {\n        return $this->customRoute;\n    }\n}\n\ntest('returns custom route', function () {\n    $element = new TestRoutableElement;\n    $element->setCustomRoute('my/route');\n\n    expect($element->getRoute())->toBe('my/route');\n});\n```\n\nThis pattern allows testing trait behavior without needing factories or database state. See `tests/Element/Concerns/` for examples.\n\n## Testing Laravel events\n\nUse Laravel's event fakes to test that events are dispatched correctly:\n\n```php\nuse CraftCms\\Cms\\Element\\Events\\BeforeSave;\nuse CraftCms\\Cms\\Element\\Events\\AfterSave;\nuse Illuminate\\Support\\Facades\\Event;\n\ntest('dispatches save events', function () {\n    Event::fake([BeforeSave::class, AfterSave::class]);\n\n    $entry = Entry::factory()->create();\n    $element = entryQuery()->id($entry->id)->one();\n\n    Craft::$app->getElements()->saveElement($element);\n\n    Event::assertDispatched(BeforeSave::class, function ($event) use ($element) {\n        return $event->element->id === $element->id;\n    });\n\n    Event::assertDispatched(AfterSave::class);\n});\n```\n\nTesting cancellable events:\n\n```php\ntest('can cancel save via event', function () {\n    Event::listen(BeforeSave::class, function (BeforeSave $event) {\n        $event->isValid = false;\n    });\n\n    $entry = Entry::factory()->create();\n    $element = entryQuery()->id($entry->id)->one();\n\n    $result = Craft::$app->getElements()->saveElement($element);\n\n    expect($result)->toBeFalse();\n});\n```\n\nTesting event data modification:\n\n```php\ntest('can modify event data', function () {\n    Event::listen(DefineUrl::class, function (DefineUrl $event) {\n        $event->url = 'https://custom-url.com';\n    });\n\n    $element = new TestElement();\n\n    expect($element->getUrl())->toBe('https://custom-url.com');\n});\n```"
+    gold_removed: ''
+  - path: AGENTS.md
+    tier: 1
+    gold_added: "# AGENTS.md\n\nThis file provides guidance to AI Coding agents when working with code in this repository.\n\n## Overview\n\nThis is the Craft CMS 6.x repository. Craft CMS 6 is a major rewrite that migrates from Yii2 to Laravel 12 while maintaining backwards compatibility through a Yii2 adapter layer.\n\n## Common Commands\n\n### Testing\n```bash\n# Run all tests (uses Pest)\ncomposer tests\n\n# Run a specific test file\n./vendor/bin/pest --compact tests/Field/FieldTest.php\n\n# Run a specific test\n./vendor/bin/pest --compact --filter=\"test name\"\n\n# Run yii2-adapter Laravel tests\ncomposer tests-adapter\n\n# Run yii2-adapter legacy tests (in the yii2-adapter directory)\n./vendor/bin/codecept run unit --filter=\"test name\"\n```\n\n\n- When running tests with `./vendor/bin/pest`, always add `--compact` to reduce output verbosity and token count.\n- When writing tests, don't use Mockery or Mocks unless absolutely necessary. Prefer using Laravel's Facade fakes or running real code. Tests written are feature or integration tests and not unit tests.\n\n### Code Quality\n```bash\n# Fix code style (runs rector, pint, and ecs in parallel)\ncomposer fix-cs\n\n# Run static analysis\ncomposer phpstan\n\n# Run rector only\ncomposer rector\n```\n\n### Frontend Development\n```bash\n# Run Vite dev server for control panel assets\nnpm run dev\n\n# Build control panel assets for production\nnpm run build\n\n# Run web components package in watch mode\nnpm run dev:cp\n\n# Build web components for production\nnpm run build:cp\n\n# Run tests for @craftcms/cp package\nnpm run test:cp\n\n# Build all frontend assets (bundles, cp, main)\nnpm run build:all\n```\n\n### Legacy Bundles (yii2-adapter)\n```bash\nnpm run build:bundles\nnpm run dev:bundles -- -- --config-name=cp\n```\n\n## Architecture\n\n### Laravel + Yii2 Hybrid System\n\nCraft 6 runs on Laravel 12 but maintains backwards compatibility with legacy Yii2 code through `craftcms/yii2-adapter`.\n\n**Key architectural points:**\n- Primary namespace: `CraftCms\\Cms\\` in `src/`\n- Main service provider: `CraftServiceProvider` (aggregates ~20 domain service providers)\n- Legacy Yii2 app bootstrapped via `Yii2ServiceProvider` which creates `Craft::$app`\n- The `yii2-adapter/` directory is a Composer path repository (`craftcms/yii2-adapter: self.version`)\n- The goal before the next release is to have no Yii code or references in the `src` folder, the `yii2-adapter` provides fallbacks and compatibility layers.\n- This is a large codebase, with large files. Be mindful of file size and search before you read.\n\n### Domain Structure\n\nThe codebase is organized by domain in `src/`:\n- `Element/` - Base element system (entries, assets, users are all elements)\n  - `Element/Concerns/` - Traits that compose Element functionality (e.g., `HasRoutesAndUrls`, `Cacheable`, `HasCanonical`)\n- `Entry/` - Entry element type and related services\n- `Field/` - Field types and field layout system\n- `Database/` - Migrations, queries, and the custom `ElementQuery` system\n- `ProjectConfig/` - YAML-based configuration management\n- `Plugin/` - Plugin system and loading\n- `User/` - Authentication, permissions, user groups\n- `Site/` - Multi-site support\n\n### Element Queries\n\nElement queries (`src/Database/Queries/`) are the primary way to query content:\n- `Entry::find()`, `Asset::find()`, `User::find()` return specialized `ElementQuery` objects.\n- `ElementQuery` implements `Illuminate\\Contracts\\Database\\Query\\Builder` and forwards calls to a Laravel query builder.\n- Use `joinElementTable(Table::ENTRIES)` to join specialized element tables and gain access to their columns.\n- Support eager loading (`with()`), caching, and custom field queries.\n- Located in `src/Database/Queries/` with concerns in `Concerns/` subdirectory.\n- **Important:** Eloquent classes which are in a `Models` namespace are not usually how content is queries. Use the elements instead if they exist, namespaced in `Elements`.\n\n### Database Patterns\n\n- Use `CraftCms\\Cms\\Database\\Table` constants for all table names (e.g., `Table::ENTRIES`, `Table::ELEMENTS`).\n- Prefer Laravel's schema builder and migrations over raw SQL.\n- When working with elements, always respect the `elements` and `elements_sites` base tables.\n\n### Translations\n\n- Use the `t()` helper function for translations: `t('Settings')`. The second argument is optional and specifies the translation category `app` (default) or `site`.\n- The `t()` helper is a wrapper around `CraftCms\\Cms\\Support\\Facades\\I18N::translate()`.\n\n### Configuration\n\n- Craft config: `config/craft/` (general.php, custom-fields.php, etc.)\n- Project config: `config/craft/project/` (YAML files for schema)\n- Laravel config: `config/` (standard Laravel configuration)\n\n### Testing\n\n- Uses Pest with Orchestra Testbench for Laravel package testing\n- Base test class: `CraftCms\\Cms\\Tests\\TestCase`\n- Tests require database - configure via `tests/.env` (copy from `.env.example.mysql` or `.env.example.pgsql`)\n- Uses `RefreshDatabase` trait - tables are migrated fresh via the `Install` migration\n- **Classes marked `final` have this keyword stripped during testing** - you can create custom test classes that extend production classes (e.g., extending `User` element) to override methods like `getFieldLayout()` for easier testing without complex mocks\n\n**Important**: When creating or adjusting tests, take a look at @docs/TESTING.md for patterns and best practices.\n\n### Service Providers Pattern\n\nEach domain has its own service provider (e.g., `FieldsServiceProvider`, `UserServiceProvider`) registered through the aggregate `CraftServiceProvider`.\n\n### Singleton Services\n\nServices that should be singletons use the `#[Singleton]` attribute from Laravel:\n\n```php\nuse Illuminate\\Container\\Attributes\\Singleton;\n\n#[Singleton]\nfinal class MyService\n{\n    public function __construct(\n        private readonly SomeDependency $dependency,\n    ) {}\n}\n```\n\nThe service can then be resolved via `app(MyService::class)` and will return the same instance each time.\n\n### Routing\n\nCraft 6 uses Laravel's routing system, coordinated through `src/Route/RouteServiceProvider.php`.\n\n**Route Registration:**\n- `routes/routes.php` is the main entry point for route loading.\n- `routes/actions.php` contains action-style routes (e.g., `actions/users/login`), registered under the `craft.actions.` name prefix.\n- `routes/cp.php` contains Control Panel routes, registered under the `craft.cp.` name prefix and prefixed with the `cpTrigger` config value.\n- `routes/web.php` contains frontend web routes, registered under the `craft.` name prefix.\n\n**Middleware Groups:**\n- `craft`: Base middleware for all Craft requests (locale, schema checks, etc.)\n- `craft.cp`: Middleware specific to Control Panel requests (requires CP request, license checks)\n- `craft.web`: Middleware for frontend web requests\n\n**Dynamic Routing:**\n- **Action Requests:** `HandleActionRequest` middleware dynamically routes requests that use the `action` parameter or the `actions/` URI prefix.\n- **Token Requests:** `HandleTokenRequest` middleware handles requests with a `token` parameter (e.g., for previews).\n- **Project Config Routes:** Dynamic routes defined by users in the Control Panel are loaded from Project Config and registered during the `booted` lifecycle of the application.\n\n### Events\n\nCraft 6 uses Laravel's event system. Events are simple classes with public properties located in `Events/` subdirectories within each domain (e.g., `src/Element/Events/`).\n\n**Laravel Event Pattern:**\n```php\n// Event class (src/Element/Events/BeforeSave.php)\nfinal class BeforeSave\n{\n    use \\CraftCms\\Cms\\Shared\\Concerns\\ValidatableEvent; // For cancellable events\n    use \\CraftCms\\Cms\\Shared\\Concerns\\HandleableEvent; // For events able to be marked as handled\n    \n    public function __construct(\n        public \\CraftCms\\Cms\\Element\\Element $element,\n        public bool $isNew,\n    ) {}\n}\n\n// Dispatching the event\nevent($event = new BeforeSave($this, $isNew));\nif (!$event->isValid) {\n    return false;\n}\n```\n\n**Yii2 Backwards Compatibility:**\n- Legacy `EVENT_*` constants are maintained in `yii2-adapter/legacy/base/Element.php`\n- The `registerEvents()` method in the yii2-adapter bridges Laravel events to Yii2 handlers\n- When referencing yii2-adapter constants from `src/`, use an alias: `use craft\\base\\Element as YiiElement;`\n\n**Key directories:**\n- `src/Element/Events/` - Element lifecycle and UI events\n- `src/Entry/Events/` - Entry-specific events\n- `src/User/Events/` - User-related events\n- `src/Plugin/Events/` - Plugin lifecycle events\n\n## Code Style\n\n- Uses Laravel Pint with Laravel preset\n- Rector for automated refactoring (PHP 8.4, Laravel-specific rules)\n- `declare(strict_types=1)` required in all PHP files\n- Final classes by default, `readonly` when possible\n- ECS for yii2-adapter code style\n- You don't need to remove unused imports, running Pint will fix that for you"
+    gold_removed: ''
+  - path: CLAUDE.md
+    tier: 1
+    gold_added: AGENTS.md
+    gold_removed: ''

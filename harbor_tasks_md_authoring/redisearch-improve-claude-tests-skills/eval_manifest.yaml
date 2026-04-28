@@ -1,0 +1,56 @@
+version: "2.0"
+
+task:
+  name: redisearch-improve-claude-tests-skills
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: RediSearch/RediSearch
+  pr: 8312
+  base_commit: "311afdbcc25ae3bd29f313b94e0663b00077c0b4"
+  merge_commit: "c11bf7021a4733953f09314adf3fd7cf68ccb860"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .skills/rust-tests-guidelines/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .skills/write-rust-tests/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .skills/write-rust-tests/SKILL.md."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .skills/write-rust-tests/SKILL.md."
+
+config_edits:
+  - path: .skills/rust-tests-guidelines/SKILL.md
+    tier: 1
+    gold_added: 6. Do not reference exact line numbers in comments, as they may change over time.
+    gold_removed: ''
+  - path: .skills/write-rust-tests/SKILL.md
+    tier: 1
+    gold_added: '
+
+      ## Avoiding redundant tests
+
+
+      Before writing each test, explicitly identify which branch or code path it will cover that no existing test already covers. An uncovered line is not sufficient justification — ask *why* it is uncovered and whether it is reachable through an already-tested entry point.
+
+
+      Two tests are redundant if they exercise the same set of branches in the code under test. Differing only in input values that don''t change control flow is not a distinct scenario.
+
+
+      Do not write standalone tests for:
+
+      - **Trivial trait delegations** — `Default`, `From`, or similar trait impls that are single-line delegations to an already-tested constructor, since they will be covered transitively.
+
+
+      After adding tests, double check that every new test covers at least one branch that no other test (existing or new) covers. Remove any that don''t.'
+    gold_removed: ''

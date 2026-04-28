@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: pgdog-update-claudemd-with-new-test
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: pgdogdev/pgdog
+  pr: 452
+  base_commit: "f1d1dd50cfe46b8a85d58048243d4fcb81a78398"
+  merge_commit: "fc4def0dfa980a4127d88e6104a786da52cfa4e7"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+
+config_edits:
+  - path: CLAUDE.md
+    tier: 1
+    gold_added: "- `cargo nextest run --test-threads=1 <test name>` to run a specific test\n- `cargo nextest run --test-threads=1 --no-fail-fast` to run all tests. Make sure to use `--test-threads=1` because some tests conflict with each other.\nBefore committing or finishing a task, use `cargo clippy` to detect more serious lint errors.\n\nVERY IMPORTANT:\n  NEVER add comments that are redundant with the nearby code.\n  ALWAYS be sure comments document \"Why\", not \"What\", the code is doing.\n  ALWAYS challenge the user's assumptions\n  ALWAYS attempt to prove hypotheses wrong - never assume a hypothesis is true unless you have evidence\n  ALWAYS demonstrate that the code you add is STRICTLY necessary, either by unit, integration, or logical processes\n  NEVER take the lazy way out\n  ALWAYS work carefully and methodically through the steps of the process.\n  NEVER use quick fixes. Always carefully work through the problem unless specifically asked.\n  ALWAYS Ask clarifying questions before implementing\n  ALWAYS Break large tasks into single-session chunks\n\nVERY IMPORTANT: you are to act as a detective, attempting to find ways to falsify the code or planning we've done by discovering gaps or inconsistencies. ONLY write code when it is absolutely required to pass tests, the build, or typecheck.\n\nVERY IMPORTANT: NEVER comment out code or skip tests unless specifically requested by the user\n\n## Principles\n- **Data first**: Define types before implementation\n- **Small Modules**: Try to keep files under 200 lines, unless required by implementation. NEVER allow files to exceed 1000 lines unless specifically instructed.\n- Prefer to run individual tests with `cargo nextest run --test-threads=1 --no-fail-fast <name of the test here>`. This is much faster.\n- A local PostgreSQL server is required for some tests to pass. Ensure it is set up, and if necessary create a database called \"pgdog\", and create a user called \"pgdog\" with password \"pgdog\".\n- Focus on files in `./pgdog` and `./integration` - other files are LOWEST priority\n\n## Test-Driven Development (TDD) - STRICT ENFORCEMENT\n- **MANDATORY WORKFLOW - NO EXCEPTIONS:**\n  1. Write exactly ONE test that fails\n  2. Write ONLY the minimal code to make that test pass\n  3. Refactor if needed (tests must still pass)\n  4. Return to step 1 for next test\n- **CRITICAL RULES:**\n  - NO implementation code without a failing test first\n  - NO untested code is allowed to exist\n  - Every line of production code must be justified by a test"
+    gold_removed: ''

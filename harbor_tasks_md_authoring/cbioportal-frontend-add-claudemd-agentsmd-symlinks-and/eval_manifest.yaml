@@ -1,0 +1,48 @@
+version: "2.0"
+
+task:
+  name: cbioportal-frontend-add-claudemd-agentsmd-symlinks-and
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: cBioPortal/cbioportal-frontend
+  pr: 5516
+  base_commit: "ee62354fb3bbd81ff71466091d83539bb4de2d56"
+  merge_commit: "f7cecc5ebadc5cd41cd60f53b64c543177ad9fa4"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/copilot-instructions.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/copilot-instructions.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/copilot-instructions.md."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_04
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+
+config_edits:
+  - path: .github/copilot-instructions.md
+    tier: 1
+    gold_added: "#### Updating stale reference screenshots after an upstream data change\n\nWhen an upstream data source (Genome Nexus, OncoKB, cBioPortal backend) changes and the e2e reference screenshots go stale, CircleCI will fail on screenshot comparison. The fastest way to refresh the references is to **pull the \"actual\" screenshot from the failing CircleCI job's artifacts** — that image already shows the new correct data, rendered in the same dockerized environment the reference must match.\n\n```bash\ncurl -L 'https://output.circle-artifacts.com/output/job/<job-uuid>/artifacts/0/./screenshots/screen/<screenshot-name>.png' \\\n  > 'end-to-end-test/remote/screenshots/reference/<screenshot-name>.png'\ngit add 'end-to-end-test/remote/screenshots/reference/<screenshot-name>.png'\n```\n\nGet the `<job-uuid>` from the failing CircleCI check on the PR (click through to the job → Artifacts tab → copy a screenshot URL and extract the UUID).\n\nDon't regenerate screenshots locally unless CircleCI can't produce them — per the note above, host-rendered images won't match the dockerized reference.\n\nOnly update the screenshots affected by the upstream change. Don't bundle unrelated screenshot updates. One upstream fix, one PR. PR #5514 (CCDS ID fix) is a reference example.\n"
+    gold_removed: ''
+  - path: AGENTS.md
+    tier: 1
+    gold_added: .github/copilot-instructions.md
+    gold_removed: ''
+  - path: CLAUDE.md
+    tier: 1
+    gold_added: .github/copilot-instructions.md
+    gold_removed: ''

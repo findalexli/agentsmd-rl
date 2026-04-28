@@ -1,0 +1,30 @@
+version: "2.0"
+
+task:
+  name: helm-charts-docs-enforce-code-signoff-in
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: jaegertracing/helm-charts
+  pr: 706
+  base_commit: "6acd77210a00d1d7acc297edb8fbb469d8c77c7b"
+  merge_commit: "7137582c80e15531bb253dcdff7c25a18dbfbb2c"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+
+config_edits:
+  - path: AGENTS.md
+    tier: 1
+    gold_added: '
+
+      - All commits must be signed off (DCO). Use `git commit -s`.
+
+
+
+      '
+    gold_removed: ''

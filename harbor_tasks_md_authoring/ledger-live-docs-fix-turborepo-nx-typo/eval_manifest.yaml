@@ -1,0 +1,24 @@
+version: "2.0"
+
+task:
+  name: ledger-live-docs-fix-turborepo-nx-typo
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: LedgerHQ/ledger-live
+  pr: 16685
+  base_commit: "075a8a7e4ce925e09fc8f47edabc71af5d3813fd"
+  merge_commit: "91a143ece6c4ed11e351abd7a31d72b548c0c523"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+
+config_edits:
+  - path: AGENTS.md
+    tier: 1
+    gold_added: '- This pnpm and nx monorepo provides frontend apps'
+    gold_removed: ''

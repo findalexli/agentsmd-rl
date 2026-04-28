@@ -1,0 +1,93 @@
+version: "2.0"
+
+task:
+  name: rsbuild-docs-setup-the-agentsmd-file
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: web-infra-dev/rsbuild
+  pr: 6054
+  base_commit: "81ca761d8521c7b791a0ca00e7c6ab523d1702f1"
+  merge_commit: "15c97c73f94924365707a69ccff3ad752bad18d8"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/copilot-instructions.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/copilot-instructions.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/copilot-instructions.md."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_04
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_05
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+
+config_edits:
+  - path: .github/copilot-instructions.md
+    tier: 1
+    gold_added: '# Rsbuild
+
+      This monorepo contains the Rsbuild build tool, plugins, and related packages. Rsbuild is a high-performance JavaScript build tool powered by Rspack.
+
+      **Setup (NEVER CANCEL):**
+
+      pnpm test                     # Unit tests
+
+      pnpm e2e                      # E2E tests
+
+      pnpm lint                     # Lint code - REQUIRED before finishing
+
+      **E2E tests (NEVER CANCEL):**'
+    gold_removed: ''
+  - path: AGENTS.md
+    tier: 1
+    gold_added: '# AGENTS.md
+
+
+      This monorepo contains the Rsbuild build tool, plugins, and related packages. Rsbuild is a high-performance JavaScript build tool powered by Rspack.
+
+
+      ## Commands
+
+
+      - **Build**: `pnpm build` (all packages) | `npx nx build @rsbuild/core` (specific)
+
+      - **Test**: `pnpm test` (unit tests) | `pnpm test:watch` (watch mode) | `pnpm e2e` (E2E tests)
+
+      - **Single test**: `pnpm test packages/core/src/foo.test.ts` (unit test) | `pnpm e2e:rspack cli/base/index.test.ts` (E2E test)
+
+      - **Lint**: `pnpm lint` (REQUIRED before commits) | `pnpm format` (format code)
+
+
+      ## Code style
+
+
+      - **Formatting**: Single quotes, Prettier
+
+      - **Types**: TypeScript strict mode
+
+      - **Naming**: camelCase files/functions, PascalCase components/classes, kebab-case packages
+
+
+      ## Architecture
+
+
+      - **Structure**: Monorepo with `packages/core/` (main), `packages/plugin-*/` (plugins)
+
+      - **Testing**: `.test.ts` files, use `rstest` runner'
+    gold_removed: ''

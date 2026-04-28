@@ -1,0 +1,40 @@
+version: "2.0"
+
+task:
+  name: airflow-fix-spdx-license-for-skillmd
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: apache/airflow
+  pr: 62185
+  base_commit: "2ada89f8c70115f99b7c8e0dca4ee87e0a6018f0"
+  merge_commit: "73a9bc562393cbdb118566b660a7a24a16ca4b53"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/skills/airflow-translations/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/skills/airflow-translations/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/skills/airflow-translations/locales/zh-CN.md."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/skills/airflow-translations/locales/zh-CN.md."
+
+config_edits:
+  - path: .github/skills/airflow-translations/SKILL.md
+    tier: 1
+    gold_added: "<!-- SPDX-License-Identifier: Apache-2.0\n     https://www.apache.org/licenses/LICENSE-2.0 -->"
+    gold_removed: ''
+  - path: .github/skills/airflow-translations/locales/zh-CN.md
+    tier: 1
+    gold_added: "<!-- SPDX-License-Identifier: Apache-2.0\n     https://www.apache.org/licenses/LICENSE-2.0 -->\n"
+    gold_removed: ''

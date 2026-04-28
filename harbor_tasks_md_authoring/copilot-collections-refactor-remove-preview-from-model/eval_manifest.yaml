@@ -1,0 +1,64 @@
+version: "2.0"
+
+task:
+  name: copilot-collections-refactor-remove-preview-from-model
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: TheSoftwareHouse/copilot-collections
+  pr: 1
+  base_commit: "1c74cb4fa7126cbe974f1674cfae42f67666aa72"
+  merge_commit: "9f4a66d06158a8ace7e09983478ae4499e8e08ca"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/prompts/implement-ui.prompt.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/prompts/implement.prompt.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/prompts/plan.prompt.md."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/prompts/research.prompt.md."
+  - id: signal_04
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/prompts/review-ui.prompt.md."
+  - id: signal_05
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/prompts/review.prompt.md."
+
+config_edits:
+  - path: .github/prompts/implement-ui.prompt.md
+    tier: 1
+    gold_added: 'model: "Claude Opus 4.5"'
+    gold_removed: ''
+  - path: .github/prompts/implement.prompt.md
+    tier: 1
+    gold_added: 'model: "Claude Opus 4.5"'
+    gold_removed: ''
+  - path: .github/prompts/plan.prompt.md
+    tier: 1
+    gold_added: 'model: "Claude Opus 4.5"'
+    gold_removed: ''
+  - path: .github/prompts/research.prompt.md
+    tier: 1
+    gold_added: 'model: "Claude Opus 4.5"'
+    gold_removed: ''
+  - path: .github/prompts/review-ui.prompt.md
+    tier: 1
+    gold_added: 'model: "Claude Opus 4.5"'
+    gold_removed: ''
+  - path: .github/prompts/review.prompt.md
+    tier: 1
+    gold_added: 'model: "Claude Opus 4.5"'
+    gold_removed: ''

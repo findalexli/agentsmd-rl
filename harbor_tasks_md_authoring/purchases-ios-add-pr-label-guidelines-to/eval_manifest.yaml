@@ -1,0 +1,57 @@
+version: "2.0"
+
+task:
+  name: purchases-ios-add-pr-label-guidelines-to
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: RevenueCat/purchases-ios
+  pr: 6295
+  base_commit: "4ced28c15e440a1f7ea51ec0988f3e4fcc93ef1a"
+  merge_commit: "3fc4258ab4816e54a3e2f5735710475fcf74aab1"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+
+config_edits:
+  - path: AGENTS.md
+    tier: 1
+    gold_added: '### Pull Request Labels
+
+
+      When creating a pull request, **always add one of these labels** to categorize the change. These labels determine automatic version bumps and changelog generation:
+
+
+      | Label | When to Use |
+
+      |-------|-------------|
+
+      | `pr:feat` | New user-facing features or enhancements |
+
+      | `pr:fix` | Bug fixes |
+
+      | `pr:other` | Internal changes, refactors, CI, docs, or anything that shouldn''t trigger a release |
+
+
+      **Additional scope labels** (add alongside the primary label above):
+
+      - `pr:RevenueCatUI` — Changes specific to the RevenueCatUI module (paywalls, customer center)
+
+      - `feat:Paywalls_V2` — Changes related to Paywalls V2 (requires `pr:RevenueCatUI` as well)
+
+      - `feat:Customer Center` — Changes related to Customer Center (requires `pr:RevenueCatUI` as well)
+
+      '
+    gold_removed: ''

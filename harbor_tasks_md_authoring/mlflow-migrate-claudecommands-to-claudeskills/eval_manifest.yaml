@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: mlflow-migrate-claudecommands-to-claudeskills
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: mlflow/mlflow
+  pr: 22539
+  base_commit: "0d600784cd11a9a71437711b6369daf43c4d6266"
+  merge_commit: "537aca4307eb203c178b819fa2f9a30ee20b517d"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/pr-review/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/resolve/SKILL.md."
+
+config_edits:
+  - path: .claude/skills/pr-review/SKILL.md
+    tier: 1
+    gold_added: 'disable-model-invocation: true'
+    gold_removed: ''
+  - path: .claude/skills/resolve/SKILL.md
+    tier: 1
+    gold_added: 'disable-model-invocation: true'
+    gold_removed: ''

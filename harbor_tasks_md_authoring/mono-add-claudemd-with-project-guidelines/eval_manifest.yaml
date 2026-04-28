@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: mono-add-claudemd-with-project-guidelines
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: rocicorp/mono
+  pr: 4868
+  base_commit: "edff053cfaa9d333a0a24ad4e6b7661b9360dc1f"
+  merge_commit: "7c4cd45c83e400eaf013b8ff37ec7129ab682a2f"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+
+config_edits:
+  - path: CLAUDE.md
+    tier: 1
+    gold_added: "# Project Guidelines for Claude\n\n## Code Quality\n1. **Always run lint and format after every change** - This ensures code consistency and catches potential issues early.\n2. **TypeScript checking must pass before every commit** - Most packages have a `type-check` command that must pass before committing changes.\n\n## TypeScript Conventions\n2. **Optional fields convention**: In this codebase, whenever there's an optional field (marked with `?`), the type is always explicitly defined as `type | undefined`. \n   - Example: `foo?: number | undefined` (not just `foo?: number`)\n   - You can always explicitly pass `undefined` for optional fields in this codebase"
+    gold_removed: ''

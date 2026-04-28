@@ -1,0 +1,24 @@
+version: "2.0"
+
+task:
+  name: recce-add-claudemd-to-import-individual
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: DataRecce/recce
+  pr: 895
+  base_commit: "fc29131bed00a365b1eb481373d854f011133c95"
+  merge_commit: "237b6e516b13f5a20c529bdcd18be0314ba224ba"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+
+config_edits:
+  - path: CLAUDE.md
+    tier: 1
+    gold_added: '- @~/.claude/recce.md'
+    gold_removed: ''

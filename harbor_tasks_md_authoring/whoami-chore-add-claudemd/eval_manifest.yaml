@@ -1,0 +1,111 @@
+version: "2.0"
+
+task:
+  name: whoami-chore-add-claudemd
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: whoami-wiki/whoami
+  pr: 41
+  base_commit: "7b9f9f8cfea4698587c193b22a888c351b8a80b6"
+  merge_commit: "01e98cff7095876c80e67dd3edbb94f9e3b98c6a"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+
+config_edits:
+  - path: CLAUDE.md
+    tier: 1
+    gold_added: '# CLAUDE.md
+
+
+      ## Commit Message Guidelines
+
+
+      This project uses [Conventional Commits](https://www.conventionalcommits.org/).
+
+
+      ### Format
+
+
+      ```
+
+      type: short description (#PR)
+
+      ```
+
+
+      ### Types
+
+
+      - `feat` — new feature or enhancement to existing functionality
+
+      - `fix` — bug fix
+
+      - `chore` — maintenance, refactoring, CI/build changes
+
+      - `release` — version release (automated)
+
+
+      ### Rules
+
+
+      1. **Lowercase** the entire subject line after the type prefix
+
+      2. **No scope** — use plain `feat:` not `feat(web):`
+
+      3. **Imperative mood** — write "add search page" not "added search page" or "adds search page"
+
+      4. **Keep it short** — aim for under 72 characters in the subject line
+
+      5. **PR number** — squash-merged PRs include `(#N)` at the end
+
+      6. **No trailing period** in the subject line
+
+
+      ### Release commits
+
+
+      Release commits follow a special format with the product name and semver version:
+
+
+      ```
+
+      release: cli-v1.1.0
+
+      release: desktop-v1.0.5
+
+      ```
+
+
+      ### Examples
+
+
+      ```
+
+      feat: add mobile navigation drawer for docs sidebar (#38)
+
+      fix: cli install and auto-update (#26)
+
+      chore: improve desktop release flow (#14)
+
+      feat: support inline audio/video players (#29)
+
+      fix: harden write command and improve cli error reporting (#30)
+
+      release: cli-v1.0.6
+
+      ```'
+    gold_removed: ''

@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: lodestar-docs-fix-prettier-formatting-in
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: ChainSafe/lodestar
+  pr: 8930
+  base_commit: "628870a0205b9c6bbd6fb62aafc02f66b86b5ca0"
+  merge_commit: "97dbe36100c4ec2fb98135bc02378e04bd37d6c5"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+
+config_edits:
+  - path: AGENTS.md
+    tier: 1
+    gold_added: "config.SLOTS_PER_EPOCH; // from params\nconfig.getForkName(slot); // computed fork for a slot\nconfig.getForkTypes(fork); // SSZ types for a fork\nconst MyContainer = new ContainerType(\n  {\n    field1: UintNum64,\n    field2: Root,\n  },\n  {typeName: \"MyContainer\"}\n);\n- **Forgetting `pnpm docs:lint` after editing docs**: Markdown files are\n  formatted by Prettier. Run `pnpm docs:lint` (or `pnpm docs:lint:fix` to\n  auto-fix) before pushing changes to `.md` files."
+    gold_removed: ''

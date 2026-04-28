@@ -1,0 +1,24 @@
+version: "2.0"
+
+task:
+  name: codex-agentsmd-add-instruction-to-install
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: openai/codex
+  pr: 3807
+  base_commit: "5332f6e2156e83a2dcd654a98a72696aa455f750"
+  merge_commit: "208089e58e9e5c49a3669dc995d8854560480a66"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+
+config_edits:
+  - path: AGENTS.md
+    tier: 1
+    gold_added: '- Install any commands the repo relies on (for example `just`, `rg`, or `cargo-insta`) if they aren''t already available before running instructions here.'
+    gold_removed: ''

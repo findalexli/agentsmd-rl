@@ -1,0 +1,76 @@
+version: "2.0"
+
+task:
+  name: goose-skills-add-createstyle-mode-for-custom
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: gooseworks-ai/goose-skills
+  pr: 20
+  base_commit: "7778da73aaa81847ba7bf26d61e549b3d8ac4a5b"
+  merge_commit: "81799a17742d82e2aee5a75e5755a9ec90d2d259"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/composites/goose-graphics/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/composites/goose-graphics/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/composites/goose-graphics/SKILL.md."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/composites/goose-graphics/styles/extract-style.md."
+  - id: signal_04
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/composites/goose-graphics/styles/extract-style.md."
+  - id: signal_05
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/composites/goose-graphics/styles/extract-style.md."
+
+config_edits:
+  - path: skills/composites/goose-graphics/SKILL.md
+    tier: 1
+    gold_added: 'This skill supports **four invocation modes** — all-args, partial-args, interactive, and create-style. Pick the fastest path for the ask.
+
+      /goose-graphics --create-style --ref <image-path> [--style-name <slug>]
+
+      - `--create-style` — create a custom style from a reference image **only** (no format selection, no HTML generation). Requires `--ref`. Optionally accepts `--style-name <slug>` to skip the naming prompt. The extracted style is saved to `styles/<name>.md` alongside the presets.
+
+      - `--style-name <slug>` — used with `--create-style` to pre-set the custom style name (lowercase-kebab-case). Skips the naming prompt in the extract-style workflow.
+
+      **Four branches:**
+
+      4. **`--create-style` present** → read `styles/extract-style.md` and follow its workflow. Skip §6 (Discover Intent), §7 (Select Style preset list), §8-§12. The extract-style workflow handles everything including save. Stop after the style is saved — do not proceed to format selection or HTML generation.
+
+
+      # Create a custom style from a reference image (no HTML generation)
+
+      /goose-graphics --create-style --ref ~/Desktop/mood.png
+
+
+      # Create with a pre-chosen name
+
+      /goose-graphics --create-style --ref ~/Desktop/mood.png --style-name sunset-editorial
+
+      The user may also say: **"I have a reference image"** — in that case, read `styles/extract-style.md` and follow its workflow to derive a custom style in slim format from the provided image. The extracted style is saved to `styles/<name>.md` alongside the presets and is immediately usable. After the style is saved, continue the workflow from Step 3 onward using the newly created style.
+
+      - **Create custom style** — `/goose-graphics --create-style --ref <image>` runs only the style extraction workflow from `styles/extract-style.md`. Analyzes the reference image, maps fonts to Google Fonts equivalents, generates a slim-format style file, and saves it to `styles/<name>.md`. No format selection or HTML generation. The saved style is immediately available for future `/goose-graphics --style <name>` calls.
+
+      Custom styles created via `--create-style` or the "I have a reference image" interactive option are saved to `styles/<name>.md` in the same slim format as presets. They are not added to `index.json` (which tracks only the 36 shipped presets) but are fully usable via `--style <name>`.
+
+      '
+    gold_removed: ''
+  - path: skills/composites/goose-graphics/styles/extract-style.md
+    tier: 1
+    gold_added: "# Skill: Create Custom Style from Reference Image\nExtract the visual design language from a reference image and produce a reusable slim-format style preset file — the same format used by all 36 built-in presets (e.g., `brutalist.md`, `matt-gray.md`).\nThe user provides a reference image — a screenshot, design mockup, mood board, website capture, or any visual reference — and wants to capture its design language as a reusable style preset. The output is a slim-format `.md` style file (4-8KB) that is immediately usable via `--style <name>` in the goose-graphics workflow.\n## Phase 3: Generate the Slim Style File\nGenerate a style file in the **slim preset format** — the same structure used by all 36 built-in presets. Do NOT generate the verbose 9-section DESIGN.md format. If you need a structural reference, read `styles/brutalist.md` or `styles/matt-gray.md`.\nThe output should be **4-8KB** and contain these sections in order:\n### Section 1: Header\n```markdown\n# Style Name\n2-4 sentence prose description of the style's visual identity. Describe the mood, the palette logic,\nthe typography pairing, and what makes this style distinctive. Reference real-world analogies\n(e.g., \"the feel of a Scandinavian furniture catalog,\" \"fintech dashboard energy\").\n> Custom style — extracted from reference image\n```\n\n### Section 2: Palette\n\nA flat table with 6-12 rows. Every color gets a hex code and a role description. Include: background, primary text, accent, secondary accent (if present), card/surface colors, border colors, and any secondary text tones.\n```markdown\n## Palette\n\n| Hex | Role |\n|-----|------|\n| `#xxxxxx` | Background (primary canvas) |\n| `#xxxxxx` | Primary text |\n| `#xxxxxx` | Accent — emphasis, CTAs, highlights |\n| ... | ... |\n```\n- Don't use pure black (`#000000`) or pure white (`#ffffff`) unless the reference clearly does.\n- Text-on-background contrast must meet WCAG AA (4.5:1 minimum). Mentally verify.\n- Keep total palette to 6-12 named colors.\n\n### Section 3: Typography\n\nInclude the Google Fonts `<link>` tag (if using webfonts), Display and Body font-family declarations with fallback stacks, a hierarchy table with 8-9 rows, and 3-5 Principles bullets.\n\n```markdown\n## Typography\n\n**Google Fonts**\n\\`\\`\\`html\n<link href=\"https://fonts.googleapis.com/css2?family=...\" rel=\"stylesheet\">\n\\`\\`\\`\n- **Display:** `'Font Name', fallback, sans-serif`\n- **Body:** `'Font Name', fallback, sans-serif`\n| Role | Font | Size | Weight | Line-height | Tracking | Transform |\n|------|------|------|--------|-------------|----------|-----------|\n| Display Hero | ... | 72px | 700 | 1.10 | -1px | none |\n| Section Heading | ... | 48px | 700 | 1.15 | -0.5px | none |\n| Sub-heading | ... | 32px | 600 | 1.20 | 0 | none |\n| Body Large | ... | 22px | 500 | 1.55 | 0 | none |\n| Body | ... | 18px | 400 | 1.55 | 0 | none |\n| Caption | ... | 12-14px | 400 | 1.40 | ... | ... |\n| Big Number | ... | 64-100px | 800 | 1.00 | ... | none |\n| Label | ... | 14px | 500-600 | 1.00 | ... | ... |\n| CTA | ... | 16-18px | 700 | 1.00 | ... | ... |\n**Principles**\n- 3-5 bullets explaining the typographic logic (why these pairings, tracking behavior, uppercase rules, etc.)\n```\n\n### Section 4: Layout\n\nBullet list covering format padding, border rules, radius, alignment, spacing, and any special layout elements (grids, textures, decorative patterns).\n```markdown\n## Layout\n\n- Format padding: carousel Xpx · infographic X/X · slides Xpx · poster X/X.\n- Border rules (thickness, color, style).\n- Border-radius rules.\n- Alignment rules (left, center, mixed).\n- Card/container rules (bg, border, padding, radius).\n- Any special elements (dot grids, background patterns, decorative shapes).\n- Vertical rhythm and spacing between sections.\n```\n### Section 5: Do / Don't\n5-6 Do rules and 5-6 Don't rules. Each must be specific and actionable with exact values (hex codes, px sizes, font names, weights). These encode the guardrails that prevent drifting off-style.\n```markdown\n## Do / Don't\n**Do**\n\n- [Specific rule with exact values]\n- ...\n\n**Don't**\n\n- [Specific rule with exact values]\n- ...\n```\n### Section 6: CSS Snippets\nA `:root` variables block defining all CSS custom properties, followed by 4-5 self-contained component patterns as inline-styled HTML blocks. Each component must use the style's colors, fonts, and spacing directly (inline styles, not CSS variables in the HTML — the `:root` block is for reference).\nRequired components:\n1. **Title block** — hero/header with headline, optional subtitle, optional label\n2. **Numbered item or step** — stat, step number, or numbered list element\n3. **Card** — bordered or surfaced container with content\n4. **CTA block** — call-to-action button\n5. **One style-specific component** — whatever is most distinctive about this style (quote block, stat display, tag system, grid pattern, etc.)\n```markdown\n## CSS snippets\n### `:root` variables\n\n\\`\\`\\`css\n:root {\n  --color-bg: #...;\n  --color-text: #...;\n  --color-accent: #...;\n  /* all palette colors */\n\n  --font-display: '...', fallback;\n  --font-body: '...', fallback;\n\n  /* borders, radius, shadows, spacing as needed */\n}\n\\`\\`\\`\n\n### Title block (brief description)\n\n\\`\\`\\`html\n<div style=\"...\">...</div>\n\\`\\`\\`\n\n### Numbered item (brief description)\n\n\\`\\`\\`html\n<div style=\"...\">...</div>\n\\`\\`\\`\n\n[...3 more components...]\n```\n\n**Important:** Study the component snippets in `brutalist.md` and `matt-gray.md` for the right level of detail. Each snippet should be a complete, copy-pasteable HTML block with all styles inline.\n### Step 1 — Ask for a name\n\nAsk the user what they want to name this style. Suggest 2-3 descriptive names based on the mood and palette (e.g., \"arctic-minimal\", \"warm-startup\", \"dark-technical\", \"sunset-editorial\"). The name must be lowercase-kebab-case.\n**Name collision guard:** Before saving, check whether `styles/<name>.md` already exists in the styles directory. If it does and is a shipped preset (listed in `styles/index.json`), warn the user and suggest an alternative name. Do not overwrite shipped presets.\n### Step 2 — Determine save location\nSave the style file alongside the existing presets in the goose-graphics styles directory. Resolve the path relative to this skill file:\n[skill-pack-dir]/styles/<name>.md\nWhere `[skill-pack-dir]` is the directory containing `SKILL.md` — the root of the goose-graphics skill pack. This is the same directory that contains `styles/brutalist.md`, `styles/matt-gray.md`, etc.\n\n**Host-specific paths (for reference):**\n\n| Host | Typical styles directory |\n|------|------------------------|\n| Claude Code / Desktop / Cowork | `~/.claude/skills/goose-graphics/styles/` |\n| Codex (OpenAI) | `~/.codex/skills/goose-graphics/styles/` |\n| Cursor | Styles embedded in `.cursor/rules/` (not applicable — Cursor uses a single `.mdc` file) |\n| Local dev / project install | `./skills/goose-graphics/styles/` or wherever the pack was cloned |\nIn most cases, the skill is already running from the installed location, so saving to the `styles/` directory relative to this file is correct.\n### Step 3 — Save the file\n\nWrite the complete style file using the Write tool.\n\n### Step 4 — Confirm\n- A 3-4 line summary of the extracted style: theme (dark/light), primary palette (background + text + accent hex codes), font pairing, and overall mood\n- How to use it immediately:\n  ```\n  /goose-graphics --style <name> --format <format> --brief \"...\"\n  ```\nEvery section of the output style file must be filled with substantive, specific content. Do not leave any section with placeholder text like \"TBD\" or \"adjust as needed.\" The file should be immediately usable via `--style <name>` without further editing.\n\n### On Format\n\nThe output MUST be in the slim preset format (Palette → Typography → Layout → Do/Don't → CSS snippets). Do NOT generate the verbose 9-section DESIGN.md format with sections like \"Visual Theme & Atmosphere,\" \"Depth & Elevation,\" or \"Format Adaptation Notes.\" Those belong to the `_full/` archive versions. The slim format is what the generation pipeline reads."
+    gold_removed: ''

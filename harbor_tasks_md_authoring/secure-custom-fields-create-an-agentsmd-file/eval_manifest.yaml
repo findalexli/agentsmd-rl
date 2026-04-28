@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: secure-custom-fields-create-an-agentsmd-file
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: WordPress/secure-custom-fields
+  pr: 213
+  base_commit: "6cf486170efe255189ce74e24be6461ff9b97665"
+  merge_commit: "22df7c6d3b907703658526d1c11bee9d53fd08e5"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+
+config_edits:
+  - path: AGENTS.md
+    tier: 1
+    gold_added: "# AGENTS.md\n\n## Dev environment tips\n\n```bash\n# Setup\nnpm install && composer install\nnpm run wp-env status   # Always check status first\nnpm run wp-env start    # Only start if not already running\n\n# Development\nnpm run watch           # Development with watch\nnpm run build          # Production build\n```\n\n### Key Directories\n\n-   `/includes/` - Core PHP functionality\n-   `/assets/src/` - Frontend source files\n-   `/assets/build/` - Compiled assets\n-   `/tests/` - E2E and PHPUnit tests\n-   `/docs/` - Documentation\n\n## Testing instructions\n\n> **Note**: PHP/E2E tests require wp-env running.\n\n```bash\n# PHP (requires wp-env)\ncomposer test             # All PHP tests (PHPUnit + PHPStan)\ncomposer test:php         # PHPUnit tests only\ncomposer test:php -- --filter=<TestName>  # Specific test\nvendor/bin/phpunit <path_to_test_file.php>  # Specific file\nvendor/bin/phpunit <path_to_test_directory>/              # Directory\ncomposer test:phpstan     # Static analysis only\n\n# E2E (requires wp-env)\nnpm run test:e2e\nnpm run test:e2e:debug    # Debug mode\nnpm run test:e2e -- --headed                   # Run with browser visible\nnpm run test:e2e -- <path_to_test_file.spec.js>  # Specific test file\n\n# Code Quality\nnpx wp-scripts lint-js   # Check JavaScript linting\nnpx wp-scripts format    # Fix JavaScript formatting\ncomposer lint:php        # Check PHP standards\nvendor/bin/phpcs         # Check PHP standards\nvendor/bin/phpcbf        # Fix PHP standards\n\n# Specific files\nvendor/bin/phpcbf <path_to_php_file.php>\n```\n\n## Code patterns\n\n- **Naming**: New functions use `scf_` prefix and hooks use `scf/hook_name`, existing use `acf_` and `acf/hook_name` (backward compat)  \n- **Internationalization**: Use `__()`, `_e()` with text domain `'secure-custom-fields'`\n- **Output escaping**: Always escape with `esc_html()`, `esc_attr()`, `esc_url()`\n- **Input sanitization**: Use `sanitize_text_field()`, `sanitize_file_name()`\n\n## PR instructions\n\n-   Ensure build passes\n-   Fix all formatting/linting issues; these are enforced through CI in PRs"
+    gold_removed: ''

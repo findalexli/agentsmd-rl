@@ -1,0 +1,24 @@
+version: "2.0"
+
+task:
+  name: prefect-update-agentsmd-files-for-a4b4de3
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: PrefectHQ/prefect
+  pr: 21570
+  base_commit: "a4b4de37bd0a0a8aba4304b320122cc92a957511"
+  merge_commit: "731d0839332adce95b3fdb1c11c39080f56634bb"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in src/prefect/utilities/AGENTS.md."
+
+config_edits:
+  - path: src/prefect/utilities/AGENTS.md
+    tier: 1
+    gold_added: '- **`resolve_block_document_references` raises `ValueError` for malformed block placeholders.** Placeholders must follow the format `prefect.blocks.<block-type-slug>.<block-document-name>` (at least two dot-separated parts after the prefix). A placeholder like `{{ prefect.blocks.only-type }}` (missing the document name) raises `ValueError` before any network call is made.'
+    gold_removed: ''

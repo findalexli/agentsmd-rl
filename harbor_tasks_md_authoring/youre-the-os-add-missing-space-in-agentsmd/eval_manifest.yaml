@@ -1,0 +1,24 @@
+version: "2.0"
+
+task:
+  name: youre-the-os-add-missing-space-in-agentsmd
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: plbrault/youre-the-os
+  pr: 207
+  base_commit: "118b5dd22cc49a45d1aa1995e227a5a8855e5461"
+  merge_commit: "f55474ff5473a1e57f85cfd6c102abd26d33b281"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in agents.md."
+
+config_edits:
+  - path: agents.md
+    tier: 1
+    gold_added: '* Do not make breaking changes to the [automation API](automation/api.py) unless explicitly instructed to.'
+    gold_removed: ''

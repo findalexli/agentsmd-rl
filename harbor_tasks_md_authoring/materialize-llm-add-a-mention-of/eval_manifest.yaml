@@ -1,0 +1,79 @@
+version: "2.0"
+
+task:
+  name: materialize-llm-add-a-mention-of
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: MaterializeInc/materialize
+  pr: 36268
+  base_commit: "2eed64f5051566d1814bcd2d9299560c84255920"
+  merge_commit: "ad7fac8f3e20fe769fce8525715031a12d2f54db"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .agents/skills/mz-test/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .agents/skills/mz-test/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .agents/skills/mz-test/SKILL.md."
+
+config_edits:
+  - path: .agents/skills/mz-test/SKILL.md
+    tier: 1
+    gold_added: 'Some compositions (e.g. platform-checks, upgrade, pg-cdc multi-version) run the
+
+      same `.td` file against multiple Materialize versions. When a change alters
+
+      version-sensitive output (e.g. the result of a `SHOW`, a system-catalog query,
+
+      or the exact text of an error message), gate the affected lines with version
+
+      guards so each version asserts on the output it actually produces:
+
+
+      ```
+
+      >[version<2602300] SHOW some_setting
+
+      old_default
+
+
+      >[version>=2602300] SHOW some_setting
+
+      new_default
+
+
+      ![version<2602300] SELECT * FROM t1_update;
+
+      contains:Invalid data in source, saw retractions
+
+
+      ![version>=2602300] SELECT * FROM t1_update;
+
+      contains:negative record multiplicity
+
+      ```
+
+
+      The `[version...]` guard goes immediately after the directive sigil (`>` for a
+
+      query expecting success, `!` for one expecting an error, etc.) and before the
+
+      SQL. The version is encoded as `MMmmmpp` (e.g. `26.23.0` → `2602300`); see
+
+      `src/build-info/src/lib.rs::version_num`. Existing examples:
+
+      `test/pg-cdc-old-syntax/privileges.td`,
+
+      `test/pg-cdc/publication-with-publish-option.td`.
+
+      '
+    gold_removed: ''

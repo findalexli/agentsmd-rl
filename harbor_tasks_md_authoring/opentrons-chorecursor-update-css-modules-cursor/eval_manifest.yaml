@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: opentrons-chorecursor-update-css-modules-cursor
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: Opentrons/opentrons
+  pr: 19640
+  base_commit: "bea69b71dd37e6a0bf6a749d4b92fdd4194e985c"
+  merge_commit: "c239d25a84b99d5f9a8d6640369d51e3b4204d0c"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .cursor/rules/css-modules.mdc."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .cursor/rules/css-modules.mdc."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .cursor/rules/css-modules.mdc."
+
+config_edits:
+  - path: .cursor/rules/css-modules.mdc
+    tier: 1
+    gold_added: "description: Ensures CSS Modules file follows stylelint and Opentrons CSS conventions\n## CSS Modules Implementation Guidelines for Opentrons\n\n### File Naming Convention\n\n- CSS file name should be component name (all lowercase) followed by `.module.css`\n- Example: `navbar.module.css`, `button.module.css`, `modal.module.css`\n\n### CSS Variables Usage\n\n- **MUST USE** CSS variables from `components/src/styles/global.css` for:\n\n  - `color` and `background-color` (e.g., `var(--white)`, `var(--black-90)`, `var(--blue-50)`)\n  - `padding` and `margin` (e.g., `var(--spacing-8)`, `var(--spacing-24)`)\n  - `gap` (e.g., `var(--spacing-12)`, `var(--spacing-16)`)\n  - `border-radius` (e.g., `var(--border-radius-4)`, `var(--border-radius-8)`)\n  - `font-size` (e.g., `var(--font-size-h3)`, `var(--font-size-p)`)\n  - `line-height` (e.g., `var(--line-height-20)`, `var(--line-height-24)`)\n  - `font-weight` (e.g., `var(--font-weight-regular)`, `var(--font-weight-bold)`)\n\n- **DO NOT USE** CSS variables for:\n  - `width` and `height` - use explicit values (e.g., `2rem`, `100vh`, `5.625rem`)\n\n### CSS Class Naming\n\n- Use snake_case for class names (e.g., `.navbar_link`, `.nav_container`, `.bottom_container`)\n- Use descriptive names that reflect the component's purpose\n\n### Global Selectors\n\n- When targeting React Router or other global classes, use `:global()` syntax\n- Example: `.navbar_link:global(.active)` for React Router's active class\n\n### Linting\n\n- Always check CSS Modules files follow stylelint by running `make lint-css`\n- Ensure all styles pass linting before committing"
+    gold_removed: ''

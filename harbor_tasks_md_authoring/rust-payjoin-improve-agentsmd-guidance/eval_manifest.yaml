@@ -1,0 +1,45 @@
+version: "2.0"
+
+task:
+  name: rust-payjoin-improve-agentsmd-guidance
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: payjoin/rust-payjoin
+  pr: 1344
+  base_commit: "203c4a86d1d65a0fe9df22181a16f305b429c340"
+  merge_commit: "945d6d8be380dd3750513fbad4ce945df25bac3c"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+
+config_edits:
+  - path: AGENTS.md
+    tier: 1
+    gold_added: '## Tooling
+
+
+      Tools are provided by nix via direnv. Do not install tools globally.
+
+      If you need a new tool, add it to the devshell in `flake.nix` so
+
+      others can reproduce.
+
+
+      Add to PR body: `Disclosure: co-authored by <agent-name>`
+
+
+      Do **not** add `Co-Authored-By` in commits.'
+    gold_removed: ''

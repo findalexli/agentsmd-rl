@@ -1,0 +1,301 @@
+version: "2.0"
+
+task:
+  name: aztec-packages-feat-review-and-optimize-claude
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: AztecProtocol/aztec-packages
+  pr: 20270
+  base_commit: "5ef38903c904f3650dea5577d9e0b87328f5297f"
+  merge_commit: "ea235ea7c26351cfe5a062c40658e6392b81f283"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/agents/identify-ci-failures.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/agents/identify-ci-failures.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/ci-logs/SKILL.md."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/ci-logs/SKILL.md."
+  - id: signal_04
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/ci-logs/SKILL.md."
+  - id: signal_05
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/noir-sync-update/SKILL.md."
+  - id: signal_06
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/noir-sync-update/SKILL.md."
+  - id: signal_07
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/noir-sync-update/SKILL.md."
+  - id: signal_08
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/updating-changelog/SKILL.md."
+  - id: signal_09
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/updating-changelog/SKILL.md."
+  - id: signal_10
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/updating-changelog/SKILL.md."
+  - id: signal_11
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in yarn-project/.claude/skills/debug-e2e/SKILL.md."
+  - id: signal_12
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in yarn-project/.claude/skills/debug-e2e/SKILL.md."
+  - id: signal_13
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in yarn-project/.claude/skills/debug-e2e/SKILL.md."
+  - id: signal_14
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in yarn-project/.claude/skills/fix-pr/SKILL.md."
+  - id: signal_15
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in yarn-project/.claude/skills/fix-pr/SKILL.md."
+  - id: signal_16
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in yarn-project/.claude/skills/fix-pr/SKILL.md."
+  - id: signal_17
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in yarn-project/.claude/skills/rebase-pr/SKILL.md."
+  - id: signal_18
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in yarn-project/.claude/skills/rebase-pr/SKILL.md."
+  - id: signal_19
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in yarn-project/.claude/skills/rebase-pr/SKILL.md."
+  - id: signal_20
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in yarn-project/.claude/skills/worktree-spawn/SKILL.md."
+  - id: signal_21
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in yarn-project/CLAUDE.md."
+  - id: signal_22
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in yarn-project/CLAUDE.md."
+
+config_edits:
+  - path: .claude/agents/analyze-logs.md
+    tier: 1
+    gold_added: ''
+    gold_removed: ''
+  - path: .claude/agents/identify-ci-failures.md
+    tier: 1
+    gold_added: 'Do NOT:
+
+      - Return raw multi-thousand-line log dumps
+
+      - Attempt to fix any failures (just identify them)
+
+      '
+    gold_removed: ''
+  - path: .claude/skills/ci-logs/SKILL.md
+    tier: 1
+    gold_added: 'argument-hint: <url-or-hash>
+
+      When you need to analyze logs from ci.aztec-labs.com, delegate to the `analyze-logs` subagent.
+
+      2. **Spawn the `analyze-logs` subagent** using the Task tool with the hash and focus area (e.g. "errors", "test \<name>", or a custom question) in the prompt.
+
+      **You do:** Use the Task tool with `subagent_type: "analyze-logs"` and prompt including the hash `343c52b17688d2cd`, focus on errors, and instruction to download with `yarn ci dlog`.
+
+
+      **For specific test analysis:** Same approach, but set the focus to the test name.'
+    gold_removed: ''
+  - path: .claude/skills/noir-sync-update/SKILL.md
+    tier: 1
+    gold_added: '## Steps
+
+      After each step, verify with `git status` and commit the results before proceeding.
+
+      ### 1. Ensure submodule is pulled
+
+      Run `./bootstrap.sh` in `noir` to ensure that the new submodule commit has been pulled. This shouldn''t produce changes that need committing.
+
+      ### 2. Update `Cargo.lock` in `avm-transpiler`
+
+      ### 3. Update `yarn.lock` in `yarn-project`
+
+      ### 4. Format `noir-projects`'
+    gold_removed: ''
+  - path: .claude/skills/updating-changelog/SKILL.md
+    tier: 1
+    gold_added: '## Steps
+
+      ### 1. Determine Target Files
+
+      ### 2. Analyze Branch Changes
+
+      ### 3. Generate Draft Entries
+
+      ### 4. Edit Documentation
+
+      ````markdown
+
+      ```
+
+      ````markdown
+
+      ```
+
+      ````'
+    gold_removed: ''
+  - path: yarn-project/.claude/skills/debug-e2e/SKILL.md
+    tier: 1
+    gold_added: 'argument-hint: <hash, PR, URL, or test name>
+
+      yarn workspace @aztec/end-to-end test:e2e <file>.test.ts -t ''<test name>''
+
+      LOG_LEVEL=verbose yarn workspace @aztec/end-to-end test:e2e <file>.test.ts -t ''<test name>''
+
+      LOG_LEVEL=debug yarn workspace @aztec/end-to-end test:e2e <file>.test.ts -t ''<test name>''
+
+      LOG_LEVEL=''info; debug:sequencer,p2p'' yarn workspace @aztec/end-to-end test:e2e <file>.test.ts -t ''<test name>'''
+    gold_removed: ''
+  - path: yarn-project/.claude/skills/fix-pr/SKILL.md
+    tier: 1
+    gold_added: '### Phase 0: Validate PR
+
+
+      Before doing anything, verify the PR is valid:
+
+
+      ```bash
+
+      gh pr view <PR> --repo AztecProtocol/aztec-packages --json state,baseRefName,headRefName
+
+      ```
+
+
+      **Abort if:**
+
+      - `state` is not `OPEN` → "PR #\<N> is \<state>, nothing to fix."
+
+
+      2. `git add <resolved-files>`
+
+      | **FORMAT** | `yarn format` |
+
+      ### Phase 5: Quality Checklist
+
+      Before committing, run from `yarn-project`:
+
+      yarn format
+
+      yarn lint
+
+      Run tests for modified files:
+
+      ### Phase 6: Commit and Push
+
+      If the PR targets `next`, amend to keep it as a single commit:
+
+      git add .
+
+      git commit --amend --no-edit
+
+      git push --force-with-lease
+
+      Otherwise, create a normal commit:
+
+      git commit -m "fix: <description of fix>"
+
+      git push
+
+      - **Validate first**: Only fix PRs that are open
+
+      - **Amend only for PRs targeting `next`**: Other PRs use normal commits'
+    gold_removed: ''
+  - path: yarn-project/.claude/skills/rebase-pr/SKILL.md
+    tier: 1
+    gold_added: '### Step 1: Validate PR
+
+      gh pr view <PR> --repo AztecProtocol/aztec-packages --json state,headRefName,baseRefName
+
+      **Abort if:**
+
+      - `state` is not `OPEN` → "PR #\<N> is \<state>, nothing to rebase."
+
+      Note the `baseRefName` (usually `next` or `merge-train/*`).
+
+      ### Step 2: Checkout and Rebase
+
+      gh pr checkout <PR>
+
+      ### Step 3: Resolve Conflicts (if any)
+
+      ### Step 4: Bootstrap (if needed)
+
+      ### Step 5: Verify Build
+
+      ### Step 6: Quality Checklist
+
+      yarn lint
+
+      ### Step 7: Commit and Push
+
+
+      If there are changes from build fixes or conflict resolution, commit and push.
+
+
+      If the PR targets `next`, amend to keep it as a single commit:
+
+      Otherwise, create a normal commit:
+
+
+      ```bash
+
+      git add .
+
+      git commit -m "fix: resolve rebase conflicts"
+
+      git push --force-with-lease
+
+      ```
+
+
+      - **Amend only for PRs targeting `next`**: Other PRs use normal commits'
+    gold_removed: ''
+  - path: yarn-project/.claude/skills/worktree-spawn/SKILL.md
+    tier: 1
+    gold_added: 'argument-hint: <task description>'
+    gold_removed: ''
+  - path: yarn-project/CLAUDE.md
+    tier: 1
+    gold_added: 'PRs are squashed to a single commit on merge, so during development just create normal commits. Only amend when explicitly asked or when using the `/fix-pr` skill on a PR targeting `next`.
+
+      git commit -m "fix: address review feedback"
+
+      git push'
+    gold_removed: ''

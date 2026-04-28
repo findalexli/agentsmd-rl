@@ -1,0 +1,30 @@
+version: "2.0"
+
+task:
+  name: freya-choreai-update-agentsmd
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: marc2332/freya
+  pr: 1510
+  base_commit: "a75e223109c11b9ba34b3cbe8b6a2fbe9d953c43"
+  merge_commit: "313dbfb0dea4b1000d86d5e6d3c5cdd03abce625"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+
+config_edits:
+  - path: AGENTS.md
+    tier: 1
+    gold_added: '- When you are just starting to work on something you must not run any check or format command right away, leave that for the end and ask the developer for confirmation
+
+      - Most hooks APIs like `use_state` return `Copy` values like `State`, when moving these around there is no need to `.clone()` them as they are `Copy` already.'
+    gold_removed: ''

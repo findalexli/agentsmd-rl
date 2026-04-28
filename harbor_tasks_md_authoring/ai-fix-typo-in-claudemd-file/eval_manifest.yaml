@@ -1,0 +1,36 @@
+version: "2.0"
+
+task:
+  name: ai-fix-typo-in-claudemd-file
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: symfony/ai
+  pr: 817
+  base_commit: "5b694dfa44743088cd0e7924e5226d3ffe99f31a"
+  merge_commit: "c4a9e4e9fe2e086a1f0a6af8de316cfbfc81e80f"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+
+config_edits:
+  - path: CLAUDE.md
+    tier: 1
+    gold_added: '# Agent component
+
+      - Prefer self::assert* over $this->assert* in tests
+
+      - NEVER mention Claude as co-author in commits'
+    gold_removed: ''

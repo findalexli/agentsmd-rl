@@ -1,0 +1,34 @@
+version: "2.0"
+
+task:
+  name: datadog-agent-add-dda-install-in-agentsmd
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: DataDog/datadog-agent
+  pr: 40346
+  base_commit: "929daa18b9169780f041c6e092536b82699759f0"
+  merge_commit: "b1b320d2a718703ac94974c335c90daaece14047"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+
+config_edits:
+  - path: AGENTS.md
+    tier: 1
+    gold_added: '
+
+      # install dda on mac OS
+
+      brew install --cask dda
+
+      '
+    gold_removed: ''

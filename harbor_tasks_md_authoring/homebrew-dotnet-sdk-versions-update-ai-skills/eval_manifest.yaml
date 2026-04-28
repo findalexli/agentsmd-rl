@@ -1,0 +1,96 @@
+version: "2.0"
+
+task:
+  name: homebrew-dotnet-sdk-versions-update-ai-skills
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: isen-ng/homebrew-dotnet-sdk-versions
+  pr: 506
+  base_commit: "59efab5c43d1fc6672dc5a36cc2031ee448a69b1"
+  merge_commit: "21d48a9a8f7c575e410c35e6b90d92efbd873b8f"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .aiskills/fix-ci/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .aiskills/fix-ci/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .aiskills/new-cask/SKILL.md."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .aiskills/new-cask/SKILL.md."
+  - id: signal_04
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .aiskills/new-cask/SKILL.md."
+  - id: signal_05
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .aiskills/update-cask/SKILL.md."
+  - id: signal_06
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .aiskills/update-cask/SKILL.md."
+
+config_edits:
+  - path: .aiskills/fix-ci/SKILL.md
+    tier: 1
+    gold_added: '---
+
+      name: fix-ci
+
+      description: Fix or update the CI workflow for homebrew-dotnet-sdk-versions. Use this skill whenever asked to fix a broken CI, investigate a CI failure, update .github/workflows/ci.yml, or sync CI changes from the official Homebrew cask. Always consult the official Homebrew cask CI as the reference before making any changes.
+
+      ---
+
+      '
+    gold_removed: ''
+  - path: .aiskills/new-cask/SKILL.md
+    tier: 1
+    gold_added: '---
+
+      name: new-cask
+
+      description: Add a new cask to homebrew-dotnet-sdk-versions. Use this skill whenever asked to support a new .NET SDK version or feature band that doesn''t have a cask yet, create a stub cask, add a new major/minor/preview release, or add support for a new dotnet-sdk version (e.g. "add dotnet-sdk12-0-100" or "support .NET 11 preview").
+
+      ---
+
+
+      **If you are the repo owner** (pushing directly to origin):
+
+      ```bash
+
+      git checkout -b new-cask/dotnet-sdk{MAJOR}-{MINOR}-{FEATURE}
+
+      git add Casks/dotnet-sdk{MAJOR}-{MINOR}-{FEATURE}.rb
+
+      git commit -m "Add support for dotnet-sdk{MAJOR}-{MINOR}-{FEATURE}"
+
+      git push origin new-cask/dotnet-sdk{MAJOR}-{MINOR}-{FEATURE}
+
+      ```
+
+
+      **If you are an external contributor** (pushing to your fork):'
+    gold_removed: ''
+  - path: .aiskills/update-cask/SKILL.md
+    tier: 1
+    gold_added: '---
+
+      name: update-cask
+
+      description: Create an update PR for an existing cask in homebrew-dotnet-sdk-versions. Use this skill whenever asked to manually bump a cask to a newer version, update sha256/url/version fields, force-update a cask the auto-updater missed, or open a PR to update a specific dotnet-sdk cask version.
+
+      ---
+
+      '
+    gold_removed: ''

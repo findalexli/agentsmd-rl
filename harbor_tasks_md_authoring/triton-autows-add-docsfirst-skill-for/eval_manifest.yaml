@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: triton-autows-add-docsfirst-skill-for
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: facebookexperimental/triton
+  pr: 1125
+  base_commit: "715656a1cccf7aeb0804eff88057838a5805bb03"
+  merge_commit: "3aad9f25dd5cf6b77b998e323d1b3b645b60bcec"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/autows-docs/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/autows-docs/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/autows-docs/SKILL.md."
+
+config_edits:
+  - path: .claude/skills/autows-docs/SKILL.md
+    tier: 1
+    gold_added: "---\nname: autows-docs\ndescription: >\n  Consult and maintain AutoWS documentation. Use BEFORE exploring AutoWS source\n  code — when investigating, planning, or modifying files under\n  WarpSpecialization/, partition scheduling, warp_specialize ops, WSCodePartition,\n  WSDataPartition, WSTaskPartition, WSMemoryPlanner, or related passes. Also use\n  AFTER making non-trivial changes to AutoWS code to keep docs in sync.\n---\n\n# AutoWS Documentation\n\nAutoWS has comprehensive design docs that live alongside the source code at:\n\n```\nthird_party/nvidia/hopper/lib/Transforms/WarpSpecialization/docs/\n```\n\n## CRITICAL: Read docs BEFORE reading source\n\nWhen investigating or planning changes to AutoWS code, **always read the\nrelevant docs first** before exploring the source files. The docs explain the\ndesign intent, invariants, and relationships between passes — information that\nis difficult to reconstruct from code alone. Reading docs first will:\n\n- Give you the correct mental model before diving into implementation details\n- Identify which files are relevant so you search less\n- Surface invariants and edge cases that aren't obvious from code\n\n### How to find the right doc\n\nUse the file map below to match your task to the relevant doc(s):\n\n| If you're working on... | Read this doc first |\n|---|---|\n| Overall pipeline, pass ordering | `docs/Overview.md` |\n| Task ID assignment (Hopper) | `docs/TaskPartitionAndPropagation.md` |\n| Splitting ops across warp groups | `docs/DataPartition.md` |\n| Channel insertion, async copies, barriers | `docs/CodePartition.md` |\n| Code specialization / cloning into regions | `docs/CodeSpecialization.md` |\n| SMEM/TMEM allocation, multi-buffering | `docs/BufferAllocation.md`, `docs/SmemAllocationDesign.md` |\n| Memory planner liveness analysis | `docs/MemoryPlannerVisualization.md` |\n| Memory lowering (global/shared/tensor) | `docs/MemoryLowering.md` |\n| Token/barrier lowering to hardware | `docs/TokenBarrierLowering.md` |\n| Ping-pong scheduling | `docs/PingPongScheduling.md` |\n| Barrier fusion/merging | `docs/BarrierFusion.md` |\n| Operand D / accumulator handling | `docs/OperandDHandling.md` |\n| Reuse groups for buffer sharing | `docs/ReuseGroups.md` |\n| TMEM allocation heuristics | `docs/TMEMAllocationHeuristics.md` |\n| Utility functions | `docs/Utilities.md` |\n\n### Workflow\n\n1. **Read** the matching doc(s) from the table above.\n2. **Then** explore source files, guided by what the docs describe.\n3. If no doc matches your task, read `docs/Overview.md` for the pipeline\n   context and file map, then proceed to source.\n\n## CRITICAL: Update docs AFTER non-trivial code changes\n\nWhen you make changes to AutoWS code that go beyond a simple bug fix, you\n**must** update the corresponding documentation. Specifically, update docs when:\n\n- **Adding a new pass or file**: Add an entry to `docs/Overview.md` (file map\n  and pipeline diagram) and create a new doc if the pass is substantial.\n- **Changing pass behavior or invariants**: Update the doc that describes that\n  pass to reflect the new behavior.\n- **Adding or changing data structures**: Update the doc that references those\n  structures.\n- **Changing the pipeline order**: Update `docs/Overview.md`.\n- **Adding new concepts or terminology**: Document them in the relevant doc or\n  create a new one if no existing doc fits.\n\nDo NOT update docs for:\n- Pure bug fixes that don't change documented behavior\n- Code style / refactoring that preserves semantics\n\n### Doc conventions\n\n- Docs live in `third_party/nvidia/hopper/lib/Transforms/WarpSpecialization/docs/`\n- Each doc covers one logical area (one pass or closely related group of passes)\n- Docs should explain **why**, not just **what** — design rationale matters\n- Include the file(s) the doc covers at the top\n- Use code snippets or IR examples to illustrate transformations"
+    gold_removed: ''

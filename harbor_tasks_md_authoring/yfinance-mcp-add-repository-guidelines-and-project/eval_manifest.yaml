@@ -1,0 +1,115 @@
+version: "2.0"
+
+task:
+  name: yfinance-mcp-add-repository-guidelines-and-project
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: narumiruna/yfinance-mcp
+  pr: 85
+  base_commit: "7b8811c9bd4237e80cf6f71c119926a24619544f"
+  merge_commit: "4cc58549f11d564c991b17554c4eb8b81de136aa"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/copilot-instructions.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+
+config_edits:
+  - path: .github/copilot-instructions.md
+    tier: 1
+    gold_added: Read [AGENTS.md](./AGENTS.md) and [CLAUDE.md](./CLAUDE.md) files for for instructions.
+    gold_removed: ''
+  - path: AGENTS.md
+    tier: 1
+    gold_added: '# Repository Guidelines
+
+
+      ## Project Structure & Module Organization
+
+      - `src/yfmcp/` holds the MCP server implementation, charting utilities, and type definitions.
+
+      - `tests/` contains async pytest coverage for server behavior and charting.
+
+      - `demo.py` is a Chainlit demo client for local experimentation.
+
+      - `pyproject.toml` defines dependencies, tooling, and formatting rules.
+
+
+      ## Architecture Overview
+
+      - `yfmcp.server` exposes FastMCP tools and wraps blocking `yfinance` calls with `asyncio.to_thread()`.
+
+      - `yfmcp.chart` generates WebP charts for MCP responses; the demo converts them for display.
+
+      - `yfmcp.types` centralizes Literal enums for tool inputs and validation.
+
+
+      ## Build, Test, and Development Commands
+
+      - `uv sync`: install runtime dependencies.
+
+      - `uv sync --extra dev`: install demo and dev tooling (Chainlit, pytest, ruff, ty).
+
+      - `uv run yfmcp`: run the MCP server locally.
+
+      - `uv run chainlit run demo.py`: start the demo chatbot at `http://localhost:8000`.
+
+      - `uv run ruff check .`: run linting.
+
+      - `uv run ty check src tests`: run type checks.
+
+      - `uv run pytest -v -s --cov=src tests`: run pytest with coverage.
+
+
+      ## Coding Style & Naming Conventions
+
+      - Python 3.12+ only; keep imports one-per-line (ruff isort config).
+
+      - Line length is 120; use `ruff format .` for formatting.
+
+      - Tool functions are async; tool names in `@mcp.tool` are prefixed `yfinance_` (see `src/yfmcp/server.py`).
+
+      - Use `_error()` helper for consistent JSON error responses.
+
+
+      ## Testing Guidelines
+
+      - Frameworks: `pytest` + `pytest-asyncio` (async tests).
+
+      - Naming: files `tests/test_*.py`, test functions `test_*`.
+
+      - Run all tests with `uv run pytest` or `make test`; target coverage with `--cov=src`.
+
+
+      ## Commit & Pull Request Guidelines
+
+      - Use short, imperative commit subjects with no trailing period (e.g., "Fix asyncio mock", "Add test cases").
+
+      - If helpful, include a brief body explaining why the change is needed.
+
+      - Keep commits focused; include tests or reasoning when behavior changes.
+
+      - PRs should describe intent, note testing done, and include screenshots for chart/demo changes.
+
+
+      ## Configuration & Secrets
+
+      - Demo uses `.env` for `OPENAI_API_KEY` or LiteLLM settings (see `README.md`).
+
+      - Do not commit API keys or generated artifacts; prefer local `.env` files.'
+    gold_removed: ''

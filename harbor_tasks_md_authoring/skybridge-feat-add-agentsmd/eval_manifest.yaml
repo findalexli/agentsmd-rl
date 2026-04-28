@@ -1,0 +1,31 @@
+version: "2.0"
+
+task:
+  name: skybridge-feat-add-agentsmd
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: alpic-ai/skybridge
+  pr: 424
+  base_commit: "7080644912174e292a7b50b812c06c02273a605d"
+  merge_commit: "583f6e4f06b7d771b31e4dc7a0ecf1104166eedb"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+
+config_edits:
+  - path: AGENTS.md
+    tier: 1
+    gold_added: '# PR Reviewer Instructions
+
+
+      When the public API of `packages/core/` changes, verify that `skills/chatgpt-app-builder/` and `docs/` are updated to match.'
+    gold_removed: ''

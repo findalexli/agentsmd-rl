@@ -1,0 +1,142 @@
+version: "2.0"
+
+task:
+  name: spawn-fix-document-sprite-vs-normal
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: OpenRouterTeam/spawn
+  pr: 1196
+  base_commit: "5b4f02d9b16e841de94c2a249c9868d9318a305b"
+  merge_commit: "1ddf2695d0097740418d30d29103fc2981194c23"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/setup-agent-team/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/setup-agent-team/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/setup-agent-team/SKILL.md."
+
+config_edits:
+  - path: .claude/skills/setup-agent-team/SKILL.md
+    tier: 1
+    gold_added: '## CRITICAL: Repository Path — Ask the User
+
+
+      **NEVER guess the repository path. NEVER invent home directories (e.g., `/home/claude-runner`). ASK the user where the repo lives.**
+
+
+      There are two common environments:
+
+
+      | Environment | Home dir | Typical repo path |
+
+      |---|---|---|
+
+      | **Sprite VM** (Fly.io managed) | `/home/sprite/` | `/home/sprite/spawn` |
+
+      | **Normal VM** (bare metal, cloud) | `/root/` | `/root/spawn` |
+
+
+      ### How to determine the path
+
+
+      1. Run `pwd` and check the current working directory
+
+      2. If unclear, **ask the user** where the spawn repo is checked out
+
+      3. Use that path consistently for ALL configuration: systemd services, wrapper scripts, PATH variables
+
+
+      ### Rules
+
+
+      - **NEVER** create new user accounts or home directories for the service
+
+      - **NEVER** assume a path like `/home/claude-runner/` — that doesn''t exist
+
+      - All systemd services, wrapper scripts, and PATH variables MUST use the **same base path** as the repo checkout
+
+      - The wrapper scripts (e.g., `start-security.sh`) MUST live inside the repo at `{REPO_ROOT}/.claude/skills/setup-agent-team/`
+
+
+      ### Examples (for a repo at `/root/spawn`)
+
+
+      - ✅ `WorkingDirectory=/root/spawn/.claude/skills/setup-agent-team`
+
+      - ✅ `ExecStart=/bin/bash /root/spawn/.claude/skills/setup-agent-team/start-security.sh`
+
+      - ✅ `Environment="PATH=/root/.bun/bin:/root/.local/bin:/usr/local/bin:/usr/bin:/bin"`
+
+      - ❌ `WorkingDirectory=/home/claude-runner/spawn/...` (invented path)
+
+      - ❌ `Environment="PATH=/home/claude-runner/.bun/bin:..."` (invented path)
+
+
+      Create `start-<service-name>.sh` in `{REPO_ROOT}/.claude/skills/setup-agent-team/`:
+
+      # Wrapper script — sets env vars and launches the trigger server.
+
+      # CRITICAL: SCRIPT_DIR must match the actual repo path on this machine.
+
+      # On a Sprite VM this is /home/sprite/spawn, on a normal VM it''s /root/spawn.
+
+      SCRIPT_DIR="<REPO_ROOT>/.claude/skills/setup-agent-team"
+
+      export REPO_ROOT="<REPO_ROOT>"
+
+      export MAX_CONCURRENT=5
+
+      export RUN_TIMEOUT_MS=7200000
+
+      Replace `<REPO_ROOT>` with the actual path (e.g., `/root/spawn` or `/home/sprite/spawn`).
+
+
+      Create a systemd unit file at `/etc/systemd/system/<service-name>-trigger.service`.
+
+
+      **CRITICAL: Replace `<REPO_ROOT>` and `<HOME>` with the actual paths. Ask the user if unsure.**
+
+
+      | Environment | `<REPO_ROOT>` | `<HOME>` | User/Group |
+
+      |---|---|---|---|
+
+      | Sprite VM | `/home/sprite/spawn` | `/home/sprite` | `sprite` / `sprite` |
+
+      | Normal VM | `/root/spawn` | `/root` | `root` / `root` |
+
+      Description=<Service Name> Trigger Server
+
+      User=<user>
+
+      Group=<group>
+
+      WorkingDirectory=<REPO_ROOT>/.claude/skills/setup-agent-team
+
+      ExecStart=/bin/bash <REPO_ROOT>/.claude/skills/setup-agent-team/start-<service-name>.sh
+
+      Restart=always
+
+
+      # Environment
+
+      Environment="IS_SANDBOX=1"
+
+      Environment="PATH=<HOME>/.bun/bin:<HOME>/.local/bin:<HOME>/.claude/local/bin:/usr/local/bin:/usr/bin:/bin"
+
+      Environment="HOME=<HOME>"
+
+      **Note:** The wrapper script (`start-<service-name>.sh`) sets the actual env vars (`TRIGGER_SECRET`, `TARGET_SCRIPT`, etc.). The systemd service just executes the wrapper.
+
+      '
+    gold_removed: ''

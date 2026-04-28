@@ -1,0 +1,44 @@
+version: "2.0"
+
+task:
+  name: ruby-lsp-adopt-the-agentsmd-standard
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: Shopify/ruby-lsp
+  pr: 3955
+  base_commit: "31ed10a793e9136b16bb9efbac780ae2506c7c05"
+  merge_commit: "41f1e5a4933023d50e8e40f3ce0e5e4224a8d375"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+
+config_edits:
+  - path: .github/copilot-instructions.md
+    tier: 1
+    gold_added: ''
+    gold_removed: ''
+  - path: AGENTS.md
+    tier: 1
+    gold_added: "# AGENTS.md\n\nThis file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.\n\n## Project Overview\n\nRuby LSP is a Language Server Protocol implementation for Ruby, providing IDE features across different editors. The project consists of:\n\n- Core Ruby LSP gem (language server implementation)\n- Ruby Indexer (code indexing for navigation)\n- VS Code extension (TypeScript frontend)\n- Documentation site (Jekyll-based)\n\n## Development Commands\n\n### Ruby LSP Core\n\n```bash\n# Run all tests\nbundle exec rake\n\n# Run specific test file\nbin/test test/requests/completion_test.rb\n\n# Run tests matching a pattern\nbin/test test/requests/completion_test.rb test_name_pattern\n\n# Type check with Sorbet\nbundle exec srb tc\n\n# Lint with RuboCop\nbin/rubocop\n\n# Auto-fix RuboCop violations\nbin/rubocop -a\n```\n\n### VS Code Extension\n\n```bash\ncd vscode\nyarn install       # Install dependencies\nyarn run lint      # Lint TypeScript code\nyarn run test      # Run extension tests\n```\n\n### Executables\n\n- `exe/ruby-lsp` - Main language server executable\n- `exe/ruby-lsp-check` - Validation tool\n- `exe/ruby-lsp-launcher` - Experimental launcher\n\n## Architecture\n\n### Server Structure\n\nThe server (`lib/ruby_lsp/server.rb`) processes LSP messages and delegates to:\n\n- **Requests** (`lib/ruby_lsp/requests/`) - Handle specific LSP features\n- **Listeners** (`lib/ruby_lsp/listeners/`) - Analyze Ruby code for the specific feature\n- **Response Builders** (`lib/ruby_lsp/response_builders/`) - Construct LSP responses\n\n### Key Components\n\n- **Document Store** (`lib/ruby_lsp/document.rb`) - Manages open documents and parsed ASTs\n- **Ruby Indexer** (`lib/ruby_indexer/`) - Indexes Ruby code for navigation features\n- **Addon System** (`lib/ruby_lsp/addon.rb`) - Extensibility framework for third-party addons\n\n### Design Patterns\n\n- **Visitor Pattern**: AST traversal using Prism parser visitors\n- **Request/Response**: Each LSP feature implemented as a request class\n- **Type Safety**: Sorbet signatures throughout (strict for lib/, test for tests)\n\n### Important Top-Level Files\n\n#### Core Server Components\n\n- **`lib/ruby_lsp/server.rb`** - Main LSP server handling all client requests and message routing\n- **`lib/ruby_lsp/base_server.rb`** - Abstract base with core LSP infrastructure (message I/O, worker threads)\n- **`lib/ruby_lsp/global_state.rb`** - Central configuration and state management (formatters, linters, client capabilities)\n- **`lib/ruby_lsp/store.rb`** - Document storage and lifecycle management\n\n#### Document Handling\n\n- **`lib/ruby_lsp/document.rb`** - Abstract base for all document types (versioning, edits, encoding)\n- **`lib/ruby_lsp/ruby_document.rb`** - Ruby source file handling with Prism parsing\n- **`lib/ruby_lsp/erb_document.rb`** - ERB template file handling\n- **`lib/ruby_lsp/rbs_document.rb`** - RBS type definition file handling\n\n#### Supporting Infrastructure\n\n- **`lib/ruby_lsp/addon.rb`** - Extension framework for third-party add-ons\n- **`lib/ruby_lsp/node_context.rb`** - AST node context information (nesting, scope)\n- **`lib/ruby_lsp/type_inferrer.rb`** - Type inference functionality\n- **`lib/ruby_lsp/client_capabilities.rb`** - Client feature capability tracking\n\n### Component Interaction Flow\n\n```mermaid\ngraph TD\n    Client[VS Code/Editor Client]\n    Server[server.rb<br/>Main LSP Server]\n    BaseServer[base_server.rb<br/>Message I/O & Threading]\n    GlobalState[global_state.rb<br/>Configuration & State]\n    Store[store.rb<br/>Document Manager]\n\n    RubyDoc[ruby_document.rb<br/>Ruby Files]\n    ERBDoc[erb_document.rb<br/>ERB Templates]\n    RBSDoc[rbs_document.rb<br/>RBS Types]\n\n    Requests[requests/*<br/>Feature Handlers]\n    Listeners[listeners/*<br/>AST Analyzers]\n    Indexer[ruby_indexer/*<br/>Symbol Index]\n\n    Addon[addon.rb<br/>Extension System]\n    NodeContext[node_context.rb<br/>AST Context]\n\n    Client <-->|LSP Protocol| Server\n    Server -.->|inherits| BaseServer\n    Server --> GlobalState\n    Server --> Store\n    Server --> Requests\n    Server --> Addon\n\n    GlobalState --> Requests\n    Document --> Requests\n\n    Store --> RubyDoc\n    Store --> ERBDoc\n    Store --> RBSDoc\n\n    RubyDoc -.->|inherits| Document[document.rb]\n    ERBDoc -.->|inherits| Document\n    RBSDoc -.->|inherits| Document\n\n    Requests --> Listeners\n    Requests --> NodeContext\n    Listeners --> Indexer\n\n    Addon -->|extends| Requests\n\n    style Server fill:#f9f,stroke:#333,stroke-width:4px\n    style GlobalState fill:#9ff,stroke:#333,stroke-width:2px\n    style Store fill:#9ff,stroke:#333,stroke-width:2px\n    style Indexer fill:#ff9,stroke:#333,stroke-width:2px\n```\n\n## Testing Approach\n\nTests use expectation-based patterns:\n\n```ruby\n# Tests typically follow this structure:\ndef test_feature_name\n  source = <<~RUBY\n    # Ruby code to test\n  RUBY\n\n  with_server(source) do |server, _uri|\n    # Make LSP request\n    # Assert response\n  end\nend\n```\n\nTest fixtures are in `test/fixtures/` and expectations in `test/expectations/`.\n\n## Common Development Tasks\n\n### Adding a New LSP Feature\n\n1. Create request class in `lib/ruby_lsp/requests/`\n2. Register in `lib/ruby_lsp/executor.rb`\n3. Add tests in `test/requests/`\n4. Update VS Code extension if needed\n\n### Working with the Indexer\n\nThe Ruby Indexer (`lib/ruby_indexer/`) handles:\n\n- Building symbol tables for classes, modules, methods, and constants\n- Resolving constant references and method calls\n- Finding definitions across files\n- Providing completion candidates for constants and methods\n- Dealing with inheritance and ancestor linearization\n\n### Typechecking with Sorbet\n\nRuby LSP uses Sorbet (typed: strict) with inline RBS annotations for static typechecking.\n\n**Key Guidelines:**\n\n- Use RBS inline annotations (`#:`) exclusively - never use RBI style `sig { }`\n- Place type annotations immediately before method definitions or after variable assignments\n- Run `bundle exec srb tc` to ensure typechecking passes\n\n**Common RBS Patterns:**\n\n```ruby\n# Method signatures (placed above method definition)\n#: (String name) -> void\ndef process(name)\n  # ...\nend\n\n# Variable annotations (placed after assignment)\n@documents = {} #: Hash[URI::Generic, Document]\n\n# Attribute type declarations (placed above attribute)\n#: String?\nattr_reader :parent_class\n\n# Generic types\n#: [T] () { (String) -> T } -> T\ndef with_cache(&block)\n  # ...\nend\n\n# Union and nullable types\nresult = nil #: (String | Symbol)?\n```\n\n**Type Syntax Reference:** <https://sorbet.org/docs/rbs-support>"
+    gold_removed: ''
+  - path: CLAUDE.md
+    tier: 1
+    gold_added: ''
+    gold_removed: ''
+  - path: CLAUDE.md
+    tier: 1
+    gold_added: AGENTS.md
+    gold_removed: ''

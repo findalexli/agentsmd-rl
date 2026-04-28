@@ -282,23 +282,12 @@ def scout_repo(
             code_files = [f for f in file_paths if not any(
                 f.endswith(ext) for ext in (".md", ".rst", ".txt", ".toml", ".cfg", ".ini", ".yml", ".yaml", ".json")
             ) and not f.startswith(("docs/", "doc/", ".github/"))]
-            # Exempt pure-tier-1-instruction-file PRs from the docs_only drop —
-            # those are the markdown_authoring scaffolder's whole input.
-            # Tier-1 paths: CLAUDE.md / AGENTS.md / SKILL.md / .cursor/rules etc.
-            # Match the scaffolder's TIER1_RE (scripts/scaffold_markdown_only.py:45).
-            import re as _re
-            _TIER1 = _re.compile(
-                r"(?:^|/)(CLAUDE\.md|CLAUDE\.local\.md|AGENTS\.md|CONVENTIONS\.md|SKILL\.md|"
-                r"\.cursorrules|\.windsurfrules|\.clinerules|\.continuerules)$|"
-                r"^\.claude/(rules|skills|agents)/.+\.md$|"
-                r"^\.cursor/rules/.+|"
-                r"^\.github/(copilot-instructions\.md|skills/.+SKILL\.md|prompts/.+\.prompt\.md)$|"
-                r"^\.agents?/skills/.+SKILL\.md$|"
-                r"^\.opencode/skills/.+SKILL\.md$|"
-                r"^\.codex/skills/.+SKILL\.md$|"
-                r"\.mdc$",
-                _re.IGNORECASE,
-            )
+            # Exempt skill / rule-file PRs from the docs_only drop —
+            # those are the markdown_authoring + cross-repo discovery
+            # scaffolders' whole input. Use the BROAD discovery regex so PRs
+            # that touch skill-adjacent files (scripts/, references/, assets/)
+            # also escape the skip — Gemini decides at post-judge.
+            from taskforge.config import TIER1_DISCOVERY_RE as _TIER1
             is_pure_tier1 = bool(file_paths) and all(_TIER1.search(p) for p in file_paths)
             if not code_files and not is_pure_tier1:
                 skipped["docs_only"] += 1

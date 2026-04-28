@@ -1,0 +1,66 @@
+version: "2.0"
+
+task:
+  name: runtime-improve-performancebenchmarkskillmd
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: dotnet/runtime
+  pr: 124574
+  base_commit: "736475ca4a183e931d84cafb4954cff582b59ae9"
+  merge_commit: "f937645c1e35f718b7af90c838785564fcc9fbc6"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/skills/performance-benchmark/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/skills/performance-benchmark/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/skills/performance-benchmark/SKILL.md."
+
+config_edits:
+  - path: .github/skills/performance-benchmark/SKILL.md
+    tier: 1
+    gold_added: '# Ad Hoc Performance Benchmarking with @EgorBot
+
+      When you need to validate the performance impact of a code change, follow this process to write a BenchmarkDotNet benchmark and trigger @EgorBot to run it.
+
+      The bot will notify you when results are ready, so don''t wait for them.
+
+      ## Step 2: Mention @EgorBot in a comment/PR description
+
+      @EgorBot [targets] [options] [BenchmarkDotNet args]
+
+      > **Note:** The @EgorBot command must not be inside the code block. Only the benchmark code should be inside the code block.
+
+      ### Target Flags
+
+      - `-linux_amd`
+
+      - `-linux_intel`
+
+      - `-windows_amd`
+
+      - `-windows_intel`
+
+      - `-linux_arm64`
+
+      - `-osx_arm64` (baremetal, feel free to always include it)
+
+      The most common combination is `-linux_amd -osx_arm64`. Do not include more than 4 targets.
+
+      Use `-profiler` when absolutely necessary along with `-linux_arm64` and/or `-linux_amd` to include `perf` profiling and disassembly in the results.
+
+      @EgorBot -linux_amd -osx_arm64
+
+      - **Check the manual**: EgorBot replies include a link to the [manual](https://github.com/EgorBo/EgorBot?tab=readme-ov-file#github-usage) for advanced options
+
+      - [EgorBot Manual](https://github.com/EgorBo/EgorBot?tab=readme-ov-file#github-usage)'
+    gold_removed: ''

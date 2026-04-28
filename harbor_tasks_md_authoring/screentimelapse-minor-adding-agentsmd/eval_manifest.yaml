@@ -1,0 +1,36 @@
+version: "2.0"
+
+task:
+  name: screentimelapse-minor-adding-agentsmd
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: wkaisertexas/ScreenTimeLapse
+  pr: 69
+  base_commit: "46ab9d9fff1d359b5c91266b9f05caa052e72310"
+  merge_commit: "db3834d800526f4d622b4ce34ef3f214e167820b"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+
+config_edits:
+  - path: AGENTS.md
+    tier: 1
+    gold_added: "# Repository Guidelines\n\n## Project Structure & Module Organization\n`TimeLapze/` contains the macOS SwiftUI app source (recording logic, models, views, assets, and localization files).  \n`TimeLapzeTests/` contains XCTest unit tests for app logic.  \n`TimeLapzeUITests/` contains UI tests.  \n`TimeLapze.xcodeproj/` holds project settings and shared schemes (`ScreenTimeLapse`, `Test`).  \nRepo-level tooling/config includes `.swift-format` (format rules), `typos.toml` (spelling checks), and `timelapze.rb` (Homebrew cask metadata).\n\n## Build, Test, and Development Commands\n- `open TimeLapze.xcodeproj`: Open the project in Xcode for local development.\n- `xcodebuild -list -project TimeLapze.xcodeproj`: Show targets and schemes.\n- `xcodebuild build -project TimeLapze.xcodeproj -scheme ScreenTimeLapse -destination 'platform=macOS'`: CLI build for the app.\n- `xcodebuild test -project TimeLapze.xcodeproj -scheme Test -destination 'platform=macOS'`: Run unit/UI tests from CLI (requires valid local signing setup).\n- `swift format --in-place --recursive TimeLapze TimeLapzeTests TimeLapzeUITests`: Apply formatter rules from `.swift-format`.\n- `typos`: Run typo checks using `typos.toml`.\n\n## Coding Style & Naming Conventions\nUse Swift with 2-space indentation and a 100-character line limit (enforced by `.swift-format`).  \nPrefer ordered imports and lowerCamelCase identifiers for methods/properties.  \nUse UpperCamelCase for types and filenames (for example, `RecorderViewModel.swift`, `PreferencesView.swift`).  \nKeep SwiftUI views suffixed with `View` and state/logic objects suffixed with `ViewModel` where applicable.\n\n## Testing Guidelines\nUse XCTest for both unit and UI coverage.  \nName test files as `<Subject>Tests.swift` and test methods as `test<BehaviorOrScenario>()`.  \nAdd tests alongside feature changes, including at least one edge/failure-path assertion for non-trivial logic.\n\n## Commit & Pull Request Guidelines\nRecent commits favor short, imperative summaries, sometimes with an issue/PR reference (for example, `Update timelapze.rb` or `Updating readme (#62)`).  \nKeep commits focused to one logical change.  \nPRs should include:\n- A clear description of what changed and why.\n- Linked issue(s) when relevant.\n- Manual test notes.\n- Screenshots or short recordings for UI-visible changes.\n- Crash details/logs when fixing stability bugs.\n\n## Security & Configuration Notes\nThis app uses screen/camera-related macOS APIs; avoid committing personal recordings, local paths, or signing artifacts.  \nDo not change signing/team settings unless the change is intentional and documented in the PR."
+    gold_removed: ''
+  - path: CLAUDE.md
+    tier: 1
+    gold_added: AGENTS.md
+    gold_removed: ''

@@ -1,0 +1,128 @@
+version: "2.0"
+
+task:
+  name: wp-calypso-agentsmd-restructure-root-and-client
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: Automattic/wp-calypso
+  pr: 108874
+  base_commit: "d325d68477750a7508aff47bcd9929713a5ff5f3"
+  merge_commit: "c7e52f976232bfdc3e61444a93a4f0375ead2836"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in client/AGENTS.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in client/AGENTS.md."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in client/AGENTS.md."
+  - id: signal_04
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in packages/image-studio/AGENTS.md."
+
+config_edits:
+  - path: AGENTS.md
+    tier: 1
+    gold_added: '- **Image Studio** (`packages/image-studio`) — AI-powered image editing and generation'
+    gold_removed: ''
+  - path: client/AGENTS.md
+    tier: 1
+    gold_added: 'React + TypeScript application clients for WordPress.com.
+
+      ## Architecture
+
+      Two coexisting architectures:
+
+
+      - Classic Calypso (`client/me/`, `client/my-sites/`) uses Redux + page.js routing.
+
+      - Dashboard (`client/dashboard/`) uses TanStack Query + TanStack Router.
+
+      yarn eslint <file>                          # Lint JS/TS/TSX
+
+      yarn eslint --fix <file>                    # Lint + fix
+
+      yarn stylelint <file>                       # Lint CSS/SCSS
+
+      yarn prettier --write <file>                # Format
+
+      yarn typecheck-client                       # Type-check (slow)
+
+      yarn test-client <file>                     # Run specific test
+
+      ### File structure
+
+
+      - Use kebab-case for directories (e.g., `components/auth-wizard`).
+
+
+      ### Imports
+
+
+      - Use `import clsx from ''clsx''`, not `classnames`.
+
+      - Add one empty line between `import ''./style.scss''` and other imports.
+
+
+      ### Types
+
+
+      - Use strict TypeScript. No `any` unless justified.
+
+      - Prefer simple, concrete types over complex generics.
+
+
+      ### UI
+
+
+      - Prefer `@wordpress/components` primitives (Button, Modal, Card, etc.).
+
+      - Avoid `__experimental*` components unless already used in the codebase.
+
+      - Prefer `VStack`, `HStack` over `Flex` components.
+
+      - Minimize custom CSS; rely on the design system first.
+
+
+      ### CSS/SCSS
+
+
+      - Do not use BEM shortcuts (`&--`, `&__`) in SCSS.
+
+      - Dialog buttons on mobile: `.dialog__action-buttons` flips to `flex-direction: column-reverse` below `$break-mobile`. Flex labels inside buttons need `width: 100%` for `justify-content: center` to work.
+
+
+      ### Internationalization
+
+
+      - Use `@wordpress/i18n` for translations.
+
+
+      ### Testing
+
+
+      - Prefer `userEvent` over `fireEvent` in tests.
+
+      - Prefer `toBeVisible()` over `toBeInTheDocument()`.'
+    gold_removed: ''
+  - path: packages/image-studio/AGENTS.md
+    tier: 1
+    gold_added: '# Image Studio'
+    gold_removed: ''
+  - path: packages/image-studio/CLAUDE.md
+    tier: 1
+    gold_added: ''
+    gold_removed: ''

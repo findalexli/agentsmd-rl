@@ -1,0 +1,200 @@
+version: "2.0"
+
+task:
+  name: rigraph-docs-add-github-copilot-instructions
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: igraph/rigraph
+  pr: 2400
+  base_commit: "7918d80e106f7f5bd41867ad0e87a0a4834c4c9c"
+  merge_commit: "894547216c4cec74910310566fae189f129f9e97"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/copilot-instructions.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/copilot-instructions.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/copilot-instructions.md."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_04
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_05
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+
+config_edits:
+  - path: .github/copilot-instructions.md
+    tier: 1
+    gold_added: '# GitHub Copilot Instructions for igraph/rigraph
+
+
+      > **Note**: For general development guidelines, code style conventions, and AI agent instructions, see [`AGENTS.md`](../AGENTS.md) in the repository root.
+
+
+      ## Common Commands for Copilot Chat
+
+
+      - Load for development: `pkgload::load_all()`
+
+      - Run tests: `testthat::test_local(reporter = "check")`
+
+      - Format code: `air format .`
+
+      - Update documentation: `devtools::document()`
+
+
+      Refer to `AGENTS.md` for more instructions.'
+    gold_removed: ''
+  - path: AGENTS.md
+    tier: 1
+    gold_added: '> **Note**: For GitHub Copilot-specific instructions, see [`.github/copilot-instructions.md`](.github/copilot-instructions.md).
+
+
+      igraph is an R package for network analysis and graph theory.
+
+      It provides routines for simple graphs and network analysis, handles large graphs efficiently, and includes functions for generating random and regular graphs, graph visualization, centrality methods, and much more.
+
+
+      ## Key Technologies
+
+
+      - **Language**: R with C/C++ backend (uses the igraph C library)
+
+      - **Testing**: testthat framework
+
+      - **Documentation**: roxygen2 with Markdown syntax
+
+      - **Code Formatting**: air (R formatting tool)
+
+      - **Build System**: R CMD, devtools, Makefile
+
+      - **Code Generation**: Stimulus framework (see `tools/README.md`)
+
+
+      ## Development Setup
+
+
+      ### Installation and Dependencies
+
+
+      ```r
+
+      # Install all dependencies
+
+      pak::pak()
+
+      # Install build dependencies
+
+      pak::pak(dependencies = "Config/Needs/build")
+
+      ```
+
+      ### Install and run R
+
+      - Run `R -q -e ''testthat::test_local(reporter = "check")''` to execute tests as a final step.
+
+
+      ### Building and Testing
+
+
+      - Load package for development: `pkgload::load_all()`
+
+      - Run tests: `testthat::test_local(reporter = "check")`
+
+      - Build package: `devtools::build()`
+
+      - Check package: `devtools::check()`
+
+      - Update documentation: `devtools::document()`
+
+      - Format code: `air format .`
+
+      - IMPORTANT: PR titles end up in `NEWS.md` grouped by conventional commit label. PRs and commits use the conventional commit style with backticks for code references such as `function_call()`
+
+      - PRs are generally squashed, a clean history within a PR is not necessary
+
+      - Prefer expressive code over comments where possible
+
+      - Add comments to utility functions that cannot be made immediately obvious
+
+      - Use line breaks after each sentence in multi-sentence comments
+
+      - Follow the [tidyverse style guide](https://style.tidyverse.org)
+
+      - Use `snake_case` for new functions
+
+      - Maintain consistent indentation (2 spaces) and spacing patterns
+
+      - Use meaningful variable names that reflect context
+
+      ### Documentation
+
+
+      - Use roxygen2 with Markdown syntax for all function documentation
+
+      - Keep each sentence on its own line in roxygen2 comments for better readability
+
+      - Document internal functions using devtag (work in progress)
+
+      - Link to C documentation using `@cdocs` tag: `#'' @cdocs igraph_function_name`
+
+      - Always run `devtools::document()` after updating documentation
+
+
+      ### Naming Conventions
+
+
+      - Use `max` for maximal (graph theory term: a vertex is maximal if no other vertex dominates it) and `largest` for maximum (the biggest value in a set)
+
+
+      ## File Structure and Organization
+
+
+      ### Test Files
+
+
+      - Test files should align with source files
+
+      - `R/name.R` → `tests/testthat/test-name.R`
+
+
+      ### Generated Files
+
+
+      **Do not modify these files directly:**
+
+
+      - `src/rinterface.c` (generated by Stimulus)
+
+      - `R/aaa-auto.R` (generated by Stimulus)
+
+
+      Update them using: `make -f Makefile-cigraph src/rinterface.c R/aaa-auto.R`
+
+
+      ## Testing
+
+
+      - Add test cases for all new functionality
+
+      - For newly created autogenerated functions, always add a test to `test-aaa-auto.R`
+
+      - Test file naming should mirror source file naming
+
+      - Run tests frequently during development and at the end: `testthat::test_local(reporter = "check")`'
+    gold_removed: ''

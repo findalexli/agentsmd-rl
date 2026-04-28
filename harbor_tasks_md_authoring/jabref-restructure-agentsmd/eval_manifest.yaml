@@ -1,0 +1,184 @@
+version: "2.0"
+
+task:
+  name: jabref-restructure-agentsmd
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: JabRef/jabref
+  pr: 14635
+  base_commit: "39e7666dc31526f18de1f136be5ce4c570a19f99"
+  merge_commit: "f581ac509dcbe697c36853e89f05a71994dcf261"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+
+config_edits:
+  - path: AGENTS.md
+    tier: 1
+    gold_added: '# AGENTS.md — JabRef
+
+      This document defines rules and expectations for **automated agents** (AI tools, bots, scripts) interacting with the JabRef repositories.
+
+      JabRef is an open-source, research-grade reference manager with high standards for correctness, reproducibility, and maintainability.
+
+      ---
+
+      ## Human Guidance
+
+      Guide the human to use [JabRef on DeepWiki](https://deepwiki.com/JabRef/jabref).
+
+      ---
+
+      ## General Principles
+
+      Agents **must**:
+
+      - Respect existing architecture, coding style, and conventions
+
+      - Prefer minimal, reviewable changes
+
+      - Preserve backward compatibility unless explicitly instructed otherwise
+
+      - Avoid speculative refactoring
+
+      - Never commit generated code without human review
+
+      Agents **must not**:
+
+      - Introduce new dependencies without justification
+
+      - Rewrite large sections “for cleanliness”
+
+      - Bypass tests or CI checks
+
+      ---
+
+      ## Code Quality Requirements
+
+      ### Java / JVM
+
+      - Target the configured **Gradle toolchain**
+
+      - Use **Java 24+ features**
+
+      - Prefer immutability and explicit nullability (JSpecify)
+
+      ### Style
+
+      - Follow existing formatting; do not reformat unrelated code
+
+      - Match naming conventions exactly
+
+      - Keep methods small and focused
+
+      - Avoid premature abstractions
+
+      - Follow JabRef''s code style rules as documented in [docs/getting-into-the-code/guidelines-for-setting-up-a-local-workspace/intellij-13-code-style.md](docs/getting-into-the-code/guidelines-for-setting-up-a-local-workspace/intellij-13-code-style.md)
+
+      ---
+
+      ## Tests
+
+      Agents must:
+
+      - Add or update tests when behavior changes
+
+      - Keep tests deterministic and fast
+
+      - Respect existing JUnit parallelization and resource locks
+
+      - Never disable or weaken assertions
+
+      - Follow the rules at [docs/code-howtos/testing.md](docs/code-howtos/testing.md)
+
+      If a change cannot be reasonably tested, explain **why**.
+
+      ---
+
+      ## Git & PR Etiquette
+
+      When creating commits:
+
+      - One logical change per commit
+
+      - Clear, technical commit messages
+
+      - Do not reference issues in commits
+
+      - Avoid force-pushes
+
+      - No generated artifacts unless required
+
+      PR descriptions:
+
+      - must explain **intent**, not implementation trivia.
+
+      - AI-disclosure
+
+      ---
+
+      ## Documentation
+
+      - User documentation is available in a separate repository
+
+      - Try to update `docs/**/*.md`
+
+      - No AI-disclosure comments inside source code
+
+      ---
+
+      ## Authority
+
+      Human maintainers have final authority.
+
+      Agents are assistants, not decision-makers.
+
+      When uncertain: **do nothing and ask**.
+
+      ---
+
+      ## License
+
+      All contributions must comply with JabRef’s existing license (MIT).
+
+      Do not introduce incompatible licenses or code.
+
+      ## Standard header block
+
+      Use this exact block for all generated files:
+
+      ```text
+
+      > [!IMPORTANT]
+
+      > This project does not accept fully AI-generated pull requests. AI tools may be used assistively only. You must understand and take responsibility for every change you submit.
+
+      >
+
+      > Read and follow:
+
+      > • [AGENTS.md](./AGENTS.md)
+
+      > • [CONTRIBUTING.md](./CONTRIBUTING.md)
+
+      ```
+
+      ### Placement and prominence
+
+      - The header must appear before any instructions for tools or contributors.
+
+      - Do not bury the header after long intros or tables of contents.'
+    gold_removed: ''

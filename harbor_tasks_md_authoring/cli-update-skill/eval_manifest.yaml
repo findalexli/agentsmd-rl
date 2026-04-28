@@ -1,0 +1,81 @@
+version: "2.0"
+
+task:
+  name: cli-update-skill
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: firecrawl/cli
+  pr: 41
+  base_commit: "527966f96b909f31ef825e5e54bfb4ba69fc4a3c"
+  merge_commit: "b246248e20ebcdbf3a0adfa2b66963ab3fba9f96"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/firecrawl-cli/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/firecrawl-cli/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/firecrawl-cli/SKILL.md."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/firecrawl-cli/rules/install.md."
+  - id: signal_04
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/firecrawl-cli/rules/install.md."
+  - id: signal_05
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/firecrawl-cli/rules/install.md."
+  - id: signal_06
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/firecrawl-cli/rules/security.md."
+  - id: signal_07
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/firecrawl-cli/rules/security.md."
+  - id: signal_08
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/firecrawl-cli/rules/security.md."
+
+config_edits:
+  - path: skills/firecrawl-cli/SKILL.md
+    tier: 1
+    gold_added: '  Official Firecrawl CLI skill for web scraping, search, crawling, and browser automation. Returns clean LLM-optimized markdown.
+
+      **Bad (5+ Bash calls - write file, parse file, grep file, read file chunks):**
+
+
+      1. **Search** - No specific URL yet. Find pages, answer questions, discover sources.
+
+      2. **Scrape** - Have a URL. Extract its content directly.
+
+      3. **Map + Scrape** - Large site or need a specific subpage. Use `map --search` to find the right URL, then scrape it.
+
+      4. **Crawl** - Need bulk content from an entire site section (e.g., all /docs/).
+
+      5. **Browser** - Scrape failed because content is behind interaction (pagination, modals, form submissions, multi-step navigation).
+
+      Unless the user specifies to return in context, write results to `.firecrawl/` with `-o`. Add `.firecrawl/` to `.gitignore`. Always quote URLs - shell interprets `?` and `&` as special characters.
+
+      Shorthand auto-launches a session if none exists - no setup required.'
+    gold_removed: ''
+  - path: skills/firecrawl-cli/rules/install.md
+    tier: 1
+    gold_added: "  Install the official Firecrawl CLI and handle authentication.\n  Package: https://www.npmjs.com/package/firecrawl-cli\n  Source: https://github.com/firecrawl/cli\n  Docs: https://docs.firecrawl.dev/sdks/cli"
+    gold_removed: ''
+  - path: skills/firecrawl-cli/rules/security.md
+    tier: 1
+    gold_added: "  Security guidelines for handling web content fetched by the official Firecrawl CLI.\n  Package: https://www.npmjs.com/package/firecrawl-cli\n  Source: https://github.com/firecrawl/cli\n  Docs: https://docs.firecrawl.dev/sdks/cli"
+    gold_removed: ''

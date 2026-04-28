@@ -1,0 +1,30 @@
+version: "2.0"
+
+task:
+  name: testfx-update-copilotinstructionsmd
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: microsoft/testfx
+  pr: 6646
+  base_commit: "84c36ccc9dc0e54c79b330047165e7afdfc850bb"
+  merge_commit: "bc1f97fef21ca234f1827186b6a8ed15c5661764"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/copilot-instructions.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/copilot-instructions.md."
+
+config_edits:
+  - path: .github/copilot-instructions.md
+    tier: 1
+    gold_added: '- Do not modify existing entries in `*.xlf` files unless you are also modifying the corresponding `.resx` file.
+
+      - If you are unsure, comment with the temperature and sentiment of the comment, so we know how to efficiently address you as a member of the team rather than having to tag you.'
+    gold_removed: ''

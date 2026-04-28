@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: wled-fix-copilotinstructionsmd-to-require-mandatory
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: wled/WLED
+  pr: 4987
+  base_commit: "3562fa264e06a5ca6057bef73a62f0117fb74357"
+  merge_commit: "e4cabf8de6d7e1625da2924da99f081962b8656d"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/copilot-instructions.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/copilot-instructions.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/copilot-instructions.md."
+
+config_edits:
+  - path: .github/copilot-instructions.md
+    tier: 1
+    gold_added: "## Before Finishing Work\n\n**CRITICAL: You MUST complete ALL of these steps before marking your work as complete:**\n\n1. **Run the test suite**: `npm test` -- Set timeout to 2+ minutes. NEVER CANCEL.\n   - All tests MUST pass\n   - If tests fail, fix the issue before proceeding\n\n2. **Build at least one hardware environment**: `pio run -e esp32dev` -- Set timeout to 30+ minutes. NEVER CANCEL.\n   - Choose `esp32dev` as it's a common, representative environment\n   - See \"Hardware Compilation\" section above for the full list of common environments\n   - The build MUST complete successfully without errors\n   - If the build fails, fix the issue before proceeding\n   - **DO NOT skip this step** - it validates that firmware compiles with your changes\n\n3. **For web UI changes only**: Manually test the interface\n   - See \"Manual Testing Scenarios\" section below\n   - Verify the UI loads and functions correctly\n\n**If any of these validation steps fail, you MUST fix the issues before finishing. Do NOT mark work as complete with failing builds or tests.**\n\n- **MANDATORY: Always run a hardware build before finishing** (see \"Before Finishing Work\" section below)\n**IMPORTANT: Use these timeout values when running builds:**\n\n- **Web UI build** (`npm run build`): 3 seconds typical - Set timeout to 30 seconds minimum\n- **Test suite** (`npm test`): 40 seconds typical - Set timeout to 120 seconds (2 minutes) minimum  \n- **Hardware builds** (`pio run -e [target]`): 15-20 minutes typical for first build - Set timeout to 1800 seconds (30 minutes) minimum\n  - Subsequent builds are faster due to caching\n  - First builds download toolchains and dependencies which takes significant time\n- **NEVER CANCEL long-running builds** - PlatformIO downloads and compilation require patience\n\n**When validating your changes before finishing, you MUST wait for the hardware build to complete successfully. Set the timeout appropriately and be patient.**\n\n**The GitHub Actions CI workflow will:**\n2. Runs `npm test` to validate build system (MUST pass)\n3. Builds web UI with `npm run build` (automatically run by PlatformIO)\n4. Compiles firmware for ALL hardware targets listed in `default_envs` (MUST succeed for all)\n**To ensure CI success, you MUST locally:**\n- Run `npm test` and ensure it passes\n- Run `pio run -e esp32dev` (or another common environment from \"Hardware Compilation\" section) and ensure it completes successfully\n- If either fails locally, it WILL fail in CI\n\n**Match this workflow in your local development to ensure CI success. Do not mark work complete until you have validated builds locally.**"
+    gold_removed: ''

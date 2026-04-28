@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: taiga-ui-chore-update-agentsmd
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: taiga-family/taiga-ui
+  pr: 13853
+  base_commit: "8041ec5dfe821cd437c6bc8d481326f88d2cff6a"
+  merge_commit: "f3253242fbc45c8c87b408356096915ae11f234d"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+
+config_edits:
+  - path: AGENTS.md
+    tier: 1
+    gold_added: "- For bug fixes, add the smallest failing automated test first and make sure it fails before implementing the fix.\n- Prefer unit or integration tests by default; add E2E coverage only when the bug affects a real user flow across\n  multiple layers.\n\n## Engineering Excellence\n\n- Prefer clarity to cleverness.\n- Write code that is easy to read, easy to change, and hard to misuse.\n- Make the smallest change that fully solves the problem.\n- Preserve existing architecture unless there is a strong reason to improve it.\n\n## Problem-Solving\n\n- Identify the actual constraint, invariant, and bottleneck before coding.\n- Prefer solving the root cause over patching symptoms.\n- Break complex problems into smaller, testable steps.\n- For non-trivial logic, reason explicitly about correctness, complexity, and edge cases.\n- Model the domain with precise types.\n- Make invalid states hard to represent.\n- Prefer discriminated unions over multiple boolean flags.\n- Prefer `satisfies` over `as` when validating object shapes.\n- Avoid unnecessary type-level complexity.\n- Prefer explicit return types for exported APIs.\n- Prefer immutable transformations unless controlled mutation is clearly beneficial.\n- Prefer Angular built-in control flow like `@if`, `@for`, and `@switch` in new templates; keep flow control shallow.\n- Preserve existing legacy `*ngIf` / `*ngFor` code when touching older templates unless there is a clear reason to\n  migrate it as part of the change.\n## Readability\n\n- Write boring code in the best sense: obvious, predictable, and maintainable.\n- Prefer early returns to deep nesting.\n- Keep functions small and focused.\n- Keep one level of abstraction per function when practical.\n- Use names that describe intent and domain meaning.\n- Prefer descriptive parameter names over short or ambiguous abbreviations, especially in callbacks.\n- Rewrite surprising code until it becomes obvious.\n- Never add comments that restate what the code already says. Comment only non-obvious intent, constraints, or gotchas.\n\n- Focus performance work on hot paths, large collections, repeated rendering, and critical startup code.\n- Prefer algorithmic improvements over micro-optimizations.\n- Avoid unnecessary allocations and repeated recomputation in frequently executed code.\n## API Design\n\n- Design APIs that are easy to understand and hard to misuse.\n- Prefer explicit options to boolean traps.\n- Keep signatures small and intention-revealing.\n- Preserve backward compatibility for public APIs unless a breaking change is required.\n- Optimize APIs for readability at the call site.\n\n## Change Discipline\n\n- Keep diffs small and review-friendly.\n- Do not refactor unrelated code.\n- State assumptions clearly.\n- Briefly explain the plan before significant changes.\n- Summarize trade-offs and verification after implementation.\n\n## Deprecated APIs\n\n- Never use deprecated methods, utilities, or constants from libraries, frameworks, or project code.\n- If a deprecated API is encountered, replace it with the recommended alternative.\n\n## Files\n\n- Every new file must end with a trailing newline.\n"
+    gold_removed: ''

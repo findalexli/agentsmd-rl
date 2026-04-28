@@ -1,0 +1,36 @@
+version: "2.0"
+
+task:
+  name: lobehub-docs-make-agents-the-source
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: lobehub/lobehub
+  pr: 14180
+  base_commit: "998c22890d4b5c6189418f94916cd036863fdfd8"
+  merge_commit: "79d5d2286a354452d9642460ff599b5167b4778c"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+
+config_edits:
+  - path: AGENTS.md
+    tier: 1
+    gold_added: "Guidelines for using AI coding agents in this LobeHub repository.\n- Next.js 16 + React 19 + TypeScript\n- SPA inside Next.js with `react-router-dom`\n- `@lobehub/ui`, antd for components; antd-style for CSS-in-JS — **prefer `createStaticStyles` with `cssVar.*`** (zero-runtime); only fall back to `createStyles` + `token` when styles genuinely need runtime computation. See `.cursor/docs/createStaticStyles_migration_guide.md`.\n- react-i18next for i18n; zustand for state management\n- SWR for data fetching; TRPC for type-safe backend\n- Drizzle ORM with PostgreSQL; Vitest for testing\n## Project Structure\n├── apps/\n│   ├── desktop/            # Electron desktop app\n│   ├── cli/                # LobeHub CLI\n│   └── device-gateway/     # Device gateway service\n│   ├── app/                # Next.js App Router (backend API + auth)\n│   │   ├── (backend)/     # API routes (trpc, webapi, etc.)\n│   │   ├── spa/            # SPA HTML template service\n│   │   └── [variants]/(auth)/  # Auth pages (SSR required)\n│   ├── routes/             # SPA page components (Vite)\n│   │   ├── (main)/         # Desktop pages\n│   │   ├── (mobile)/       # Mobile pages\n│   │   ├── (desktop)/      # Desktop-specific pages\n│   │   ├── (popup)/        # Popup window pages\n│   │   ├── onboarding/     # Onboarding pages\n│   │   └── share/          # Share pages\n│   ├── spa/                # SPA entry points and router config\n│   │   ├── entry.web.tsx   # Web entry\n│   │   ├── entry.mobile.tsx\n│   │   ├── entry.desktop.tsx\n│   │   ├── entry.popup.tsx\n│   │   └── router/         # React Router configuration\n## SPA Routes and Features\nSPA-related code is grouped under `src/spa/` (entries + router) and `src/routes/` (page segments). We use a **roots vs features** split: route trees only hold page segments; business logic and UI live in features.\n- **`src/spa/`** – SPA entry points (`entry.web.tsx`, `entry.mobile.tsx`, `entry.desktop.tsx`, `entry.popup.tsx`) and React Router config (`router/`, with `desktopRouter.config.*`, `mobileRouter.config.tsx`, `popupRouter.config.tsx`). Keeps router config next to entries to avoid confusion with `src/routes/`.\n- **`src/routes/` (roots)**\\\n  Only page-segment files: `_layout/index.tsx`, `index.tsx` (or `page.tsx`), and dynamic segments like `[id]/index.tsx`. Keep these **thin**: they should only import from `@/features/*` and compose layout/page, with no business logic or heavy UI.\n\n- **`src/features/`**\\\n  Business components by **domain** (e.g. `Pages`, `PageEditor`, `Home`). Put layout chunks (sidebar, header, body), hooks, and domain-specific UI here. Each feature exposes an `index.ts` (or `index.tsx`) with clear exports.\nWhen adding or changing SPA routes:\n1. In `src/routes/`, add only the route segment files (layout + page) that delegate to features.\n2. Implement layout and page content under `src/features/<Domain>/` and export from there.\n3. In route files, use `import { X } from '@/features/<Domain>'` (or `import Y from '@/features/<Domain>/...'`). Do not add new `features/` folders inside `src/routes/`.\n4. **Register the desktop route tree in both configs:** `src/spa/router/desktopRouter.config.tsx` and `src/spa/router/desktopRouter.config.desktop.tsx` must stay in sync (same paths and nesting). Updating only one can cause **blank screens** if the other build path expects the route. `desktopRouter.sync.test.tsx` guards this invariant — keep it passing.\nSee the **spa-routes** skill (`.agents/skills/spa-routes/SKILL.md`) for the full convention and file-division rules.\n## Development\n### Starting the Dev Environment\n# SPA dev mode (frontend only, proxies API to localhost:3010)\nbun run dev:spa\n# Full-stack dev (Next.js + Vite SPA concurrently)\nbun run dev\nAfter `dev:spa` starts, the terminal prints a **Debug Proxy** URL:\n```plaintext\nDebug Proxy: https://app.lobehub.com/_dangerous_local_dev_proxy?debug-host=http%3A%2F%2Flocalhost%3A9876\n```\nOpen this URL to develop locally against the production backend (app.lobehub.com). The proxy page loads your local Vite dev server's SPA into the online environment, enabling HMR with real server config.\n### Git Workflow\n- **Branch strategy**: `canary` is the development branch (cloud production); `main` is the release branch (periodically cherry-picks from canary)\n- New branches should be created from `canary`; PRs should target `canary`\n- Use rebase for `git pull`\n- Commit messages: prefix with gitmoji\n- Branch format: `<type>/<feature-name>`\n### Package Management\n- `pnpm` for dependency management\n- `bun` to run npm scripts\n- `bunx` for executable npm packages\n### Testing\n```bash\n# Run specific test (NEVER run `bun run test` - takes ~10 minutes)\nbunx vitest run --silent='passed-only' '[file-path]'\n\n# Database package\ncd packages/database && bunx vitest run --silent='passed-only' '[file]'\n```\n- Prefer `vi.spyOn` over `vi.mock`\n- Tests must pass type check: `bun run type-check`\n- After 2 failed fix attempts, stop and ask for help\n\n### i18n\n- Add keys to a namespace file under `src/locales/default/` (e.g. `agent.ts`, `auth.ts`)\n- For dev preview: translate `locales/zh-CN/` and `locales/en-US/`\n- Don't run `pnpm i18n` - CI handles it"
+    gold_removed: ''
+  - path: CLAUDE.md
+    tier: 1
+    gold_added: '@AGENTS.md'
+    gold_removed: ''

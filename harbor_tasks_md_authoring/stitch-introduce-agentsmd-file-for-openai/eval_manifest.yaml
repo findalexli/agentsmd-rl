@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: stitch-introduce-agentsmd-file-for-openai
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: StitchDesign/Stitch
+  pr: 1650
+  base_commit: "62040530b315fcdf8fd47d4598cc1e77c961914f"
+  merge_commit: "807d39fa23439006d158cc312f7cb152f14dd643"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+
+config_edits:
+  - path: AGENTS.md
+    tier: 1
+    gold_added: "# Repository Guidelines\n\n## Project Structure & Module Organization\n- App code: `Stitch/` (Swift, SwiftUI). Extension: `StitchQuickLookExtension/`.\n- Tests: `StitchTests/` (XCTest). Mirror the source layout; use `*Tests.swift`.\n- Docs and assets: `Guides/`, `README_Assets/`, `public/`.\n- CI helpers: `ci_scripts/` (e.g., `ci_pre_xcodebuild.sh` writes `secrets.json`).\n- Xcode project: `Stitch.xcodeproj`, test plan: `Stitch.xctestplan`.\n\n## Build, Test, and Development Commands\n- Open in Xcode: open `Stitch.xcodeproj`, select the `Stitch` scheme, run.\n- CLI build (Debug macOS): `xcodebuild -scheme Stitch -configuration Debug build`.\n- Run tests (macOS): `xcodebuild -scheme Stitch -destination 'platform=macOS' test`.\n- Run tests (iOS sim): `xcodebuild -scheme Stitch -destination 'platform=iOS Simulator,name=iPhone 15' test`.\n- Lint Swift: `swiftlint` (install via Homebrew). Config lives in `.swiftlint.yml`.\n\n## Coding Style & Naming Conventions\n- Swift style enforced by SwiftLint. Key rules: `line_length: 120`, `vertical_whitespace: 2`; several complexity rules are disabled to favor iteration.\n- Use 4-space indentation; Unix line endings; UTF-8.\n- Names: Types `UpperCamelCase`, methods/properties `lowerCamelCase`, constants `lowerCamelCase`.\n- SwiftUI: prefer explicit `.position` vs `.offset` consistently when laying out views.\n\n## Testing Guidelines\n- Framework: XCTest. Derive from `XCTestCase`; test methods start with `test`.\n- File naming: `FeatureNameTests.swift`; keep focused, deterministic tests.\n- Location: add new tests under `StitchTests/` mirroring source folders.\n- Run locally with Xcode or `xcodebuild ... test` (examples above).\n\n## Commit & Pull Request Guidelines\n- Commits: present tense, concise, describe intent. Include PR reference like `(#123)` when applicable.\n  - Examples: `Fix crash on empty graph`, `Handle .overlay views in parser (#1630)`.\n- PRs: clear description, what/why, linked issues, steps to test, screenshots or clips for UI changes.\n- Keep changes scoped; update docs (`Guides/`, `README.md`) and tests when behavior changes.\n\n## Security & Configuration Tips\n- Do not commit secrets. In CI, `ci_scripts/ci_pre_xcodebuild.sh` writes `secrets.json` from environment variables.\n- For local development, you may create a local `secrets.json`; never push real keys.\n- Update bundle IDs and Development Team for both `Stitch` and `StitchQuickLookExtension` targets; enable CloudKit per README.\n"
+    gold_removed: ''

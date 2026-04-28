@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: premailer.net-add-agentsmd
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: milkshakesoftware/PreMailer.Net
+  pr: 448
+  base_commit: "ab75f9c389f671bb9fbcac75e5cb30e4ca503492"
+  merge_commit: "be8edad6f24ec39de5be0346da3df8722a84b05c"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+
+config_edits:
+  - path: AGENTS.md
+    tier: 1
+    gold_added: "# AGENTS.md\n\n## Layout gotcha\n\nThe .sln and all projects live in the nested `PreMailer.Net/` folder, not the repo root. **Run all `dotnet` commands from `./PreMailer.Net/`** (matches `working-directory` in `.github/workflows/dotnetcore.yml`).\n\n```\n./PreMailer.Net/                     <- cwd for dotnet\n  PreMailer.Net.sln\n  PreMailer.Net/       (library, netstandard2.0 + net461, signed)\n  PreMailer.Net.Tests/ (xunit, net9.0)\n  Benchmarks/          (BenchmarkDotNet, net9.0, Exe)\n```\n\n## Commands\n\nFrom `./PreMailer.Net/`:\n\n- Restore/build: `dotnet restore` then `dotnet build -c Release --no-restore`\n- All tests: `dotnet test --no-restore`\n- Single test: `dotnet test --filter \"FullyQualifiedName~PreMailerTests.MethodName\"`\n- Watch tests: `dotnet watch test --project PreMailer.Net.Tests/PreMailer.Net.Tests.csproj`\n- Benchmarks: `dotnet run -c Release --project Benchmarks/Benchmarks.csproj`\n- Pack (manual): `PreMailer.Net/nuget.bat` — calls `dotnet pack ... --include-symbols`\n\n## Framework targets\n\n- Library multi-targets **`netstandard2.0;net461`** — keep code compatible with both. No C# nullable reference types in the library (only Benchmarks has `<Nullable>enable</Nullable>`).\n- `net461` gets an extra `System.Memory` package reference; don't remove it.\n- Assembly is signed with `PreMailer.Net.snk` (`SignAssembly=true`). Any InternalsVisibleTo must include the public key.\n- `LangVersion=latest` is set, so modern C# syntax is fine as long as it compiles for both TFMs.\n\n## Dependencies\n\n- Library depends only on **AngleSharp 1.4.0**. The DOM is an `IHtmlDocument`; expose it via `PreMailer.Document` (see README \"Custom DOM Processing\").\n- Tests use xunit + Moq + coverlet. No fixtures/services required — tests are pure.\n\n## Release flow\n\nPublishing to NuGet is driven by GitHub **Releases**, not branch pushes (see `dotnetcore.yml`):\n\n1. Create a GitHub release; tag like `v2.3.4`.\n2. The `v` prefix is stripped and passed as `-p:Version=`; the release body becomes `PackageReleaseNotes`.\n3. CI runs on `windows-latest` with .NET SDK `10.0.x` and pushes `*.nupkg` using `secrets.NUGET_APIKEY`.\n\nDo not bump versions in the `.csproj` — version is supplied at pack time from the tag.\n\n## Conventions\n\n- README is packed into the nupkg (`PackageReadmeFile`). Keep README changes shippable.\n- `-premailer-*` CSS properties are proxied to HTML attributes (see `AttributeToCss.cs`, tests in `PreMailerTests`). Preserve that contract.\n- Unsupported pseudo-classes/elements must be logged to `InlineResult.Warnings`, not thrown.\n\n## Local CI\n\nREADME documents running workflows with `act`:\n`act push --container-architecture=linux/arm64 --platform ubuntu-slim=node:lts-bullseye`\nNote: the real CI uses `windows-latest`, so `act` won't fully reproduce it."
+    gold_removed: ''

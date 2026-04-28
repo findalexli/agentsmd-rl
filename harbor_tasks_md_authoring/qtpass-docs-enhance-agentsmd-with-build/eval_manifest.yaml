@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: qtpass-docs-enhance-agentsmd-with-build
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: IJHack/QtPass
+  pr: 1152
+  base_commit: "d0684a5f105d08f4bafcf736dc5e65f2d07a4c74"
+  merge_commit: "f464088709a7939daf8fe7fa0cad356c6a39f1ba"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+
+config_edits:
+  - path: AGENTS.md
+    tier: 1
+    gold_added: "# Full build (Qt 6)\n# Full build (Qt 5 alternative)\nqmake && make -j4\n\n# With coverage (Qt 6)\n\n# With coverage (Qt 5 alternative)\nqmake -r CONFIG+=coverage\nmake -j4\nmake lcov\n  - Prerequisite: configure Git commit signing (GPG or SSH signing key) before using `-S`.\n  - Verify signing works: `git commit -S --allow-empty -m \"test signed commit\"` (then reset if needed).\n  - If signing fails, set up your signing key and Git `user.signingkey`/signing format, then retry.\n- Use `QCoreApplication::arguments()` instead of raw `argv[]` for CLI parsing (for proper Unicode handling and cross-platform consistency)\n`/home/user/.password-store`). The literal `\"/\"` is correct here because, in Qt,\n`QDir::cleanPath()` normalises path separators to forward slashes on all\nplatforms — using `QDir::separator()` would silently break the comparison on\nWindows where it returns `\\\\`."
+    gold_removed: ''

@@ -1,0 +1,64 @@
+version: "2.0"
+
+task:
+  name: redpanda-skill-make-createbackportbranch-reusable-across
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: redpanda-data/redpanda
+  pr: 30248
+  base_commit: "c21df75137e92f05915dbdb7333816dcf4ffce49"
+  merge_commit: "2a3c5a420b6d265c2b77091f5bb4b33a6f1abb19"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/create-backport-branch/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/create-backport-branch/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/create-backport-branch/SKILL.md."
+
+config_edits:
+  - path: .claude/skills/create-backport-branch/SKILL.md
+    tier: 1
+    gold_added: 'gh api "repos/{owner}/{repo}/pulls/$pr_number/commits" --paginate --jq ''[.[].sha[0:10]]|join(" ")''
+
+      `gh` resolves the `{owner}` and `{repo}` placeholders from the git remote of the current directory (see [`gh api` docs](https://cli.github.com/manual/gh_api)). Run this from a checkout of the repo that owns the PR.
+
+
+      After all commits are cherry-picked successfully, resolve the source-PR URL dynamically:
+
+
+      ```bash
+
+      pr_url=$(gh pr view $pr_number --json url --jq .url)
+
+      ```
+
+
+      Then emit this report to stdout:
+
+      Backport of PR ${pr_url}
+
+      ## Conflict details
+
+
+      If `generated_files_touched` is non-empty, append this warning section:
+
+      ## ⚠️ Generated files
+
+
+      The following files were cherry-picked and may need regeneration:
+
+
+      **Optional: machine-readable report.** If the `SKILL_REPORT_FILE` env var is set (callers like GitHub Actions workflows use this), write the exact same report text to that file path. The file content is designed to be usable verbatim as the body of the backport PR. Humans invoking the skill directly do not set this variable and simply read the report on stdout.
+
+      '
+    gold_removed: ''

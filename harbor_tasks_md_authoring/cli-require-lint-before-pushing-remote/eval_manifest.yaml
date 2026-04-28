@@ -1,0 +1,33 @@
+version: "2.0"
+
+task:
+  name: cli-require-lint-before-pushing-remote
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: entireio/cli
+  pr: 1003
+  base_commit: "b487fe881a365ef761210b6676881bd6869ba729"
+  merge_commit: "cbf5d9b396015f0701446a8d84a860c2e258555b"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+
+config_edits:
+  - path: CLAUDE.md
+    tier: 1
+    gold_added: '### Before Any Push Or Remote Code Update (REQUIRED)
+
+
+      Before pushing commits or otherwise sending code changes to any remote, run `mise run lint` on the current tree and ensure it passes. If `mise run fmt` changed files, rerun `mise run lint` on the formatted tree before pushing.
+
+      '
+    gold_removed: ''

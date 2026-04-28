@@ -1,0 +1,30 @@
+version: "2.0"
+
+task:
+  name: restate-agentsmd-updates
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: restatedev/restate
+  pr: 4361
+  base_commit: "42114b85003e0493fb7dba9a31493d9509b8c6ad"
+  merge_commit: "ad0a4392ecfb4670961c081fef7b038e5163280f"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+
+config_edits:
+  - path: AGENTS.md
+    tier: 1
+    gold_added: '4. **Lint check** (if you modified Rust files): Run `cargo clippy --all-features --all-targets --workspace -- -D warnings` to check for lint warnings.
+
+      6. If you are making changes to Cargo.toml files, make sure to also regenerate workspace-hack (cargo hakari generate)'
+    gold_removed: ''

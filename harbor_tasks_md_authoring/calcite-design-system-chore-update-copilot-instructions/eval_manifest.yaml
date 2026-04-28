@@ -1,0 +1,42 @@
+version: "2.0"
+
+task:
+  name: calcite-design-system-chore-update-copilot-instructions
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: Esri/calcite-design-system
+  pr: 14233
+  base_commit: "3b73344eebbe9eb1cdf2b9d18f11fa5e1a70f703"
+  merge_commit: "275eb377019ac05f71abcd173ec25e6bad13b886"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/copilot-instructions.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/copilot-instructions.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/copilot-instructions.md."
+
+config_edits:
+  - path: .github/copilot-instructions.md
+    tier: 1
+    gold_added: '- Some workspace packages are internal or private tooling packages. Only change them when the task explicitly targets those package-level concerns.
+
+      - When browser baseline updates or modern web development resources suggest a new pattern, propose it with supporting references (e.g., MDN, web.dev, Baseline status) and wait for approval before applying it.
+
+      - Use strict TypeScript typings and avoid unnecessary type widening.
+
+      - Prefer `*.browser.e2e.tsx` for new component tests that use **Vitest locators** (use the project’s established locator patterns first). Legacy `*.e2e.ts` tests still exist and continue to run, so update them when required by the changed behavior.
+
+      - Always use CSS classes when adding/updating stories instead of repeating styles.
+
+      - When helpful, label the type of review comment up front (for example, `fixme` or `suggestion`) so the intent is clear.'
+    gold_removed: ''

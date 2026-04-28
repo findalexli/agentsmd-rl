@@ -1,0 +1,24 @@
+version: "2.0"
+
+task:
+  name: awesome-cursorrules-expo-cursor-rules-update-navigation
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: PatrickJS/awesome-cursorrules
+  pr: 141
+  base_commit: "b962e13eb9ae63e9547e1ef3b9378c58b77118bb"
+  merge_commit: "c78546c52ba4fe555e9ee5c21a2c894d9d89513f"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in rules/react-native-expo-cursorrules-prompt-file/.cursorrules."
+
+config_edits:
+  - path: rules/react-native-expo-cursorrules-prompt-file/.cursorrules
+    tier: 1
+    gold_added: '  "Implement proper navigation using Expo Router",'
+    gold_removed: ''

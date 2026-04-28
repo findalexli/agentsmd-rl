@@ -1,0 +1,36 @@
+version: "2.0"
+
+task:
+  name: torchjd-chore-add-claudemd
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: SimplexLab/TorchJD
+  pr: 567
+  base_commit: "121a9b0c4f88401d8d6a7307d7da67b398b70db2"
+  merge_commit: "46962c2be7788503c151007fa013f761a6238ef2"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+
+config_edits:
+  - path: AGENTS.md
+    tier: 1
+    gold_added: "- Only generate docstrings for public functions or functions that contain more than 4 lines of code.\n- Use the Sphinx style for Python docstrings (e.g. :param my_param: Does something) and never\n  include a :returns: key.\n- The code you generate should always contain type hints in the function prototypes (including\n  return type hints of None), but type hints are not needed when initializing variables.\n- We use uv for everything (e.g. we do `uv run python ...` to run some python code, and\n  `uv run pytest tests/unit` to run unit tests). Please prefer `uv run python -c ...` over\n  `python3 -c ...`\n- After generating code, please run `uv run ty check`, `uv run ruff check` and `uv run ruff format`.\n  Fix any error.\n- After changing anything in `src` or in `tests/unit` or `tests/doc`, please identify the affected\n  test files in `tests/` and run them with e.g.\n  `uv run pytest tests/unit/aggregation/test_upgrad.py -W error`. Fix any error, either in the\n  changes you've made or by adapting the tests to the new specifications."
+    gold_removed: ''
+  - path: CLAUDE.md
+    tier: 1
+    gold_added: '@AGENTS.md'
+    gold_removed: ''

@@ -1,0 +1,65 @@
+version: "2.0"
+
+task:
+  name: shopsys-improved-skill-for-sprint-summary
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: shopsys/shopsys
+  pr: 4578
+  base_commit: "68a587ba26440761f23e44d1f2f1f0f9a8e041ef"
+  merge_commit: "84f30b96eb9d3bc9b35da8de8d95fc440da16ae0"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .agents/skills/sprint-summary/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .agents/skills/sprint-summary/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .agents/skills/sprint-summary/SKILL.md."
+
+config_edits:
+  - path: .agents/skills/sprint-summary/SKILL.md
+    tier: 1
+    gold_added: 'You can generate the CSV here: https://shopsys.atlassian.net/issues/?filter=12564
+
+      Before exporting, update the sprint number in the filter to the sprint you want to summarize.
+
+      To export the CSV, click the three dots in the top right corner and select "Export" -> "CSV - filter fields".
+
+
+      **Required:** when Playwright MCP is available, generate screenshots for UX-relevant tickets as part of the workflow (do not wait for a separate prompt). Default target URL is the review environment `https://<release-branch>.odin.shopsys.cloud/` (e.g. `19-0.odin.shopsys.cloud` for branch `19.0`); confirm or override with the user before starting.
+
+
+      5. After the user decides whether to open the file in PhpStorm, instruct them to create the article in Confluence:
+
+
+      ```
+
+      Please create the article in Confluence here:
+
+      https://shopsys.atlassian.net/wiki/spaces/PRG/folder/2698510337?atlOrigin=eyJpIjoiMTIzN2EwNmQyYzMyNGFiY2I1OTU1YmVkMjk4YTk1MTciLCJwIjoiYyJ9
+
+      ```
+
+
+      6. Always include the following link with instructions for sending the summary to the maillist:
+
+
+      ```
+
+      For instructions on sending this summary to the maillist, see:
+
+      https://docs.google.com/document/d/172xIeT30FWxKYBh-ZedV5CRxsCv86ZkXMPdiyDuE0jU/edit?pli=1&tab=t.0
+
+      ```
+
+      '
+    gold_removed: ''

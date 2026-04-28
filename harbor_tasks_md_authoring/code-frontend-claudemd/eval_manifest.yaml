@@ -1,0 +1,73 @@
+version: "2.0"
+
+task:
+  name: code-frontend-claudemd
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: modrinth/code
+  pr: 4433
+  base_commit: "2de222bca0b1fed31c6b14dfca84f7d5b395f877"
+  merge_commit: "c82a68f52cfff8b3c91cae7a52f6126ea44dc351"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+
+config_edits:
+  - path: CLAUDE.md
+    tier: 1
+    gold_added: '## Frontend
+
+
+      There are two similar frontends in the Modrinth monorepo, the website (apps/frontend) and the app frontend (apps/app-frontend).
+
+
+      Both use Tailwind v3, and their respective configs can be seen at `tailwind.config.ts` and `tailwind.config.js` respectively.
+
+
+      Both utilize shared and common components from `@modrinth/ui` which can be found at `packages/ui`, and stylings from `@modrinth/assets` which can be found at `packages/assets`.
+
+
+      Both can utilize icons from `@modrinth/assets`, which are automatically generated based on what''s available within the `icons` folder of the `packages/assets` directory. You can see the generated icons list in `generated-icons.ts`.
+
+
+      Both have access to our dependency injection framework, examples as seen in `packages/ui/src/providers/`. Ideally any state which is shared between a page and it''s subpages should be shared using this dependency injection framework.
+
+
+      ### Website (apps/frontend)
+
+
+      Before a pull request can be opened for the website, `pnpm web:fix` and `pnpm web:intl:extract` must be run, otherwise CI will fail.
+
+
+      To run a development version of the frontend, you must first copy over the relevant `.env` template file (prod, staging or local, usually prod) within the `apps/frontend` folder into `apps/frontend/.env`. Then you can run the frontend by running `pnpm web:dev` in the root folder.
+
+
+      ### App Frontend (apps/app-frontend)
+
+
+      Before a pull request can be opened for the website, you must CD into the `app-frontend` folder; `pnpm fix` and `pnpm intl:extract` must be run, otherwise CI will fail.
+
+
+      To run a development version of the app frontend, you must first copy over the relevant `.env` template file (prod, staging or local, usually prod) within `packages/app-lib` into `packages/app-lib/.env`. Then you must run the app itself by running `pnpm app:dev` in the root folder.
+
+
+      ### Localization
+
+
+      Refer to `.github/instructions/i18n-convert.instructions.md` if the user asks you to perform any i18n conversion work on a component, set of components, pages or sets of pages.
+
+      '
+    gold_removed: ''

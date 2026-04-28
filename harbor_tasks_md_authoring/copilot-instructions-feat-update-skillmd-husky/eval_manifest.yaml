@@ -1,0 +1,24 @@
+version: "2.0"
+
+task:
+  name: copilot-instructions-feat-update-skillmd-husky
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: SebastienDegodez/copilot-instructions
+  pr: 25
+  base_commit: "95d81a13f05b40bbcddccde60ea0f57715f91b09"
+  merge_commit: "2c701224004a2f230d27ece5ac277e5b9cbd1174"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/setup-husky-dotnet/SKILL.md."
+
+config_edits:
+  - path: skills/setup-husky-dotnet/SKILL.md
+    tier: 1
+    gold_added: '- `.NET SDK 10.0+`'
+    gold_removed: ''

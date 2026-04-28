@@ -1,0 +1,24 @@
+version: "2.0"
+
+task:
+  name: cairo-agentsmd-to-prevent-bots-from
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: starkware-libs/cairo
+  pr: 8386
+  base_commit: "07b4ae1d0224140189c93ad50e11ec2c1c87ac39"
+  merge_commit: "3f042a1bac58b17444cf54edd38daebc5ae75061"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+
+config_edits:
+  - path: AGENTS.md
+    tier: 1
+    gold_added: Do not read or grep crates/cairo-lang-syntax/src/node/ast.rs. Instead read crates/cairo-lang-syntax-codegen/src/generator.rs.
+    gold_removed: ''

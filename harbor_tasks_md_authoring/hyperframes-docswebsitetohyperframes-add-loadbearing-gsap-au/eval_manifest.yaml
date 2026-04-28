@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: hyperframes-docswebsitetohyperframes-add-loadbearing-gsap-au
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: heygen-com/hyperframes
+  pr: 364
+  base_commit: "733d454d1166162ba32513caf9a84c838081d157"
+  merge_commit: "309c74e864423c1151f77891c5c654f8e1ae4162"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/website-to-hyperframes/references/step-6-build.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/website-to-hyperframes/references/step-6-build.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/website-to-hyperframes/references/step-6-build.md."
+
+config_edits:
+  - path: skills/website-to-hyperframes/references/step-6-build.md
+    tier: 1
+    gold_added: "\n---\n\n## Load-bearing rules for animation authoring\n\nRules below came out of two independent website-to-hyperframes builds (2026-04-20) where compositions lint-clean and still ship broken — elements that never appear, ambient motion that doesn't scrub, entrance tweens that silently kill their target. The linter cannot catch these; the rules must be followed by the author.\n\n- **No iframes for captured content.** Iframes do not seek deterministically with the timeline — the capture engine cannot scrub inside them, so they appear frozen (or blank) in the rendered output. If the source you're stylizing is a live web app, use the screenshots from `capture/` as stacked panels or layered images, not live embeds.\n\n- **Never stack two transform tweens on the same element.** A common failure: a `y` entrance plus a `scale` Ken Burns on the same `<img>`. The second tween's `immediateRender: true` writes the element's initial state at construction time, overwriting whatever the first tween set — leaving the element invisible or offscreen with no lint warning. A secondary mechanism: `tl.from()` resets to its declared \"from\" state when the playhead is seeked past the timeline's end, so an element that looked correct in linear playback vanishes in the capture engine's non-linear seek. Fix one of two ways:\n\n  ```html\n  <!-- BAD: two transforms on one element -->\n  <img class=\"hero\" src=\"...\" />\n  <script>\n    tl.from(\".hero\", { y: 50, opacity: 0, duration: 0.6 }, 0);\n    tl.to(\".hero\", { scale: 1.04, duration: beat }, 0); // kills the entrance\n  </script>\n\n  <!-- GOOD option A: combine into one tween -->\n  <script>\n    tl.fromTo(\n      \".hero\",\n      { y: 50, opacity: 0, scale: 1.0 },\n      { y: 0, opacity: 1, scale: 1.04, duration: beat, ease: \"none\" },\n      0,\n    );\n  </script>\n\n  <!-- GOOD option B: split across parent + child -->\n  <div class=\"hero-wrap\"><img class=\"hero\" src=\"...\" /></div>\n  <script>\n    tl.from(\".hero-wrap\", { y: 50, opacity: 0, duration: 0.6 }, 0); // entrance on parent\n    tl.to(\".hero\", { scale: 1.04, duration: beat }, 0); // Ken Burns on child\n  </script>\n  ```\n\n- **Prefer `tl.fromTo()` over `tl.from()` inside `.clip` scenes.** `gsap.from()` sets `immediateRender: true` by default, which writes the \"from\" state at timeline construction — before the `.clip` scene's `data-start` is active. Elements can flash visible, start from the wrong position, or skip their entrance entirely when the scene is seeked non-linearly (which the capture engine does). Explicit `fromTo` makes the state at every timeline position deterministic:\n\n  ```js\n  // BRITTLE: immediateRender interacts badly with scene boundaries\n  tl.from(el, { opacity: 0, y: 50, duration: 0.6 }, t);\n\n  // DETERMINISTIC: state is defined at both ends, no immediateRender surprise\n  tl.fromTo(el, { opacity: 0, y: 50 }, { opacity: 1, y: 0, duration: 0.6 }, t);\n  ```\n\n- **Ambient pulses must attach to the seekable `tl`, never bare `gsap.to()`.** Auras, shimmers, gentle float loops, logo breathing — all of these must be added to the scene's timeline, not fired standalone. Standalone tweens run on wallclock time and do not scrub with the capture engine, so the effect is absent in the rendered video even though it looks correct in the studio preview:\n\n  ```js\n  // BAD: lives outside the timeline, never renders in capture\n  gsap.to(\".aura\", { scale: 1.08, yoyo: true, repeat: 5, duration: 1.2 });\n\n  // GOOD: seekable, deterministic, renders\n  tl.to(\".aura\", { scale: 1.08, yoyo: true, repeat: 5, duration: 1.2 }, 0);\n  ```\n\n- **Hard-kill every scene boundary, not just captions.** The caption hard-kill rule above generalizes: any element whose visibility changes at a beat boundary needs a deterministic `tl.set()` kill after its fade, because later tweens on the same element (or `immediateRender` from a sibling tween) can resurrect it. Apply to every element with an exit animation:\n\n  ```js\n  tl.to(el, { opacity: 0, duration: 0.3 }, beatEnd);\n  tl.set(el, { opacity: 0, visibility: \"hidden\" }, beatEnd + 0.3); // deterministic kill\n  ```"
+    gold_removed: ''

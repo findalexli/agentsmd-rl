@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: claude-code-game-studios-fix-missing-allowedtools-in-archite
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: Donchitos/Claude-Code-Game-Studios
+  pr: 36
+  base_commit: "666e0fcb5ad3f5f0f56e1219e8cf03d44e62a49a"
+  merge_commit: "9ccc5440af4b6e9cfa0014c993cf37c6a81f4222"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/architecture-decision/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/story-done/SKILL.md."
+
+config_edits:
+  - path: .claude/skills/architecture-decision/SKILL.md
+    tier: 1
+    gold_added: 'allowed-tools: Read, Glob, Grep, Write, Edit, Task, AskUserQuestion'
+    gold_removed: ''
+  - path: .claude/skills/story-done/SKILL.md
+    tier: 1
+    gold_added: 'allowed-tools: Read, Glob, Grep, Bash, Write, Edit, AskUserQuestion, Task'
+    gold_removed: ''

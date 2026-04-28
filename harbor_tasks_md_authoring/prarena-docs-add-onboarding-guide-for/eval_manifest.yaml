@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: prarena-docs-add-onboarding-guide-for
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: aavetis/PRarena
+  pr: 59
+  base_commit: "e40fd18aed13fbce6581cee073bba39285f13362"
+  merge_commit: "ecec5ecd6d5c9ce89800dad116c7b1549a13973d"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+
+config_edits:
+  - path: AGENTS.md
+    tier: 1
+    gold_added: "# Repository-wide instructions\n\n## Onboarding a new agent into PRarena\n\nFollow every step below when we start tracking a new coding agent. Skipping items here is what caused the Jules onboarding fixes—treat this as the single source of truth.\n\n### 1. Gather canonical agent metadata first\n- Decide on the agent `key` (lowercase slug with no spaces). This drives CSV column names and template lookups.\n- Record the public-facing names:\n  - `display`: short label for tables.\n  - `long_name`: full name for the leaderboard cards.\n- Pick a distinctive color triple (total bar, merged bar, line). Reuse the soft/bright/dark convention already in `generate_chart.py`.\n- Collect every GitHub search URL the site surfaces. We need four queries per agent:\n  1. **Total PRs** – `is:pr+head:<branch-prefix>/` or `is:pr+author:<bot>`\n  2. **Merged PRs** – add `+is:merged`\n  3. **Ready PRs** – add `+-is:draft`\n  4. **Draft PRs** – add `+is:draft` (used only in the UI, but keep it in metadata)\n  Verify each query manually in the browser before codifying it.\n\n### 2. Wire the GitHub collection pipeline (`collect_data.py`)\n- Extend the `Q` dictionary with three entries for the new agent (`total`, `merged`, `nondraft`). Match the naming pattern: `<key>_total`, `<key>_merged`, `<key>_nondraft`.\n- Update the `row` list and the CSV header block right below it to append the new metrics. Order matters – keep all metrics grouped by agent, and ensure the header labels exactly match the keys from `Q`.\n- Sanity-check that every key referenced in `row` is defined in `Q`; the script fails later if you miss one.\n- Historical data:\n  - Update the first row in both `data.csv` and `data_backup.csv` so the header now contains the three new `<key>_*` columns. If a migration is needed, either backfill realistic values by querying the API per timestamp (patterned after `scripts/add_nondraft_final.py`) or set placeholder zeros with a follow-up backfill plan. Do not leave `Unnamed:` columns in the CSV.\n  - If you add a migration helper, include the new agent in any `agents = [...]` or query maps inside `scripts/` (e.g., `scripts/add_nondraft_final.py`).\n\n### 3. Extend the analytics & templating engine (`generate_chart.py`)\n- Add a full entry for the agent inside the global `AGENTS` list (key, labels, colors, and all four query URLs). This single list feeds the README template, GitHub Pages template, and chart toggles.\n- Touch every hard-coded per-agent section:\n  - Percentage calculations: duplicate the existing lambda blocks for `df[\"<key>_percentage\"]` and `df[\"<key>_total_percentage\"]`.\n  - Matplotlib bars and lines: create the paired `bars_<key>_total`, `bars_<key>_merged`, and the line trace for success rate, including color and label strings.\n  - Success-rate annotations: extend the annotation block so the new agent prints values (color, offsets, formatting).\n  - JSON export: add the color triple to the `colors` dictionary and include the new key in every `for agent in [...]` list. (Search for `for agent in [\"copilot\", \"codex\", \"cursor\", \"devin\", \"codegen\", \"jules\"]` and append your new key everywhere.)\n- Confirm `build_stats` and downstream calculations automatically pick up the new columns because they iterate over `AGENTS`.\n\n### 4. Update front-end logic that relies on explicit agent lists\n- In `templates/index_template.html`, expand the regex used to match agent labels (`labelLower.match(/(...)/)`) to include the new key. This avoids missing toggle behavior.\n- No manual edits are required in `docs/index.html`; running the generator will rebuild it from the template.\n\n### 5. Regenerate derived assets (automated outputs)\n- Run `python collect_data.py` once to verify API connectivity and append a fresh data row that includes the new columns. This also updates `docs/index.html` timestamps.\n- Run `python generate_chart.py` to:\n  - Recompute the chart image (`docs/chart.png`).\n  - Emit `docs/chart-data.json` with the expanded datasets.\n  - Re-render `README.md` and `docs/index.html` from their templates. Never hand-edit those generated files.\n- Open the rendered README and `docs/index.html` to visually confirm the new agent appears everywhere (leaderboard card, chart toggles, data sources, stats table).\n\n### 6. Final validation\n- Load `data.csv` with pandas (`python - <<'PY' ...`) to ensure no `Unnamed` columns remain and the new `<key>_*` headers exist.\n- Skim the git diff for only intentional changes (especially large CSV diffs). Make sure both `data.csv` and `data_backup.csv` stay in sync.\n- Commit once everything builds, then create the PR via the automation tool.\n\nStick to this checklist whenever onboarding an agent; deviating caused the regressions we had with Jules."
+    gold_removed: ''

@@ -1,0 +1,53 @@
+version: "2.0"
+
+task:
+  name: fcitx5-mcbopomofo-set-up-instructions-for-copilot
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: openvanilla/fcitx5-mcbopomofo
+  pr: 232
+  base_commit: "025e83d834bf2746424c80ae603aaf65b3247dbf"
+  merge_commit: "0c264edcf30c01e1e9b5d657124a1fe3d51adf2a"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/copilot-instructions.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/copilot-instructions.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/copilot-instructions.md."
+
+config_edits:
+  - path: .github/copilot-instructions.md
+    tier: 1
+    gold_added: 'When reviewing code:
+
+
+      - Do NOT generate pull request overviews.
+
+      - Do NOT generate explainers.
+
+      - Do NOT summarize what a diff chunk does.
+
+      - Only point out issues that are of medium severity or higher.
+
+      - Do point out spelling errors in symbol names such as those of variables, classes, methods, and functions.
+
+      - Do point out spelling or grammar errors in comments.
+
+      - Do point out style issues such as extraneous spaces (for example `a  = b;`).
+
+      - Do point out spelling errors in commit messages.
+
+      - Do point out issues surrounding C++ `auto` uses. Suggest when `const auto&` can be used, for example.
+
+      '
+    gold_removed: ''

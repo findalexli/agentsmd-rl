@@ -66,6 +66,75 @@ AGENT_INSTRUCTION_RE = re.compile("|".join(AGENT_INSTRUCTION_PATTERNS), re.IGNOR
 DOC_RE = re.compile("|".join(DOC_PATTERNS), re.IGNORECASE)
 CONFIG_RE = re.compile("|".join(CONFIG_PATTERNS), re.IGNORECASE)
 
+# Scaffold-time tier-1 patterns: what the deterministic verbatim-grep scaffolder
+# (scripts/scaffold_markdown_only.py) is willing to build a task from. Slightly
+# broader than AGENT_INSTRUCTION_PATTERNS — accepts any .md inside .claude/skills
+# (not just SKILL.md), any file under .cursor/rules/, prompt files, etc.
+# Mirrors the historical scaffold_markdown_only.TIER1_RE.
+TIER1_SCAFFOLD_PATTERNS: list[str] = [
+    r"(?:^|/)(CLAUDE\.md|CLAUDE\.local\.md|AGENTS\.md|CONVENTIONS\.md|SKILL\.md|"
+    r"\.cursorrules|\.windsurfrules|\.clinerules|\.continuerules)$",
+    r"^\.claude/(rules|skills|agents)/.+\.md$",
+    r"^\.cursor/rules/.+",
+    r"^\.github/(copilot-instructions\.md|skills/.+SKILL\.md|prompts/.+\.prompt\.md)$",
+    r"^\.agents?/skills/.+SKILL\.md$",
+    r"^\.opencode/skills/.+SKILL\.md$",
+    r"^\.codex/skills/.+SKILL\.md$",
+    # Anthropic-style top-level skills/<name>/ layout: SKILL.md sits next to
+    # forms.md, reference.md, CHANGELOG.md, etc. — sibling .md files are still
+    # scaffold-eligible (verbatim-grep works on text).
+    r"^skills/[^/]+/.+\.md$",
+    # Same pattern under each skill convention — admit non-SKILL.md text
+    # rule/reference files (e.g. .claude/skills/foo/references/api.md is
+    # already covered by the .claude/(rules|skills|agents)/.+\.md$ above).
+    r"^\.agents?/skills/[^/]+/.+\.md$",
+    r"^\.opencode/skills/[^/]+/.+\.md$",
+    r"^\.codex/skills/[^/]+/.+\.md$",
+    r"^\.github/skills/[^/]+/.+\.md$",
+    r"\.mdc$",
+]
+TIER1_SCAFFOLD_RE = re.compile("|".join(TIER1_SCAFFOLD_PATTERNS), re.IGNORECASE)
+
+# Discovery-time tier-1 patterns: broad recall for the cross-repo discover →
+# Gemini-post-judge pipeline. Anthropic's official skills layout
+# (github.com/anthropics/skills) puts adjacent files like scripts/build.py,
+# references/api.md, assets/template.html, CHANGELOG.md, LICENSE.txt next to
+# SKILL.md. PRs that touch those are real skill-authoring work, but the
+# scaffolder cannot deterministically build from them — Gemini decides.
+SKILL_DIR_BROAD_PATTERNS: list[str] = [
+    r"^skills/[^/]+/.+",            # top-level skills/<name>/...  (anthropics/skills layout)
+    r"^\.claude/skills/[^/]+/.+",   # any file under .claude/skills/<name>/
+    r"^\.agents?/skills/[^/]+/.+",
+    r"^\.opencode/skills/[^/]+/.+",
+    r"^\.codex/skills/[^/]+/.+",
+    r"^\.github/skills/[^/]+/.+",
+]
+TIER1_DISCOVERY_PATTERNS: list[str] = TIER1_SCAFFOLD_PATTERNS + SKILL_DIR_BROAD_PATTERNS
+TIER1_DISCOVERY_RE = re.compile("|".join(TIER1_DISCOVERY_PATTERNS), re.IGNORECASE)
+
+# Binary file extensions — common in skill assets/ subdirectories. The
+# verbatim-grep scaffolder cannot test these, but discovery may include them.
+BINARY_EXT_RE = re.compile(
+    r"\.(png|jpe?g|gif|webp|svg|ico|pdf|zip|tar|gz|tgz|bz2|xz|"
+    r"woff2?|ttf|otf|eot|"
+    r"mp3|mp4|mov|avi|webm|wav|"
+    r"wasm|so|dylib|dll|exe|class|jar)$",
+    re.IGNORECASE,
+)
+
+
+def is_tier1_scaffold(path: str) -> bool:
+    """File is something the deterministic verbatim-grep scaffolder can build a
+    markdown_authoring task from (text rule file or skill .md)."""
+    return bool(TIER1_SCAFFOLD_RE.search(path))
+
+
+def is_tier1_discoverable(path: str) -> bool:
+    """File is part of a skill / rule-file directory hierarchy. Used by the
+    cross-repo discovery pipeline to keep skill-adjacent PRs (scripts/,
+    references/, assets/) in the candidate pool — Gemini judges them."""
+    return bool(TIER1_DISCOVERY_RE.search(path))
+
 NON_CODE_EXTENSIONS = frozenset({
     ".md", ".rst", ".txt", ".toml", ".cfg", ".ini",
     ".yml", ".yaml", ".json", ".lock", ".sum",

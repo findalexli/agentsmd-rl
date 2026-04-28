@@ -1,0 +1,24 @@
+version: "2.0"
+
+task:
+  name: prefect-update-agentsmd-files-for-287cee7
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: PrefectHQ/prefect
+  pr: 21573
+  base_commit: "287cee702260b4f4f190fb70246c192b0dded172"
+  merge_commit: "0a42e49bcebefdac52aa73d8d4741b969117093b"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in src/prefect/utilities/AGENTS.md."
+
+config_edits:
+  - path: src/prefect/utilities/AGENTS.md
+    tier: 1
+    gold_added: '- **`generate_parameter_schema` silently downgrades unsupported parameter types to `Any`.** When a parameter''s type raises `ValueError`, `TypeError`, or `PydanticInvalidForJsonSchema` during JSON schema generation (e.g., `Callable`, custom types Pydantic can''t serialize), the type is replaced with `Any` in the output schema without warning. If a flow parameter shows up as `Any` in the schema, the declared type is not JSON-schema-compatible.'
+    gold_removed: ''

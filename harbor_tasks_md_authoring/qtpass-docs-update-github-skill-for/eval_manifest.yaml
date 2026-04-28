@@ -1,0 +1,30 @@
+version: "2.0"
+
+task:
+  name: qtpass-docs-update-github-skill-for
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: IJHack/QtPass
+  pr: 1178
+  base_commit: "ecef4e7849e55e2abffac95d9fc7be965822d4ca"
+  merge_commit: "030fe38d73aeb70edb2abd38d96a83dbd60a3323"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .opencode/skills/qtpass-github/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .opencode/skills/qtpass-github/SKILL.md."
+
+config_edits:
+  - path: .opencode/skills/qtpass-github/SKILL.md
+    tier: 1
+    gold_added: 'gh api graphql -f query=''{ repository(owner: "<OWNER>", name: "<REPO>") { pullRequest(number: <PR_NUMBER>) { id reviewThreads(first: 20) { nodes { id isResolved } } } } }'' | jq -r ''.data.repository.pullRequest.reviewThreads.nodes[] | "\(.id) \(.isResolved)"''
+
+      gh api "repos/<OWNER>/<REPO>/pulls/<PR_NUMBER>/reviews" -X POST -f "body"="All issues addressed in recent commits" -f "event"="COMMENT"'
+    gold_removed: ''

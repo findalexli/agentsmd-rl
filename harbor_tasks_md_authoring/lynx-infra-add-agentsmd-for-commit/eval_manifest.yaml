@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: lynx-infra-add-agentsmd-for-commit
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: lynx-family/lynx
+  pr: 4414
+  base_commit: "76633aea33719583e72e185030934e046171ab2b"
+  merge_commit: "0d2af8c3cc6ada47c0ba7988c3a1ba28a4b73f3e"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+
+config_edits:
+  - path: AGENTS.md
+    tier: 1
+    gold_added: "## Conventions\n\n- All commit messages MUST be written in **English**.\n- Preferred format:\n\n  Header:\n  `[Type][Scope] Short imperative summary`\n\n  Body (details):\n  `- What changed`\n  `- Why it was needed`\n  `- How it was verified / impacts`\n\n  Footer (optional):\n  `issue: #12345`\n\n### Type\n- `Feature`, `BugFix`, `Optimize`, `Refactor`, `Infra`, `Docs`, `Test`, etc., using capitalized English.\n\n### Scope\n- Module or subsystem name (e.g., `Clay`, `Layout`, `Headers`, `Painting`, `Harmony`, `Android`, `iOS`, etc.), optional but recommended.\n"
+    gold_removed: ''

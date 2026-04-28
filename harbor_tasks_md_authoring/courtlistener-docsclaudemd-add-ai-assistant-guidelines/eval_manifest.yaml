@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: courtlistener-docsclaudemd-add-ai-assistant-guidelines
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: freelawproject/courtlistener
+  pr: 6683
+  base_commit: "47d4284eeb1067abaf2f30bd6e9bfa972b3bb868"
+  merge_commit: "27ad946a4b709da31874b810009738f4aff698e9"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+
+config_edits:
+  - path: CLAUDE.md
+    tier: 1
+    gold_added: "# CourtListener Development Guidelines\n\nThese guidelines help AI assistants work effectively on CourtListener. Rules marked as MUST are mandatory for AI agents.\n\nRules and guidance on our wiki is written with flexibility for humans, but MUST be strictly followed by AI agents. For example, if it says that something \"should\" be done, that's guidance to humans. AIs MUST do those things.\n\n\n## Developer Guides\n\n- **Getting Started**: https://github.com/freelawproject/courtlistener/wiki/Getting-Started-Developing-CourtListener/\n\n\n## Project Structure\n\n```\ncl/                     # Main Django project\n├── assets/            # Static files, templates, React components\n│   ├── templates/     # Django templates (base.html, etc.)\n│   ├── react/         # React/TypeScript components\n│   └── static-global/ # Global CSS/JS\n├── lib/               # Shared utilities\n├── tests/             # Test utilities and base classes\n└── [app]/             # Individual Django apps (search, alerts, etc.)\n```\n\n\n## Coding Rules\n\n1. **URLs**: MUST use Django's `reverse()` function. NEVER hardcode URLs in backend code.\n   ```python\n   # Good\n   from django.urls import reverse\n   url = reverse(\"some_view_name\", kwargs={\"pk\": 1})\n\n   # Bad\n   url = \"/some/hardcoded/path/1/\"\n   ```\n\n2. **Type Hints**: New code MUST include type hints and pass MyPy. Upgrade lint.yml with new files as you go.\n\n3. **Unused Code**: MUST delete unused code created during a task.\n\n4. **API Version**: Always use API v4, never v3. v3 is deprecated.\n\n5. **Management Commands**: Do not add `cl_` to the names of management commands. It's an obsolete practice.\n\n6. **Async Patterns**: Many views use async. Use `sync_to_async` and `async_to_sync` from `asgiref.sync` when needed.\n\n### Python Style Rules\n\n1. Use modern python features like the walrus operator.\n\n2. Prefer early exits to prevent deep nesting.\n    ```python\n    # Good\n    if not some_condition:\n       # Condition failed. Exit the function.\n       return\n\n    # Bad\n    if some_condition:\n       do_something()\n    ```\n\n## Testing\n\n### Test Base Classes\n\nRead the testing guide before writing tests and follow it strictly: https://github.com/freelawproject/courtlistener/wiki/Automated-tests-on-CourtListener\n\nUse project-specific test classes from `cl.tests.cases`:\n\n```python\nfrom cl.tests.cases import SimpleTestCase, TestCase, APITestCase\n\nclass MySimpleTest(SimpleTestCase):\n    \"\"\"No database access needed\"\"\"\n    pass\n\nclass MyDBTest(TestCase):\n    \"\"\"Needs database access\"\"\"\n    fixtures = [\"some_fixture.json\"]\n\nclass MyAPITest(APITestCase):\n    \"\"\"For REST API tests\"\"\"\n    pass\n```\n\n### Running Tests\n\n```bash\n# Run all tests for an app\ndocker exec cl-django python manage.py test cl.appname.tests\n\n# Run specific test class\ndocker exec cl-django python manage.py test cl.appname.tests.TestClassName\n\n# Run specific test method\ndocker exec cl-django python manage.py test cl.appname.tests.TestClassName.test_method\n```\n\n### Testing Guidelines\n\n- Keep the database between test runs for efficiency\n- Use `subTest()` to reduce test methods while testing multiple cases\n- Avoid selenium tests unless necessary (they're slow)\n- Use `time_machine` for date-dependent tests to avoid flaky failures\n- Use `FactoryBoy` to make mock data.\n- NEVER use Django fixtures. If fixtures are found, replace them with tests that use FactoryBoy and Fakes.\n\n\n## Database Migrations\n\nWhen creating code that modify Django models, strictly follow the Database Migration guide: https://github.com/freelawproject/courtlistener/wiki/Database-migrations\n\n\n## Submitting Work\n\n### Commits\n\n- Break changes into logical commits (use `git add -p` for sub-file commits)\n- Follow conventional commit format: `type(scope): message`\n  ```\n  feat(alerts): Add new notification system\n  fix(search): Correct pagination bug\n  docs(readme): Update installation steps\n  refactor(api): Simplify serializer logic\n  ```\n\n### Pull Requests\n\n1. Update branch before committing.\n2. Run `pre-commit` and ensure it passes\n3. Submit as **draft** PR\n4. Use the template from `.github/PULL_REQUEST_TEMPLATE.md`\n\n\n## Available Tools\n\n### Docker Commands\n\n```bash\n# Run Django management commands\ndocker exec cl-django python manage.py [command]\n\n# Run tests\ndocker exec cl-django python manage.py test [test_path]\n\n# Access Django shell\ndocker exec -it cl-django python manage.py shell\n```\n\n### CLI Tools\n\n- `rg` may be installed. Use it instead of `grep` if so.\n- `gh` → GitHub CLI for PRs, issues, actions\n- `pre-commit` → code quality checks (ruff, mypy, etc.)\n- `uv` → Python dependency management (the only tool to use for deps)"
+    gold_removed: ''

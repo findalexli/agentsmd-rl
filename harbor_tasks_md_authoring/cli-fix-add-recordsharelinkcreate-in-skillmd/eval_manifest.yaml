@@ -1,0 +1,30 @@
+version: "2.0"
+
+task:
+  name: cli-fix-add-recordsharelinkcreate-in-skillmd
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: larksuite/cli
+  pr: 597
+  base_commit: "f3699298aacfa70e61dcf39249996e31898e8d7c"
+  merge_commit: "e23b3a8dc6056a3eb6ecf797f48ff6abe899eee6"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/lark-base/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/lark-base/SKILL.md."
+
+config_edits:
+  - path: skills/lark-base/SKILL.md
+    tier: 1
+    gold_added: 'description: "当需要用 lark-cli 操作飞书多维表格（Base）时调用：适用于建表、字段管理、记录读写、记录分享链接、视图配置、历史查询，以及角色/表单/仪表盘管理/工作流；也适用于把旧的 +table / +field / +record 写法改成当前命令写法。涉及字段设计、公式字段、查找引用、跨表计算、行级派生指标、数据分析需求时也必须使用本 skill。"
+
+      | `+record-share-link-create` | 为一条或多条记录生成分享链接 | [`lark-base-record-share-link-create.md`](references/lark-base-record-share-link-create.md) | 单次最多 100 条；重复 record_id 会自动去重；适合分享单条记录或批量分享场景 |'
+    gold_removed: ''

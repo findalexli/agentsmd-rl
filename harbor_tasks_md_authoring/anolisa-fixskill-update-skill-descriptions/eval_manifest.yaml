@@ -1,0 +1,86 @@
+version: "2.0"
+
+task:
+  name: anolisa-fixskill-update-skill-descriptions
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: alibaba/anolisa
+  pr: 182
+  base_commit: "8460cbe117dd7b36776cc0390859f1707b55aadc"
+  merge_commit: "d7dd7e6cbddd6ce869173c9703ffac3da3c51c74"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in src/os-skills/ai/install-claude-code/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in src/os-skills/ai/install-claude-code/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in src/os-skills/ai/install-openclaw/SKILL.md."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in src/os-skills/ai/install-openclaw/SKILL.md."
+  - id: signal_04
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in src/os-skills/devops/kernel-dev/SKILL.md."
+  - id: signal_05
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in src/os-skills/devops/kernel-dev/SKILL.md."
+  - id: signal_06
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in src/os-skills/devops/kernel-dev/SKILL.md."
+  - id: signal_07
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in src/os-skills/system-admin/backup-restore/SKILL.md."
+  - id: signal_08
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in src/os-skills/system-admin/backup-restore/SKILL.md."
+  - id: signal_09
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in src/os-skills/system-admin/storage-resize/SKILL.md."
+
+config_edits:
+  - path: src/os-skills/ai/install-claude-code/SKILL.md
+    tier: 1
+    gold_added: 'description: Install and configure Claude Code on RPM-based Linux systems (e.g., Alibaba Cloud Linux) with multiple fallback methods (native installer, npm, nvm+npm). Includes DashScope/Qwen API configuration template. Use when the user asks to install Claude Code CLI, set up Claude Code CLI, or configure Claude Code with a custom API endpoint on RPM-based Linux systems.
+
+      - **OS**: Linux'
+    gold_removed: ''
+  - path: src/os-skills/ai/install-openclaw/SKILL.md
+    tier: 1
+    gold_added: 'description: 在 RPM 包管理的 Linux 服务器（如 Alibaba Cloud Linux）上安装和配置 OpenClaw，接入钉钉频道与阿里云百炼（通义千问）模型。当用户需要部署 OpenClaw、配置钉钉机器人、接入 DashScope/Qwen 模型、排查 OpenClaw 网关无法启动、或遇到插件不加载等问题时使用此技能。包含完整踩坑记录与正确配置结构。
+
+      # Linux 仓库自带 Node.js 22'
+    gold_removed: ''
+  - path: src/os-skills/devops/kernel-dev/SKILL.md
+    tier: 1
+    gold_added: 'description: Linux 内核研发自动化技能（RPM 包管理系统），提供内核编译（SRPM/Upstream 双方法）、内核 module 开发环境搭建、依赖安装、示例代码生成等功能。Linux 官方内核及上游最新内核，兼容 x86_64 和 aarch64 双架构。使用场景：内核定制开发、驱动模块研发、内核漏洞修复验证。适用于 RPM 包管理的 Linux 系统（如 Alibaba Cloud Linux）。
+
+      # Kernel Development - Linux 内核研发自动化
+
+      - 📦 仅Linux操作系统'
+    gold_removed: ''
+  - path: src/os-skills/system-admin/backup-restore/SKILL.md
+    tier: 1
+    gold_added: 'description: 处理所有备份与恢复任务，覆盖四个层面：工作区（项目/数据库/代码）、用户数据（家目录/dotfiles/密钥）、操作系统（全量系统/磁盘镜像/LVM 快照）、阿里云快照（云盘快照/自动策略/跨地域复制/整机镜像）。适用于 RPM 包管理的 Linux 系统（如 Alibaba Cloud Linux）纯命令行环境，使用 yum 包管理器。当用户提到备份、恢复、快照、归档、回滚、克隆、迁移、容灾等任何涉及数据保存或恢复的请求时触发此技能，即使请求看起来很简单也应使用。
+
+      > 适用环境：Linux / 纯命令行 / yum 包管理器'
+    gold_removed: ''
+  - path: src/os-skills/system-admin/storage-resize/SKILL.md
+    tier: 1
+    gold_added: 'description: Linux 磁盘扩容技能（RPM 包管理系统），实现云盘扩容后自动完成分区调整和文件系统扩容。支持系统盘/数据盘在线扩容，适配 XFS/EXT4/Btrfs 文件系统。适用于 RPM 包管理的 Linux 系统（如 Alibaba Cloud Linux）。'
+    gold_removed: ''

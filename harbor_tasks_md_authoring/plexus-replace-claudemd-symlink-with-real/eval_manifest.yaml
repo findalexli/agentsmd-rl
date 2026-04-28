@@ -1,0 +1,28 @@
+version: "2.0"
+
+task:
+  name: plexus-replace-claudemd-symlink-with-real
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: mcowger/plexus
+  pr: 288
+  base_commit: "7ef61b2bb67b3a27b781367d2ab12efc0cdec4c2"
+  merge_commit: "784c95db40ac12c0003e691b0f0dd065a0cb7ad6"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+
+config_edits:
+  - path: CLAUDE.md
+    tier: 1
+    gold_added: ''
+    gold_removed: ''
+  - path: CLAUDE.md
+    tier: 1
+    gold_added: See AGENTS.md for project instructions and guidelines.
+    gold_removed: ''

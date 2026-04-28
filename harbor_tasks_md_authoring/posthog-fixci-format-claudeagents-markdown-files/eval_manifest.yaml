@@ -1,0 +1,48 @@
+version: "2.0"
+
+task:
+  name: posthog-fixci-format-claudeagents-markdown-files
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: PostHog/posthog
+  pr: 48897
+  base_commit: "159f5131860f0d7d1d1d8dbee2f88542abc1ff17"
+  merge_commit: "2bba384758abbf4b7130e7998b7075a2bad903e5"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/agents/ingestion/pipeline-composition-doctor.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/agents/ingestion/pipeline-composition-doctor.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/agents/ingestion/pipeline-composition-doctor.md."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/agents/ingestion/pipeline-step-doctor.md."
+  - id: signal_04
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/agents/ingestion/pipeline-step-doctor.md."
+  - id: signal_05
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/agents/ingestion/pipeline-step-doctor.md."
+
+config_edits:
+  - path: .claude/agents/ingestion/pipeline-composition-doctor.md
+    tier: 1
+    gold_added: "  return function batchStep(inputs) {\n    return Promise.resolve(inputs.map((input) => ok(transform(input))))\n  }\n  return function batchStep(inputs) {\n    return Promise.resolve(inputs.filter(isValid).map((input) => ok(transform(input))))\n  }"
+    gold_removed: ''
+  - path: .claude/agents/ingestion/pipeline-step-doctor.md
+    tier: 1
+    gold_added: "  return function parseStep(input) {\n    return Promise.resolve(ok({ ...input, parsed: true }))\n  }\n  return function parseStep(input: T): Promise<PipelineResult<T & { parsed: boolean }>> {\n    return Promise.resolve(ok({ ...input, parsed: true }))\n  }\n  return function lookupStep(input) {\n    // uses db and timeout from closure\n  }\n  return function lookupStep(input) {\n    // uses module-level db\n  }"
+    gold_removed: ''

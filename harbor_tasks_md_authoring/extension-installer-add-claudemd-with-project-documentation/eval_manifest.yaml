@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: extension-installer-add-claudemd-with-project-documentation
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: phpstan/extension-installer
+  pr: 100
+  base_commit: "5120c4519119dc588f35bf2b6fa402293f86a3b4"
+  merge_commit: "7faeb5e3bbf9cfe58f263e80708ea6d55eb5d716"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+
+config_edits:
+  - path: CLAUDE.md
+    tier: 1
+    gold_added: "# CLAUDE.md\n\n## Project Overview\n\n**phpstan/extension-installer** is a Composer plugin that automatically registers PHPStan extensions. Without it, users must manually add `includes` entries in their `phpstan.neon` for every installed PHPStan extension. This plugin detects installed extensions and generates a configuration file so PHPStan picks them up automatically.\n\nThe package is published as `phpstan/extension-installer` on Packagist with the Composer type `composer-plugin`.\n\n## How It Works\n\n1. The plugin (`src/Plugin.php`) subscribes to Composer's `post-install-cmd` and `post-update-cmd` script events.\n2. On each event, it scans all installed packages for PHPStan extensions (packages with type `phpstan-extension` or an `extra.phpstan` key in their `composer.json`).\n3. It generates `src/GeneratedConfig.php` containing a constant with all discovered extensions, their install paths, and included neon files.\n4. PHPStan reads `GeneratedConfig.php` at runtime to load the extensions automatically.\n5. A stub `GeneratedConfig.php` is committed to the repo as a fallback for when Composer runs with `--no-scripts`.\n\nUsers can ignore specific extensions via `extra.phpstan/extension-installer.ignore` in their project's `composer.json`.\n\n## Repository Structure\n\n```\nsrc/\n  Plugin.php           - The Composer plugin (event subscriber, extension discovery, config generation)\n  GeneratedConfig.php  - Stub file (overwritten at install time with discovered extensions)\ne2e/\n  integration/         - E2E test: installs phpstan-phpunit extension, runs PHPStan analysis\n  ignore/              - E2E test: verifies the ignore functionality works correctly\n  test-extension/      - Minimal test extension used by the ignore e2e test\n.github/workflows/\n  build.yml            - Lint, coding standard, and PHPStan static analysis\n  integration-tests.yml - E2E integration and ignore tests across PHP/Composer versions\n```\n\n## PHP Version Support\n\nThis repository supports **PHP 7.4+** (see `composer.json`: `\"php\": \"^7.4 || ^8.0\"`). Do not use language features unavailable in PHP 7.4.\n\n## Dependencies\n\n- `composer-plugin-api: ^2.0` - Composer 2.x plugin API\n- `phpstan/phpstan: ^2.0` - PHPStan (dev dependency for self-analysis; the plugin itself works with extensions requiring PHPStan ^1 or ^2)\n\nDev dependencies:\n- `composer/composer: ^2.0` - For type information\n- `php-parallel-lint/php-parallel-lint: ^1.2.0` - Syntax linting\n- `phpstan/phpstan-strict-rules: ^2.0` - Strict PHPStan rules for self-analysis\n\n## Development Commands\n\nAll commands are defined in the `Makefile`:\n\n```bash\nmake check       # Run all checks (lint + cs + phpstan)\nmake lint         # Run php-parallel-lint on src/\nmake cs           # Run PHP_CodeSniffer (requires build-cs to be set up)\nmake cs-install   # Clone and install phpstan/build-cs coding standard\nmake cs-fix       # Auto-fix coding standard violations\nmake phpstan      # Run PHPStan static analysis (level 8)\n```\n\n### Coding Standard\n\nThis project uses [phpstan/build-cs](https://github.com/phpstan/build-cs) (branch `2.x`) for coding standards via PHP_CodeSniffer. The `phpcs.xml` configures `php_version` as `70400` (PHP 7.4). To set it up locally:\n\n```bash\nmake cs-install\nmake cs\n```\n\n### Static Analysis\n\nPHPStan runs at **level 8** on the `src/` directory with `phpstan-strict-rules` included. Configuration is in `phpstan.neon`.\n\n## CI Pipeline\n\n### Build (`build.yml`)\n\n- **Lint**: Runs `php-parallel-lint` across PHP 7.4, 8.0, 8.1, 8.2, 8.3, 8.4\n- **Coding Standard**: Runs PHP_CodeSniffer on PHP 8.2\n- **PHPStan**: Runs static analysis across PHP 7.4-8.4 with both lowest and highest dependency versions\n\n### Integration Tests (`integration-tests.yml`)\n\n- **Integration test**: Installs `phpstan-phpunit` via the extension installer, runs PHPStan analysis on a test file, then verifies it works after renaming the directory (testing relative path handling)\n- **Ignore test**: Verifies the ignore configuration correctly excludes specified extensions\n- Both tests run across PHP 7.4-8.5 and multiple Composer versions (v2, preview, snapshot, 2.1.0)\n- Uses `COMPOSER_ROOT_VERSION: \"1.4.x-dev\"` environment variable\n\n## Branch\n\nThe main development branch is `1.4.x`.\n\n## Making Changes\n\n- Keep `src/GeneratedConfig.php` as a stub - it gets overwritten at install time by `Plugin.php`.\n- Any changes to the plugin logic are in `src/Plugin.php`.\n- E2E tests in `e2e/` validate the plugin works end-to-end with real Composer installs.\n- Run `make check` before submitting changes to verify lint, coding standard, and static analysis all pass."
+    gold_removed: ''

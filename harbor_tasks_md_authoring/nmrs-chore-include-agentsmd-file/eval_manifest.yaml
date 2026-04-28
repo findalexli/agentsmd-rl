@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: nmrs-chore-include-agentsmd-file
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: cachebag/nmrs
+  pr: 338
+  base_commit: "fdd5ccb268bd48a0c6cb7adf44663bb825a8fc63"
+  merge_commit: "3a0de8ac3fcb2efa5d8e7cccd96c3a7ff611bc70"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+
+config_edits:
+  - path: AGENTS.md
+    tier: 1
+    gold_added: "# AGENTS.md\n\nContext for AI agents working in this repository.\n\n## Project overview\n\n`nmrs` is a Rust library for managing network connections via NetworkManager over D-Bus.\nThe workspace has two crates:\n\n- **`nmrs/`** — the core library (async, D-Bus, no GUI dependencies)\n- **`nmrs-gui/`** — a GTK4/libadwaita GUI frontend\n\n## Architecture\n\n```\nnmrs/src/\n  lib.rs                — public API surface, re-exports from api/\n  api/\n    network_manager.rs  — main entry point (NetworkManager struct)\n    models/             — public types, enums, errors, traits\n    builders/           — connection settings constructors (wifi, vpn, bluetooth)\n  core/                 — internal business logic (connection, scanning, VPN, state waiting)\n  dbus/                 — raw D-Bus proxy calls (NM, devices, access points)\n  monitoring/           — real-time D-Bus signal subscriptions\n  types/                — constants, device type registry\n  util/                 — validation, cert handling, helpers\n```\n\n`lib.rs` re-exports commonly used types at the crate root for convenience.\nInternal modules (`core`, `dbus`, `monitoring`, `types`, `util`) are not part of the public API.\n\n## Build and test\n\nRequires a running NetworkManager instance (or use the provided Dockerfile).\n\n```bash\ncargo check                                               # quick compile check\ncargo fmt --all -- --check                                # formatting (default rustfmt, no config file)\ncargo clippy --all-targets --all-features -- -D warnings  # lints (warnings are errors in CI)\ncargo test -p nmrs --lib --all-features                   # unit tests only\ncargo test --doc --all-features --workspace               # doc tests\ncargo test --all-features --workspace                     # unit + integration (needs NM + wifi hardware)\ncargo test --test integration_test --all-features         # integration only\n```\n\nIntegration tests require wifi hardware or `mac80211_hwsim`:\n```bash\nsudo modprobe mac80211_hwsim radios=2\ncargo test --test integration_test --all-features\nsudo modprobe -r mac80211_hwsim\n```\n\n## Toolchain\n\n- Edition 2024, resolver 3, stable Rust (MSRV: 1.94.0)\n- Workspace lints in root `Cargo.toml`: `unused = \"warn\"`, clippy allows `too_many_arguments` and `type_complexity`\n- CI runs: format, clippy, lib tests, doc tests, semver-checks (`cargo-semver-checks` for `nmrs`), cross-compile for aarch64\n\n## Code conventions\n\n- **Error handling**: all public fallible operations return `nmrs::Result<T>` (alias for `Result<T, ConnectionError>`). Use `ConnectionError` variants, not raw strings.\n- **Builder pattern**: config structs use `with_*` builder methods returning `Self` with `#[must_use]`. See `WireGuardConfig`, `OpenVpnConfig`, `EapOptions`.\n- **`#[non_exhaustive]`** on all public structs and enums.\n- **Doc comments** on all public items with examples where practical. Doc examples use `nmrs::` paths (crate root re-exports).\n- **No `unwrap()` in library code** — return errors via `?` or `ConnectionError`.\n  - `unwrap_or_else()` is allowed if the error is expected and there is a fallback value. Document this with a comment.\n- **Tests**: unit tests live in `#[cfg(test)] mod tests` within the module or in `api/models/tests.rs`. Integration tests in `nmrs/tests/`. Assert behavior, not implementation.\n\n## Commit messages\n\nFollow [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/):\n\n```\ntype(#issue): description\n```\n\nExamples: `fix(#24): handle missing DNS in VPN config`, `feat: add OpenVPN proxy support`.\nAtomic commits — one logical change per commit.\n\n## Changelog\n\n[Keep a Changelog](https://keepachangelog.com/) format in `nmrs/CHANGELOG.md` and `nmrs-gui/CHANGELOG.md`.\nSections: `Added`, `Changed`, `Fixed`. Link PRs/issues in parentheses.\n\n## Things to watch out for\n\n- The `VpnCredentials` type is deprecated — prefer `WireGuardConfig` for new WireGuard code.\n- `nmrs-gui` depends on GTK4/libadwaita and only builds on Linux with those dev libs installed.\n"
+    gold_removed: ''

@@ -1,0 +1,49 @@
+version: "2.0"
+
+task:
+  name: bencher-update-claudemd
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: bencherdev/bencher
+  pr: 652
+  base_commit: "4bb242010f6cfb9730cbe28536e51f1dab05b0e3"
+  merge_commit: "f08d8a6f18e7bb34a359991ab76b4fc44de18453"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+
+config_edits:
+  - path: CLAUDE.md
+    tier: 1
+    gold_added: 'Whenever changes are made to the API, `cargo gen-types` should be run to update the spec.
+
+      ## Scripts and Tasks
+
+
+      Shell scripts are to be used very sparingly.
+
+      Instead of using shell scripts, tasks are created in the `tasks/` directory.
+
+      These tasks are invoked using a Cargo `alias` in `.cargo/config.toml`.
+
+
+      Administrative specific tasks that are only run locally and not in CI/CD are located in the catch all `xtask` crate.
+
+
+      The only acceptable use of a shell script is as an ultra-lightweight wrapper around a shell command, like `git` or `docker`.
+
+      '
+    gold_removed: ''

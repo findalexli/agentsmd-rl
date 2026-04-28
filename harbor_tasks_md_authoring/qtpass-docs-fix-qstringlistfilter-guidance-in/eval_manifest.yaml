@@ -1,0 +1,40 @@
+version: "2.0"
+
+task:
+  name: qtpass-docs-fix-qstringlistfilter-guidance-in
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: IJHack/QtPass
+  pr: 1165
+  base_commit: "9380303b3c34c018b8f66b31daa1823971290c98"
+  merge_commit: "5a1c8210b321df389770dacc3b084562155b02c9"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .opencode/skills/qtpass-fixing/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .opencode/skills/qtpass-fixing/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .opencode/skills/qtpass-fixing/SKILL.md."
+
+config_edits:
+  - path: .opencode/skills/qtpass-fixing/SKILL.md
+    tier: 1
+    gold_added: 'When the goal is to drop env vars by name prefix, use `std::remove_if` with `startsWith`. Don''t reach for `QStringList::filter()` — it does the opposite (keeps matching entries) and matches substrings anywhere in the string, so even as a selection it would over-match:
+
+      // Bad — filter() returns entries containing key, also matching "FOOBAR=value"
+
+      // when key is "FOO". And it selects, not removes; the assignment then drops
+
+      // every entry that didn''t match — opposite of the intent.
+
+      // Good — explicit prefix-based removal'
+    gold_removed: ''

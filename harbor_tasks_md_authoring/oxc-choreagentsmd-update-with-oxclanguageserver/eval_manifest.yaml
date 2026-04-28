@@ -1,0 +1,38 @@
+version: "2.0"
+
+task:
+  name: oxc-choreagentsmd-update-with-oxclanguageserver
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: oxc-project/oxc
+  pr: 14910
+  base_commit: "b60779353c5c9df73addfb1eaf4d8af35a7415b2"
+  merge_commit: "272a1455714a1c02556dc798b160cac2afea4e8a"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+
+config_edits:
+  - path: AGENTS.md
+    tier: 1
+    gold_added: '- `oxc_language_server` - LSP server for editor integration
+
+      Prerequisites: Rust (MSRV: 1.88.0), Node.js, pnpm, just
+
+      - **oxc_language_server**: Editor integration - `cargo test -p oxc_language_server`
+
+      | Language Server       | Inline and `/fixtures`                  |'
+    gold_removed: ''

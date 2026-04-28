@@ -1,0 +1,45 @@
+version: "2.0"
+
+task:
+  name: publications-add-table-structure-guidelines-to
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: trailofbits/publications
+  pr: 647
+  base_commit: "808f48d93e2901bfe89a7c280d728b111d60a517"
+  merge_commit: "eb0d33c7f8dff74468aa22341829b96e681543f5"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+
+config_edits:
+  - path: CLAUDE.md
+    tier: 1
+    gold_added: '#### Table Column Structure
+
+      - Security review tables use 5 columns: `| Product | Date | Effort | Announcement | Report |`
+
+      - Every row must have exactly 6 pipe characters (matching the header row)
+
+      - Do not add extra trailing pipes or columns beyond the header
+
+      - Do not leave rows truncated with missing columns — pad with empty cells (`| |`) if data is unavailable
+
+
+      - Every table row must have the same number of `|` delimiters as its header — no truncated or extra-long rows
+
+      - Use single space in empty cells: `| |` not `|  |`'
+    gold_removed: ''

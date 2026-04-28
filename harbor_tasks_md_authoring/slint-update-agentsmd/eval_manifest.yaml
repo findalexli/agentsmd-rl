@@ -1,0 +1,130 @@
+version: "2.0"
+
+task:
+  name: slint-update-agentsmd
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: slint-ui/slint
+  pr: 11365
+  base_commit: "b32f9340d7e4ca92d0aa07c9cc1b3fff36e38b58"
+  merge_commit: "e03e564baacad2697bc81180ab09a3772428ba10"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+
+config_edits:
+  - path: AGENTS.md
+    tier: 1
+    gold_added: 'Slint is a declarative GUI toolkit for embedded, desktop, mobile, and web.
+
+      UIs are written in `.slint` markup and connected to Rust, C++, JavaScript, or Python business logic.
+
+      cargo build --release                          # Release build (use whenever measuring performance)
+
+      cargo test                                     # Run tests
+
+      Don''t run `cargo build` before `cargo test` — `cargo test` compiles what it needs.
+
+      cargo test -p test-driver-interpreter         # Fastest: interpreter-based
+
+      cargo test -p test-driver-rust                # Rust API (slow to compile without SLINT_TEST_FILTER)
+
+      cargo test -p test-driver-cpp                 # C++ (build slint-cpp first for the dynamic library)
+
+      cargo test -p test-driver-nodejs              # Node.js
+
+      cargo test -p doctests                        # Documentation snippets
+
+      ### Filtering .slint Test Cases
+
+
+      The test drivers compile every `.slint` file under `tests/cases/` into a generated Rust test, which is slow.
+
+      Set `SLINT_TEST_FILTER=<substring>` to limit the build to matching case files.
+
+
+      tests/run_tests.sh rust layout                 # Filter by name via the helper script
+
+      Only drop the filter for a final full-suite run before committing.
+
+
+      ### Writing Slint Test Cases
+
+
+      The `test` property in `tests/cases/*.slint` must be declared `out property<bool> test: ...;`.
+
+      Without `out`, the compiler treats it as private and the driver passes the test vacuously.
+
+
+      Rust (`rs/slint/`, `rs/macros/` for `slint!`, `rs/build/`), C++ (`cpp/`, CMake), Node.js (`node/`, Neon), Python (`python/`, PyO3), WebAssembly (`wasm-interpreter/`).
+
+      ### Tools (`tools/`)
+
+      `lsp/` (LSP server), `compiler/` (CLI), `viewer/` (hot-reload `.slint` viewer), `slintpad/` (web playground), `figma_import/`, `tr-extractor/` (i18n), `updater/` (version migration).
+
+      `vscode/`, `zed/`, `kate/`, `sublime/`, `tree-sitter-slint/`.
+
+      - The default git branch is `master`.
+
+      - Prefer linear history — rebase or squash on merge.
+
+      - Rust: `rustfmt` enforced in CI.
+
+      - C++: `clang-format` enforced in CI.
+
+      ### Comments and Docs
+
+      - Follow `docs/astro/writing-style-guide.md` when writing *new* comments, doc comments, commit messages, or markdown.
+
+      - But don''t reformat existing prose to match the style.
+
+      ## Platform Prerequisites
+
+      See [`docs/building.md`](docs/building.md) for Linux/macOS/Windows system packages, FFMPEG setup, and the Windows symlink `git clone` flag.
+
+      Load the relevant file under `docs/development/` when working in the listed area:
+
+
+      - `compiler-internals.md` — `internal/compiler/`: pipeline, passes, LLR, codegen.
+
+      - `type-system.md` — `langtype.rs`, `lookup.rs`, type checking: unit types, conversions, name resolution, type register.
+
+      - `property-binding-deep-dive.md` — `internal/core/properties.rs`, binding bugs: reactivity, dependency tracking, two-way bindings, PropertyTracker, ChangeTracker.
+
+      - `custom-renderer.md` — `internal/renderers/`, drawing bugs: renderer traits, drawing API, backend integration.
+
+      - `animation-internals.md` — `internal/core/animations.rs`: timing, easing curves, debugging.
+
+      - `layout-system.md` — `internal/core/layout.rs`, sizing bugs: constraints, GridLayout/BoxLayout, compile-time lowering.
+
+      - `python-tests.md` — Python tests, `test-driver-python`: pytest setup, rebuilding slint-python, compile vs runtime issues.
+
+      - `item-tree.md` — `internal/core/item_tree.rs`, event handling, component model: item tree, instantiation, traversal, focus.
+
+      - `model-repeater-system.md` — `internal/core/model.rs`, `for` loops: Model trait, VecModel, adapters, Repeater, ListView virtualization.
+
+      - `input-event-system.md` — `internal/core/input.rs`, event handling: routing, focus, drag-drop, shortcuts.
+
+      - `text-layout.md` — `internal/core/textlayout/`, text rendering: shaping, line breaking, styled text.
+
+      - `window-backend-integration.md` — `internal/core/window.rs`, `internal/backends/`: WindowAdapter, Platform, WindowEvent, popups.
+
+      - `lsp-architecture.md` — `tools/lsp/`, IDE tooling: completion, hover, semantic tokens, live preview.
+
+      - `mcp-server.md` — `internal/backends/testing/mcp_server.rs`, `introspection.rs`: shared introspection layer, handle/arena, HTTP transport, adding tools.
+
+      - `ffi-language-bindings.md` — `api/`, internal FFI: cbindgen, FFI patterns, adding cross-language APIs.'
+    gold_removed: ''

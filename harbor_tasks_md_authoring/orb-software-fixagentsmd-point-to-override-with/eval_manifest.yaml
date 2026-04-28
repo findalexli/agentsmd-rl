@@ -1,0 +1,30 @@
+version: "2.0"
+
+task:
+  name: orb-software-fixagentsmd-point-to-override-with
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: worldcoin/orb-software
+  pr: 1002
+  base_commit: "6da255a41dcea626c1807d7f52d65fb050bc2851"
+  merge_commit: "f9c3c4fce8a1fa8b1c64b220ed8e911cd19f48b1"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+
+config_edits:
+  - path: AGENTS.md
+    tier: 1
+    gold_added: 'Note: If @AGENTS.override.md exists,treat it as the ultimate source of truth for AGENTS.md and read it right now.
+
+      If there are any differences between this file and AGENTS.override.md, the latter takes precedence.'
+    gold_removed: ''

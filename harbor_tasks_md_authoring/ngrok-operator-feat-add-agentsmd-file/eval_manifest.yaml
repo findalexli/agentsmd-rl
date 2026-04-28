@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: ngrok-operator-feat-add-agentsmd-file
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: ngrok/ngrok-operator
+  pr: 692
+  base_commit: "df17bdbcc015292941c31439b23f420d835d9334"
+  merge_commit: "3b11a4d078c9762ac448936b8ff5ff46cc9377ba"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+
+config_edits:
+  - path: AGENTS.md
+    tier: 1
+    gold_added: "# AGENTS.md - ngrok Kubernetes Operator\n\nThe ngrok-operator is a Kubernetes Operator that reconciles:\n\n- Service resources of `Type=LoadBalancer`\n- Ingress resources\n- Gateway API resources\n- ngrok CRDs\n\n## Quick Facts\n\n- **Module**: `github.com/ngrok/ngrok-operator`\n- **Type**: Kubernetes Operator (kubebuilder v4, multigroup)\n- **Domain**: `k8s.ngrok.com`\n- **Language**: Go\n\n## Entry Points & Modes\n\n- **[main.go](main.go)** → `cmd.Execute()`\n- **[cmd/](cmd/)** contains three operational modes:\n  - `api-manager.go` - Manages ngrok resources via ngrok API (CRDs → ngrok API)\n  - `agent-manager.go` - Runs ngrok agents in-cluster for tunneling\n  - `bindings-forwarder-manager.go` - Manages service bindings and forwarding\n\n## Directory Map\n\n```\napi/<group>/v1alpha1/        # CRD definitions (ingress, ngrok, bindings)\ninternal/controller/<group>/ # Reconcilers organized by API group\ninternal/controller/base_controller.go  # Common CRUD/finalizers/status helpers\ninternal/ngrokapi/           # ngrok API client wrappers\ninternal/ir/                 # Intermediate representation (K8s → ngrok API)\ninternal/store/              # State management and caching\npkg/managerdriver/           # Manager driver implementations\npkg/bindingsdriver/          # Bindings driver implementations\ncmd/                         # CLI and manager entry points\nconfig/                      # Kustomize manifests (CRDs, RBAC, etc.)\nhelm/ngrok-operator/         # Helm chart\n```\n\n## Resource → Controller Map\n\n| API Group | Resources | Controller Location |\n|-----------|-----------|---------------------|\n| **ingress.k8s.ngrok.com/v1alpha1** | Domain, IPPolicy | [internal/controller/ingress/](internal/controller/ingress/) |\n| **ingress.k8s.ngrok.com/v1alpha1** | Ingress (networking.k8s.io/v1) | [internal/controller/ingress/](internal/controller/ingress/) |\n| **ngrok.k8s.ngrok.com/v1alpha1** | NgrokTrafficPolicy, KubernetesOperator | [internal/controller/ngrok/](internal/controller/ngrok/) |\n| **bindings.k8s.ngrok.com/v1alpha1** | BindingConfiguration, BoundEndpoint | [internal/controller/bindings/](internal/controller/bindings/) |\n| **gateway.networking.k8s.io/v1** | Gateway, GatewayClass, HTTPRoute, TLSRoute, TCPRoute | [internal/controller/gateway/](internal/controller/gateway/) |\n| **core/v1** | Service | [internal/controller/service/](internal/controller/service/) |\n| **agent** | AgentEndpoint | [internal/controller/agent/](internal/controller/agent/) |\n\n## Core Patterns\n\n- **BaseController** ([internal/controller/base_controller.go](internal/controller/base_controller.go)) - Common CRUD operations, finalizer management, status updates\n- **IR** ([internal/ir/](internal/ir/)) - Translates Kubernetes resources to ngrok API concepts\n- **Store** ([internal/store/](internal/store/)) - State and caching across reconcilers\n- **Drivers** ([pkg/managerdriver/](pkg/managerdriver/), [pkg/bindingsdriver/](pkg/bindingsdriver/)) - Abstracts operational modes\n\n## Development Workflow\n\n```bash\nmake help                   # List all available targets\nmake generate               # Generate DeepCopy methods\nmake manifests              # Generate CRDs, RBAC, webhooks\nmake build                  # Build binaries\nmake test                   # Run unit tests\nmake e2e-tests              # Run E2E tests\nmake run                    # Run locally (uses kubeconfig)\nmake deploy                 # Deploy to cluster\nmake undeploy               # Remove from cluster\n```\n\n## Configuration\n\n- **Credentials**: `helm install` requires `credentials.apiKey` and `credentials.authtoken`\n- **Feature Flags**: `useExperimentalGatewayApi=true` enables Gateway API support\n\n## Rules\n\n- Always register new APIs with `AddToScheme` in manager setup\n- Update RBAC markers (`// +kubebuilder:rbac:...`) when adding permissions\n- Use status subresource (`r.Status().Update()`) for status-only updates\n- Manage finalizers on resource deletion to clean up external resources\n- Requeue on transient ngrok API errors (return `ctrl.Result{Requeue: true}`)\n- Prefer `BaseController` helpers over raw client operations\n"
+    gold_removed: ''

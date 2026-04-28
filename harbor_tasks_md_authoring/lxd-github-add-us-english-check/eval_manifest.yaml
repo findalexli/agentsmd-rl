@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: lxd-github-add-us-english-check
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: canonical/lxd
+  pr: 18133
+  base_commit: "5a72c442191986d8474e1d705a17dfd4c48be6e0"
+  merge_commit: "01754d11622b5969b55826066603711163af94ba"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/copilot-instructions.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/copilot-instructions.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/copilot-instructions.md."
+
+config_edits:
+  - path: .github/copilot-instructions.md
+    tier: 1
+    gold_added: "### Language and Spelling\n\n- Use **US English spelling** throughout all user-facing text, including documentation, CLI output, and error messages. Common examples:\n  - `behavior` not `behaviour`\n  - `color` not `colour`\n  - `center` not `centre`\n  - `license` not `licence`\n  - `initialize` not `initialise`\n  - `analyze` not `analyse`\n  - `canceled` not `cancelled`\n"
+    gold_removed: ''

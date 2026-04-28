@@ -1,0 +1,174 @@
+version: "2.0"
+
+task:
+  name: daft-docsskills-add-claude-code-compatible
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: Eventual-Inc/Daft
+  pr: 6116
+  base_commit: "9662e33b494181d341eb045b10e1b92d3ac80584"
+  merge_commit: "201891140a6e5c782f04060214c30a77bba1608e"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/daft-distributed-scaling/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/daft-distributed-scaling/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/daft-distributed-scaling/SKILL.md."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/daft-docs-navigation/SKILL.md."
+  - id: signal_04
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/daft-docs-navigation/SKILL.md."
+  - id: signal_05
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/daft-docs-navigation/SKILL.md."
+  - id: signal_06
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/daft-udf-tuning/SKILL.md."
+  - id: signal_07
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/daft-udf-tuning/SKILL.md."
+  - id: signal_08
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/daft-udf-tuning/SKILL.md."
+
+config_edits:
+  - path: .claude/skills/daft-distributed-scaling/SKILL.md
+    tier: 1
+    gold_added: '---
+
+      name: "daft-distributed-scaling"
+
+      description: "Scale Daft workflows to distributed Ray clusters. Invoke when optimizing performance or handling large data."
+
+      ---
+
+
+      # Daft Distributed Scaling
+
+
+      Scale single-node workflows to distributed execution.
+
+
+      ## Core Strategies
+
+
+      | Strategy | API | Use Case | Pros/Cons |
+
+      |---|---|---|---|
+
+      | **Shuffle** | `repartition(N)` | Light data (e.g. file paths), Joins | **Global balance**. High memory usage (materializes data). |
+
+      | **Streaming** | `into_batches(N)` | Heavy data (images, tensors) | **Low memory** (streaming). High scheduling overhead if batches too small. |
+
+
+      ## Quick Recipes
+
+
+      ### 1. Light Data: Repartitioning
+
+      Best for distributing file paths before heavy reads.
+
+
+      ```python
+
+      # Create enough partitions to saturate workers
+
+      df = daft.read_parquet("s3://metadata").repartition(100)
+
+      df = df.with_column("data", read_heavy_data(df["path"]))
+
+      ```
+
+
+      ### 2. Heavy Data: Streaming Batches
+
+      Best for processing large partitions without OOM.
+
+
+      ```python
+
+      # Stream 1GB partition in 64-row chunks to control memory
+
+      df = df.read_parquet("heavy_data").into_batches(64)
+
+      df = df.with_column("embed", model.predict(df["img"]))
+
+      ```
+
+
+      ## Advanced Tuning: The ByteDance Formula
+
+
+      Target: Keep all actors busy without OOM or scheduling bottlenecks.
+
+
+      ### Formula 1: Repartitioning (Light Data / Paths)
+
+      Calculate the **Max Partition Count** to ensure each task has enough data to feed local actors.
+
+
+      1.  **Min Rows Per Partition** = `Batch Size * (Total Concurrency / Nodes)`
+
+      2.  **Max Partitions** = `Total Rows / Min Rows Per Partition`
+
+
+      **Example**:
+
+      - 1M rows, 4 nodes, 16 total concurrency, Batch Size 64.
+
+      - **Min Rows**: `64 * (16/4) = 256`.
+
+      - **Max Partitions**: `1,000,000 / 256 ≈ 3906`.
+
+      - *Recommendation*: Use ~1000 partitions to run multiple batches per task.
+
+
+      ```python
+
+      df = df.repartition(1000) # Balanced fan-out
+
+      ```
+
+
+      ### Formula 2: Streaming (Heavy Data / Images)
+
+      Avoid creating tiny partitions. Use `into_batches` to stream data within larger partitions.
+
+
+      **Strategy**: Keep partitions large (e.g. 1GB+), use `into_batches(Batch Size)` to control memory.
+
+
+      ```python
+
+      # Stream batches to control memory usage per actor
+
+      df = df.into_batches(64).with_column("preds", model(max_concurrency=16).predict(df["img"]))
+
+      ```'
+    gold_removed: ''
+  - path: .claude/skills/daft-docs-navigation/SKILL.md
+    tier: 1
+    gold_added: "---\nname: \"daft-docs-navigation\"\ndescription: \"Navigate Daft documentation. Invoke when user asks general questions about APIs, concepts, or examples, or wants to search the docs.\"\n---\n\n# Daft Docs Navigation\n\nNavigate Daft's documentation for APIs, concepts, and examples.\n\n## Documentation Structure\n\n1.  **Live Site**: [`https://docs.daft.ai`](https://docs.daft.ai) (Primary source, searchable).\n2.  **Source Repo**: `docs/` directory in the repository.\n    -   If `docs/` is missing or empty, clone the repo: `git clone https://github.com/Eventual-Inc/Daft.git`\n\n## Key Locations in `docs/`\n\n-   **API Reference**: `api/` (e.g., `api/io.md` for reading/writing).\n-   **Optimization**: `optimization/` (e.g., `optimization/partitioning.md`).\n-   **Distributed**: `distributed/` (e.g., `distributed/ray.md`).\n-   **UDFs**: `custom-code/` (e.g., `func.md`, `cls.md`).\n-   **Connectors**: `connectors/` (e.g., S3, Lance).\n-   **Table of Contents**: `docs/SUMMARY.md`.\n\n## Usage\n\n**Search for API Usage:**\n```bash\ngrep_search(pattern='from_glob', path='docs/')\n```\n\n**Browse Topics:**\n```bash\nread(file_path='docs/SUMMARY.md')\n```"
+    gold_removed: ''
+  - path: .claude/skills/daft-udf-tuning/SKILL.md
+    tier: 1
+    gold_added: "---\nname: \"daft-udf-tuning\"\ndescription: \"Optimize Daft UDF performance. Invoke when user needs GPU inference, encounters slow UDFs, or asks about async/batch processing.\"\n---\n\n# Daft UDF Tuning\n\nOptimize User-Defined Functions for performance.\n\n## UDF Types\n\n| Type | Decorator | Use Case |\n|---|---|---|\n| **Stateless** | `@daft.func` | Simple transforms. Use `async` for I/O-bound tasks. |\n| **Stateful** | `@daft.cls` | Expensive init (e.g., loading models). Supports `gpus=N`. |\n| **Batch** | `@daft.func.batch` | Vectorized CPU/GPU ops (NumPy/PyTorch). Faster. |\n\n## Quick Recipes\n\n### 1. Async I/O (Web APIs)\n\n```python\n@daft.func\nasync def fetch(url: str):\n    async with aiohttp.ClientSession() as s:\n        return await s.get(url).text()\n```\n\n### 2. GPU Batch Inference (PyTorch/Models)\n\n```python\n@daft.cls(gpus=1)\nclass Classifier:\n    def __init__(self):\n        self.model = load_model().cuda() # Run once per worker\n\n    @daft.method.batch(batch_size=32)\n    def predict(self, images):\n        return self.model(images.to_pylist())\n\n# Run with concurrency\ndf.with_column(\"preds\", Classifier(max_concurrency=4).predict(df[\"img\"]))\n```\n\n## Tuning Keys\n\n-   **`max_concurrency`**: Total parallel UDF instances.\n-   **`gpus=N`**: GPU request per instance.\n-   **`batch_size`**: Rows per call. Too small = overhead; too big = OOM.\n-   **`into_batches(N)`**: Pre-slice partitions if memory is tight."
+    gold_removed: ''

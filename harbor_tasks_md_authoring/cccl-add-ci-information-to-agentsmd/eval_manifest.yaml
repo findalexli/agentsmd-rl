@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: cccl-add-ci-information-to-agentsmd
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: NVIDIA/cccl
+  pr: 5779
+  base_commit: "d0aebe0cf804ea6622e06ad26c90d4d2a1cfb651"
+  merge_commit: "01ea4cc158bea531300a26a7eb920c53370d0715"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+
+config_edits:
+  - path: AGENTS.md
+    tier: 1
+    gold_added: "## Continuous Integration (CI)\n\nSee `ci-overview.md` for detailed examples and troubleshooting guidance.\n\nCCCL's CI is built on GitHub Actions and relies on a dynamically generated job matrix plus several helper scripts.\n\n### Key Components\n\n* **`ci/matrix.yaml`**\n\n  * Declares build and test jobs for `pull_request`, `nightly`, and `weekly` workflows.\n  * Pull request (PR) runs typically spawn ~250 jobs.\n  * To reduce overhead, you can add an override matrix in `workflows.override`. This limits the PR CI run to a targeted subset of jobs. Overrides are recommended when:\n    * Changes touch high-dependency areas (e.g. top-level CI/devcontainers, libcudacxx, thrust, CUB). See `ci/inspect_changes.sh` for dependency information.\n    * A smaller subset of jobs is enough to validate the change (e.g. infra changes, targeted fixes).\n  * Important rules:\n    * PR merges are blocked while an override matrix is active.\n    * The override must be reset to empty (not removed) before merging.\n    * Only add overrides when starting a new draft that qualifies; never remove one without being asked.\n\n* **`.github/actions/workflow-build/`**\n\n  * Runs `build-workflow.py`.\n  * Reads `ci/matrix.yaml` and prunes jobs using `ci/inspect_changes.sh`.\n  * Calls `prepare-workflow-dispatch.py` to produce a formatted job matrix for dispatch.\n\n* **`.github/actions/workflow-run-job-{linux,windows}/`**\n\n  * Runs a single matrix job inside a devcontainer.\n\n* **`.github/actions/workflow-results/`**\n\n  * Aggregates artifacts and results.\n  * Marks workflow as failed if any job fails or an override matrix is present.\n\n* **`.github/workflows/ci-workflow-{pull-request,nightly,weekly}.yml`**\n\n  * Top-level GitHub Actions workflows invoking CI.\n\n* **`ci/inspect_changes.sh`**\n\n  * Detects which subprojects changed between commits.\n  * Defines internal dependencies between CCCL projects. If a project is marked dirty, all dependent projects are also marked dirty and tested.\n  * Allows `build-workflow.py` to skip unaffected jobs.\n\n---\n\n### Commit Message Controls\n\nTags appended to the commit summary (case-sensitive) control CI behavior:\n\n* `[skip-matrix]`: Skip CCCL project build/test jobs. (Docs, devcontainers, and third-party builds still run.)\n* `[skip-vdc]`: Skip \"Verify Devcontainer\" jobs. Safe unless CI or devcontainer infra is modified.\n* `[skip-docs]`: Skip doc tests/previews. Safe if docs are unaffected.\n* `[skip-matx]`: Skip building the MatX third-party smoke test.\n\n> ⚠️ All of these tags block merging until removed and a full CI run (with no overrides) succeeds.\n\nUse these tags for early iterations to save resources. Remove them before review/merge.\n\n---\n\n* Validate changes with builds/tests; report results.\n* Run `pre-commit` before committing.\n* Review `CONTRIBUTING.md` and `ci-overview.md` before starting work.\n\n### Performance Tips\n* Use development containers with `sccache` (CCCL team only).\n* Limit architectures to reduce compile time (e.g. `-arch \"native\"` or `\"80\"` if no GPU).\n* Build with Ninja for fast, parallel builds."
+    gold_removed: ''

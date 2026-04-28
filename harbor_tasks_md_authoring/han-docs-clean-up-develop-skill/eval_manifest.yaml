@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: han-docs-clean-up-develop-skill
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: TheBushidoCollective/han
+  pr: 84
+  base_commit: "7a0ee44a9f5f1be1b5ee9589f851ae1f0673f121"
+  merge_commit: "be7aebd520d183f3c0b36102b12a4a2a79f7b227"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in plugins/core/skills/develop/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in plugins/core/skills/develop/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in plugins/core/skills/develop/SKILL.md."
+
+config_edits:
+  - path: plugins/core/skills/develop/SKILL.md
+    tier: 1
+    gold_added: "description: >-\n  Guides end-to-end feature development through 8 phases: discover requirements,\n  explore codebase patterns, clarify ambiguities with the user, design architecture,\n  implement with TDD, run multi-agent code review, validate all quality gates, and\n  write a blog post. Use when asked to add a feature, implement a new capability,\n  build functionality, or develop a feature end-to-end.\nStructured 8-phase process for building new features from requirement gathering through documentation. Each phase produces a concrete output that feeds the next.\n- `/review` - Multi-agent code review with confidence-based filtering\n- `/test` - Write tests using TDD principles\n- `/fix` - Debug and fix bugs\n- `/refactor` - Restructure code without changing behavior"
+    gold_removed: ''

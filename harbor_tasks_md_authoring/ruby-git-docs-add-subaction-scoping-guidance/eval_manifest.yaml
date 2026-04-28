@@ -1,0 +1,48 @@
+version: "2.0"
+
+task:
+  name: ruby-git-docs-add-subaction-scoping-guidance
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: ruby-git/ruby-git
+  pr: 1202
+  base_commit: "917036b035ad29610163612e6bfc2f95642c5b1a"
+  merge_commit: "98547c9f15b7e5d88661e7c32f9ecb49fe0365e4"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/skills/command-implementation/REFERENCE.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/skills/command-implementation/REFERENCE.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/skills/command-implementation/REFERENCE.md."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/skills/review-arguments-dsl/CHECKLIST.md."
+  - id: signal_04
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/skills/review-arguments-dsl/CHECKLIST.md."
+  - id: signal_05
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/skills/review-arguments-dsl/CHECKLIST.md."
+
+config_edits:
+  - path: .github/skills/command-implementation/REFERENCE.md
+    tier: 1
+    gold_added: "  - [Scoping options to sub-command classes](#scoping-options-to-sub-command-classes)\nFor each option, make one of three decisions:\n| **Exclude (wrong sub-action)** | Option belongs to a different sub-action than the one this class implements | Omit — see [Scoping options to sub-command classes](#scoping-options-to-sub-command-classes) below |\n### Scoping options to sub-command classes\n\nWhen a git command is split into sub-command classes (e.g., `Branch::Create`,\n`Branch::List`, `Branch::Delete`), each class must include **only** the options that\napply to the sub-action it implements. Do **not** enumerate every option on the man\npage — most git commands document options for all modes on a single page, and adding\noptions that belong to a different mode produces a class that accepts arguments git\nwill reject or misinterpret.\n\n**How to determine which options belong to a sub-action:**\n\n1. **Read the SYNOPSIS** — git man pages list separate SYNOPSIS lines per mode\n   (e.g., `git branch [--list]`, `git branch -d`, `git branch -m`). Only options\n   shown on the SYNOPSIS line for the target sub-action are candidates.\n\n2. **Cross-reference the DESCRIPTION and OPTIONS sections** — some options are\n   described generally but only apply to specific modes. Check each option's\n   description for phrases like \"only useful with `--list`\" or \"when used with\n   `-d`\". If the docs explicitly tie an option to a different mode, exclude it.\n\n3. **Common/shared options** — options that appear on every SYNOPSIS line or are\n   described as applying to the command as a whole (e.g., `--quiet`, `--verbose`)\n   should be included in every sub-command class where they are meaningful.\n\n**Example — `git branch`:**\n\n| Option | Create | List | Delete | Move/Copy |\n|---|---|---|---|---|\n| `--track` | Yes | — | — | — |\n| `--force` | Yes | — | Yes | Yes |\n| `--sort` | — | Yes | — | — |\n| `--format` | — | Yes | — | — |\n| `--merged` | — | Yes | — | — |\n| `--quiet` | Yes | — | Yes | — |\n| `--color` | — | Yes | — | — |\n\nThis rule applies **only** when the command is split into sub-command classes. For\nsingle-class commands, include all options as described in the decision table above.\n"
+    gold_removed: ''
+  - path: .github/skills/review-arguments-dsl/CHECKLIST.md
+    tier: 1
+    gold_added: "  - [Options excluded because they belong to a different sub-action](#options-excluded-because-they-belong-to-a-different-sub-action)\n### Options excluded because they belong to a different sub-action\n\nWhen a command is split into sub-command classes (e.g., `Branch::Create` vs.\n`Branch::List`), each class includes **only** the options that apply to its\nsub-action. Do **not** add every option from the man page — git documents all modes\non a single page.\n\nTo determine which options belong to a sub-action:\n\n1. **Read the SYNOPSIS** — git man pages list separate SYNOPSIS lines per mode.\n   Only options shown on the SYNOPSIS line for the target sub-action are candidates.\n2. **Cross-reference DESCRIPTION and OPTIONS sections** — check each option's\n   description for phrases like \"only useful with `--list`\" or \"when used with\n   `-d`\". If the docs explicitly tie an option to a different mode, exclude it.\n3. **Common/shared options** — options on every SYNOPSIS line or described as\n   applying to the command as a whole (e.g., `--quiet`, `--verbose`) belong in\n   every sub-command class where they are meaningful.\n\nThis rule applies **only** to split commands. For single-class commands, include all\noptions (subject to execution-model exclusions below).\n"
+    gold_removed: ''

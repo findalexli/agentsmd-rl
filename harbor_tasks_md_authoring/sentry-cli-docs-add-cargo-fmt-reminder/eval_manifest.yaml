@@ -1,0 +1,33 @@
+version: "2.0"
+
+task:
+  name: sentry-cli-docs-add-cargo-fmt-reminder
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: getsentry/sentry-cli
+  pr: 2738
+  base_commit: "3c48dab009a8163947d64a1c6702797ee72f6d28"
+  merge_commit: "3728f6ff8df02ed1ae428e0ba70c53a14a973c57"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+
+config_edits:
+  - path: CLAUDE.md
+    tier: 1
+    gold_added: '
+
+      # Code Formatting
+
+
+      **ALWAYS** run `cargo fmt` before committing any Rust code changes to ensure consistent formatting across the codebase.'
+    gold_removed: ''

@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: opendal-docs-require-following-pr-template
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: apache/opendal
+  pr: 7219
+  base_commit: "f021b71e5a886a312cb9886c4a7645b60d389713"
+  merge_commit: "54c67405daab573ccddd5c4085e2683eb2cf9eae"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+
+config_edits:
+  - path: AGENTS.md
+    tier: 1
+    gold_added: '## Pull Request Requirements
+
+      - Always follow OpenDAL''s pull request template when creating a PR.
+
+      '
+    gold_removed: ''

@@ -1,0 +1,48 @@
+version: "2.0"
+
+task:
+  name: rsyslog-ai-add-missing-agentsmd-files
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: rsyslog/rsyslog
+  pr: 6187
+  base_commit: "e0d3bd8b9312bc448d4c4253d7d30154bc8f088d"
+  merge_commit: "8c8c7bf3349bace9d49a414f2785947abe4c3f06"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in runtime/AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in runtime/AGENTS.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in runtime/AGENTS.md."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in tests/AGENTS.md."
+  - id: signal_04
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in tests/AGENTS.md."
+  - id: signal_05
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in tests/AGENTS.md."
+
+config_edits:
+  - path: runtime/AGENTS.md
+    tier: 1
+    gold_added: "# AGENTS.md – Runtime subtree\n\nThese instructions apply to all files under `runtime/`, which implement the\nrsyslog core (message queues, networking backends, parsers, scheduler, stats\ncollection, and process orchestration).\n\n## Purpose & scope\n- Treat this tree as the authoritative implementation of the rsyslog engine.\n  Changes here affect every module and deployment profile.\n- Consult the top-level `AGENTS.md` and component-specific guides (e.g.\n  `plugins/AGENTS.md`) when a change crosses directory boundaries.\n\n## Key components\n- `rsyslog.c` / `rsyslog.h`: main entry point and daemon lifecycle helpers.\n- `modules.c`, `module-template.h`: module loader contracts shared with\n  `plugins/` and `contrib/`.\n- `queue.c`, `wti.c`, `wtp.c`: work queue implementation and worker threads.\n- `tcpsrv.c`, `tcpclt.c`, `net*.c`: TCP/TLS listeners and clients.\n- `parser.c`, `prop.c`, `template.c`: core message parsing and property engine.\n- `statsobj.c`, `dynstats*.c`: statistics registry and dynamic counters.\n- `timezones.c`, `datetime.c`: time conversion helpers.\n\n## Build & validation\n- Bootstrap with `./autogen.sh` only when build scripts change (see root\n  instructions) and configure with `./configure --enable-testbench` so runtime\n  helpers used by the testbench stay available. Run these commands from the\n  repository root, not from within `runtime/`.\n- Build the core with `make -j$(nproc)`; this compiles the runtime and shared\n  libraries that tests dynamically load via `-M../runtime/.libs:../.libs`.\n- Prefer targeted test runs over a full `make check`:\n  - Directly invoke the most relevant shell test under `tests/` (e.g.\n    `./tests/queue-persist.sh`).\n  - Use `make check TESTS='<script>.sh'` when you need automake’s harness or\n    Valgrind variants (`*-vg.sh`).\n  - For configuration validation edits, run `./tests/validation-run.sh`.\n- When changing exported symbols, update `runtime/Makefile.am` and ensure the\n  library version script (if touched) remains consistent with existing\n  SONAME policies.\n\n## Coding expectations\n- Follow `COMMENTING_STYLE.md` and add/update \"Concurrency & Locking\" blocks in\n  files that manage shared state (queues, network sessions, statistics).\n- Keep worker/thread behavior aligned with `MODULE_AUTHOR_CHECKLIST.md` rules:\n  per-worker state stays in `wrkrInstanceData_t`, shared state is guarded in\n  per-action data structures.\n- Update `doc/ai/module_map.yaml` when locking guarantees, queue semantics, or\n  exported helper APIs change so module authors know what to depend on.\n- Update or create unit helpers (e.g. under `tests/` or `runtime/hashtable/`)\n  when you modify reusable primitives.\n\n## Coordination & documentation\n- Notify module owners (via metadata or review notes) when adjusting\n  `module-template.h`, initialization flows, or statistics surfaces consumed by\n  plugins.\n- Cross-reference user docs in `doc/` if behavior visible to operators changes\n  (configuration syntax, stats counters, TLS requirements, etc.).\n- Leave `ChangeLog` and `NEWS` edits to the maintainers; do not modify those\n  files in routine patches.\n\n## Debugging tips\n- Enable extra runtime logging with `export RSYSLOG_DEBUG=\"...\"` in tests (see\n  `tests/diag.sh`) when chasing race conditions.\n- Use the testbench Valgrind helpers by running the corresponding `*-vg.sh`\n  scripts to flush out memory and threading regressions."
+    gold_removed: ''
+  - path: tests/AGENTS.md
+    tier: 1
+    gold_added: "# AGENTS.md – Testbench subtree\n\nThis guide covers everything under `tests/`, including shell test cases,\nhelpers, suppressions, and supporting binaries.\n\n## Purpose & scope\n- The directory implements the Automake testbench that exercises rsyslog.\n- Each `.sh` script is a standalone scenario that can be executed directly or\n  through `make check`.\n- Use this guide together with the top-level `AGENTS.md` and the component\n  guide that matches the module you are testing.\n\n## Writing & updating tests\n- Base new shell tests on existing ones; include `. $srcdir/diag.sh` to gain the\n  helper functions (timeouts, Valgrind integration, rsyslogd launch helpers).\n- Name Valgrind-enabled wrappers with the `-vg.sh` suffix and toggle Valgrind by\n  exporting `USE_VALGRIND` before sourcing the non-`vg` script.\n- Put auxiliary binaries next to their scripts (e.g. `*.c` programs compiled via\n  the Automake harness) and list them in `tests/Makefile.am`.\n- Keep long-lived configuration snippets in `tests/testsuites/` and reuse them\n  instead of copying large config blocks into multiple scripts.\n- Document new environment flags or helper functions inside `diag.sh` so other\n  tests can discover them.\n\n## Running tests locally\n- Build rsyslog first (`./autogen.sh`, `./configure --enable-testbench`,\n  `make -j$(nproc)`) so the testbench can load freshly built binaries and\n  modules.\n- Execute individual scenarios directly for quick feedback\n  (`./tests/imfile-basic.sh`).\n- Use `make check TESTS='script.sh'` when you need Automake logging,\n  parallelisation control, or to exercise the Valgrind wrappers.\n- Remove stale `.log`/`.trs` files before re-running a flaky test to avoid\n  Automake caching previous outcomes.\n- For configuration validation changes, run `./tests/validation-run.sh` to\n  confirm both failure and success paths.\n\n## Debugging & environment control\n- `tests/diag.sh` documents environment variables such as `SUDO`,\n  `USE_VALGRIND`, `RSYSLOG_DEBUG`, and timeout overrides; prefer these knobs over\n  ad-hoc `sleep` loops.\n- Use `USE_GDB=1 make <test>.log` to pause execution and attach a debugger as\n  described in `tests/README`.\n- Keep suppression files (e.g. `*.supp`) current when adding new Valgrind noise;\n  failing to do so will cause CI false positives.\n\n## Coordination\n- When adding tests for a plugin or runtime subsystem, mention them in the\n  component’s `AGENTS.md` so future authors know smoke coverage exists.\n- Update `KNOWN_ISSUES` or module metadata if a test encodes a known bug or a\n  skipped scenario.\n- If a change requires additional docker services or fixtures, document setup\n  steps in `tests/CI/README` (or create it) and link from the relevant module\n  guide."
+    gold_removed: ''

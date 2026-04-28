@@ -1,0 +1,100 @@
+version: "2.0"
+
+task:
+  name: codecompanion.nvim-chore-update-claudemd
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: olimorris/codecompanion.nvim
+  pr: 2171
+  base_commit: "7a63ee65234fa121c87aee34aa96b1ee998d6c75"
+  merge_commit: "89382c89253832436a8bb2322ba1098285486000"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+
+config_edits:
+  - path: CLAUDE.md
+    tier: 1
+    gold_added: 'Neovim plugin providing LLM-powered coding assistance with chat interface, inline code transformation, and extensible tools.
+
+      ## Architecture
+
+      - **Strategies**: Chat, inline, and cmd interaction modes
+
+      - **Adapters**: LLM provider integrations (HTTP and ACP)
+
+      - **Tools**: LLM-executable functions for file operations
+
+      - **Variables**: Dynamic context injection (buffers, LSP diagnostics)
+
+      ### Naming
+
+      - Use explicit names (`pattern` not `pat`)
+
+      - Functions should describe their action (`should_include` not `include_ok`)
+
+      - Make conditionals readable: `if should_include(pattern) then`
+
+      ### Lua Style
+
+      - Format with StyLua (120 column width, 2 spaces)
+
+      - Use LuaCATS type annotations
+
+      - Consistent error handling with logging
+
+      ### Patterns
+
+      ````lua
+
+      -- Configuration
+
+      local defaults = { strategies = { chat = { adapter = "copilot" } } }
+
+      local M = { config = vim.deepcopy(defaults) }
+
+      -- Error handling
+
+      ````
+
+      ### Testing
+
+      - Use Mini.Test
+
+      - Run with `make test` or `make test_file FILE=path`
+
+      ## Development
+
+      - **Format**: `make format`
+
+      - **Test**: `make test`
+
+      - **Docs**: `make docs`
+
+      Keep functions under 50 lines, use descriptive names, and ensure all public APIs have type annotations.
+
+      ## Important Instructions
+
+      - NEVER create files unless absolutely necessary
+
+      - ALWAYS prefer editing existing files
+
+      - NEVER proactively create documentation files
+
+      - Use four backticks for code blocks with language specification
+
+      ````'
+    gold_removed: ''

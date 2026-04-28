@@ -1,0 +1,62 @@
+version: "2.0"
+
+task:
+  name: mux-docs-add-pr-title-structure
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: coder/mux
+  pr: 463
+  base_commit: "ec66ae430f27f4a9ce5f5202b8ede32a600405fd"
+  merge_commit: "646a727a043cf6b63fa8c92f466a45a16686927e"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in docs/AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in docs/AGENTS.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in docs/AGENTS.md."
+
+config_edits:
+  - path: docs/AGENTS.md
+    tier: 1
+    gold_added: '### PR Title Structure
+
+
+      Use these prefixes based on what best describes the PR:
+
+
+      - **perf:** (improvement to performance, no functionality changes)
+
+      - **refactor:** (improvement to codebase, no behavior changes)
+
+      - **fix:** (conforming behavior to user expectations)
+
+      - **feat:** (net new functionality)
+
+      - **ci:** (concerned with build process or CI)
+
+
+      Examples:
+
+
+      - `🤖 perf: cache markdown plugin arrays to avoid re-parsing`
+
+      - `🤖 refactor: extract IPC handlers to separate module`
+
+      - `🤖 fix: handle workspace rename edge cases`
+
+      - `🤖 feat: add keyboard shortcuts for workspace navigation`
+
+      - `🤖 ci: update wait_pr_checks script timeout`
+
+      '
+    gold_removed: ''

@@ -1,0 +1,93 @@
+version: "2.0"
+
+task:
+  name: phoenix-featskills-add-session-skills
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: Arize-ai/phoenix
+  pr: 11500
+  base_commit: "b6698dda12ce5b2d2b72eb5075bbcf83570ff92f"
+  merge_commit: "2ba749be7eb4f35dc36996b4b7473d415239b5c7"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/phoenix-tracing/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/phoenix-tracing/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/phoenix-tracing/SKILL.md."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/phoenix-tracing/rules/sessions-typescript.md."
+  - id: signal_04
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/phoenix-tracing/rules/sessions-typescript.md."
+  - id: signal_05
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/phoenix-tracing/rules/sessions-typescript.md."
+
+config_edits:
+  - path: skills/phoenix-tracing/SKILL.md
+    tier: 1
+    gold_added: '- **Quick Start**: `setup-{lang}` → `instrumentation-auto-{lang}` → Check Phoenix
+
+      - **Custom Spans**: `setup-{lang}` → `instrumentation-manual-{lang}` → `span-{type}`
+
+      - **Session Tracking**: `sessions-{lang}` for conversation grouping patterns
+
+      - **Production**: `production-{lang}` for batching, masking, and deployment
+
+      ## How to Use This Skill
+
+      **Navigation Patterns:**
+
+      # By category prefix
+
+      rules/setup-*              # Installation and configuration
+
+      rules/instrumentation-*    # Auto and manual tracing
+
+      rules/span-*               # Span type specifications
+
+      rules/sessions-*           # Session tracking
+
+      rules/production-*         # Production deployment
+
+      rules/fundamentals-*       # Core concepts
+
+      rules/attributes-*         # Attribute specifications
+
+
+      # By language
+
+      rules/*-python.md          # Python implementations
+
+      rules/*-typescript.md      # TypeScript implementations
+
+      **Reading Order:**
+
+      1. Start with `setup-{lang}` for your language
+
+      2. Choose `instrumentation-auto-{lang}` OR `instrumentation-manual-{lang}`
+
+      3. Reference `span-{type}` files as needed for specific operations
+
+      4. See `fundamentals-*` files for attribute specifications
+
+      '
+    gold_removed: ''
+  - path: skills/phoenix-tracing/rules/sessions-typescript.md
+    tier: 1
+    gold_added: "Track multi-turn conversations by grouping traces with session IDs. **Use `withSpan` directly from `@arizeai/openinference-core`** - no wrappers or custom utilities needed.\n## Core Concept\n\n**Session Pattern:**\n1. Generate a unique `session.id` once at application startup\n2. Export SESSION_ID, import `withSpan` where needed\n3. Use `withSpan` to create a parent CHAIN span with `session.id` for each interaction\n4. All child spans (LLM, TOOL, AGENT, etc.) automatically group under the parent\n5. Query traces by `session.id` in Phoenix to see all interactions\n\n## Implementation (Best Practice)\n\n### 1. Setup (instrumentation.ts)\nimport { register } from \"@arizeai/phoenix-otel\";\nimport { randomUUID } from \"node:crypto\";\n\n// Initialize Phoenix\nregister({\n  projectName: \"your-app\",\n  url: process.env.PHOENIX_COLLECTOR_ENDPOINT || \"http://localhost:6006\",\n  apiKey: process.env.PHOENIX_API_KEY,\n  batch: true,\n});\n\n// Generate and export session ID\nexport const SESSION_ID = randomUUID();\n```\n### 2. Usage (app code)\n\n```typescript\nimport { withSpan } from \"@arizeai/openinference-core\";\nimport { SESSION_ID } from \"./instrumentation\";\n\n// Use withSpan directly - no wrapper needed\nconst handleInteraction = withSpan(\n    const result = await agent.generate({ prompt: userInput });\n    return result;\n  },\n  {\n    name: \"cli.interaction\",\n    kind: \"CHAIN\",\n    attributes: { \"session.id\": SESSION_ID },\n// Call it\nconst result = await handleInteraction();\n```\n### With Input Parameters\nconst processQuery = withSpan(\n  async (query: string) => {\n    return await agent.generate({ prompt: query });\n  },\n  {\n    name: \"process.query\",\n    kind: \"CHAIN\",\n    attributes: { \"session.id\": SESSION_ID },\n  }\n);\n\nawait processQuery(\"What is 2+2?\");\n## Key Points\n### Session ID Scope\n- **CLI/Desktop Apps**: Generate once at process startup\n- **Web Servers**: Generate per-user session (e.g., on login, store in session storage)\n- **Stateless APIs**: Accept session.id as a parameter from client\n\n### Span Hierarchy\n```\ncli.interaction (CHAIN) ← session.id here\n├── ai.generateText (AGENT)\n│   ├── ai.generateText.doGenerate (LLM)\n│   └── ai.toolCall (TOOL)\n└── ai.generateText.doGenerate (LLM)\n```\n\nThe `session.id` is only set on the **root span**. Child spans are automatically grouped by the trace hierarchy.\n\n### Querying Sessions\n\n```bash\n# Get all traces for a session\nnpx @arizeai/phoenix-cli traces \\\n  --endpoint http://localhost:6006 \\\n  --project your-app \\\n  --format raw \\\n  --no-progress | \\\n  jq '.[] | select(.spans[0].attributes[\"session.id\"] == \"YOUR-SESSION-ID\")'\n```\n\n## Dependencies\n\n```json\n{\n  \"dependencies\": {\n    \"@arizeai/openinference-core\": \"^2.0.5\",\n    \"@arizeai/phoenix-otel\": \"^0.4.1\"\n}\n**Note:** `@opentelemetry/api` is NOT needed - it's only for manual span management.\n\n## Why This Pattern?\n\n1. **Simple**: Just export SESSION_ID, use withSpan directly - no wrappers\n2. **Built-in**: `withSpan` from `@arizeai/openinference-core` handles everything\n3. **Type-safe**: Preserves function signatures and type information\n4. **Automatic lifecycle**: Handles span creation, error tracking, and cleanup\n5. **Framework-agnostic**: Works with any LLM framework (AI SDK, LangChain, etc.)\n6. **No extra deps**: Don't need `@opentelemetry/api` or custom utilities\n## Advanced: Custom Input/Output Processing\nconst processWithLogging = withSpan(\n  async (query: string) => {\n    const result = await llm.generate(query);\n    return result;\n  },\n  {\n    name: \"query.process\",\n    kind: \"CHAIN\",\n    attributes: { \"session.id\": SESSION_ID },\n    processInput: (query) => ({\n      \"input.value\": query,\n      \"input.length\": query.length,\n    }),\n    processOutput: (result) => ({\n      \"output.value\": result.text,\n      \"output.tokens\": result.usage?.totalTokens,\n    }),\n  }\n);\n```\n## Adding More Attributes\n\n```typescript\nimport { withSpan } from \"@arizeai/openinference-core\";\nimport { SESSION_ID } from \"./instrumentation\";\n\nconst handleWithContext = withSpan(\n  async (userInput: string) => {\n    return await agent.generate({ prompt: userInput });\n  },\n  {\n    name: \"cli.interaction\",\n    kind: \"CHAIN\",\n    attributes: {\n      \"session.id\": SESSION_ID,\n      \"user.id\": userId,              // Track user\n      \"metadata.environment\": \"prod\",  // Custom metadata\n    },\n  }\n);\n## Anti-Pattern: Don't Create Wrappers\n❌ **Don't do this:**\n```typescript\n// Unnecessary wrapper\nexport function withSessionTracking(fn) {\n  return withSpan(fn, { attributes: { \"session.id\": SESSION_ID } });\n}\n```\n✅ **Do this instead:**\n// Use withSpan directly\nimport { withSpan } from \"@arizeai/openinference-core\";\nimport { SESSION_ID } from \"./instrumentation\";\nconst handler = withSpan(fn, {\n  attributes: { \"session.id\": SESSION_ID }\n});\n## Alternative: Context API Pattern\n\nFor web servers or complex async flows where you need to propagate session IDs through middleware, you can use the Context API:\nimport { context } from \"@opentelemetry/api\";\nimport { setSession } from \"@arizeai/openinference-core\";\n  setSession(context.active(), { sessionId: \"user_123_conv_456\" }),\n**Use Context API when:**\n- Building web servers with middleware chains\n- Session ID needs to flow through many async boundaries\n- You don't control the call stack (e.g., framework-provided handlers)\n\n**Use withSpan when:**\n- Building CLI apps or scripts\n- You control the function call points\n- Simpler, more explicit code is preferred\n\n## Related\n- `fundamentals-universal-attributes.md` - Other universal attributes (user.id, metadata)\n- `span-chain.md` - CHAIN span specification\n- `sessions-python.md` - Python session tracking patterns"
+    gold_removed: ''

@@ -1,0 +1,40 @@
+version: "2.0"
+
+task:
+  name: xlaude-docs-using-agentsmd-instead
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: Xuanwo/xlaude
+  pr: 61
+  base_commit: "ce16a804f1a75664cb9522ce257afe265c8eaeec"
+  merge_commit: "d17dda1d8463fad9486b42b17d61c3ba9b9cf3c6"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+
+config_edits:
+  - path: AGENTS.md
+    tier: 1
+    gold_added: "# xlaude - Claude 实例管理工具\n\nxlaude 是一个用于管理 Claude 实例的命令行工具，通过 git worktree 实现多分支并行开发。\n\n## 核心功能\n\n### xlaude create [name]\n创建新的 worktree 和分支：\n- 必须在 main/master/develop 分支上执行\n- 如果不提供 name，自动从 BIP39 词库随机选择一个词\n- 创建新分支 `<name>`\n- 创建 worktree 到 `../<repo-name>-<name>` 目录\n- **不会自动启动 Claude**\n\n### xlaude open [name]\n打开已存在的 worktree 并启动全局配置的 Agent（默认为 Claude）：\n- 有参数：打开指定的 worktree\n- 无参数：\n  - 如果当前目录是 worktree（非 main/master/develop）：直接打开当前 worktree\n  - 如果当前 worktree 未被管理：询问是否添加并打开\n  - 否则：显示交互式选择列表\n- 切换到 worktree 目录\n- 启动全局配置的 `agent` 命令（默认：`claude --dangerously-skip-permissions`）\n- 继承所有环境变量\n\n### xlaude delete [name]\n删除 worktree 并清理：\n- 有参数：删除指定的 worktree\n- 无参数：删除当前所在的 worktree\n- 检查未提交的修改和未推送的 commit\n- 检查分支是否已完全合并，未合并时询问是否强制删除\n- 需要时进行二次确认\n- 自动删除 worktree 和本地分支（如果安全）\n\n### xlaude add [name]\n将当前 worktree 添加到 xlaude 管理：\n- 必须在 git worktree 中执行\n- 如果不提供 name，默认使用当前分支名\n- 检查是否已被管理，避免重复添加\n- 适用于手动创建的 worktree 或从其他地方克隆的项目\n\n### xlaude list\n列出所有活跃的 worktree，显示：\n- 名称\n- 仓库名\n- 路径\n- 创建时间\n- Claude sessions（如果存在）\n  - 显示最多 3 个最近的 session\n  - 每个 session 显示：最后更新时间和最后的用户消息\n  - 超过 3 个时显示剩余数量\n\n### xlaude clean\n清理无效的 worktree：\n- 检查所有管理的 worktree 是否仍存在于 git 中\n- 自动移除已被手动删除的 worktree\n- 适用于使用 `git worktree remove` 后的清理\n- 保持 xlaude 状态与 git 状态同步\n\n### xlaude rename <old_name> <new_name>\n重命名 worktree 状态：\n- 重命名 xlaude 管理中的 worktree 名称\n- 仅更新 xlaude 状态，不影响实际的 git worktree 或目录\n- 检查新名称是否已存在，避免冲突\n- 保留所有 Claude sessions 和元数据\n\n### xlaude dir [name]\n获取 worktree 的目录路径：\n- 有参数：返回指定 worktree 的绝对路径\n- 无参数：显示交互式选择列表\n- 输出纯路径，无装饰符，便于 shell 命令使用\n- 适用于与其他工具集成（cd、编辑器、zoxide 等）\n\n## 技术实现\n\n- 使用 Rust 开发\n- 直接调用系统 git 命令\n- 状态持久化位置：\n  - macOS: `~/Library/Application Support/com.xuanwo.xlaude/state.json`\n  - Linux: `~/.config/xlaude/state.json`\n  - Windows: `%APPDATA%\\xuanwo\\xlaude\\config\\state.json`\n  - Worktree key 格式：`<repo-name>/<worktree-name>`（v0.3+）\n  - 自动迁移旧版本格式到新格式\n- 使用 clap 构建 CLI\n- 使用 BIP39 词库生成随机名称\n- 彩色输出和交互式确认\n- 集成测试覆盖所有核心功能\n\n## 全局 Agent 配置\n\n`agent` 字段用于配置启动会话时使用的完整命令行（全局唯一，对 `open` 和 Dashboard 均生效）：\n\n```json\n{\n  \"worktrees\": { /* ... */ },\n  \"editor\": \"zed\",\n  \"agent\": \"codex\"\n}\n```\n\n说明：\n\n- 若未设置，默认值为 `claude --dangerously-skip-permissions`。\n- 该值按 shell 风格进行分词解析，支持引号；如需管道/重定向，请写成脚本后在此引用脚本路径。\n- 不支持环境变量或每仓库/每 worktree 覆盖；全局唯一。\n\n## 使用示例\n\n```bash\n# 在 opendal 项目中创建新的工作分支\ncd opendal\nxlaude create feature-x  # 创建 ../opendal-feature-x 目录\n\n# 使用随机名称创建\nxlaude create  # 可能创建 ../opendal-dolphin 目录\n\n# 打开并启动 Claude\nxlaude open feature-x  # 打开指定的 worktree\nxlaude open  # 如果在 worktree 中直接打开，否则交互式选择\n\n# 将已存在的 worktree 添加到管理\ncd ../opendal-bugfix\nxlaude add  # 使用当前分支名作为名称\nxlaude add hotfix  # 或指定自定义名称\n\n# 列出所有活跃的实例\nxlaude list\n\n# 删除当前 worktree\nxlaude delete\n\n# 删除指定 worktree\nxlaude delete feature-x\n\n# 清理无效的 worktree\nxlaude clean\n\n# 重命名 worktree\nxlaude rename feature-x feature-improved\n\n# 典型工作流\nxlaude create my-feature  # 创建 worktree\nxlaude open my-feature   # 打开并开始工作\n# ... 工作完成后 ...\nxlaude delete my-feature # 清理 worktree\n\n# 直接在当前 worktree 中启动\ncd ../opendal-feature\nxlaude open  # 自动检测并打开当前 worktree\n\n# 获取 worktree 路径（用于目录切换）\ncd $(xlaude dir feature-x)  # 切换到指定 worktree\nxlaude dir  # 交互式选择 worktree 并输出路径\n\n# 配合 shell function 使用\n# 在 .bashrc/.zshrc 中添加：\n# xcd() { cd $(xlaude dir \"$@\"); }\nxcd feature-x  # 快速切换到 worktree\n\n# 与其他工具集成\ncode $(xlaude dir feature-x)  # 用 VSCode 打开\nvim $(xlaude dir feature-x)/src/main.rs  # 编辑文件\n```"
+    gold_removed: ''
+  - path: CLAUDE.md
+    tier: 1
+    gold_added: ''
+    gold_removed: ''
+  - path: CLAUDE.md
+    tier: 1
+    gold_added: AGENTS.md
+    gold_removed: ''

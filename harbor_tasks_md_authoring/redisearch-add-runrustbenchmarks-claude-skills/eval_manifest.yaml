@@ -1,0 +1,46 @@
+version: "2.0"
+
+task:
+  name: redisearch-add-runrustbenchmarks-claude-skills
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: RediSearch/RediSearch
+  pr: 8241
+  base_commit: "2ec183e65851a5d6034359ef81fa083c61fe4ae2"
+  merge_commit: "bfee19de943a1461447ccab43d7cae928c9ba455"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .skills/run-rust-benchmarks/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .skills/run-rust-benchmarks/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .skills/run-rust-benchmarks/SKILL.md."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .skills/run-rust-tests/SKILL.md."
+  - id: signal_04
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .skills/run-rust-tests/SKILL.md."
+
+config_edits:
+  - path: .skills/run-rust-benchmarks/SKILL.md
+    tier: 1
+    gold_added: "---\nname: run-rust-benchmarks\ndescription: Run Rust benchmarks and compare performance with the C implementation\n---\n\n# Rust Benchmarks Skill\n\nRun Rust benchmarks and compare performance with the C implementation.\n\n## Arguments\n- `<crate>`: Run the given benchmark crate (e.g., `/run-rust-benchmarks rqe_iterators_bencher`)\n- `<crate> <bench>`: Run specific bench in a benchmakr crate (e.g., `/run-rust-benchmarks rqe_iterators_bencher \"Iterator - InvertedIndex - Numeric - Read Dense\"`)\n\nArguments provided: `$ARGUMENTS`\n\n## Instructions\n\n1. Check the arguments provided above:\n   - If a crate name is provided, run benchmarks for that crate:\n     ```bash\n     cd src/redisearch_rs && cargo bench -p <crate_name>\n     ```\n   - If both crate and bench name are provided, run the specific bench:\n     ```bash\n     cd src/redisearch_rs && cargo bench -p <crate_name> <bench_name>\n     ```\n2. Once the benchmarks are complete, generate a summary comparing the average run times between the Rust and C implementations.\n\n## Common Benchmark Commands\n\n```bash\n# Bench given crate\ncd src/redisearch_rs && cargo bench -p rqe_iterators_bencher\ncd src/redisearch_rs && cargo bench -p inverted_index_bencher\n\n# Run a specific benchmark\ncd src/redisearch_rs && cargo bench -p rqe_iterators_bencher \"Iterator - InvertedIndex - Numeric - Read Dense\"\n```"
+    gold_removed: ''
+  - path: .skills/run-rust-tests/SKILL.md
+    tier: 1
+    gold_added: '- `<crate>`: Run tests for specific crate (e.g., `/run-rust-tests hyperloglog`)
+
+      - `<crate> <test>`: Run specific test in crate (e.g., `/run-rust-tests hyperloglog test_merge`)'
+    gold_removed: ''

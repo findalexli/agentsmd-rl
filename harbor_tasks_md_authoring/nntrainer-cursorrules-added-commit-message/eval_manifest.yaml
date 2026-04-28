@@ -1,0 +1,42 @@
+version: "2.0"
+
+task:
+  name: nntrainer-cursorrules-added-commit-message
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: nntrainer/nntrainer
+  pr: 3802
+  base_commit: "0e50be090a31c803a8c9f98f0859e206b85fff82"
+  merge_commit: "c2ee000e451db932b8a2ce197400c6c39a81fce6"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .cursorrules."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .cursorrules."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .cursorrules."
+
+config_edits:
+  - path: .cursorrules
+    tier: 1
+    gold_added: '=== How to write commit messages ===
+
+      - The commit message should summarize the commit itself.
+
+      - If the commit is a bugfix; it should describe the bug and how it is resolved.
+
+      - If the commit is a new feature; it should describe the feature itself.
+
+      - A commit should include a sign-off message.
+
+      '
+    gold_removed: ''

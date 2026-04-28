@@ -1,0 +1,35 @@
+version: "2.0"
+
+task:
+  name: swamp-docs-require-skillcreator-guidelines-for
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: systeminit/swamp
+  pr: 426
+  base_commit: "ef93e49991143f5044fcff6dfd7ba6fb64ccea6e"
+  merge_commit: "34fc0a92b04c007388cbc054e5906cb35313a9ed"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+
+config_edits:
+  - path: CLAUDE.md
+    tier: 1
+    gold_added: '## Skills
+
+
+      When creating or updating `swamp-*` skills in `.claude/skills/`, follow the
+
+      `skill-creator` skill guidelines to ensure consistent structure and quality.
+
+      '
+    gold_removed: ''

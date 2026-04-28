@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: bisq2-add-first-version-of-agentsmd
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: bisq-network/bisq2
+  pr: 4353
+  base_commit: "4538a0d4e3e814cec6d5a8e122acacaa2e1297b2"
+  merge_commit: "e6996de5d4de835a901492e955d4de4b4e005cce"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+
+config_edits:
+  - path: AGENTS.md
+    tier: 1
+    gold_added: "# AGENTS.md — Bisq 2\n\n## Overview\nBisq 2 is a decentralized trading platform.\n\n## Tech Stack\n- Java (JDK 21 required)\n- Gradle (Kotlin DSL)\n- JavaFX (required for desktop app)\n\n## Repo Structure (high‑level)\n- `apps/` — composite build for desktop app, seed node app, installers\n- `network/` — composite build for networking components\n- `common/`, `platform/`, `presentation/`, `application/`, `trade/`, etc. — core modules\n- `docs/dev/` — dev guide, build instructions, code guidelines\n\n## Build & Run\nCommon commands (macOS/Linux):\n- Build all: `./gradlew clean build`\n- Build without tests: `./gradlew clean build -x test`\n- Install desktop app: `./gradlew :apps:desktop:desktop-app:installDist`\n- Run desktop app: `./apps/desktop/desktop-app/build/install/desktop-app/bin/desktop-app`\n\nSeed node:\n- Install seed node: `./gradlew :apps:seed-node-app:installDist`\n\nFull clean/rebuild:\n- `./gradlew cleanAll buildAll`\n\n## Local Network Scenarios\nSee `Makefile` for multi‑node local test setups (clearnet/tor/i2p) using `screen`:\n- `make start-clearnet-full-env n=2`\n- `make start-tor-seeds` → then `make start-tor-full-env n=2`\n\n## Config & Runtime Options\n- JVM args are the primary config mechanism (typesafe config)\n- Program args supported: `--app-name`, `--data-dir`\n- Custom config file: `bisq.conf` in the data dir\n\n## Protobuf Conventions\n- One `.proto` file per module; package name matches module name\n- `option java_package = \"bisq.<module>.protobuf\"`\n- Field names use lowerCamelCase (not underscore)\n- Enums use ALL_CAPS with a type prefix (e.g., `CHATMESSAGETYPE_TEXT`)\n- Optional Java fields should use `optional` in proto\n\n## Testing Instructions\n- Add or update tests when behavior changes\n- Keep tests deterministic and fast\n- Respect existing JUnit parallelization and resource locks\n- Never disable or weaken assertions\n- If a change cannot be reasonably tested, explain **why**\n\n## Authority\nHuman contributors have final authority.\nAgents are assistants, not decision-makers.\n\nWhen uncertain: **do nothing and ask**.\n\n## Conventions & Guidelines\n- Follow `docs/dev/code-guidelines.md`\n  - Lombok for getters/setters/toString/equals/hashCode\n  - K&R brace style, always use braces\n  - Avoid nullable values; use `Optional` and `@Nullable` where needed\n- See `docs/dev/contributing.md` for PR workflow and commit style\n- For i18n strings, only update the base file in `i18n/src/main/resources/<name>.properties` and do not edit `..._<lang>.properties` files directly.\n\n## Useful Docs\n- `docs/dev/build.md`\n- `docs/dev/dev-guide.md`\n- `docs/dev/code-guidelines.md`\n- `docs/dev/protobuf-notes.md`\n\n## License\nBisq 2 is licensed under the AGPL-3.0. All contributions are subject to this license."
+    gold_removed: ''

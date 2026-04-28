@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: shardingsphere-enhance-claudemd-with-intelligent-code
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: apache/shardingsphere
+  pr: 36934
+  base_commit: "82805e27c8677a2abbb32952a12bb6bbbd56ce00"
+  merge_commit: "8f97abdbb20ea6168d49091676b2f8d97791f771"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+
+config_edits:
+  - path: CLAUDE.md
+    tier: 1
+    gold_added: "- `Connect:` Flexible adaptation of database protocol, SQL dialect and database storage\n- `Enhance:` Transparent features: sharding, encryption, security, governance\n- `Pluggable:` Micro-kernel + 3-layer pluggable architecture\n5. NEVER auto-commit to Git without explicit instruction\n6. ONLY edit explicitly mentioned files\n7. Make decisions within task scope ONLY\n8. NEVER perform autonomous \"best practice\" improvements\n9. Apply formatting to new code ONLY\n10. Provide comprehensive analysis before coding\n- NEVER auto-commit changes without explicit user command\n### Intelligent Code Standards\n\n#### Contextual Intelligence\n- **Pattern Recognition**: Identify and apply existing architectural patterns\n- **Style Adaptation**: Seamlessly match current codebase conventions\n- **Architectural Harmony**: Ensure new code fits existing design philosophy\n- **Self-Documenting Design**: Code should explain its purpose through structure\n\n#### Clean Code Intelligence\n- **Single Responsibility**: Each function/class has one clear purpose\n- **DRY Principle**: Detect and eliminate duplication automatically\n- **Effortless Reading**: Code reads like well-written prose\n- **Optimal Abstraction**: Create right level of abstraction for problem domain\n\n#### Evolutionary Code Design\n- **Open-Closed Principle**: Code open for extension, closed for modification\n- **Fail-Fast Design**: Detect errors early and exit cleanly\n- **Graceful Degradation**: Implement automatic recovery when possible\n- **Future-Proofing**: Anticipate likely future requirements\n\n- **Comprehensive Analysis**: Thoroughly analyze problem context, consider multiple approaches\n- **One-Shot Excellence**: Provide optimal solutions in single response\n- **Quality Validation**: Ensure immediate usability, actionable recommendations\n- All tests pass in <5 minutes\n- **Intelligence**: Patterns recognized, architecture harmonized, future-proof\n## Practical Examples\n\n### Example 1: Intelligent Bug Fix\nBefore (potential null pointer):\npublic void processConnection(DatabaseConnection conn) {\n    conn.execute(sql);\n}\n\nAfter (context-aware, self-documenting):\npublic void processConnection(DatabaseConnection validConnection) {\n    if (validConnection.isValid()) {\n        validConnection.execute(sql);\n    }\n}\n\n### Example 2: Pattern-Based New Feature\nFollowing Repository pattern for consistency:\npublic class MySQLConnectionValidator implements DatabaseValidator {\n    private static final int TIMEOUT_MS = 5000;\n\n    public ValidationResult validate(ConnectionConfig config) {\n        return timeoutAwareValidation(config);\n    }\n}\n\n### Example 3: Evolutionary Design\nOpen-closed principle implementation:\npublic abstract class AbstractDatabaseConnector {\n    protected abstract Connection createConnection(Config config);\n\n    public final ValidationResult validate(Config config) {\n        return preValidation(config);\n    // Implementation in child classes\n    return createConnection(config);\n    }\n}\n\n   - Make intelligent decisions within task scope\n   - Maintain existing architectural patterns\n   - Preserve existing style and design philosophy\n   - Apply context-aware design principles\n1. **Pre-change**: Verify task matches user request, analyze existing patterns\n2. **Post-change**: Run relevant tests, verify no regression, confirm architectural harmony\n- **Report deviations** as soon as detected"
+    gold_removed: ''

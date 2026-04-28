@@ -1,0 +1,60 @@
+version: "2.0"
+
+task:
+  name: worktrunk-refactor-consolidate-clauderules-into-claudemd
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: max-sixty/worktrunk
+  pr: 791
+  base_commit: "cf6d16dd0f495f22c5c55d4e8e9a76954a0b902a"
+  merge_commit: "2cddfd6fb316e264410208b747487116adf1b2c2"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/writing-user-outputs/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/writing-user-outputs/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/writing-user-outputs/SKILL.md."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_04
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_05
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+
+config_edits:
+  - path: .claude/rules/accessor-conventions.md
+    tier: 1
+    gold_added: ''
+    gold_removed: ''
+  - path: .claude/rules/caching-strategy.md
+    tier: 1
+    gold_added: ''
+    gold_removed: ''
+  - path: .claude/rules/output-system-architecture.md
+    tier: 1
+    gold_added: ''
+    gold_removed: ''
+  - path: .claude/skills/writing-user-outputs/SKILL.md
+    tier: 1
+    gold_added: "---\nname: writing-user-outputs\ndescription: CLI output formatting standards for worktrunk. Use when writing user-facing messages, error handling, progress output, hints, warnings, or working with the output system.\n---\n\n# Output System Architecture\n\n## Shell Integration\n\nWorktrunk uses file-based directive passing for shell integration:\n\n1. Shell wrapper creates a temp file via `mktemp`\n2. Shell wrapper sets `WORKTRUNK_DIRECTIVE_FILE` env var to the file path\n3. wt writes shell commands (like `cd '/path'`) to that file\n4. Shell wrapper sources the file after wt exits\n\nWhen `WORKTRUNK_DIRECTIVE_FILE` is not set (direct binary call), commands execute\ndirectly and shell integration hints are shown.\n\n## Output Functions\n\nThe output system handles shell integration automatically. Just call output\nfunctions — they do the right thing regardless of whether shell integration is\nactive.\n\n```rust\n// NEVER DO THIS - don't check mode in command code\nif is_shell_integration_active() {\n    // different behavior\n}\n\n// ALWAYS DO THIS - just call output functions\noutput::print(success_message(\"Created worktree\"))?;\noutput::change_directory(&path)?;  // Writes to directive file if set, else no-op\n```\n\n**Output functions** (`src/output/global.rs`):\n\n| Function | Destination | Purpose |\n|----------|-------------|---------|\n| `print(message)` | stderr | Status messages (use with formatting functions) |\n| `blank()` | stderr | Visual separation |\n| `stdout(content)` | stdout | Primary output (tables, JSON, pipeable) |\n| `change_directory(path)` | directive file | Shell cd after wt exits |\n| `execute(command)` | directive file | Shell command after wt exits |\n| `flush()` | both | Flush buffers (call before interactive prompts) |\n| `terminate_output()` | stderr | Reset ANSI state on stderr |\n| `is_shell_integration_active()` | — | Check if directive file set (rarely needed) |\n\n**Message formatting functions** (`worktrunk::styling`):\n\n| Function | Symbol | Color |\n|----------|--------|-------|\n| `success_message()` | ✓ | green |\n| `progress_message()` | ◎ | cyan |\n| `info_message()` | ○ | — |\n| `warning_message()` | ▲ | yellow |\n| `hint_message()` | ↳ | dim |\n| `error_message()` | ✗ | red |\n\n## stdout vs stderr\n\n**Decision principle:** If this command is piped, what should the receiving program get?\n- **stdout** → Data for pipes, scripts, `eval` (tables, JSON, shell code)\n- **stderr** → Status for the human watching (progress, success, errors, hints)\n- **directive file** → Shell commands executed after wt exits (cd, exec)\n\nExamples:\n- `wt list` → table/JSON to stdout (for grep, jq, scripts)\n- `wt config shell init` → shell code to stdout (for `eval`)\n- `wt switch` → status messages only (nothing to pipe)\n\n## Security\n\n`WORKTRUNK_DIRECTIVE_FILE` is automatically removed from spawned subprocesses\n(via `shell_exec::Cmd`). This prevents hooks from writing to the directive\nfile.\n\n## Windows Compatibility (Git Bash / MSYS2)\n\nOn Windows with Git Bash, `mktemp` returns POSIX-style paths like `/tmp/tmp.xxx`.\nThe native Windows binary (`wt.exe`) needs a Windows path to write to the\ndirective file.\n\n**No explicit path conversion is needed.** MSYS2 (which Git Bash uses)\nautomatically converts POSIX paths in environment variables when spawning native\nWindows binaries. When the shell wrapper sets `WORKTRUNK_DIRECTIVE_FILE=/tmp/...`\nand runs `wt.exe`, MSYS2 translates this to `C:\\Users\\...\\Temp\\...` before the\nbinary sees it.\n\nSee: https://www.msys2.org/docs/filesystem-paths/\n\nThis means the shell wrapper templates can use `$directive_file` directly without\ncalling `cygpath -w`. The conversion happens automatically in the MSYS2 runtime.\n\n## Simplification Notes\n\nThe output system was originally more complex to handle shell integration\nedge cases. After consolidation, the thin wrappers (`print`, `stdout`,\n`blank`) are essentially `eprintln!`/`println!` + flush.\n\n**What still provides value:**\n\n- `change_directory()`, `execute()` — IPC with shell wrapper via directive file\n- `terminate_output()` — ANSI reset when needed\n\n**What could be further simplified:**\n\n- `print()` → `eprintln!()` + flush (callers must remember to flush)\n- `stdout()` → `println!()` + flush\n- `blank()` → `eprintln!()` + flush\n\nThe abstraction cost is low, but if we wanted to reduce indirection, these\nwrappers could be removed. The main value they provide is consistency (correct\nstream, always flushing).\n\n---\n\n# CLI Output Formatting Standards\nUse `output::` functions for consistency.\nconsistency, not complex logic."
+    gold_removed: ''
+  - path: CLAUDE.md
+    tier: 1
+    gold_added: "\n## Accessor Function Naming Conventions\n\nFunction prefixes signal return behavior and side effects.\n\n| Prefix | Returns | Side Effects | Error Handling | Example |\n|--------|---------|--------------|----------------|---------|\n| (bare noun) | `Option<T>` or `T` | None (may cache) | Returns None/default if absent | `config()`, `switch_previous()` |\n| `set_*` | `Result<()>` | Writes state | Errors on failure | `set_switch_previous()`, `set_config()` |\n| `require_*` | `Result<T>` | None | Errors if absent | `require_branch()`, `require_target_ref()` |\n| `fetch_*` | `Result<T>` | Network I/O | Errors on failure | `fetch_pr_info()`, `fetch_mr_info()` |\n| `load_*` | `Result<T>` | File I/O | Errors on failure | `load_project_config()`, `load_template()` |\n\n**When to use each:**\n\n- **Bare nouns** — Value may not exist and that's fine (Rust stdlib convention)\n- **`set_*`** — Write state to storage\n- **`require_*`** — Value must exist for operation to proceed\n- **`fetch_*`** — Retrieve from external service (network)\n- **`load_*`** — Read from filesystem\n\n**Anti-patterns:**\n\n- Don't use bare nouns if the function makes network calls (use `fetch_*`)\n- Don't use bare nouns if absence is an error (use `require_*`)\n- Don't use `load_*` for computed values (use bare nouns)\n- Don't use `get_*` prefix — use bare nouns instead (Rust convention)\n\n## Repository Caching Strategy\n\nMost data is stable for the duration of a command. The only things worktrunk modifies are:\n\n- **Worktree list** — `wt switch --create`, `wt remove` create/remove worktrees\n- **Working tree state** — `wt merge` commits, stages files\n- **Git config** — `wt config` modifies settings\n\nEverything else (remote URLs, project config, branch metadata) is read-only.\n\n### Caching Implementation\n\n`Repository` holds its cache directly via `Arc<RepoCache>`. Cloning a Repository shares the cache — all clones see the same cached values.\n\n**Key patterns:**\n\n- **Command entry points** create Repository via `Repository::current()` or `Repository::at(path)`\n- **Parallel tasks** (e.g., `wt list`) clone the Repository, sharing the cache\n- **Tests** naturally get isolation since each test creates its own Repository\n\n**Currently cached:**\n\n- `git_common_dir` — computed at construction, stored on struct\n- `worktree_root()` — per-worktree, keyed by path\n- `repo_path()` — derived from git_common_dir and is_bare\n- `is_bare()` — git config, doesn't change\n- `current_branch()` — per-worktree, keyed by path\n- `project_identifier()` — derived from remote URL\n- `primary_remote()` — git config, doesn't change\n- `primary_remote_url()` — derived from primary_remote, doesn't change\n- `default_branch()` — from git config or detection, doesn't change\n- `integration_target()` — effective target for integration checks (local default or upstream if ahead)\n- `merge_base()` — keyed by (commit1, commit2) pair\n- `ahead_behind` — keyed by (base_ref, branch_name), populated by `batch_ahead_behind()`\n- `project_config` — loaded from .config/wt.toml\n\n**Not cached (intentionally):**\n\n- `is_dirty()` — changes as we stage/commit\n- `list_worktrees()` — changes as we create/remove worktrees\n\n### Adding New Cached Methods\n\n1. Add field to `RepoCache` struct: `field_name: OnceCell<T>`\n2. Access via `self.cache.field_name`\n3. Return owned values (String, PathBuf, bool)\n\n```rust\n// For repo-wide values (same for all clones)\npub fn cached_value(&self) -> anyhow::Result<String> {\n    self.cache\n        .field_name\n        .get_or_init(|| { /* compute value */ })\n        .clone()\n}\n\n// For per-worktree values (different per worktree path)\n// Use DashMap for concurrent access\npub fn cached_per_worktree(&self, path: &Path) -> String {\n    self.cache\n        .field_name\n        .entry(path.to_path_buf())\n        .or_insert_with(|| { /* compute value */ })\n        .clone()\n}\n```"
+    gold_removed: ''

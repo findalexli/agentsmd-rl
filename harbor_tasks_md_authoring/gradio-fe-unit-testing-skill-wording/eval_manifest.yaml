@@ -1,0 +1,35 @@
+version: "2.0"
+
+task:
+  name: gradio-fe-unit-testing-skill-wording
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: gradio-app/gradio
+  pr: 13263
+  base_commit: "b5e64918b721550bc3762169fda81c5270904eaa"
+  merge_commit: "d8b94d4d6dc2c4c721dcc5f0833fbf58037ac04f"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .agents/skills/frontend-unit-testing/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .agents/skills/frontend-unit-testing/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .agents/skills/frontend-unit-testing/SKILL.md."
+
+config_edits:
+  - path: ".agents/skills/frontend-unit-testing/SKILL.md"
+    tier: 1
+    gold_added: |-
+      3. **Test ID queries** (required fallback — when no semantic/text query works):
+         If the element lacks a `data-testid`, **add one to the component source**. This is always the right move. `container.querySelector` is never acceptable — adding a `data-testid` is cheap, explicit, and keeps test intent clear.
+      - **Never use `container.querySelector`**. It is unconditionally banned. Use `getByRole`, `getByText`, `getByLabelText`, `getByDisplayValue`, `getByPlaceholderText`, or `getByTestId`. If none of those work, add a `data-testid` attribute to the component source — this is always the correct solution.
+    gold_removed: ""

@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: mono-chore-add-copilot-instructions
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: rocicorp/mono
+  pr: 4955
+  base_commit: "67971e4cbbcc17d351bc879fd712f570e9f5f11b"
+  merge_commit: "303294e2e1a878006c3a9d93721dce5655b1954f"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/copilot-instructions.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/copilot-instructions.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/copilot-instructions.md."
+
+config_edits:
+  - path: .github/copilot-instructions.md
+    tier: 1
+    gold_added: "# Rocicorp Monorepo - Copilot Instructions\n\n## Architecture Overview\n\nThis monorepo contains **Zero** (real-time sync platform) and **Replicache** (client-side data layer), built as complementary technologies for building reactive, sync-enabled applications.\n\n### Key Components\n\n- **packages/zero-client**: Main Zero client library using Replicache under the hood\n- **packages/zero-cache**: Server-side cache and sync engine\n- **packages/zql**: IVM (Incremental View Maintenance) query engine and language\n- **packages/replicache**: Core client-side data synchronization library\n- **apps/zbugs**: Reference application demonstrating Zero/Replicache patterns\n\n### Data Flow Architecture\n\nZero follows a **sync-first** model: client queries are reactive and automatically update when server data changes. ZQL queries are transformed to SQL on the server and results are incrementally maintained.\n\n## Development Workflow\n\n### Essential Commands\n\n```bash\n# Install and build everything\nnpm install && npm run build\n\n# Run tests (uses vitest)\nnpm run test              # All tests\nnpm run test:watch        # Watch mode\n\n# Type checking and linting\nnpm run check-types       # TypeScript across all packages\nnpm run lint              # oxlint with type-awareness\nnpm run format            # Prettier formatting\n```\n\n### Package-Level Commands\n\nEach package supports: `test`, `check-types`, `lint`, `format`, `build`\n\n### Zero Cache Development\n\n```bash\n# Start Zero cache server for local development\nnpm run start-zero-cache\n\n# In zbugs app - start Zero cache with schema hot-reload\nnpm run zero-cache-dev\n```\n\n## Code Conventions\n\n### TypeScript Patterns\n\n- **Optional fields**: Always explicitly typed as `type | undefined` (not just `type?`)\n\n  ```typescript\n  // Correct\n  interface User {\n    name?: string | undefined;\n  }\n\n  // Incorrect\n  interface User {\n    name?: string;\n  }\n  ```\n\n### Zero Schema Definition\n\nZero schemas use a builder pattern with method chaining:\n\n```typescript\nconst user = table('user')\n  .columns({\n    id: string(),\n    name: string().optional(),\n    role: enumeration<Role>(),\n  })\n  .primaryKey('id');\n```\n\n### Testing Patterns\n\n- Use **vitest** for all testing\n- Tests are co-located with source files (`.test.ts`)\n- Multiple vitest configs for different environments (e.g., `vitest.config.pg-16.ts` for PostgreSQL tests)\n- Test files automatically discovered by the root vitest config\n- Prefer `test` over `it` for consistency\n\n### Import Patterns\n\n- Packages import from each other using workspace names (`zero-client`, `shared`, etc.)\n- Cross-package dependencies are managed through the monorepo structure\n- Re-exports are common (see `packages/zero/src/zero.ts` → `packages/zero-client/src/mod.ts`)\n- Do not import from `mod.ts`. Use relative paths.\n\n## Database Integration\n\n### Zero + PostgreSQL\n\nZero maintains a dual-database setup:\n\n- **PostgreSQL**: Source of truth for server data\n- **SQLite**: Client-side replica managed by Replicache\n\n### Schema Migrations\n\n- Use Drizzle for PostgreSQL schema management (`db-migrate`, `db-seed`)\n- Zero schema definitions are separate from PostgreSQL schema\n- Apps like zbugs demonstrate the connection between PostgreSQL tables and Zero schemas\n\n## Debugging and Development\n\n### Zero Cache Debugging\n\n```bash\n# Debug Zero cache with breakpoints\nnpm run zero-brk\n\n# Transform/run queries for debugging\nnpm run transform-query\nnpm run run-query\n```\n\n### Docker Development\n\nMany apps include Docker Compose for local PostgreSQL:\n\n```bash\nnpm run db-up    # Start PostgreSQL\nnpm run db-down  # Stop PostgreSQL\n```\n\n## Package Dependencies\n\n### Core Dependencies\n\n- **@rocicorp/\\*** packages are internal utilities (logger, lock, resolver)\n- **vitest**: Primary testing framework\n- **oxlint**: TypeScript-aware linting\n- **turbo**: Monorepo task running and caching\n\n### Zero-Specific\n\n- Clients depend on `replicache` for local data management\n- Server components use `fastify` for HTTP/WebSocket handling\n- OpenTelemetry integration for observability\n\n## Critical Files to Understand\n\n- `turbo.json`: Task dependencies and caching configuration\n- `vitest.config.ts`: Multi-project test discovery and configuration\n- `apps/zbugs/shared/schema.ts`: Reference Zero schema implementation\n- `packages/zero-client/src/mod.ts`: Main Zero client API surface"
+    gold_removed: ''

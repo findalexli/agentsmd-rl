@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: fastled-docsclaude-grant-agents-featurebranch-autonomy
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: FastLED/FastLED
+  pr: 2294
+  base_commit: "73cd62b45ba8b8c644b12f0666e3e3058f17f4fb"
+  merge_commit: "1dbc956623ba9cbc015656edb868adb309919b1e"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+
+config_edits:
+  - path: CLAUDE.md
+    tier: 1
+    gold_added: "- **Default mindset: finish the job.** Agents should not leave uncommitted changes dangling on `master`/`main`. If you made edits on `master`, the correct end-state is a feature branch + pushed PR — not a dirty working tree.\n- **Feature branches — full autonomy, no user consent required.** Agents may freely create branches, commit, push, and open PRs against any branch that is NOT `master`/`main`. Do this proactively when work is complete.\n- **`master`/`main` — extra caution required.**\n  - NEVER commit directly to `master`/`main`.\n  - NEVER push directly to `master`/`main`.\n  - NEVER force-push to `master`/`main` (or any branch with an open PR others may be reviewing).\n  - If changes exist on `master`, move them: `git checkout -b feat/<topic>` carries the working-tree changes to a feature branch, then commit + push + open a PR there.\n- **Recovery pattern for uncommitted changes on `master`:**\n  1. `git status` — confirm scope\n  2. `git checkout -b <descriptive-branch>` — changes follow to new branch\n  3. `git add <specific files>` + `git commit` (conventional commit format)\n  4. `git push -u origin <branch>` and `gh pr create`\n  5. `git status` again to confirm clean tree"
+    gold_removed: ''

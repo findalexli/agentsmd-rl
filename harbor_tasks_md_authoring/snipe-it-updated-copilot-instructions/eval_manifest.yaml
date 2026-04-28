@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: snipe-it-updated-copilot-instructions
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: grokability/snipe-it
+  pr: 18684
+  base_commit: "5d6b9890cade19faa1fae12fd8c9c4168c32646f"
+  merge_commit: "f6ee500e6c68a7bd04c72a0d49f2c052e37154d0"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/copilot-instructions.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/copilot-instructions.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/copilot-instructions.md."
+
+config_edits:
+  - path: .github/copilot-instructions.md
+    tier: 1
+    gold_added: "    - Use Form Requests for validation. The request class should utilize the rules set on the model.\n    - Use Transformers for API responses.\n- Use **Transformer classes** for consistent and structured JSON responses."
+    gold_removed: ''

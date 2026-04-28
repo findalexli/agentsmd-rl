@@ -1,0 +1,80 @@
+version: "2.0"
+
+task:
+  name: iii-feat-update-cursor-rules
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: iii-hq/iii
+  pr: 985
+  base_commit: "672c6c19cf5b08b3537ccc44d28115082d884782"
+  merge_commit: "d92c14d610537092fe3fde019dd048426f1c73d8"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in packages/snap/src/cursor-rules/dot-files/.cursor/rules/motia/api-steps.mdc."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in packages/snap/src/cursor-rules/dot-files/.cursor/rules/motia/api-steps.mdc."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in packages/snap/src/cursor-rules/dot-files/.cursor/rules/motia/api-steps.mdc."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in packages/snap/src/cursor-rules/dot-files/.cursor/rules/motia/event-steps.mdc."
+  - id: signal_04
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in packages/snap/src/cursor-rules/dot-files/.cursor/rules/motia/event-steps.mdc."
+  - id: signal_05
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in packages/snap/src/cursor-rules/dot-files/.cursor/rules/motia/event-steps.mdc."
+  - id: signal_06
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in packages/snap/src/cursor-rules/dot-files/.cursor/rules/motia/motia-config.mdc."
+  - id: signal_07
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in packages/snap/src/cursor-rules/dot-files/.cursor/rules/motia/motia-config.mdc."
+  - id: signal_08
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in packages/snap/src/cursor-rules/dot-files/.cursor/rules/motia/motia-config.mdc."
+  - id: signal_09
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in packages/snap/src/cursor-rules/dot-files/.cursor/rules/motia/realtime-streaming.mdc."
+  - id: signal_10
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in packages/snap/src/cursor-rules/dot-files/.cursor/rules/motia/realtime-streaming.mdc."
+  - id: signal_11
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in packages/snap/src/cursor-rules/dot-files/.cursor/rules/motia/realtime-streaming.mdc."
+
+config_edits:
+  - path: packages/snap/src/cursor-rules/dot-files/.cursor/rules/motia/api-steps.mdc
+    tier: 1
+    gold_added: "export type ZodInput = ZodObject<any> | ZodArray<any>\nexport type StepSchemaInput = ZodInput | JsonSchema\n\n   * Schema for the request body. Accepts either:\n   * - Zod schema (ZodObject or ZodArray)\n   * - JSON Schema object\n  bodySchema?: StepSchemaInput\n   * Schema for response bodies. Accepts either:\n   * - Zod schema (ZodObject or ZodArray)\n   * - JSON Schema object\n   * for each HTTP Status Code, you need to define a schema that defines the response body\n  responseSchema?: Record<number, StepSchemaInput>\nexport type ApiResponse<\n  TStatus extends number = number, \n  TBody = string | Buffer | Record<string, unknown>\n> = {\n  status: TStatus\n  headers?: Record<string, string>\n  body: TBody\n}\n\n  metadata: z.record(z.string(), z.any()).optional()"
+    gold_removed: ''
+  - path: packages/snap/src/cursor-rules/dot-files/.cursor/rules/motia/event-steps.mdc
+    tier: 1
+    gold_added: "Defining an Event Step is done by two elements. Configuration and Handler.\nexport type ZodInput = ZodObject<any> | ZodArray<any>\nexport type StepSchemaInput = ZodInput | JsonSchema\n\n   * Optional: Virtually subscribed topics for documentation/lineage purposes.\n   */\n  virtualSubscribes?: string[]\n\n  /**\n   * Schema for input data. Accepts either:\n   * - Zod schema (ZodObject or ZodArray)\n   * - JSON Schema object\n  input?: StepSchemaInput\n\n\n  /**\n   * Optional: Infrastructure configuration for handler and queue settings.\n   */\n  infrastructure?: Partial<InfrastructureConfig>"
+    gold_removed: ''
+  - path: packages/snap/src/cursor-rules/dot-files/.cursor/rules/motia/motia-config.mdc
+    tier: 1
+    gold_added: "---\ndescription: Application configuration for Motia projects\nglobs: motia.config.ts,motia.config.js\nalwaysApply: false\n---\n# Motia Configuration Guide\n\nThe `motia.config.ts` file is the central configuration file for your Motia application. It allows you to customize plugins, adapters, stream authentication, and Express app settings.\n\n## Creating the Configuration File\n\nCreate a `motia.config.ts` file in the root of your project:\n\n```typescript\nimport { config } from 'motia'\n\nexport default config({\n  plugins: [],\n  adapters: {},\n  streamAuth: undefined,\n  app: undefined,\n})\n```\n\n## Type Definitions\n\n```typescript\nimport type { Express } from 'express'\n\nexport type Config = {\n  /**\n   * Optional: Callback to customize the Express app instance.\n   * Use this to add custom middleware, routes, or configurations.\n   */\n  app?: (app: Express) => void\n\n  /**\n   * Optional: Array of plugin builders to extend Motia functionality.\n   * Plugins can add workbench UI components and custom steps.\n   */\n  plugins?: MotiaPluginBuilder[]\n\n  /**\n   * Optional: Custom adapters for state, events, cron, and streams.\n   * Use this for horizontal scaling or custom storage backends.\n   */\n  adapters?: AdapterConfig\n\n  /**\n   * Optional: Stream authentication configuration.\n   * Use this to secure real-time stream subscriptions.\n   */\n  streamAuth?: StreamAuthConfig\n}\n\nexport type AdapterConfig = {\n  state?: StateAdapter\n  streams?: StreamAdapterManager\n  events?: EventAdapter\n  cron?: CronAdapter\n}\n\nexport type StreamAuthRequest = {\n  headers: Record<string, string | string[] | undefined>\n  url?: string\n}\n\nexport type StreamAuthConfig<TSchema extends z.ZodTypeAny = z.ZodTypeAny> = {\n  /**\n   * JSON Schema defining the shape of the auth context.\n   * Use z.toJSONSchema() to convert a Zod schema.\n   */\n  contextSchema: JsonSchema\n\n  /**\n   * Authentication callback that receives the request and returns\n   * the auth context or null if authentication fails.\n   */\n  authenticate: (request: StreamAuthRequest) => Promise<z.infer<TSchema> | null> | (z.infer<TSchema> | null)\n}\n```\n\n## Plugins\n\nPlugins extend Motia functionality by adding workbench UI components and custom steps.\n\n### Plugin Type Definition\n\n```typescript\nexport type WorkbenchPlugin = {\n  packageName: string\n  componentName?: string\n  label?: string\n  labelIcon?: string\n  position?: 'bottom' | 'top'\n  cssImports?: string[]\n  props?: Record<string, any>\n}\n\nexport type MotiaPlugin = {\n  workbench: WorkbenchPlugin[]\n  dirname?: string\n  steps?: string[]\n}\n\nexport type MotiaPluginBuilder = (motia: MotiaPluginContext) => MotiaPlugin\n```\n\n### Using Built-in Plugins\n\n```typescript\nimport { config } from 'motia'\n\nconst statesPlugin = require('@motiadev/plugin-states/plugin')\nconst endpointPlugin = require('@motiadev/plugin-endpoint/plugin')\nconst logsPlugin = require('@motiadev/plugin-logs/plugin')\nconst observabilityPlugin = require('@motiadev/plugin-observability/plugin')\n\nexport default config({\n  plugins: [observabilityPlugin, statesPlugin, endpointPlugin, logsPlugin],\n})\n```\n\n### Creating a Local Plugin\n\n```typescript\nimport path from 'node:path'\nimport { config, type MotiaPlugin, type MotiaPluginContext } from 'motia'\n\nfunction myLocalPlugin(motia: MotiaPluginContext): MotiaPlugin {\n  motia.registerApi(\n    {\n      method: 'GET',\n      path: '/__motia/my-plugin',\n    },\n    async (_req, _ctx) => {\n      return {\n        status: 200,\n        body: { message: 'Hello from my plugin!' },\n      }\n    },\n  )\n\n  return {\n    dirname: path.join(__dirname, 'plugins'),\n    steps: ['**/*.step.ts'],\n    workbench: [\n      {\n        componentName: 'MyComponent',\n        packageName: '~/plugins/components/my-component',\n        label: 'My Plugin',\n        position: 'top',\n        labelIcon: 'toy-brick',\n      },\n    ],\n  }\n}\n\nexport default config({\n  plugins: [myLocalPlugin],\n})\n```\n\n## Adapters\n\nAdapters allow you to customize the underlying infrastructure for state management, event handling, cron jobs, and streams. This is useful for horizontal scaling or using custom storage backends.\n\n### Available Adapter Packages\n\n| Package | Description |\n|---------|-------------|\n| `@motiadev/adapter-redis-state` | Redis-based state management for distributed systems |\n| `@motiadev/adapter-redis-cron` | Redis-based cron scheduling with distributed locking |\n| `@motiadev/adapter-redis-streams` | Redis Streams for real-time data |\n| `@motiadev/adapter-rabbitmq-events` | RabbitMQ for event messaging |\n| `@motiadev/adapter-bullmq-events` | BullMQ for event queue processing |\n\n### Using Custom Adapters\n\n```typescript\nimport { config } from 'motia'\nimport { RedisStateAdapter } from '@motiadev/adapter-redis-state'\nimport { RabbitMQEventAdapter } from '@motiadev/adapter-rabbitmq-events'\nimport { RedisCronAdapter } from '@motiadev/adapter-redis-cron'\n\nexport default config({\n  adapters: {\n    state: new RedisStateAdapter(\n      { url: process.env.REDIS_URL },\n      { keyPrefix: 'myapp:state:', ttl: 3600 }\n    ),\n    events: new RabbitMQEventAdapter({\n      url: process.env.RABBITMQ_URL!,\n      exchangeType: 'topic',\n      exchangeName: 'motia-events',\n    }),\n    cron: new RedisCronAdapter(\n      { url: process.env.REDIS_URL },\n      { keyPrefix: 'myapp:cron:', lockTTL: 30000 }\n    ),\n  },\n})\n```\n\n## Stream Authentication\n\nStream authentication secures real-time stream subscriptions by validating client credentials.\n\n### Configuration\n\n```typescript\nimport { config, type StreamAuthRequest } from 'motia'\nimport { z } from 'zod'\n\nconst authContextSchema = z.object({\n  userId: z.string(),\n  permissions: z.array(z.string()).optional(),\n})\n\nexport default config({\n  streamAuth: {\n    contextSchema: z.toJSONSchema(authContextSchema),\n    authenticate: async (request: StreamAuthRequest) => {\n      const token = extractToken(request)\n      \n      if (!token) {\n        return null\n      }\n\n      const user = await validateToken(token)\n      if (!user) {\n        throw new Error('Invalid token')\n      }\n\n      return {\n        userId: user.id,\n        permissions: user.permissions,\n      }\n    },\n  },\n})\n\nfunction extractToken(request: StreamAuthRequest): string | undefined {\n  const protocol = request.headers['sec-websocket-protocol'] as string | undefined\n  if (protocol?.includes('Authorization')) {\n    const [, token] = protocol.split(',')\n    return token?.trim()\n  }\n\n  if (request.url) {\n    try {\n      const url = new URL(request.url)\n      return url.searchParams.get('authToken') ?? undefined\n    } catch {\n      return undefined\n    }\n  }\n\n  return undefined\n}\n```\n\n### Using Auth Context in Streams\n\nOnce configured, the auth context is available in the `canAccess` callback of stream configurations:\n\n```typescript\nimport { StreamConfig } from 'motia'\nimport { z } from 'zod'\n\nexport const config: StreamConfig = {\n  name: 'protectedStream',\n  schema: z.object({ data: z.string() }),\n  baseConfig: { storageType: 'default' },\n  canAccess: (subscription, authContext) => {\n    if (!authContext) return false\n    return authContext.permissions?.includes('read:stream')\n  },\n}\n```\n\n## Express App Customization\n\nUse the `app` callback to customize the Express application instance:\n\n```typescript\nimport { config } from 'motia'\nimport cors from 'cors'\nimport helmet from 'helmet'\n\nexport default config({\n  app: (app) => {\n    app.use(helmet())\n    app.use(cors({ origin: process.env.ALLOWED_ORIGINS?.split(',') }))\n    \n    app.get('/health', (_req, res) => {\n      res.json({ status: 'healthy' })\n    })\n  },\n})\n```\n\n## Complete Example\n\n```typescript\nimport path from 'node:path'\nimport { config, type MotiaPlugin, type MotiaPluginContext, type StreamAuthRequest } from 'motia'\nimport { z } from 'zod'\n\nconst statesPlugin = require('@motiadev/plugin-states/plugin')\nconst logsPlugin = require('@motiadev/plugin-logs/plugin')\n\nconst authContextSchema = z.object({\n  userId: z.string(),\n  role: z.enum(['admin', 'user']).optional(),\n})\n\ntype AuthContext = z.infer<typeof authContextSchema>\n\nconst tokens: Record<string, AuthContext> = {\n  'admin-token': { userId: 'admin-1', role: 'admin' },\n  'user-token': { userId: 'user-1', role: 'user' },\n}\n\nfunction extractAuthToken(request: StreamAuthRequest): string | undefined {\n  const protocol = request.headers['sec-websocket-protocol'] as string | undefined\n  if (protocol?.includes('Authorization')) {\n    const [, token] = protocol.split(',')\n    return token?.trim()\n  }\n\n  if (request.url) {\n    try {\n      const url = new URL(request.url)\n      return url.searchParams.get('authToken') ?? undefined\n    } catch {\n      return undefined\n    }\n  }\n\n  return undefined\n}\n\nexport default config({\n  plugins: [statesPlugin, logsPlugin],\n  streamAuth: {\n    contextSchema: z.toJSONSchema(authContextSchema),\n    authenticate: async (request: StreamAuthRequest) => {\n      const token = extractAuthToken(request)\n      if (!token) return null\n\n      const context = tokens[token]\n      if (!context) throw new Error(`Invalid token: ${token}`)\n\n      return context\n    },\n  },\n})\n```"
+    gold_removed: ''
+  - path: packages/snap/src/cursor-rules/dot-files/.cursor/rules/motia/realtime-streaming.mdc
+    tier: 1
+    gold_added: "### StreamConfig Type Definition\n\n```typescript\nexport type ZodInput = ZodObject<any> | ZodArray<any>\nexport type StepSchemaInput = ZodInput | JsonSchema\n\nexport type StreamSubscription = { groupId: string; id?: string }\n\nexport interface StreamConfig {\n  /**\n   * The stream name, used on the client side to subscribe.\n   */\n  name: string\n\n  /**\n   * Schema for stream data. Accepts either:\n   * - Zod schema (ZodObject or ZodArray)\n   * - JSON Schema object\n   */\n  schema: StepSchemaInput\n\n  /**\n   * Storage configuration for the stream.\n   * Use 'default' for built-in storage or 'custom' with a factory function.\n   */\n  baseConfig: { storageType: 'default' } | { storageType: 'custom'; factory: () => MotiaStream<any> }\n\n  /**\n   * Optional: Access control callback to authorize subscriptions.\n   * Return true to allow access, false to deny.\n   */\n  canAccess?: (subscription: StreamSubscription, authContext: any) => boolean | Promise<boolean>\n}\n```\n\nexport type BaseStreamItem<TData = unknown> = TData & { id: string }\n"
+    gold_removed: ''

@@ -1,0 +1,118 @@
+version: "2.0"
+
+task:
+  name: pup-fixskills-align-datadog-skills-with
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: datadog-labs/pup
+  pr: 428
+  base_commit: "23e6b744de2655516cb6da520f1051715c8846ff"
+  merge_commit: "b5ce33d964f9ec5f2c3f0dc5601dc28debd18086"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/dd-code-generation/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/dd-code-generation/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/dd-code-generation/SKILL.md."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/dd-logs/SKILL.md."
+  - id: signal_04
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/dd-logs/SKILL.md."
+  - id: signal_05
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/dd-logs/SKILL.md."
+  - id: signal_06
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/dd-monitors/SKILL.md."
+  - id: signal_07
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/dd-monitors/SKILL.md."
+  - id: signal_08
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/dd-monitors/SKILL.md."
+  - id: signal_09
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/dd-pup/SKILL.md."
+  - id: signal_10
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/dd-pup/SKILL.md."
+  - id: signal_11
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/dd-pup/SKILL.md."
+
+config_edits:
+  - path: skills/dd-code-generation/SKILL.md
+    tier: 1
+    gold_added: 'pup monitors list --tags="env:prod"
+
+      pup monitors list --tags="team:backend"
+
+      pup monitors list --tags="env:production" --output=table'
+    gold_removed: ''
+  - path: skills/dd-logs/SKILL.md
+    tier: 1
+    gold_added: '# JSON output is the default
+
+      pup logs search --query="@http.status_code:>=500" --from="1h"
+
+      pup obs-pipelines list
+
+      pup obs-pipelines create --file pipeline.json
+
+      pup logs search --query="*" --from="1h" | jq ''group_by(.service) | map({service: .[0].service, count: length}) | sort_by(-.count)[:10]''
+
+      Inspect log-based metrics:
+
+      # List existing log-based metrics
+
+      pup logs metrics list'
+    gold_removed: ''
+  - path: skills/dd-monitors/SKILL.md
+    tier: 1
+    gold_added: 'pup monitors search --query "status:Alert"
+
+      pup monitors get <id>
+
+      pup monitors create --file monitor.json
+
+      pup monitors update 12345 --file monitor-muted.json
+
+      pup monitors update 12345 --file monitor-muted-until.json
+
+      pup monitors update 12345 --file monitor-unmuted.json
+
+      pup monitors list | jq ''.[] | select(.tags | contains(["team:"]) | not) | {id, name}''
+
+      pup monitors list | jq ''sort_by(.overall_state_modified) | .[:10] | .[] | {id, name, status: .overall_state}''
+
+      pup downtime create --file downtime.json'
+    gold_removed: ''
+  - path: skills/dd-pup/SKILL.md
+    tier: 1
+    gold_added: '| Security signals | `pup security signals list --query "*" --from 24h` |
+
+      pup infrastructure hosts list --count 100
+
+      pup security signals list --query "*" --from 24h'
+    gold_removed: ''

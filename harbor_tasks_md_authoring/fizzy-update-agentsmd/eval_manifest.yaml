@@ -1,0 +1,24 @@
+version: "2.0"
+
+task:
+  name: fizzy-update-agentsmd
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: basecamp/fizzy
+  pr: 1818
+  base_commit: "72f87f2d8f1b6ee0669b174045dfefe12ea6e005"
+  merge_commit: "3ac9a44abfba94e65179658d304e9bd453aaef76"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+
+config_edits:
+  - path: AGENTS.md
+    tier: 1
+    gold_added: Use Chrome MCP tools to interact with the running dev app for UI testing and debugging.
+    gold_removed: ''

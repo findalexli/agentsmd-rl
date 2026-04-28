@@ -1,0 +1,30 @@
+version: "2.0"
+
+task:
+  name: debbie.codes-remove-hardcoded-path-from-addcontent
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: debs-obrien/debbie.codes
+  pr: 542
+  base_commit: "1957fcf58280c8df0213c43b5b6b1ecd47bcf0f5"
+  merge_commit: "ad7952f803bb1a6e87be0e4dc31d8b6cba6b99f0"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .agents/skills/add-content/references/environment.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .agents/skills/add-content/references/environment.md."
+
+config_edits:
+  - path: .agents/skills/add-content/references/environment.md
+    tier: 1
+    gold_added: 'export NVM_DIR="$HOME/.nvm" && [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" && npm install 2>&1 | tail -5
+
+      export NVM_DIR="$HOME/.nvm" && [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" && npm run dev > /tmp/nuxt-dev.log 2>&1 &'
+    gold_removed: ''

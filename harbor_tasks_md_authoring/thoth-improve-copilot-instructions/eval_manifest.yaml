@@ -1,0 +1,24 @@
+version: "2.0"
+
+task:
+  name: thoth-improve-copilot-instructions
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: plengauer/Thoth
+  pr: 2901
+  base_commit: "f92d35fb428dcd7f779b7c7cf70e8d3291a3fe01"
+  merge_commit: "19598aaf3cdf250aabd03a02cc04aac519f9ff75"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/copilot-instructions.md."
+
+config_edits:
+  - path: .github/copilot-instructions.md
+    tier: 1
+    gold_added: 8. **GitHub Action supply chain integrity** - pin GitHub Actions in any workflow to full-length commit SHAs (not tags); for readability, you may add a comment indicating the corresponding action version next to the SHA
+    gold_removed: ''

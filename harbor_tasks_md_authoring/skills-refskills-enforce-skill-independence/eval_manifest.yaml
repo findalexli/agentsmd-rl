@@ -1,0 +1,92 @@
+version: "2.0"
+
+task:
+  name: skills-refskills-enforce-skill-independence
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: getsentry/skills
+  pr: 127
+  base_commit: "6a844a09d7981594d510fc9b2d6b022b4ed2e246"
+  merge_commit: "0a38bc1f1810e6359eea21681e0b7a6309b3ae99"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/commit/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/pr-writer/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/pr-writer/SKILL.md."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/pr-writer/SKILL.md."
+  - id: signal_04
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/skill-writer/EVAL.md."
+  - id: signal_05
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/skill-writer/references/design-principles.md."
+  - id: signal_06
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/skill-writer/references/design-principles.md."
+  - id: signal_07
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/skill-writer/references/design-principles.md."
+
+config_edits:
+  - path: skills/commit/SKILL.md
+    tier: 1
+    gold_added: '**If you''re on `main` or `master`, you MUST create a feature branch first** — unless the user explicitly asked to commit to main. Do not ask the user whether to create a branch; just proceed with branch creation, then re-check the current branch before committing. If still on `main` or `master`, stop — do not commit.'
+    gold_removed: ''
+  - path: skills/pr-writer/SKILL.md
+    tier: 1
+    gold_added: 'Before creating a PR, ensure all changes are committed **to a feature branch**, not to the default branch.
+
+      # Check current branch and for uncommitted changes
+
+      git branch --show-current
+
+      If on `main` or `master`, create a feature branch and move any uncommitted changes onto it before committing — a PR cannot be opened from the default branch against itself. If there are uncommitted changes, commit them on the feature branch before proceeding.'
+    gold_removed: ''
+  - path: skills/skill-writer/EVAL.md
+    tier: 1
+    gold_added: Synthesize a new skill named `pi-agent-integration-eval` for working with `@mariozechner/pi-agent-core` as a consumer in downstream libraries.
+    gold_removed: ''
+  - path: skills/skill-writer/references/design-principles.md
+    tier: 1
+    gold_added: '## Independence
+
+
+      A skill''s runtime behavior must not depend on another skill being present. Do not instruct the agent to invoke another skill by name (`run the X skill`, `use \`sentry-skills:Y\``, `hand off to Z`), and do not treat another skill''s files as runtime resources (`load skills/other-skill/references/foo.md`). Other skills may not be installed, may be renamed, or may be overridden by a user''s own skill of the same name; any runtime dependency silently breaks in all three cases.
+
+
+      State the intent directly and trust the agent''s skill discovery to pick up whatever skill matches:
+
+
+      | Do | Don''t |
+
+      |----|-------|
+
+      | "If you''re on `main`, create a feature branch first." | "Use the `create-branch` skill to create the branch." |
+
+      | "If there are uncommitted changes, commit them first." | "Run the `sentry-skills:commit` skill before proceeding." |
+
+      | "For deeper guidance on X, see `references/x.md`." | "See the `other-skill` skill for X." |
+
+
+      Mentioning another skill''s name in non-runtime content — provenance logs, audit allowlists, eval prompts meant to be copy-pasted by a human — is fine. The rule targets runtime behavior, not any mention of a skill''s name.
+
+      '
+    gold_removed: ''

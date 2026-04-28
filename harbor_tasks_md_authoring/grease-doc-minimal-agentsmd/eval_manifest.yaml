@@ -1,0 +1,76 @@
+version: "2.0"
+
+task:
+  name: grease-doc-minimal-agentsmd
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: GaloisInc/grease
+  pr: 534
+  base_commit: "022817dd4d1a383563ac085ed72717a32f7d7447"
+  merge_commit: "dbbc65e81e7a8198d7f4c286a632aa4494afe70a"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+
+config_edits:
+  - path: AGENTS.md
+    tier: 1
+    gold_added: '# AGENTS.md
+
+
+      GREASE is a Haskell library and command-line tool for under-constrained symbolic
+
+      execution of binaries.
+
+
+      ## Haskell
+
+
+      Format, build, and lint after every change.
+
+
+      - Format: `make -j8 -f scripts/lint/Makefile fmt`
+
+      - Build: `cabal build pkg:grease-exe`
+
+      - Lint: `make -j8 -f scripts/lint/Makefile hs`
+
+      - Test: `cd grease-exe && cabal run test:grease-tests`
+
+
+      ### Error handling
+
+
+      Read error handling documentation at `doc/dev/errors.md`.
+
+
+      ### Writing tests
+
+
+      See `doc/dev/tests.md`.
+
+
+      ## `.cbl` files
+
+
+      Read docs at `doc/sexp.md` and `doc/sexp-progs.md`.
+
+
+      ## `*shape*.txt` files
+
+
+      Read docs at `doc/shape-dsl.md`.'
+    gold_removed: ''

@@ -1,0 +1,127 @@
+version: "2.0"
+
+task:
+  name: ledger-live-support-firsts-cursor-rules
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: LedgerHQ/ledger-live
+  pr: 13246
+  base_commit: "5c8588c75cf8f7b63080c08360a3890927f8524f"
+  merge_commit: "562c605b447e67cf68e66aa252e7f83bf9a95d3b"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .cursor/rules/git-workflow.mdc."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .cursor/rules/git-workflow.mdc."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .cursor/rules/git-workflow.mdc."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .cursor/rules/ldls.mdc."
+  - id: signal_04
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .cursor/rules/ldls.mdc."
+  - id: signal_05
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .cursor/rules/ldls.mdc."
+  - id: signal_06
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .cursor/rules/react-general.mdc."
+  - id: signal_07
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .cursor/rules/react-general.mdc."
+  - id: signal_08
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .cursor/rules/react-general.mdc."
+  - id: signal_09
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .cursor/rules/react-new-arch.mdc."
+  - id: signal_10
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .cursor/rules/react-new-arch.mdc."
+  - id: signal_11
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .cursor/rules/react-new-arch.mdc."
+  - id: signal_12
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .cursor/rules/testing.mdc."
+  - id: signal_13
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .cursor/rules/testing.mdc."
+  - id: signal_14
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .cursor/rules/testing.mdc."
+  - id: signal_15
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .cursor/rules/typescript.mdc."
+  - id: signal_16
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .cursor/rules/typescript.mdc."
+  - id: signal_17
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .cursor/rules/typescript.mdc."
+
+config_edits:
+  - path: .cursor/rules/git-workflow.mdc
+    tier: 1
+    gold_added: "---\ndescription: Git workflow and commit conventions for Ledger Wallet\nglobs: [\"**/*\"]\nalwaysApply: true\n---\n\n# Git Workflow & Commit Conventions\n\n## Branch Naming\n\nBranches must use a clear prefix based on their purpose:\n\n- **feat/** — New features\n- **bugfix/** — Bug fixes\n- **support/** — Refactor, tests, CI, improvements\n- **chore** — Maintenance, tooling, configs\n\n### Examples\n\n- `feat/add-ethereum-staking`\n- `bugfix/fix-transaction-signing`\n- `support/update-dependencies`\n\n### Best Practices\n\n- Use **kebab-case**\n- Keep names **short, explicit, action-oriented**\n- One branch = **one isolated concern**\n\n---\n\n## Commit Message Format\n\nFollow the **Conventional Commits** standard.\n\n### Format\n\n```\n\n<type>[optional scope]: <description>\n\n[optional body]\n\n[optional footer(s)]\n\n```\n\n### Rules\n\n- Description must be **imperative, clear, lowercase**\n- Scope is optional but recommended (`desktop`, `mobile`, `coin`, `common`, etc.)\n- Add body for complex or user-facing changes\n- If needed, include footers:\n  - `BREAKING CHANGE: ...`\n  - Jira ticket (`LL-1234`)\n\n---\n\n## Commit Types\n\n- **feat** — New feature\n- **fix** — Bug fix\n- **docs** — Docs only\n- **style** — Formatting, no code change\n- **refactor** — Restructure without behavior change\n- **test** — Add/update tests\n- **chore** — Maintenance, tooling, configs\n- **perf** — Performance improvements\n- **ci** — CI/CD changes\n\n### Examples\n\n```\nfeat(desktop): add dark mode toggle\nfix(mobile): resolve transaction signing issue\ndocs(common): update API documentation\nrefactor(account): simplify account syncing logic\ntest(coin): add bitcoin integration tests\n```\n\n---\n\n## Workflow Best Practices\n\n- Commits must be **small, isolated, meaningful**\n- One commit = **one logical change**\n- Prefer **multiple focused commits** over large mixed ones\n- Never mix refactor + fix + feature\n- Rebase before PR to keep history clean\n- Squash only for trivial branches (`support/cleanup`)"
+    gold_removed: ''
+  - path: .cursor/rules/ldls.mdc
+    tier: 1
+    gold_added: '---
+
+      description: LDLS UI React design system rules
+
+      globs: ["**/*.tsx", "**/*.jsx"]
+
+      alwaysApply: true
+
+      ---
+
+
+      @node_modules/@ledgerhq/ldls-ui-react/ai-rules/RULES.md'
+    gold_removed: ''
+  - path: .cursor/rules/react-general.mdc
+    tier: 1
+    gold_added: "---\nalwaysApply: true\ndescription: General React and React Native engineering rules for Ledger Live\nglobs: [\"**/*.{ts,tsx}\"]\n---\n\n# General React & React Native Patterns\n\n_These rules apply to all files, including those inside `src/newArch/`._\n\n## Component Architecture\n\n- Prefer functional components.\n- Keep components focused and reasonably sized.\n- Decompose large UI into smaller reusable elements.\n- Use composition for extensibility.\n\n## State Management\n\n- Prioritize local state for UI-only concerns.\n- Use RTK Query (with slices) only when necessary for app-wide state.\n- Apply optimized selectors to limit re-rendering.\n- Connect Redux at the lowest component level when possible.\n\n## Styling\n\n### Mobile (React Native)\n\n- Define styles with `StyleSheet.create()`.\n- Follow design-system tokens.\n- Typography uses design-system components.\n- All styles support theme switching.\n\n### Desktop\n\n- Use CSS modules or styled-components.\n- Follow design-system foundations (colors, spacing, typography).\n- Full compatibility with dark/light mode is required.\n\n## Performance\n\n- Memoize expensive operations with `useMemo`.\n- Stabilize callbacks with `useCallback`.\n- Wrap costly components in `React.memo`.\n- Apply list virtualization where needed.\n- Use lazy loading for large screens or modules.\n\n## Navigation\n\n### Mobile\n\n- Use React Navigation.\n- Ensure correct deep-link support.\n- Keep navigation types strict and consistent.\n\n### Desktop\n\n- Use React Router.\n- Implement route guards when necessary.\n- Maintain clear history logic.\n\n## Data Fetching\n\n- Use RTK Query\n  - `dada-client` or `cal-client` are good examples to follow\n- Use consistent loading, retry, and error states.\n- Prefer optimistic UI when appropriate.\n- Apply caching and stale-time strategies.\n\n## Accessibility\n\n### Mobile\n\n- Provide accessible labels for all interactive elements.\n- Support screen reader flows.\n- Ensure proper focus transitions.\n\n### Desktop\n\n- Use semantic HTML tags.\n- Implement full keyboard navigation.\n- Apply meaningful ARIA attributes when required.\n\n## Error Boundaries\n\n- Wrap critical areas in error boundaries.\n- Report errors to monitoring services.\n- Provide clean, user-friendly fallback UIs.\n\n## Platform-Specific Code\n\n### React Native\n\n- Use `Platform.select` for small platform variations.\n- Ensure behavior parity across iOS and Android.\n\n### Desktop\n\n- Use environment flags for Electron/Web differences.\n- Keep platform abstraction consistent.\n\n## Animations\n\n### Mobile\n\n- Use the native driver whenever feasible.\n- Prefer `Animated` and layout animations for performance.\n\n### Desktop\n\n- Use CSS transitions for lightweight animations.\n- Use Framer Motion for structured or complex animations.\n- Respect reduced-motion system preferences.\n\n## Internationalization (i18n)\n\n- Use `react-i18next` consistently.\n- Keep translation keys descriptive and structured.\n- Support pluralization, gender, and variable interpolation.\n- Validate components across multiple locales."
+    gold_removed: ''
+  - path: .cursor/rules/react-new-arch.mdc
+    tier: 1
+    gold_added: "---\nalwaysApply: true\ndescription: React New Architecture engineering rules (newArch) for Ledger Live\nglobs: [\"**/*.ts\", \"**/*.tsx\"]\n---\n\n# React New Architecture (`newArch`)\n\n_Mandatory rules for all files inside `src/newArch/`._\n\n## Migration Principles\n\n- New code must conform to `newArch` patterns.\n- Upon completion, `src/newArch` replaces `src/` entirely.\n- Applies equally to `ledger-live-mobile` and `ledger-live-desktop` codebases.\n- Code reviews enforce strict adherence.\n\n## Folder & Project Structure\n\n### High-Level Structure\n\n```\nsrc/newArch/\n├── features/\n│   └── FeatureName/\n│       ├── __integrations__/\n│       ├── components/\n│       ├── screens/\n│       ├── hooks/\n│       └── utils/\n├── components/\n├── hooks/\n└── utils/\n```\n\n### Feature Folder Responsibilities\n\n- `components/` gathers reusable UI elements across multiple screens.\n- `screens/` contains individual screen folders and their private building blocks.\n- `hooks/` contains feature-specific reusable hooks.\n- `utils/` contains feature-scoped utilities.\n\n### Nesting Guidelines\n\n- Place elements inside the closest folder matching their reuse scope.\n- Screen-specific building blocks stay inside the screen folder.\n- Feature-level components belong to `FeatureName/components/`.\n- Global shared UI belongs to `src/newArch/components/`.\n\n## Component & File Patterns\n\n### Index-Based Structure\n\n- Each component resides in its own folder.\n- Entry file: `index.tsx`.\n- Support files live alongside it:\n\n  - `use<ComponentName>ViewModel.ts`\n  - `types.ts`\n  - `styles.ts`\n\n### Naming Rules\n\n- Let folder hierarchy convey context; component names remain concise.\n- Use the **List / Detail** naming pattern for multi-view workflows.\n- ViewModel hooks always follow the naming: `use<ComponentName>ViewModel.ts`\n\n### Constants & Utils\n\n- Store utilities in a `utils/` directory near their consumers.\n- Shared constants belong to `utils/constants/`.\n- Utilities remain separate from component folders.\n\n## Import Rules\n\n- Keep relative imports shallow (within one directory level).\n- Use TypeScript path aliases for broader access.\n- Import directories via alias paths instead of long relative chains.\n- Importing `index.tsx` explicitly is discouraged — rely on folder alias exports.\n\n## ViewModel Pattern\n\n- Components needing external logic use: `Container → ViewModel → View`.\n- The ViewModel produces data and handlers.\n- The View receives everything via props.\n- The View does not directly call hooks that connect to external systems.\n\n## Data Fetching & State Management\n\n- Use RTK Query\n  - `dada-client` or `cal-client` are good examples to follow\n- Use consistent loading, retry, and error states.\n- Prefer optimistic UI when appropriate.\n- Apply caching and stale-time strategies.\n\n## Testing\n\n### Integration Tests\n\n- Every new feature under `src/newArch/` **must include an integration test** located inside its `__integrations__/` folder.\n- A **minimal integration test** must be created as soon as the feature folder is added.\n- This test should be expanded and updated progressively as the feature grows.\n- Integration tests ensure that screens, components, hooks, and navigation work together as expected within the New Architecture.\n- use MSW to mock Network API calls\n\n### Hooks & Utils\n\n- All **hooks** must have dedicated tests validating their logic, edge cases, and interactions with external systems.\n- **Utilities (`utils/`)** must also be covered by unit tests to ensure stability and prevent regressions.\n- Keep test files close to their source whenever appropriate (e.g., `utils/` and `hooks/` can contain their own `__tests__/`).\n\n### General Guidelines\n\n- Prefer **integration-first** testing where possible, to validate the complete behavior of the feature.\n- Keep mocks minimal—favor realistic wiring of components through the New Architecture patterns.\n- Follow the project's existing **custom test renderer** conventions and best practices."
+    gold_removed: ''
+  - path: .cursor/rules/testing.mdc
+    tier: 1
+    gold_added: "---\nglobs: [\"*.test.*\", \"*.spec.*\", \"**/tests/**\", \"**/__tests__/**\"]\ndescription: General, Desktop, and Mobile testing patterns for Ledger Wallet\nalwaysApply: true\n---\n\n# Testing Rules\n\n- **Stack:** Jest, MSW, coin-tester\n- **File Structure:**\n  - Tests next to source files\n  - `.test.ts` / `.spec.ts`\n  - `__tests__` for grouped tests\n  - `__integrations__` for integration tests\n- **Test Types:** Unit, Integration (prefer integration for complex features)\n- **Rules:**\n  - Test behavior, not implementation\n  - Deterministic tests\n  - Keep mocks minimal\n  - use MSW for Network API calls (use same pattern as `apps/ledger-live-mobile/__tests__/server.ts` with `handlers`)\n  - Integrate Redux when relevant\n  - Async: use `async/await` + `waitFor`\n- **Test Data:** Fixtures under `__fixtures__`, use factories/builders, avoid hardcoded/unrealistic values\n- **Maintenance:** Keep tests minimal/focused, remove obsolete tests\n- **Query Priority:** ByRole > ByLabelText > ByText > ByTestId\n\n---\n\n# Desktop Testing\n\n- **Environment:** ledger-live-desktop\n- **Render function:** imported from `tests/testSetup`\n- **Mocking Network** `apps/ledger-live-desktop/tests/server.ts`\n- **Stack:** + React Testing Library + MSW\n- **Command** inside ledger-live-desktop `pnpm test:jest \"filename\"` or `pnpm test:jest` to run them all\n\n---\n\n# Mobile Testing\n\n- **Environment:** ledger-live-mobile\n- **Render function:** imported from `@tests/test-renderer`\n- **Mocking Network** `apps/ledger-live-mobile/__tests__/server.ts`\n- **Stack:** + React Native Testing Library + MSW\n- **Command** inside ledger-live-mobile `pnpm test:jest \"filename\"` or `pnpm test:jest` to run them all"
+    gold_removed: ''
+  - path: .cursor/rules/typescript.mdc
+    tier: 1
+    gold_added: "---\nalwaysApply: true\nglobs: [\"**/*.ts\", \"**/*.tsx\"]\ndescription: React and React Native development patterns for Ledger Wallet\n---\n\n## **Components**\n\n- Use **function components** with typed props.\n- Prefer **React.FC** only when children typing is needed; otherwise avoid.\n- Memoize when beneficial (`React.memo`, `useMemo`, `useCallback`).\n\n---\n\n## **Props & State**\n\n- Type props with **interfaces** or **type aliases** (PascalCase).\n- Use `readonly` for immutable props/state shapes.\n- Avoid `any`; use `unknown` when necessary.\n- Prefer discriminated unions for state machines.\n\n---\n\n## **Hooks**\n\n- Extract logic into **custom hooks**.\n- Type hook return values explicitly.\n- Avoid unnecessary dependencies in hook arrays.\n\n---\n\n## **Data & Types**\n\n- Store types in `types.ts` files.\n- Use **Zod** for runtime validation.\n\n---\n\n## **Imports & Exports**\n\n- Prefer **named imports** and **named exports**.\n- Always declare imports at the beginning of source files.\n- Import order:\n\n  1. External libs\n  2. Internal modules\n  3. Types\n\n- Avoid default exports.\n\n---\n\n## **Error Handling**\n\n- Use custom error classes with `code` and optional context.\n- Prefer **Result<T, E>** patterns for recoverable failures.\n\n---\n\n## **Async Patterns**\n\n- Use `async/await`.\n- Wrap async code with `try/catch`.\n- Avoid inline Promises inside JSX.\n\n---\n\n## **Performance**\n\n- Use `as const` for literals.\n- Use mapped types for transformations.\n- Use memoization and stable references to reduce re-renders."
+    gold_removed: ''
+  - path: .cursorrules
+    tier: 1
+    gold_added: ''
+    gold_removed: ''

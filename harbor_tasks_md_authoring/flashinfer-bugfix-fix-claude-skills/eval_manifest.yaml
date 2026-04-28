@@ -1,0 +1,72 @@
+version: "2.0"
+
+task:
+  name: flashinfer-bugfix-fix-claude-skills
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: flashinfer-ai/flashinfer
+  pr: 2275
+  base_commit: "835a0151c2d203ccb935662d94920cc4e539e2a5"
+  merge_commit: "747b0cb190810323d157926f8645ac7a90e6740a"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/add-cuda-kernel/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/add-cuda-kernel/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/add-cuda-kernel/SKILL.md."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/benchmark-kernel/SKILL.md."
+  - id: signal_04
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/benchmark-kernel/SKILL.md."
+  - id: signal_05
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/debug-cuda-crash/SKILL.md."
+  - id: signal_06
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/debug-cuda-crash/SKILL.md."
+
+config_edits:
+  - path: .claude/skills/add-cuda-kernel/SKILL.md
+    tier: 1
+    gold_added: "---\nname: add-cuda-kernel\ndescription: Step-by-step tutorial for adding new CUDA kernels to FlashInfer\n---\n\n## Step 10: Add Benchmark\n\n**All new kernels should have benchmarks.** This helps track performance regressions and allows users to compare against other implementations.\n\nCreate a benchmark file in `benchmarks/` (e.g., `benchmarks/bench_scale.py`):\n\n```python\nimport torch\nfrom flashinfer.testing import bench_gpu_time\n\ndef bench_scale():\n    \"\"\"Benchmark scale kernel.\"\"\"\n    import flashinfer\n\n    sizes = [1024, 4096, 16384, 65536, 262144]\n    dtypes = [torch.float16, torch.bfloat16]\n\n    print(\"Scale Kernel Benchmark\")\n    print(\"-\" * 60)\n    print(f\"{'Size':>10} {'Dtype':>10} {'Time (us)':>12} {'Std (us)':>10}\")\n    print(\"-\" * 60)\n\n    for size in sizes:\n        for dtype in dtypes:\n            x = torch.randn(size, dtype=dtype, device=\"cuda\")\n\n            # Benchmark with CUPTI (auto-fallback to CUDA events)\n            median_time, std_time = bench_gpu_time(\n                flashinfer.scale,\n                args=(x, 2.0),\n                enable_cupti=True,\n                dry_run_iters=10,\n                repeat_iters=100,\n            )\n\n            print(f\"{size:>10} {str(dtype):>10} {median_time*1e6:>12.2f} {std_time*1e6:>10.2f}\")\n\nif __name__ == \"__main__\":\n    bench_scale()\n```\n\n**For more complex kernels**, consider:\n\n- Adding comparisons against reference implementations (e.g., PyTorch native, cuBLAS, cuDNN)\n- Using the unified benchmarking framework in `benchmarks/flashinfer_benchmark.py` if applicable\n- Testing across different problem sizes and configurations\n\n→ **For complete benchmarking guide, see [`.claude/skills/benchmark-kernel/SKILL.md`](../benchmark-kernel/SKILL.md)**\n\nbenchmarks/bench_scale.py                  # NEW: Benchmark script"
+    gold_removed: ''
+  - path: .claude/skills/benchmark-kernel/SKILL.md
+    tier: 1
+    gold_added: '---
+
+      name: benchmark-kernel
+
+      description: Guide for benchmarking FlashInfer kernels with CUPTI timing
+
+      ---
+
+      '
+    gold_removed: ''
+  - path: .claude/skills/debug-cuda-crash/SKILL.md
+    tier: 1
+    gold_added: '---
+
+      name: debug-cuda-crash
+
+      description: Tutorial for debugging CUDA crashes using API logging
+
+      ---
+
+      '
+    gold_removed: ''

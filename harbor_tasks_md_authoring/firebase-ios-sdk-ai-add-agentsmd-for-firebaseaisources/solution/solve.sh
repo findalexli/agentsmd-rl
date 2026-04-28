@@ -1,0 +1,309 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+cd /workspace/firebase-ios-sdk
+
+# Idempotency guard
+if grep -qF "- **`Chat.swift`**: Defines the `Chat` class, which represents a back-and-forth " "FirebaseAI/Sources/AGENTS.md" && grep -qF "- **[`Internal/`](Internal/AGENTS.md)**: This directory contains internal protoc" "FirebaseAI/Sources/Protocols/AGENTS.md" && grep -qF "- **`CodableProtoEnum.swift`**: This file provides helper protocols for encoding" "FirebaseAI/Sources/Protocols/Internal/AGENTS.md" && grep -qF "- **[`Internal/`](Internal/AGENTS.md)**: Internal types are used for the interna" "FirebaseAI/Sources/Types/AGENTS.md" && grep -qF "This directory is further organized into subdirectories based on the feature the" "FirebaseAI/Sources/Types/Internal/AGENTS.md" && grep -qF "- **`BackendError.swift`**: Defines an error structure for capturing detailed er" "FirebaseAI/Sources/Types/Internal/Errors/AGENTS.md" && grep -qF "- **`ImagenGenerationRequest.swift`**: Defines the `ImagenGenerationRequest` str" "FirebaseAI/Sources/Types/Internal/Imagen/AGENTS.md" && grep -qF "- **`BidiGenerateContentServerMessage.swift`**: Defines the `BidiGenerateContent" "FirebaseAI/Sources/Types/Internal/Live/AGENTS.md" && grep -qF "- **`CountTokensRequest.swift`**: Defines the request structure for the `countTo" "FirebaseAI/Sources/Types/Internal/Requests/AGENTS.md" && grep -qF "- **`URLContext.swift`**: Defines the `URLContext` struct. It is currently an em" "FirebaseAI/Sources/Types/Internal/Tools/AGENTS.md" && grep -qF "- **`Part.swift`**: Defines the `Part` protocol and several conforming structs: " "FirebaseAI/Sources/Types/Public/AGENTS.md" && grep -qF "- **`ImagenGenerationConfig.swift`**: Defines the `ImagenGenerationConfig` struc" "FirebaseAI/Sources/Types/Public/Imagen/AGENTS.md" && grep -qF "- **`LiveSession.swift`**: Defines the `LiveSession` class, which represents a l" "FirebaseAI/Sources/Types/Public/Live/AGENTS.md" && grep -qF "- **`CodeExecution.swift`**: Defines the `CodeExecution` struct, which is a tool" "FirebaseAI/Sources/Types/Public/Tools/AGENTS.md"; then
+  echo "Gold patch already applied."
+  exit 0
+fi
+
+git apply --whitespace=nowarn <<'PATCH'
+diff --git a/FirebaseAI/Sources/AGENTS.md b/FirebaseAI/Sources/AGENTS.md
+@@ -0,0 +1,40 @@
++# FirebaseAI Source Overview
++
++This directory contains the source code for the FirebaseAI library.
++
++## Directories
++
++- **[`Protocols/`](Protocols/AGENTS.md)**: This directory contains Swift protocols used throughout the FirebaseAI library. These protocols define contracts for data models and services, ensuring a consistent and predictable structure.
++
++- **[`Types/`](Types/AGENTS.md)**: This directory contains data types used in the FirebaseAI library. These types are organized into `Internal` and `Public` subdirectories.
++
++## Files
++
++- **`AILog.swift`**: Defines an internal `AILog` enum for logging within the Firebase AI SDK. It includes a `MessageCode` enum for various log messages, and helper functions for logging at different levels (error, warning, notice, info, debug). It also provides a way to enable verbose logging.
++- **`Chat.swift`**: Defines the `Chat` class, which represents a back-and-forth chat with a `GenerativeModel`. It is instantiated via the `startChat(history:)` method on a `GenerativeModel` instance. It manages the chat history and provides `sendMessage` and `sendMessageStream` methods for sending messages to the model.
++- **`Constants.swift`**: Defines a `Constants` enum containing constants for the Firebase AI SDK, such as the base error domain.
++- **`Errors.swift`**: Defines various error-related structs and enums used for parsing and representing errors from the backend, such as `ErrorStatus`, `ErrorDetails`, and `RPCStatus`.
++- **`FirebaseAI.swift`**: Defines the main `FirebaseAI` class, which is the primary entry point for using the Firebase AI SDK. It provides factory methods for creating `GenerativeModel`, `ImagenModel`, and `LiveGenerativeModel` instances.
++- **`FirebaseInfo.swift`**: Defines the `FirebaseInfo` struct, which encapsulates Firebase-related information used by the SDK, such as project ID, API key, App Check, and Auth interop instances.
++- **`GenAIURLSession.swift`**: Provides a `GenAIURLSession` enum with a `default` URLSession instance for the SDK to use. It includes a workaround for a simulator bug.
++- **`GenerateContentError.swift`**: Defines the public `GenerateContentError` enum, which represents errors that can occur when generating content from a model.
++- **`GenerateContentRequest.swift`**: Defines the `GenerateContentRequest` struct, which represents a request to generate content from the model.
++- **`GenerateContentResponse.swift`**: Defines the `GenerateContentResponse` struct, which represents the model's response to a generate content request. It also defines nested structs like `UsageMetadata`, `Candidate`, `Citation`, `FinishReason`, `PromptFeedback`, and `GroundingMetadata`.
++- **`GenerationConfig.swift`**: Defines the `GenerationConfig` struct for configuring model parameters for generative AI requests.
++- **`GenerativeAIRequest.swift`**: Defines the `GenerativeAIRequest` protocol for requests sent to the generative AI backend. It also defines `RequestOptions`.
++- **`GenerativeAIService.swift`**: Defines the `GenerativeAIService` struct, which is responsible for making requests to the generative AI backend. It handles things like authentication, URL construction, and response parsing.
++- **`GenerativeModel.swift`**: Defines the `GenerativeModel` class, which represents a remote multimodal model. It provides methods for generating content, counting tokens, and starting a chat via `startChat(history:)`, which returns a `Chat` instance.
++- **`History.swift`**: Defines the `History` class, a thread-safe class for managing the chat history, used by the `Chat` class.
++- **`JSONValue.swift`**: Defines the `JSONValue` enum and `JSONObject` typealias for representing JSON values.
++- **`ModalityTokenCount.swift`**: Defines the `ModalityTokenCount` and `ContentModality` structs for representing token counting information for a single modality.
++- **`ModelContent.swift`**: Defines the `ModelContent` struct, which represents the content of a message to or from the model. It can contain multiple `Part`s.
++- **`PartsRepresentable.swift`**: Defines the `PartsRepresentable` protocol, which is implemented by types that can be converted into an array of `Part`s.
++- **`PartsRepresentable+Image.swift`**: Extends `UIImage`, `NSImage`, `CGImage`, and `CIImage` to conform to `PartsRepresentable`, allowing them to be used as input to the model.
++- **`Safety.swift`**: Defines structs and enums related to safety settings and ratings, such as `SafetyRating`, `SafetySetting`, and `HarmCategory`.
++- **`TemplateChatSession.swift`**: Defines the `TemplateChatSession` class for a chat session that uses a prompt template.
++- **`TemplateGenerateContentRequest.swift`**: Defines the `TemplateGenerateContentRequest` struct for generating content from a template.
++- **`TemplateGenerativeModel.swift`**: Defines the `TemplateGenerativeModel` class for generating content from a prompt template.
++- **`TemplateImagenGenerationRequest.swift`**: Defines the `TemplateImagenGenerationRequest` struct for generating images from a template.
++- **`TemplateImagenModel.swift`**: Defines the `TemplateImagenModel` class for generating images from a prompt template.
++- **`TemplateInput.swift`**: Defines the `TemplateInput` enum for representing different types of input to a template.
++- **`Tool.swift`**: Defines structs and enums related to tools and function calling, such as `FunctionDeclaration`, `Tool`, and `ToolConfig`.
+diff --git a/FirebaseAI/Sources/Protocols/AGENTS.md b/FirebaseAI/Sources/Protocols/AGENTS.md
+@@ -0,0 +1,11 @@
++# FirebaseAI Protocols
++
++This directory contains Swift protocols used throughout the FirebaseAI library.
++These protocols define contracts for data models and services, ensuring a consistent and predictable structure.
++
++When adding new features, refer to the existing protocols to maintain consistency.
++If a new protocol is needed, define it here.
++
++## Directories
++
++- **[`Internal/`](Internal/AGENTS.md)**: This directory contains internal protocols not meant for public consumption.
+diff --git a/FirebaseAI/Sources/Protocols/Internal/AGENTS.md b/FirebaseAI/Sources/Protocols/Internal/AGENTS.md
+@@ -0,0 +1,9 @@
++# FirebaseAI Internal Protocols
++
++This directory contains internal protocols not meant for public consumption.
++These are used for internal workings of the FirebaseAI library.
++Protocols in this directory are subject to change without notice and should not be relied upon by external code.
++
++### Files
++
++- **`CodableProtoEnum.swift`**: This file provides helper protocols for encoding and decoding protobuf enums. It defines `ProtoEnum` as a base protocol for types that represent a Protocol Buffer raw enum value. `DecodableProtoEnum` and `EncodableProtoEnum` provide default implementations for `Decodable` and `Encodable` respectively. `CodableProtoEnum` combines both `DecodableProtoEnum` and `EncodableProtoEnum`.
+diff --git a/FirebaseAI/Sources/Types/AGENTS.md b/FirebaseAI/Sources/Types/AGENTS.md
+@@ -0,0 +1,9 @@
++# FirebaseAI Types
++
++This directory contains data types used in the FirebaseAI library.
++These types are organized into `Internal` and `Public` subdirectories.
++
++- **[`Public/`](Public/AGENTS.md)**: Public types are part of the public API of the library and are safe to be used by developers.
++- **[`Internal/`](Internal/AGENTS.md)**: Internal types are used for the internal implementation of the library and are not meant for public consumption. They can change at any time without notice.
++
++When adding a new data type, consider whether it should be part of the public API or not and place it in the corresponding directory.
+diff --git a/FirebaseAI/Sources/Types/Internal/AGENTS.md b/FirebaseAI/Sources/Types/Internal/AGENTS.md
+@@ -0,0 +1,12 @@
++# FirebaseAI Internal Types
++
++This directory contains internal data types used for the implementation of the FirebaseAI library.
++These types are not part of the public API and should not be used directly by developers.
++They are subject to change without notice.
++
++This directory is further organized into subdirectories based on the feature they are related to, for example:
++- **[`Errors/`](Errors/AGENTS.md)**: Internal error types.
++- **[`Imagen/`](Imagen/AGENTS.md)**: Internal types related to Imagen models.
++- **[`Live/`](Live/AGENTS.md)**: Internal types related to real-time features.
++- **[`Requests/`](Requests/AGENTS.md)**: Internal types for API requests.
++- **[`Tools/`](Tools/AGENTS.md)**: Internal types for function calling.
+diff --git a/FirebaseAI/Sources/Types/Internal/Errors/AGENTS.md b/FirebaseAI/Sources/Types/Internal/Errors/AGENTS.md
+@@ -0,0 +1,10 @@
++# FirebaseAI Internal Error Types
++
++This directory contains internal error types used within the FirebaseAI library.
++These errors are not part of the public API and are used to handle specific error conditions within the SDK.
++
++### Files
++
++- **`BackendError.swift`**: Defines an error structure for capturing detailed error information from the backend service. It includes the HTTP response code, a message, an RPC status, and additional details. It conforms to `CustomNSError` to integrate with Cocoa error handling and provide richer error information.
++
++- **`EmptyContentError.swift`**: Defines a specific error for when a `Candidate` is returned with no content and no finish reason. This is a nested struct within an extension of `Candidate`.
+diff --git a/FirebaseAI/Sources/Types/Internal/Imagen/AGENTS.md b/FirebaseAI/Sources/Types/Internal/Imagen/AGENTS.md
+@@ -0,0 +1,29 @@
++# FirebaseAI Internal Imagen Types
++
++This directory contains internal data types related to the Imagen feature.
++These types are used for constructing requests and parsing responses from the Imagen image generation service.
++They are not meant for public consumption and can change at any time.
++
++The types in this directory define the structure of the data sent to and received from the Imagen API, including parameters for image generation, safety attributes, and output options.
++
++### Files
++
++- **`ImageGenerationInstance.swift`**: Defines the `ImageGenerationInstance` struct, which contains a `prompt` string for the image generation.
++
++- **`ImageGenerationOutputOptions.swift`**: Defines the `ImageGenerationOutputOptions` struct, containing `mimeType` and `compressionQuality` for the generated image.
++
++- **`ImageGenerationParameters.swift`**: Defines the `ImageGenerationParameters` struct, which holds all the parameters for an image generation request, such as `sampleCount`, `storageURI`, `negativePrompt`, etc.
++
++- **`ImagenConstants.swift`**: Defines constants for the Imagen feature, including the error domain and specific error codes like `imagesBlocked`.
++
++- **`ImagenGCSImage.swift`**: Defines the `ImagenGCSImage` struct, representing an image generated by Imagen and stored in Google Cloud Storage (GCS). It includes the `mimeType` and `gcsURI`.
++
++- **`ImagenGenerationRequest.swift`**: Defines the `ImagenGenerationRequest` struct, which encapsulates the entire request sent to the Imagen API, including the model, API configuration, instances, and parameters.
++
++- **`ImagenImageRepresentable.swift`**: Defines the `ImagenImageRepresentable` protocol for types that can be represented as an Imagen image. This is for internal use.
++
++- **`ImagenSafetyAttributes.swift`**: Defines the `ImagenSafetyAttributes` struct. This is a prediction from Imagen related to safety, but it is currently unused by the SDK.
++
++- **`InternalImagenImage.swift`**: Defines the `_InternalImagenImage` struct, which is the internal representation of an Imagen image, containing the `mimeType`, `bytesBase64Encoded`, and `gcsURI`.
++
++- **`RAIFilteredReason.swift`**: Defines the `RAIFilteredReason` struct, which contains the reason why an image was filtered by Responsible AI (RAI).
+diff --git a/FirebaseAI/Sources/Types/Internal/Live/AGENTS.md b/FirebaseAI/Sources/Types/Internal/Live/AGENTS.md
+@@ -0,0 +1,42 @@
++# FirebaseAI Internal Live Types
++
++This directory contains internal data types for real-time and streaming features of the FirebaseAI library.
++The types here are used for bidirectional communication with the backend, for example, in streaming chat sessions or real-time transcription.
++
++These types are not part of the public API and are subject to change.
++
++### Files
++
++- **`AsyncWebSocket.swift`**: Provides an async/await wrapper around `URLSessionWebSocketTask` for interacting with web sockets. It simplifies sending and receiving messages and provides a custom error, `WebSocketClosedError`, for when the web socket is closed.
++
++- **`BidiGenerateContentClientContent.swift`**: Defines the `BidiGenerateContentClientContent` struct, which represents an incremental update of the current conversation delivered from the client.
++
++- **`BidiGenerateContentClientMessage.swift`**: Defines the `BidiGenerateContentClientMessage` enum, which represents all possible messages a client can send in a bidirectional streaming RPC. This includes setup, content, real-time input, and tool responses.
++
++- **`BidiGenerateContentRealtimeInput.swift`**: Defines the `BidiGenerateContentRealtimeInput` struct, for user input that is sent in real time, such as audio, video, or text.
++
++- **`BidiGenerateContentServerContent.swift`**: Defines the `BidiGenerateContentServerContent` struct, which is an incremental server update generated by the model in response to client messages.
++
++- **`BidiGenerateContentServerMessage.swift`**: Defines the `BidiGenerateContentServerMessage` struct and its nested `MessageType` enum, representing a response message from the server in a bidirectional streaming RPC. It can be a setup completion, server content, a tool call, a tool call cancellation, or a go-away notification.
++
++- **`BidiGenerateContentSetup.swift`**: Defines the `BidiGenerateContentSetup` struct, which is the first message sent by the client to configure the streaming RPC. It contains the model name, generation config, system instruction, tools, and other settings.
++
++- **`BidiGenerateContentSetupComplete.swift`**: Defines the `BidiGenerateContentSetupComplete` struct, which is an empty struct sent by the server to indicate that the setup is complete.
++
++- **`BidiGenerateContentToolCall.swift`**: Defines the `BidiGenerateContentToolCall` struct, which is a request from the server for the client to execute one or more function calls.
++
++- **`BidiGenerateContentToolCallCancellation.swift`**: Defines the `BidiGenerateContentToolCallCancellation` struct, a notification from the server to cancel a previously issued tool call.
++
++- **`BidiGenerateContentToolResponse.swift`**: Defines the `BidiGenerateContentToolResponse` struct, which is a client-generated response to a `ToolCall` from the server.
++
++- **`BidiGenerateContentTranscription.swift`**: Defines the `BidiGenerateContentTranscription` struct, which contains the transcribed text from an audio input.
++
++- **`BidiGenerationConfig.swift`**: Defines the `BidiGenerationConfig` struct, which holds configuration options for live content generation, such as temperature, topP, topK, etc.
++
++- **`BidiSpeechConfig.swift`**: Defines the `BidiSpeechConfig` struct, for speech generation configuration, including voice configuration and language code.
++
++- **`GoAway.swift`**: Defines the `GoAway` struct, which is a notification from the server that it will disconnect soon, providing the time left before termination.
++
++- **`LiveSessionService.swift`**: Defines the `LiveSessionService` actor, which manages the connection and communication with the backend for a `LiveSession`. It handles setting up the web socket, sending and receiving messages, and managing the session's lifecycle.
++
++- **`VoiceConfig.swift`**: Defines the `VoiceConfig` enum, which represents the configuration for the speaker's voice. It can be either a `prebuiltVoiceConfig` with a voice name or a `customVoiceConfig` with a voice sample.
+diff --git a/FirebaseAI/Sources/Types/Internal/Requests/AGENTS.md b/FirebaseAI/Sources/Types/Internal/Requests/AGENTS.md
+@@ -0,0 +1,9 @@
++# FirebaseAI Internal Request Types
++
++This directory contains internal data types for API requests.
++These types encapsulate the data that needs to be sent to the backend for various operations.
++They are not part of the public API and can change at any time.
++
++### Files
++
++- **`CountTokensRequest.swift`**: Defines the request structure for the `countTokens` API endpoint, used to calculate the number of tokens in a prompt. It includes the model name and the content to be tokenized. The request encoding differs between Vertex AI and Google AI backends due to different API expectations (e.g., model resource name format). The file also defines the `CountTokensResponse` struct.
+diff --git a/FirebaseAI/Sources/Types/Internal/Tools/AGENTS.md b/FirebaseAI/Sources/Types/Internal/Tools/AGENTS.md
+@@ -0,0 +1,9 @@
++# FirebaseAI Internal Tool-related Types
++
++This directory contains internal data types related to tools and function calling.
++These types are used to provide context to tools that can be executed by the model.
++These types are internal and subject to change.
++
++### Files
++
++- **`URLContext.swift`**: Defines the `URLContext` struct. It is currently an empty struct that serves to enable the URL context tool. Its presence in a `Tool` enables the feature, and it may be expanded in the future to carry more specific context.
+diff --git a/FirebaseAI/Sources/Types/Public/AGENTS.md b/FirebaseAI/Sources/Types/Public/AGENTS.md
+@@ -0,0 +1,22 @@
++# FirebaseAI Public Types
++
++This directory contains public data types that are part of the FirebaseAI library's public API.
++These types are safe for developers to use and are documented in the official Firebase documentation.
++
++The types are organized into subdirectories based on the feature they are related to, for example:
++- **[`Imagen/`](Imagen/AGENTS.md)**: Public types related to Imagen models.
++- **[`Live/`](Live/AGENTS.md)**: Public types related to real-time features.
++- **[`Tools/`](Tools/AGENTS.md)**: Public types for function calling.
++
++When adding a new public type, it should be placed in the appropriate subdirectory.
++Any changes to these types must be done carefully to avoid breaking changes for users.
++
++### Files
++
++- **`Backend.swift`**: Defines the `Backend` struct, which is used to configure the backend API for the Firebase AI SDK. It provides static methods `vertexAI(location:)` and `googleAI()` to create instances for the respective backends.
++- **`Part.swift`**: Defines the `Part` protocol and several conforming structs: `TextPart`, `InlineDataPart`, `FileDataPart`, `FunctionCallPart`, `FunctionResponsePart`, `ExecutableCodePart`, and `CodeExecutionResultPart`. A `Part` represents a discrete piece of data in a media format that can be interpreted by the model.
++- **`ResponseModality.swift`**: Defines the `ResponseModality` struct, which represents the different types of data that a model can produce as output (e.g., `text`, `image`, `audio`).
++- **`Schema.swift`**: Defines the `Schema` class, which allows the definition of input and output data types for function calling. It supports various data types like string, number, integer, boolean, array, and object.
++- **`ThinkingConfig.swift`**: Defines the `ThinkingConfig` struct, for controlling the "thinking" behavior of compatible Gemini models. It includes parameters like `thinkingBudget` and `includeThoughts`.
++- **`URLContextMetadata.swift`**: Defines the `URLContextMetadata` struct, which contains metadata related to the `Tool.urlContext()` tool.
++- **`URLMetadata.swift`**: Defines the `URLMetadata` struct, which contains metadata for a single URL retrieved by the `Tool.urlContext()` tool, including the `retrievalStatus`.
+diff --git a/FirebaseAI/Sources/Types/Public/Imagen/AGENTS.md b/FirebaseAI/Sources/Types/Public/Imagen/AGENTS.md
+@@ -0,0 +1,26 @@
++# FirebaseAI Public Imagen Types
++
++This directory contains public data types for the Imagen image generation feature.
++These types are part of the public API and are used by developers to interact with the Imagen service.
++
++### Files
++
++- **`ImagenAspectRatio.swift`**: Defines the `ImagenAspectRatio` struct, which represents the aspect ratio for images generated by Imagen. It provides static properties for common aspect ratios like `square1x1`, `portrait9x16`, etc.
++
++- **`ImagenGenerationConfig.swift`**: Defines the `ImagenGenerationConfig` struct, which contains configuration options for generating images with Imagen, such as `negativePrompt`, `numberOfImages`, `aspectRatio`, `imageFormat`, and `addWatermark`.
++
++- **`ImagenGenerationResponse.swift`**: Defines the `ImagenGenerationResponse` struct, which is the response from a request to generate images. It contains the generated `images` and a `filteredReason` if any images were filtered.
++
++- **`ImagenImageFormat.swift`**: Defines the `ImagenImageFormat` struct, which represents the image format for generated images. It provides static methods for `png()` and `jpeg(compressionQuality:)`.
++
++- **`ImagenImagesBlockedError.swift`**: Defines the `ImagenImagesBlockedError` error, which occurs when image generation fails due to all generated images being blocked.
++
++- **`ImagenInlineImage.swift`**: Defines the `ImagenInlineImage` struct, which represents an image generated by Imagen as inline data. It contains the `mimeType` and the image `data`.
++
++- **`ImagenModel.swift`**: Defines the `ImagenModel` class, which is the main entry point for generating images. It has methods like `generateImages(prompt:)` to generate images from a text prompt.
++
++- **`ImagenPersonFilterLevel.swift`**: Defines the `ImagenPersonFilterLevel` struct, which is a filter level controlling whether generation of images containing people or faces is allowed.
++
++- **`ImagenSafetyFilterLevel.swift`**: Defines the `ImagenSafetyFilterLevel` struct, which is a filter level controlling how aggressively to filter sensitive content.
++
++- **`ImagenSafetySettings.swift`**: Defines the `ImagenSafetySettings` struct, which contains settings for controlling the aggressiveness of filtering out sensitive content, including `safetyFilterLevel` and `personFilterLevel`.
+diff --git a/FirebaseAI/Sources/Types/Public/Live/AGENTS.md b/FirebaseAI/Sources/Types/Public/Live/AGENTS.md
+@@ -0,0 +1,30 @@
++# FirebaseAI Public Live Types
++
++This directory contains public data types for real-time and streaming features of the FirebaseAI library.
++These types are used by developers to interact with live, streaming services, such as real-time chat sessions or audio transcription.
++
++### Files
++
++- **`AudioTranscriptionConfig.swift`**: Defines the `AudioTranscriptionConfig` struct, which is used to enable and configure audio transcriptions when communicating with a model that supports the Gemini Live API.
++
++- **`LiveAudioTranscription.swift`**: Defines the `LiveAudioTranscription` struct, which represents the text transcription of audio during a live interaction with the model.
++
++- **`LiveGenerationConfig.swift`**: Defines the `LiveGenerationConfig` struct, which contains a wide range of configuration options for live content generation, such as `temperature`, `topP`, `topK`, `candidateCount`, `maxOutputTokens`, etc.
++
++- **`LiveGenerativeModel.swift`**: Defines the `LiveGenerativeModel` class, which is a multimodal model capable of real-time content generation based on various input types, supporting bidirectional streaming. Its main function is `connect()`, which starts a `LiveSession`.
++
++- **`LiveServerContent.swift`**: Defines the `LiveServerContent` struct, which represents an incremental server update generated by the model in response to client messages. It includes properties like `modelTurn`, `isTurnComplete`, `wasInterrupted`, etc.
++
++- **`LiveServerGoingAwayNotice.swift`**: Defines the `LiveServerGoingAwayNotice` struct, which is a notification from the server that it will disconnect soon, including the `timeLeft`.
++
++- **`LiveServerMessage.swift`**: Defines the `LiveServerMessage` struct, which represents an update from the server. It contains a `payload` enum that can be content, a tool call, a tool call cancellation, or a going away notice.
++
++- **`LiveServerToolCall.swift`**: Defines the `LiveServerToolCall` struct, which is a request from the server for the client to execute the provided function calls.
++
++- **`LiveServerToolCallCancellation.swift`**: Defines the `LiveServerToolCallCancellation` struct, a notification for the client to cancel a previous function call.
++
++- **`LiveSession.swift`**: Defines the `LiveSession` class, which represents a live WebSocket session. It provides methods for sending real-time data (like `sendAudioRealtime(_:)`, `sendVideoRealtime(_:mimeType:)`, and `sendTextRealtime(_:)`) and for sending content incrementally with `sendContent(_:turnComplete:)`. It also has a `close()` method to end the session.
++
++- **`LiveSessionErrors.swift`**: Defines several public error structs related to live sessions: `LiveSessionUnsupportedMessageError`, `LiveSessionLostConnectionError`, `LiveSessionUnexpectedClosureError`, and `LiveSessionSetupError`.
++
++- **`SpeechConfig.swift`**: Defines the `SpeechConfig` struct, for controlling the voice of the model during conversation, including the `voiceName` and `languageCode`.
+diff --git a/FirebaseAI/Sources/Types/Public/Tools/AGENTS.md b/FirebaseAI/Sources/Types/Public/Tools/AGENTS.md
+@@ -0,0 +1,8 @@
++# FirebaseAI Public Tool-related Types
++
++This directory contains public data types related to tools and function calling.
++These types are used by developers to define and configure tools that the model can execute.
++
++### Files
++
++- **`CodeExecution.swift`**: Defines the `CodeExecution` struct, which is a tool that allows the model to execute code. This can be used to solve complex problems by leveraging the model's ability to generate and execute code. It is currently an empty struct, but its presence in a `Tool` enables the code execution feature.
+PATCH
+
+echo "Gold patch applied."

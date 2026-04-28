@@ -1,0 +1,68 @@
+version: "2.0"
+
+task:
+  name: automodel-fix-move-skills-to-claudeskills
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: NVIDIA-NeMo/Automodel
+  pr: 1662
+  base_commit: "c1b78f14f2ae975035059dce0abaadea40062587"
+  merge_commit: "bd9e79ce0e54173e1299c379745c59897caa2c93"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/model-onboarding/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/model-onboarding/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/model-onboarding/SKILL.md."
+
+config_edits:
+  - path: .claude/skills/developer-guide/SKILL.md
+    tier: 1
+    gold_added: ''
+    gold_removed: ''
+  - path: .claude/skills/distributed-training/SKILL.md
+    tier: 1
+    gold_added: ''
+    gold_removed: ''
+  - path: .claude/skills/launcher-config/SKILL.md
+    tier: 1
+    gold_added: ''
+    gold_removed: ''
+  - path: .claude/skills/model-onboarding/SKILL.md
+    tier: 1
+    gold_added: "### General testing rules\n\n- **Match the model's dtype.** Never invent or override the dtype in tests. If the\n  model runs in `bfloat16`, tests must also use `bfloat16`. Check the model's\n  `config.json` (`torch_dtype` field) or its default `model.dtype` and use that\n  everywhere -- model init, input tensors, reference tensors, and tolerance\n  thresholds. Using a different dtype (e.g., `float32` when the model uses\n  `bfloat16`) hides real precision issues and makes parity comparisons meaningless.\n\n- **Layer-rewrite equivalence tests.** Whenever you rewrite or replace a layer\n  (attention, MLP, normalization, RoPE, etc.) with a custom implementation, you\n  **must** add a unit test that checks numerical equivalence against the original\n  HuggingFace layer. Guidelines:\n  - Use a **realistically sized** layer config, not the absolute minimum. For\n    example, `hidden_size=256, num_attention_heads=8, num_key_value_heads=4` is\n    a reasonable choice. Extremely small dimensions (e.g., `hidden_size=8`) can\n    mask numerical divergence because there are too few elements for errors to\n    accumulate.\n  - Seed both the original and rewritten layer with identical weights (copy\n    `state_dict` from one to the other via the adapter if needed).\n  - Feed the same random input through both layers and assert\n    `torch.allclose(out_original, out_rewritten, atol=..., rtol=...)` with\n    tolerances appropriate for the dtype (`atol=1e-2, rtol=1e-2` for `bfloat16`;\n    `atol=1e-5, rtol=1e-5` for `float32`).\n  - Name the test `test_<layer>_equivalence` (e.g., `test_attention_equivalence`,\n    `test_mlp_equivalence`).\n\n### 4.2 Layer equivalence tests\n\nWhen a layer has been rewritten, add a test like:\n\n```python\ndef test_attention_equivalence(tiny_config):\n    \"\"\"Verify custom attention matches HF reference output.\"\"\"\n    dtype = tiny_config.torch_dtype  # e.g. torch.bfloat16\n    torch.manual_seed(42)\n\n    # Instantiate original HF layer and custom NeMo layer\n    from transformers.models.<name>.modeling_<name> import <Name>Attention as HFAttention\n    from nemo_automodel.components.models.<name>.layers import <Name>Attention as NeMoAttention\n\n    hf_attn = HFAttention(tiny_config, layer_idx=0).to(dtype=dtype, device=\"cuda\")\n    nemo_attn = NeMoAttention(tiny_config, layer_idx=0).to(dtype=dtype, device=\"cuda\")\n\n    # Copy weights from HF to NeMo (via state_dict adapter or manual mapping)\n    # ... adapter.from_hf(hf_attn.state_dict()) ...\n\n    hidden = torch.randn(2, 32, tiny_config.hidden_size, dtype=dtype, device=\"cuda\")\n    position_ids = torch.arange(32, device=\"cuda\").unsqueeze(0).expand(2, -1)\n\n    with torch.no_grad():\n        hf_out = hf_attn(hidden, position_ids=position_ids)[0]\n        nemo_out = nemo_attn(hidden, position_ids=position_ids)[0]\n\n    atol, rtol = (1e-2, 1e-2) if dtype == torch.bfloat16 else (1e-5, 1e-5)\n    assert torch.allclose(hf_out, nemo_out, atol=atol, rtol=rtol), (\n        f\"Max diff: {(hf_out - nemo_out).abs().max().item()}\"\n    )\n```\n\n### 4.3 Functional tests\n## Phase 6: Parity Testing\n\nAfter implementation and unit tests are complete, run the full parity-testing\nworkflow to verify that the new model produces numerically equivalent results to\nthe reference HuggingFace implementation.\n\n**Read and follow the parity-testing skill** at\n`.claude/skills/parity-testing/SKILL.md`. It walks through three levels of\ncomparison (state-dict round-trip, component-level parity, end-to-end forward\npass) and provides debugging steps when a level fails.\n\nDo not skip this phase. A model that passes unit tests can still diverge from HF\ndue to subtle weight-conversion bugs, backend differences, or RoPE mismatches\nthat only surface in a full parity comparison.\n\n---\n\n- [ ] Created layer equivalence tests for every rewritten layer (matching model dtype)\n- [ ] Ran parity-testing skill (state-dict round-trip, component parity, E2E forward pass)"
+    gold_removed: ''
+  - path: .claude/skills/model-onboarding/llm-patterns.md
+    tier: 1
+    gold_added: ''
+    gold_removed: ''
+  - path: .claude/skills/model-onboarding/moe-patterns.md
+    tier: 1
+    gold_added: ''
+    gold_removed: ''
+  - path: .claude/skills/model-onboarding/vlm-patterns.md
+    tier: 1
+    gold_added: ''
+    gold_removed: ''
+  - path: .claude/skills/parity-testing/SKILL.md
+    tier: 1
+    gold_added: ''
+    gold_removed: ''
+  - path: .claude/skills/parity-testing/pitfalls.md
+    tier: 1
+    gold_added: ''
+    gold_removed: ''
+  - path: .claude/skills/recipe-development/SKILL.md
+    tier: 1
+    gold_added: ''
+    gold_removed: ''

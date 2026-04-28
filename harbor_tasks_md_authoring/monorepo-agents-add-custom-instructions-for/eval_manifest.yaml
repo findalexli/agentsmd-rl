@@ -1,0 +1,48 @@
+version: "2.0"
+
+task:
+  name: monorepo-agents-add-custom-instructions-for
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: commonwarexyz/monorepo
+  pr: 2038
+  base_commit: "3aa281d6e4c2804e167966a0ce993cf4a71b34f4"
+  merge_commit: "11a82e4e4302be12ed7bc65e4a8fb21852908464"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/copilot-instructions.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+
+config_edits:
+  - path: .github/copilot-instructions.md
+    tier: 1
+    gold_added: ../AGENTS.md
+    gold_removed: ''
+  - path: AGENTS.md
+    tier: 1
+    gold_added: '## Reviewing PRs
+
+      When reviewing PRs, focus the majority of your effort on correctness and performance (not style). Pay special attention to bugs
+
+      that can be caused by malicious participants when a function accepts untrusted input. This repository is designed to be
+
+      used in adversarial environments, and as such, we should be extra careful to ensure that the code is robust.
+
+      '
+    gold_removed: ''

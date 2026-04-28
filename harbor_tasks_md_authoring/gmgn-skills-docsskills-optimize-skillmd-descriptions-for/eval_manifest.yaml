@@ -1,0 +1,70 @@
+version: "2.0"
+
+task:
+  name: gmgn-skills-docsskills-optimize-skillmd-descriptions-for
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: GMGNAI/gmgn-skills
+  pr: 97
+  base_commit: "eeb4a77cf76575431dcd6805de1ef2a02a515aab"
+  merge_commit: "4143e07266d88ccd2f6952d6d3206fca57cd641a"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/gmgn-cooking/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/gmgn-market/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/gmgn-portfolio/SKILL.md."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/gmgn-swap/SKILL.md."
+  - id: signal_04
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/gmgn-token/SKILL.md."
+  - id: signal_05
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/gmgn-token/SKILL.md."
+  - id: signal_06
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/gmgn-track/SKILL.md."
+
+config_edits:
+  - path: skills/gmgn-cooking/SKILL.md
+    tier: 1
+    gold_added: 'description: "[FINANCIAL EXECUTION] Launch new tokens on crypto launchpads (Pump.fun, PancakeSwap, FourMeme, Bonk, BAGS, Flap, etc.) or query token creation stats via GMGN API. Requires explicit user confirmation — executes irreversible on-chain transactions. Use when user asks to create a token, launch a meme coin, deploy on a launchpad, or check launchpad token creation stats on Solana, BSC, Base."'
+    gold_removed: ''
+  - path: skills/gmgn-market/SKILL.md
+    tier: 1
+    gold_added: 'description: Get token price charts (K-line, candlestick, OHLCV), trending token rankings, and newly launched tokens on launchpads (pump.fun, letsbonk, etc.) via GMGN API. Use when user asks for token price history, candlestick chart, trending tokens, hot tokens by volume, new token launches, or early-stage token opportunities on Solana, BSC, or Base.'
+    gold_removed: ''
+  - path: skills/gmgn-portfolio/SKILL.md
+    tier: 1
+    gold_added: 'description: Get wallet holdings, realized/unrealized P&L, win rate, trading history, and performance stats for any crypto wallet via GMGN API. Use when user asks for wallet holdings, wallet P&L, trader win rate, wallet performance analysis, or whether a wallet is worth copy-trading on Solana, BSC, or Base.'
+    gold_removed: ''
+  - path: skills/gmgn-swap/SKILL.md
+    tier: 1
+    gold_added: 'description: "[FINANCIAL EXECUTION] Execute on-chain token swaps and manage limit orders (stop loss, take profit) via GMGN API. Requires explicit user confirmation — executes irreversible blockchain transactions. Use when user asks to swap tokens, buy or sell a token, set a limit order, or check order status on Solana, BSC, or Base."'
+    gold_removed: ''
+  - path: skills/gmgn-token/SKILL.md
+    tier: 1
+    gold_added: 'description: Get real-time token price, market cap, holder list, trader list, top Smart Money traders, security audit (honeypot, rug pull risk, renounced status), liquidity pool info, and social links (Twitter/X, website) for any crypto token via GMGN API. Use when user asks for token price, token security check, who holds a token, top traders, Smart Money positions, token social links, or cryptocurrency market data on Solana, BSC, or Base.
+
+      | `token info` | Basic info + realtime price, liquidity, market cap, total supply, holder count, social links (market cap = price × circulating_supply) |'
+    gold_removed: ''
+  - path: skills/gmgn-track/SKILL.md
+    tier: 1
+    gold_added: 'description: Get real-time trade activity from Smart Money wallets, KOL influencer wallets, and personally followed wallets via GMGN API. Use when user asks what smart money is buying, KOL trades, whale moves, copy-trading signals, or recent trades from followed wallets on Solana, BSC, or Base.'
+    gold_removed: ''

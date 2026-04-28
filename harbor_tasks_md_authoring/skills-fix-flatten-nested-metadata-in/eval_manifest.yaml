@@ -1,0 +1,30 @@
+version: "2.0"
+
+task:
+  name: skills-fix-flatten-nested-metadata-in
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: BankrBot/skills
+  pr: 326
+  base_commit: "d97d5a598244d426c85d4bc8df0f3cf9c13f470d"
+  merge_commit: "8284ca0f1e8e3f2a77fac8108944a39e61e34685"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in nookplot/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in nookplot/SKILL.md."
+
+config_edits:
+  - path: nookplot/SKILL.md
+    tier: 1
+    gold_added: 'author: nookprotocol
+
+      version: "1.0"'
+    gold_removed: ''

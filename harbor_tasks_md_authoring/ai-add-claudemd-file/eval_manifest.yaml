@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: ai-add-claudemd-file
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: symfony/ai
+  pr: 432
+  base_commit: "f4c08d6363d068543e796fd31d69b7639a92c9fc"
+  merge_commit: "de0c7486ca8d9ae953ee1c42e717b62a195d9651"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+
+config_edits:
+  - path: CLAUDE.md
+    tier: 1
+    gold_added: "# CLAUDE.md\n\nThis file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.\n\n## Project Overview\n\nThis is the Symfony AI monorepo containing multiple components and bundles that integrate AI capabilities into PHP applications. The project is organized as a collection of independent packages under the `src/` directory, each with their own composer.json, tests, and dependencies.\n\n## Architecture\n\n### Core Components\n- **Platform** (`src/platform/`): Unified interface to AI platforms (OpenAI, Anthropic, Azure, Gemini, VertexAI, etc.)\n- **Agent** (`src/agent/`): Framework for building AI agents that interact with users and perform tasks\n- **Store** (`src/store/`): Data storage abstraction with indexing and retrieval for vector databases\n- **MCP SDK** (`src/mcp-sdk/`): SDK for Model Context Protocol enabling agent-tool communication\n\n### Integration Bundles\n- **AI Bundle** (`src/ai-bundle/`): Symfony integration for Platform, Store, and Agent components\n- **MCP Bundle** (`src/mcp-bundle/`): Symfony integration for MCP SDK\n\n### Supporting Directories\n- **Examples** (`examples/`): Standalone examples demonstrating component usage across different AI platforms\n- **Demo** (`demo/`): Full Symfony web application showcasing components working together\n- **Fixtures** (`fixtures/`): Shared test fixtures for multi-modal testing (images, audio, PDFs)\n\n## Development Commands\n\n### Testing\nEach component has its own test suite. Run tests for specific components:\n```bash\n# Platform component\ncd src/platform && vendor/bin/phpunit\n\n# Agent component  \ncd src/agent && vendor/bin/phpunit\n\n# AI Bundle\ncd src/ai-bundle && vendor/bin/phpunit\n\n# Demo application\ncd demo && vendor/bin/phpunit\n```\n\n### Code Quality\nThe project uses PHP CS Fixer with Symfony coding standards:\n```bash\n# Fix code style issues\nvendor/bin/php-cs-fixer fix\n\n# Check specific directories\nvendor/bin/php-cs-fixer fix src/platform/\n```\n\nStatic analysis with PHPStan (component-specific):\n```bash\ncd src/platform && vendor/bin/phpstan analyse\n```\n\n### Development Linking\nUse the `./link` script to symlink local development versions:\n```bash\n# Link components to external project\n./link /path/to/project\n\n# Copy instead of symlink\n./link --copy /path/to/project\n\n# Rollback changes\n./link --rollback /path/to/project\n```\n\n### Running Examples\nExamples are self-contained and can be run individually:\n```bash\ncd examples\nphp anthropic/chat.php\nphp openai/function-calling.php\n```\n\nMany examples require environment variables (see `.env` files in example directories).\n\n### Demo Application\nThe demo is a full Symfony application:\n```bash\ncd demo\ncomposer install\nsymfony server:start\n```\n\n## Component Dependencies\n\nComponents are designed to work independently but have these relationships:\n- Agent depends on Platform for AI communication\n- AI Bundle integrates Platform, Agent, and Store\n- MCP Bundle provides MCP SDK integration\n- Store is standalone but often used with Agent for RAG applications\n\n## Testing Architecture\n\nEach component uses:\n- **PHPUnit 11+** for testing framework\n- Component-specific `phpunit.xml.dist` configurations\n- Shared fixtures in `/fixtures` for multi-modal content\n- MockHttpClient pattern preferred over response mocking\n\n## Development Notes\n\n- Each component in `src/` is a separate Composer package with its own dependencies\n- Use `@dev` versions for internal component dependencies during development\n- Components follow Symfony coding standards and use `@Symfony` PHP CS Fixer rules\n- The monorepo structure allows independent versioning while maintaining shared development workflow"
+    gold_removed: ''

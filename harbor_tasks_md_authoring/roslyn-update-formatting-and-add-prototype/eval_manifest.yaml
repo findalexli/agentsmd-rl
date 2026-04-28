@@ -1,0 +1,52 @@
+version: "2.0"
+
+task:
+  name: roslyn-update-formatting-and-add-prototype
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: dotnet/roslyn
+  pr: 80677
+  base_commit: "e6c19293cb42a34f84c04ce5882a50e929ea88ee"
+  merge_commit: "6a5c2d3f7d81eb8db5afae9d83ce7886864e4085"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/copilot-instructions.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/copilot-instructions.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/copilot-instructions.md."
+
+config_edits:
+  - path: .github/copilot-instructions.md
+    tier: 1
+    gold_added: '- **Language Server Protocol**: `src/LanguageServer/` contains LSP implementation used by VS Code extension
+
+      - **ServiceHub**: Remote services (`src/Workspaces/Remote/`) run out-of-process for performance
+
+      - **Analyzers**: `src/Analyzers/` for static analysis, separate from `src/RoslynAnalyzers/` (internal tooling)
+
+      - **VSIX Packaging**: Multiple deployment targets - `src/VisualStudio/Setup/` for main VS integration
+
+      - **Namespace Strategy**: `Microsoft.CodeAnalysis.[Language].[Area]` (e.g., `Microsoft.CodeAnalysis.CSharp.Formatting`)
+
+      - **File Organization**: Group by feature area, separate language-specific implementations
+
+      - **Immutability**: All syntax trees, documents, and solutions are immutable - create new instances for changes
+
+      - **Cancellation**: Always thread `CancellationToken` through async operations
+
+      - **MEF Lifecycle**: Use `[ImportingConstructor]` with obsolete attribute for MEF v2 compatibility
+
+      - **PROTOTYPE Comments**: Only used to track follow-up work in feature branches and are disallowed in main branch
+
+      - Solution filters: `Roslyn.sln`, `Compilers.slnf`, `Ide.slnf` for focused builds'
+    gold_removed: ''

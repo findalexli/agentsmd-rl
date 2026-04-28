@@ -1,0 +1,60 @@
+version: "2.0"
+
+task:
+  name: prairielearn-add-additional-conventions-to-agentsmd
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: PrairieLearn/PrairieLearn
+  pr: 13508
+  base_commit: "17d74207e5fd73c26bb240e1cf83fa64601909fc"
+  merge_commit: "224489dc25aeeaa490db4b0ec4779dfc1625f2be"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+
+config_edits:
+  - path: AGENTS.md
+    tier: 1
+    gold_added: '## Conventions
+
+
+      ### Stylistic conventions
+
+
+      - NEVER use `as any` casts in TypeScript code to avoid type errors.
+
+      - Don''t add extra defensive checks or try/catch blocks that are abnormal for that area of the codebase (especially if called by trusted / validated codepaths).
+
+      - Don''t add extra comments that a human wouldn''t add or that are inconsistent with the rest of the file.
+
+
+      ### Library usage conventions
+
+
+      - Use `@tanstack/react-query` for API calls.
+
+      - Use `react-hook-form` for form handling.
+
+
+      ### User interface conventions
+
+
+      - Use `react-bootstrap` components for UI elements.
+
+      - Titles and buttons should use sentence case ("Save course", "Discard these changes").
+
+      '
+    gold_removed: ''

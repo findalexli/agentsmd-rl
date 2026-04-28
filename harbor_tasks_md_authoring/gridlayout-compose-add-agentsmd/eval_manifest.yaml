@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: gridlayout-compose-add-agentsmd
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: cheonjaeung/gridlayout-compose
+  pr: 94
+  base_commit: "80910a9d34bac947191d9fc8f266dd7910f8e28a"
+  merge_commit: "cd1bc4cc3ff6f4ccbc5b26ae2ef01201d204bd8e"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+
+config_edits:
+  - path: AGENTS.md
+    tier: 1
+    gold_added: "# Guidelines for AI Agents\n\n## Core Rules\n\n- Update documentation when the feature is added, removed or changed.\n- Verify changes by running tests after making changes.\n- Run `./gradlew apiDump` when the public API is changed.\n\n## Project Structure\n\n- `grid/`: The main library module.\n  - `src/commonMain/`: Main source code for the library.\n  - `src/androidMain/`: Android specific source code.\n  - `src/test/`: Unit tests and snapshot tests.\n- `samples/`: Sample applications.\n  - `shared/`: Shared code module for all sample applications.\n  - `android/`: Android sample application.\n  - `desktop/`: Desktop sample application.\n  - `ios/`: Xcode project for iOS sample application.\n- `docs/`: Documentation.\n\n## Commands\n\n- `./gradlew build`: Build project.\n- `./gradlew test`: Run all test cases.\n- `./gradlew verifyPaparazziDebug`: Run only snapshot tests.\n- `./gradlew recordPaparazziDebug`: Update and create new snapshots.\n- `./gradlew apiDump`: Update public API binary compatibility.\n\n## Commit Style\n\n- Use concise, atomic commit message.\n- Start with capitalized imperative verb."
+    gold_removed: ''

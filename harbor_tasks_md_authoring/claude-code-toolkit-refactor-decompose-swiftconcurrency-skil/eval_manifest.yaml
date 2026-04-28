@@ -1,0 +1,122 @@
+version: "2.0"
+
+task:
+  name: claude-code-toolkit-refactor-decompose-swiftconcurrency-skil
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: notque/claude-code-toolkit
+  pr: 423
+  base_commit: "e4525729dc32f294868957671ab7e6ca01779fe9"
+  merge_commit: "183b6f982ec7f8335c37742f77efb38ed254a0af"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/swift-concurrency/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/swift-concurrency/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/swift-concurrency/SKILL.md."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/swift-concurrency/references/actor-isolation.md."
+  - id: signal_04
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/swift-concurrency/references/actor-isolation.md."
+  - id: signal_05
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/swift-concurrency/references/actor-isolation.md."
+  - id: signal_06
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/swift-concurrency/references/anti-patterns.md."
+  - id: signal_07
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/swift-concurrency/references/anti-patterns.md."
+  - id: signal_08
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/swift-concurrency/references/anti-patterns.md."
+  - id: signal_09
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/swift-concurrency/references/fundamentals.md."
+  - id: signal_10
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/swift-concurrency/references/fundamentals.md."
+  - id: signal_11
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/swift-concurrency/references/fundamentals.md."
+  - id: signal_12
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/swift-concurrency/references/task-patterns.md."
+  - id: signal_13
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/swift-concurrency/references/task-patterns.md."
+  - id: signal_14
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/swift-concurrency/references/task-patterns.md."
+
+config_edits:
+  - path: skills/swift-concurrency/SKILL.md
+    tier: 1
+    gold_added: 'Pattern catalog for Swift''s structured concurrency model: async/await, Actors, TaskGroups, AsyncSequence, Sendable, and cancellation. Load the reference file matching the developer''s question.
+
+      ## Reference Loading Table
+
+      | Signal | Reference File | Content |
+
+      |--------|---------------|---------|
+
+      | async/await, Task, Sendable | references/fundamentals.md | async/await patterns, Task/Task.detached, Sendable/@Sendable |
+
+      | Actor, @MainActor, nonisolated | references/actor-isolation.md | Actor isolation, MainActor UI confinement, nonisolated opt-out |
+
+      | TaskGroup, AsyncSequence, AsyncStream, cancellation | references/task-patterns.md | Structured concurrency, rate-limited groups, streams, cancellation |
+
+      | Anti-patterns, common mistakes | references/anti-patterns.md | Blocking MainActor, task leaking, actor reentrancy hazard |
+
+
+      ## References
+
+
+      - `references/fundamentals.md` -- async/await, Task, Sendable basics
+
+      - `references/actor-isolation.md` -- Actor, @MainActor, nonisolated
+
+      - `references/task-patterns.md` -- TaskGroup, AsyncSequence, AsyncStream, cancellation
+
+      - `references/anti-patterns.md` -- blocking, leaking, reentrancy mistakes'
+    gold_removed: ''
+  - path: skills/swift-concurrency/references/actor-isolation.md
+    tier: 1
+    gold_added: "---\nname: swift-actor-isolation\ndescription: \"Actor isolation, @MainActor, nonisolated patterns with code examples.\"\ntype: reference\n---\n\n# Actor Isolation\n\nActors protect mutable state from data races. Only one task can execute on an actor at a time.\n\n```swift\nactor BankAccount {\n    private var balance: Decimal\n\n    init(initialBalance: Decimal) {\n        self.balance = initialBalance\n    }\n\n    func deposit(_ amount: Decimal) {\n        balance += amount\n    }\n\n    func withdraw(_ amount: Decimal) throws {\n        guard balance >= amount else {\n            throw BankError.insufficientFunds\n        }\n        balance -= amount\n    }\n\n    func getBalance() -> Decimal {\n        balance\n    }\n}\n\n// All access is async from outside the actor\nlet account = BankAccount(initialBalance: 1000)\ntry await account.withdraw(200)\nlet balance = await account.getBalance()\n```\n\n## @MainActor\n\nUse `@MainActor` to confine work to the main thread, required for all UI updates.\n\n```swift\n@MainActor\nfinal class ProfileViewModel: ObservableObject {\n    @Published var user: User?\n    @Published var isLoading = false\n\n    private let service: UserService\n\n    init(service: UserService) {\n        self.service = service\n    }\n\n    func loadProfile() async {\n        isLoading = true\n        defer { isLoading = false }\n\n        do {\n            user = try await service.fetchCurrentUser()\n        } catch {\n            print(\"Load failed: \\(error)\")\n        }\n    }\n}\n```\n\n## nonisolated\n\nUse `nonisolated` to opt specific methods out of actor isolation when they only read immutable state or perform no state access.\n\n```swift\nactor CacheManager {\n    let maxSize: Int\n    private var entries: [String: Data] = [:]\n\n    init(maxSize: Int) {\n        self.maxSize = maxSize\n    }\n\n    // No await needed to call this -- it reads only a let property\n    nonisolated func description() -> String {\n        \"CacheManager(maxSize: \\(maxSize))\"\n    }\n\n    func store(_ data: Data, forKey key: String) {\n        entries[key] = data\n    }\n}\n```"
+    gold_removed: ''
+  - path: skills/swift-concurrency/references/anti-patterns.md
+    tier: 1
+    gold_added: "---\nname: swift-concurrency-anti-patterns\ndescription: \"Common concurrency mistakes: blocking MainActor, task leaking, actor reentrancy.\"\ntype: reference\n---\n\n# Common Anti-Patterns\n\n## Blocking the Main Actor\n\nNever perform synchronous blocking work on `@MainActor`. Offload heavy computation to a detached task or a background actor.\n\n```swift\n// BAD -- blocks the main thread\n@MainActor\nfunc loadData() {\n    let data = heavySyncComputation() // UI freezes\n    self.items = data\n}\n\n// GOOD -- offload and return to main actor for UI update\n@MainActor\nfunc loadData() async {\n    let data = await Task.detached(priority: .userInitiated) {\n        heavySyncComputation()\n    }.value\n    self.items = data\n}\n```\n\n## Unstructured Tasks Leaking\n\nCreating `Task { }` without storing or cancelling it leads to leaked work that outlives its logical scope.\n\n```swift\n// BAD -- task leaks if view disappears\nfunc viewDidAppear() {\n    Task {\n        while true {\n            await pollServer()\n            try await Task.sleep(for: .seconds(30))\n        }\n    }\n}\n\n// GOOD -- store and cancel on disappear\nprivate var pollingTask: Task<Void, Never>?\n\nfunc viewDidAppear() {\n    pollingTask = Task {\n        while !Task.isCancelled {\n            await pollServer()\n            try? await Task.sleep(for: .seconds(30))\n        }\n    }\n}\n\nfunc viewDidDisappear() {\n    pollingTask?.cancel()\n    pollingTask = nil\n}\n```\n\n## Actor Reentrancy Hazard\n\nAwaiting inside an actor method yields the actor, allowing other callers to mutate state before your method resumes. Always re-validate state after an `await`.\n\n```swift\nactor ImageCache {\n    private var cache: [URL: UIImage] = [:]\n    private var inFlight: [URL: Task<UIImage, Error>] = [:]\n\n    func image(for url: URL) async throws -> UIImage {\n        // Check cache first\n        if let cached = cache[url] { return cached }\n\n        // Deduplicate in-flight requests\n        if let existing = inFlight[url] {\n            return try await existing.value\n        }\n\n        let task = Task {\n            let (data, _) = try await URLSession.shared.data(from: url)\n            guard let image = UIImage(data: data) else {\n                throw ImageError.decodingFailed\n            }\n            return image\n        }\n\n        inFlight[url] = task\n\n        let image = try await task.value\n\n        // Re-check: another caller may have populated cache while we awaited\n        cache[url] = image\n        inFlight[url] = nil\n\n        return image\n    }\n}\n```"
+    gold_removed: ''
+  - path: skills/swift-concurrency/references/fundamentals.md
+    tier: 1
+    gold_added: "---\nname: swift-concurrency-fundamentals\ndescription: \"async/await basics, Task and Task.detached patterns, Sendable/@Sendable protocol.\"\ntype: reference\n---\n\n# Swift Concurrency Fundamentals\n\n## async/await\n\nMark functions that perform asynchronous work with `async`. Use `throws` alongside `async` for fallible operations. Call async functions with `await`.\n\n```swift\nfunc fetchUser(id: String) async throws -> User {\n    let url = URL(string: \"https://api.example.com/users/\\(id)\")!\n    let (data, response) = try await URLSession.shared.data(from: url)\n\n    guard let httpResponse = response as? HTTPURLResponse,\n          httpResponse.statusCode == 200 else {\n        throw APIError.invalidResponse\n    }\n\n    return try JSONDecoder().decode(User.self, from: data)\n}\n\n// Calling from a synchronous context\nTask {\n    do {\n        let user = try await fetchUser(id: \"42\")\n        print(user.name)\n    } catch {\n        print(\"Failed: \\(error)\")\n    }\n}\n```\n\n## Task and Task.detached\n\n`Task { }` creates unstructured work that inherits the current actor context. `Task.detached` creates work with no inherited context -- use it sparingly.\n\n```swift\n// Inherits current actor isolation (e.g., @MainActor)\nTask {\n    let data = try await fetchData()\n    updateUI(with: data) // safe on MainActor if caller was MainActor\n}\n\n// No inherited context -- runs on a cooperative thread pool\nTask.detached(priority: .background) {\n    let report = await generateReport()\n    await MainActor.run {\n        displayReport(report)\n    }\n}\n```\n\n## Sendable and @Sendable\n\nThe `Sendable` protocol marks types safe to transfer across concurrency domains. The compiler enforces this at build time with strict concurrency checking.\n\n```swift\n// Value types are implicitly Sendable\nstruct Coordinate: Sendable {\n    let latitude: Double\n    let longitude: Double\n}\n\n// Classes must be final with only immutable stored properties\nfinal class Configuration: Sendable {\n    let apiKey: String\n    let baseURL: URL\n\n    init(apiKey: String, baseURL: URL) {\n        self.apiKey = apiKey\n        self.baseURL = baseURL\n    }\n}\n\n// @Sendable closures cannot capture mutable state\nfunc process(items: [Item], transform: @Sendable (Item) -> Result) async {\n    await withTaskGroup(of: Result.self) { group in\n        for item in items {\n            group.addTask {\n                transform(item)\n            }\n        }\n    }\n}\n```"
+    gold_removed: ''
+  - path: skills/swift-concurrency/references/task-patterns.md
+    tier: 1
+    gold_added: "---\nname: swift-task-patterns\ndescription: \"TaskGroup, AsyncSequence, AsyncStream, and cancellation patterns.\"\ntype: reference\n---\n\n# Task Patterns\n\n## TaskGroup for Parallel Work\n\nUse `withTaskGroup` or `withThrowingTaskGroup` to fan out work and collect results.\n\n```swift\nfunc fetchAllProfiles(ids: [String]) async throws -> [Profile] {\n    try await withThrowingTaskGroup(of: Profile.self) { group in\n        for id in ids {\n            group.addTask {\n                try await fetchProfile(id: id)\n            }\n        }\n\n        var profiles: [Profile] = []\n        for try await profile in group {\n            profiles.append(profile)\n        }\n        return profiles\n    }\n}\n```\n\n### Rate-Limited Concurrency\n\nLimit concurrency manually when hitting external services:\n\n```swift\nfunc fetchWithLimit(ids: [String], maxConcurrent: Int = 5) async throws -> [Profile] {\n    try await withThrowingTaskGroup(of: Profile.self) { group in\n        var iterator = ids.makeIterator()\n        var profiles: [Profile] = []\n\n        // Seed the group with initial batch\n        for _ in 0..<min(maxConcurrent, ids.count) {\n            if let id = iterator.next() {\n                group.addTask { try await fetchProfile(id: id) }\n            }\n        }\n\n        // As each completes, add the next\n        for try await profile in group {\n            profiles.append(profile)\n            if let id = iterator.next() {\n                group.addTask { try await fetchProfile(id: id) }\n            }\n        }\n\n        return profiles\n    }\n}\n```\n\n## AsyncSequence and AsyncStream\n\n`AsyncSequence` is the async counterpart to `Sequence`. Use `AsyncStream` to bridge callback-based APIs into structured concurrency.\n\n```swift\n// Consuming an AsyncSequence\nfunc processNotifications() async {\n    for await notification in NotificationCenter.default.notifications(named: .userDidUpdate) {\n        guard let user = notification.userInfo?[\"user\"] as? User else { continue }\n        await handleUserUpdate(user)\n    }\n}\n\n// Creating an AsyncStream from a delegate/callback pattern\nfunc locationUpdates() -> AsyncStream<CLLocation> {\n    AsyncStream { continuation in\n        let delegate = LocationDelegate(\n            onUpdate: { location in\n                continuation.yield(location)\n            },\n            onFinish: {\n                continuation.finish()\n            }\n        )\n        // Store delegate to keep it alive\n        continuation.onTermination = { _ in\n            delegate.stopUpdating()\n        }\n        delegate.startUpdating()\n    }\n}\n\n// Consuming the stream\nTask {\n    for await location in locationUpdates() {\n        print(\"Lat: \\(location.coordinate.latitude)\")\n    }\n}\n```\n\n## Cancellation\n\nStructured concurrency propagates cancellation automatically through task hierarchies. Check for cancellation in long-running work.\n\n```swift\nfunc processLargeDataset(_ items: [DataItem]) async throws -> [Result] {\n    var results: [Result] = []\n\n    for item in items {\n        // Throws CancellationError if the task was cancelled\n        try Task.checkCancellation()\n\n        let result = await process(item)\n        results.append(result)\n    }\n\n    return results\n}\n\n// Alternative: check without throwing\nfunc processWithGracefulCancel(_ items: [DataItem]) async -> [Result] {\n    var results: [Result] = []\n\n    for item in items {\n        if Task.isCancelled {\n            break // stop early, return partial results\n        }\n        let result = await process(item)\n        results.append(result)\n    }\n\n    return results\n}\n\n// Cancelling a task\nlet task = Task {\n    try await processLargeDataset(hugeList)\n}\n\n// Later, if the user navigates away\ntask.cancel()\n```"
+    gold_removed: ''

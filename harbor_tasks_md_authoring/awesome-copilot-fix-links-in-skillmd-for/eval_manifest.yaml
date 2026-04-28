@@ -1,0 +1,44 @@
+version: "2.0"
+
+task:
+  name: awesome-copilot-fix-links-in-skillmd-for
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: github/awesome-copilot
+  pr: 1470
+  base_commit: "0e422e6dff5e7559806f77ff20bdeb66ea9ead9f"
+  merge_commit: "5037cca92264e2378fb11d79f721e424740d080d"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/create-spring-boot-java-project/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/create-spring-boot-java-project/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/create-spring-boot-kotlin-project/SKILL.md."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/create-spring-boot-kotlin-project/SKILL.md."
+
+config_edits:
+  - path: skills/create-spring-boot-java-project/SKILL.md
+    tier: 1
+    gold_added: '- If you need to custom the project name, please change the `artifactId` and the `packageName` in [download-spring-boot-project-template](#download-spring-boot-project-template)
+
+      - If you need to update the Spring Boot version, please change the `bootVersion` in [download-spring-boot-project-template](#download-spring-boot-project-template)'
+    gold_removed: ''
+  - path: skills/create-spring-boot-kotlin-project/SKILL.md
+    tier: 1
+    gold_added: '- If you need to custom the project name, please change the `artifactId` and the `packageName` in [download-spring-boot-project-template](#download-spring-boot-project-template)
+
+      - If you need to update the Spring Boot version, please change the `bootVersion` in [download-spring-boot-project-template](#download-spring-boot-project-template)'
+    gold_removed: ''

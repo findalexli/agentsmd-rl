@@ -1,0 +1,30 @@
+version: "2.0"
+
+task:
+  name: vscode-docs-docs-fix-release-note-writer
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: microsoft/vscode-docs
+  pr: 9674
+  base_commit: "de6a056035610a829c88809354c1928ba2b0b62c"
+  merge_commit: "45cae295343e06c711596c3ca427eb9e148a2393"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/skills/release-note-writer/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/skills/release-note-writer/SKILL.md."
+
+config_edits:
+  - path: .github/skills/release-note-writer/SKILL.md
+    tier: 1
+    gold_added: '2. **Stable Release Notes**: These notes summarize the key features and improvements in a stable release of VS Code. They follow a more structured format with predefined sections for different feature areas. The release is initially created using a template and then updated by the engineering team.
+
+      Stable release notes summarize the key features and improvements in a stable release of VS Code. They follow a more structured format with predefined sections for different feature areas. The release is initially created using a template and then updated by the engineering team.'
+    gold_removed: ''

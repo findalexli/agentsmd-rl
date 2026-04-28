@@ -1,0 +1,60 @@
+version: "2.0"
+
+task:
+  name: qsv-refactormcp-skills-optimization
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: dathere/qsv
+  pr: 3493
+  base_commit: "c4a1260817d74b6ff7709b317786b46a4ceda12a"
+  merge_commit: "73a0a942cb9f0d18460db34a4aa40fb080920c12"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/skills/csv-wrangling/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/skills/csv-wrangling/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/skills/csv-wrangling/SKILL.md."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/skills/data-quality/SKILL.md."
+  - id: signal_04
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/skills/data-quality/SKILL.md."
+  - id: signal_05
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/skills/data-quality/SKILL.md."
+
+config_edits:
+  - path: .claude/skills/skills/csv-wrangling/SKILL.md
+    tier: 1
+    gold_added: '4. **Inspect** - `slice --len 5` (preview rows), `frequency --frequency-jsonl` (value distributions with cache for reuse)
+
+      7. **Export** - `to` (XLSX, ODS, etc.), `tojsonl`, `table`
+
+      | Aggregate/GROUP BY | `sqlp` | `frequency` | `frequency` for simple counts; `--frequency-jsonl` creates cache |
+
+      | Reshape wide->long | `transpose --long` | - | DuckDB UNPIVOT (external) for complex reshaping |
+
+      excel (to CSV) -> index -> stats -> select -> to ods/xlsx'
+    gold_removed: ''
+  - path: .claude/skills/skills/data-quality/SKILL.md
+    tier: 1
+    gold_added: '| Row lengths | `fixlengths` | Pads short rows to match longest row; compare count before/after to detect ragged rows |
+
+      7. fixlengths      -> Pad short rows to uniform length (compare count before/after to detect ragged rows)
+
+      | Empty values | `apply emptyreplace col --replacement "N/A"` |'
+    gold_removed: ''

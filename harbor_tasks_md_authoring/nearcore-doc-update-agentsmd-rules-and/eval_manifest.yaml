@@ -1,0 +1,85 @@
+version: "2.0"
+
+task:
+  name: nearcore-doc-update-agentsmd-rules-and
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: near/nearcore
+  pr: 15168
+  base_commit: "3b77af7f104bc6ed4d03ab10f98d3937b5cb9422"
+  merge_commit: "e45f4f8a478e21df9baf5a47c93f4b3adde8e362"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in chain/chain/CLAUDE.md."
+  - id: signal_04
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in chain/chain/CLAUDE.md."
+  - id: signal_05
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in chain/chain/CLAUDE.md."
+
+config_edits:
+  - path: AGENTS.md
+    tier: 1
+    gold_added: '
+
+      - Always prefer `use` declarations over fully qualified paths.
+
+
+
+
+      - To run specific tests, use `cargo test --package {package} --features test_features -- {path::to::test} --exact --show-output`. Always use `--features test_features`. Use `--feature nightly` if needed.
+
+
+
+      - Run exact command `RUSTFLAGS="-D warnings" cargo clippy --all-features --all-targets`
+
+      - Never run clippy on individual packages
+
+      '
+    gold_removed: ''
+  - path: chain/chain/CLAUDE.md
+    tier: 1
+    gold_added: '# chain/chain
+
+
+      ## Consensus
+
+      - For high-level documentation on the consensus protocol, see `docs/ChainSpec/Consensus.md`.
+
+      - Doomslug is implemented in `chain/chain/src/doomslug.rs`.
+
+
+      ## Block Processing
+
+      - Entry point: `Chain::start_process_block_async` in `chain/chain/src/chain.rs`.
+
+      - Blocks whose parent is unknown are stored in the orphan pool and processed when the parent arrives.
+
+      - Synchronous preprocessing in `preprocess_block` validates in this order: block signature → header → block body → chunk headers → chunk endorsements (>2/3 stake per chunk for non-SPICE) → missing chunks check.
+
+      - After validation, chunk application runs asynchronously on a rayon thread pool; postprocessing saves state and updates head.
+
+      - Optimistic blocks allow chunk application to start before the full block arrives; cached results are reused during normal block processing. See `docs/architecture/how/optimistic_block.md`. Disabled for SPICE.
+
+      - See `docs/ChainSpec/BlockProcessing.md` for the spec and `docs/ChainSpec/Consensus.md` for Doomslug finality.'
+    gold_removed: ''

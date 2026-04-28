@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: gemini-cli-desktop-add-agentsmd-for-codex-cli
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: Piebald-AI/gemini-cli-desktop
+  pr: 129
+  base_commit: "c1af4d7a6623b39b46e4126e3843efadc79dd00a"
+  merge_commit: "54b4ec2a5279b6e40c72b3c8654d48c0794dbd54"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+
+config_edits:
+  - path: AGENTS.md
+    tier: 1
+    gold_added: "# Repository Guidelines\n\n## Project Structure & Module Organization\n- `crates/backend` (Rust): core logic, CLI/session orchestration; colocated unit tests in `src/**`.\n- `crates/server` (Rust): web server binary `gemini-desktop-web` serving the web UI.\n- `crates/tauri-app` (Rust): desktop app (`gemini-desktop`) built with Tauri.\n- `frontend` (TypeScript/React/Vite/Tailwind): UI source; built assets are embedded/served.\n- `assets/`: images and static assets (screenshots, icons).\n- Top-level helpers: `justfile` (tasks), `tarpaulin.toml` (coverage), `installer.iss` (Windows installer).\n\n## Build, Test, and Development Commands\n- Install deps: `just deps` (runs `pnpm install` in `frontend`).\n- Desktop dev: `just dev` (Tauri dev from `frontend/`).\n- Web dev: `just dev-web` (runs Rust server + frontend dev with `GEMINI_DESKTOP_WEB=true`).\n- Build desktop: `just build` (Tauri bundle).\n- Build web: `just build-web` (builds frontend + `crates/server` release).\n- Lint/format: `just lint`, `just fmt`, CI‑strict: `just lint-ci`, `just check-fmt`.\n- Tests: `just test` or `cargo nextest run` (e.g., `just test -p backend`).\n\n## Coding Style & Naming Conventions\n- Rust: stable toolchain, `cargo fmt` and `cargo clippy` (pedantic/nursery enabled in `tauri-app`). 4‑space indent, snake_case for modules/functions, PascalCase for types.\n- TypeScript/React: ESLint + Prettier enforced.\n  - Prettier: 2‑space indent, semicolons, width 80 (`frontend/.prettierrc`).\n  - Components: PascalCase files in `src/components/**`; hooks in `src/hooks` use `useSomething`.\n- Keep modules focused; prefer small, composable functions. Avoid unrelated changes in a single PR.\n\n## Testing Guidelines\n- Frameworks: Rust unit/integration tests (tokio, mockall, serial_test). Frontend currently relies on type/lint checks.\n- Run: `just test` or `cargo nextest run -p backend`.\n- Coverage: `cargo tarpaulin -p backend` (threshold set to 95% in `tarpaulin.toml`; HTML at `target/tarpaulin/html/`).\n- Conventions: colocate tests with code using `#[cfg(test)] mod tests { ... }`; name async tests with `#[tokio::test]`.\n\n## Commit & Pull Request Guidelines\n- Commit style: Conventional Commits with scopes (e.g., `feat(ui): ...`, `fix(backend): ...`, `refactor(...)`). Version bumps use `vX.Y.Z`.\n- Before PR: run `just lint-ci` and `just check-fmt`; ensure tests pass and coverage holds.\n- PR requirements:\n  - Clear description and rationale; link related issues (e.g., `#123`).\n  - Screenshots/GIFs for UI changes (`frontend/`), and notes for behavior changes.\n  - Small, focused changes preferred; include migration notes if config or APIs change.\n\n## Security & Configuration Tips\n- Do not commit secrets or API keys. Prefer local OS keychain/env vars.\n- Web dev/build sets `GEMINI_DESKTOP_WEB=true` (handled by `just`).\n- Cross‑platform: verify changes build on Linux/macOS/Windows when touching Tauri/runtime code."
+    gold_removed: ''

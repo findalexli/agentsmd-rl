@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: react-native-navigation-skill-for-running-e2e-tests
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: wix/react-native-navigation
+  pr: 8253
+  base_commit: "f8a416d3ebaa4c024d195a811c504d1872f12620"
+  merge_commit: "5a399aee35dea6aa364a375a5522f5ec1a6d094b"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .cursor/skills/engine-e2e/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .cursor/skills/engine-e2e/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .cursor/skills/engine-e2e/SKILL.md."
+
+config_edits:
+  - path: .cursor/skills/engine-e2e/SKILL.md
+    tier: 1
+    gold_added: "---\nname: engine-e2e\ndescription: Run Wix Engine (mobile-apps-engine) iOS E2E tests locally to validate RNN changes. Use when you need to test RNN fixes against the Engine's Detox test suite.\n---\n\n# Running Engine E2E Tests Against Local RNN Changes\n\nThe Engine app (`@wix/wix-one-app-engine`) in `~/Documents/mobile-apps-engine` consumes RNN\nfrom `node_modules/react-native-navigation`. To test RNN changes against the Engine's E2E\nsuite, you patch the Engine's copy of RNN, rebuild the native binary, and run the tests.\n\n## Prerequisites\n\n- Node via nvm (`nvm use default`)\n- The `CI` env var must be **unset** (not `0`, fully unset) to avoid CI-specific codepaths.\n  Use `env -u CI` before every command.\n- The Engine repo at `~/Documents/mobile-apps-engine` with `yarn install` already done.\n\n## Step 1: Patch RNN in Engine's node_modules\n\nApply your RNN source changes to the corresponding files under:\n```\n~/Documents/mobile-apps-engine/node_modules/react-native-navigation/ios/\n```\nThe directory structure mirrors the RNN repo's `ios/` folder exactly.\n\n## Step 2: Rebuild the iOS Native Binary\n\n```bash\ncd ~/Documents/mobile-apps-engine\nunset PREFIX && . ~/.nvm/nvm.sh > /dev/null && nvm use default > /dev/null\nenv -u CI yarn workspace @wix/mobile-apps-engine-native-builds build-local-ios\n```\n\nThis runs `xcodebuild` with `-quiet` flag — expect no output until it finishes.\nTakes ~10-15 minutes on M-series Macs.\n\nThe build output (`.app` bundle) lands in:\n```\npackages/native/mobile-apps-engine-native-builds/dist/binaries.json\n```\n\n### Troubleshooting Build\n\n- **Keychain error** (`SecKeychainUnlock`): The `CI` env var is set. Use `env -u CI`.\n- **Signing errors**: Expected for local builds — the script handles ad-hoc signing.\n\n## Step 3: Build JS Bundles (first time only)\n\nThese are needed once per checkout. Skip if already built.\n\n```bash\nenv -u CI yarn workspace @wix/mobile-apps-engine-extra-bundle local:build\nenv -u CI yarn workspace @wix/mobile-apps-dependencies local:build\n```\n\n## Step 4: Run E2E Tests\n\n```bash\ncd ~/Documents/mobile-apps-engine\nunset PREFIX && . ~/.nvm/nvm.sh > /dev/null && nvm use default > /dev/null\nenv -u CI yarn workspace @wix/wix-one-app-engine test:e2e:ios -w d <suite_files...>\n```\n\nThe `-w d` flag selects the Detox worker count.\n\n### Specific suites relevant to RNN\n\n| Suite file | What it tests |\n|-----------|---------------|\n| `e2e/suites/ExternalLinks.test.js` | Deep link navigation, back button |\n| `e2e/suites/ExternalLinksModes.test.js` | Deep link modes (pop to root, tab switch) |\n| `e2e/suites/ExternalLinksPushNotifications.test.js` | Push notification deep links |\n| `e2e/suites/ExtenalLinksWithSiteSelect.test.js` | Deep links with site selection |\n| `e2e/suites/EngineUIComponents.test.js` | Error screen, UI components |\n| `e2e/suites/LaunchArgs.test.js` | Launch arguments |\n| `e2e/suites/LazyModules.test.js` | Lazy-loaded modules |\n\n### Example: Run the deep-link suites\n\n```bash\nenv -u CI yarn workspace @wix/wix-one-app-engine test:e2e:ios -w d \\\n  e2e/suites/ExternalLinks.test.js \\\n  e2e/suites/ExternalLinksModes.test.js \\\n  e2e/suites/ExternalLinksPushNotifications.test.js\n```\n\n### Troubleshooting Tests\n\n- **`Error: No dist version found`**: The native build hasn't run or failed.\n  Run step 2 again.\n- **`Cannot find module .../mobile-apps-engine-extra-bundle/index.js`**:\n  Run step 3 (`local:build` for extra-bundle).\n- **`ENOENT .../metadata.json`**: Run step 3 (`local:build` for mobile-apps-dependencies).\n- **`Unable to resolve module @rozenite/...`**: The Rozenite plugin import is broken.\n  Patch `packages/wix-one-app-engine/src/rozenitePlugin/helper/rozenite-network-inspector.ts`\n  to make the import optional with a no-op fallback.\n- **Tests time out on `navigateBack()`**: The `navigateBack()` helper taps\n  `element(by.id('pop'))` on iOS. This relies on RNN's `setBackButtonTestID` working\n  correctly. If the back button's view hierarchy changed (e.g., iOS 26 Liquid Glass),\n  the testID isn't applied and the element can't be found.\n\n## Key Engine Files\n\n| File | Purpose |\n|------|---------|\n| `packages/wix-one-app-engine/e2e/helpers/utils.js` | Test helpers including `navigateBack()` |\n| `packages/wix-one-app-engine/demo-modules/deep-links/module.js` | Deep link route definitions |\n| `packages/wix-one-app-engine/demo-modules/deep-links/Screens.js` | Deep link screen components |\n| `packages/wix-one-app-engine/internalScripts/test-e2e.js` | E2E test runner script |\n| `packages/native/mobile-apps-engine-native-builds/local_build_scripts/build_ios.js` | Local iOS build script |\n"
+    gold_removed: ''

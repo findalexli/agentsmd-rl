@@ -1,0 +1,24 @@
+version: "2.0"
+
+task:
+  name: clusterfuzz-update-agentsmd-with-linting-instructions
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: google/clusterfuzz
+  pr: 5089
+  base_commit: "28e1d2ad88976ea4152e33264a9244556f4c8ee3"
+  merge_commit: "df752be8bdbe86fcfcd678311af820581cd020f6"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+
+config_edits:
+  - path: AGENTS.md
+    tier: 1
+    gold_added: It's possible to get into a state where linting and formatting contradict each other. In this case, STOP, the human will fix it.
+    gold_removed: ''

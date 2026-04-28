@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: cluster-api-provider-proxmox-add-copilot-instructions-for-re
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: ionos-cloud/cluster-api-provider-proxmox
+  pr: 631
+  base_commit: "7597baf342eefd584b9a5fe2701c09ae66be4655"
+  merge_commit: "d2f136fe1da4834a6fb99897eaafc626d32b6fd4"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/copilot-instructions.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/copilot-instructions.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/copilot-instructions.md."
+
+config_edits:
+  - path: .github/copilot-instructions.md
+    tier: 1
+    gold_added: "# Copilot Instructions for CAPMOX\n\nThis repository contains the Cluster API Provider for Proxmox Virtual Environment (CAPMOX).\n\n## Project Overview\n\nCAPMOX is a Kubernetes Cluster API provider that enables declarative management of Kubernetes clusters on Proxmox VE infrastructure. It follows the Kubernetes Operator pattern and uses controllers to reconcile resources.\n\n- **Language**: Go 1.25.0\n- **Framework**: Kubebuilder v4\n- **Key Dependencies**: \n  - Cluster API v1.10.4\n  - controller-runtime v0.20.4\n  - go-proxmox v0.3.2 (Proxmox API client)\n\n## Repository Structure\n\n- `api/v1alpha1/` - Custom Resource Definitions (ProxmoxCluster, ProxmoxMachine, ProxmoxMachineTemplate, ProxmoxClusterTemplate)\n- `cmd/main.go` - Controller manager entry point\n- `internal/controller/` - Reconciliation logic for controllers\n- `internal/webhook/` - Webhook handlers for validation and defaulting\n- `pkg/` - Shared packages (ignition, cloudinit, proxmox client, scope, ipam)\n- `config/` - Kustomize configuration for CRDs, RBAC, webhooks\n- `docs/` - Documentation (Development.md, Usage.md, Troubleshooting.md)\n- `test/e2e/` - End-to-end tests\n- `hack/` - Helper scripts and tools\n\n## Build and Development Workflow\n\n### Prerequisites\n- Go 1.25.0\n- Docker (for building images and running kind)\n- kubectl\n- kind or minikube\n- make\n\n### Key Commands\n\n**Building:**\n```bash\nmake build              # Build the manager binary\nmake docker-build       # Build Docker image\n```\n\n**Testing:**\n```bash\nmake test              # Run unit tests (includes manifests, generate, fmt, vet)\nmake test WHAT=./pkg/... # Run tests for specific packages\n```\n\n**Code Generation and Validation:**\n```bash\nmake manifests         # Generate CRDs and RBAC manifests\nmake generate          # Generate DeepCopy methods\nmake mockgen           # Generate mocks for testing\nmake verify            # Verify modules and generated files are up to date\nmake verify-modules    # Check if go.mod and go.sum are up to date\nmake verify-gen        # Check if generated files are up to date\n```\n\n**Linting:**\n```bash\nmake lint              # Run golangci-lint\nmake yamlfmt           # Format YAML files\n```\n\n**Code Formatting:**\n```bash\nmake fmt               # Run go fmt\nmake vet               # Run go vet\n```\n\n**Module Management:**\n```bash\nmake tidy              # Run go mod tidy (including hack/tools)\n```\n\n### Development Environment Setup\n\n**Tilt (Recommended):**\nUse the helper script to set up a development environment with Tilt:\n```bash\n./hack/start-capi-tilt.sh\n```\n\nThis will:\n1. Clone cluster-api and cluster-api-ipam-provider-in-cluster if not present\n2. Create tilt-settings.json\n3. Start Tilt with hot-reload enabled\n\n**Manual Setup:**\nSee `docs/Development.md` for detailed manual setup instructions.\n\n### Important Development Notes\n\n1. **Always run `make verify` before committing** - This ensures generated files and modules are up to date\n2. **After modifying API types**, run `make manifests generate` to update generated code and CRDs\n3. **After adding new dependencies**, run `make tidy` to update go.mod and go.sum\n4. **When adding mocks**, update `.mockery.yaml` and run `make mockgen`\n\n## CI/CD Pipeline\n\nThe repository uses GitHub Actions with the following workflows:\n\n- **test.yml**: Runs `make verify` and `make test`, includes SonarQube scanning\n- **lint.yml**: Runs golangci-lint, yamllint, and actionlint\n- **e2e.yml**: End-to-end testing\n- **codespell.yml**: Spell checking\n\nAll PRs must pass these checks before merging.\n\n## Common Issues and Workarounds\n\n1. **Test Failures**: Run `make test` to see detailed error messages. Unit tests use envtest with Kubernetes 1.30.0.\n2. **Build Failures**: Ensure Go version matches go.mod (1.25.0). Run `make tidy` to fix module issues.\n3. **Generated Files Out of Date**: Run `make verify-gen` to check, then `make manifests generate mockgen` to fix.\n4. **Module Issues**: Run `make verify-modules` to check, then `make tidy` to fix.\n\n## Testing Strategy\n\n- Unit tests are located alongside source files (e.g., `pkg/scope/machine_test.go`)\n- Use testify for assertions and gomega for BDD-style tests\n- Mock interfaces are generated using mockery (see `.mockery.yaml`)\n- E2E tests are in `test/e2e/` and require a Proxmox VE instance\n\n## Key Conventions\n\n- Controllers follow the Cluster API contract for infrastructure providers\n- Use structured logging with klog/logr\n- Error handling uses pkg/errors for wrapping\n- Network configuration supports both cloud-init and Ignition\n- Support for IPAM provider for IP address management\n\n## Environment Variables\n\nDevelopment environment variables are documented in `envfile.example`. Key variables:\n- `PROXMOX_URL` - Proxmox API endpoint\n- `PROXMOX_TOKEN` - API token ID\n- `PROXMOX_SECRET` - API token secret\n- `CAPMOX_LOGLEVEL` - Log level (default: 4)\n\n## Additional Resources\n\n- [Development Guide](docs/Development.md)\n- [Usage Guide](docs/Usage.md)\n- [Contributing Guide](CONTRIBUTING.md)\n- [Troubleshooting](docs/Troubleshooting.md)"
+    gold_removed: ''

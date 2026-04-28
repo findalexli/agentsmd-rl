@@ -1,0 +1,109 @@
+version: "2.0"
+
+task:
+  name: xcpcio-docs-add-git-workflow-documentation
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: xcpcio/xcpcio
+  pr: 301
+  base_commit: "f4d0a95ba42b20cc1ce196cd65ae5a085887fb37"
+  merge_commit: "74b768d95e84babc62dc9b1474ca84207e4e98ce"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+
+config_edits:
+  - path: CLAUDE.md
+    tier: 1
+    gold_added: '
+
+      ## Git Workflow
+
+
+      ### Standard Development Workflow
+
+
+      ```bash
+
+      # Create appropriate branch based on task type
+
+      git checkout -b <type>/<description>
+
+      # Examples:
+
+      # feat/add-dark-mode-support
+
+      # fix/search-filter-bug
+
+      # chore/update-dependencies
+
+      # docs/api-documentation
+
+
+      # Make changes, format, and commit with proper format and signoff
+
+      pnpm run format
+
+      git add .
+
+      git commit -m "<type>: <description>" --signoff
+
+      # Examples:
+
+      # feat: add dark mode support for search components
+
+      # fix: resolve search filter not working with special characters
+
+      # chore: bump @types/node to latest version
+
+      # docs: add API documentation for ranking system
+
+
+      # Push branch and create PR
+
+      git push -u origin <branch-name>
+
+      gh pr create --title "<type>: <description>" --body "Brief summary of changes"
+
+
+      # Merge and cleanup
+
+      gh pr merge <pr-number> --squash
+
+      git checkout main && git pull origin main
+
+      git branch -d <branch-name>
+
+      ```
+
+
+      ### Commit Types
+
+
+      - `feat`: New features or enhancements
+
+      - `fix`: Bug fixes
+
+      - `chore`: Maintenance tasks, dependency updates
+
+      - `docs`: Documentation changes
+
+      - `refactor`: Code refactoring without functional changes
+
+      - `test`: Adding or updating tests
+
+      - `style`: Code formatting, white-space fixes'
+    gold_removed: ''

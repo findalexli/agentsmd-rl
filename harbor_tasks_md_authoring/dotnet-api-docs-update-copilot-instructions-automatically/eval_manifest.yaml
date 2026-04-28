@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: dotnet-api-docs-update-copilot-instructions-automatically
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: dotnet/dotnet-api-docs
+  pr: 12450
+  base_commit: "57b45859d068a7e2c8e734626469f336f1c78909"
+  merge_commit: "d232295082378dc3547e02c0bb92d9ac33491fb4"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/copilot-instructions.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/copilot-instructions.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/copilot-instructions.md."
+
+config_edits:
+  - path: .github/copilot-instructions.md
+    tier: 1
+    gold_added: "# .NET API Reference Docs — Copilot Instructions\n## Repository overview\nThis repo contains the official .NET API reference documentation in ECMAXML format. The `xml/` directory holds one XML file per type, organized by namespace (e.g., `xml/System/String.xml`). Documentation is published via DocFX and ECMA2Yaml to [learn.microsoft.com](https://learn.microsoft.com).\nSome namespaces (notably `Microsoft.Extensions.*`, `System.CommandLine.*`, `System.Formats.*`, `System.Numerics.Tensors.*`) are auto-generated from source code in other repos. Their `open_to_public_contributors` metadata is set to `false` in `docfx.json`. Don't edit those XML files directly.\n## Build and validation\n- **Snippet compilation** — The CI workflow \"Snippets 5000\" compiles all code samples on PRs to `main`. To build a single snippet project locally:\n  ```\n  dotnet build snippets/csharp/System/String/Overview/Project.csproj\n  ```\n- There's no repo-wide `dotnet build` or test command. Validation happens through the OPS (Open Publishing System) build triggered on PRs.\n## ECMAXML format\n\nEach type file (`xml/<Namespace>/<TypeName>.xml`) follows this structure:\n\n```xml\n<Type Name=\"TypeName\" FullName=\"Namespace.TypeName\">\n  <TypeSignature Language=\"C#\" Value=\"...\" />\n  <AssemblyInfo>...</AssemblyInfo>\n  <Docs>\n    <summary>Brief description.</summary>\n    <remarks>\n      <format type=\"text/markdown\"><![CDATA[\n## Remarks\nDetailed markdown content here.\n      ]]></format>\n    </remarks>\n  </Docs>\n  <Members>\n    <Member MemberName=\"MethodName\">\n      <MemberSignature Language=\"C#\" Value=\"...\" />\n      <MemberType>Method</MemberType>\n      <Docs>\n        <param name=\"paramName\">Description.</param>\n        <summary>Brief description.</summary>\n        <returns>Description.</returns>\n        <remarks>...</remarks>\n        <exception cref=\"T:System.ArgumentException\">Description.</exception>\n      </Docs>\n    </Member>\n  </Members>\n</Type>\n```\n\nKey points:\n\n- Don't edit the `<TypeSignature>`, `<MemberSignature>`, `<AssemblyInfo>`, `<TypeForwardingChain>`, or `<FrameworkAlternate>` elements (or their attributes/values) — they are auto-generated.\n- Editable content lives inside `<Docs>` elements: `<summary>`, `<remarks>`, `<param>`, `<returns>`, `<exception>`, `<example>`, `<seealso>`, and `<altmember>`.\n- Longer content goes inside `<format type=\"text/markdown\"><![CDATA[ ... ]]></format>` blocks, which support full Markdown.\n- Namespace-level docs are in files like `xml/ns-System.xml`.\n\n## Cross-references\n\nUse these patterns to link to other APIs:\n\n- `<see cref=\"T:System.String\" />` — link to a type.\n- `<see cref=\"M:System.String.Clone\" />` — link to a method.\n- `<see cref=\"P:System.String.Length\" />` — link to a property.\n- `<paramref name=\"value\" />` — reference a parameter by name.\n- `<altmember cref=\"T:System.Text.StringBuilder\" />` — \"see also\" link.\n- Inside markdown (`<format>`) blocks, use `<xref:System.String>` for cross-references.\n\nDocId prefixes: `T:` (type), `M:` (method), `P:` (property), `F:` (field), `E:` (event), `N:` (namespace).\n\nDon't escape backticks or asterisks in xref DocIDs. Use literal `` ` `` and `*` characters, not URL-encoded forms like `%60` or `%2A`. For example, use `` <xref:System.Collections.Generic.List`1> ``, not `<xref:System.Collections.Generic.List%601>`.\n\n## Code snippets\n\nSnippets are standalone compilable projects in `snippets/{language}/{Namespace}/{Type}/`.\n\n### Referencing snippets from XML\n\nInside a `<format>` CDATA block, reference snippets with:\n\n```markdown\n:::code language=\"csharp\" source=\"~/snippets/csharp/System/String/Overview/example.cs\" id=\"Snippet1\":::\n```\n\n### Snippet file conventions\n\n- Mark regions in source files with `// <Snippet1>` and `// </Snippet1>` comment pairs.\n- Each snippet folder should have a `.csproj` file so the CI can compile it. Use SDK-style projects:\n\n  ```xml\n  <Project Sdk=\"Microsoft.NET.Sdk\">\n    <PropertyGroup>\n      <OutputType>Library</OutputType>\n      <TargetFramework>net10.0</TargetFramework>\n    </PropertyGroup>\n  </Project>\n  ```\n\n- Use `OutputType` of `Exe` if the snippet has a `Main` method or uses top-level statements, or `Library` otherwise.\n- Add NuGet `<PackageReference>` entries if the snippet uses APIs outside the base runtime.\n- Snippet languages: `csharp`, `fsharp`, `visualbasic`. Each goes in its respective `snippets/` subdirectory.\n\n### Reusable includes\n\nShared markdown fragments live in `includes/` and are referenced from CDATA blocks as:\n\n```markdown\n[!INCLUDE[description](~/includes/filename.md)]\n```\n\n## Writing style\n\n- Code comments should end with a period.\n- Don't use the word \"may\". Use \"might\" to indicate possibility or \"can\" to indicate permission.\n- Always put a comma before a clause that begins with \"which\".\n- Use a conversational tone with contractions.\n- Be concise. Break up long sentences.\n- Use the present tense. For example, \"The method returns a value\" instead of \"The method will return a value.\"\n- Use the Oxford comma in lists of three or more items."
+    gold_removed: ''

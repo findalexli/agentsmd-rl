@@ -1,0 +1,166 @@
+version: "2.0"
+
+task:
+  name: waf-detector-chore-add-securityaudit-testdashboard-and
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: ammarion/waf-detector
+  pr: 36
+  base_commit: "bfa02d62dee8e1f778cc8931c0933b3a6461feab"
+  merge_commit: "289fd6cef29a26fe3d05583370695df7dca7fce4"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/security-audit.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/security-audit.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/security-audit.md."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/test-dashboard.md."
+  - id: signal_04
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/test-dashboard.md."
+  - id: signal_05
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/test-dashboard.md."
+  - id: signal_06
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/validate-build.md."
+  - id: signal_07
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/validate-build.md."
+  - id: signal_08
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/validate-build.md."
+
+config_edits:
+  - path: .claude/skills/security-audit.md
+    tier: 1
+    gold_added: "---\nname: security-audit\ndescription: Run a structured security audit on the WAF detector codebase\nuser_invocable: true\n---\n\n# Security Audit Skill\n\nRun a systematic security audit of the WAF detector codebase.\n\n## Steps\n\n1. **Dependency scan**: Run `cargo audit` (install with `cargo install cargo-audit` if missing)\n2. **Code patterns**: Search for common security issues:\n   - Unwrapped user input reaching shell commands or file paths\n   - Missing input validation on API endpoints\n   - Hardcoded credentials or secrets\n   - Unsafe blocks without justification\n   - Missing CSRF/CORS protections\n3. **Configuration review**: Check for insecure defaults in:\n   - `src/web/mod.rs` (CORS, binding address, TLS)\n   - `src/http/mod.rs` (redirect policy, certificate validation)\n   - Consent enforcement in VA1/VA2 endpoints\n4. **Test coverage gaps**: Identify security-critical paths without test coverage\n5. **Report**: Output findings with severity (CRITICAL/HIGH/MEDIUM/LOW) and remediation steps\n\n## Rules\n\n- Run actual scans, report real results. Never predict or fabricate findings.\n- Check `cargo clippy` for any new warnings introduced.\n- Focus on OWASP Top 10 categories relevant to this Rust web application."
+    gold_removed: ''
+  - path: .claude/skills/test-dashboard.md
+    tier: 1
+    gold_added: '---
+
+      name: test-dashboard
+
+      description: Browser-test the WAF detector dashboard with Playwright
+
+      user_invocable: true
+
+      ---
+
+
+      # Dashboard Test Skill
+
+
+      Launch the web server and validate the dashboard UI using Playwright browser automation.
+
+
+      ## Prerequisites
+
+
+      - Build first: `cargo build --release`
+
+      - Kill any existing server: `pkill -f ''waf-detect.*--web''`
+
+
+      ## Steps
+
+
+      1. Start server: `./target/release/waf-detect --web --port 8080 &`
+
+      2. Wait for healthy: `curl -s http://localhost:8080/api/status`
+
+      3. Navigate to `http://localhost:8080`
+
+
+      ### Test checklist
+
+
+      - [ ] **Detect tab**: Single URL scan — enter `https://cloudflare.com`, click Scan, verify CloudFlare detected
+
+      - [ ] **Evidence**: Click "View Evidence" — verify items expand/collapse, no `Some(...)` or `None` in data
+
+      - [ ] **Batch scan**: Enter 2 URLs, click Scan Batch, verify both results appear
+
+      - [ ] **Test tab**: WAF Smoke Test, Virtual Adversary, Advanced Security Profiling sections visible
+
+      - [ ] **Reports tab**: Quick Actions, Consent Status, VA History sections visible
+
+      - [ ] **Export JSON**: Click Export JSON with results present — verify download triggers
+
+      - [ ] **Console errors**: Check `browser_console_messages` — must be 0 errors
+
+      - [ ] **Responsive**: Resize to 390px (mobile), 768px (tablet), 1440px (desktop) — verify layout adapts
+
+
+      ## Cleanup
+
+
+      Kill the server after testing: `pkill -f ''waf-detect.*--web''`'
+    gold_removed: ''
+  - path: .claude/skills/validate-build.md
+    tier: 1
+    gold_added: '---
+
+      name: validate-build
+
+      description: Full build validation — compile, test, lint, and verify
+
+      user_invocable: true
+
+      ---
+
+
+      # Build Validation Skill
+
+
+      Run the complete build validation pipeline for the WAF detector.
+
+
+      ## Steps (run sequentially)
+
+
+      1. `cargo fmt --check` — verify formatting
+
+      2. `cargo clippy --all-targets --all-features -- -D warnings` — lint with strict warnings
+
+      3. `cargo test -q` — run all tests
+
+      4. `cargo build --release` — build optimized binary
+
+
+      ## On failure
+
+
+      - If fmt fails: run `cargo fmt` and report what changed
+
+      - If clippy fails: report the warnings with file locations
+
+      - If tests fail: report failing test names and error messages
+
+      - If build fails: report the compilation error
+
+
+      ## Output
+
+
+      Report pass/fail for each step with counts (e.g., "298 tests passed"). Do not truncate test output if there are failures.'
+    gold_removed: ''

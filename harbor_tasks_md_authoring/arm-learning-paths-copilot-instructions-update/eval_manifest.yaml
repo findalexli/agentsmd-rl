@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: arm-learning-paths-copilot-instructions-update
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: ArmDeveloperEcosystem/arm-learning-paths
+  pr: 2670
+  base_commit: "0f6eceafa0ef53f7949e6f311c320aa0cbf7622f"
+  merge_commit: "5cdf3055af36e915161ebaf5bb3ef8d2ce2f45e6"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/copilot-instructions.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/copilot-instructions.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/copilot-instructions.md."
+
+config_edits:
+  - path: .github/copilot-instructions.md
+    tier: 1
+    gold_added: "- `/content` - The main directory containing all Learning Paths and install guides as markdown files\n- `/themes` - HTML templates and styling elements that render the content into the final website\n- `/tools` - Python scripts for automated website integrity checking\n- `config.toml` - High-level Hugo configuration settings\n### Content organization\nThe `/content` directory is organized into:\n- `learning-paths/` - Core learning content organized by categories:\n  - `embedded-and-microcontrollers/` - MCU, IoT, and embedded development topics\n  - `servers-and-cloud-computing/` - Server, cloud, and enterprise computing topics\n  - `mobile-graphics-and-gaming/` - Mobile app development, graphics, and gaming\n  - `cross-platform/` - Cross-platform development and general programming topics, these appear in multiple categories on the website\n  - `laptops-and-desktops/` - Desktop application development, primarily Windows on Arm and macOS\n  - `automotive/` - Automotive and ADAS development\n  - `iot/` - IoT-specific Learning Paths\n- `install-guides/` - Tool installation guides with supporting subdirectories organized by tool categories like `docker/`, `gcc/`, `license/`, `browsers/`, plus an `_images/` directory for screenshots and diagrams\n- `migration/` - Migration guides and resources, this maps to https://learn.arm.com/migration\n- `lists/` - Content listing and organization files, this maps to https://learn.arm.com/lists\n- `stats/` - Website statistics and analytics, this maps to https://learn.arm.com/stats\n\nThe `/content` directory is the primary workspace where contributors add new Learning Paths as markdown files, organized into category-specific subdirectories that correspond to the different learning path topics available on the site at https://learn.arm.com/.\nEach Learning Path must have an `_index.md` file and a `_next-steps.md` file. The `_index.md` file contains the main content of the Learning Path. The `_next-steps.md` file contains links to related content and is included at the end of the Learning Path.\nThe `_index.md` file should contain the following front matter and content sections:\n\n- `weight`: Numerical ordering for display sequence, weight is 1 for `_index.md` and each page is ordered by weight, no markdown files should have the same weight in a directory\n- `author`: Main contributor's name, multiple authors can be listed separated using `-` on new lines\nLimit `further_reading` resources to four to six essential links. Prioritize:\n\n\n- Title: [Imperative verb] + [technology/tool] + [outcome]\n- Introduction paragraph: Context + user goal + value proposition\n- Prerequisites section with explicit requirements and links\n- Learning objectives: three to four bulleted, measurable outcomes with action verbs\n- Step-by-step sections with logical progression\n- Clear next steps/conclusion\n\n\n- Use inclusive language:\n\n\n- For Learning Paths, include a short recap and forward-looking transition at the end of each major instructional section or module. Use a consistent      heading such as:\n\n  ## What you’ve accomplished and what’s next:\n\n  In this section:\n  - Briefly summarize what the user has learned or completed\n  - Briefly describe what the user should expect in the next section or suggest further exploration\n\n  Keep this concise and encouraging. Do not repeat earlier content verbatim.\n\n  - Common phrases: \"To [action]\" (not \"Follow the steps below to [action]\"), \"for example\" (not \"e.g.\"), \"that is\" (not \"i.e.\"), \"because\" (not \"since\"), \"also\" (not \"in addition\"), \"to\" (not \"in order to\"), \"see\" (not \"refer to\"), \"use\" (not \"utilize\" or \"leverage\"), \"need\" (not \"require\"), \"can\" or \"might\" (not \"may\"), \"set up\" as verb, \"setup\" as noun, \"therefore\" (not \"ergo\"), \"namely\" (not \"viz.\"), \"avoid\" (not \"try not to\").\n\n\n\n\n## Product name emphasis\n\n- Product names and technical technologies (for example, LiteRT, XNNPACK, KleidiAI, SME2) should appear in regular text.\n- Avoid using italics or bold to emphasize product or technology names unless they are part of a heading or a UI label.\n\n\n\n### Language smoothing\n\nAvoid robotic or generic encouragement phrases such as:\n- \"Great job — let’s get started!\"\n- \"Great job — your environment is ready!\"\n\nUse calm, natural transitions that focus on what happens next.\n\nAlso avoid multiple consecutive sentences starting with \"This\" (for example, \"This ensures...\", \"This creates...\", \"This provides...\"). Vary sentence structure to maintain natural flow.\n\n\n\n\n\n\n- When adding images or diagrams, ensure that alt text is complete and meaningful for screen reader users. Alt text should explain:\n  - The main subject and purpose of the image\n  - Any visible text labels, UI elements, or controls\n  - The environment or context (for example, dashboard, code editor, terminal, or hardware setup)\n  - The emotional tone only if it adds meaning (for example, warning or error states)\n\nUse the following format consistently:\n![Descriptive alt text#center](image.png \"Caption\")\n\nAvoid placeholders or generic phrases. Alt text should stand alone as a full description of the image.\n\n\n\n\n\n#### Editorial decision priorities\n\nWhen content trade-offs are required, prioritize the following in order:\n\n1. Alignment with the stated purpose and positioning of the content\n2. Clarity and readability for the intended skill level\n3. Consistency with existing Learning Paths and install guides\n4. Completeness within the stated scope"
+    gold_removed: ''

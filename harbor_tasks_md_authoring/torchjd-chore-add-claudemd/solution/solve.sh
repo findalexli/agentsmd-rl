@@ -1,0 +1,34 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+cd /workspace/torchjd
+
+# Idempotency guard
+if grep -qF "- Only generate docstrings for public functions or functions that contain more t" "AGENTS.md" && grep -qF "CLAUDE.md" "CLAUDE.md"; then
+  echo "Gold patch already applied."
+  exit 0
+fi
+
+git apply --whitespace=nowarn <<'PATCH'
+diff --git a/AGENTS.md b/AGENTS.md
+@@ -0,0 +1,14 @@
++- Only generate docstrings for public functions or functions that contain more than 4 lines of code.
++- Use the Sphinx style for Python docstrings (e.g. :param my_param: Does something) and never
++  include a :returns: key.
++- The code you generate should always contain type hints in the function prototypes (including
++  return type hints of None), but type hints are not needed when initializing variables.
++- We use uv for everything (e.g. we do `uv run python ...` to run some python code, and
++  `uv run pytest tests/unit` to run unit tests). Please prefer `uv run python -c ...` over
++  `python3 -c ...`
++- After generating code, please run `uv run ty check`, `uv run ruff check` and `uv run ruff format`.
++  Fix any error.
++- After changing anything in `src` or in `tests/unit` or `tests/doc`, please identify the affected
++  test files in `tests/` and run them with e.g.
++  `uv run pytest tests/unit/aggregation/test_upgrad.py -W error`. Fix any error, either in the
++  changes you've made or by adapting the tests to the new specifications.
+diff --git a/CLAUDE.md b/CLAUDE.md
+@@ -0,0 +1 @@
++@AGENTS.md
+PATCH
+
+echo "Gold patch applied."

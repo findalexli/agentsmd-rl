@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: docs-add-agentsmd-file
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: cockroachdb/docs
+  pr: 20373
+  base_commit: "3a885b65f67f5da32232bc79185a557df203cd81"
+  merge_commit: "7fbb35cd932669d1877ca6efe1bdc3dc386590c2"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in src/current/AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in src/current/AGENTS.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in src/current/AGENTS.md."
+
+config_edits:
+  - path: src/current/AGENTS.md
+    tier: 1
+    gold_added: "# AGENTS.md for CockroachDB docs\n\nHello! We're working together on docs for CockroachDB, a distributed SQL database. The docs are located in Markdown files (with Liquid templates) in various subdirectories of this one.\n\nThis file has instructions and general info for working with us on these docs. Please pay close attention to things written here.\n\nDocs for each released version are in subdirectories named for the version, e.g., `v25.4`.\n\nDocs specific to the CockroachDB Cloud product are in `cockroachcloud`.\n\nDocs related to release notes and other release-related matters are in `releases`.\n\n## Style guide\n\nOur style guide lives in `StyleGuide.md` in the root of this repository. Please follow the guidance there carefully when writing docs.\n\n## Include files\n\nTo avoid repeating text across different files, we use shared \"include files\" (or just: \"includes\") which are referenced using the following syntax.\n\nFor includes that apply across versions or products:\n\n```\n{% include common/define-watched-cdc.md %}\n```\n\nFor includes that pertain to the CockroachDB Cloud product:\n\n```\n{% include cockroachcloud/metrics-time-interval-selection.md %}\n```\n\nFor includes that we can assume only apply to specific versions, though in some cases, their content may be identical across all versions where the file exists:\n\n```\n{% include vXX.Y/misc/cert-auth-using-x509-subject.md %}\n```\n\nNote: The Liquid variable `{{page.version.version}}` resolves to the major version in the path of the page where it is used (e.g. `v25.4`). References to version-specific includes often use this, allowing the same page content that's used across versions to show different versions of an include, based on the current version being rendered. For example, `{% include {{page.version.version}}/misc/cert-auth-using-x509-subject.md %}`.\n  \nThe includes are all located in subdirectories of the `_include` directory, i.e.,\n\n- `_include/common` for widely shared things\n- `_include/cockroachcloud` for Cloud\n- `_include/v25.4` for v25.4-specific content\n\n<!-- eof -->"
+    gold_removed: ''

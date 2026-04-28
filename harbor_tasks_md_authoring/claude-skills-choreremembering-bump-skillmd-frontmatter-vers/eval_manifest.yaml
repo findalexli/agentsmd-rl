@@ -1,0 +1,24 @@
+version: "2.0"
+
+task:
+  name: claude-skills-choreremembering-bump-skillmd-frontmatter-vers
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: oaustegard/claude-skills
+  pr: 585
+  base_commit: "ae983485bc73e0c1a42e86abc162251f74fe812b"
+  merge_commit: "7aa0f22d15f9819950e639b68aa65a1a87f4de9c"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in remembering/SKILL.md."
+
+config_edits:
+  - path: remembering/SKILL.md
+    tier: 1
+    gold_added: '  version: 5.7.1'
+    gold_removed: ''

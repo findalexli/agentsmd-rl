@@ -1,0 +1,24 @@
+version: "2.0"
+
+task:
+  name: context-engineering-kit-fix-typo-in-guidance-section
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: NeoLabHQ/context-engineering-kit
+  pr: 28
+  base_commit: "049be011de652cb97487a06d2d39545f81a08688"
+  merge_commit: "30a2f7a7d583af05dde1a6ab14cbc8a78109e6ed"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in plugins/ddd/skills/software-architecture/SKILL.md."
+
+config_edits:
+  - path: plugins/ddd/skills/software-architecture/SKILL.md
+    tier: 1
+    gold_added: This skill provides guidance for quality focused software development and architecture. It is based on Clean Architecture and Domain Driven Design principles.
+    gold_removed: ''

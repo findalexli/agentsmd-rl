@@ -1,0 +1,36 @@
+version: "2.0"
+
+task:
+  name: couchers-merge-cursorrules-into-claudemd-and
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: Couchers-org/couchers
+  pr: 8324
+  base_commit: "25635aa27656250150562c865320c02b0afb4ff2"
+  merge_commit: "ba5640666839def021f7ed7d672a8353e3114458"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+
+config_edits:
+  - path: .cursorrules
+    tier: 1
+    gold_added: ''
+    gold_removed: ''
+  - path: CLAUDE.md
+    tier: 1
+    gold_added: "- `/app/backend` - Python backend (gRPC, SQLAlchemy, PostgreSQL/PostGIS). See `/app/backend/readme.md` for more details\n- `/app/mobile` - React Native Expo mobile app (uses `npm`, not `yarn`). See `/app/mobile/README.md` for setup instructions\n- Uses `yarn` (not npm) - run dev server with `yarn start` (not Docker)\n- Run linting with `yarn lint` and auto-fix with `yarn lint:fix`\n- Run tests with `yarn test`\n- Run linting AND formatting with `yarn format`\n- Import aliases: use `components/` not `../../../components/`, `routes` not `../../../routes`\n- Import multiple MUI icons together: `import { Favorite, Star, Public } from \"@mui/icons-material\"` instead of separate imports\n- No `any` types - explicitly type mock mutations (e.g., `UseMutationResult<...>`)\n- Use StyledLink or next/link for routing - NOT MUI `Link`\n- Type definitions should always go at the top of the file below the imports\n- Remove extra unnecessary style declarations - don't repeat anything that's already a default of MUI or the theme\n- Use theme-defined colors instead of ad-hoc gray backgrounds; use default MUI hover styles instead of custom dark-grey-on-hover\n- Prefer modern 2025 design patterns for UI components\n- Add Tanstack `queryKeys` to `app/web/features/queryKeys.ts` if they are used in more than one place\n- Use `slotProps` rather than `InputLabelProps` for MUI (`InputLabelProps` is deprecated)\n\n### Web Dark Mode\n- **Always use CSS variables for theme colors** to ensure dark mode compatibility:\n  - `var(--mui-palette-primary-main)` instead of `theme.palette.primary.main` in styled components\n  - `var(--mui-palette-text-primary)` for text colors\n  - `var(--mui-palette-background-paper)` / `var(--mui-palette-background-default)` for backgrounds\n  - `var(--mui-palette-divider)` for borders/dividers\n  - `var(--mui-palette-grey-XXX)` for grey shades (e.g., grey-50, grey-200, grey-300)\n  - `var(--mui-palette-action-hover)` for hover states\n- **Exception**: Use `theme.palette.*` values when passing colors to functions like `alpha()` that require actual color values, not CSS variables\n- For styled components, only add `({ theme })` parameter when you need `theme.spacing()`, `theme.breakpoints`, or functions like `alpha()`\n- Test all components in both light and dark mode to ensure proper color contrast and visibility\n- Never hardcode English text - always use the `t()` function or `<Trans>` component for user-facing text\n- Store all English strings in the appropriate locale files (`features/*/locales/en.json`)\n- Use the `<Trans>` component for text with embedded components (like links). Make sure components in the translation JSON match the `components` prop exactly\n- For dates and times on the web frontend, never use `Date.toLocaleDateString()` or `Intl.DateTimeFormat` directly - use the helpers in `app/web/utils/date.ts` (`localizeDateTime`, `localizeDateTimeRange`, `localizeYearMonth`, `timeAgo`). Pass the user's current language via `useTranslation()`'s `i18n.language`, not the browser locale\n- Use fixture data from `test/fixtures/` (e.g., `hostRequest.json`, `messages.json`, `groupChat.json`) when available, instead of creating mock data inline\n- Query elements by label (`getByLabelText`) for accessibility. When there's ambiguity (e.g., both a label and aria-label), use the `selector` option: `getByLabelText(label, { selector: \"textarea\" })`\n- For text split by child elements (e.g., links inside text), use a function matcher:\n  ```typescript\n  screen.getByText((content, element) => {\n    return element?.textContent === \"Full text including embedded link text\";\n  })\n  ```\n- Use `await screen.findByText()` when waiting for elements after loading states, instead of `getByText()` after `waitForElementToBeRemoved()`\n- Always add a `downgrade()` to migrations when possible and relevant"
+    gold_removed: ''

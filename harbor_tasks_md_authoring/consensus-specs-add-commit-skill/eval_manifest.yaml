@@ -1,0 +1,40 @@
+version: "2.0"
+
+task:
+  name: consensus-specs-add-commit-skill
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: ethereum/consensus-specs
+  pr: 5163
+  base_commit: "6cbeacc32dc0458dbd56a4f63fcac066992015b6"
+  merge_commit: "f86389617e35e3d1d10d0dc096336ee341a6f91a"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/commit/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/commit/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/commit/SKILL.md."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/prepare-release/SKILL.md."
+
+config_edits:
+  - path: .claude/skills/commit/SKILL.md
+    tier: 1
+    gold_added: "---\nname: commit\ndescription: >-\n  Commit changes and open pull requests. Follow the project's conventions\n  for scope, formatting, and writing style. Use when the user asks to make\n  a commit or pull request.\ncompatibility: Requires make, uv, git\n---\n\n# Committing changes\n\n## Scope\n\nA pull request should have a single, well-defined objective. If a change\naccomplishes multiple unrelated things, split it into separate pull requests.\nFor a large change with one objective, break it into multiple commits when\npossible. Each commit should adhere to the preparation steps below.\n\n## Preparation\n\nCheck that the branch is up to date with `ethereum/consensus-specs@master`;\nrebase if it is not. Run the linter (`make lint`) and ensure it passes. If the\nlinter makes modifications, stage these fixes. Ensure relevant tests pass if the\nspecifications or testing framework changed.\n\n## Writing style\n\nThe subject line (and PR title) must be written in the imperative mood. It must\nnot have component prefixes like the \"conventional commit\" style. It must be\nless than or equal to 68 characters. Use sentence case, not title case. Code\n(functions, classes, etc) must be wrapped in backticks. There must be no\nterminal punctuation.\n\nThe body (and PR description) should describe what and why, not how. Wrap the\nbody at 72 characters. Do not use section headers. A single paragraph is ideal,\nbut multiple paragraphs are okay if necessary. Keep things simple and try to be\nconcise. Mention any relevant information, concerns, or related PRs/issues. Do\nnot mention running the linter or tests; CI will show this. Do not include a\n`Co-Authored-By` trailer."
+    gold_removed: ''
+  - path: .claude/skills/prepare-release/SKILL.md
+    tier: 1
+    gold_added: Titles should use sentence case, not title case. Titles must be fewer than 68
+    gold_removed: ''

@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: docker-otel-lgtm-add-claudemd
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: grafana/docker-otel-lgtm
+  pr: 1023
+  base_commit: "ef715567770b72424299d36229ba9c4827a75d7d"
+  merge_commit: "27faac14b38b6e49b9dd4b64165fc1e6e4e22f6d"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+
+config_edits:
+  - path: CLAUDE.md
+    tier: 1
+    gold_added: "# CLAUDE.md\n\nThis file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.\n\n## Project Overview\n\ndocker-otel-lgtm is an all-in-one OpenTelemetry backend Docker image for\ndevelopment, demo, and testing. It bundles Grafana, Prometheus, Tempo, Loki,\nPyroscope, and OpenTelemetry Collector into a single container.\n\n## Build & Run Commands\n\nAll development tasks use [mise](https://github.com/jdx/mise) as the task\nrunner. Tool versions (Go, Java, Rust, lychee) are pinned in `mise.toml`.\n\n```bash\n# Build Docker image (tag defaults to \"latest\")\nmise run build-lgtm dev1\n\n# Run Docker image\nmise run lgtm dev1\n\n# Run locally built image\nmise run local-lgtm\n```\n\nThe build script (`build-lgtm.sh`) auto-detects Docker or Podman.\n\n## Testing\n\nAcceptance tests use [OATS](https://github.com/grafana/oats) (OpenTelemetry\nAcceptance Tests). Most examples have an `oats.yaml` that validates traces\n(TraceQL), metrics (PromQL), and logs (LogQL).\n\n```bash\n# Run all acceptance tests\nmise run acceptance-tests\n\n# Run a single example's tests (build first)\nmise run build-lgtm dev1\noats -timeout 2h -lgtm-version dev1 examples/nodejs\n```\n\n## Linting\n\n```bash\n# All lints\nmise run lint\n\n# Markdown link checker only\nmise run lint:links\n\n# Links in modified files (local)\nmise run lint:links-in-modified-files-local\n\n# Super-linter (Docker-based, runs all language linters)\nmise run lint:super-linter\n```\n\nGo code uses `.golangci.yaml` config. Markdown uses `.markdownlint.yaml`. EditorConfig rules in `.editorconfig`.\n\n## Architecture\n\n### Docker Image (docker/)\n\nThe Dockerfile is a multi-stage build on `redhat/ubi9`. The builder stage\ndownloads each component via individual `download-*.sh` scripts, using cosign\nverification for the OpenTelemetry Collector and SHA256 checksum verification\nfor other components. Each component has a `run-*.sh` startup script.\n`run-all.sh` is the container entrypoint that starts all services.\n\n### Example Applications (examples/)\n\nLanguage-specific demo apps that emit OpenTelemetry data:\n- `examples/java` (port 8080) - Maven + OTel Java Agent\n- `examples/go` (port 8081) - Go workspace (`go.work` at repository root)\n- `examples/python` (port 8082) - Python + auto-instrumentation\n- `examples/dotnet` (port 8083) - .NET/C#\n- `examples/nodejs` (port 8084) - Node.js\n\nMost examples have a `docker-compose.oats.yml`, a `run.sh` script, and an\n`oats.yaml` for acceptance tests.\n\n### Key Ports\n\n| Service    | Port |\n|------------|------|\n| Grafana    | 3000 |\n| OTLP gRPC  | 4317 |\n| OTLP HTTP  | 4318 |\n| Pyroscope  | 4040 |\n| Prometheus | 9090 |\n\n### OTel Collector Configuration\n\nThe collector config is split across `docker/otelcol-config.yaml` (base) and\n`docker/otelcol-config-export-http.yaml` (external export). To test the merged\nconfig (run inside the container where the binary is at\n`/otel-lgtm/otelcol-contrib/otelcol-contrib`):\n\n```bash\n/otel-lgtm/otelcol-contrib/otelcol-contrib \\\n  --config docker/otelcol-config.yaml \\\n  --config docker/otelcol-config-export-http.yaml \\\n  print-initial-config \\\n  --feature-gates otelcol.printInitialConfig > merged.yaml\n```\n\n## Component Versions\n\nAll component versions are declared as `ARG` directives in `docker/Dockerfile`\nwith Renovate annotations for automated dependency updates. Version bumps are\nmade there, not elsewhere.\n\n## Release Process\n\nReleases are automated weekly (Friday 09:00 UTC) via GitHub Actions if\n`docker/` has changed. Version auto-increments based on component changes.\nReleases are immutable once published."
+    gold_removed: ''

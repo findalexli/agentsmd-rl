@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: nim-libp2p-chorecopilot-add-more-instructions
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: vacp2p/nim-libp2p
+  pr: 2307
+  base_commit: "0341cd046a372dd26d6face3d2f063763ed0dbb3"
+  merge_commit: "543af0b1087d35a6d7f7ca24cc5d7ca1ab6909f6"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/copilot-instructions.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/copilot-instructions.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/copilot-instructions.md."
+
+config_edits:
+  - path: .github/copilot-instructions.md
+    tier: 1
+    gold_added: "- `cancel()` procedure of `Future` type is deprecated, code should either call `cancelSoon()` for non-blocking call or `cancelAndWait()` for blocking call until the future is canceled/has been canceled.\n- Do not use `asyncSpawn` unless the future reference is explicitly tracked. Running a future with `asyncSpawn` without tracking its reference risks the future being freed/deallocated when it becomes unreferenced.\n- Usage of `AsyncLock` must always be documented. Provide a clear explanation of why the lock is required in that context. This ensures that locking decisions are transparent, justified, and maintainable.\n#### Leverage the Type System\n- Enforce strong typing: Always prefer explicit, well-defined types over loosely typed or primitive representations.\n- Use `chronos.Duration` for durations\n  - All duration values must be represented using `chronos.Duration`.\n  - Do not use primitive types (`float`, `int`, etc.) for storing or passing durations. Replace them with `chronos.Duration`.\n- Avoid tuples in public interfaces\n  - Public APIs must not expose tuples.\n  - Instead, define a named type (e.g., object) with clear field names to ensure readability and maintainability.\n  - Exception: Tuples may be used only in functions that are internal to a single file and invoked in one place. They must never leak into shared or public APIs.\n"
+    gold_removed: ''

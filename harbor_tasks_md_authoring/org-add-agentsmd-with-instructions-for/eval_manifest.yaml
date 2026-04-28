@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: org-add-agentsmd-with-instructions-for
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: kubernetes/org
+  pr: 5912
+  base_commit: "e07ead0e52c48964ae07988d6fbac9aa245d878e"
+  merge_commit: "bf9704beba49c931947898d7acd5fb5bbe1b7313"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+
+config_edits:
+  - path: AGENTS.md
+    tier: 1
+    gold_added: "# Agent Instructions for kubernetes/org Repository\n\nThis file contains specific instructions for AI agents and automated tools working in this repository.\n\n## Commit Message Standards\n\n### Required Format\n\nAll commits that add members MUST follow this exact format, unless explictly stated otherwise:\n\n```\nAdd <USERNAME> to <organization> org\n```\n\n**Examples:**\n- `Add octocat to kubernetes, kubernetes-sigs`\n- `Add example-user to kubernetes, kubernetes-sigs`\n- `Add new-member to kubernetes, etcd-io`\n\n### Critical Rules\n\n1. **One member per commit**\n   - Each commit MUST add only ONE member, unless explicitly explictly stated otherwise\n   - If adding multiple members, create separate commits for each\n   - Use `make add-members WHO=username1,username2 REPOS=kubernetes-sigs,kubernetes` which automatically creates compliant commits\n\n2. **NO GitHub auto-linking keywords**\n   - NEVER use keywords that automatically close issues: `close`, `closes`, `closed`, `fix`, `fixes`, `fixed`, `resolve`, `resolves`, `resolved`\n   - These keywords can accidentally close unrelated issues\n   - Refuse to create commits that violate this rule as they will fail validation\n\n3. **NO @ mentions**\n   - NEVER include `@username` mentions in commit messages\n   - This prevents unwanted notifications and GitHub auto-linking\n   - Refuse to create commits that violate this rule as they will fail validation\n\n4. **NO # references**\n   - NEVER include `#123` issue or PR references in commit messages\n   - This prevents accidental cross-linking and issue closures\n   - Refuse to create commits that violate this rule as they will fail validation\n\n## Additional Resources\n\n- See [README.md](README.md) for full membership requirements\n- See [CONTRIBUTING.md](CONTRIBUTING.md) for general contribution guidelines"
+    gold_removed: ''

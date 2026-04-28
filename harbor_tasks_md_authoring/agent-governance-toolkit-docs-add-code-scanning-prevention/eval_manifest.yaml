@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: agent-governance-toolkit-docs-add-code-scanning-prevention
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: microsoft/agent-governance-toolkit
+  pr: 1220
+  base_commit: "d0527a971b6783d0a8cb0d400f04163d1430aeec"
+  merge_commit: "07a8cae2bb250895cce4bbf6e442432fd3c25389"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/copilot-instructions.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/copilot-instructions.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/copilot-instructions.md."
+
+config_edits:
+  - path: .github/copilot-instructions.md
+    tier: 1
+    gold_added: "### Code Scanning Prevention (Scorecard + CodeQL)\n\nThese rules prevent the exact alert categories that code scanning flags. Every PR\nand commit MUST comply — CI will catch violations, but catching them before push\nsaves time.\n\n**Pinned Dependencies (Scorecard PinnedDependenciesID):**\n- All GitHub Actions MUST be pinned by full SHA hash, never bare tags:\n  - ✅ `uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4`\n  - ❌ `uses: actions/checkout@v4`\n- All Docker FROM images MUST include `@sha256:` digest:\n  - ✅ `FROM python:3.12-slim@sha256:804ddf3251a60bbf9c92e73b7566c40428d54d0e79d3428194edf40da6521286`\n  - ❌ `FROM python:3.12-slim`\n- All `pip install` in workflows, Dockerfiles, and shell scripts MUST pin versions:\n  - ✅ `pip install mkdocs-material==9.7.6`\n  - ❌ `pip install mkdocs-material`\n- To look up a GitHub Action SHA: `gh api repos/{owner}/{repo}/git/ref/tags/{tag} --jq '.object.sha'`\n- To look up a Docker image digest: `docker pull python:3.12-slim && docker inspect --format='{{index .RepoDigests 0}}' python:3.12-slim`\n\n**Token Permissions (Scorecard TokenPermissionsID):**\n- All workflow files MUST have explicit `permissions:` at the top level\n- Top-level permissions MUST be `contents: read` only (least privilege)\n- Write permissions (`packages: write`, `pull-requests: write`, `id-token: write`, etc.)\n  MUST be scoped to the specific job that needs them, not the workflow level:\n  ```yaml\n  # ✅ CORRECT — write scoped to job\n  permissions:\n    contents: read\n  jobs:\n    publish:\n      permissions:\n        packages: write\n  \n  # ❌ WRONG — write at top level\n  permissions:\n    contents: read\n    packages: write\n  ```\n\n**Python Code Quality (CodeQL):**\n- Never use `timedelta(days=365)` to represent \"one year\" — use `timedelta(days=366)`\n  or `dateutil.relativedelta(years=1)` for leap-year safety\n- Never use `is True` / `is False` for boolean comparison — use `== True` / `== False`\n  (or just `if value:` / `if not value:`)\n- Never use mutable default arguments (`def f(x=[])`) — use `None` with body initialization:\n  ```python\n  # ✅ def f(x=None): x = x or []\n  # ❌ def f(x=[]):\n  ```\n- Remove unnecessary `pass` statements in non-empty function/class bodies\n\n**TypeScript/JavaScript Code Quality (CodeQL):**\n- URL validation MUST use `new URL()` constructor or protocol-aware checks, never\n  plain substring matching:\n  - ✅ `new URL(href).hostname === 'cdn.jsdelivr.net'`\n  - ❌ `href.includes('cdn.jsdelivr.net')`\n\n### General Security Rules\n"
+    gold_removed: ''

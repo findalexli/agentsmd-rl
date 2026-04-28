@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: axum-login-add-agentsmd-guidance
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: maxcountryman/axum-login
+  pr: 312
+  base_commit: "6dc750a9ea1cb05564822904c42a79198db9b0bf"
+  merge_commit: "a118ab11d63c37ddcf6ab608cdeef914a9d4157b"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+
+config_edits:
+  - path: AGENTS.md
+    tier: 1
+    gold_added: "# AGENTS\n\nThis repo is a workspace with the library at `axum-login/` and examples under\n`examples/*`.\n\n## Expectations\n- Prefer the builder-based `require` API for new docs/examples; macros are legacy\n  conveniences.\n- Keep public API changes breaking only in breaking releases; document in\n  `CHANGELOG.md`.\n- Avoid unnecessary cloning; favor `Arc` where shared state is needed.\n- Keep docs and examples in sync with the library API.\n\n## Style\n- Run `cargo fmt` (or `cargo +nightly fmt --all -- --check` in CI).\n- Clippy is enforced: `cargo clippy --workspace --all-targets --all-features -- -D warnings`.\n\n## Tests\n- Full suite: `cargo test` (includes unit, integration, doc tests).\n- Targeted runs are ok while iterating, but re-run full suite before shipping.\n\n## Release hygiene\n- Update `CHANGELOG.md` for net-new changes relative to `main`.\n- Keep commit messages descriptive and documentation-friendly."
+    gold_removed: ''

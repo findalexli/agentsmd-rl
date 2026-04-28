@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: directories-create-chatwootmdc
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: leerob/directories
+  pr: 231
+  base_commit: "e319a20667a1f764296f80c83970e0f3e9635fec"
+  merge_commit: "6b8ae34ef8c5467e385887af8e170c47b31d01e4"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in chatwoot.mdc."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in chatwoot.mdc."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in chatwoot.mdc."
+
+config_edits:
+  - path: chatwoot.mdc
+    tier: 1
+    gold_added: "# Chatwoot Project Documentation\n\n## Estructura del Proyecto\n@app/models/\n- Modelos principales como Conversation, Message, Contact, Account\n- Usar validaciones de ActiveRecord y callbacks cuando sea necesario\n\n@app/controllers/\n- Controllers RESTful siguiendo convenciones Rails\n- API controllers en api/v1/\n- Usar strong parameters y manejo de errores consistente\n\n@app/services/\n- Servicios para lógica de negocio compleja\n- Mantener servicios pequeños y enfocados\n- Ejemplos: MessageTemplates, WebhookDelivery\n\n@app/jobs/\n- Jobs de Sidekiq para tareas asíncronas\n- Nombrar jobs con sufijo Job (ej: NotificationJob)\n\n@app/javascript/\n- Componentes Vue.js\n- Store de Vuex\n- Helpers y utilidades frontend\n\n## Convenciones de Código\n\n### Ruby\n```ruby\n# Ejemplo de servicio\nclass ConversationUpdateService\n  def initialize(conversation, params)\n    @conversation = conversation\n    @params = params\n  end\n\n  def perform\n    update_status\n    notify_participants\n  end\n\n  private\n\n  def update_status\n    # lógica aquí\n  end\nend\n```\n\n### Vue\n```vue\n<!-- Ejemplo de componente -->\n<template>\n  <div class=\"conversation-view\">\n    <message-list :messages=\"messages\" />\n    <reply-box @send=\"handleSend\" />\n  </div>\n</template>\n\n<script>\nexport default {\n  name: 'ConversationView',\n  props: {\n    conversationId: {\n      type: Number,\n      required: true\n    }\n  }\n}\n</script>\n```\n\n## Patrones Comunes\n\n### WebSockets\n- Usar Action Cable para comunicación en tiempo real\n- Mantener canales específicos por funcionalidad\n- Implementar reconexión automática\n\n### Redis\n- Usar para caché y colas de trabajo\n- Implementar rate limiting cuando sea necesario\n- Mantener TTL apropiado para datos en caché\n\n### Testing\n- Specs descriptivos usando RSpec\n- Factories con FactoryBot\n- Mocks y stubs cuando sea apropiado\n\n## Archivos Clave\n@config/routes.rb - Rutas de la aplicación\n@app/javascript/app.js - Entrada principal frontend\n@app/models/conversation.rb - Modelo central\n@app/controllers/api/v1/base_controller.rb - Controlador base API\n\n## Seguridad\n- Validar permisos usando Pundit\n- Sanitizar inputs\n- Implementar rate limiting\n- Usar JWT para autenticación API\n\n## Performance\n- Índices en columnas frecuentemente consultadas\n- Eager loading para evitar N+1\n- Caché de fragmentos en vistas\n- Optimizar consultas grandes\n\n## Comandos Útiles\n```bash\n# Development\nbundle exec rails s\nyarn dev\n\n# Testing\nbundle exec rspec\nyarn test\n\n# Linting\nbundle exec rubocop\nyarn lint\n```\n\n## Referencias\n- @Documentación API\n- @Guía de Contribución\n- @Setup Local"
+    gold_removed: ''

@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: release-docs-update-claudemd
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: openshift/release
+  pr: 70141
+  base_commit: "ecbb0d7591b37e987da6c398de272983f51a3b88"
+  merge_commit: "a83c763a66c769ea6528d3f34a67eb5cb42c2d99"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+
+config_edits:
+  - path: CLAUDE.md
+    tier: 1
+    gold_added: "# CLAUDE.md\n\nThis file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.\n\n## Repository Structure\n\n- `ci-operator/config/` - CI configuration files defining builds and tests for component repositories\n- `ci-operator/jobs/` - Generated Prow job configurations (auto-generated, rarely edited manually)\n- `ci-operator/step-registry/` - Reusable test steps, chains, and workflows for multi-stage jobs\n- `ci-operator/templates/` - Legacy black-box test workflows (deprecated, use step-registry instead)\n- `core-services/` - Core service configurations applied to api.ci cluster\n- `services/` - Additional service configurations\n- `cluster/` - Legacy cluster provisioning manifests\n- `projects/` - Experimental, legacy, or non-critical service manifests\n- `tools/` - Container image build manifests for tooling\n\n## Common Development Commands\n\n### Configuration Updates\nAfter modifying CI configuration files, regenerate downstream artifacts:\n```bash\nmake update\n```\nThis runs: `make jobs`, `make ci-operator-config`, `make prow-config`, `make registry-metadata`, `make release-controllers`, `make boskos-config`\n\n### CI Job Configuration\nWhen modifying CI jobs in `ci-operator/config/`:\n```bash\nmake jobs\n```\nThis validates config, generates Prow job configs, and sanitizes job definitions.\n\n### Validation\n```bash\nmake check              # Validate all service configs\nmake check-core         # Validate core-services\nmake check-services     # Validate services\nmake checkconfig        # Validate Prow configuration\n```\n\n### New Repository Setup\n```bash\nmake new-repo\n```\nInteractive tool to configure CI workflow for a new component repository. Automatically runs `make update` afterwards.\n\n### Step Registry Validation\n```bash\nmake validate-step-registry\n```\nValidates step registry definitions for correctness.\n\n### Release Controllers\n```bash\nmake release-controllers\n```\nRegenerates release controller configurations.\n\n## Architecture\n\n### CI Operator Configuration Flow\n1. Developers edit YAML files in `ci-operator/config/<org>/<repo>/`\n2. Each config file defines:\n   - `build_root`: Base image for builds\n   - `images`: Container images to build\n   - `tests`: Test definitions (can reference step-registry workflows)\n   - `promotion`: Where to push successful builds\n   - `releases`: OpenShift releases to test against\n3. Running `make jobs` generates Prow job configs in `ci-operator/jobs/`\n4. Prow triggers jobs based on PR/merge/periodic events\n5. Jobs execute ci-operator with the config, which orchestrates builds and tests\n\n### Step Registry System\nThe step-registry contains reusable CI components:\n- **Steps** (`.yaml` + `-commands.sh`): Atomic tasks (e.g., `openshift-e2e-test`)\n- **Chains** (`-chain.yaml`): Ordered sequences of steps\n- **Workflows** (`-workflow.yaml`): Complete test scenarios with pre/test/post phases\n- **References** (`-ref.yaml`): Step definitions with metadata\n\nSteps are referenced in `ci-operator/config/` test definitions using multi-stage syntax. The registry allows sharing common operations (cluster provisioning, testing, cleanup) across many repositories.\n\n### Configuration Generation Pipeline\n1. `ci-operator/config/` is the source of truth (manually edited)\n2. `ci-operator-prowgen` generates `ci-operator/jobs/` from config files\n3. `determinize-ci-operator` normalizes config file formatting\n4. `determinize-prow-config` normalizes Prow configuration\n5. All generation uses containerized tools (pulled from quay.io/openshift/ci-public)\n\n### File Naming Conventions\n- `ci-operator/config/`: `<org>-<repo>-<branch>.yaml`\n- `ci-operator/jobs/`: `<org>-<repo>-<org>-<repo>-<branch>-<jobtype>.yaml`\n- `step-registry/`: Component name prefixed (e.g., `openshift-e2e-test-ref.yaml`)\n- `core-services/`: `admin_*.yaml` for admin resources, `_*.yaml` excluded from application\n\n## Key Workflows\n\n### Modifying CI for a Repository\n1. Edit config in `ci-operator/config/<org>/<repo>/`\n2. Run `make jobs` to regenerate Prow jobs\n3. Run `make checkconfig` to validate\n4. Commit both config and generated job files\n\n### Adding a New Test Step\n1. Create files in `ci-operator/step-registry/<component>/`:\n   - `<name>-ref.yaml` (step metadata)\n   - `<name>-commands.sh` (script to execute)\n2. Run `make registry-metadata` to update metadata\n3. Reference the step in workflow chains or directly in configs\n\n### Creating a New Workflow\n1. Define individual steps if needed\n2. Create a workflow file: `<name>-workflow.yaml`\n3. Define `pre`, `test`, and `post` phases using existing steps/chains\n4. Run `make validate-step-registry` to check correctness\n\n## Container Engine\nBy default, `podman` is used. Override with:\n```bash\nexport CONTAINER_ENGINE=docker\n```\n\n## Important Notes\n- Never manually edit files in `ci-operator/jobs/` - always edit `ci-operator/config/` and regenerate\n- New test workflows should use step-registry, not templates (templates are legacy)\n- Core services config in `core-services/` is auto-applied by Prow postsubmit after merge\n- ConfigMaps are updated by the `config-updater` Prow plugin\n- The repository uses containerized tooling for most operations (check Makefile for specific images)\n- Config files are deterministically formatted - manual formatting will be overwritten by generation tools"
+    gold_removed: ''

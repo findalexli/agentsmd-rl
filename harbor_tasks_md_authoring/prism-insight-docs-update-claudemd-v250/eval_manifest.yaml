@@ -1,0 +1,36 @@
+version: "2.0"
+
+task:
+  name: prism-insight-docs-update-claudemd-v250
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: dragon1086/prism-insight
+  pr: 182
+  base_commit: "64fa1529c219518beae34c6dca70ef4a4c70c53c"
+  merge_commit: "97ff368feeb90e9486f0f4879831108e614f9f94"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+
+config_edits:
+  - path: CLAUDE.md
+    tier: 1
+    gold_added: '> **Version**: 2.5.0 | **Updated**: 2026-02-22
+
+      | `/report` 오류 후 재사용 불가 | v2.5.0 수정 - 서버 오류 시 자동 환급됨, 재시도 가능 |
+
+      | 2.5.0 | 2026-02-22 | **Telegram /report 일일 횟수 환급 + 한국어 메시지 복원** - 서버 오류(서브프로세스 타임아웃, 내부 AI 에이전트 오류) 시 `/report`·`/us_report` 일일 사용 횟수 자동 환급 (`refund_daily_limit`, `_is_server_error` 추가, `send_report_result` 내 환급 처리), `AnalysisRequest`에 `user_id` 필드 추가, Telegram 봇 사용자 대면 메시지 한국어 템플릿 복원 |'
+    gold_removed: ''

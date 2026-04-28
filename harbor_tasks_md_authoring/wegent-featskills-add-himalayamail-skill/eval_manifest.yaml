@@ -1,0 +1,40 @@
+version: "2.0"
+
+task:
+  name: wegent-featskills-add-himalayamail-skill
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: wecode-ai/Wegent
+  pr: 556
+  base_commit: "0de47aac7e7f91595ed98bc4f0d73eaf04cfea70"
+  merge_commit: "6bdd331479b6d9458ad3cfccc88fc605449795bb"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in backend/init_data/skills/browser/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in backend/init_data/skills/himalaya-mail/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in backend/init_data/skills/himalaya-mail/SKILL.md."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in backend/init_data/skills/himalaya-mail/SKILL.md."
+
+config_edits:
+  - path: backend/init_data/skills/browser/SKILL.md
+    tier: 1
+    gold_added: 'description: Complete real user web tasks end-to-end via browser-tool, navigate, interact, wait for page state, extract results, and provide evidence when needed.'
+    gold_removed: ''
+  - path: backend/init_data/skills/himalaya-mail/SKILL.md
+    tier: 1
+    gold_added: "---\nname: himalaya-mail\ndescription: Use Himalaya CLI to manage email (accounts/folders, list/read/search messages, compose/send). Prefer safe triage flows and require confirmation before any destructive action.\n---\n\n# Himalaya Mail\n\n## Overview\n\nUse this skill to run email workflows through the `himalaya` CLI with a safety-first pattern:\n1) discover exact commands from local help,\n2) execute non-destructive actions,\n3) require confirmation for destructive actions.\n\n## Inputs To Confirm Up Front\n\nBefore running anything beyond `--help`, ask for or infer (then confirm) these:\n- Config path: default `~/.wegent-executor/mail/config.toml`\n- Account: which configured account to use (if more than one)\n- Folder/mailbox: default should be explicit (e.g. `INBOX`)\n- Scope limits: default list size (e.g. 20) and whether to include message bodies\n- Sent folder name: do not assume `Sent`; use the server's actual folder name (e.g. `Sent`, `Sent Messages`, `已发送邮件`)\n- Compose/send: always confirm the account used for SMTP and headers (use `-a <account>` for message compose/send commands)\n\n## Workflow\n\n### 1. Resolve Config Source First\n\nPrefer private local config files instead of repository-stored credentials.\n\nUse this config path (default):\n\n```bash\nhimalaya -c ~/.wegent-executor/mail/config.toml account list\n```\n\nTreat `.wegent-executor/mail/config.toml` as `$HOME/.wegent-executor/mail/config.toml`.\n\nAlways run commands with `-c ~/.wegent-executor/mail/config.toml` unless the user explicitly asks for another config path.\n\n### 1.1 Resolve Real Folder Names (Critical For Non-English Mailboxes)\n\nFolder names are server-defined and often localized (for example `已发送邮件`, `已删除邮件`).\nNever hardcode `Sent`/`Trash`. Before any move/copy/save-to-sent behavior, list folders and pick the exact name shown by the server.\n\nFirst, discover the folder-list subcommand via local help (see step 2). Then list folders for the selected account and use the exact folder name from the CLI output in subsequent commands.\n\n### 2. Discover Exact Command Shape\n\nHimalaya command structures can vary by version. Always inspect local help before execution:\n\n```bash\nhimalaya --help\nhimalaya <subcommand> --help\n```\n\nFor nested commands, continue drilling down until flags and required args are explicit.\n\n### 3. Perform Non-Destructive Operations First\n\nPrefer this order:\n1. Account/mailbox/folder discovery\n2. Message listing\n3. Message read/show\n4. Search/filter\n5. Draft/compose preview\n6. Send or state-changing operations (confirmation required)\n\n### 4. Execute Destructive Operations Safely\n\nFor operations that may send externally, delete, move, expunge, or mutate message state (including read/unread and flags):\n1. List candidate message IDs first.\n2. Ask for explicit confirmation.\n3. Execute only confirmed IDs.\n\n```bash\nhimalaya -c ~/.wegent-executor/mail/config.toml envelope list -a <account> -f <folder> -s 20\nhimalaya -c ~/.wegent-executor/mail/config.toml message <destructive-subcommand> -a <account> -f <folder> <id...>\n```\n\nConfirmation prompt template (use literally, and wait for user response):\n- \"About to run: <command>. Targets: account=<account>, folder=<folder>, ids=[...]. Reply with `CONFIRM` to proceed, or tell me what to change.\"\n\n### 5. Report Results Clearly\n\nAfter command execution, return:\n1. Context (account/folder)\n2. Result (counts, IDs, subject lines, status)\n3. Next safest action\n\n## Safety Rules\n\n- Never run send/delete/move/expunge/flag-changing operations without confirmation.\n- Prefer showing candidate IDs before any bulk action.\n- Default to headers/envelopes only; do not print full message bodies unless the user explicitly asks.\n- Do not echo tokens/passwords/config contents into chat.\n- Do not download/open attachments unless the user explicitly asks and the destination path is clear.\n- For listing/search, default to `-s 20` (or the closest equivalent in the local CLI).\n- For bulk operations, require an explicit list of IDs; avoid \"all in folder\" actions unless the user insists and confirms.\n- If command shape is uncertain, stop and re-check `--help` instead of guessing.\n\n## Address Defaults (Compose/Send)\n\n- Default for AI-authored emails: generate then send via templates (pre-fills correct `From:` from config):\n\n```bash\nhimalaya -c ~/.wegent-executor/mail/config.toml template write -a <account> \\\n  -H 'To: <...>' -H 'Subject: ...' 'body...' \\\n| himalaya -c ~/.wegent-executor/mail/config.toml template send -a <account>\n```\n\n- Always pass `-a <account>` for compose/send.\n- Do not use `himalaya message send` unless the user explicitly asks to send a raw RFC5322/MIME message; then validate `From:` exactly matches the selected account `email = \"...\"` from `~/.wegent-executor/mail/config.toml` (no typos, no missing TLD).\n\n## Common Failure Handling\n\n- Basic sanity: `command -v himalaya`, `himalaya --version`, `himalaya --help`.\n- Config/auth/network: show the exact CLI error; confirm `-c ~/.wegent-executor/mail/config.toml` and `-a <account>` are correct.\n- Diagnose: `himalaya -c ~/.wegent-executor/mail/config.toml account doctor <account>`."
+    gold_removed: ''

@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: homematicip_local-update-claudemd-documentation
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: SukramJ/homematicip_local
+  pr: 963
+  base_commit: "e3f61ea6ecbeb103bcb45af559250b075c22d893"
+  merge_commit: "ae6d97a200e8ed2ad99f37d9f540b012b5c2979e"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+
+config_edits:
+  - path: CLAUDE.md
+    tier: 1
+    gold_added: "**Version:** 2.0.0\n- **aiohomematic** (v2025.12.17) - Core async library for Homematic device communication\n- **Home Assistant Core** - Minimum version: 2025.10.0+\n- **pytest-homeassistant-custom-component** (0.13.300) - HA test framework\n- **pylint** (4.0.4) - Code linting\n- **ruff** (0.14.8) - Fast Python linter and formatter\n- **aiohomematic-test-support** (2025.12.17) - Mock test data\n   - Version: 2.0.0\n   - Dependencies: aiohomematic==2025.12.17\n**Current version:** 12 (as of 2025-12)\n- **Current Version:** 2.0.0\n- **Minimum HA Version:** 2025.10.0+\n- **aiohomematic Version:** 2025.12.17\n    - Current version: 12 - always increment when migrating"
+    gold_removed: ''

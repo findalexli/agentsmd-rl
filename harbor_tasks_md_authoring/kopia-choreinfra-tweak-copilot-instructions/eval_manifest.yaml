@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: kopia-choreinfra-tweak-copilot-instructions
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: kopia/kopia
+  pr: 5278
+  base_commit: "c7c0c163b449548153f4d8b3ad895e98d3960a11"
+  merge_commit: "a8359865c1428dc146a4f71d69ce4cb330d15202"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/copilot-instructions.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/copilot-instructions.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/copilot-instructions.md."
+
+config_edits:
+  - path: .github/copilot-instructions.md
+    tier: 1
+    gold_added: "Note: Linting is **NOT** run on linux/arm64 or linux/arm platforms to avoid issues.\n\n**Runs:** All unit tests with gotestsum\n**Race Detector Tests:**\n```bash\nmake test UNIT_TEST_RACE_FLAGS=-race UNIT_TESTS_TIMEOUT=1200s\n```\n\n**Requires:** KOPIA_PROVIDER_TEST=true, credentials for storage backend.\n4. **Provider tests require environment:** Provider tests need KOPIA_PROVIDER_TEST=true and storage credentials.\n\n- `.codecov.yml` - Code coverage reporting config\n10. Do not commit executables or binary artifacts to the git repository.\n    Do not modify `.gitignore` files.\n\n11. **Trust these instructions** - These instructions have been validated by running all commands. Only search for additional information if something fails or if these instructions are incomplete or incorrect."
+    gold_removed: ''

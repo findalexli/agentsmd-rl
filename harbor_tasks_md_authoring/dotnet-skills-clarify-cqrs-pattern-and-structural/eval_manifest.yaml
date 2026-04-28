@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: dotnet-skills-clarify-cqrs-pattern-and-structural
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: Aaronontheweb/dotnet-skills
+  pr: 26
+  base_commit: "05cb21944a3751cd787aaf2ac7a1d3347ef82427"
+  merge_commit: "b493f9cf181131ade1d7a27b6797a55789f1d6ec"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/data/database-performance/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/data/database-performance/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/data/database-performance/SKILL.md."
+
+config_edits:
+  - path: skills/data/database-performance/SKILL.md
+    tier: 1
+    gold_added: "tags: [cqrs, performance, patterns]\n## Read/Write Model Separation (CQRS Pattern)\n**Read and write models are fundamentally different - they have different shapes, columns, and purposes.** Don't create a single \"User\" entity and reuse it everywhere.\n\n- **Read models** are denormalized, optimized for query efficiency, and return multiple projection types (UserProfile, UserSummary, UserDetailForAdmin)\n- **Write models** are normalized, validation-focused, and accept strongly-typed commands (CreateUserCommand, UpdateUserCommand)\n      # Read side - multiple optimized projections\n      IUserReadStore.cs\n\n      # Write side - command handlers\n      IUserWriteStore.cs\n\n      # Read DTOs - lightweight, denormalized\n      UserProfile.cs\n      UserSummary.cs\n\n      # Write commands - validation-focused\n      CreateUserCommand.cs\n      UpdateUserCommand.cs\n      (similar structure...)\n// Read models: Multiple specialized projections optimized for different use cases\n    // Returns detailed profile for single-user view\n\n    // Returns lightweight info for lookups\n\n    // Returns paginated summaries - only what the list view needs\n\n    // Boolean query - no entity needed\n// Write model: Accepts strongly-typed commands, minimal return values\n    // Returns only the created ID - caller doesn't need the full entity\n\n    // Update validates command, returns void (success or throws)\n\n    // Delete is simple and explicit\n**Key structural differences illustrated:**\n- Read store returns multiple different DTOs (UserProfile, UserSummary, bool flag)\n- Write store returns minimal data (just UserId on create) or void\n- Read queries are stateless projections - no tracking needed\n- Write operations focus on command validation, not retrieving data afterwards\n- Different databases/tables can back read vs write (eventual consistency pattern)"
+    gold_removed: ''

@@ -1,0 +1,36 @@
+version: "2.0"
+
+task:
+  name: rhino-created-agentsmd-and-claudemd
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: mozilla/rhino
+  pr: 2210
+  base_commit: "9d1298d3ffc01c7cc78152b85834332a56849fa3"
+  merge_commit: "67c824c2fb6e9a92e348c9f616ff542be4043412"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+
+config_edits:
+  - path: AGENTS.md
+    tier: 1
+    gold_added: "# Rhino\n\nRhino is an open source (MPL 2.0) JavaScript engine, implemented in Java 11. The build system used is gradle, via the\ngradle wrapper (`./gradlew`). There are no external dependencies, except for JUnit for unit tests.\n\n## Useful commands\n\n1. Build: `./gradlew build`\n2. Run tests: `./gradlew test`\n3. Format code: `./gradlew spotlessApply`\n4. Checks (tests, formatting): `./gradlew check`\n\n## Rules and code style\n\n- Important: try to follow the existing code style and patterns.\n- Be restrained in regard to writing code comments.\n- Always add unit tests for any new feature or bug fixes. They should go either in `rhino` or `tests`; search for\n  existing tests to make a decision on a case-by-case basis.\n- New test classes should be written using JUnit 5. Migrating existing tests from JUnit 4 to JUnit 5 is not a goal\n  though, unless explicitly requested.\n- Code style is enforced via spotless. After every change, reformat the code.\n\n## Code organization\n\nThe code base is organized in multiple modules. Most changes will go into the `rhino` or `tests` modules. Refer to\nREADME.md for the full list.\n\n- `rhino`: The primary codebase necessary and sufficient to run JavaScript code\n- `rhino-tools`: Contains the shell, debugger, and the \"Global\" object, which many tests and other Rhino-based tools use\n- `tests`: The tests that depend on all of Rhino and also the external tests, including the Mozilla legacy test scripts\n  and the test262 tests\n\n## Architecture\n\nRhino follows a classical architecture:\n\n- [TokenStream](rhino/src/main/java/org/mozilla/javascript/TokenStream.java) is the lexer\n- [Parser](rhino/src/main/java/org/mozilla/javascript/Parser.java) is the parser, which produces an AST modeled by the\n  subclasses of [AstNode](rhino/src/main/java/org/mozilla/javascript/ast/AstNode.java)\n- the [IRFactory](rhino/src/main/java/org/mozilla/javascript/IRFactory.java) will generate a tree IR, modeled\n  by [Node](rhino/src/main/java/org/mozilla/javascript/Node.java)\n- there are two backends:\n    - one which generates java classes, in [Codegen](rhino/src/main/java/org/mozilla/javascript/optimizer/Codegen.java);\n    - and one which generates a bytecode for [Interpreter](rhino/src/main/java/org/mozilla/javascript/Interpreter.java),\n      in [CodeGenerator](rhino/src/main/java/org/mozilla/javascript/CodeGenerator.java).\n\n[ScriptRuntime](rhino/src/main/java/org/mozilla/javascript/ScriptRuntime.java) is the main class for all runtime\nmethods, shared between compiled classes and interpreter.\n\nBuiltins such as `Object` or `Array` are implemented in\n[NativeObject](rhino/src/main/java/org/mozilla/javascript/NativeObject.java),\n[NativeArray](rhino/src/main/java/org/mozilla/javascript/NativeArray.java), etc."
+    gold_removed: ''
+  - path: CLAUDE.md
+    tier: 1
+    gold_added: '@AGENTS.md'
+    gold_removed: ''

@@ -1,0 +1,24 @@
+version: "2.0"
+
+task:
+  name: lean4-chore-add-agentsmd-symlink-to
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: leanprover/lean4
+  pr: 13461
+  base_commit: "43e1e8285b918fc41cf375d8ae958c3fb87dedf3"
+  merge_commit: "3e9ed3c29dfa31db6bd7d701b45b152bea22f3e8"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+
+config_edits:
+  - path: AGENTS.md
+    tier: 1
+    gold_added: .claude/CLAUDE.md
+    gold_removed: ''

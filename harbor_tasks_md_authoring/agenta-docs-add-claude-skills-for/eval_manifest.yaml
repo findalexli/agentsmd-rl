@@ -1,0 +1,456 @@
+version: "2.0"
+
+task:
+  name: agenta-docs-add-claude-skills-for
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: Agenta-AI/agenta
+  pr: 3427
+  base_commit: "825e940e1550c4d819eeaa8c685cfff2668f714c"
+  merge_commit: "4bc10515de3f953278b02269029322eb17dd4573"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/add-announcement/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/add-announcement/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/add-announcement/SKILL.md."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/create-changelog-announcement/SKILL.md."
+  - id: signal_04
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/create-changelog-announcement/SKILL.md."
+  - id: signal_05
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/create-changelog-announcement/SKILL.md."
+  - id: signal_06
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/write-social-announcement/SKILL.md."
+  - id: signal_07
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/write-social-announcement/SKILL.md."
+  - id: signal_08
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/write-social-announcement/SKILL.md."
+
+config_edits:
+  - path: .claude/skills/add-announcement/SKILL.md
+    tier: 1
+    gold_added: "---\nname: add-announcement\ndescription: Helps add announcement cards to the sidebar banner system. Use when adding changelog entries, feature announcements, updates, or promotional banners to the Agenta sidebar. Handles both simple changelog entries and complex custom banners.\nallowed-tools: Read, Edit, Grep, Glob\nuser-invocable: true\n---\n\n# Add Announcement Card\n\nThis skill helps you add announcement cards to the Agenta sidebar banner system. Announcement cards appear at the bottom of the sidebar and can be dismissed by users.\n\n## System Overview\n\nThe sidebar banner system is located at `web/oss/src/components/SidebarBanners/` and uses:\n- **Priority-based queue**: Only one banner shows at a time\n- **Auto-progression**: When dismissed, the next highest priority banner appears\n- **Persistent dismissal**: Uses localStorage to remember dismissed banners\n- **Jotai atoms**: For reactive state management\n\n## Two Types of Announcements\n\n### 1. Simple Changelog Announcements (Most Common)\n\nFor standard product updates, features, and changes, simply add to `changelog.json`:\n\n**File**: `web/oss/src/components/SidebarBanners/data/changelog.json`\n\n**Format**:\n```json\n{\n    \"id\": \"changelog-YYYY-MM-DD-feature-name\",\n    \"title\": \"Feature Title (Short)\",\n    \"description\": \"Brief description of the feature or change.\",\n    \"link\": \"https://agenta.ai/docs/changelog/feature-name\"\n}\n```\n\n**ID Convention**: `changelog-` + date (YYYY-MM-DD) + feature slug\n- Example: `changelog-2026-01-09-chat-sessions`\n- Must be unique to prevent conflicts\n\n**Title Guidelines**:\n- Keep under 40 characters\n- Clear and actionable\n- Focus on user benefit\n- Examples: \"Chat Sessions in Observability\", \"PDF Support in Playground\"\n\n**Description Guidelines**:\n- One sentence, under 100 characters\n- Describe what users can do, not technical details\n- Examples: \"Track multi-turn conversations with session grouping and cost analytics.\"\n\n**Link Convention**:\n- Always points to `https://agenta.ai/docs/changelog/[feature-slug]`\n- You'll need to create the corresponding changelog documentation page\n\n### 2. Custom Banners (Advanced)\n\nFor complex banners with custom UI, interactions, or logic (trial warnings, upgrade prompts, etc.), you need to:\n\n1. Add the banner type to `types.ts`\n2. Add priority to `state/atoms.ts`\n3. Create the banner in `activeBannersAtom` (OSS) or `eeBannersAtom` (EE)\n\n**When to use custom banners**:\n- Non-dismissible banners (e.g., trial expiration)\n- Custom interactions (buttons with onClick handlers)\n- Dynamic content (depends on user state)\n- Conditional display (show only under certain conditions)\n\n## Step-by-Step: Adding a Simple Changelog Announcement\n\n### Step 1: Read the current changelog.json\n```bash\n# View current entries to understand the structure\ncat web/oss/src/components/SidebarBanners/data/changelog.json\n```\n\n### Step 2: Add your entry\nEdit `web/oss/src/components/SidebarBanners/data/changelog.json` and add your new entry to the array:\n\n```json\n[\n    {\n        \"id\": \"changelog-2024-12-16-pdf-support\",\n        \"title\": \"PDF Support in Playground\",\n        \"description\": \"You can now upload and test PDFs directly in the playground.\",\n        \"link\": \"https://agenta.ai/docs/changelog/pdf-support-in-playground\"\n    },\n    {\n        \"id\": \"changelog-2026-01-09-your-feature\",\n        \"title\": \"Your Feature Title\",\n        \"description\": \"Brief description of what users can do.\",\n        \"link\": \"https://agenta.ai/docs/changelog/your-feature-slug\"\n    }\n]\n```\n\n### Step 3: Verify the format\n- Ensure valid JSON (no trailing commas, proper quotes)\n- Check ID uniqueness\n- Verify link URL matches the documentation page you'll create\n\n### Step 4: Test locally\nThe banner will automatically appear in the sidebar on the next page load. To see it:\n1. Clear localStorage: `localStorage.removeItem('agenta:dismissed-banners')`\n2. Refresh the page\n3. Banner should appear at bottom of sidebar\n\n## Banner Priority System\n\nBanners are shown in priority order (lower number = shown first):\n\n```\nPriority 0: star-repo (GitHub star prompt for new users)\nPriority 1: changelog (product updates) ← Most changelog entries\nPriority 2: upgrade (upgrade prompts)\nPriority 3: trial (trial/billing warnings)\n```\n\nChangelog entries automatically get priority 1.\n\n## Common Patterns and Examples\n\n### Example 1: Feature Announcement\n```json\n{\n    \"id\": \"changelog-2026-01-15-batch-evaluation\",\n    \"title\": \"Batch Evaluation Available\",\n    \"description\": \"Evaluate multiple test sets simultaneously with batch processing.\",\n    \"link\": \"https://agenta.ai/docs/changelog/batch-evaluation\"\n}\n```\n\n### Example 2: Integration Announcement\n```json\n{\n    \"id\": \"changelog-2026-01-20-langchain-support\",\n    \"title\": \"LangChain v0.3 Support\",\n    \"description\": \"Full support for LangChain v0.3 with auto-instrumentation.\",\n    \"link\": \"https://agenta.ai/docs/changelog/langchain-v03\"\n}\n```\n\n### Example 3: Improvement Announcement\n```json\n{\n    \"id\": \"changelog-2026-01-25-faster-traces\",\n    \"title\": \"10x Faster Trace Loading\",\n    \"description\": \"Observability page now loads traces up to 10x faster.\",\n    \"link\": \"https://agenta.ai/docs/changelog/faster-trace-loading\"\n}\n```\n\n## Related Files\n\n### Core System Files\n- `web/oss/src/components/SidebarBanners/index.tsx` - Main container\n- `web/oss/src/components/SidebarBanners/SidebarBanner.tsx` - Display component\n- `web/oss/src/components/SidebarBanners/types.ts` - Type definitions\n- `web/oss/src/components/SidebarBanners/state/atoms.ts` - State management\n- `web/oss/src/components/SidebarBanners/data/changelog.json` - Changelog data\n\n### Integration Point\n- `web/oss/src/components/Sidebar/Sidebar.tsx` - Where banners are rendered\n\n### EE Override (Enterprise Edition)\n- `web/ee/src/components/SidebarBanners/index.tsx` - EE wrapper\n- `web/ee/src/components/SidebarBanners/state/atoms.ts` - EE banners (trial, upgrade)\n\n## Best Practices\n\n1. **Timing**: Add announcements when features are fully deployed and documented\n2. **User-focused**: Write from user perspective (\"You can now...\"), not technical perspective\n3. **Brevity**: Keep title and description short - users skim banners\n4. **Links**: Always link to comprehensive documentation, not just a blog post\n5. **Testing**: Clear localStorage and verify the banner displays correctly\n6. **Uniqueness**: Use date-based IDs to prevent conflicts with past/future announcements\n\n## Troubleshooting\n\n**Banner not appearing?**\n- Check JSON syntax (use a JSON validator)\n- Clear localStorage: `localStorage.removeItem('agenta:dismissed-banners')`\n- Verify you're looking at the correct environment (OSS vs EE)\n- Check browser console for errors\n\n**Banner appearing multiple times?**\n- Ensure ID is unique (not already in the dismissed list)\n- Check for duplicate entries in changelog.json\n\n**Banner styling looks wrong?**\n- The SidebarBanner component handles all styling automatically\n- Don't add custom HTML/styling in description - it's rendered as plain text\n\n## Next Steps After Adding Announcement\n\nAfter adding the announcement to `changelog.json`, you should:\n\n1. **Create changelog documentation page** at `docs/docs/changelog/[feature-slug].mdx`\n2. **Add screenshots or demo video** to the documentation\n3. **Link to related feature documentation** from the changelog page\n4. **Test the banner** in both OSS and EE environments\n5. **Commit changes** with a descriptive commit message\n\n## Example Workflow\n\n```bash\n# 1. Edit changelog.json\ncode web/oss/src/components/SidebarBanners/data/changelog.json\n\n# 2. Create documentation page\ncode docs/docs/changelog/your-feature.mdx\n\n# 3. Test locally (if running dev server)\n# Clear localStorage in browser console:\n# localStorage.removeItem('agenta:dismissed-banners')\n\n# 4. Commit\ngit add web/oss/src/components/SidebarBanners/data/changelog.json\ngit add docs/docs/changelog/your-feature.mdx\ngit commit -m \"docs: add changelog announcement for [feature name]\"\n```\n\n---\n\n**Note**: This skill focuses on simple changelog announcements. For custom banners with complex logic, consult the SidebarBanners README or ask for guidance on creating custom banner components."
+    gold_removed: ''
+  - path: .claude/skills/create-changelog-announcement/SKILL.md
+    tier: 1
+    gold_added: "---\nname: create-changelog-announcement\ndescription: Use this skill to create and publish changelog announcements for new features, improvements, or bug fixes. This skill handles the complete workflow - creating detailed changelog documentation pages, adding sidebar announcement cards, and ensuring everything follows project standards. Use when the user mentions adding changelog entries, documenting new features, creating release notes, or announcing product updates.\nmodel: sonnet\nuser-invocable: true\n---\n\n# Create Changelog Announcement\n\nThis skill guides you through creating complete changelog announcements that include:\n1. Detailed changelog documentation page in `/docs/blog/entries/`\n2. Summary entry in `/docs/blog/main.mdx`\n3. Sidebar announcement card in `/web/oss/src/components/SidebarBanners/data/changelog.json`\n4. Roadmap update in `/docs/src/data/roadmap.ts`\n5. GitHub discussion closure (if applicable)\n6. Social media announcements (LinkedIn, Twitter, Slack)\n\n## Your Core Responsibilities\n\n### 1. **Complete Changelog Creation Workflow**\n\nFor every changelog announcement, you create THREE coordinated entries:\n\n**A. Detailed Entry** (`docs/blog/entries/[feature-slug].mdx`):\n- Comprehensive explanation of the feature or change\n- Code examples, screenshots, or embedded videos\n- Links to related documentation\n- User-focused benefits and use cases\n\n**B. Summary Entry** (`docs/blog/main.mdx`):\n- Concise 1-2 paragraph summary\n- Version number and date\n- Link to detailed entry\n- Embedded media if significant feature\n\n**C. Sidebar Announcement** (`web/oss/src/components/SidebarBanners/data/changelog.json`):\n- One-sentence description\n- Link to detailed documentation\n- Unique ID with date\n\n### 2. **Information Gathering**\n\n**Before creating any entry, collect:**\n- Feature name and description\n- Version number (if unclear, ask: \"Which version is this changelog entry for?\")\n- Release date (default to today if not specified)\n- Whether user has screenshots/videos (ask if mentioned but not provided)\n- Links to related documentation\n\n**Never proceed without** a clear version identifier and feature description.\n\n### 3. **Writing Style Guidelines**\n\nApply these writing guidelines rigorously:\n\n- **Clarity above all else**: Use 11th grade English for non-technical terms\n- **Active voice**: \"You can now track conversations\" not \"Conversations can now be tracked\"\n- **Short sentences**: Default to punchy sentences; use longer ones only for flow\n- **Complete sentences**: Avoid fragments unless brevity clearly improves readability\n- **No em dashes (—)**: Use periods, parentheses (), or semicolons ; instead\n- **Minimal formatting**: Use bold and bullets sparingly—only when they aid scanning\n- **User-focused**: Write \"You can now...\" not \"We've added...\"\n- **Benefits over features**: Explain what users can do, not what you built\n\n**Examples:**\n\n❌ **Bad**: \"We've implemented a new session tracking system that enables users to group related traces—making it easier to analyze conversations.\"\n\n✅ **Good**: \"You can now group related traces into sessions. This helps you analyze complete conversations and track metrics across multiple turns.\"\n\n### 4. **ID and Naming Conventions**\n\n**Changelog Entry File Naming**:\n- Use kebab-case with descriptive names\n- Examples: `chat-sessions-observability.mdx`, `pdf-support-in-playground.mdx`\n- Keep under 60 characters\n\n**Sidebar Announcement IDs**:\n- Format: `changelog-YYYY-MM-DD-feature-slug`\n- Example: `changelog-2026-01-09-chat-sessions`\n- Must be unique to prevent conflicts\n\n**Version Format**:\n- Use semantic versioning: `v0.73.0`\n- Include in summary entry\n\n### 5. **Media Handling**\n\n**When user mentions videos or screenshots:**\n\n**For YouTube videos** (in detailed entry):\n```mdx\n<div style={{display: 'flex', justifyContent: 'center', marginTop: \"20px\", marginBottom: \"20px\", flexDirection: 'column', alignItems: 'center'}}>\n  <iframe\n    width=\"100%\"\n    height=\"500\"\n    src=\"https://www.youtube.com/embed/VIDEO_ID\"\n    title=\"Feature Demo\"\n    frameBorder=\"0\"\n    allow=\"accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share\"\n    allowFullScreen\n  ></iframe>\n</div>\n```\n\n**For images** (in detailed entry):\n```mdx\n<Image\n  img={require('/static/images/changelog/feature-name.png')}\n  alt=\"Feature description\"\n  style={{display: 'block', margin: '20px auto', textAlign: 'center'}}\n/>\n```\n\n**Ask for specifics if unclear:**\n- \"Do you have the YouTube URL for the demo video?\"\n- \"How many screenshots should I add placeholders for?\"\n- \"Where should I place the images in the narrative?\"\n\n### 6. **Feature Documentation Integration**\n\n**Always search for related documentation:**\n1. Check if a dedicated feature page exists in `/docs/docs/`\n2. If found, link to it in both the summary and detailed entries\n3. If not found, note this and ask: \"Should we create documentation for this feature?\"\n\n**Documentation links format:**\n- Use relative paths: `/observability/trace-with-python-sdk/track-chat-sessions`\n- Not absolute URLs unless external\n\n### 7. **Quality Assurance Checklist**\n\nBefore finalizing, verify:\n- [ ] Version number present and correct\n- [ ] All three entries created (detailed, summary, sidebar)\n- [ ] Summary links to detailed entry correctly\n- [ ] Active voice used where possible\n- [ ] No em dashes present\n- [ ] Feature documentation linked if applicable\n- [ ] Media placeholders added if mentioned\n- [ ] Writing style guidelines followed\n- [ ] IDs and file names follow conventions\n- [ ] All required frontmatter included\n\n### 8. **File Locations Reference**\n\n**Detailed changelog entries:**\n- Path: `/docs/blog/entries/[feature-slug].mdx`\n- Example: `/docs/blog/entries/chat-sessions-observability.mdx`\n\n**Summary changelog:**\n- Path: `/docs/blog/main.mdx`\n- Add new entry at the TOP of the file (after imports, before other entries)\n\n**Sidebar announcements:**\n- Path: `/web/oss/src/components/SidebarBanners/data/changelog.json`\n- JSON array, add new entry at the TOP\n\n## Step-by-Step Workflow\n\n### Step 1: Gather Information\nAsk the user for any missing information:\n```\n- What version is this for?\n- Do you have a demo video or screenshots?\n- What's the primary benefit users will get from this?\n- Are there existing docs for this feature I should link to?\n```\n\n### Step 2: Search for Related Documentation\n```bash\n# Search for related docs\ngrep -r \"session\" docs/docs/observability --include=\"*.mdx\" --include=\"*.md\"\n```\n\n### Step 3: Create Detailed Entry\nCreate `/docs/blog/entries/[feature-slug].mdx`:\n\n**IMPORTANT: Use correct frontmatter format (no authors field):**\n\n```mdx\n---\ntitle: \"Feature Name\"\nslug: feature-name-slug\ndate: YYYY-MM-DD\ntags: [vX.Y.Z]\ndescription: \"One-sentence description of the feature.\"\n---\n\n# Feature Name\n\n## Overview\n\n[2-3 paragraphs explaining what this feature is and why it matters]\n\n## Key Capabilities\n\n- **Capability 1**: Description\n- **Capability 2**: Description\n- **Capability 3**: Description\n\n## How It Works\n\n[Step-by-step explanation or code examples]\n\n```python\n# Code example if applicable\nimport agenta as ag\nag.tracing.store_session(session_id=\"conversation_123\")\n```\n\n## Use Cases\n\n[Real-world scenarios where this feature helps]\n\n## Getting Started\n\n[Links to documentation, tutorials, or guides]\n\n- [Feature Documentation](/docs/path/to/feature)\n- [Tutorial](/tutorials/path/to/tutorial)\n\n## What's Next\n\n[Optional: What's coming next or related features]\n```\n\n### Step 4: Add Summary to main.mdx\nAdd to `/docs/blog/main.mdx` at the TOP (after imports):\n\n```mdx\n### [Feature Name](/changelog/feature-slug)\n\n_DD Month YYYY_\n\n**vX.Y.Z**\n\n[1-2 paragraph summary explaining what the feature does and why users should care. Focus on benefits and capabilities.]\n\n[Optional: Add embedded video or image if this is a major feature]\n\n---\n```\n\n### Step 5: Add Sidebar Announcement\nAdd to `/web/oss/src/components/SidebarBanners/data/changelog.json`:\n\n```json\n[\n    {\n        \"id\": \"changelog-2026-01-09-feature-name\",\n        \"title\": \"Feature Name (Keep Under 40 Chars)\",\n        \"description\": \"One-sentence benefit users get from this feature.\",\n        \"link\": \"https://agenta.ai/docs/changelog/feature-slug\"\n    },\n    // ... existing entries\n]\n```\n\n### Step 6: Update Roadmap\nUpdate `/docs/src/data/roadmap.ts`:\n\n**If feature was in roadmap:**\n1. Find the feature in `inProgressFeatures` array\n2. Move it to `shippedFeatures` array at the top\n3. Convert from `PlannedFeature` format to `ShippedFeature` format:\n   - Remove `githubUrl` field\n   - Add `changelogPath` field pointing to your detailed entry\n   - Add `shippedAt` field with ISO date (YYYY-MM-DD)\n\n**Example:**\n```typescript\n// Move from inProgressFeatures to top of shippedFeatures:\n{\n  id: \"chat-session-view\",\n  title: \"Chat Sessions in Observability\",\n  description: \"Track multi-turn conversations with session grouping...\",\n  changelogPath: \"/docs/changelog/chat-sessions-observability\",\n  shippedAt: \"2026-01-09\",\n  labels: [{name: \"Observability\", color: \"DE74FF\"}],\n}\n```\n\n### Step 7: Check GitHub Discussion\nIf the roadmap item had a `githubUrl` pointing to a GitHub discussion:\n\n1. Note the discussion URL from the roadmap entry\n2. Check if the discussion should be closed (ask user if unsure)\n3. If using `gh` CLI: `gh issue close <number> --repo Agenta-AI/agenta --comment \"Shipped in v0.73.0\"`\n4. If CLI not available, note the discussion URL for manual closure\n\n### Step 8: Create Social Media Announcements\n\n**Follow the guidelines in:** `.claude/skills/write-social-announcement/SKILL.md`\n\nThat skill contains comprehensive\
+      \ guidelines for writing authentic announcements that avoid common AI writing patterns. Key points:\n\n- Vary your openings (don't always start with \"We just shipped\")\n- Avoid AI vocabulary: \"crucial\", \"pivotal\", \"showcases\", \"underscores\", \"landscape\", \"tapestry\"\n- No superficial \"-ing\" analyses at end of sentences\n- No rhetorical questions (\"Working with large test sets?\")\n- No cliché closings (\"Small changes, but they add up\")\n- Be specific and direct\n\nCreate `SOCIAL_ANNOUNCEMENTS.md` with sections for LinkedIn, Twitter, and Slack\n\n### Step 9: Build and Verify\n\n**CRITICAL: Always run the build to verify no errors before finishing.**\n\n1. **Run the documentation build:**\n```bash\ncd docs && npm run build\n```\n\n2. **If build fails, fix errors immediately:**\n   - **Common error: Missing authors field** - Remove `authors: [agenta]` from frontmatter\n   - **Correct frontmatter format** (example from existing entries):\n     ```yaml\n     ---\n     title: \"Feature Name\"\n     slug: feature-name-slug\n     date: YYYY-MM-DD\n     tags: [vX.Y.Z]\n     description: \"Brief description\"\n     ---\n     ```\n   - **Invalid MDX syntax** - Check for unclosed tags, incorrect JSX\n   - **Broken links** - Verify all relative paths exist\n\n3. **Verify checklist:**\n- [ ] Build completed successfully (`npm run build` in docs/)\n- [ ] Read all files to ensure consistency\n- [ ] Check that links work (relative paths correct)\n- [ ] Verify JSON syntax in sidebar announcement\n- [ ] Ensure version numbers match across files\n- [ ] Confirm writing style follows guidelines\n- [ ] Roadmap updated correctly\n- [ ] Social announcements created\n\n## Common Patterns and Examples\n\n### Example 1: New Feature Announcement (Chat Sessions)\n\n**Detailed Entry** (`docs/blog/entries/chat-sessions-observability.mdx`):\n```mdx\n---\ntitle: \"Chat Sessions in Observability\"\ndescription: \"Track and analyze multi-turn conversations with session grouping, cost analytics, and conversation flow visualization.\"\nauthors: [agenta]\ntags: [observability, sessions, tracing]\nhide_table_of_contents: false\n---\n\n# Chat Sessions in Observability\n\n## Overview\n\nChat sessions bring conversation-level observability to Agenta. You can now group related traces from multi-turn conversations together, making it easy to analyze complete user interactions rather than individual requests.\n\nThis feature is essential for debugging chatbots, AI assistants, and any application with multi-turn conversations. You get visibility into the entire conversation flow, including costs, latency, and intermediate steps.\n\n## Key Capabilities\n\n- **Automatic Grouping**: All traces with the same `ag.session.id` attribute are automatically grouped together\n- **Session Analytics**: Track total cost, latency, and token usage per conversation\n- **Session Browser**: Dedicated UI showing all sessions with first input, last output, and key metrics\n- **Session Drawer**: Detailed view of all traces within a session with parent-child relationships\n- **Real-time Monitoring**: Auto-refresh mode for monitoring active conversations\n\n## How It Works\n\nAdd a session ID to your traces using either the Python SDK or OpenTelemetry:\n\n**Python SDK:**\n```python\nimport agenta as ag\n\nag.tracing.store_session(session_id=\"conversation_123\")\n```\n\n**OpenTelemetry:**\n```javascript\nspan.setAttribute('ag.session.id', 'conversation_123')\n```\n\nThe UI automatically detects session IDs and groups traces together. You can use any format for session IDs: UUIDs, composite IDs (`user_123_session_456`), or custom formats.\n\n## Use Cases\n\n- **Debug Chatbots**: See the complete conversation flow when users report issues\n- **Monitor Multi-turn Agents**: Track how your agent handles follow-up questions and context\n- **Analyze Conversation Costs**: Understand which conversations are expensive and why\n- **Optimize Performance**: Identify latency issues across entire conversations, not just single requests\n\n## Getting Started\n\nLearn more in our documentation:\n\n- [Track Chat Sessions (Python SDK)](/observability/trace-with-python-sdk/track-chat-sessions)\n- [Session Tracking (OpenTelemetry)](/observability/trace-with-opentelemetry/session-tracking)\n- [Observability Overview](/observability/overview)\n\n## What's Next\n\nWe're continuing to enhance session tracking with upcoming features like session-level annotations, session comparisons, and automated session analysis.\n```\n\n**Summary Entry** (add to `docs/blog/main.mdx`):\n```mdx\n### [Chat Sessions in Observability](/changelog/chat-sessions-observability)\n\n_9 January 2026_\n\n**v0.73.0**\n\nYou can now track multi-turn conversations with chat sessions. All traces with the same session ID are automatically grouped together, letting you analyze complete conversations instead of individual requests.\n\nThe new session browser shows key metrics like total cost, latency, and token usage per conversation. Open any session to see all traces with their parent-child relationships. This makes debugging chatbots and AI assistants much easier. Add session tracking with one line of code using either our Python SDK or OpenTelemetry.\n\n---\n```\n\n**Sidebar Announcement**:\n```json\n{\n    \"id\": \"changelog-2026-01-09-chat-sessions\",\n    \"title\": \"Chat Sessions in Observability\",\n    \"description\": \"Track multi-turn conversations with session grouping and cost analytics.\",\n    \"link\": \"https://agenta.ai/docs/changelog/chat-sessions-observability\"\n}\n```\n\n### Example 2: Integration Announcement\n\n**For integrations, focus on:**\n- What you can now integrate with\n- How easy it is to set up (mention \"one line of code\" if true)\n- Key benefits specific to that integration\n- Link to integration docs\n\n### Example 3: Improvement Announcement\n\n**For improvements, emphasize:**\n- Quantifiable improvements (e.g., \"10x faster\", \"50% reduction\")\n- Before/after comparison if dramatic\n- How this helps users (time saved, better experience)\n\n## Decision-Making Framework\n\n**When Information is Missing:**\n- Version number unclear → Ask immediately before proceeding\n- Feature scope ambiguous → Request clarification and examples\n- Media availability uncertain → Confirm with user before adding placeholders\n- Categorization unclear → Ask whether it's a new feature, improvement, or bug fix\n\n**When Editing Existing Entries:**\n- Always preserve factual accuracy and original intent\n- Improve clarity and style without changing meaning\n- Flag technical inaccuracies to the user rather than guessing\n\n## Output Format\n\nWhen creating a changelog announcement, provide:\n\n1. **Detailed entry content** for `docs/blog/entries/[slug].mdx`\n2. **Summary entry content** to add to `docs/blog/main.mdx`\n3. **Sidebar announcement JSON** to add to `changelog.json`\n4. **Confirmation** that you checked for related documentation\n5. **Any questions** or clarifications needed\n\n**Be proactive** in identifying unclear requirements. Ask specific questions rather than making assumptions. Your goal is to produce changelog entries that are immediately publishable without requiring revision.\n\n## Tips for Success\n\n1. **Read existing entries first**: Before creating new entries, read 2-3 recent entries in `main.mdx` and `entries/` to match the tone and structure\n2. **Be concise**: Users skim changelogs. Front-load the benefit in every sentence.\n3. **Link generously**: Help users find more information easily\n4. **Test your work**: Read the entries out loud to catch awkward phrasing\n5. **Consistency matters**: Ensure terminology matches across all three entries\n\n---\n\n**Remember**: You're creating user-facing documentation that represents a new feature to thousands of developers. Make it clear, compelling, and easy to understand."
+    gold_removed: ''
+  - path: .claude/skills/write-social-announcement/SKILL.md
+    tier: 1
+    gold_added: '# Write Social Media Announcements
+
+
+      This skill creates authentic social media announcements for LinkedIn, Twitter/X, and Slack that avoid common AI writing patterns.
+
+
+      ## Writing Guidelines
+
+
+      ### Core Principles
+
+
+      1. **Write like a human, not a press release**
+
+      2. **Be specific, not generic**
+
+      3. **State facts directly without inflating their importance**
+
+      4. **Vary your openings** - Don''t start every post with "We just shipped"
+
+
+      ### Words and Phrases to NEVER Use
+
+
+      These words are statistical markers of AI-generated text. Avoid them completely:
+
+
+      **Significance words:**
+
+      - testament, pivotal, crucial, vital, key (as adjective), groundbreaking
+
+      - underscores, highlights, emphasizes, showcases, exemplifies
+
+      - landscape (abstract), tapestry (abstract), realm, beacon
+
+      - indelible mark, focal point, deeply rooted
+
+
+      **Transition/filler words:**
+
+      - Additionally (especially at start of sentence)
+
+      - Furthermore, Moreover
+
+      - In summary, In conclusion, Overall
+
+      - It''s important to note/remember/consider
+
+
+      **Puffery words:**
+
+      - vibrant, rich (figurative), profound, renowned
+
+      - cutting-edge, revolutionary, game-changing
+
+      - seamless, robust, comprehensive, holistic
+
+
+      **Action verbs that sound corporate:**
+
+      - delve, garner, foster, cultivate, leverage
+
+      - enhance, optimize, streamline, empower
+
+      - align with, resonate with
+
+
+      **Generic praise phrases:**
+
+      - commitment to excellence/quality/innovation
+
+      - dedication to [abstract noun]
+
+      - passion for [thing]
+
+
+      ### Sentence Patterns to AVOID
+
+
+      **1. Superficial "-ing" analyses at end of sentences**
+
+
+      ❌ "We added cost tracking, helping teams make better decisions."
+
+      ❌ "The new filter reduces noise, enabling faster debugging."
+
+
+      ✅ "We added cost tracking. Now you can see exactly what each request costs."
+
+      ✅ "The new filter reduces noise. Debugging is faster."
+
+
+      **2. "Not only... but also" and negative parallelisms**
+
+
+      ❌ "It''s not just about speed, it''s about reliability."
+
+      ❌ "Not only does it track costs, but it also shows token usage."
+
+
+      ✅ "It''s fast and reliable."
+
+      ✅ "It tracks costs and shows token usage."
+
+
+      **3. Rule of three (adjective, adjective, adjective)**
+
+
+      ❌ "A fast, reliable, and scalable solution."
+
+      ❌ "Clean, modern, and intuitive interface."
+
+
+      ✅ "It''s fast." (just say the most important thing)
+
+
+      **4. Rhetorical questions followed by answers**
+
+
+      ❌ "Working with large test sets? Collapse them."
+
+      ❌ "Tired of switching tabs? Now you don''t have to."
+
+
+      ✅ "You can collapse large test sets."
+
+      ✅ "Costs show in the dropdown. No tab switching."
+
+
+      **5. "Small changes, but they add up" type closings**
+
+
+      ❌ "Small changes, but they add up when you''re testing prompts all day."
+
+      ❌ "Little things that make a big difference."
+
+
+      ✅ (Just end. Don''t summarize or reflect on the importance.)
+
+
+      **6. Overuse of em dashes for dramatic effect**
+
+
+      ❌ "Provider costs — right in the dropdown — so you don''t have to switch tabs."
+
+
+      ✅ "Provider costs show in the dropdown."
+
+
+      ### What TO Do
+
+
+      **Be direct:**
+
+      - "You can now see costs in the dropdown."
+
+      - "Evaluations run from the Playground."
+
+      - "Test cases collapse."
+
+
+      **Be specific:**
+
+      - "Cost per million tokens shows next to each model."
+
+      - Not: "Cost information is now more accessible."
+
+
+      **Use simple verbs:**
+
+      - "is" instead of "serves as"
+
+      - "has" instead of "boasts" or "features"
+
+      - "shows" instead of "showcases"
+
+
+      **Vary sentence length:**
+
+      - Mix short punchy sentences with longer ones
+
+      - Don''t make every sentence the same structure
+
+
+      **End without summarizing:**
+
+      - Don''t wrap up with "these improvements help teams..."
+
+      - Just stop after the last fact
+
+
+      ### Platform-Specific Guidelines
+
+
+      #### LinkedIn
+
+
+      **Format:**
+
+      - 3-4 short paragraphs max
+
+      - One code snippet if relevant (optional)
+
+      - Link at the end
+
+      - No hashtags (LinkedIn algorithm doesn''t favor them anymore)
+
+
+      **Tone:**
+
+      - Conversational but professional
+
+      - First person ("We shipped" or "I added")
+
+      - Explain what changed and why it matters
+
+
+      **Opening variations (rotate these, don''t always use the same one):**
+
+      - "[Feature] is live in [Product]."
+
+      - "Three updates to [Product] this week:"
+
+      - "New in [Product]: [feature]."
+
+      - "[Problem statement]. Fixed that."
+
+      - Start with the most interesting detail
+
+
+      #### Twitter/X
+
+
+      **Format:**
+
+      - Two tweets max: announcement + link
+
+      - First tweet: what shipped + key benefit (under 280 chars)
+
+      - Second tweet: "Check it out:" + link
+
+
+      **Tone:**
+
+      - Casual, direct
+
+      - No thread unless it''s a major release
+
+
+      #### Slack
+
+
+      **Community (#announcements):**
+
+      - Short, user-focused
+
+      - One code snippet if it helps
+
+      - Bullet points OK here
+
+      - Link to changelog
+
+
+      **Internal (#product-updates):**
+
+      - Bullet points with metrics
+
+      - Note any manual TODOs
+
+      - Link to changelog
+
+
+      ### Examples
+
+
+      **LinkedIn - Good:**
+
+      ```
+
+      Three Playground updates shipped today.
+
+
+      Model costs show in the dropdown now. You see the price per million tokens right when selecting a model.
+
+
+      You can run evaluations without leaving the Playground. Hit evaluate, pick your test set, and it runs with your current config.
+
+
+      Test cases collapse. Useful when you have 50 of them and need to find a specific one.
+
+
+      https://agenta.ai/docs/changelog/playground-ux-improvements
+
+      ```
+
+
+      **LinkedIn - Bad (AI patterns):**
+
+      ```
+
+      We just shipped three quality-of-life improvements to the Agenta Playground.
+
+
+      **Provider costs upfront.** You can now see the cost per million tokens directly in the model selection dropdown — helping you make informed decisions about which model to use.
+
+
+      **Evaluations from the Playground.** Start an evaluation run without leaving the Playground, keeping you in flow when iterating on prompts.
+
+
+      **Collapsible test cases.** Working with large test sets? Collapse completed test cases to focus on what matters.
+
+
+      Small changes, but they add up when you''re testing prompts all day.
+
+      ```
+
+
+      Problems with the bad version:
+
+      - "quality-of-life improvements" - generic puffery
+
+      - "helping you make informed decisions" - superficial -ing analysis
+
+      - "keeping you in flow" - superficial -ing analysis
+
+      - "Working with large test sets?" - rhetorical question
+
+      - "focus on what matters" - cliché
+
+      - "Small changes, but they add up" - AI closing pattern
+
+      - Overuse of em dashes
+
+      - Bold headers with periods (feels like a list, not prose)
+
+
+      **Twitter - Good:**
+
+      ```
+
+      Tweet 1:
+
+      Three Playground updates in Agenta:
+
+      - Model costs visible in dropdown
+
+      - Run evaluations without leaving Playground
+
+      - Collapsible test cases
+
+
+      Tweet 2:
+
+      Changelog: [link]
+
+      ```
+
+
+      **Twitter - Bad:**
+
+      ```
+
+      We just shipped three quality-of-life improvements! 🚀
+
+
+      The Playground now shows provider costs, lets you run evaluations directly, and supports collapsible test cases.
+
+
+      Small UX wins that add up. Check it out 👇
+
+      ```
+
+
+      Problems: emoji, "quality-of-life improvements", "Small UX wins that add up"
+
+
+      ### Self-Check Before Posting
+
+
+      Ask yourself:
+
+      1. Would a tired engineer actually write this at 11pm?
+
+      2. Does every sentence add new information?
+
+      3. Did I use any words from the "never use" list?
+
+      4. Did I end with a summary or reflection? (Remove it)
+
+      5. Are there rhetorical questions? (Rewrite as statements)
+
+      6. Count the em dashes. More than one? Rewrite.'
+    gold_removed: ''

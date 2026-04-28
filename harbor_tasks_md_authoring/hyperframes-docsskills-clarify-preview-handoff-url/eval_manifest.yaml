@@ -1,0 +1,139 @@
+version: "2.0"
+
+task:
+  name: hyperframes-docsskills-clarify-preview-handoff-url
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: heygen-com/hyperframes
+  pr: 504
+  base_commit: "2b836cc2242e8725b8159cdb8786e522c3fd0e97"
+  merge_commit: "4af64d8adcfb6fd2418371bf38c344e2eb6e6ca3"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/hyperframes-cli/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/hyperframes-cli/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/hyperframes-cli/SKILL.md."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/website-to-hyperframes/SKILL.md."
+  - id: signal_04
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/website-to-hyperframes/SKILL.md."
+  - id: signal_05
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/website-to-hyperframes/SKILL.md."
+  - id: signal_06
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/website-to-hyperframes/references/step-7-validate.md."
+  - id: signal_07
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/website-to-hyperframes/references/step-7-validate.md."
+  - id: signal_08
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/website-to-hyperframes/references/step-7-validate.md."
+
+config_edits:
+  - path: skills/hyperframes-cli/SKILL.md
+    tier: 1
+    gold_added: 'When handing a project back to the user, use the Studio project URL, not the
+
+      source `index.html` path:
+
+
+      ```text
+
+      http://localhost:<port>/#project/<project-name>
+
+      ```
+
+
+      Use the actual port from the preview output and the project directory name. For
+
+      example, after `npx hyperframes preview --port 3017` in `codex-openai-video`,
+
+      report `http://localhost:3017/#project/codex-openai-video`.
+
+
+      Treat `index.html` as source-code context only. It is fine to link it as an
+
+      implementation file, but do not label it as the project or preview surface.
+
+      '
+    gold_removed: ''
+  - path: skills/website-to-hyperframes/SKILL.md
+    tier: 1
+    gold_added: 'Lint, validate, snapshot, preview. Deliver the localhost Studio project URL
+
+      (`http://localhost:<port>/#project/<project-name>`) to the user first — only
+
+      render to MP4 on explicit request. Do not treat `index.html` as the project
+
+      handoff link; it is source-code context only.
+
+      **Gate:** `npx hyperframes lint` and `npx hyperframes validate` pass with zero errors, and the final response includes the active Studio project URL.'
+    gold_removed: ''
+  - path: skills/website-to-hyperframes/references/step-7-validate.md
+    tier: 1
+    gold_added: '### Handoff URL
+
+
+      The Studio URL is the project handoff surface. In the final response, report the
+
+      active preview URL with the project hash:
+
+
+      ```text
+
+      http://localhost:<port>/#project/<project-name>
+
+      ```
+
+
+      Use the actual port selected by `hyperframes preview` and the project name shown
+
+      by the preview command. If you run `hyperframes preview --port 3017` for a
+
+      project directory named `codex-openai-video`, the project URL is:
+
+
+      ```text
+
+      http://localhost:3017/#project/codex-openai-video
+
+      ```
+
+
+      Do **not** present `index.html` as the project link. `index.html` is the source
+
+      file for agents and editors; the user-facing project is the running HyperFrames
+
+      Studio preview. You may include source file links as secondary context, but the
+
+      primary "Project" or "Preview" line must be the localhost Studio URL.
+
+
+      If a render was also requested, still include the Studio URL first so the user
+
+      can scrub and inspect the project. Include the MP4 path as the rendered output,
+
+      not as a replacement for the project URL.
+
+      '
+    gold_removed: ''

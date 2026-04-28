@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: hushline-update-agentsmd
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: scidsg/hushline
+  pr: 1297
+  base_commit: "993655281cca60a51647469f170dc062f315c2f4"
+  merge_commit: "4f4553b7de4e6b70ca962bdf8ef52de9a0cf1b4e"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+
+config_edits:
+  - path: AGENTS.md
+    tier: 1
+    gold_added: "## Documentation\n\nWhen behavior changes or features are added/removed, update documentation:\n\nLocal workflow:\n\n1. Clone docs repo:\n   - `git clone https://github.com/scidsg/hushline-docs.git` (if missing)\n   - `cd hushline-docs && git pull --ff-only`\n   - Update, add, or remove relevant documentation content.\n2. Build docs:\n   - `cd docs`\n   - `npm run build`\n3. Clone or update website repo:\n   - `cd ..`\n   - `git clone https://github.com/scidsg/hushline-website.git` (if missing)\n   - `cd hushline-website && git pull --ff-only`\n4. Sync built docs into website library:\n   - `rsync -a --delete ../hushline-docs/docs/build/ ../hushline-website/src/library/`\n5. Verify the site renders correctly before opening PRs.\n\n- Before opening a PR, always run `make lint` and `make test` and fix any issues first."
+    gold_removed: ''

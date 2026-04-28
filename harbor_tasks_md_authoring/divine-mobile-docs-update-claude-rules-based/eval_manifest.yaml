@@ -1,0 +1,111 @@
+version: "2.0"
+
+task:
+  name: divine-mobile-docs-update-claude-rules-based
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: divinevideo/divine-mobile
+  pr: 3018
+  base_commit: "2015cbd187de73c4b73d8137469d32ec65e83ba3"
+  merge_commit: "fb8f5d521bdf5b9cf13b2fae57171b0e8b0034fd"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/rules/architecture.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/rules/architecture.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/rules/architecture.md."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/rules/code_style.md."
+  - id: signal_04
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/rules/code_style.md."
+  - id: signal_05
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/rules/code_style.md."
+  - id: signal_06
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/rules/state_management.md."
+  - id: signal_07
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/rules/state_management.md."
+  - id: signal_08
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/rules/state_management.md."
+  - id: signal_09
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/rules/testing.md."
+  - id: signal_10
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/rules/testing.md."
+  - id: signal_11
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/rules/testing.md."
+
+config_edits:
+  - path: .claude/rules/architecture.md
+    tier: 1
+    gold_added: '### When to Extract into a Package
+
+
+      Extract code into a dedicated package when:
+
+      - A repository or client is reused across multiple features
+
+      - A service has grown large enough to slow down CI (each package gets its own targeted CI workflow)
+
+      - The code has no dependency on the app''s `lib/` layer
+
+
+      Extracting into packages improves CI speed because only the affected package''s workflow runs on changes, rather than the full mobile test suite.
+
+      '
+    gold_removed: ''
+  - path: .claude/rules/code_style.md
+    tier: 1
+    gold_added: "## Latest Dependency Versions\n\nWhen adding a new dependency to `pubspec.yaml`, always use the latest stable version. Don't copy version constraints from older packages without checking for updates.\n\n```yaml\n# Good — checked pub.dev for latest\nvery_good_analysis: ^10.2.0\n\n# Bad — copied from another package without checking\nvery_good_analysis: ^6.0.0\n```\n\n---\n\n## PR Scope\n\nPull requests should only include changes directly related to the task. Remove unrelated file modifications (stale lock files, unrelated docs, formatting changes in untouched files) before requesting review.\n\nIf you discover something unrelated that needs fixing, create a separate PR or issue for it.\n\n---\n\n## Temporary Code\n\nTransitional or temporary code (feature flags, compatibility shims, workarounds for in-progress migrations) must include a `// TODO(#issue):` comment referencing a tracking issue for its removal. Code without a removal plan tends to become permanent.\n\n```dart\n// Good — linked to a tracking issue\n// TODO(#2854): Remove this fallback after unified search ships\nif (useOldSearch) {\n  return _legacySearch(query);\n}\n\n// Bad — no indication this is temporary or when to remove it\nif (useOldSearch) {\n  return _legacySearch(query);\n}\n```\n\n---\n"
+    gold_removed: ''
+  - path: .claude/rules/state_management.md
+    tier: 1
+    gold_added: "### Getters vs Stored State: When Computation Is Expensive\n\nSimple derivations (null checks, string formatting, boolean flags) are fine as getters. However, if the computation is expensive — sorting, filtering, or transforming a list — store the result as a field in state rather than recomputing it on every access.\n\n```dart\n// Good — cheap derivation, getter is fine\nbool get isValid => name?.isNotEmpty == true;\n\n// Bad — expensive list operation as a getter, recomputed on every access\nList<Video> get sortedVideos =>\n    videos.toList()..sort((a, b) => b.date.compareTo(a.date));\n\n// Good — computed once at emit time and stored in state\nemit(state.copyWith(\n  sortedVideos: videos.toList()..sort((a, b) => b.date.compareTo(a.date)),\n));\n```\n"
+    gold_removed: ''
+  - path: .claude/rules/testing.md
+    tier: 1
+    gold_added: '## New and Extracted Packages Must Ship with Tests
+
+
+      When extracting code into a new package (client, repository, utility), include test coverage in the same PR. Do not defer tests to a follow-up — the extraction PR is incomplete without them.
+
+
+      At minimum, cover:
+
+      - All public methods on the main class
+
+      - Error/edge cases for network or I/O operations
+
+      - Model serialization if the package defines models
+
+
+      ---
+
+      '
+    gold_removed: ''

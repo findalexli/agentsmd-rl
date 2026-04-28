@@ -1,0 +1,75 @@
+version: "2.0"
+
+task:
+  name: runtime-improve-vmrcodeflowstatus-skillmd-structure
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: dotnet/runtime
+  pr: 124150
+  base_commit: "bb9ae8f25b0b12b99176f3f615ba079ca8338181"
+  merge_commit: "500d83e287aea93e8361e1fbbb8fe17c6ea5cf07"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/skills/vmr-codeflow-status/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/skills/vmr-codeflow-status/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/skills/vmr-codeflow-status/SKILL.md."
+
+config_edits:
+  - path: .github/skills/vmr-codeflow-status/SKILL.md
+    tier: 1
+    gold_added: 'description: Analyze VMR codeflow PR status for dotnet repositories. Use when investigating stale codeflow PRs, checking if fixes have flowed through the VMR pipeline, debugging dependency update issues in PRs authored by dotnet-maestro[bot], checking overall flow status for a repo, or diagnosing why backflow PRs are missing or blocked.
+
+      > 🚨 **NEVER** use `gh pr review --approve` or `--request-changes`. Only `--comment` is allowed. Approval and blocking are human-only actions.
+
+
+      - You need to know why backflow PRs are missing or when the last VMR build was published
+
+      - You''re asked questions like "is this codeflow PR up to date", "has the runtime revert reached this PR", "why is the codeflow blocked", "what is the state of flow for the sdk", "what''s the flow status for net11"
+
+
+      ## Two Modes
+
+
+      | Mode | Use When | Required Params |
+
+      |------|----------|-----------------|
+
+      | **PR analysis** | Investigating a specific codeflow PR | `-PRNumber` (and optionally `-Repository`) |
+
+      | **Flow health** (`-CheckMissing`) | Checking overall repo flow status | `-CheckMissing` (optional: `-Repository`, `-Branch`) |
+
+
+      > ⚠️ **Common mistake**: Don''t use `-PRNumber` and `-CheckMissing` together — they are separate modes. `-CheckMissing` scans branches discovered from open and recent backflow PRs (unless `-Branch` is provided), not a specific PR.
+
+      ### PR Analysis Mode (default)
+
+      7. **Traces fixes** (with `-TraceFix`) — Checks if a specific fix has flowed through VMR → codeflow PR
+
+
+      ### Flow Health Mode (`-CheckMissing`)
+
+      1. **Checks official build freshness** — Queries `aka.ms` shortlinks for latest published VMR build dates per channel
+
+      2. **Scans backflow PRs** — Finds branches where a backflow PR should exist but doesn''t, and checks health of open PRs (conflict/staleness/resolved status)
+
+      3. **Scans forward flow** — Checks open forward flow PRs into `dotnet/dotnet` for staleness and conflicts
+
+      4. **Produces summary** — Counts healthy/blocked/missing PRs across both directions
+
+
+      > ❌ **Never assume "Unknown" health means healthy.** When `gh` API calls fail (auth, rate limiting), the script returns "Unknown" status — this is explicitly excluded from healthy/covered counts.
+
+
+      > ⚠️ **aka.ms redirect behavior**: 301 is expected and treated as a valid product URL (→ ci.dot.net). Non-301 redirects (often 302, which goes to Bing) indicate an invalid URL. The script only accepts 301.'
+    gold_removed: ''

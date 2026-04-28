@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: vortex-fix-agentsmd-sccache
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: vortex-data/vortex
+  pr: 7377
+  base_commit: "256a0299f993205fe05ed2e5d6e31627d690293c"
+  merge_commit: "50d64a4bc6eea0cc02a1e6d8893812ff1170a834"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+
+config_edits:
+  - path: AGENTS.md
+    tier: 1
+    gold_added: "- Project is a monorepo Rust workspace, java bindings in `/java`, python bindings in\n- Run `cargo build -p` to build a specific crate\n- Use `cargo clippy --all-targets --all-features` to make sure a project is free of lint issues.\n- Run `cargo +nightly fmt --all` to format Rust source files. Please do this every time you reach a\n- Run `./scripts/public-api.sh` to re-generate the public API lock files. Please do this every time\n- You can try running\n- When iterating on CI failures, fetch only failed job logs first\n- If `gh` commands fail with `error connecting to api.github.com` in sandbox, immediately rerun with\n- If cargo fails with `sccache: error: Operation not permitted`, rerun the command with\n  `RUSTC_WRAPPER=` so rustc runs directly. You should ONLY do this if you get this exact error, as\n  this is only a concern when you are running on our CI.\n- Run docs doctests from the docs directory (`make -C docs doctest`) so the correct Sphinx Makefile"
+    gold_removed: ''

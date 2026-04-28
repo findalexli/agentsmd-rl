@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: nestjs-cqrs-starter-chore-add-agentsmd
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: hardyscc/nestjs-cqrs-starter
+  pr: 1041
+  base_commit: "dd4886c552fa100c6f6b35794cfc07e0e97366b2"
+  merge_commit: "a014ad126e3693a4526fbf5c77b02ced48aaeca3"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+
+config_edits:
+  - path: AGENTS.md
+    tier: 1
+    gold_added: "# AGENTS.md\n\n## Repository Overview\n\nNestJS CQRS Microservices Starter — a monorepo demonstrating an advanced microservice architecture with GraphQL (Apollo Federation), Domain-Driven Design (DDD), and the Command Query Responsibility Segregation (CQRS) pattern using NestJS.\n\n## Project Structure\n\n```\napps/\n  gateway/          # Apollo Federation gateway (GraphQL entry point, port 3000)\n  service-user/     # User microservice (CQRS + EventStore + MySQL)\n  service-account/  # Account microservice (CQRS + EventStore + MySQL)\nlibs/\n  common/           # Shared library: domain events and interfaces\n```\n\nEach service follows DDD layers:\n\n```\nsrc/\n  <domain>/\n    commands/       # Command handlers (write side)\n    queries/        # Query handlers (read side)\n    events/         # Event handlers (async reactions to domain events)\n    models/         # Domain entities / TypeORM entities\n    sagas/          # Sagas (orchestrate cross-service workflows via events)\n    dto/            # GraphQL input/output types\n    resolvers/      # GraphQL resolvers\n    <domain>.module.ts\n```\n\n## Common Commands\n\n```bash\n# Install dependencies\nnpm install\n\n# Build all apps\nnpm run build\n\n# Lint (zero warnings enforced)\nnpm run lint\n\n# Format code\nnpm run format\n\n# Run unit tests\nnpm test\n\n# Run unit tests with coverage\nnpm run test:cov\n\n# Run e2e tests (gateway)\nnpm run test:e2e\n\n# Start a specific app in watch mode\nnest start service-user --watch\nnest start service-account --watch\nnest start gateway --watch\n```\n\n## Architecture Conventions\n\n- **CQRS**: All write operations go through `Command` → `CommandHandler`. All read operations go through `Query` → `QueryHandler`. Never mix reads and writes in the same handler.\n- **Events**: Domain events are published after successful command execution and handled asynchronously by `EventHandler` classes. Cross-service events flow through EventStore persistent subscriptions.\n- **Sagas**: Use NestJS CQRS `@Saga()` to react to events and dispatch new commands across service boundaries.\n- **GraphQL**: All APIs are exposed via GraphQL resolvers using `type-graphql` decorators. The gateway federates schemas from each microservice.\n- **TypeORM**: Entities use MySQL. Entity class names map to uppercase table names (e.g., `USER`, `ACCOUNT`).\n- **Shared library**: Place reusable domain event definitions and interfaces in `libs/common/src`. Import using the `@hardyscc/common` path alias.\n\n## Code Style\n\n- TypeScript strict mode is enabled.\n- ESLint with `@typescript-eslint` — zero warnings allowed (`--max-warnings 0`).\n- Prettier is enforced via `lint-staged` on pre-commit (formats `*.ts` files).\n- Commit messages must follow [Conventional Commits](https://www.conventionalcommits.org/) (enforced by `commitlint`).\n\n## External Dependencies for Local Development\n\n| Service    | Docker command |\n|------------|----------------|\n| MySQL 8    | `docker run -d -e MYSQL_ROOT_PASSWORD=Admin12345 -e MYSQL_USER=usr -e MYSQL_PASSWORD=User12345 -e MYSQL_DATABASE=development -e MYSQL_AUTHENTICATION_PLUGIN=mysql_native_password -p 3306:3306 --name some-mysql bitnami/mysql:8.0.19` |\n| EventStore | `docker run --name some-eventstore -d -p 2113:2113 -p 1113:1113 eventstore/eventstore:release-5.0.9` |\n\nAfter starting EventStore, create persistent subscriptions for cross-service event routing (see README.md for the `curl` commands).\n\n## Testing\n\n- Unit tests live alongside source files as `*.spec.ts`.\n- E2E tests for the gateway are in `apps/gateway/test/`.\n- Run `npm test` before opening a pull request."
+    gold_removed: ''

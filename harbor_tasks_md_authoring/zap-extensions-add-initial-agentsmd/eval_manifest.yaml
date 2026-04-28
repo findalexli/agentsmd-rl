@@ -1,0 +1,70 @@
+version: "2.0"
+
+task:
+  name: zap-extensions-add-initial-agentsmd
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: zaproxy/zap-extensions
+  pr: 7094
+  base_commit: "a2bc6558ff7cab8306f330f04645c988d3085fa0"
+  merge_commit: "e7d19f465850e42060c027dfe3264f52ff949353"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+
+config_edits:
+  - path: AGENTS.md
+    tier: 1
+    gold_added: '## Project Overview
+
+
+      This project contains official add-ons for ZAP, the Zed Attack Proxy.
+
+      ZAP is a tool for finding vulnerabilities in web applications.
+
+
+      ## Project Structure
+
+
+      The main functionality is in the addOns directory.
+
+      Each add-on is contained in its own directory underneath addOns.
+
+
+      ## Build and Test Instructions
+
+
+      To build an add-on called ''example'' use `./gradlew :addOns:example:compileJava`
+
+
+      To run the unit tests use:  `./gradlew :addOns:example:test`
+
+
+      ## Development Guidelines
+
+
+      - Always use modern Java features when relevant.
+
+      - Always i18n any strings which will appear in the UI.
+
+      - Do not duplicate code, instead create reusable methods.
+
+      - Prefer use of imports over fully qualified class names, unless there is a collision.
+
+      - Avoid unnecessary intermediate variables.
+
+      - For UI code put as much functionality as possible into non UI code to make it easier to add unit tests for it.'
+    gold_removed: ''

@@ -1,0 +1,75 @@
+version: "2.0"
+
+task:
+  name: vscode-hygiene-skill-updates
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: microsoft/vscode
+  pr: 296347
+  base_commit: "8eb7cee49c0e6b8c5e35fe68f964b2f1480e7a07"
+  merge_commit: "ddc18bbe4c2c1b8e90465b4e9daf14828ab61d12"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/skills/hygiene/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/skills/hygiene/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/skills/hygiene/SKILL.md."
+
+config_edits:
+  - path: .github/skills/hygiene/SKILL.md
+    tier: 1
+    gold_added: '---
+
+      name: hygiene
+
+      description: Use when making code changes to ensure they pass VS Code''s hygiene checks. Covers the pre-commit hook, unicode restrictions, string quoting rules, copyright headers, indentation, formatting, ESLint, and stylelint. Run the hygiene check before declaring work complete.
+
+      ---
+
+
+      ## Running the hygiene check
+
+      **Always run the pre-commit hygiene check before declaring work complete.** This catches issues that would block a commit.
+
+      To run the hygiene check on your staged files:
+
+      npm run precommit
+
+      This executes `node --experimental-strip-types build/hygiene.ts`, which scans only **staged files** (from `git diff --cached`).
+
+
+      To check specific files directly (without staging them first):
+
+      node --experimental-strip-types build/hygiene.ts path/to/file.ts
+
+
+      ## What it checks
+
+
+      The hygiene linter scans staged files for issues including (but not limited to):
+
+
+      - **Unicode characters**: Non-ASCII characters (em-dashes, curly quotes, emoji, etc.) are rejected. Use ASCII equivalents in comments and code. Suppress with `// allow-any-unicode-next-line` or `// allow-any-unicode-comment-file`.
+
+      - **Double-quoted strings**: Only use `"double quotes"` for externalized (localized) strings. Use `''single quotes''` everywhere else.
+
+      - **Copyright headers**: All files must include the Microsoft copyright header.
+
+      - **Indentation**: Tabs only, no spaces for indentation.
+
+      - **Formatting**: TypeScript files must match the formatter output (run `Format Document` to fix).
+
+      - **ESLint**: TypeScript files are linted with ESLint.
+
+      - **Stylelint**: CSS files are linted with stylelint.'
+    gold_removed: ''

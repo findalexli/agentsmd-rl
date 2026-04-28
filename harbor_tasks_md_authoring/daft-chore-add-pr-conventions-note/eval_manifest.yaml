@@ -1,0 +1,43 @@
+version: "2.0"
+
+task:
+  name: daft-chore-add-pr-conventions-note
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: Eventual-Inc/Daft
+  pr: 5166
+  base_commit: "33884bed809abf6775d3c88f7085fcfa684f39c0"
+  merge_commit: "889a3dd173696282336bf5aa90093efc86090e18"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+
+config_edits:
+  - path: AGENTS.md
+    tier: 1
+    gold_added: '
+
+      ## PR Conventions
+
+
+      - Titles: Conventional Commits (e.g., `feat: ...`); enforced by `.github/workflows/pr-labeller.yml`.
+
+      - Descriptions: follow `.github/pull_request_template.md`.'
+    gold_removed: ''
+  - path: CLAUDE.md
+    tier: 1
+    gold_added: AGENTS.md
+    gold_removed: ''

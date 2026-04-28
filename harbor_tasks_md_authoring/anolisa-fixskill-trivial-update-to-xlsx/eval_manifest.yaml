@@ -1,0 +1,24 @@
+version: "2.0"
+
+task:
+  name: anolisa-fixskill-trivial-update-to-xlsx
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: alibaba/anolisa
+  pr: 200
+  base_commit: "d7dd7e6cbddd6ce869173c9703ffac3da3c51c74"
+  merge_commit: "efb487b99eed063447eb4253a2c1730da69945ed"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in src/os-skills/others/xlsx/SKILL.md."
+
+config_edits:
+  - path: src/os-skills/others/xlsx/SKILL.md
+    tier: 1
+    gold_added: 'description: "Comprehensive spreadsheet creation, editing, and analysis with support for formulas, formatting, data analysis, and visualization. When agent needs to work with spreadsheets (.xlsx, .xlsm, .csv, .tsv, etc) for: (1) Creating new spreadsheets with formulas and formatting, (2) Reading or analyzing data, (3) Modify existing spreadsheets while preserving formulas, (4) Data analysis and visualization in spreadsheets, or (5) Recalculating formulas"'
+    gold_removed: ''

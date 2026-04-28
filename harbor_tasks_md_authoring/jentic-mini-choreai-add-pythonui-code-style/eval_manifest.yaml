@@ -1,0 +1,68 @@
+version: "2.0"
+
+task:
+  name: jentic-mini-choreai-add-pythonui-code-style
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: jentic/jentic-mini
+  pr: 283
+  base_commit: "12adc64e065adafa9e2e3327f8e39b3bc1cd3915"
+  merge_commit: "eac47cc3e7d130b29457a0dacbc8487dd28b458c"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/CLAUDE.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/CLAUDE.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/CLAUDE.md."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/rules/python-code-style.md."
+  - id: signal_04
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/rules/python-code-style.md."
+  - id: signal_05
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/rules/python-code-style.md."
+  - id: signal_06
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/rules/ui-code-style.md."
+  - id: signal_07
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/rules/ui-code-style.md."
+  - id: signal_08
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/rules/ui-code-style.md."
+
+config_edits:
+  - path: .claude/CLAUDE.md
+    tier: 1
+    gold_added: '- **Icons**: Lucide React
+
+      Shadcn-style owned components in `ui/src/components/ui/`.
+
+      - **UI**: ESLint 9 (flat config) with Prettier as plugin. Config: `ui/eslint.config.js`, `ui/prettier.config.js`, `ui/.editorconfig`'
+    gold_removed: ''
+  - path: .claude/rules/python-code-style.md
+    tier: 1
+    gold_added: "---\npaths:\n  - \"**/*.py\"\n---\n\n## Python code style\n\nFormatting is `ruff format` — [PEP 8](https://peps.python.org/pep-0008/)-aligned, line length 100 (project standard; PEP 8 recommends 79). `ruff check` enforces our selected rule subset (`E4`, `E7`, `E9`, `F`, `I`, `PLC0415`, `PLC2701`) — see `[tool.ruff.lint]` in `pyproject.toml`. Run `pdm run lint:fix` on files you touched before handing off.\n\n- **Top-level imports only.** Every `import` belongs at the module top, above the first definition. No function-local imports for lazy-loading or startup-cost reasons. Enforced by ruff `PLC0415`.\n  - **Exception: breaking an import cycle.** When you must inline an import to avoid a circular dependency, leave a one-line comment explaining why the cycle can't be untangled.\n\n- **Don't import other modules' private names.** Symbols prefixed with `_` are module-private. If another module needs one, promote it to public (rename without the leading underscore) rather than cross-importing `_foo`. Enforced by ruff `PLC2701`.\n\n- **Modern type syntax for Python 3.11.** Prefer `list[str]`, `dict[str, int]` ([PEP 585](https://peps.python.org/pep-0585/)) and `X | None` ([PEP 604](https://peps.python.org/pep-0604/)) over `typing.List` / `typing.Optional`."
+    gold_removed: ''
+  - path: .claude/rules/ui-code-style.md
+    tier: 1
+    gold_added: "---\npaths:\n  - \"ui/**/*.ts\"\n  - \"ui/**/*.tsx\"\n---\n\n## UI code style\n\nMost rules below are enforced by ESLint (`ui/eslint.config.js`) — run `npm run lint:fix` from `ui/` on files you touched before handing off (or `npm run lint` to check without modifying).\n\nTest files (`**/__tests__/**`, `**/*.test.{ts,tsx}`, `**/*.spec.{ts,tsx}`) and `e2e/**` have relaxed rules — see the test blocks in `eslint.config.js` before assuming every rule below applies.\n\n### Components\n- **Use UI library primitives, not raw HTML.** In `src/pages/` and `src/components/layout/`, replace raw `<button>`, `<input>`, `<select>`, `<textarea>`, `<a>`, and `react-router-dom`'s `<Link>` with `<Button>`, `<Input>`, `<Select>`, `<Textarea>`, and `<AppLink>` from `@/components/ui`. The same rule applies inside `src/components/ui/`, with the primitive files themselves (Button, Input, Select, Textarea) as the only exception.\n- **Merge class names with `cn()`.** Components that accept a `className` prop pass it through `cn()` from `@/lib/utils`.\n- **Named components use `function` declarations.** `forwardRef` primitives (Button, Input, Select, Textarea) take an anonymous function, so they write as `export const Name = forwardRef<...>((...) => ...)` — this is the ESLint config's unnamed-component path, not a custom exemption.\n\n### Styling\n- **Semantic design tokens only.** Use `bg-primary`, `text-muted-foreground`, `border-border` — not raw Tailwind colors like `bg-blue-500`. Add new tokens in `ui/src/index.css`; see CLAUDE.md for the four-step recipe.\n- **Icons are Lucide React SVG components.** No emoji in UI code.\n\n### Imports\n- **Absolute `@/` imports, never `../..`.** Relative parent paths are an ESLint error.\n- **Type-only imports use `import type`.** Enforced by `@typescript-eslint/consistent-type-imports`.\n\n### Generated code\n- **Never edit `ui/src/api/generated/`.** It is codegen output. When backend endpoints change, update `ui/openapi.json` and regenerate (command in CLAUDE.md)."
+    gold_removed: ''

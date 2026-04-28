@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: roslyn-add-copilot-instructions-file
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: dotnet/roslyn
+  pr: 80615
+  base_commit: "0a431a8a0a7a6f0c1a9f8d822de706376e75ba48"
+  merge_commit: "a01d6a0838430706cea74ad38e054c2877ffbfa1"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/copilot-instructions.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/copilot-instructions.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/copilot-instructions.md."
+
+config_edits:
+  - path: .github/copilot-instructions.md
+    tier: 1
+    gold_added: "# Roslyn (.NET Compiler Platform) AI Coding Instructions\n\n## Architecture Overview\n\n**Core Components** (layered from bottom-up):\n- **Compilers** (`src/Compilers/`): C# and VB.NET compilers with syntax trees, semantic models, symbols, and emit APIs\n- **Workspaces** (`src/Workspaces/`): Solution/project model, document management, and host services\n- **Features** (`src/Features/`): Language-agnostic IDE features (refactoring, completion, diagnostics)\n- **EditorFeatures** (`src/EditorFeatures/`): Editor-specific implementations and text buffer integration\n- **VisualStudio** (`src/VisualStudio/`): VS-specific language services and UI integration\n\n## Development Workflow\n\n**Building**:\n- `build.sh` - Full solution build\n- `dotnet build Compilers.slnf` - Compiler-only build  \n- Run `dotnet msbuild <path to csproj> /t:UpdateXlf` when .resx files are modified to update corresponding .xlf files\n\n**Testing**:\n- `test.sh` - Run all tests\n- `dotnet test` for specific test projects\n- Tests inherit from base classes like `AbstractLanguageServerProtocolTests`, `WorkspaceTestBase`\n- Use `[UseExportProvider]` for MEF-dependent tests\n\n**Formatting**:\n- Whitespace formatting preferences are stored in the `.editorconfig` file\n- Run `dotnet format whitespace -f . --include ` followed by the relative paths to changed .cs and .vb files to apply formatting preferences\n\n## Code Patterns\n\n**Service Architecture** (use MEF consistently):\n```csharp\n[ExportLanguageService(typeof(IMyService), LanguageNames.CSharp), Shared]\n[method: ImportingConstructor]\n[method: Obsolete(MefConstruction.ImportingConstructorMessage, error: true)]\ninternal sealed class CSharpMyService : IMyService\n```\n\n**Roslyn API Usage**:\n```csharp\n// Always use immutable patterns\nvar newTree = oldTree.WithChangedText(newText);\nvar newDocument = oldDocument.WithSyntaxTree(newTree);\n\n// Semantic analysis\nvar semanticModel = await document.GetSemanticModelAsync(cancellationToken);\nvar symbolInfo = semanticModel.GetSymbolInfo(expression);\n```\n\n**Testing Conventions**:\n- Inherit from `TestBase` or language-specific base classes\n- Use `UseExportProvider` for MEF services\n- Test utilities in `Microsoft.CodeAnalysis.Test.Utilities`\n- Language-specific test bases: `CSharpTestBase`, `VisualBasicTestBase`\n\n## Critical Integration Points\n\n**Language Server Protocol**: `src/LanguageServer/` contains LSP implementation used by VS Code extension\n**ServiceHub**: Remote services (`src/Workspaces/Remote/`) run out-of-process for performance\n**Analyzers**: `src/Analyzers/` for static analysis, separate from `src/RoslynAnalyzers/` (internal tooling)\n**VSIX Packaging**: Multiple deployment targets - `src/VisualStudio/Setup/` for main VS integration\n\n## Key Conventions\n\n**Namespace Strategy**: `Microsoft.CodeAnalysis.[Language].[Area]` (e.g., `Microsoft.CodeAnalysis.CSharp.Formatting`)\n**File Organization**: Group by feature area, separate language-specific implementations\n**Immutability**: All syntax trees, documents, and solutions are immutable - create new instances for changes\n**Cancellation**: Always thread `CancellationToken` through async operations\n**MEF Lifecycle**: Use `[ImportingConstructor]` with obsolete attribute for MEF v2 compatibility\n\n## Common Gotchas\n\n- Follow existing conventions in the file\n- Language services must be exported per-language, not shared across C#/VB\n- Test failures often indicate MEF composition issues - check export attributes\n- VSIX deployment targets multiple architectures - ensure platform-specific assets are handled\n- ServiceHub components require special deployment considerations for .NET Core vs Framework\n\n## Essential Files for Context\n\n- `docs/wiki/Roslyn-Overview.md` - Architecture deep-dive\n- `docs/contributing/Building, Debugging, and Testing on Unix.md` - Development setup\n- `src/Compilers/Core/Portable/` - Core compiler APIs\n- `src/Workspaces/Core/Portable/` - Workspace object model\n- Solution filters: `Roslyn.sln`, `Compilers.slnf`, `Ide.slnf` for focused builds"
+    gold_removed: ''

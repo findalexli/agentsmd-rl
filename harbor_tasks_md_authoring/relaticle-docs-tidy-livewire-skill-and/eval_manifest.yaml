@@ -1,0 +1,63 @@
+version: "2.0"
+
+task:
+  name: relaticle-docs-tidy-livewire-skill-and
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: relaticle/relaticle
+  pr: 240
+  base_commit: "11ed71453e86739e0d94ae7e287a778ec7904801"
+  merge_commit: "a3b743516fb2196dd41b144a9b6ffb9fadf75197"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/skills/livewire-development/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/skills/livewire-development/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/skills/livewire-development/SKILL.md."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_04
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+
+config_edits:
+  - path: .github/skills/livewire-development/SKILL.md
+    tier: 1
+    gold_added: '# Single-file component (default in v4)
+
+      # Multi-file component
+
+      Before creating a component, check `config/livewire.php` for directory overrides, which change where files are stored. Then, look at existing files in those directories (defaulting to `app/Livewire/` and `resources/views/livewire/`) to match the established convention.
+
+      | Single-file (SFC) | default | — | `resources/views/livewire/create-post.blade.php` (PHP + Blade in one file) |
+
+      | Multi-file (MFC) | `--mfc` | `app/Livewire/CreatePost.php` | `resources/views/livewire/create-post.blade.php` |
+
+      | View-based | ⚡ prefix | — | `resources/views/livewire/create-post.blade.php` (Blade-only with functional state) |
+
+      Namespaced components map to subdirectories: `make:livewire Posts/CreatePost` creates files at `app/Livewire/Posts/CreatePost.php` and `resources/views/livewire/posts/create-post.blade.php`.
+
+      }'
+    gold_removed: ''
+  - path: CLAUDE.md
+    tier: 1
+    gold_added: '## Deployment
+
+
+      - Laravel can be deployed using [Laravel Cloud](https://cloud.laravel.com/), which is the fastest way to deploy and scale production Laravel applications.
+
+      '
+    gold_removed: ''

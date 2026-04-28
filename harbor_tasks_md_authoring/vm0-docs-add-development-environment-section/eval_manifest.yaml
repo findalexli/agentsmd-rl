@@ -1,0 +1,49 @@
+version: "2.0"
+
+task:
+  name: vm0-docs-add-development-environment-section
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: vm0-ai/vm0
+  pr: 363
+  base_commit: "10f300049e74e902a93444b469350a4f3d13c72d"
+  merge_commit: "655c1f30bca4ef374527c7c76abb45012b3c2f87"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+
+config_edits:
+  - path: CLAUDE.md
+    tier: 1
+    gold_added: '## Development Environment
+
+
+      **Claude Code runs in an isolated Docker container** with its own PostgreSQL server. This environment is completely separate from production.
+
+
+      ### Key Assumptions
+
+
+      - **main branch is always stable** - All code merged to main has passed CI (build + tests). If your branch fails to build or pass tests, the issue is in your branch code, not main.
+
+      - **Use dev-tunnel for local development** - Run `/dev-tunnel` to start a local server accessible by sandbox webhooks. Without this, webhooks cannot reach your local server.
+
+      - **Run `pnpm db:migrate` to sync database** - After pulling new changes, run this command in the `turbo` directory to apply the latest migrations.
+
+      - **Run `script/sync-env.sh` to sync environment variables** - If missing required environment variables, ask the user to run this script to sync `.env.local`.
+
+      '
+    gold_removed: ''

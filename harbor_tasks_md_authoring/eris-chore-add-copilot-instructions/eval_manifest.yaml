@@ -1,0 +1,31 @@
+version: "2.0"
+
+task:
+  name: eris-chore-add-copilot-instructions
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: abalabahaha/eris
+  pr: 1602
+  base_commit: "ae295d081c17f574b3768f6d60fcd7dd1b64b54c"
+  merge_commit: "440ed2ec7581e92be22f450cd185e5fe54044e75"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/copilot-instructions.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/copilot-instructions.md."
+
+config_edits:
+  - path: .github/copilot-instructions.md
+    tier: 1
+    gold_added: 'When performing a code review, make sure all properties/methods in classes and objects, where applicable, and including documentation, is listed in alphabetical order. The only exceptions to this are `update()` method in classes, which should appear first, and `toString()`/`toJSON()` should appear last.
+
+
+      When performing a code review, make sure class getters are positioned before class methods.'
+    gold_removed: ''

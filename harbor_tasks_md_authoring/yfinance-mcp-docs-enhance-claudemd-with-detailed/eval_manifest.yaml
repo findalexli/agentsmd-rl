@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: yfinance-mcp-docs-enhance-claudemd-with-detailed
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: narumiruna/yfinance-mcp
+  pr: 78
+  base_commit: "f958c615d918d6b617abbb4141a5815a2aba6bbd"
+  merge_commit: "9ce857b6b5d1fe0536edf45af7f0be44961e4cc8"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+
+config_edits:
+  - path: CLAUDE.md
+    tier: 1
+    gold_added: "- `src/yfmcp/server.py` - Main FastMCP server with all tool implementations\n  - All tools are async and use `asyncio.to_thread()` to wrap blocking yfinance calls\n  - Tools: `get_ticker_info`, `get_ticker_news`, `search`, `get_top`, `get_price_history`\n  - Error handling returns JSON with `{\"error\": \"message\"}` format via `_error()` helper\n  - All MCP tools are prefixed with `yfinance_` to avoid naming conflicts\n- `src/yfmcp/chart.py` - Chart generation using mplfinance and matplotlib\n  - `generate_chart()` - Main function that returns base64-encoded WebP images\n  - `_calculate_volume_profile()` - Helper for volume profile chart type\n  - Uses non-interactive matplotlib backend (`Agg`) to avoid display issues\n  - Converts WebP images to base64 for efficient token usage in MCP responses\n  - Supports both OpenAI and LiteLLM backends (configurable via environment variables)\n  - Manages persistent MCP session throughout chat lifecycle (reuses session across messages)\n  - WebP to PNG conversion for better Chainlit compatibility\n    - `get_mcp_client()` - Creates MCP client connection using stdio transport\n    - `convert_mcp_tools_to_openai_format()` - Converts MCP tools to OpenAI tool format\n    - `chat_completion()` - Unified API call wrapper supporting both OpenAI and LiteLLM\n\n### Testing\n- `tests/test_server.py` - Integration tests for MCP server\n  - Tests use `stdio_client` to connect to the actual server\n  - All tests are async using `@pytest.mark.asyncio`\n  - Tests verify JSON response structure and data correctness\n\n## Development Notes\n\n### Async/Await Pattern\nAll MCP tool functions in `server.py` are async. Since `yfinance` is synchronous, all blocking calls are wrapped with `asyncio.to_thread()` to avoid blocking the event loop. This pattern should be maintained for any new tools.\n\n### Chart Generation\nCharts use WebP format for efficient token usage in MCP responses. The demo chatbot converts WebP to PNG for better browser compatibility. When adding new chart types, follow the pattern in `chart.py` using mplfinance and return `ImageContent` objects.\n\n### Tool Naming Convention\nAll MCP tools are prefixed with `yfinance_` (e.g., `yfinance_get_ticker_info`) to avoid naming conflicts when this server is used alongside other MCP servers.\n\n### Error Handling\nUse the `_error()` helper function to return consistent JSON error messages: `{\"error\": \"message\"}`. Always provide helpful error messages that guide users on how to fix the issue."
+    gold_removed: ''

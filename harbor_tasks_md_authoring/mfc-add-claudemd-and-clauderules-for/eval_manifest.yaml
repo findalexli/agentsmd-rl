@@ -1,0 +1,218 @@
+version: "2.0"
+
+task:
+  name: mfc-add-claudemd-and-clauderules-for
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: MFlowCode/MFC
+  pr: 1255
+  base_commit: "38f045727211f14afabcad5069fe4422ea08f4e3"
+  merge_commit: "79976636d80a807c346b07ac113f2bde1357bc13"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/rules/common-pitfalls.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/rules/common-pitfalls.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/rules/common-pitfalls.md."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/rules/fortran-conventions.md."
+  - id: signal_04
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/rules/fortran-conventions.md."
+  - id: signal_05
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/rules/fortran-conventions.md."
+  - id: signal_06
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/rules/gpu-and-mpi.md."
+  - id: signal_07
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/rules/gpu-and-mpi.md."
+  - id: signal_08
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/rules/gpu-and-mpi.md."
+  - id: signal_09
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/rules/parameter-system.md."
+  - id: signal_10
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/rules/parameter-system.md."
+  - id: signal_11
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/rules/parameter-system.md."
+  - id: signal_12
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/copilot-instructions.md."
+  - id: signal_13
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_14
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_15
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+
+config_edits:
+  - path: .claude/rules/common-pitfalls.md
+    tier: 1
+    gold_added: "# Common Pitfalls\n\n## Array Bounds & Ghost Cells\n- Grid dimensions: `m`, `n`, `p` (cells in x, y, z). 1D: n=p=0. 2D: p=0.\n- Interior domain: `0:m`, `0:n`, `0:p`\n- Buffer/ghost region: `-buff_size:m+buff_size` (similar for n, p in multi-D)\n- `buff_size` depends on WENO order and features (typically `2*weno_polyn + 2`)\n- Domain bounds: `idwint(1:3)` (interior `0:m`), `idwbuff(1:3)` (with ghost cells)\n- Cell-center coords: `x_cc(-buff_size:m+buff_size)`, `y_cc(...)`, `z_cc(...)`\n- Cell-boundary coords: `x_cb(-1-buff_size:m+buff_size)`\n- Riemann solver indexing: left state at `j`, right state at `j+1`\n- Off-by-one errors in ghost cell regions are a common source of bugs\n\n## Field Variable Indexing\n- Conserved variables: `q_cons_vf(1:sys_size)`. Primitive: `q_prim_vf(1:sys_size)`.\n- Index ranges depend on `model_eqns` and enabled features (set in `m_global_parameters.fpp`):\n  - `cont_idx` — continuity (partial densities, one per fluid)\n  - `mom_idx` — momentum components\n  - `E_idx` — total energy (scalar)\n  - `adv_idx` — volume fractions (advection equations)\n  - `bub_idx`, `stress_idx`, `xi_idx`, `species_idx`, `B_idx`, `c_idx` — optional\n- Shorthand scalars: `momxb`/`momxe`, `contxb`/`contxe`, `advxb`/`advxe`, etc.\n- `sys_size` = total number of conserved variables (computed at startup)\n- Changing `model_eqns` or enabling features changes ALL index positions\n\n## Blast Radius\n- `src/common/` is shared by ALL three executables (pre_process, simulation, post_process)\n- Any change to common/ requires testing all three targets\n- Public subroutine signature changes affect all callers across all targets\n- Parameter default changes affect all existing case files\n\n## Physics Consistency\n- Pressure formula MUST match `model_eqns` setting\n- Model-specific conservative ↔ primitive conversion paths exist\n- Volume fractions must sum to 1.0\n- Boundary condition symmetry requirements must be maintained\n\n## Compiler-Specific Issues\n- Code must compile on gfortran, nvfortran, Cray ftn, and Intel ifx\n- Each compiler has different strictness levels and warning behavior\n- Fypp macros must expand correctly for both GPU and CPU builds\n- GPU builds only work with nvfortran, Cray ftn, and AMD flang\n\n## Test System\n- Tests are generated **programmatically** in `toolchain/mfc/test/cases.py`, not standalone files\n- Each test is a parameter modification on top of `BASE_CFG` defaults\n- Test UUID = CRC32 hash of the test's trace string; `./mfc.sh test -l` lists all\n- To add a test: modify `cases.py` using `CaseGeneratorStack` push/pop pattern\n- Golden files: `tests/<UUID>/golden.txt` — tolerance-based comparison, not exact match\n- If your change intentionally modifies output, regenerate golden files:\n  `./mfc.sh test --generate --only <affected_tests> -j 8`\n- Do not regenerate ALL golden files unless you understand every output change\n\n## PR Checklist\nBefore submitting a PR:\n- [ ] `./mfc.sh format -j 8` (auto-format)\n- [ ] `./mfc.sh precheck -j 8` (5 CI lint checks)\n- [ ] `./mfc.sh build -j 8` (compiles)\n- [ ] `./mfc.sh test --only <relevant> -j 8` (tests pass)\n- [ ] If adding parameters: all 4 locations updated\n- [ ] If modifying `src/common/`: all three targets tested\n- [ ] If changing output: golden files regenerated for affected tests\n- [ ] One logical change per commit"
+    gold_removed: ''
+  - path: .claude/rules/fortran-conventions.md
+    tier: 1
+    gold_added: '# Fortran Conventions
+
+
+      ## File Format
+
+      - Source files use `.fpp` extension (Fortran + Fypp preprocessor macros)
+
+      - Fypp preprocesses `.fpp` → `.f90` at build time via CMake
+
+      - Fypp supports conditional compilation, code generation, and regex macros
+
+
+      ## Module Structure
+
+      Every Fortran module follows this pattern:
+
+      - File: `m_<feature>.fpp`
+
+      - Module: `module m_<feature>`
+
+      - `implicit none` required
+
+      - Explicit `intent(in)`, `intent(out)`, or `intent(inout)` on ALL subroutine/function arguments
+
+      - Initialization subroutine: `s_initialize_<feature>_module`
+
+      - Finalization subroutine: `s_finalize_<feature>_module`
+
+
+      ## Naming
+
+      - Modules: `m_<feature>`
+
+      - Public subroutines: `s_<verb>_<noun>`
+
+      - Public functions: `f_<verb>_<noun>`
+
+      - Private/local variables: no prefix required
+
+      - Constants: descriptive names, not ALL_CAPS
+
+
+      ## Forbidden Patterns
+
+
+      Caught by `./mfc.sh precheck` (source lint step 4/5):
+
+      - `dsqrt`, `dexp`, `dlog`, `dble`, `dabs`, `dcos`, `dsin`, `dtan`, etc. → use generic intrinsics
+
+      - `1.0d0`, `2.5d-3` (Fortran `d` exponent literals) → use `1.0_wp`, `2.5e-3_wp`
+
+      - `double precision` → use `real(wp)` or `real(stp)`
+
+      - `real(8)`, `real(4)` → use `wp` or `stp` kind parameters
+
+      - Raw `!$acc` or `!$omp` directives → use Fypp GPU_* macros from `parallel_macros.fpp`
+
+      - Full list of forbidden patterns: `toolchain/bootstrap/precheck.sh`
+
+
+      Enforced by convention/code review (not automated):
+
+      - `goto`, `COMMON` blocks, global `save` variables
+
+      - `stop`, `error stop` → use `call s_mpi_abort()` or `@:PROHIBIT()`/`@:ASSERT()`
+
+
+      ## Error Checking Macros (from macros.fpp)
+
+      - `@:PROHIBIT(condition, message)` — Runtime constraint check; aborts with file/line info
+
+      - `@:ASSERT(predicate, message)` — Invariant assertion; aborts if predicate is false
+
+      - `@:LOG(expr)` — Debug logging, active only in `MFC_DEBUG` builds
+
+      - Fortran-side runtime validation also exists in `m_checker*.fpp` files using `@:PROHIBIT`
+
+
+      ## Precision Types
+
+      - `wp` (working precision): used for computation. Double by default.
+
+      - `stp` (storage precision): used for field data arrays and I/O. Double by default.
+
+      - In single-precision mode (`--single`): both become single.
+
+      - In mixed-precision mode (`--mixed`): wp=double, stp=half.
+
+      - MPI type matching: `mpi_p` must match `wp`, `mpi_io_p` must match `stp`.
+
+      - Always use generic intrinsics: `sqrt` not `dsqrt`, `abs` not `dabs`.
+
+      - Cast with `real(..., wp)` or `real(..., stp)`, never `dble(...)`.
+
+
+      Key derived types (`m_derived_types.fpp`):
+
+      - `scalar_field` — `real(stp), pointer :: sf(:,:,:)`. Uses `stp`, NOT `wp`.
+
+      - `vector_field` — allocatable array of `scalar_field` components.
+
+      - New field arrays MUST use `stp` for storage precision consistency.
+
+
+      ## Size Guidelines (soft)
+
+      - Subroutine: ≤500 lines
+
+      - Helper routine: ≤150 lines
+
+      - Function: ≤100 lines
+
+      - File: ≤1000 lines
+
+      - Arguments: ≤6 preferred'
+    gold_removed: ''
+  - path: .claude/rules/gpu-and-mpi.md
+    tier: 1
+    gold_added: "# GPU and MPI Patterns\n\n## GPU Offloading Architecture\n\nOnly `src/simulation/` is GPU-accelerated. Pre/post_process run on CPU only.\n\nMFC uses a **backend-agnostic GPU abstraction** via Fypp macros. The same source code\ncompiles to either OpenACC or OpenMP target offload depending on the build flag:\n\n- `./mfc.sh build --gpu acc` → OpenACC backend (NVIDIA nvfortran, Cray ftn)\n- `./mfc.sh build --gpu mp`  → OpenMP target offload backend (Cray ftn, AMD flang)\n- `./mfc.sh build` (no --gpu) → CPU-only, GPU macros expand to plain Fortran\n\n### Macro Layers (in src/common/include/)\n- `parallel_macros.fpp` — **Use these.** Generic `GPU_*` macros that dispatch to the\n  correct backend based on `MFC_OpenACC` / `MFC_OpenMP` compile definitions.\n- `acc_macros.fpp` — OpenACC-specific `ACC_*` implementations (do not call directly)\n- `omp_macros.fpp` — OpenMP target offload `OMP_*` implementations (do not call directly)\n  - OMP macros generate **compiler-specific** directives: NVIDIA uses `target teams loop`,\n    Cray uses `target teams distribute parallel do simd`, AMD uses\n    `target teams distribute parallel do`\n- `shared_parallel_macros.fpp` — Shared helpers (collapse, private, reduction generators)\n\n### Key GPU Macros (always use the `GPU_*` prefix)\n\nInline macros (use `$:` prefix):\n- `$:GPU_PARALLEL_LOOP(collapse=N, private=[...], reduction=[...], reductionOp='+')` —\n  Parallel loop over GPU threads. Most common GPU macro.\n- `$:END_GPU_PARALLEL_LOOP()` — Required closing for GPU_PARALLEL_LOOP.\n- `$:GPU_LOOP(collapse=N, ...)` — Inner loop within a GPU parallel region.\n- `$:GPU_ENTER_DATA(create=[...])` — Allocate device memory (unscoped).\n- `$:GPU_EXIT_DATA(delete=[...])` — Free device memory.\n- `$:GPU_UPDATE(host=[...])` — Copy device → host (before MPI send).\n- `$:GPU_UPDATE(device=[...])` — Copy host → device (after MPI receive).\n- `$:GPU_ROUTINE(parallelism='[seq]')` — Mark routine for device compilation.\n- `$:GPU_DECLARE(create=[...])` — Declare device-resident data.\n- `$:GPU_ATOMIC(atomic='update')` — Atomic operation on device.\n- `$:GPU_WAIT()` — Synchronization barrier.\n\nBlock macros (use `#:call`/`#:endcall`):\n- `GPU_PARALLEL(...)` — GPU parallel region wrapping a code block.\n- `GPU_DATA(copy=..., create=..., ...)` — Scoped data region.\n- `GPU_HOST_DATA(use_device_addr=[...])` — Host code with device pointers.\n\nBlock macro usage:\n```\n#:call GPU_PARALLEL(copyin='[var1]', copyout='[var2]')\n  $:GPU_LOOP(collapse=N)\n  do k = 0, n; do j = 0, m\n    ! loop body\n  end do; end do\n#:endcall GPU_PARALLEL\n```\n\nNEVER write raw `!$acc` or `!$omp` directives. Always use `GPU_*` Fypp macros.\nThe precheck source lint will catch raw directives and fail.\n\n### Memory Management Macros (from macros.fpp)\n- `@:ALLOCATE(var1, var2, ...)` — Fortran allocate + `GPU_ENTER_DATA(create=...)`\n- `@:DEALLOCATE(var1, var2, ...)` — `GPU_EXIT_DATA(delete=...)` + Fortran deallocate\n- `@:PREFER_GPU(var1, var2, ...)` — NVIDIA unified memory page placement hint\n- Every `@:ALLOCATE` MUST have a matching `@:DEALLOCATE` in finalization\n- Conditional allocation MUST have conditional deallocation\n\n### GPU Field Setup (Cray-specific, from macros.fpp)\n- `@:ACC_SETUP_VFs(...)` / `@:ACC_SETUP_SFs(...)` — GPU pointer setup for vector/scalar fields\n- These compile only for Cray (`_CRAYFTN`); other compilers skip them\n\n### Compiler-Backend Matrix\n| Compiler        | `--gpu acc` (OpenACC) | `--gpu mp` (OpenMP) | CPU-only |\n|-----------------|----------------------|---------------------|----------|\n| GNU gfortran    | No                   | No                  | Yes      |\n| NVIDIA nvfortran| Yes (primary)        | Yes                 | Yes      |\n| Cray ftn (CCE)  | Yes                  | Yes (primary)       | Yes      |\n| Intel ifx       | No                   | No                  | Yes      |\n| AMD flang       | No                   | Yes                 | Yes      |\n\n## Preprocessor Defines (`#ifdef` / `#ifndef`)\n\nRaw `#ifdef` / `#ifndef` preprocessor guards are **normal and expected** in MFC.\nThey are NOT the same as raw `!$acc`/`!$omp` pragmas (which are forbidden).\n\nUse `#ifdef` for feature, target, compiler, and library gating:\n\n### Feature gating\n- `MFC_MPI` — MPI-enabled build (`--mpi` flag, default ON)\n- `MFC_OpenACC` — OpenACC GPU backend (`--gpu acc`)\n- `MFC_OpenMP` — OpenMP target offload backend (`--gpu mp`)\n- `MFC_GPU` — Any GPU build (either OpenACC or OpenMP)\n- `MFC_DEBUG` — Debug build (`--debug`)\n- `MFC_SINGLE_PRECISION` — Single-precision mode (`--single`)\n- `MFC_MIXED_PRECISION` — Mixed-precision mode (`--mixed`)\n\n### Target gating (for code in `src/common/` shared across executables)\n- `MFC_PRE_PROCESS` — Only in pre_process builds\n- `MFC_SIMULATION` — Only in simulation builds\n- `MFC_POST_PROCESS` — Only in post_process builds\n\n### Compiler gating (for compiler-specific workarounds)\n- `_CRAYFTN` — Cray Fortran compiler\n- `__NVCOMPILER_GPU_UNIFIED_MEM` — NVIDIA unified memory (GH-200 / `--unified`)\n- `__PGI` — Legacy PGI/NVIDIA compiler\n- `__INTEL_COMPILER` — Intel compiler\n- `FRONTIER_UNIFIED` — Frontier HPC unified memory\n\n### Library-specific code\n- FFTW (`m_fftw.fpp`) uses heavy `#ifdef` gating for `MFC_GPU` and `__PGI`\n- CUDA Fortran (`cudafor` module) is gated behind `__NVCOMPILER_GPU_UNIFIED_MEM`\n- SILO/HDF5 interfaces may have conditional paths\n\nWhen adding new `#ifdef` blocks, always provide an `#else` or `#endif` path so\nthe code compiles in all configurations (CPU-only, GPU-ACC, GPU-OMP, with/without MPI).\n\n## MPI\n\n### Halo Exchange\n- Pack/unpack offset calculations are error-prone — verify carefully\n- Buffer sizing depends on dimensionality and QBMM state\n- GPU coherence: always `GPU_UPDATE(host=...)` before MPI send,\n  `GPU_UPDATE(device=...)` after MPI receive\n\n### Error Handling\n- Use `call s_mpi_abort()` for fatal errors, never `stop` or `error stop`\n- MPI must be finalized before program exit"
+    gold_removed: ''
+  - path: .claude/rules/parameter-system.md
+    tier: 1
+    gold_added: "# Parameter System\n\n## Overview\nMFC has ~3,400 simulation parameters defined in Python and read by Fortran via namelist files.\n\n## Parameter Flow: Python → Fortran\n\n1. **Definition**: `toolchain/mfc/params/definitions.py` — source of truth\n   - Parameters are indexed families: `patch_icpp(i)%attr`, `fluid_pp(i)%attr`, etc.\n   - Each has type, default, constraints, and tags\n\n2. **Validation** (two layers):\n   - `toolchain/mfc/case.py` / `toolchain/mfc/params/registry.py` — JSON schema validation\n     via fastjsonschema (type checking, defaults)\n   - `toolchain/mfc/case_validator.py` — Physics constraint checking\n     (e.g., volume fractions sum to 1, dependency validation)\n\n3. **Input Generation**: `toolchain/mfc/run/input.py`\n   - Python case dict → Fortran namelist `.inp` file\n   - Format: `&user_inputs` ... `&end/`\n\n4. **Fortran Reading**: `src/*/m_start_up.fpp`\n   - Reads `&user_inputs` namelist\n   - Each parameter must be declared in the namelist statement\n\n## Adding a New Parameter (4-location checklist)\n\nYOU MUST update the first 3 locations. Missing any causes silent failures or compile errors.\nLocation 4 is required only if the parameter has physics constraints.\n\n1. **`toolchain/mfc/params/definitions.py`**: Add parameter with type, default, constraints\n2. **`src/*/m_global_parameters.fpp`**: Declare the Fortran variable in the relevant\n   target(s). If the param is used by simulation only, add it there. If shared, add to\n   all three targets' m_global_parameters.fpp.\n3. **`src/*/m_start_up.fpp`**: Add to the Fortran `namelist` declaration in the relevant\n   target(s).\n4. **`toolchain/mfc/case_validator.py`**: Add validation rules if the parameter has\n   physics constraints. Include `PHYSICS_DOCS` entry with title, category, explanation.\n\n## Case Files\n- Case files are Python scripts (`.py`) that define a dict of parameters\n- Validated with `./mfc.sh validate case.py`\n- Examples in `examples/` directory\n- Create new cases with `./mfc.sh new <name>`\n- Search parameters with `./mfc.sh params <query>`\n\n## Fortran-Side Runtime Validation\nEach target has `m_checker*.fpp` files (e.g., `src/simulation/m_checker.fpp`,\n`src/common/m_checker_common.fpp`) containing runtime parameter validation using\n`@:PROHIBIT(condition, message)`. When adding parameters with physics constraints,\nadd Fortran-side checks here in addition to `case_validator.py`.\n\n## Analytical Initial Conditions\nString expressions in parameters become Fortran code via `case.py.__get_analytic_ic_fpp()`.\nThese are compiled into the binary, so syntax errors cause build failures, not runtime errors.\n\nAvailable variables in analytical IC expressions:\n- `x`, `y`, `z` — cell-center coordinates (mapped to `x_cc(i)`, `y_cc(j)`, `z_cc(k)`)\n- `xc`, `yc`, `zc` — patch centroid coordinates\n- `lx`, `ly`, `lz` — patch lengths\n- `r` — patch radius; `eps`, `beta` — vortex parameters\n- `e` — Euler's number (2.71828...)\n- Standard Fortran math intrinsics available: `sin`, `cos`, `exp`, `sqrt`, `abs`, etc.\n- For moving immersed boundaries: `t` (simulation time) is also available\n\nExample: `'patch_icpp(1)%vel(2)': '(x - xc) * exp(-((x-xc)**2 + (y-yc)**2))'`"
+    gold_removed: ''
+  - path: .github/copilot-instructions.md
+    tier: 1
+    gold_added: '* Only `simulation` (plus its `common` dependencies) is GPU-accelerated via **OpenACC** or **OpenMP target offload** (`--gpu acc` or `--gpu mp`). GPU code uses backend-agnostic `GPU_*` Fypp macros (in `src/common/include/parallel_macros.fpp`) that dispatch to the correct backend at compile time.'
+    gold_removed: ''
+  - path: CLAUDE.md
+    tier: 1
+    gold_added: "# MFC — Multi-component Flow Code\n\nMFC is an exascale multi-physics CFD solver written in modern Fortran 2008+ with Fypp\npreprocessing. It has three executables (pre_process, simulation, post_process), a Python\ntoolchain for building/running/testing, and supports GPU acceleration via OpenACC and\nOpenMP target offload. It must compile with gfortran, nvfortran, Cray ftn, and Intel ifx.\n\n## Commands\n\nPrefer using `./mfc.sh` as the entry point for building, running, testing, formatting,\nand linting. It handles virtual environments, module loading, dependency bootstrapping,\nand build configuration. Avoid invoking CMake, Python toolchain scripts, or Fortran\ncompilers directly unless you have a specific reason.\n\nAll commands run from the repo root via `./mfc.sh`.\n\n```bash\n# Building\n./mfc.sh build -j 8                        # Build all 3 targets (pre_process, simulation, post_process)\n./mfc.sh build -t simulation -j 8          # Build only simulation\n./mfc.sh build --gpu acc -j 8              # Build with OpenACC GPU support\n./mfc.sh build --gpu mp -j 8              # Build with OpenMP target offload GPU support\n./mfc.sh build --debug -j 8                # Debug build\n./mfc.sh build -i case.py --case-optimization -j 8  # Case-optimized build (10x speedup)\n\n# Running\n./mfc.sh run case.py -n 4                  # Run case with 4 MPI ranks\n./mfc.sh run case.py --no-build            # Run without rebuilding\n./mfc.sh run case.py -e batch -N 2 -n 4 -c phoenix -a ACCOUNT  # Batch submit on Phoenix\n\n# Testing\n./mfc.sh test -j 8                         # Run full test suite (560+ tests)\n./mfc.sh test --only 1D -j 8              # Only 1D tests\n./mfc.sh test --only 2D Bubbles -j 8      # Only 2D bubble tests\n./mfc.sh test --only <UUID> -j 8          # Run one specific test by UUID\n./mfc.sh test -l                           # List all tests with UUIDs and traces\n./mfc.sh test -% 10 -j 8                  # Run 10% random sample\n./mfc.sh test --generate --only <feature>  # Regenerate golden files after intentional output change\n\n# Verification (pre-commit CI checks)\n./mfc.sh precheck -j 8                     # Run all 5 lint checks (same as CI gate)\n./mfc.sh format -j 8                       # Auto-format Fortran (.fpp/.f90) + Python\n./mfc.sh lint                              # Pylint + Python unit tests\n./mfc.sh spelling                          # Spell check\n\n# Module loading (HPC clusters only — must use `source`)\nsource ./mfc.sh load -c p -m g             # Load Phoenix GPU modules\nsource ./mfc.sh load -c f -m g             # Load Frontier GPU modules\nsource ./mfc.sh load -c p -m c             # Load Phoenix CPU modules\n\n# Other\n./mfc.sh validate case.py                  # Validate case file without running\n./mfc.sh params <query>                    # Search ~3,400 case parameters\n./mfc.sh clean                             # Remove build artifacts\n./mfc.sh new <name>                        # Create new case from template\n```\n\n## System Identification and Module Loading\n\nMFC targets HPC clusters. Before building on a cluster, load the correct modules\nvia `source ./mfc.sh load -c <slug> -m <mode>`.\n\nTo identify the current system, check multiple signals — hostname alone is not always\nsufficient (compute nodes may differ from login nodes):\n\n```bash\nhostname                    # e.g., login-phoenix-gnr-2.pace.gatech.edu\necho $LMOD_SYSHOST          # e.g., \"phoenix\" (most reliable when set)\necho $CRAY_LD_LIBRARY_PATH  # Non-empty → Cray system (Frontier, Carpenter Cray)\necho $MODULESHOME           # Confirms module system is available\n```\n\nSupported systems and their slugs (full list in `toolchain/modules`):\n\n| Slug | System | GPU Backend | Example |\n|------|--------|-------------|---------|\n| `p` | GT Phoenix | OpenACC (nvfortran) | `source ./mfc.sh load -c p -m g` |\n| `f` | OLCF Frontier | OpenACC/OpenMP (Cray ftn) | `source ./mfc.sh load -c f -m g` |\n| `tuo` | LLNL Tuolumne | OpenMP (Cray ftn) | `source ./mfc.sh load -c tuo -m g` |\n| `d` | NCSA Delta | OpenACC (nvfortran) | `source ./mfc.sh load -c d -m g` |\n| `b` | PSC Bridges2 | OpenACC (nvfortran) | `source ./mfc.sh load -c b -m g` |\n| `cc` | DoD Carpenter (Cray) | CPU only | `source ./mfc.sh load -c cc -m c` |\n| `c` | DoD Carpenter (GNU) | CPU only | `source ./mfc.sh load -c c -m c` |\n| `o` | Brown Oscar | OpenACC (nvfortran) | `source ./mfc.sh load -c o -m g` |\n| `h` | UF HiPerGator | OpenACC (nvfortran) | `source ./mfc.sh load -c h -m g` |\n\nThe `-m` flag selects mode: `g`/`gpu` for GPU builds, `c`/`cpu` for CPU-only.\nBatch job templates for `./mfc.sh run -e batch -c <system>` are in `toolchain/templates/`.\n\nIMPORTANT: `source` (or `.`) is required for `load` — it sets environment variables\nin the current shell. Using `./mfc.sh load` without `source` will error.\n\n## Development Workflow Contract\n\nIMPORTANT: Follow this loop for ALL code changes. Do not skip steps.\n\n1. **Read first** — Read and understand relevant code before modifying it.\n2. **Plan** — For multi-file changes, outline your approach before implementing.\n3. **Implement** — Make small, focused changes. One logical change per commit.\n4. **Format** — Run `./mfc.sh format -j 8` to auto-format.\n5. **Verify** — Run `./mfc.sh precheck -j 8` (same 5 checks as CI lint gate).\n6. **Build** — Run `./mfc.sh build -j 8` to verify compilation.\n7. **Test** — Run relevant tests: `./mfc.sh test --only <feature> -j 8`.\n   For changes to `src/common/`, test ALL three targets: `./mfc.sh test -j 8`.\n8. **Commit** — Only after steps 4-7 pass. Do not commit untested code.\n\nYOU MUST run `./mfc.sh precheck` before any commit. This is enforced by pre-commit hooks.\nYOU MUST run tests relevant to your changes before claiming work is done.\nNEVER commit code that does not compile or fails tests.\n\n## Architecture\n\n```\nsrc/\n  common/         # Shared code (used by ALL three executables — wide blast radius)\n  pre_process/    # Grid generation and initial conditions\n  simulation/     # CFD solver (GPU-accelerated via OpenACC / OpenMP target offload)\n  post_process/   # Data output and visualization\ntoolchain/        # Python CLI, build system, testing, parameter management\n  mfc/params/definitions.py   # ~3,400 parameter definitions (source of truth)\n  mfc/case_validator.py       # Physics constraint validation\n  mfc/test/                   # Test runner and case generation\nexamples/         # Example simulation cases (case.py files)\ntests/            # 560+ regression test golden files\n```\n\nSource files are `.fpp` (Fortran + Fypp macros), preprocessed to `.f90` by CMake.\n\n## Critical Rules\n\nNEVER use raw OpenACC/OpenMP pragmas (`!$acc`, `!$omp`). Use `GPU_*` Fypp macros instead.\n  Raw `#ifdef`/`#ifndef` preprocessor guards for feature/compiler/library gating ARE normal.\nNEVER use double-precision intrinsics: `dsqrt`, `dexp`, `dlog`, `dble`, `dabs`, `real(8)`, `real(4)`.\n  Use generic intrinsics (`sqrt`, `exp`, `log`) and precision types (`wp`, `stp`).\nNEVER use `d` exponent literals (`1.0d0`). Use `1.0_wp` instead.\nNEVER use `stop` or `error stop`. Use `call s_mpi_abort()` or `@:PROHIBIT()`/`@:ASSERT()`.\nNEVER use `goto`, `COMMON` blocks, or global `save` variables.\n\nEvery `@:ALLOCATE(...)` MUST have a matching `@:DEALLOCATE(...)`.\nEvery new parameter MUST be added in at least 3 places (4 if it has constraints):\n  1. `toolchain/mfc/params/definitions.py` (parameter definition)\n  2. Fortran variable declaration in `src/*/m_global_parameters.fpp`\n  3. Fortran namelist in `src/*/m_start_up.fpp` (namelist binding)\n  4. `toolchain/mfc/case_validator.py` (only if parameter has physics constraints)\n\nChanges to `src/common/` affect ALL three executables. Test comprehensively.\n\n## Naming Conventions\n\n- Modules: `m_<feature>` (e.g., `m_bubbles`)\n- Public subroutines: `s_<verb>_<noun>` (e.g., `s_compute_pressure`)\n- Public functions: `f_<verb>_<noun>`\n- 2-space indentation, lowercase keywords, explicit `intent` on all arguments\n\n## Precision System\n\n- `wp` = working precision (computation). `stp` = storage precision (field data arrays and I/O).\n- Default: both double. Single mode: both single. Mixed: wp=double, stp=half.\n- MPI types must match: `mpi_p` ↔ `wp`, `mpi_io_p` ↔ `stp`.\n\n## Code Review Priorities\n\nWhen reviewing PRs, prioritize in this order:\n1. Correctness (logic bugs, numerical issues, array bounds)\n2. Precision discipline (stp vs wp mixing)\n3. Memory management (@:ALLOCATE/@:DEALLOCATE pairing, GPU pointer setup)\n4. MPI correctness (halo exchange, buffer sizing, GPU_UPDATE calls)\n5. GPU code (GPU_* Fypp macros only, no raw pragmas)\n6. Physics consistency (pressure formula matches model_eqns)\n7. Compiler portability (all four compilers)"
+    gold_removed: ''

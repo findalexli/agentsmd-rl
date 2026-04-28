@@ -1,0 +1,309 @@
+version: "2.0"
+
+task:
+  name: gumroad-add-claude-code-skills-for
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: antiwork/gumroad
+  pr: 3546
+  base_commit: "5dd3f2cb254a62ad83dc7d7d0b572838e0cde13e"
+  merge_commit: "2b39306c0ee22f273456034ad15542ad8fe213bd"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/commit/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/commit/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/commit/SKILL.md."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/create-issue/SKILL.md."
+  - id: signal_04
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/create-issue/SKILL.md."
+  - id: signal_05
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/create-issue/SKILL.md."
+  - id: signal_06
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/pr-description/SKILL.md."
+  - id: signal_07
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/pr-description/SKILL.md."
+  - id: signal_08
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/pr-description/SKILL.md."
+  - id: signal_09
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/pr-description/references/example.md."
+  - id: signal_10
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/pr-description/references/example.md."
+  - id: signal_11
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/pr-description/references/example.md."
+  - id: signal_12
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/review-pr/SKILL.md."
+  - id: signal_13
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/review-pr/SKILL.md."
+  - id: signal_14
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/review-pr/SKILL.md."
+  - id: signal_15
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/review-pr/references/review-guidance.md."
+  - id: signal_16
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/review-pr/references/review-guidance.md."
+  - id: signal_17
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/review-pr/references/review-guidance.md."
+
+config_edits:
+  - path: .claude/skills/commit/SKILL.md
+    tier: 1
+    gold_added: '---
+
+      name: commit
+
+      description: Stage and commit changes with a clear, concise commit message.
+
+      argument-hint: [optional message hint]
+
+      allowed-tools: Bash(git *)
+
+      ---
+
+
+      # Commit
+
+
+      Create a commit for the current changes.
+
+
+      ## Steps
+
+
+      1. Run `git status` (without `-uall`) to see untracked and modified files.
+
+      2. Run `git diff` and `git diff --cached` to understand staged and unstaged changes.
+
+      3. Run `git log --oneline -5` to see recent commit style.
+
+      4. Stage the relevant files by name — avoid `git add -A` or `git add .`.
+
+      5. Write a commit message and commit.
+
+
+      If `$ARGUMENTS` is provided, use it as a hint for the message.
+
+
+      ## Commit message rules
+
+
+      - Use the imperative mood ("Add", "Fix", "Remove", not "Added", "Fixes", "Removed").
+
+      - Be concise: one short sentence, ideally under 50 characters.
+
+      - Do NOT use conventional commit prefixes (no `feat:`, `fix:`, `chore:`, etc.).
+
+      - Do NOT add any `Co-Authored-By` or similar trailers.
+
+      - Focus on **what** changed and **why**, not how.
+
+      - If a second line is needed for context, keep it brief.
+
+
+      ## Examples of good messages
+
+
+      - `Prevent discount code from being cleared on edit`
+
+      - `Add integration test for offer code persistence`
+
+      - `Remove unused legacy export helper`
+
+      - `Fix thumbnail missing in upsell insert`
+
+
+      $ARGUMENTS'
+    gold_removed: ''
+  - path: .claude/skills/create-issue/SKILL.md
+    tier: 1
+    gold_added: "---\nname: create-issue\ndescription: >\n  Draft GitHub issues for the Gumroad codebase. Outputs to an unstaged markdown file in the repo\n  root. Never creates issues on GitHub. Triggers on: \"create issue\", \"write issue\", \"draft issue\",\n  \"write a bug report\", \"file an issue\", \"create a ticket\", or when the user describes a problem\n  or feature they want to turn into a GitHub issue.\n---\n\n# Issue Drafting\n\nDraft well-structured GitHub issues. Output to an unstaged `.md` file — never post to GitHub.\n\n## Workflow\n\n### 1. Understand the Problem\n\nGather context from the user. Ask clarifying questions if needed:\n\n- What's happening vs what should happen?\n- Who's affected and how often?\n- Any workarounds in use?\n- Is there data that quantifies the impact?\n\nIf the user points to code, trace the relevant paths to understand the root cause. Include aggregated, anonymized data that quantifies the impact when available (e.g., \"99 purchases across 82 sellers are in this state\"). Never include PII — no emails, names, IDs, or payment details.\n\n### 2. Decide: Single Issue or Parent + Sub-issues\n\nBefore writing, assess the scope:\n\n**Single issue** when:\n\n- One clear problem with one solution path\n- The fix would be one PR (~100 LOC per CONTRIBUTING.md)\n- No independent workstreams\n\n**Parent + sub-issues** when:\n\n- The solution has multiple independently shippable parts\n- Different parts could be worked on in parallel or by different people\n- The total scope would exceed one reasonably-sized PR\n- There's a logical sequence (e.g., API integration → webhook fix → backfill)\n\nIf suggesting sub-issues, number the solution parts clearly and note which can be done independently vs which depend on each other. Write the parent issue as the full document, then note where to split.\n\n### 3. Write the Issue\n\nStructure:\n\n**## What**\nThe problem, concretely. Include:\n\n- What's happening and what the impact is\n- Who's affected (users, sellers, internal team)\n- Quantify with data when possible (error rates, support ticket counts)\n- Link to related issues, Slack threads, or prior attempts\n- Mention workarounds people are using and why they're insufficient\n\n**## Why**\nThe root cause. Explain the technical reason the problem exists — not just symptoms. Reference code areas and behaviors (e.g., \"the PayPal webhook handler\" or \"the dispute resolution flow\"), not specific file paths or line numbers — those change. This is what makes the issue actionable rather than just a complaint.\n\n**## Proposed solution**\nHigh-level direction that's technically sound but not overly prescriptive. Give enough guidance that someone can start working without a long investigation phase, while leaving room for implementation decisions:\n\n- Name the approach and why it's the right one\n- If there are API constraints or non-obvious technical details, explain them (link to external docs when relevant)\n- Number the parts if the solution has multiple steps\n- Note alternatives considered and why they were rejected, if relevant\n- Don't dictate implementation details like exact method signatures or class names — describe what needs to happen, not exactly how to code it\n\n**## Acceptance criteria**\nCheckboxes. Each one should be independently testable. Cover:\n\n- The happy path\n- Key edge cases\n- Things that should NOT change (e.g., \"Stripe behavior is unchanged\")\n\n**## Edge cases** (when applicable)\nCall out non-obvious scenarios: race conditions, ordering issues, backward compatibility, migration concerns.\n\n### 4. Output\n\nWrite to `gh-issue-draft.md` in the repo root. Do NOT stage or commit.\n\nIf the issue should be split into sub-issues, write the parent issue first, then add a `## Sub-issues` section at the end listing each sub-issue with a one-line summary. The user can split them manually.\n\n## Style\n\n- Concise and direct. No jargon, no filler.\n- Ground claims in data or code references — don't just say \"this is a problem,\" show it.\n- Use `product` not `link`, `buyer`/`seller` not `customer`/`creator` per CONTRIBUTING.md.\n- Link to external docs (API references, etc.) where they add clarity.\n- Reference code by area or concept (\"the dispute webhook handler\"), not by file:line — those change.\n- The issue is public (open source). It must be **self-contained**: an OSS contributor who has no access to prod, Slack, or internal tools should have everything they need to implement it without asking follow-up questions.\n- Include aggregated data when it quantifies the problem. **Never include PII** — no emails, user IDs, names, or payment details.\n\n## Important\n\n- Use `gh` read-only only. Never create issues via CLI.\n- The user reviews and posts manually — just write the best possible draft."
+    gold_removed: ''
+  - path: .claude/skills/pr-description/SKILL.md
+    tier: 1
+    gold_added: "---\nname: pr-description\ndescription: >\n  Generate a PR description for the current branch and its linked GitHub issue.\n  Outputs to an unstaged markdown file in the repo root. Never creates or updates PRs.\n  Triggers on: \"generate PR description\", \"write PR description\", \"PR description\",\n  \"describe this PR\", \"draft PR\", or after completing implementation work when the user\n  wants to prepare a PR. Also use when the user says \"pr\", \"pull request description\",\n  or asks to summarize their branch changes for review.\n---\n\n# PR Description Generator\n\nGenerate a concise, high-quality PR description from the current branch and its linked GitHub issue. Output to an unstaged `.md` file — never publish or update a PR.\n\n## Workflow\n\n### 1. Gather Context\n\nRun these in parallel:\n\n```bash\n# Current branch name\ngit branch --show-current\n\n# Commits on this branch vs main\ngit log main..HEAD --oneline\n\n# Full diff against main\ngit diff main...HEAD\n\n# Check for linked issue number in branch name or commits\n# Branch names often follow: username/issue-description or fix/NNNN-description\n```\n\nIf the branch name or commits reference an issue number, fetch it:\n\n```bash\ngh issue view <number> --repo antiwork/gumroad --comments\n```\n\nIf no issue number is found, ask the user.\n\n### 2. Understand the Change\n\nFrom the issue and diff, determine:\n\n- **What problem was being solved** (or what feature was requested)\n- **What approach was taken** (high-level concept, not file-by-file)\n- **Whether this is a UI change** (look for view/component/CSS changes)\n\nRead key changed files if the diff alone doesn't make the approach clear.\n\n### 3. Write the Description\n\nUse the template below. Adapt sections based on what's relevant — not every section is needed for every PR.\n\n**Style rules:**\n\n- Write in simple, direct language. Avoid jargon.\n- Focus on _why_ and _how at a high level_ — not what files changed.\n- No file change summaries or lists of modified files.\n- No checklists.\n- Succinct PR title: no \"feat:\" prefix, but \"Fix:\" is fine for bug fixes.\n- Keep it concise. A few clear sentences beat a wall of text.\n\n#### Template\n\n```markdown\nFixes #<issue-number>\n\n## Problem\n\n[Why this change exists. What was broken or missing. 1-3 sentences max.]\n\n## Approach\n\n[High-level concept of the solution. What strategy was used and why.\nNOT a list of file changes. If there were alternative approaches considered,\nbriefly explain why this one was chosen.]\n\n<!-- BEFORE/AFTER — include for UI/CSS changes, delete this section otherwise\n## Before/After\n\nBefore:\n<!-- screenshot or video -->\n\nAfter:\n\n<!-- screenshot or video -->\n\nInclude: Desktop (light + dark) and Mobile (light + dark) if applicable.\n-->\n\n<!-- TEST RESULTS — include a screenshot of test suite passing locally\n## Test Results\n\n<!-- screenshot -->\n\n-->\n\n---\n\nThis PR was implemented with AI assistance using Claude Code for code generation. All code was self-reviewed.\n```\n\nSee [references/example.md](references/example.md) for a well-received PR description example.\n\n### 4. Output the File\n\nWrite the description to `gh-pr-draft.md` in the repo root. Do NOT stage or commit this file.\n\nIf `gh-pr-draft.md` already exists, overwrite it.\n\nTell the user the file was created and suggest they review it before posting.\n\n## Important\n\n- Use `gh` read-only only. Never create, comment on, or update PRs.\n- Always fetch the GitHub issue — it provides critical context for the Problem section.\n- Omit the Before/After section entirely for non-UI changes (remove the HTML comment too).\n- Omit the Test Results section if not applicable (remove the HTML comment too).\n- The AI disclaimer is always the last line, after a `---` separator."
+    gold_removed: ''
+  - path: .claude/skills/pr-description/references/example.md
+    tier: 1
+    gold_added: '# Example: Well-Received PR Description
+
+
+      This PR was well-received by the Gumroad team. Use it as a style reference.
+
+
+      ```markdown
+
+      Fixes #2562
+
+
+      ## Problem
+
+
+      Inertia.js caches the entire `page.props` object in browser history state. When users navigate backward/forward, the browser restores the cached props including the flash message, causing it to re-render even though it was already displayed.
+
+
+      ## Approach
+
+
+      Clear the flash prop from Inertia''s cache immediately after displaying the message using `router.replaceProp("flash", null)`. This is a client-side operation that modifies the current page state without making a server request.
+
+
+      Created a `useFlashMessage` hook that displays the flash and clears it from cache, then updated the layouts to use it.
+
+
+      ### Why This Approach
+
+
+      Other open PRs for this issue:
+
+
+      - **#2655** uses server-side ID generation + sessionStorage tracking (adds backend changes and storage management)
+
+      - **#2614** removes flash from Inertia props entirely (invasive restructure)
+
+      - **#2613** uses `router.replace({ props: ... })` (similar concept, older API)
+
+
+      This PR uses `router.replaceProp()` — the direct Inertia v2 API designed for single-prop updates. No server changes, no storage management, minimal code.
+
+
+      ## Before/After
+
+
+      Before:
+
+      https://github.com/user-attachments/assets/46a53f8e-cb14-4930-8301-34943af3a5f2
+
+
+      After:
+
+      https://github.com/user-attachments/assets/23efb2b5-c533-4ec4-9a29-59ee7a07c1cd
+
+
+      ## Test Results
+
+
+      <img width="602" height="141" alt="Screenshot 2026-01-06 at 23 10 31" src="https://github.com/user-attachments/assets/d7b2ba00-5007-4100-bb0a-85b6fb04d87f" />
+
+
+      ---
+
+
+      This PR was implemented with AI assistance using Claude Code for code generation. All code was self-reviewed.
+
+      ```'
+    gold_removed: ''
+  - path: .claude/skills/review-pr/SKILL.md
+    tier: 1
+    gold_added: "---\nname: review-pr\ndescription: >\n  Review GitHub pull requests for the Gumroad codebase against project guidelines, code quality,\n  and correctness. Use when the user wants to review a PR, check new comments on a PR, provide\n  feedback on code changes, or asks about PR quality. Triggers on: \"review PR\", \"review this PR\",\n  \"check PR #NNN\", any GitHub PR URL (e.g. https://github.com/antiwork/gumroad/pull/NNNN),\n  \"what's new on the PR\", \"check comments\", \"review the diff\", \"give feedback on this PR\",\n  or requests to evaluate code changes in a pull request.\n---\n\n# PR Review\n\nReview pull requests for code quality, correctness, and CONTRIBUTING.md compliance.\n\n**Scope boundary**: This skill evaluates _how the code is written_. For evaluating _whether the PR solves the right problem_, use the `issue-detective` skill instead.\n\n## Workflow\n\n### 1. Fetch PR Context\n\n```bash\ngh pr view <number> --repo antiwork/gumroad\ngh pr diff <number> --repo antiwork/gumroad\ngh pr view <number> --repo antiwork/gumroad --comments\ngh api repos/antiwork/gumroad/pulls/<number>/comments\n```\n\nAlso read `CONTRIBUTING.md` from the repo root — it's the source of truth for all guideline checks.\n\nNote PR status (draft, closed, merged). Skip review if merged or closed unless user insists.\n\n### 2. Understand the Change\n\nFrom the diff and description, determine:\n\n- What changed and why (read the linked issue if referenced)\n- Bug fix, feature, refactor, or chore\n- Which layers are affected (frontend, backend, both, tests only)\n- Size and complexity\n\nRead key modified files in full when the diff alone is insufficient to understand context.\n\n### 3. Review\n\nRun these review passes on the diff:\n\n**Pass 1 — Bugs and Logic Errors**\nWrong conditionals, missing edge cases, race conditions, nil/null handling, off-by-one errors, security vulnerabilities (injection, XSS, CSRF). Focus on code paths introduced or modified by the PR.\n\n**Pass 2 — CONTRIBUTING.md Compliance**\nCheck the diff against every applicable rule in CONTRIBUTING.md (code standards, naming conventions, testing standards, Sidekiq patterns, PR structure, etc.). The file is the single source of truth — do not maintain a separate checklist.\n\n**Pass 3 — Code Clarity**\nEvaluate readability and maintainability of new/modified code. See [references/review-guidance.md](references/review-guidance.md) for what to flag vs what to leave alone. The goal is clear, explicit code — not clever or compact code.\n\n**Pass 4 — PR Structure**\nAI disclosure, description quality (explains _why_), before/after for UI changes, test results, appropriate size — all per CONTRIBUTING.md.\n\n### 4. Score and Filter\n\nAssign each finding a confidence score (0–100): how likely is this a genuine problem?\n\n**Keep** findings >= 80. **Drop** findings below 80.\n\nSee [references/review-guidance.md](references/review-guidance.md) for noise filtering rules and severity levels.\n\n### 5. Report\n\n```\n## Summary\n\n[1-2 sentences: what the PR does and overall assessment]\n\n## Issues\n\n### [critical|important|suggestion] Title\n**File:** `path/to/file.rb:NN`\n**Confidence:** NN/100\n\n[Concise explanation and fix suggestion if straightforward.]\n\n...\n\n## Checklist\n\n[CONTRIBUTING.md items that are missing — e.g., no AI disclosure, no before/after, missing tests]\n\n## Verdict\n\n[approve / request-changes / comment-only — with brief justification]\n```\n\nWrite the review to `gh-pr-review.md` in the repo root. Do NOT stage or commit. Do NOT post to GitHub.\n\n### 6. Iterate\n\nWhen the user asks to re-check a PR (new comments, updated diff):\n\n```bash\ngh pr view <number> --repo antiwork/gumroad --comments\ngh api repos/antiwork/gumroad/pulls/<number>/comments\ngh pr diff <number> --repo antiwork/gumroad\n```\n\nFocus on what changed since the last review. Don't repeat prior findings unless still unaddressed.\n\n## Important\n\n- Use `gh` read-only only. Never approve, comment on, or request changes via CLI.\n- Review what the PR _introduces_ — not pre-existing code.\n- Be direct and concise. No filler praise.\n- Prioritize substantive issues over cosmetic ones.\n- When unsure, state uncertainty rather than false confidence.\n- For large PRs (1k+ lines), note the PR should be broken up."
+    gold_removed: ''
+  - path: .claude/skills/review-pr/references/review-guidance.md
+    tier: 1
+    gold_added: '# PR Review Guidance
+
+
+      Supplementary review guidance beyond what CONTRIBUTING.md already covers. Read CONTRIBUTING.md first — this file adds the reviewer''s lens.
+
+
+      ## Code Clarity Pass (inspired by code-simplifier philosophy)
+
+
+      Evaluate readability and maintainability of new/modified code. The goal is clear, explicit code — not clever or compact code.
+
+
+      Flag:
+
+
+      - Unnecessary nesting that could be flattened (early returns, guard clauses)
+
+      - Redundant code that could be consolidated without premature abstraction
+
+      - Unclear variable/method names that require mental decoding
+
+      - Nested ternaries — prefer if/else or case/switch for multiple conditions
+
+      - Overly dense one-liners that sacrifice readability for brevity
+
+
+      Do NOT flag:
+
+
+      - Code that''s already clear enough — don''t suggest changes for marginal improvement
+
+      - Three similar lines that could theoretically be abstracted — duplication is fine if the cases are independent
+
+      - Missing type annotations or docstrings on code that''s self-explanatory
+
+      - Style preferences not backed by CONTRIBUTING.md
+
+
+      ## Noise Filtering
+
+
+      Confidence scoring (0–100) for each finding. Only report findings >= 80.
+
+
+      ### Always drop (regardless of score)
+
+
+      - Pre-existing issues not introduced by the PR
+
+      - Issues a linter, formatter, or type checker would catch
+
+      - Style nitpicks not covered by CONTRIBUTING.md
+
+      - Changes to lines outside the PR diff
+
+      - Suggestions that would add unnecessary complexity or abstraction
+
+      - Speculation about potential future bugs without concrete evidence
+
+
+      ### Severity levels
+
+
+      - **critical**: Would cause incorrect behavior, data loss, security vulnerability, or production breakage
+
+      - **important**: Violates CONTRIBUTING.md, introduces tech debt, or has a meaningful quality impact
+
+      - **suggestion**: Could improve clarity or maintainability but isn''t wrong as-is'
+    gold_removed: ''

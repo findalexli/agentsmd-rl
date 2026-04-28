@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: dotnet-skills-docs-add-async-local-functions
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: Aaronontheweb/dotnet-skills
+  pr: 37
+  base_commit: "8b83f4978a58f0a81aa181134a0c56c509f8a519"
+  merge_commit: "843855a82123cdc89b14c81e6b384d0392e184f6"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/csharp-concurrency-patterns/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/csharp-concurrency-patterns/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/csharp-concurrency-patterns/SKILL.md."
+
+config_edits:
+  - path: skills/csharp-concurrency-patterns/SKILL.md
+    tier: 1
+    gold_added: "## Prefer Async Local Functions\n\nUse async local functions instead of `Task.Run(async () => ...)` or `ContinueWith()`:\n\n### Don't: Anonymous Async Lambda\n\n```csharp\nprivate void HandleCommand(MyCommand cmd)\n{\n    var self = Self;\n\n    _ = Task.Run(async () =>\n    {\n        // Lots of async work here...\n        var result = await DoWorkAsync();\n        return new WorkCompleted(result);\n    }).PipeTo(self);\n}\n```\n\n### Do: Async Local Function\n\n```csharp\nprivate void HandleCommand(MyCommand cmd)\n{\n    async Task<WorkCompleted> ExecuteAsync()\n    {\n        // Lots of async work here...\n        var result = await DoWorkAsync();\n        return new WorkCompleted(result);\n    }\n\n    ExecuteAsync().PipeTo(Self);\n}\n```\n\n### Avoid ContinueWith for Sequencing\n\n**Don't:**\n```csharp\nsomeTask\n    .ContinueWith(t => ProcessResult(t.Result))\n    .ContinueWith(t => SendNotification(t.Result));\n```\n\n**Do:**\n```csharp\nasync Task ProcessAndNotifyAsync()\n{\n    var result = await someTask;\n    var processed = await ProcessResult(result);\n    await SendNotification(processed);\n}\n\nProcessAndNotifyAsync();\n```\n\n### Why This Matters\n\n| Benefit | Description |\n|---------|-------------|\n| **Readability** | Named functions are self-documenting; anonymous lambdas obscure intent |\n| **Debugging** | Stack traces show meaningful function names instead of `<>c__DisplayClass` |\n| **Exception handling** | Cleaner try/catch structure without `AggregateException` unwrapping |\n| **Scope clarity** | Local functions make captured variables explicit |\n| **Testability** | Easier to extract and unit test the async logic |\n\n### Akka.NET Example\n\nWhen using `PipeTo` in actors, async local functions keep the pattern clean:\n\n```csharp\nprivate void HandleSync(StartSync cmd)\n{\n    async Task<SyncResult> PerformSyncAsync()\n    {\n        await using var scope = _scopeFactory.CreateAsyncScope();\n        var service = scope.ServiceProvider.GetRequiredService<ISyncService>();\n\n        var count = await service.SyncAsync(cmd.EntityId);\n        return new SyncResult(cmd.EntityId, count);\n    }\n\n    PerformSyncAsync().PipeTo(Self);\n}\n```\n\nThis is cleaner than wrapping everything in `Task.Run(async () => ...)`.\n\n---\n"
+    gold_removed: ''

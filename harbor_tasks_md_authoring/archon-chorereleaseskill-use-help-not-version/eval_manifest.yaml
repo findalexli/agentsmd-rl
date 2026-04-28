@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: archon-chorereleaseskill-use-help-not-version
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: coleam00/Archon
+  pr: 1359
+  base_commit: "4115ea5d3afdf0db0bf263872426d0147df889f0"
+  merge_commit: "359b6d3bd317c67bd251561d2c4b2d420511ede4"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/release/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/release/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/release/SKILL.md."
+
+config_edits:
+  - path: .claude/skills/release/SKILL.md
+    tier: 1
+    gold_added: "  # Use `--help` (NOT `version`). The `version` command's compiled-binary code\n  # path depends on BUNDLED_IS_BINARY=true, which is set by scripts/build-binaries.sh\n  # — but we're doing a bare `bun build --compile` here to keep the smoke fast,\n  # so BUNDLED_IS_BINARY is still `false`. That sends `version` down the dev\n  # branch of version.ts which tries to read package.json from a path that only\n  # exists in node_modules, producing a false-positive ENOENT. `--help` has no\n  # such dev/binary branch and exercises the same module-init graph we're\n  # actually testing. Must NOT touch network, database, or require env vars.\n  if ! \"$TMP_BINARY\" --help > /tmp/archon-preflight.log 2>&1; then"
+    gold_removed: ''

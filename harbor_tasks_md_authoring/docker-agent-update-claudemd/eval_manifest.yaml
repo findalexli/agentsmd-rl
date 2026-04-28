@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: docker-agent-update-claudemd
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: docker/docker-agent
+  pr: 414
+  base_commit: "de682d75355630ea791d8e24920e7748087cbbe1"
+  merge_commit: "5d0e6ea80a31e5c7669d152c7b335ee2a173d01d"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+
+config_edits:
+  - path: CLAUDE.md
+    tier: 1
+    gold_added: "- `task format` - Format code\n- `task push-image` - Build and push Docker image\n- `./bin/cagent run <config.yaml>` - Run agent with configuration (uses TUI by default)\n- `./bin/cagent run <config.yaml> --tui=false` - Run in CLI mode\n- `./bin/cagent exec <config.yaml>` - Execute agent without TUI\n- **Remote runtime support**: Can connect to remote runtime servers\n- **Agent properties**: name, model, description, instruction, sub_agents, toolsets, add_date, add_environment_info, code_mode_tools, max_iterations, num_history_items\n- **Model providers**: openai, anthropic, gemini, dmr with configurable parameters\n- **Tool configuration**: MCP tools (local stdio and remote), builtin tools (filesystem, shell, think, todo, memory, etc.)\n- **Multiple interfaces**: CLI (`run.go`), TUI (default for `run` command), API (`api.go`)\n- **Interactive commands**: `/exit`, `/reset`, `/eval`, `/usage`, `/compact` during sessions\n- **Gateway mode**: SSE-based transport for external MCP clients like Claude Code\n- **script**: Custom shell scripts\n- **fetch**: HTTP requests\n- **Docker-based MCP**: Reference MCP servers from Docker images (e.g., `docker:github-official`)\nversion: \"2\"\n\n    model: model_ref  # Can be inline like \"openai/gpt-4o\" or reference defined models\n        path: ./path/to/db\n\nmodels:\n  model_ref:\n    provider: anthropic\n    model: claude-sonnet-4-0\n    max_tokens: 64000\n- Model references can be inline (e.g., `openai/gpt-4o`) or defined in models section\nModels can be referenced inline (e.g., `openai/gpt-4o`) or defined explicitly:\n\n### DMR\n\n```yaml\nmodels:\n  dmr:\n    provider: dmr\n    model: ai/llama3.2\n```\n\n      API_KEY: \"value\"\n### Docker-based MCP Server\n\n```yaml\ntoolsets:\n  - type: mcp\n    ref: docker:github-official\n    instruction: |\n      Use these tools to help with GitHub tasks.\n```\n\n### Shell Tool\n\n```yaml\ntoolsets:\n  - type: shell\n```\n\n### Filesystem Tool\n\n```yaml\ntoolsets:\n  - type: filesystem\n```\n\nversion: \"2\"\n\n    model: anthropic/claude-sonnet-4-0\n    model: openai/gpt-4o\n        ref: docker:search-tools\n    model: anthropic/claude-sonnet-4-0\n        path: ./writer_memory.db\n- `/usage` - Show token usage statistics\n- `/compact` - Generate summary and compact session history\n- `/eval` - Save evaluation data\n- `pkg/gateway/` - MCP gateway/server implementation\n- `pkg/tui/` - Terminal User Interface components\n- `pkg/api/` - API server implementation\n- `examples/` - Sample agent configurations\n- `TELEMETRY_ENABLED` - Control telemetry (set to false to disable)\n- `CAGENT_HIDE_TELEMETRY_BANNER` - Hide telemetry banner message\n- `CAGENT_HIDE_FEEDBACK_LINK` - Hide feedback link\n- Logs written to `~/.cagent/cagent.debug.log` by default\n- Use `--log-file <path>` to specify custom log location\n### OpenTelemetry Tracing\n\n- Add `--otel` flag to enable OpenTelemetry tracing\n- Example: `./bin/cagent run config.yaml --otel`\n\n- **Model not found**: Ensure model is defined in config or use inline format (provider/model)"
+    gold_removed: ''

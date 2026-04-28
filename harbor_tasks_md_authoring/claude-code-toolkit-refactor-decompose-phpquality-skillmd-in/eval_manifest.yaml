@@ -1,0 +1,247 @@
+version: "2.0"
+
+task:
+  name: claude-code-toolkit-refactor-decompose-phpquality-skillmd-in
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: notque/claude-code-toolkit
+  pr: 425
+  base_commit: "e4525729dc32f294868957671ab7e6ca01779fe9"
+  merge_commit: "0653aa11e6aaf3db33ee29b1e96721249cbd7435"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/php-quality/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/php-quality/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/php-quality/SKILL.md."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/php-quality/references/framework-idioms.md."
+  - id: signal_04
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/php-quality/references/framework-idioms.md."
+  - id: signal_05
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/php-quality/references/framework-idioms.md."
+  - id: signal_06
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/php-quality/references/modern-php-features.md."
+  - id: signal_07
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/php-quality/references/modern-php-features.md."
+  - id: signal_08
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/php-quality/references/modern-php-features.md."
+  - id: signal_09
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/php-quality/references/quality-tools.md."
+  - id: signal_10
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/php-quality/references/quality-tools.md."
+  - id: signal_11
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/php-quality/references/quality-tools.md."
+
+config_edits:
+  - path: skills/php-quality/SKILL.md
+    tier: 1
+    gold_added: 'version: 1.1.0
+
+      PHP code quality enforcement: strict types, PSR-12 compliance, modern language features, framework idioms, and static analysis tooling.
+
+      ## Reference Loading Table
+
+      | Signal | Reference | Size |
+
+      |--------|-----------|------|
+
+      | union types, intersection types, DNF, enums, readonly, named arguments, match expression, null-safe operator, PHP 8.0, PHP 8.1, PHP 8.2 | `references/modern-php-features.md` | ~160 lines |
+
+      | Laravel, Eloquent, Collections, Service Container, Symfony, DI attributes, Event Dispatcher, framework | `references/framework-idioms.md` | ~70 lines |
+
+      | PHP-CS-Fixer, PHPStan, Psalm, Rector, static analysis, CI, linting, code style, taint analysis | `references/quality-tools.md` | ~60 lines |
+
+      **Load greedily.** If the user''s question touches any signal keyword, load the matching reference before responding. Multiple signals matching = load all matching references.
+
+      ---
+
+      ## Core Rules (Always Apply)
+
+      ### Strict Types Declaration
+
+      Every PHP file must begin with `declare(strict_types=1)`. This enforces scalar type coercion rules, catching type errors at call time instead of silently converting values.
+
+      // Without strict_types: strlen(123) silently returns 3
+
+      // With strict_types: strlen(123) throws TypeError
+
+      This is non-negotiable. Omitting it is a code quality defect.
+
+      ### PSR-12 Coding Standard
+
+      PSR-12 extends PSR-1 and PSR-2 as the accepted PHP coding style. Key rules:
+
+      - 4-space indentation, no trailing whitespace
+
+      - One class per file
+
+      - `use` statements after namespace with a blank line before and after
+
+      - Visibility required on all properties, methods, and constants
+
+      - Opening braces on same line for control structures
+
+      - Opening braces on next line for classes and methods
+
+      ---
+
+      ## Phase 1: ASSESS
+
+      Determine what kind of PHP quality review is needed:
+
+      | Request type | Load references | Action |
+
+      |-------------|----------------|--------|
+
+      | Code review | All three | Full quality pass |
+
+      | Type system question | `modern-php-features.md` | Feature-specific guidance |
+
+      | Framework patterns | `framework-idioms.md` | Idiomatic pattern review |
+
+      | Tooling setup | `quality-tools.md` | Config and CI guidance |
+
+      **Gate**: Request classified and relevant references loaded.
+
+      ---
+
+      ## Phase 2: REVIEW
+
+      Apply loaded reference knowledge to the user''s code or question. Every review checks:
+
+      1. `declare(strict_types=1)` present
+
+      2. PSR-12 compliance
+
+      3. Modern PHP features used where appropriate (from references)
+
+      4. Framework idioms followed (if applicable)
+
+      5. Quality tooling configured (if applicable)
+
+      **Gate**: Specific, reference-backed feedback provided.'
+    gold_removed: ''
+  - path: skills/php-quality/references/framework-idioms.md
+    tier: 1
+    gold_added: "# Framework Idioms Reference\n\n> **Scope**: Idiomatic patterns for Laravel and Symfony. Covers Eloquent scopes, Collections, Service Container binding, Symfony DI attributes, and Event Dispatcher. Does NOT cover raw PHP patterns without a framework or quality tooling configuration.\n> **Version range**: Laravel 10+, Symfony 6.2+\n> **Generated**: 2026-04-16\n\n---\n\n## Laravel Idioms\n\n### Eloquent\n\n```php\n// Scopes for reusable query constraints\nclass User extends Model\n{\n    public function scopeActive(Builder $query): Builder\n    {\n        return $query->where('active', true);\n    }\n}\n\n// Usage: User::active()->where('role', 'admin')->get();\n```\n\n### Collections\n\n```php\n// Prefer collection methods over raw loops\n$names = collect($users)\n    ->filter(fn (User $u) => $u->isActive())\n    ->map(fn (User $u) => $u->fullName())\n    ->sort()\n    ->values()\n    ->all();\n```\n\n### Service Container\n\n```php\n// Bind interface to implementation in a ServiceProvider\n$this->app->bind(PaymentGateway::class, StripeGateway::class);\n\n// Contextual binding\n$this->app->when(OrderService::class)\n    ->needs(PaymentGateway::class)\n    ->give(StripeGateway::class);\n```\n\n---\n\n## Symfony Idioms\n\n### Dependency Injection with Attributes\n\n```php\nuse Symfony\\Component\\DependencyInjection\\Attribute\\Autowire;\n\nclass ReportGenerator\n{\n    public function __construct(\n        private readonly ReportRepository $repository,\n        #[Autowire('%kernel.project_dir%/var/reports')]\n        private readonly string $outputDir,\n    ) {\n    }\n}\n```\n\n### Event Dispatcher\n\n```php\nuse Symfony\\Component\\EventDispatcher\\Attribute\\AsEventListener;\n\n#[AsEventListener(event: OrderPlaced::class)]\nclass SendOrderConfirmation\n{\n    public function __invoke(OrderPlaced $event): void\n    {\n        // Send confirmation email for $event->orderId\n    }\n}\n```"
+    gold_removed: ''
+  - path: skills/php-quality/references/modern-php-features.md
+    tier: 1
+    gold_added: "# Modern PHP Features Reference\n\n> **Scope**: PHP 8.0, 8.1, and 8.2 language features relevant to code quality reviews: type system improvements, enums, readonly, match expressions, named arguments, null-safe operator. Does NOT cover framework-specific patterns or tooling configuration.\n> **Version range**: PHP 8.0 through 8.2\n> **Generated**: 2026-04-16\n\n---\n\n## Type Declarations\n\n### Union Types (PHP 8.0)\n\n```php\nfunction parseId(int|string $id): User\n{\n    return match (true) {\n        is_int($id)    => $this->findById($id),\n        is_string($id) => $this->findBySlug($id),\n    };\n}\n```\n\n### Intersection Types (PHP 8.1)\n\n```php\nfunction processItem(Countable&Iterator $collection): void\n{\n    // $collection must implement BOTH interfaces\n    foreach ($collection as $item) {\n        // ...\n    }\n}\n```\n\n### DNF Types (PHP 8.2)\n\nDisjunctive Normal Form combines union and intersection types.\n\n```php\nfunction handle((Countable&Iterator)|null $items): void\n{\n    // Combines union and intersection: (A&B)|C\n    if ($items === null) {\n        return;\n    }\n    // ...\n}\n```\n\n---\n\n## Enums (PHP 8.1)\n\n### Backed Enums\n\n```php\nenum Status: string\n{\n    case Active   = 'active';\n    case Inactive = 'inactive';\n    case Pending  = 'pending';\n\n    // Enums can have methods\n    public function label(): string\n    {\n        return match ($this) {\n            self::Active   => 'Active',\n            self::Inactive => 'Inactive',\n            self::Pending  => 'Pending Review',\n        };\n    }\n\n    // And implement interfaces\n    public function isTerminal(): bool\n    {\n        return $this === self::Inactive;\n    }\n}\n\n// Usage\n$status = Status::from('active');        // throws ValueError if invalid\n$status = Status::tryFrom('unknown');    // returns null if invalid\n$value  = Status::Active->value;         // 'active'\n```\n\nBacked enums can be `string` or `int`. Use them instead of class constants for fixed value sets.\n\n---\n\n## Readonly Properties and Classes (PHP 8.1 / 8.2)\n\n```php\n// Readonly properties (PHP 8.1) — set once, immutable after\nclass Money\n{\n    public function __construct(\n        public readonly int $amount,\n        public readonly string $currency,\n    ) {\n    }\n}\n\n// Readonly classes (PHP 8.2) — all properties are implicitly readonly\nreadonly class Coordinate\n{\n    public function __construct(\n        public float $latitude,\n        public float $longitude,\n    ) {\n    }\n}\n\n$c = new Coordinate(37.7749, -122.4194);\n// $c->latitude = 0; // Error: Cannot modify readonly property\n```\n\n---\n\n## Named Arguments (PHP 8.0)\n\nNamed arguments improve readability for functions with many parameters or boolean flags.\n\n```php\n// Before: positional arguments — what does true mean?\n$user = createUser('Alice', 'alice@example.com', true, false);\n\n// After: named arguments — intent is clear\n$user = createUser(\n    name: 'Alice',\n    email: 'alice@example.com',\n    isAdmin: true,\n    sendWelcomeEmail: false,\n);\n\n// Named arguments can skip optional parameters\nhtmlspecialchars($string, encoding: 'UTF-8');\n```\n\n---\n\n## Match Expressions (PHP 8.0)\n\n`match` is a stricter alternative to `switch`. It uses strict comparison (`===`), returns a value, and throws `UnhandledMatchError` for missing cases.\n\n```php\n// switch — loose comparison, fall-through risk, verbose\nswitch ($statusCode) {\n    case 200:\n        $text = 'OK';\n        break;\n    case 404:\n        $text = 'Not Found';\n        break;\n    default:\n        $text = 'Unknown';\n}\n\n// match — strict comparison, no fall-through, expression\n$text = match ($statusCode) {\n    200     => 'OK',\n    301     => 'Moved Permanently',\n    404     => 'Not Found',\n    500     => 'Internal Server Error',\n    default => 'Unknown',\n};\n\n// match with no subject — replaces if/elseif chains\n$category = match (true) {\n    $age < 13  => 'child',\n    $age < 18  => 'teen',\n    $age < 65  => 'adult',\n    default    => 'senior',\n};\n```\n\n---\n\n## Null Safe Operator (PHP 8.0)\n\nThe `?->` operator short-circuits to `null` when the left side is null, eliminating nested null checks.\n\n```php\n// Before: defensive null checking\n$country = null;\nif ($user !== null) {\n    $address = $user->getAddress();\n    if ($address !== null) {\n        $country = $address->getCountry();\n    }\n}\n\n// After: nullsafe chaining\n$country = $user?->getAddress()?->getCountry();\n\n// Combine with null coalescing for defaults\n$countryCode = $user?->getAddress()?->getCountry()?->code ?? 'US';\n```"
+    gold_removed: ''
+  - path: skills/php-quality/references/quality-tools.md
+    tier: 1
+    gold_added: '# Quality Tools Reference
+
+
+      > **Scope**: PHP code quality tool configuration and usage: PHP-CS-Fixer, PHPStan, Psalm, Rector. Covers CI integration commands, config files, and recommended strictness levels. Does NOT cover language features or framework patterns.
+
+      > **Version range**: PHP-CS-Fixer 3.x, PHPStan 1.x, Psalm 5.x, Rector 1.x
+
+      > **Generated**: 2026-04-16
+
+
+      ---
+
+
+      ## CI Commands
+
+
+      Run these tools in CI:
+
+
+      ```bash
+
+      # PHP-CS-Fixer — auto-fix PSR-12 violations
+
+      ./vendor/bin/php-cs-fixer fix --dry-run --diff
+
+
+      # PHPStan — static analysis (level 0-9, aim for 6+)
+
+      ./vendor/bin/phpstan analyse src --level=6
+
+
+      # Psalm — alternative static analysis
+
+      ./vendor/bin/psalm --show-info=true
+
+
+      # Rector — automated refactoring and upgrades
+
+      ./vendor/bin/rector process src --dry-run
+
+      ```
+
+
+      ---
+
+
+      ## Tool Reference
+
+
+      | Tool | Purpose | Config File |
+
+      |------|---------|-------------|
+
+      | PHP-CS-Fixer | Code style enforcement | `.php-cs-fixer.dist.php` |
+
+      | PHPStan | Static analysis, type checking | `phpstan.neon` |
+
+      | Psalm | Static analysis, taint analysis | `psalm.xml` |
+
+      | Rector | Automated refactoring | `rector.php` |
+
+
+      ### PHP-CS-Fixer
+
+
+      Enforces PSR-12 and custom code style rules. Config file `.php-cs-fixer.dist.php` defines rulesets. Use `--dry-run --diff` in CI to detect violations without modifying files. Run `fix` locally to auto-correct.
+
+
+      ### PHPStan
+
+
+      Static analysis with levels 0 through 9. Level 6 is the recommended minimum for production code: it covers method return types, property types, and dead code detection. Higher levels add strictness around mixed types and dynamic property access.
+
+
+      ### Psalm
+
+
+      Alternative to PHPStan with taint analysis for security-sensitive code paths. Shows data flow from user input to dangerous sinks (SQL queries, shell commands, file operations). Use `--show-info=true` to surface non-error findings like unused variables.
+
+
+      ### Rector
+
+
+      Automated refactoring engine. Upgrades PHP syntax to target version (e.g., converting `switch` to `match`, adding property promotion). Always run with `--dry-run` first in CI to preview changes.'
+    gold_removed: ''

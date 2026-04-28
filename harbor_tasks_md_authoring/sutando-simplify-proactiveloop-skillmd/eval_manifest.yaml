@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: sutando-simplify-proactiveloop-skillmd
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: sonichi/sutando
+  pr: 131
+  base_commit: "5ff99ca1b91c6babb5f3f57651f739b6729f1213"
+  merge_commit: "29f80de39e15b83fd695c850e230ee3bc547704f"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/proactive-loop/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/proactive-loop/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/proactive-loop/SKILL.md."
+
+config_edits:
+  - path: skills/proactive-loop/SKILL.md
+    tier: 1
+    gold_added: "1. Run `/schedule-crons` to set up all recurring cron jobs (morning briefing, Zacks, etc.)\n## Start the loop\nUse `/loop <interval>` with this prompt:\n   - **Access control:** If the task has `access_tier: other` or `access_tier: team`, delegate to a sandboxed agent. Do NOT process non-owner tasks with your full capabilities. Write the sandboxed output to results."
+    gold_removed: ''

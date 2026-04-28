@@ -1,0 +1,123 @@
+version: "2.0"
+
+task:
+  name: grafana-alerting-add-gh-in-claudemd
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: grafana/grafana
+  pr: 114992
+  base_commit: "39b7d866603d9e59cf6d0198e307767eb5e7ef70"
+  merge_commit: "92a8dd8b53eaad0111fd762b2a9e6e29c6913ef1"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in public/app/features/alerting/unified/CLAUDE.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in public/app/features/alerting/unified/CLAUDE.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in public/app/features/alerting/unified/CLAUDE.md."
+
+config_edits:
+  - path: public/app/features/alerting/unified/CLAUDE.md
+    tier: 1
+    gold_added: '## Using GitHub CLI for Context
+
+
+      When working on issues, PRs, or needing repository context, use the GitHub CLI (`gh`) to fetch information directly:
+
+
+      ### Common Commands
+
+
+      ```bash
+
+      # View issue details
+
+      gh issue view <issue-number>
+
+
+      # View PR details and diff
+
+      gh pr view <pr-number>
+
+      gh pr diff <pr-number>
+
+
+      # List recent issues
+
+      gh issue list --limit 10
+
+
+      # List PRs with specific labels
+
+      gh pr list --label "alerting"
+
+
+      # Search issues
+
+      gh issue list --search "keyword"
+
+
+      # View PR reviews and comments
+
+      gh pr view <pr-number> --comments
+
+
+      # Check CI status
+
+      gh pr checks <pr-number>
+
+
+      # View repository info
+
+      gh repo view
+
+      ```
+
+
+      ### When to Use
+
+
+      - **Understanding issue context**: Fetch issue descriptions, comments, and linked PRs
+
+      - **Reviewing PR changes**: Get diffs, review comments, and CI status
+
+      - **Finding related work**: Search for similar issues or existing implementations
+
+      - **Checking project status**: List open issues/PRs for the alerting team
+
+
+      ### Example Workflow
+
+
+      ```bash
+
+      # Working on issue #12345
+
+      gh issue view 12345
+
+
+      # Check if there''s an existing PR
+
+      gh pr list --search "fixes #12345"
+
+
+      # Review a related PR
+
+      gh pr view 67890
+
+      gh pr diff 67890
+
+      ```
+
+
+      - Use `gh` CLI to fetch issue/PR context from GitHub'
+    gold_removed: ''

@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: everclaw-community-branches-add-agent-integration-section-to
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: profbernardoj/everclaw-community-branches
+  pr: 6
+  base_commit: "9ca2e081f3c318fba69f8cd121f51b9d3a21be3b"
+  merge_commit: "a765054a2fd5058f9d93114cca46224a94391df4"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in SKILL.md."
+
+config_edits:
+  - path: SKILL.md
+    tier: 1
+    gold_added: "## Agent Integration (Recommended Path)\n\n**If you are an AI agent (OpenClaw, Claude, etc.), use the OpenAI-compatible proxy for all Morpheus inference. Do NOT use the bash scripts (session.sh, chat.sh) -- the proxy handles sessions, auth, and model routing automatically.**\n\n### Send Inference\n\n```bash\ncurl http://127.0.0.1:8083/v1/chat/completions \\\n  -H \"Content-Type: application/json\" \\\n  -H \"Authorization: Bearer morpheus-local\" \\\n  -d '{\"model\": \"kimi-k2.5\", \"messages\": [{\"role\": \"user\", \"content\": \"Hello\"}], \"stream\": false}'\n```\n\n### List Available Models\n\n```bash\ncurl http://127.0.0.1:8083/v1/models\n```\n\n### Health Check\n\n```bash\ncurl http://127.0.0.1:8083/health\n```\n\nThe proxy (port 8083) auto-opens blockchain sessions, auto-renews before expiry, and injects all required auth headers. The bash scripts (`session.sh`, `chat.sh`) are available for manual debugging but should not be used for agent integration.\n\nSee Section 12 for full proxy documentation.\n\n---\n"
+    gold_removed: ''

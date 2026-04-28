@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: node-mssql-docs-add-githubcopilotinstructionsmd
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: tediousjs/node-mssql
+  pr: 1844
+  base_commit: "1b815b169c278760cb77751d937cebdc8ddc9043"
+  merge_commit: "62846c71029d1d65ac6ceeecaa16eb2b5d2b0f5a"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/copilot-instructions.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/copilot-instructions.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/copilot-instructions.md."
+
+config_edits:
+  - path: .github/copilot-instructions.md
+    tier: 1
+    gold_added: "# Copilot Instructions for node-mssql\n\n## Build, Test, and Lint\n\n```bash\nnpm test              # Lint (standard) + unit tests\nnpm run lint          # StandardJS linter only (no config file — uses standard directly)\nnpm run test-unit     # Unit tests only (no database required)\nnpm run test-tedious  # Integration tests against a live SQL Server (tedious driver)\nnpm run test-cli      # CLI tool tests\n```\n\nRun a single unit test:\n\n```bash\nnpx mocha --exit -t 15000 --grep \"test name\" test/common/unit.js\n```\n\nIntegration tests require a running SQL Server instance configured in `test/.mssql.json` (see `.devcontainer/.mssql.json` for the expected shape). The devcontainer sets up both Node.js and SQL Server via Docker Compose.\n\n## Architecture\n\nThis is a **driver-agnostic SQL Server client** for Node.js. The core abstraction is:\n\n- **`lib/base/`** — Abstract base classes (`ConnectionPool`, `Request`, `Transaction`, `PreparedStatement`) that define the public API. All extend `EventEmitter`.\n- **`lib/tedious/`** — Tedious driver implementation. Each file extends the corresponding base class and overrides private methods like `_poolCreate()`, `_executeQuery()`, etc.\n- **`lib/msnodesqlv8/`** — MSNodeSQLv8 (native ODBC) driver implementation. Same pattern.\n- **Entry points**: `index.js` and `tedious.js` both export `lib/tedious`; `msnodesqlv8.js` exports `lib/msnodesqlv8`.\n\nDriver index files use `Object.assign()` to merge base exports with driver-specific class overrides, then register the driver on the shared `driver` object in `lib/shared.js`.\n\n### Other key modules\n\n- **`lib/shared.js`** — Global mutable state: the active `driver`, configurable `Promise` library, and `map` (JS type → SQL type registry with `getTypeByValue()` auto-detection).\n- **`lib/global-connection.js`** — Singleton global connection pool with pre-connect handler registration.\n- **`lib/datatypes.js`** — SQL type definitions. Parameterized types are factory functions: `sql.VarChar(50)`, `sql.Numeric(18, 4)`.\n- **`lib/table.js`** — `Table` class for bulk inserts and TVPs. Parses qualified names like `[db].[schema].[table]`.\n- **`lib/error/`** — Error hierarchy: `MSSQLError` → `ConnectionError`, `RequestError`, `TransactionError`, `PreparedStatementError`. Each has a `code` property (e.g., `EINJECT`, `EARGS`, `EREQINPROG`).\n\n## Conventions\n\n- **Private methods** use a leading underscore (`_poolCreate`, `_executeQuery`). These are the driver-specific hooks that implementations override.\n- **Dual API**: All async methods support both Promises and callbacks.\n- **Streaming**: `Request` supports a `stream` mode where results are emitted as `row`, `recordset`, and `done` events.\n- **Linting**: StandardJS — no semicolons, 2-space indent, single quotes. No config overrides.\n- **Commit messages:** Follow [Conventional Commits](https://www.conventionalcommits.org/) enforced by commitlint. Semantic-release uses these to generate automated releases and changelogs, so correct commit types are critical.\n  - `fix` — Bug fixes or behavioural corrections that don't change public interfaces. Triggers a **patch** release.\n  - `feat` — New backwards-compatible functionality. Triggers a **minor** release.\n  - `feat!` (or any type with `!`) — Breaking changes where consumers would need to update their code. Triggers a **major** release.\n  - `chore` — Dependency updates, tooling changes, or housekeeping. **Does not trigger a release.**\n  - `ci` — Changes to CI pipelines or workflow configuration. **Does not trigger a release.**\n  - `style` — Refactoring or stylistic changes that do not change functionality. **Does not trigger a release.**\n  - `test` — Changes that only touch test files. **Does not trigger a release.**\n  - Only `fix` and `feat` trigger releases. If a change doesn't neatly fit `fix` or `feat` but still needs to be released, use whichever is most appropriate to ensure a release is created.\n- **Commits and merges:**\n  - Commits should be atomic and ideally deployable in isolation — all tests, linting, and commitlinting should pass on each individual commit.\n  - PRs are merged using a **merge commit** (no squash-merge or rebase-merge). Each commit in the PR history is preserved.\n  - To keep branches up to date with the base branch, **rebase** onto it rather than merging it in.\n  - All changes must go through a **pull request** — no direct commits to master.\n- **Debug logging**: Uses the `debug` library with `mssql:*` namespaces (`mssql:base`, `mssql:tedi`, etc.).\n- **Instance tracking**: `lib/utils.js` uses a `WeakMap` (`IDS`) to assign unique IDs to class instances.\n- **SQL injection guard**: Parameter names are validated against patterns like `--`, `/*`, `'` — throws `RequestError` with code `EINJECT`.\n\n### Test patterns\n\n- **Unit tests** (`test/common/unit.js`): No database needed. Tests type mapping, table parsing, error construction.\n- **Integration tests** (`test/common/tests.js`): Exported as a factory `(sql, driver) => { ... }` — called by each driver's test file. Many tests exercise three execution styles: callback, promise, and streaming.\n- **Framework**: Mocha + Node.js built-in `assert` (no chai/sinon).\n- **Keeping this file up to date:** If a change affects the architecture, conventions, build process, or any other information documented here, update this file as part of the same PR."
+    gold_removed: ''

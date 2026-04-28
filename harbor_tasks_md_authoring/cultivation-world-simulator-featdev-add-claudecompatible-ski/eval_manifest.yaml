@@ -1,0 +1,133 @@
+version: "2.0"
+
+task:
+  name: cultivation-world-simulator-featdev-add-claudecompatible-ski
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: 4thfever/cultivation-world-simulator
+  pr: 96
+  base_commit: "a2f2010ee55ae567b6da87d0a919c7119a75569c"
+  merge_commit: "e286d249c45fb9abcc5bb847906acc004529ca00"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/git-pr/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/git-pr/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/git-pr/SKILL.md."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/test-validate/SKILL.md."
+  - id: signal_04
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/test-validate/SKILL.md."
+  - id: signal_05
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/test-validate/SKILL.md."
+
+config_edits:
+  - path: .claude/skills/git-pr/SKILL.md
+    tier: 1
+    gold_added: '---
+
+      name: git-pr
+
+      description: Create a pull request with proper remote handling
+
+      ---
+
+
+      ## Pre-flight
+
+
+      ```bash
+
+      git remote -v
+
+      # If origin URL is outdated, fix it:
+
+      # git remote set-url origin https://github.com/AI-Cultivation/cultivation-world-simulator.git
+
+      ```
+
+
+      ## Commands
+
+
+      ```bash
+
+      git checkout main && git pull origin main
+
+      git checkout -b <github-username>/<branch-name>
+
+      git add <files>
+
+      git commit -m "<type>: <description>"
+
+      git push -u origin <github-username>/<branch-name>
+
+      gh pr create --head <github-username>/<branch-name> --base main --title "<type>: <description>" --body "<body>"
+
+      ```
+
+
+      ## Notes
+
+
+      - Always branch off from `main`, not from current branch
+
+      - Follow PR template in `.github/PULL_REQUEST_TEMPLATE.md`
+
+      - `<github-username>`: e.g., `xzhseh`
+
+      - `<type>`: `feat` | `fix` | `refactor` | `test` | `docs`'
+    gold_removed: ''
+  - path: .claude/skills/test-validate/SKILL.md
+    tier: 1
+    gold_added: '---
+
+      name: test-validate
+
+      description: Run Python tests using the project venv
+
+      ---
+
+
+      ## Commands
+
+
+      ```bash
+
+      # Run all tests
+
+      .venv/bin/pytest
+
+
+      # Run specific test file
+
+      .venv/bin/pytest tests/test_<name>.py -v
+
+
+      # Run with coverage
+
+      .venv/bin/pytest --cov=src
+
+
+      # Run server (dev mode)
+
+      .venv/bin/python src/server/main.py --dev
+
+      ```'
+    gold_removed: ''

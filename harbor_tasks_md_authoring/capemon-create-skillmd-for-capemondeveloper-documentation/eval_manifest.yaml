@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: capemon-create-skillmd-for-capemondeveloper-documentation
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: kevoreilly/capemon
+  pr: 120
+  base_commit: "4207319b796c85eac073bcd869c6e84624e1849d"
+  merge_commit: "f4ad23487b9707fff22fcbbf7995656de2ebbeb9"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .gemini/skills/capemon-developer/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .gemini/skills/capemon-developer/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .gemini/skills/capemon-developer/SKILL.md."
+
+config_edits:
+  - path: .gemini/skills/capemon-developer/SKILL.md
+    tier: 1
+    gold_added: "---\nname: capemon-developer\ndescription: Expert capability for navigating, modifying, and extending the capemon malware monitoring codebase. Includes deep knowledge of Windows API hooking, PE structures, and the CAPEv2 sandbox architecture.\n---\n\n# Capemon Skills\n\n`capemon` is a sophisticated monitoring and instrumentation engine designed for malware analysis, configuration extraction, and payload recovery. It acts as the core injection component for the CAPEv2 sandbox.\n\n## Core Capabilities\n\n### 1. API Hooking & Monitoring\n`capemon` implements an extensive hooking engine derived from `cuckoomon-modified`, providing deep visibility into application behavior across multiple subsystems:\n- **Process & Thread Management:** Monitoring creation, termination, and manipulation of processes and threads.\n- **File System Operations:** Tracking file creation, deletion, reading, and writing.\n- **Registry Activity:** Capturing configuration changes and persistence mechanisms.\n- **Network Communication:** Intercepting socket operations, DNS queries, and high-level protocol activity (HTTP, etc.).\n- **Cryptography:** Extracting keys and monitoring encryption/decryption routines.\n- **Synchronization & Services:** Monitoring mutexes, events, and Windows Service interactions.\n- **Windows Management Instrumentation (WMI):** Intercepting WMI queries used for anti-analysis or reconnaissance.\n- **Scripting Engines:** Specific hooks for VBScript and other language runtimes.\n\n### 2. Debugging & Tracing\n`capemon` implements a powerful in-process debugger independent of Windows debugging interfaces, but harnessing the capabilities of the processor:\n- **Hardware breakpoints:** Four breakpoints bp0-bp3 that can be set on execute, read or write\n- **Software breakpoints:** Unlimited INT3 or 'CC' breakpoints overwriting instruction byte\n- **Single-step:** Tracing allows instruction-level capture enhanced with configurable step-over, trace-length, register changes, function names, strings & more\n- **Actions:** Configurable actions allow control flow manipulation with skipped or taken jumps, arbitrary register changes or jumps, string capture, dumps, scans & more\n- **Programmable:** Debugger configurable either on submission with simple text options or via dynamic YARA signature scans during unpacking or detonation\n- **Integration:** Hooking engine integrated with optional behavior log output & breakpoints set on return from hooked APIs (break-on-return)\n- **Stealth:** Debugger does not rely upon Windows interface and thus evades detection by a slew of interface-related indicators, with additional stealth from hook-based protections\n\n### 3. Automated Unpacking\n'capemon' implements a powerful unpacking engine using a combination of techniques\n- **Memory region tracking:** Regions of memory revealed through indicators of execution, allocation or protection are tracked\n- **Early capture:** Multiple possible triggers allow payload capture at earliest moment often resulting in working unpacked samples\n- **Injection capture:**: Strong coverage of injection techniques for inter-process payload capture\n- **PE unmapping:** Integrated Scylla engine allows capture of memory or file-mapped PE images in memory\n- **Shellcode dumping:** Shellcode * non-PE regions equally captured as payloads\n- **Import Reconstruction:** Repairing Import Address Tables (IAT) to create functional dumped executables.\n- **AMSI Dumping:** Intercepting and dumping buffers passed to the Antimalware Scan Interface (AMSI).\n\n### 4. Config Extraction\nAutomated Static & Dynamic malware configuration extraction relies on 'capemon' capabilities\n- **Static extraction:** Typically reliant upon capemon's unpacking or process dump capture before static parsing\n- **Dynamic extraction:** When parser implementation is onerous, dynamic capture of decrypted configs can be performed by debugger via YARA signature\n\n### 5. YARA integration\nIntegration of YARA for in-memory scanning\n- **Dynamic configuration:** Sandbox configuration such as hooking exclusions or options implemented during detonation\n- **Debugger programming:** Precise dydnamic breakpoint address resolution using YARA signatures & cape-specific metadata\n- **Unpacking engine integration:** Dynamic scanning of all memory regions prior to unpacking capture\n- **Function resolution:** Allows dynamic address resolution for APIs or functions for hooking or other purposes\n\n## Technical Foundations\n- **Platform:** Windows (x86 and x64).\n- **Hooking Method:** Inline hooking of Win32 and Native APIs (NTAPI).\n- **Debugger:** Native in-process 'self' debugging utilising minimal OS interfaces & hardware capabilities (breakpoint, single-step)\n- **Dependencies:** \n    - `distorm` for instruction decoding.\n    - `libyara` for pattern matching.\n    - `Scylla` for PE reconstruction.\n    - `bson` for data serialization."
+    gold_removed: ''

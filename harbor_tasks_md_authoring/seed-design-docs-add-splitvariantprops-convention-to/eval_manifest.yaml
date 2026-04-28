@@ -1,0 +1,147 @@
+version: "2.0"
+
+task:
+  name: seed-design-docs-add-splitvariantprops-convention-to
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: daangn/seed-design
+  pr: 1363
+  base_commit: "e6b866d8685725265816f3965c6453c57a287fac"
+  merge_commit: "2c5fd7ec91d691c8f4abb92b240b78d5af459d32"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .agents/skills/create-component/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .agents/skills/create-component/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .agents/skills/create-component/SKILL.md."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .agents/skills/create-component/details/implementation-steps.md."
+  - id: signal_04
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .agents/skills/create-component/details/implementation-steps.md."
+  - id: signal_05
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .agents/skills/create-component/details/implementation-steps.md."
+  - id: signal_06
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in packages/react/AGENTS.md."
+  - id: signal_07
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in packages/react/AGENTS.md."
+  - id: signal_08
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in packages/react/AGENTS.md."
+
+config_edits:
+  - path: .agents/skills/create-component/SKILL.md
+    tier: 1
+    gold_added: '1. 각 단계에서 수정 대상 폴더의 `AGENTS.md`를 먼저 읽고 해당 패키지의 컨벤션을 확인합니다.
+
+      2. Rootage 스펙을 정의/수정하고 `bun generate:all`을 실행합니다.
+
+      3. Recipe, React UI, Storybook, 문서를 순서대로 반영합니다.
+
+      4. `bun packages:build`, `bun typecheck`, Visual Test 체크리스트를 완료합니다.
+
+      5. 상세 구현은 `details/implementation-steps.md`와 `details/verification-checklist.md`를 사용합니다.'
+    gold_removed: ''
+  - path: .agents/skills/create-component/details/implementation-steps.md
+    tier: 1
+    gold_added: '**컨벤션**: 구현 전 `packages/qvism-preset/AGENTS.md`를 읽고 해당 패키지의 컨벤션을 확인한다.
+
+      **컨벤션**: 구현 전 `packages/react/AGENTS.md`를 읽고 해당 패키지의 컨벤션을 확인한다.
+
+      | 직접 splitVariantProps | `recipe.splitVariantProps(props)` | Badge |
+
+      | 단일 슬롯 | `createRecipeContext` → `withContext` | Fab |
+
+      | 복합 슬롯 | `createSlotRecipeContext` → `withProvider`/`withContext` | Chip |
+
+      ### Variant Props 처리 (필수)
+
+
+      variant props(`variant`, `size`, `tone` 등)는 함수 인자에서 수동 destructuring하지 않는다. 반드시 `recipe.splitVariantProps(props)`를 사용하거나, `createRecipeContext`/`createSlotRecipeContext` 유틸을 사용한다. 세 패턴 모두 내부적으로 `splitVariantProps`를 호출하여 variant props와 HTML 속성을 타입 안전하게 분리한다.
+
+
+      `recipe.splitVariantProps(props)`는 `[variantProps, restProps]` 튜플을 반환한다. `variantProps`만 recipe 함수에 전달하고, `restProps`는 DOM 요소에 spread한다.
+
+
+      ⚠️ **금지 패턴**: `({ variant, size, ...rest })` 형태로 variant를 함수 인자에서 직접 꺼내거나, `recipe({ variant, size })` 형태로 직접 전달하면 안 된다. variant가 추가/변경될 때 누락 위험이 있고, 타입 안전성이 보장되지 않는다.
+
+
+      ### 단일 슬롯 패턴 (createRecipeContext)
+
+
+      `createRecipeContext(recipe)`로 context를 생성하고, `withContext`로 Primitive 요소를 감싸면 내부에서 자동으로 `splitVariantProps`를 호출한다. `forwardRef`로 감싸고 반드시 `displayName`을 설정한다.
+
+      1. **variant props 수동 destructuring**: `recipe.splitVariantProps(props)` 또는 `createRecipeContext`/`createSlotRecipeContext`를 사용한다. `({ variant, size, ...rest })` 형태 금지.
+
+      2. **존재하지 않는 패키지 import**: `createSlotRecipeContext`는 `@seed-design/react-utils`가 아닌 `../../utils/createSlotRecipeContext` 상대 경로에서 import한다.
+
+      3. **잘못된 createSlotRecipeContext 호출**: slotRecipe를 객체로 감싸지 말고 직접 전달한다.
+
+      4. **React 레이어에 style 직접 작성**: style prop 대신 qvism-preset recipe의 해당 슬롯에 스타일을 작성하고, `withContext`로 연결한다.'
+    gold_removed: ''
+  - path: packages/react/AGENTS.md
+    tier: 1
+    gold_added: '- variant props(`variant`, `size`, `tone` 등)는 함수 인자에서 수동 destructuring 금지. 반드시 `recipe.splitVariantProps(props)` 또는 `createRecipeContext`/`createSlotRecipeContext` 유틸을 사용한다.
+
+      ## Variant Props 처리 패턴
+
+
+      variant props는 반드시 아래 세 가지 패턴 중 하나로 처리한다. 세 패턴 모두 내부적으로 `splitVariantProps`를 사용하여 variant props와 HTML 속성을 타입 안전하게 분리한다.
+
+
+      | 유형 | 도구 | 예시 |
+
+      |------|------|------|
+
+      | 직접 splitVariantProps | `recipe.splitVariantProps(props)` | Badge |
+
+      | 단일 슬롯 | `createRecipeContext` → `withContext` | Fab |
+
+      | 복합 슬롯 | `createSlotRecipeContext` → `withProvider`/`withContext` | Chip |
+
+
+      ### 직접 splitVariantProps
+
+
+      context 유틸 없이 컴포넌트 내부에서 `recipe.splitVariantProps(props)`를 직접 호출하여 `[variantProps, restProps]` 튜플로 분리한다. 반환된 `variantProps`만 recipe 함수에 전달하고, `restProps`는 DOM 요소에 spread한다. Badge 컴포넌트가 대표적인 예시이다.
+
+
+      ### createRecipeContext (단일 슬롯)
+
+
+      `createRecipeContext(recipe)`로 context를 생성하고, `withContext`로 Primitive 요소를 감싸면 내부에서 자동으로 `splitVariantProps`를 호출한다. Fab 컴포넌트가 대표적인 예시이다.
+
+
+      ### createSlotRecipeContext (복합 슬롯)
+
+
+      `createSlotRecipeContext(slotRecipe)`로 context를 생성하고, `withProvider`로 Root를, `withContext`로 하위 슬롯을 연결한다. 내부에서 자동으로 `splitVariantProps`를 호출한다. Chip 컴포넌트가 대표적인 예시이다.
+
+
+      ### 절대 금지: variant props 수동 destructuring
+
+
+      `({ variant, size, ...rest })` 형태로 variant를 함수 인자에서 직접 꺼내거나, `recipe({ variant, size })` 형태로 직접 전달하면 안 된다. variant가 추가/변경될 때 누락 위험이 있고, 타입 안전성이 보장되지 않는다.
+
+      '
+    gold_removed: ''

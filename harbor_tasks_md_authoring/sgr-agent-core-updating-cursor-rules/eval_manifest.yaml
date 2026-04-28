@@ -1,0 +1,428 @@
+version: "2.0"
+
+task:
+  name: sgr-agent-core-updating-cursor-rules
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: vamplabAI/sgr-agent-core
+  pr: 148
+  base_commit: "582c14e086ed8e0f8d254f9d284dcc74c98b843e"
+  merge_commit: "848dfddb2c67be033fb0155568bff8776319a723"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .cursor/rules/architecture.mdc."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .cursor/rules/architecture.mdc."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .cursor/rules/architecture.mdc."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .cursor/rules/code-style.mdc."
+  - id: signal_04
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .cursor/rules/code-style.mdc."
+  - id: signal_05
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .cursor/rules/code-style.mdc."
+  - id: signal_06
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .cursor/rules/core-modules.mdc."
+  - id: signal_07
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .cursor/rules/core-modules.mdc."
+  - id: signal_08
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .cursor/rules/core-modules.mdc."
+  - id: signal_09
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .cursor/rules/implementation-order.mdc."
+  - id: signal_10
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .cursor/rules/implementation-order.mdc."
+  - id: signal_11
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .cursor/rules/implementation-order.mdc."
+  - id: signal_12
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .cursor/rules/python-fastapi.mdc."
+  - id: signal_13
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .cursor/rules/python-fastapi.mdc."
+  - id: signal_14
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .cursor/rules/python-fastapi.mdc."
+  - id: signal_15
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .cursor/rules/testing.mdc."
+  - id: signal_16
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .cursor/rules/testing.mdc."
+  - id: signal_17
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .cursor/rules/testing.mdc."
+  - id: signal_18
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .cursor/rules/workflow.mdc."
+  - id: signal_19
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .cursor/rules/workflow.mdc."
+  - id: signal_20
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .cursor/rules/workflow.mdc."
+
+config_edits:
+  - path: .cursor/rules/architecture.mdc
+    tier: 1
+    gold_added: "---\ndescription: Architectural rules and boundaries for SGR Agent Core\nglobs: sgr_agent_core/**/*.py\nalwaysApply: true\n---\n\n# Architectural Rules for SGR Agent Core\n\n## General Architecture\n\nThe project uses **modular architecture with clear separation of concerns**. The framework implements Schema-Guided Reasoning (SGR) for building intelligent research agents.\n\n## Core Architecture Layers\n\n### Layer 1: Base Classes (No Dependencies)\n- `BaseAgent` - Base class for all agents\n- `BaseTool` - Base class for all tools (Pydantic models)\n- `MCPBaseTool` - Base class for MCP-integrated tools\n- `models.py` - Core data models (AgentContext, AgentStatesEnum, etc.)\n\n### Layer 2: Configuration and Registry\n- `agent_config.py` - GlobalConfig singleton\n- `agent_definition.py` - AgentDefinition, AgentConfig, LLMConfig, etc.\n- `services/registry.py` - AgentRegistry, ToolRegistry\n- `services/prompt_loader.py` - PromptLoader service\n\n### Layer 3: Factory and Services\n- `agent_factory.py` - AgentFactory for creating agents\n- `services/mcp_service.py` - MCP2ToolConverter\n- `services/tavily_search.py` - Tavily search service\n- `next_step_tool.py` - NextStepToolsBuilder, NextStepToolStub\n\n### Layer 4: Agent Implementations\n- `agents/sgr_agent.py` - SGRAgent (Structured Output)\n- `agents/tool_calling_agent.py` - ToolCallingAgent (Function Calling)\n- `agents/sgr_tool_calling_agent.py` - SGRToolCallingAgent (Hybrid)\n\n### Layer 5: Tools\n- `tools/reasoning_tool.py` - ReasoningTool\n- `tools/clarification_tool.py` - ClarificationTool\n- `tools/web_search_tool.py` - WebSearchTool\n- `tools/extract_page_content_tool.py` - ExtractPageContentTool\n- `tools/generate_plan_tool.py` - GeneratePlanTool\n- `tools/adapt_plan_tool.py` - AdaptPlanTool\n- `tools/create_report_tool.py` - CreateReportTool\n- `tools/final_answer_tool.py` - FinalAnswerTool\n\n### Layer 6: Server and API\n- `server/app.py` - FastAPI application\n- `server/endpoints.py` - API endpoints\n- `server/models.py` - API request/response models\n- `server/settings.py` - Server settings\n- `stream.py` - OpenAIStreamingGenerator\n\n## Agent Execution Cycle\n\nAll agents follow a two-phase cycle:\n\n```python\nwhile agent.state not in FINISH_STATES:\n    reasoning = await agent._reasoning_phase()\n    action_tool = await agent._select_action_phase(reasoning)\n    await agent._action_phase(action_tool)\n```\n\n### Phase 1: Reasoning Phase\n- Agent analyzes current context\n- Decides on next action\n- Implementation varies by agent type (SO, FC, or Hybrid)\n\n### Phase 2: Select Action Phase\n- Selects appropriate tool based on reasoning\n- Returns tool instance ready for execution\n\n### Phase 3: Action Phase\n- Executes selected tool\n- Updates conversation history\n- Updates agent context\n\n## Module Rules\n\n### Agents (`sgr_agent_core/agents/`)\n- Must inherit from `BaseAgent`\n- Must implement `_reasoning_phase()`, `_select_action_phase()`, `_action_phase()`\n- Automatically registered in `AgentRegistry` via `AgentRegistryMixin`\n- Can override `_prepare_context()` and `_prepare_tools()` for customization\n\n### Tools (`sgr_agent_core/tools/`)\n- Must inherit from `BaseTool` or `MCPBaseTool`\n- Must be Pydantic models\n- Must implement `__call__()` method\n- Automatically registered in `ToolRegistry` via `ToolRegistryMixin`\n- Return string or JSON string from `__call__()`\n\n### Services (`sgr_agent_core/services/`)\n- Stateless utility classes\n- Provide shared functionality (prompts, MCP, search)\n- No direct dependencies on agents or tools\n\n### Configuration (`agent_config.py`, `agent_definition.py`)\n- Hierarchical configuration: GlobalConfig → AgentDefinition → AgentConfig\n- Supports YAML loading\n- Automatic inheritance and override of settings\n\n## Design Principles\n\n1. **One class at a time**: When implementing new functionality, create one class at a time, starting from lower layers\n2. **Minimal dependencies**: Each module should depend only on lower layer modules\n3. **Type hints**: Use type hints for all functions and methods\n4. **Async-first**: All I/O operations must be async\n5. **Registry pattern**: Use registries for automatic discovery of agents and tools\n6. **Configuration over code**: Prefer YAML configuration over hardcoded values\n\n## References\n\n@docs/en/framework/main-concepts.md\n@docs/en/framework/agents.md\n@README.md"
+    gold_removed: ''
+  - path: .cursor/rules/code-style.mdc
+    tier: 1
+    gold_added: "---\ndescription: Code style and formatting rules for SGR Agent Core\nglobs: **/*.py\nalwaysApply: true\n---\n\n# Code Style Rules\n\n## General Rules\n\n1. **Comments**: Write all code comments **ONLY in English**\n2. **User responses**: Respond in Russian unless user requests otherwise\n3. **Empty line at end of file**: Always add an empty line at the end of new files\n4. **Virtual environment**: Virtual environment is located in `.venv` directory\n\n## Code Formatting\n\n### Ruff and Black\n- Use `ruff` for linting and formatting\n- Line length: **120 characters** (configured in `pyproject.toml`)\n- Follow rules from `pyproject.toml` and `.ruff.toml` if present\n\n### Imports\n- Use `isort` for import sorting\n- Group imports: standard library → third-party → local\n- One import per line for long lists\n\n### Type Hints\n- **Mandatory**: Use type hints for all functions and methods\n- Prefer `T | None` over `Optional[T]` (Python 3.10+)\n- Use `Union[A, B]` for complex types when needed\n- Use `dict[str, Any]` instead of `Dict[str, Any]` (Python 3.9+)\n\n### Docstrings\n- Use docstrings in Google style format\n- All docstrings in **English**\n- Must document:\n  - Public classes and methods\n  - Complex business logic\n  - Parameters and return values\n\nExample:\n```python\ndef create_agent(self, agent_def: AgentDefinition, task_messages: list[dict]) -> BaseAgent:\n    \"\"\"\n    Create an agent instance from a definition.\n\n    Args:\n        agent_def: Agent definition with configuration\n        task_messages: Task messages in OpenAI format\n\n    Returns:\n        Created agent instance\n    \"\"\"\n```\n\n## File Structure\n\n### Element Order in File\n1. Module docstring\n2. Imports (standard library → third-party → local)\n3. Constants\n4. Types and exceptions\n5. Classes and functions\n\n### Naming\n- **Classes**: PascalCase (`SGRAgent`, `BaseTool`)\n- **Functions and methods**: snake_case (`create_agent`, `_prepare_context`)\n- **Constants**: UPPER_SNAKE_CASE (`MAX_ITERATIONS`)\n- **Private methods**: start with `_` (`_reasoning_phase`, `_log_reasoning`)\n- **Types**: PascalCase (`AgentContext`, `AgentDefinition`)\n\n## Error Handling\n\n- Use specific exceptions, not generic `Exception`\n- Create custom exceptions for business logic when needed\n- Always include informative error messages\n- Use `Optional` or `| None` for values that may be missing\n\n## Async/Await\n\n- Use `async def` for all asynchronous operations\n- Use `await` for all async calls\n- Don't use blocking I/O in async code\n- Use `httpx` instead of `requests` for async HTTP calls\n\n## FastAPI-Specific Guidelines\n\n- Avoid global scope variables, use application state\n- Use functional components and Pydantic models for validation\n- Use declarative route definitions with clear return type annotations\n- Use `async def` for asynchronous endpoints\n- Use Pydantic's `BaseModel` for input/output validation\n- Use `HTTPException` for expected errors\n\n## References\n\n@pyproject.toml\n@pytest.ini"
+    gold_removed: ''
+  - path: .cursor/rules/core-modules.mdc
+    tier: 1
+    gold_added: '---
+
+      description: Rules for core modules of SGR Agent Core
+
+      globs: sgr_agent_core/**/*.py
+
+      alwaysApply: true
+
+      ---
+
+
+      # Rules for Core Modules
+
+
+      ## Base Classes
+
+
+      ### BaseAgent (`sgr_agent_core/base_agent.py`)
+
+      - Parent class for all agents
+
+      - Implements two-phase execution cycle: Reasoning → Action
+
+      - Manages agent context, conversation history, and streaming
+
+      - Must be subclassed to implement `_reasoning_phase()`, `_select_action_phase()`, `_action_phase()`
+
+      - Automatically registered in `AgentRegistry` via `AgentRegistryMixin`
+
+
+      ### BaseTool (`sgr_agent_core/base_tool.py`)
+
+      - Parent class for all tools
+
+      - Must be a Pydantic model
+
+      - Must implement `__call__(context, config)` method
+
+      - Returns string or JSON string
+
+      - Automatically registered in `ToolRegistry` via `ToolRegistryMixin`
+
+
+      ### MCPBaseTool (`sgr_agent_core/base_tool.py`)
+
+      - Base class for MCP-integrated tools
+
+      - Handles MCP client calls
+
+      - Converts MCP responses to tool format
+
+
+      ## Configuration Modules
+
+
+      ### GlobalConfig (`sgr_agent_core/agent_config.py`)
+
+      - Singleton pattern for global configuration
+
+      - Loads from YAML files (`config.yaml`, `agents.yaml`)
+
+      - Provides default values for all agent settings
+
+
+      ### AgentDefinition (`sgr_agent_core/agent_definition.py`)
+
+      - Definition template for creating agents
+
+      - Contains: name, base_class, tools, llm, prompts, execution, search, mcp configs
+
+      - Supports YAML loading
+
+      - Validates required fields
+
+
+      ### AgentConfig (`sgr_agent_core/agent_definition.py`)
+
+      - Runtime configuration for agent instance
+
+      - Combines: LLMConfig, SearchConfig, ExecutionConfig, PromptsConfig, MCPConfig
+
+      - Supports hierarchical inheritance from GlobalConfig
+
+
+      ## Factory and Services
+
+
+      ### AgentFactory (`sgr_agent_core/agent_factory.py`)
+
+      - Creates agent instances from AgentDefinition
+
+      - Resolves agent classes from AgentRegistry
+
+      - Resolves tools from ToolRegistry
+
+      - Builds MCP tools via MCP2ToolConverter
+
+      - Creates OpenAI client with proxy support
+
+
+      ### AgentRegistry (`sgr_agent_core/services/registry.py`)
+
+      - Centralized registry for agent classes
+
+      - Automatic registration via `AgentRegistryMixin`
+
+      - Supports lookup by name (case-insensitive)
+
+
+      ### ToolRegistry (`sgr_agent_core/services/registry.py`)
+
+      - Centralized registry for tool classes
+
+      - Automatic registration via `ToolRegistryMixin`
+
+      - Supports lookup by name (case-insensitive)
+
+
+      ### PromptLoader (`sgr_agent_core/services/prompt_loader.py`)
+
+      - Loads and formats prompts from files or strings
+
+      - Generates system prompts with tool descriptions
+
+      - Formats initial user requests and clarification responses
+
+
+      ### MCP2ToolConverter (`sgr_agent_core/services/mcp_service.py`)
+
+      - Converts MCP server tools to BaseTool instances
+
+      - Handles MCP client initialization
+
+      - Builds tools from MCP configuration
+
+
+      ## Agent Implementations
+
+
+      ### SGRAgent (`sgr_agent_core/agents/sgr_agent.py`)
+
+      - Uses Structured Output approach
+
+      - Creates dynamic JSON schema for tools
+
+      - LLM returns reasoning + tool schema in one call
+
+      - Extracts tool directly from reasoning result
+
+
+      ### ToolCallingAgent (`sgr_agent_core/agents/tool_calling_agent.py`)
+
+      - Uses native Function Calling
+
+      - No explicit reasoning phase
+
+      - Uses `tool_choice="required"` for tool selection
+
+      - Best for advanced LLM models
+
+
+      ### SGRToolCallingAgent (`sgr_agent_core/agents/sgr_tool_calling_agent.py`)
+
+      - Hybrid approach: SGR + Function Calling
+
+      - Uses ReasoningTool for explicit reasoning
+
+      - Uses Function Calling for tool selection
+
+      - Best balance for most tasks
+
+
+      ## Tools
+
+
+      ### ReasoningTool (`sgr_agent_core/tools/reasoning_tool.py`)
+
+      - Provides structured reasoning output
+
+      - Contains: reasoning_steps, current_situation, plan_status, enough_data, remaining_steps, task_completed
+
+
+      ### ClarificationTool (`sgr_agent_core/tools/clarification_tool.py`)
+
+      - Requests clarification from user
+
+      - Pauses agent execution
+
+      - Waits for user input via `provide_clarification()`
+
+
+      ### WebSearchTool (`sgr_agent_core/tools/web_search_tool.py`)
+
+      - Performs web search via Tavily API
+
+      - Returns search results with sources
+
+      - Respects max_searches limit
+
+
+      ### ExtractPageContentTool (`sgr_agent_core/tools/extract_page_content_tool.py`)
+
+      - Extracts content from web pages
+
+      - Uses Tavily API for content extraction
+
+      - Respects content_limit
+
+
+      ### GeneratePlanTool (`sgr_agent_core/tools/generate_plan_tool.py`)
+
+      - Generates research plan
+
+      - Defines research goal and steps
+
+      - Provides search strategies
+
+
+      ### AdaptPlanTool (`sgr_agent_core/tools/adapt_plan_tool.py`)
+
+      - Adapts existing plan based on new information
+
+      - Updates research goal and steps
+
+      - Modifies search strategies
+
+
+      ### CreateReportTool (`sgr_agent_core/tools/create_report_tool.py`)
+
+      - Creates final research report
+
+      - Saves report to file
+
+      - Formats report with sources
+
+
+      ### FinalAnswerTool (`sgr_agent_core/tools/final_answer_tool.py`)
+
+      - Provides final answer to user
+
+      - Completes agent execution
+
+      - Sets agent state to COMPLETED
+
+
+      ## Server and API
+
+
+      ### FastAPI Application (`sgr_agent_core/server/app.py`)
+
+      - Main FastAPI application
+
+      - Configures CORS, middleware
+
+      - Registers endpoints
+
+
+      ### API Endpoints (`sgr_agent_core/server/endpoints.py`)
+
+      - `/v1/chat/completions` - OpenAI-compatible chat endpoint
+
+      - `/v1/agents/{agent_id}/state` - Get agent state
+
+      - `/v1/agents/{agent_id}/clarification` - Provide clarification
+
+      - `/v1/agents` - List available agents
+
+
+      ### Streaming (`sgr_agent_core/stream.py`)
+
+      - OpenAIStreamingGenerator for streaming responses
+
+      - Formats events in OpenAI-compatible format
+
+      - Handles tool calls and content chunks
+
+
+      ## General Rules for All Modules
+
+
+      1. **Type hints**: Use type hints everywhere
+
+      2. **Async**: All I/O operations must be async
+
+      3. **Documentation**: Document public methods in English
+
+      4. **Error handling**: Use specific exceptions
+
+      5. **Registry**: Use registry pattern for discovery
+
+      6. **Configuration**: Prefer YAML over hardcoded values
+
+
+      ## References
+
+
+      @architecture.mdc
+
+      @code-style.mdc
+
+      @docs/en/framework/main-concepts.md'
+    gold_removed: ''
+  - path: .cursor/rules/implementation-order.mdc
+    tier: 1
+    gold_added: "---\ndescription: Implementation order for new features - one class at a time\nglobs: sgr_agent_core/**/*.py\nalwaysApply: false\n---\n\n# Implementation Order: One Class at a Time\n\n## \"One Class at a Time\" Principle\n\nWhen adding new functionality, follow **\"one class at a time\"** principle, starting from lower architecture layers.\n\n## Architecture Layers (Bottom to Top)\n\n1. **Layer 1**: Base classes (BaseAgent, BaseTool, Models)\n2. **Layer 2**: Configuration and Registry\n3. **Layer 3**: Factory and Services\n4. **Layer 4**: Agent Implementations\n5. **Layer 5**: Tools\n6. **Layer 6**: Server and API\n\n## Implementation Steps\n\n### 1. Determine Layer\nDetermine which layer the new functionality belongs to (see @architecture.mdc)\n\n### 2. Write Test First\n- Create test file `tests/test_<module_name>.py`\n- Write minimal unit tests for class\n- Test must **fail** (red) because class doesn't exist\n- Run test:\n  - **Linux/macOS**: `source .venv/bin/activate && pytest tests/test_<module_name>.py::test_name -v`\n  - **Windows**: `.venv\\Scripts\\activate && pytest tests/test_<module_name>.py::test_name -v`\n- Verify test fails for correct reason\n\n### 3. Implement Class\n- Create class with minimal implementation\n- Use type hints\n- Add docstrings in English\n- Follow rules from @code-style.mdc\n- Place in appropriate layer directory\n\n### 4. Verify Test Passes\n- Run test:\n  - **Linux/macOS**: `source .venv/bin/activate && pytest tests/test_<module_name>.py::test_name -v`\n  - **Windows**: `.venv\\Scripts\\activate && pytest tests/test_<module_name>.py::test_name -v`\n- Test must **pass** (green)\n- Make sure implementation is correct\n\n### 5. Run All Tests\n- Execute:\n  - **Linux/macOS**: `source .venv/bin/activate && pytest tests/ -v`\n  - **Windows**: `.venv\\Scripts\\activate && pytest tests/ -v`\n- All tests must pass\n- Fix any regressions\n\n### 6. Run Linter\n- Execute:\n  - **Linux/macOS**: `source .venv/bin/activate && pre-commit run -a`\n  - **Windows**: `.venv\\Scripts\\activate && pre-commit run -a`\n- Fix all linting errors\n- Repeat until all checks pass\n\n### 7. Move to Next Layer\nOnly after lower layer class is ready and tested, move to upper layer classes.\n\n## Example: Adding New Tool\n\n### Step 1: Write Test\n```python\n# tests/test_custom_tool.py\n@pytest.mark.asyncio\nasync def test_custom_tool_execution():\n    \"\"\"Test CustomTool execution.\"\"\"\n    tool = CustomTool(param=\"value\")\n    result = await tool(context, config)\n    assert result == \"expected_result\"\n```\n\n### Step 2: Run Test (Should Fail)\n\n**Linux/macOS:**\n```bash\nsource .venv/bin/activate\npytest tests/test_custom_tool.py::test_custom_tool_execution -v\n# Expected: FAILED - CustomTool doesn't exist\n```\n\n**Windows:**\n```powershell\n.venv\\Scripts\\Activate.ps1\npytest tests/test_custom_tool.py::test_custom_tool_execution -v\n# Expected: FAILED - CustomTool doesn't exist\n```\n\n### Step 3: Implement Tool (Layer 5)\n```python\n# sgr_agent_core/tools/custom_tool.py\nclass CustomTool(BaseTool):\n    \"\"\"Custom tool for specific functionality.\"\"\"\n    tool_name: str = \"custom_tool\"\n    description: str = \"Does custom thing\"\n\n    param: str\n\n    async def __call__(self, context: AgentContext, config: AgentConfig) -> str:\n        \"\"\"Execute custom tool.\"\"\"\n        return \"expected_result\"\n```\n\n### Step 4: Verify Test Passes\n\n**Linux/macOS:**\n```bash\nsource .venv/bin/activate\npytest tests/test_custom_tool.py::test_custom_tool_execution -v\n# Expected: PASSED\n```\n\n**Windows:**\n```powershell\n.venv\\Scripts\\Activate.ps1\npytest tests/test_custom_tool.py::test_custom_tool_execution -v\n# Expected: PASSED\n```\n\n### Step 5: Run All Tests\n\n**Linux/macOS:**\n```bash\nsource .venv/bin/activate\npytest tests/ -v\n# Expected: All tests pass\n```\n\n**Windows:**\n```powershell\n.venv\\Scripts\\Activate.ps1\npytest tests/ -v\n# Expected: All tests pass\n```\n\n### Step 6: Run Linter\n\n**Linux/macOS:**\n```bash\nsource .venv/bin/activate\npre-commit run -a\n# Expected: All checks pass\n```\n\n**Windows:**\n```powershell\n.venv\\Scripts\\Activate.ps1\npre-commit run -a\n# Expected: All checks pass\n```\n\n## Example: Adding New Agent\n\n### Step 1: Write Test\n```python\n# tests/test_custom_agent.py\n@pytest.mark.asyncio\nasync def test_custom_agent_creation():\n    \"\"\"Test CustomAgent creation.\"\"\"\n    agent_def = AgentDefinition(\n        name=\"custom_agent\",\n        base_class=CustomAgent,\n        tools=[ReasoningTool],\n        ...\n    )\n    agent = await AgentFactory.create(agent_def, task_messages=[...])\n    assert isinstance(agent, CustomAgent)\n```\n\n### Step 2: Implement Agent (Layer 4)\n```python\n# sgr_agent_core/agents/custom_agent.py\nclass CustomAgent(BaseAgent):\n    \"\"\"Custom agent implementation.\"\"\"\n    name: str = \"custom_agent\"\n\n    async def _reasoning_phase(self) -> ReasoningTool:\n        \"\"\"Reasoning phase implementation.\"\"\"\n        ...\n\n    async def _select_action_phase(self, reasoning: ReasoningTool) -> BaseTool:\n        \"\"\"Select action phase implementation.\"\"\"\n        ...\n\n    async def _action_phase(self, tool: BaseTool) -> str:\n        \"\"\"Action phase implementation.\"\"\"\n        ...\n```\n\n## Forbidden\n\n❌ Implement multiple classes simultaneously\n❌ Move to upper layers before lower ones are ready\n❌ Skip writing tests\n❌ Skip running tests\n❌ Skip running linter\n❌ Implement functionality without understanding architecture\n\n## Allowed\n\n✅ Implement one class at a time\n✅ Write tests first (TDD)\n✅ Verify test fails before implementation\n✅ Verify test passes after implementation\n✅ Run all tests after each change\n✅ Run linter after each change\n✅ Use stubs for dependencies\n✅ Refactor after basic functionality works\n\n## References\n\n@architecture.mdc\n@code-style.mdc\n@testing.mdc\n@workflow.mdc"
+    gold_removed: ''
+  - path: .cursor/rules/python-fastapi.mdc
+    tier: 1
+    gold_added: "description: Python and FastAPI specific guidelines\nglobs: sgr_agent_core/server/**/*.py, **/*.py\nalwaysApply: true\n\n# Python/FastAPI Guidelines\n\n## General Python Rules\n\n- Don't use the `requests` library in asynchronous code - use `httpx` instead\n- Don't use `print` in the main logic of system services - initialize `logging.Logger`\n- Use `def` for pure functions and `async def` for asynchronous operations\n- Use type hints for all function signatures\n- Prefer Pydantic models over raw dictionaries for input validation\n- Write comments only in entity docs and complex logic - no need to comment every line of code\n- Do not use `Optional` import from `typing` in cases you can use `|` (Python 3.10+)\n## Error Handling and Validation\n  - Handle errors and edge cases at the beginning of functions\n  - Use early returns for error conditions to avoid deeply nested if statements\n  - Place the happy path last in the function for improved readability\n  - Avoid unnecessary else statements; use the if-return pattern instead\n  - Use guard clauses to handle preconditions and invalid states early\n  - Implement proper error logging and user-friendly error messages\n  - Use custom error types or error factories for consistent error handling\n\n## FastAPI-Specific Guidelines\n\n- Avoid global scope variables - implement/use global application state, set its initialization logic in one place\n- Use functional components (plain functions) and Pydantic models for input validation and response schemas\n- Use declarative route definitions with clear return type annotations\n- Use `async def` for asynchronous endpoints\n- Minimize `@app.on_event(\"startup\")` and `@app.on_event(\"shutdown\")` - prefer lifespan context managers for managing startup and shutdown events\n- Use middleware for logging, error monitoring, and performance optimization\n- Optimize for performance using async functions for I/O-bound tasks, caching strategies, and lazy loading\n- Use `HTTPException` for expected errors and model them as specific HTTP responses\n- Use middleware for handling unexpected errors, logging, and error monitoring\n- Use Pydantic's `BaseModel` for consistent input/output validation and response schemas\n\n## Performance Optimization\n\n- Minimize blocking I/O operations - use asynchronous operations for all database calls and external API requests\n- Implement caching for static and frequently accessed data using tools like Redis or in-memory stores\n- Optimize data serialization and deserialization with Pydantic\n- Use lazy loading techniques for large datasets and substantial API responses\n\n## References\n\n@code-style.mdc\n@architecture.mdc\n@core-modules.mdc"
+    gold_removed: ''
+  - path: .cursor/rules/testing.mdc
+    tier: 1
+    gold_added: "---\ndescription: Test writing rules for SGR Agent Core\nglobs: tests/**/*.py\nalwaysApply: true\n---\n\n# Test Writing Rules\n\n## General Principles\n\n1. **Coverage**: Aim for code coverage >90%\n2. **One class at a time**: When creating new class, write tests for it immediately\n3. **Isolation**: Each test must be independent\n4. **Readability**: Test names should describe what is being tested\n5. **Virtual environment**: Use `.venv` for running tests\n\n## Test Structure\n\n### Naming\n- Test file: `test_<module_name>.py`\n- Test class: `Test<ClassName>`\n- Test method: `test_<what_is_tested>`\n\n### Test Class Structure\n```python\nclass TestAgentFactory:\n    \"\"\"Test suite for AgentFactory.\"\"\"\n\n    @pytest.mark.asyncio\n    async def test_create_agent_from_definition(self):\n        \"\"\"Test creating agent from AgentDefinition.\"\"\"\n        # Arrange\n        # Act\n        # Assert\n```\n\n## Test Types\n\n### Unit Tests\n- Test individual modules in isolation\n- Use mocks for dependencies (OpenAI client, external APIs)\n- Fast and deterministic\n- Use `@pytest.mark.asyncio` for async tests\n\n### Integration Tests\n- Test interaction between modules\n- Test agent creation and execution flow\n- Use real configuration but mocked LLM clients\n\n### E2E Tests\n- Test full agent execution cycle\n- Use mocked LLM responses\n- Verify agent state transitions\n\n### Edge-case Tests\n- Test edge cases (empty inputs, max iterations, etc.)\n- Test error handling\n- Test input validation\n\n## Fixtures\n\n### Using Fixtures\n- Create fixtures in `tests/conftest.py` for reusable data\n- Use `@pytest.fixture` for reusable data\n- Use `scope=\"function\"` for test isolation\n\n### Common Fixtures\n- `mock_openai_client` - Mocked AsyncOpenAI client\n- `test_llm_config` - Test LLM configuration\n- `test_prompts_config` - Test prompts configuration\n- `test_execution_config` - Test execution configuration\n- `create_test_agent()` - Helper function to create test agents\n\n## Test Examples\n\n### Unit Test for Agent Factory\n```python\n@pytest.mark.asyncio\nasync def test_create_agent_from_definition(self):\n    \"\"\"Test creating agent from AgentDefinition.\"\"\"\n    with (\n        patch(\"sgr_agent_core.agent_factory.MCP2ToolConverter.build_tools_from_mcp\", return_value=[]),\n        mock_global_config(),\n    ):\n        agent_def = AgentDefinition(\n            name=\"sgr_agent\",\n            base_class=SGRAgent,\n            tools=[ReasoningTool],\n            llm={\"api_key\": \"test-key\", \"base_url\": \"https://api.openai.com/v1\"},\n            prompts={...},\n            execution={},\n        )\n        agent = await AgentFactory.create(agent_def, task_messages=[{\"role\": \"user\", \"content\": \"Test\"}])\n\n        assert isinstance(agent, SGRAgent)\n        assert len(agent.task_messages) == 1\n```\n\n### Integration Test for Agent Execution\n```python\n@pytest.mark.asyncio\nasync def test_sgr_agent_full_execution_cycle(self):\n    \"\"\"Test full execution cycle of SGRAgent.\"\"\"\n    # Test agent creation and basic execution flow\n```\n\n## Assertions\n\n### What to Check\n- Return value types\n- Agent state transitions\n- Tool execution results\n- Error messages\n- HTTP status codes (for API tests)\n\n### Using assert\n- Use clear assert messages\n- Check multiple aspects of result\n- Use `isinstance()` for type checking\n\n## Running Tests\n\n### All Tests\n\n**Linux/macOS:**\n```bash\nsource .venv/bin/activate\npytest tests/ -v\n```\n\n**Windows (PowerShell):**\n```powershell\n.venv\\Scripts\\Activate.ps1\npytest tests/ -v\n```\n\n**Windows (CMD):**\n```cmd\n.venv\\Scripts\\activate.bat\npytest tests/ -v\n```\n\n**Windows (Git Bash/WSL):**\n```bash\nsource .venv/Scripts/activate\npytest tests/ -v\n```\n\n### With Coverage\n\n**Linux/macOS:**\n```bash\nsource .venv/bin/activate\npytest tests/ --cov=sgr_agent_core --cov-report=term-missing\n```\n\n**Windows:**\n```powershell\n.venv\\Scripts\\Activate.ps1\npytest tests/ --cov=sgr_agent_core --cov-report=term-missing\n```\n\n### Specific Test\n\n**Linux/macOS:**\n```bash\nsource .venv/bin/activate\npytest tests/test_agent_factory.py::TestAgentFactory::test_create_agent_from_definition -v\n```\n\n**Windows:**\n```powershell\n.venv\\Scripts\\Activate.ps1\npytest tests/test_agent_factory.py::TestAgentFactory::test_create_agent_from_definition -v\n```\n\n### Async Tests\n- Use `pytest-asyncio` plugin (configured in `pytest.ini`)\n- Mark async tests with `@pytest.mark.asyncio`\n- Use `asyncio_mode = \"auto\"` in pytest.ini\n\n## Mocking\n\n### OpenAI Client Mocking\n- Mock `AsyncOpenAI` client for all LLM calls\n- Use `AsyncMock` for async methods\n- Mock stream responses for streaming tests\n\n### External Services\n- Mock Tavily API calls\n- Mock MCP server calls\n- Mock file system operations when needed\n\n## References\n\n@pytest.ini\n@tests/conftest.py\n@code-style.mdc"
+    gold_removed: ''
+  - path: .cursor/rules/workflow.mdc
+    tier: 1
+    gold_added: "---\ndescription: Workflow rules for bug fixes, new features, and testing\nglobs: **/*.py, tests/**/*.py\nalwaysApply: true\n---\n\n# Workflow Rules for Bug Fixes and New Features\n\n## Virtual Environment\n\n**IMPORTANT**: Virtual environment is located in `.venv` directory. Always activate it before running tests or commands:\n\n**Linux/macOS:**\n```bash\nsource .venv/bin/activate\n```\n\n**Windows (PowerShell):**\n```powershell\n.venv\\Scripts\\Activate.ps1\n```\n\n**Windows (CMD):**\n```cmd\n.venv\\Scripts\\activate.bat\n```\n\n**Windows (Git Bash/WSL):**\n```bash\nsource .venv/Scripts/activate\n```\n\n## New Features (TDD Approach)\n\n### Mandatory Workflow for New Features\n\n**CRITICALLY IMPORTANT**: When user asks to implement a new feature (using words \"фича\", \"feature\", \"новая функция\", \"добавить\", \"implement\", \"add\"), **always** apply TDD approach and follow this strict workflow:\n\n**Do not skip any step!** Always follow order: write test (red) → verify test fails → implement feature → test (green) → run all tests → run linter → report.\n\n### Step-by-step Process for New Features\n\n1. **Write test first**\n   - Create test in corresponding file `tests/test_*.py`\n   - Test must **fail** (red) because feature doesn't exist yet\n   - Test must clearly describe expected behavior\n   - Make sure test actually fails for the right reason\n   - Run test:\n     - **Linux/macOS**: `source .venv/bin/activate && pytest tests/test_*.py::test_name -v`\n     - **Windows**: `.venv\\Scripts\\activate && pytest tests/test_*.py::test_name -v`\n\n2. **Verify test fails**\n   - Run new test:\n     - **Linux/macOS**: `source .venv/bin/activate && pytest tests/test_*.py::test_name -v`\n     - **Windows**: `.venv\\Scripts\\activate && pytest tests/test_*.py::test_name -v`\n   - Test must **fail** (red) - this confirms test is correct\n   - If test passes unexpectedly, review test logic\n\n3. **Implement feature**\n   - Write code that implements new feature\n   - Follow rules from @code-style.mdc and @architecture.mdc\n   - Use @implementation-order.mdc if adding new classes\n   - Implement one class/module at a time\n\n4. **Verify feature works**\n   - Run new test:\n     - **Linux/macOS**: `source .venv/bin/activate && pytest tests/test_*.py::test_name -v`\n     - **Windows**: `.venv\\Scripts\\activate && pytest tests/test_*.py::test_name -v`\n   - Test must **pass** (green)\n   - Make sure feature works as expected\n\n5. **Run all tests**\n   - Execute full test suite:\n     - **Linux/macOS**: `source .venv/bin/activate && pytest tests/ -v`\n     - **Windows**: `.venv\\Scripts\\activate && pytest tests/ -v`\n   - Make sure **all tests are green**\n   - If there are failing tests - fix them before proceeding\n\n6. **Run linter**\n   - Execute linter:\n     - **Linux/macOS**: `source .venv/bin/activate && pre-commit run -a`\n     - **Windows**: `.venv\\Scripts\\activate && pre-commit run -a`\n   - Fix all linting errors\n   - Make sure linter passes completely\n   - If there are errors, fix them and repeat step 6\n\n7. **Write report**\n   - Brief report of work done\n   - What feature was implemented\n   - Which tests were added/changed\n   - Test run results\n   - Linter results\n\n### Report Structure Example for New Features\n\n```markdown\n## Feature: [brief description]\n\n### Implementation\n1. Added test `test_new_feature` in `tests/test_module.py` (initially red)\n2. Implemented `new_method` in `sgr_agent_core/module.py`\n3. Ran new test - passed (green)\n4. Ran all tests - all green (239 passed)\n5. Ran linter - all checks passed\n\n### Changed Files\n- `sgr_agent_core/module.py` - added new_method implementation\n- `tests/test_module.py` - added test_new_feature test\n```\n\n## Bug Fixes (TDD Approach)\n\n### Mandatory Workflow for Bug Fixes\n\n**CRITICALLY IMPORTANT**: When user asks to fix a bug (using words \"баг\", \"bug\", \"ошибка\", \"error\", \"исправить\", \"fix\"), **always** apply TDD approach and follow this strict workflow:\n\n**Do not skip any step!** Always follow order: test (red) → fix → test (green) → all tests → run linter → report.\n\n### Step-by-step Process for Bug Fixes\n\n1. **Write test reproducing bug**\n   - Create test in corresponding file `tests/test_*.py`\n   - Test must **fail** (red) and reproduce bug\n   - Make sure error actually exists\n   - Run test:\n     - **Linux/macOS**: `source .venv/bin/activate && pytest tests/test_*.py::test_name -v`\n     - **Windows**: `.venv\\Scripts\\activate && pytest tests/test_*.py::test_name -v`\n\n2. **Fix code**\n   - Write code that fixes bug\n   - Follow rules from @code-style.mdc and @architecture.mdc\n   - Make minimal changes needed to fix the bug\n\n3. **Verify fix**\n   - Run new test:\n     - **Linux/macOS**: `source .venv/bin/activate && pytest tests/test_*.py::test_name -v`\n     - **Windows**: `.venv\\Scripts\\activate && pytest tests/test_*.py::test_name -v`\n   - Test must **pass** (green)\n   - Make sure bug is fixed\n\n4. **Run all tests**\n   - Execute full run:\n     - **Linux/macOS**: `source .venv/bin/activate && pytest tests/ -v`\n     - **Windows**: `.venv\\Scripts\\activate && pytest tests/ -v`\n   - Make sure **all tests are green**\n   - If there are failing tests - fix them\n\n5. **Run linter**\n   - Execute linter:\n     - **Linux/macOS**: `source .venv/bin/activate && pre-commit run -a`\n     - **Windows**: `.venv\\Scripts\\activate && pre-commit run -a`\n   - Fix all linting errors\n   - Make sure linter passes completely\n   - If there are errors, fix them and repeat step 5\n\n6. **Write report**\n   - Brief report of work done\n   - What was fixed\n   - Which tests were added/changed\n   - Test run results\n   - Linter results\n\n### Report Structure Example for Bug Fixes\n\n```markdown\n## Bug Fix: [brief description]\n\n### Problem\n[Bug description]\n\n### Solution\n1. Added test `test_bug_reproduction` in `tests/test_module.py` (initially red)\n2. Fixed method `method_name` in `sgr_agent_core/module.py`\n3. Ran new test - passed (green)\n4. Ran all tests - all green (239 passed)\n5. Ran linter - all checks passed\n\n### Changed Files\n- `sgr_agent_core/module.py` - fixed processing logic\n- `tests/test_module.py` - added test for bug\n```\n\n## Final Verification Before Reporting\n\n**MANDATORY**: Before writing final report for any work (bug fix or new feature), **always** complete these steps:\n\n1. **Run all tests**:\n   - **Linux/macOS**: `source .venv/bin/activate && pytest tests/ -v`\n   - **Windows**: `.venv\\Scripts\\activate && pytest tests/ -v`\n   - All tests must pass (green)\n   - No test failures allowed\n\n2. **Run linter**:\n   - **Linux/macOS**: `source .venv/bin/activate && pre-commit run -a`\n   - **Windows**: `.venv\\Scripts\\activate && pre-commit run -a`\n   - All linting checks must pass\n   - Fix all errors and warnings\n   - Repeat until all checks pass\n\n3. **Only then write report**\n   - Report must include test results\n   - Report must include linter results\n   - Report must confirm all checks passed\n\n## Testing Commands Reference\n\n### Linux/macOS\n```bash\n# Activate virtual environment\nsource .venv/bin/activate\n\n# Run all tests\npytest tests/ -v\n\n# Run specific test\npytest tests/test_module.py::TestClass::test_method -v\n\n# Run with coverage\npytest tests/ --cov=sgr_agent_core --cov-report=term-missing\n\n# Run linter\npre-commit run -a\n\n# Run both tests and linter\npytest tests/ -v && pre-commit run -a\n```\n\n### Windows (PowerShell/CMD)\n```powershell\n# Activate virtual environment (PowerShell)\n.venv\\Scripts\\Activate.ps1\n\n# Activate virtual environment (CMD)\n.venv\\Scripts\\activate.bat\n\n# Run all tests\npytest tests/ -v\n\n# Run specific test\npytest tests/test_module.py::TestClass::test_method -v\n\n# Run with coverage\npytest tests/ --cov=sgr_agent_core --cov-report=term-missing\n\n# Run linter\npre-commit run -a\n\n# Run both tests and linter (PowerShell)\npytest tests/ -v; if ($?) { pre-commit run -a }\n\n# Run both tests and linter (CMD)\npytest tests/ -v && pre-commit run -a\n```\n\n### Windows (Git Bash/WSL)\n```bash\n# Activate virtual environment\nsource .venv/Scripts/activate\n\n# Run all tests\npytest tests/ -v\n\n# Run specific test\npytest tests/test_module.py::TestClass::test_method -v\n\n# Run with coverage\npytest tests/ --cov=sgr_agent_core --cov-report=term-missing\n\n# Run linter\npre-commit run -a\n\n# Run both tests and linter\npytest tests/ -v && pre-commit run -a\n```\n\n## References\n\n@testing.mdc\n@code-style.mdc\n@architecture.mdc"
+    gold_removed: ''

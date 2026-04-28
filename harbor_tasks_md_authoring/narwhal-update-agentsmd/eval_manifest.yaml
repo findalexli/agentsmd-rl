@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: narwhal-update-agentsmd
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: lonewolf-io/narwhal
+  pr: 216
+  base_commit: "c4e84d2529b89d9bea100d108c7eb5ffeebbde76"
+  merge_commit: "f726e207ee7fac949803d97ce167e5e3c1e50b38"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+
+config_edits:
+  - path: AGENTS.md
+    tier: 1
+    gold_added: "## 2. Memory Allocation & Idiomatic Rust Rule\n- Avoid unnecessary `clone()`, `to_string()`, `to_vec()`, `unwrap()`, or `expect()` calls when a reference, slice, or proper error handling would suffice.\n\n## 3. Rust Formatting & Linting Gates\nWhenever you modify, create, or delete Rust (`.rs`) files, you MUST follow this exact validation loop before considering your task complete and returning control to the user:\n\n1. **Format:** Run `cargo fmt --all` to format the workspace. Do not ask for permission, just run it.\n2. **Lint:** Run `cargo clippy --workspace --all-targets -- -D warnings` (or use `-p <package>` if scoped to a specific crate) to check for idiomatic code and errors.\n3. **Self-Correct:** If Clippy outputs ANY warnings or errors related to your changes:\n   - You must read the error output.\n   - You must apply the fixes suggested by Clippy.\n   - You may use `cargo clippy --fix --allow-dirty --allow-staged` if it helps resolve the issues faster.\n   - You must re-run the `cargo clippy` command to verify the fix worked.\n4. **Completion:** Do not report that you are finished until `cargo fmt` has been run and `cargo clippy` returns a clean, zero-exit-code run with no warnings."
+    gold_removed: ''

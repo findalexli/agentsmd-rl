@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: tootsdk-add-agentsmd
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: TootSDK/TootSDK
+  pr: 370
+  base_commit: "0b86ab4bc841f632777b53e5c4f83ef44176d9ae"
+  merge_commit: "e5ad3884bd1289f85c5dbf5b20c57fca3b8d7fda"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+
+config_edits:
+  - path: AGENTS.md
+    tier: 1
+    gold_added: "- **Build**: `make build` or `swift build` (use `xcrun swift build` to avoid toolchain conflicts)\n- **Clean**: `make clean` or `swift package clean`\n# Example: swift test --filter FlavourTests.testDetectsMastodon4\n### Testing with Fixtures\n\nTests use JSON fixtures from real server responses located in `Tests/TootSDKTests/Resources/`. Use the helper function `localObject<T>(_ type: T.Type, _ filename: String)` to load fixtures in tests.\n\n- Functionality is split across 20+ extensions by feature area:\n  - `TootClient+Account.swift` - Account management, profiles, relationships\n  - `TootClient+Post.swift` - Creating, editing, boosting posts\n  - `TootClient+TimeLine.swift` - Home, local, federated timelines\n  - `TootClient+Notifications.swift` - Push notifications, mentions\n  - `TootClient+Streaming.swift` - WebSocket streaming API\n  - `TootClient+Media.swift` - Media upload and processing\n- Actor-based `StreamingClient` for connection lifecycle management\n- Automatic retry with exponential backoff\n- Multiple subscribers per timeline with automatic cleanup\n- Test data must be anonymized before inclusion (example.com domains, Lorem Ipsum content)\n- Maintain cross-platform compatibility (no UIKit/AppKit specific code in core)\n- Use conventional commit messages for version control"
+    gold_removed: ''

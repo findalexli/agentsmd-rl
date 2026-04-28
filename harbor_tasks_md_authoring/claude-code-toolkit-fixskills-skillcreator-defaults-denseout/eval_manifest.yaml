@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: claude-code-toolkit-fixskills-skillcreator-defaults-denseout
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: notque/claude-code-toolkit
+  pr: 526
+  base_commit: "be4f42fdf936d5e7bc62c2ce5d27a1c3f9295875"
+  merge_commit: "b4c3e1d755bd06a260d1c1a722bef402a4e6570c"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/skill-creator/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/skill-creator/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/skill-creator/SKILL.md."
+
+config_edits:
+  - path: skills/skill-creator/SKILL.md
+    tier: 1
+    gold_added: "## Output style directive (applies to every generated skill/agent)\n\nGenerated SKILL.md and agent bodies must be written as **dense informational\ntext focused on accuracy**. Minimize prose, maximize signal, no filler.\n\n- No motivational framing, no pep talk, no \"this will help you...\".\n- No repeated restatement of the same constraint in different words.\n- Prefer tables, numbered phases, and bullet lists over paragraphs.\n- Every sentence must carry information the model will act on; cut anything\n  that is only atmosphere.\n- Explanations of \"why\" stay short and attached to the rule they justify --\n  one clause, not a paragraph.\n\nThis is a generation constraint on the outputs of this skill, not a style note\nfor this skill's own prose. Enforce it during the \"Write the SKILL.md\" phase\nand during any agent scaffolding.\n\n**`user_invocable` default is `false`.** New skills are agent-facing by default:\nthe `/do` router dispatches them, and the user never types the skill name. Emit\nthe frontmatter field explicitly so the default is visible:\n\n```yaml\nuser_invocable: false  # default -- router-dispatched, not user-typed\n```\n\nFlipping to `true` requires an explicit justification comment in the\nfrontmatter naming the user-facing trigger phrases and why routing through\n`/do` is insufficient. Example:\n\n```yaml\nuser_invocable: true  # justification: users type \"/pr-workflow\" directly as\n                      # a slash-command entry point; /do dispatch is bypassed\n                      # because the user is already scoped to the PR lifecycle.\n```\n\nNo justification = leave it `false`. User-invocable expands the system-prompt\nsurface and the slash-command namespace; both are scarce.\n\n### Post-scaffold: regenerate skills INDEX.json (mandatory)\n\nAfter the skill directory + SKILL.md are on disk, regenerate the skills index.\nWithout this step the router cannot discover the new skill and requests that\nshould match it fall through to the fallback handler.\n\n```bash\npython3 scripts/generate-skill-index.py\n```\n\nRun it from the repo root. Treat it as a commit-gating step: the scaffold is\nnot complete until INDEX.json reflects the new skill. Diff the file before\nstaging to confirm exactly one new entry was added.\n\n### Post-scaffold: joy-check + do-pair validation\n\nBefore declaring the skill shippable, run both checks. They catch different\nfailure modes: joy-check catches grievance-mode framing that drags the model\ntoward pessimism; do-pair validation catches anti-patterns with no paired\n\"Do instead\" counterpart.\n\n**Joy-check** (framing). Invoke the `joy-check` skill on the SKILL.md and each\n`references/*.md` file. The accepted deterministic substitute is:\n\n```bash\npython3 scripts/validate-references.py --check-do-framing\n```\n\nThis script enforces the positive-pairing rule that joy-check encodes\nstructurally: every anti-pattern gets a constructive counterpart. Use it when\ndispatching the full `joy-check` skill is disproportionate (small edits,\nCI contexts, or when only structural pairing matters). For any new skill that\nships prose-heavy references, prefer the full `joy-check` skill -- tone drift\nis not caught by the pairing script.\n\n**Do-pair validation** (structural). Same command, different failure class.\nShip the skill only after this exits 0:\n\n```bash\npython3 scripts/validate-references.py --check-do-framing\n```\n"
+    gold_removed: ''

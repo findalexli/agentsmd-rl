@@ -1,0 +1,70 @@
+version: "2.0"
+
+task:
+  name: tambo-chore-update-claudemd-files-to
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: tambo-ai/tambo
+  pr: 1214
+  base_commit: "1bdd145788d6738c5f0e24896400ff45188be637"
+  merge_commit: "22d6ea28fd18c073b3f739d901121bb1e1e59e31"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in cli/CLAUDE.md."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in create-tambo-app/CLAUDE.md."
+  - id: signal_04
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in docs/CLAUDE.md."
+  - id: signal_05
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in react-sdk/CLAUDE.md."
+  - id: signal_06
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in showcase/CLAUDE.md."
+
+config_edits:
+  - path: CLAUDE.md
+    tier: 1
+    gold_added: '**⚠️ IMPORTANT: Read @AGENTS.md before making any changes or using any tools. It contains detailed architectural guidance and development workflows.**
+
+      For detailed information on architecture, development patterns, and cross-package workflows, see @AGENTS.md.'
+    gold_removed: ''
+  - path: cli/CLAUDE.md
+    tier: 1
+    gold_added: '**⚠️ IMPORTANT: Read @AGENTS.md before making any changes or using any tools. It contains detailed architectural guidance and command workflows.**'
+    gold_removed: ''
+  - path: create-tambo-app/CLAUDE.md
+    tier: 1
+    gold_added: '**⚠️ IMPORTANT: Read @AGENTS.md before making any changes or using any tools. It contains detailed architectural guidance and proxy patterns.**'
+    gold_removed: ''
+  - path: docs/CLAUDE.md
+    tier: 1
+    gold_added: '**⚠️ IMPORTANT: Read @AGENTS.md before making any changes or using any tools. It contains detailed architectural guidance and content workflows.**'
+    gold_removed: ''
+  - path: react-sdk/CLAUDE.md
+    tier: 1
+    gold_added: '**⚠️ IMPORTANT: Read @AGENTS.md before making any changes or using any tools. It contains detailed architectural guidance and development patterns.**'
+    gold_removed: ''
+  - path: showcase/CLAUDE.md
+    tier: 1
+    gold_added: '**⚠️ IMPORTANT: Read @AGENTS.md before making any changes or using any tools. It contains detailed architectural guidance and component patterns.**'
+    gold_removed: ''

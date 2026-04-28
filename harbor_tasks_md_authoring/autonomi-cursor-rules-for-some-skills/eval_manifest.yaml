@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: autonomi-cursor-rules-for-some-skills
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: maidsafe/autonomi
+  pr: 3401
+  base_commit: "f838f350de18aee0a25379457f4e4fb17b5e7999"
+  merge_commit: "af2299504095b42b95772c287d45dec385d18ae7"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .cursorrules."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .cursorrules."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .cursorrules."
+
+config_edits:
+  - path: .cursorrules
+    tier: 1
+    gold_added: "You are an AI assistant specialized in Python and Rust development. \nPlease do not use unwraps or panics. Please ensure all methods are fully tested and annotated. \n\n# Automatic Skill Triggering Rules\n\nThis rule set enables automatic detection of task patterns and applies appropriate workflows.\n\n## Deep Researcher Auto-Trigger\nWhen the user's prompt contains any of these patterns, apply the deep-researcher workflow:\n- \"deep analyze\" or \"comprehensive analysis\"\n- \"compare API\" or \"API diff\" or \"generate documentation\"\n- \"scan crate\" or \"find differences\"\n- \"create report\" or \"public API\"\n- \"reference backup\" or \"autonomi_backup\"\n- Mentions generating HTML/MD reports\n\n**Auto-apply:**\n- Create todo list file in `Claude_workflows/` folder\n- Use systematic file scanning approach\n- Track failures in CSV format\n- Generate collapsible HTML documentation\n\n## Conflict Resolver Auto-Trigger\nWhen the user's prompt contains:\n- \"merge conflict\" or \"git conflict\" or \"resolve conflict\"\n- \"HEAD vs\" or \"<<<<<<\" or \"conflict markers\"\n- \"resolution strategy\"\n\n**Auto-apply:**\n- Run `git status` to identify conflicts\n- Create conflict resolution todo list\n- Document resolution strategy\n- Verify with `cargo clippy --release --all-targets --all-features`\n\n## Test Debugger Auto-Trigger  \nWhen the user's prompt contains:\n- \"test failed\" or \"test failing\" or \"FAILED\"\n- \"panicked at\" or \"assertion failed\"\n- \"debug test\" or \"fix test\"\n- Error messages with \"error[E\" patterns\n\n**Auto-apply:**\n- Run test with `--nocapture` for full output\n- Create debug todo list\n- Reference backup implementations if available\n- Verify fix with full test suite\n\n## Compilation Fixer Auto-Trigger\nWhen the user's prompt contains:\n- \"compilation error\" or \"compile error\" or \"doesn't compile\"\n- \"cargo clippy\" errors or \"fix errors\"\n- \"type mismatch\" or \"cannot find\" or \"use not found\"\n- Error codes like \"error[E0433]\", \"error[E0308]\", etc.\n\n**Auto-apply:**\n- Run `cargo clippy --release --all-targets --all-features`\n- Create fix todo list\n- Maintain public API unchanged\n- Use iterative fix-verify cycle\n\n## Refactoring Auto-Trigger\nWhen the user's prompt contains:\n- \"refactor\" or \"move code\" or \"extract to\"\n- \"split into\" or \"reorganize\" or \"modularize\"\n- \"wrapper pattern\" or \"delegate to\"\n- \"maintain API\" or \"re-expose\"\n\n**Auto-apply:**\n- Create refactoring todo list\n- Document file structure changes\n- Verify API compatibility\n- Run full lint and test suite\n\n## Designer Flow Auto-Trigger\nWhen the user's prompt contains:\n- \"design feature\" or \"feature planning\" or \"new feature\"\n- \"architecture design\" or \"design workflow\"\n- \"plan epic\" or \"create epic\" or \"proof points\"\n- \"design → plan → prove\" or \"design loop\"\n\n**Auto-apply:**\n- Use Manus 3-file pattern: plan.md, notes.md, deliverable\n- Create plan in `Claude_workflows/plans/` folder\n- Run 5 design rounds: Requirements → Architecture → Edge Cases → Proof Points → Lock In\n- Generate epic with proof-point tasks\n- Follow TDD approach for proof\n- Define KPIs for measurement\n\n### Manus Attention Loop\n```\n1. Read plan file before major decisions\n2. Execute next phase\n3. Update plan with progress/errors\n4. Append research to notes.md\n5. Before next decision → Read plan again\n6. Repeat until complete\n```\n\n## Common Workflows\n\n### Todo List Creation Pattern\nFor any significant task, automatically create:\n```\nClaude_workflows/Claude_task_{task_name}_todo_list.txt\n```\n\nWith format:\n```\nClaude Task: {Task Name} Todo List\n==================================\n\n1. [ ] Step 1 description\n2. [ ] Step 2 description\n...\n\nStatus: IN PROGRESS\nStarted: {date}\n```\n\n### Verification Pattern\nAfter any code changes, always run:\n```bash\ncargo clippy --release --all-targets --all-features -- -Dwarnings\n```\n\n### Statistics Tracking\nOn task completion, optionally flush to `Claude_workflows/statistic.csv`:\n- task_start_time, task_name, duration_taken, total_token_spend"
+    gold_removed: ''

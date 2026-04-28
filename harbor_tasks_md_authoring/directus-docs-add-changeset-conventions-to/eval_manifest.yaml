@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: directus-docs-add-changeset-conventions-to
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: directus/directus
+  pr: 26547
+  base_commit: "3afd4f62869a58b49ca122e920e5dfdc987b52ab"
+  merge_commit: "bb8ec54cd0c5554b5bb6dacb70cad9eabc637cfd"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+
+config_edits:
+  - path: AGENTS.md
+    tier: 1
+    gold_added: "\n## Changesets\n\nAll code changes require a changeset to document what changed for the release notes.\n\n### Creating a Changeset\n\n```bash\npnpm changeset\n```\n\nThis interactive command will:\n\n1. Ask which packages are affected\n2. Ask whether the change is a major, minor, or patch (see versioning guidance below)\n3. Prompt for a description of the change\n\n### Changeset Description Format\n\n**IMPORTANT**: All changeset descriptions must be written in **past tense**, as they document changes that have already\nbeen made.\n\nExamples:\n\n- ✅ \"Added support for multi-provider AI\"\n- ✅ \"Fixed race condition in WebSocket connections\"\n- ✅ \"Replaced deprecated `ldapjs` with `ldapts`\"\n- ❌ \"Add support for multi-provider AI\" (present tense - incorrect)\n- ❌ \"Adding support for multi-provider AI\" (present continuous - incorrect)\n\n### Versioning Guidelines\n\nFollow semantic versioning:\n\n- **Patch** (`0.0.x`) - Bug fixes, dependency updates, internal improvements that don't affect the public API\n  - Example: \"Fixed validation error in date field\"\n\n- **Minor** (`0.x.0`) - New features, enhancements to existing features, non-breaking changes\n  - Example: \"Added visual editing support to live preview\"\n\n- **Major** (`x.0.0`) - Breaking changes that require user action or code updates\n  - Example: \"Removed deprecated `GET /items` endpoint\"\n\n### Breaking Changes\n\nWhen introducing a breaking change:\n\n1. Use **major** version bump\n2. In the changeset description, clearly document:\n   - What changed (past tense)\n   - Why it changed (if not obvious)\n   - Migration steps or what users need to update\n\nExample breaking change changeset:\n\n```markdown\n---\n'@directus/api': major\n---\n\nRemoved support for Node.js 18. Directus now requires Node.js 20 or higher.\n\n**Migration**: Update your Node.js installation to version 20 or higher before upgrading.\n```\n\n## Pull Requests\n\n### Code Quality Requirements\n\n**IMPORTANT**: Before creating a pull request, ensure all linters and formatters pass successfully. This is a mandatory\nrequirement for all PRs.\n\nRun these commands to verify code quality:\n\n```bash\npnpm lint         # ESLint - checks JavaScript/TypeScript code\npnpm lint:style   # Stylelint - checks CSS/SCSS/Vue styles\npnpm format       # Prettier - checks code formatting\n```\n\nAll three commands must pass with no errors before raising a PR. If any issues are found:\n\n1. Many issues can be auto-fixed:\n   - `pnpm lint --fix` - Auto-fix ESLint issues\n   - `pnpm lint:style --fix` - Auto-fix Stylelint issues\n   - `prettier --cache --write .` - Auto-format with Prettier\n\n2. Review and manually fix any remaining issues that cannot be auto-fixed\n\n### PR Template\n\nWhen creating a new pull request, always use the PR template located at `.github/pull_request_template.md`. The template\nincludes:\n\n- **Scope**: List what changed in the PR\n- **Potential Risks / Drawbacks**: Document any risks or trade-offs\n- **Tested Scenarios**: Describe how the changes were tested\n- **Review Notes / Questions**: Highlight areas needing attention or questions for reviewers\n- **Checklist**: Confirm tests, documentation, and OpenAPI updates\n\nReplace the placeholder \"Lorem ipsum\" content with actual details about your changes. Always reference the related issue\nat the bottom using `Fixes #<num>` format.\n\n### Handling Change Requests\n\n**IMPORTANT**: When you receive change requests or feedback on a pull request, you must create a **sub-PR** (a new pull\nrequest) to address those changes. Do not directly push commits to the existing PR branch.\n\n#### Why Sub-PRs?\n\n- Maintains a clean review history\n- Allows reviewers to evaluate changes in isolation\n- Prevents mixing original work with requested changes\n- Enables parallel work on multiple change requests\n\n#### How to Create a Sub-PR\n\n1. Create a new branch from the current PR branch:\n\n   ```bash\n   git checkout -b <original-branch>-fixes-1\n   ```\n\n2. Make the requested changes on the new branch\n\n3. Create a new pull request that:\n   - Targets the original PR branch (not `main`)\n   - References the original PR in the description: \"Addresses feedback from #<original-pr-num>\"\n   - Includes a clear description of what changed\n\n4. Once the sub-PR is reviewed and merged into the original PR branch, the original PR will be updated automatically\n\n#### Example Workflow\n\n```bash\n# Original PR branch: claude/feature-xyz\n# Reviewer requests changes\n\n# Create sub-PR branch\ngit checkout claude/feature-xyz\ngit checkout -b claude/feature-xyz-fixes-1\n\n# Make changes, commit, and push\ngit add .\ngit commit -m \"Address reviewer feedback on validation logic\"\ngit push origin claude/feature-xyz-fixes-1\n\n# Create PR: claude/feature-xyz-fixes-1 → claude/feature-xyz\n```\n\n**Note**: This sub-PR workflow applies when explicitly instructed to fix change requests. For minor fixes (typos,\nformatting) or when working on your own PRs before initial review, direct commits to the PR branch are acceptable."
+    gold_removed: ''

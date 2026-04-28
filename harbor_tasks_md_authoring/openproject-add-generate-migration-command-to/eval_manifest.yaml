@@ -1,0 +1,46 @@
+version: "2.0"
+
+task:
+  name: openproject-add-generate-migration-command-to
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: opf/openproject
+  pr: 22083
+  base_commit: "52dd21af26994b3c97bf6d836418d2c041a92bc7"
+  merge_commit: "5aecdf5f2ce951126b1602b1ef152cb3cbe3b395"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+
+config_edits:
+  - path: AGENTS.md
+    tier: 1
+    gold_added: 'bundle exec rails db:migrate      # Setup database
+
+      bundle exec rails g migration MigrationName  # Generate a migration
+
+      bundle exec rails db:migrate                 # Run migrations
+
+      bundle exec rails db:rollback                # Rollback last migration
+
+      bundle exec rails db:seed                    # Seed sample data
+
+      bundle exec rails parallel:spec          # Parallel tests
+
+      bin/compose exec backend bundle exec rails db:migrate      # Run migrations
+
+      bin/compose exec backend bundle exec rails db:seed         # Seed data'
+    gold_removed: ''

@@ -1,0 +1,36 @@
+version: "2.0"
+
+task:
+  name: neo-featagents-codify-peerescalation-discipline-as
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: neomjs/neo
+  pr: 10386
+  base_commit: "aec1292af9a7f7a8f07789787cf7755f077f192b"
+  merge_commit: "da84a55604d79c46f52e22efe7358accc4147c0f"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+
+config_edits:
+  - path: AGENTS.md
+    tier: 1
+    gold_added: '5. **Productive Failure Loop (The Tripwire):** If the same verification strategy (e.g., E2E test) fails 3 to 5 times for the same logical hypothesis, STOP execution. Do not panic. Instead, step back and challenge your architectural assumptions. You **MUST** document the paradox locally (e.g., in `walkthrough.md` or a `scratch` artifact), invoke `add_memory`, and ask the user for guidance — but **first consider #7 (Peer Escalation Protocol) below**: cross-family peer escalation is lower-cost than user-tier escalation and frequently resolves the paradox without reaching this rule''s user-tier hand-off. Only escalate to creating an R&D ticket or GH Discussion if the blocker is systemic and requires asynchronous external review.
+
+      6. **Global Turn Limit (25-Turn Guardrail):** If you reach 25 turns on a single task without resolution, you MUST perform a hard cut. Stop coding, invoke `add_memory`, and provide a comprehensive status report to the user detailing the blockage. **Earlier peer escalation per #7 below is the discipline that prevents reaching this hard cut** — by turn 25, the cost of context-recovery typically exceeds the cost of asking your peer at turn 5-10.
+
+      7. **Peer Escalation Protocol (Swarm Strength Primitive):** *"Stuck is data, not failure. Asking is discipline."* When you encounter friction that resists multiple debugging hypotheses (substrate-edge ambiguity, cross-family-knowledge gap, multi-turn diminishing returns), your cross-family peer (e.g., `@neo-opus-4-7` ↔ `@neo-gemini-3-1-pro`) is often the lowest-cost source of fresh-perspective unblock. Send an A2A message via `add_message` with: empirical state (what you tested, what passed/failed) + hypothesis enumeration (what you''ve ruled out and why) + specific ask (not "help me solve this" but "have you seen this pattern? / what would you check next?") + explicit *"I''m escalating per §10.7"* framing. Peer escalation is a sign of structural awareness, not weakness — it fires earlier and lower-cost than the user-tier rules above (#5, #6), and frequently resolves friction that would otherwise reach them. The cost stratification is explicit: peer-tier (low — async A2A, peer responds when convenient) → user-tier #5 (medium — interrupts user attention) → user-tier #6 (high — comprehensive status report, hard work-stop). **Do NOT defer escalating because** *"my peer might be busy"* (A2A is async; their response timing is theirs), *"I should figure this out solo"* (solo loops on substrate-edge cases waste compute), or *"asking is admitting failure"* (wrong framing — earlier escalation IS the wisdom that prevents reaching #6''s 25-turn hard-cut). Empirical anchor: session `aaf22f06-cc5c-4dff-aa2f-7d5efb3a6343` (2026-04-26) — an agent encountered a Playwright/ES-module load-order paradox; substantial turn budget burned on solo debugging before user-triggered escalation surfaced cross-family contribution that unblocked in a single A2A response. The substrate worked when invoked; this rule codifies the reflex to invoke it proactively.'
+    gold_removed: ''

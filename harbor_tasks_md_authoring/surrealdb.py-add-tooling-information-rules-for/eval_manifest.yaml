@@ -1,0 +1,150 @@
+version: "2.0"
+
+task:
+  name: surrealdb.py-add-tooling-information-rules-for
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: surrealdb/surrealdb.py
+  pr: 210
+  base_commit: "de59c374f26d7843695516aaaf29fd95079041fa"
+  merge_commit: "df2b3564d786aa2dcbb785c80dc43d95651782f6"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .cursor/tooling.mdc."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .cursor/tooling.mdc."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .cursor/tooling.mdc."
+
+config_edits:
+  - path: .cursor/tooling.mdc
+    tier: 1
+    gold_added: '---
+
+      alwaysApply: true
+
+      ---
+
+
+      # Development Tooling
+
+
+      This project uses `uv` for dependency management and includes several tools for code quality and testing. These should always pass before a tasks is considered complete.
+
+
+      ## Setup
+
+
+      Install dependencies:
+
+      ```bash
+
+      uv sync --group dev
+
+      ```
+
+
+      ## Testing
+
+
+      ### Run All Tests
+
+      ```bash
+
+      uv run pytest
+
+      ```
+
+
+      ### Run Specific Tests
+
+      ```bash
+
+      uv run pytest tests/unit_tests/data_types/test_geometry.py
+
+      ```
+
+
+      ### Test Coverage
+
+      Coverage reports are generated automatically when running tests. View the HTML report:
+
+      ```bash
+
+      uv run pytest --cov=src/surrealdb --cov-report=term-missing --cov-report=html
+
+      ```
+
+
+      ## Code Quality
+
+
+      ### Format Code
+
+      Check formatting:
+
+      ```bash
+
+      uv run ruff format --check --diff src/
+
+      ```
+
+
+      Apply formatting:
+
+      ```bash
+
+      uv run ruff format src/
+
+      ```
+
+
+      ### Lint Code
+
+      ```bash
+
+      uv run ruff check src/
+
+      ```
+
+
+      ## Type Checking
+
+
+      ### mypy
+
+      Check library:
+
+      ```bash
+
+      uv run mypy --explicit-package-bases src/
+
+      ```
+
+
+      Check tests:
+
+      ```bash
+
+      uv run mypy --explicit-package-bases tests/
+
+      ```
+
+
+      ### pyright
+
+      ```bash
+
+      uv run pyright src/
+
+      ```'
+    gold_removed: ''

@@ -1,0 +1,42 @@
+version: "2.0"
+
+task:
+  name: neo-docsagentos-formalize-resumption-protocol-in
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: neomjs/neo
+  pr: 10345
+  base_commit: "53a48ac0dc860904556780e830bd5a4a4eccffd7"
+  merge_commit: "975ba0f3f8eee102095e8509f99ec3bf0008e6fb"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+
+config_edits:
+  - path: AGENTS.md
+    tier: 1
+    gold_added: '## 8. The Resumption Protocol (Interruption Amnesia)
+
+
+      During continuous agent sessions, an agent can succumb to "interruption amnesia." If the human commander injects a diagnostic sub-question or testing request (e.g., "test this A2A message" or "run this script") while the agent is midway through a ticket''s lifecycle, the agent will typically resolve the sub-question and halt. It frequently drops the overarching "Definition of Done" (executing the `pull-request` skill) because its immediate context window was hijacked by the side-quest.
+
+
+      **The Mandate:**
+
+      If a user interrupts your ticket lifecycle for a diagnostic test, meta-request, or side-quest, you **MUST** explicitly resume the ticket lifecycle and check the PR Definition of Done immediately after the test concludes. Do not halt without asking yourself: *"Did the previous interruption distract me from opening the Pull Request?"*
+
+      '
+    gold_removed: ''

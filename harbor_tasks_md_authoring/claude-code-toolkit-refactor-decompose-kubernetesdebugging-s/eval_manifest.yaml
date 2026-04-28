@@ -1,0 +1,111 @@
+version: "2.0"
+
+task:
+  name: claude-code-toolkit-refactor-decompose-kubernetesdebugging-s
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: notque/claude-code-toolkit
+  pr: 426
+  base_commit: "e4525729dc32f294868957671ab7e6ca01779fe9"
+  merge_commit: "daa6888e6c557eba9d926414befa72cc5ff8fc9e"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/kubernetes-debugging/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/kubernetes-debugging/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/kubernetes-debugging/SKILL.md."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/kubernetes-debugging/references/crash-diagnosis.md."
+  - id: signal_04
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/kubernetes-debugging/references/crash-diagnosis.md."
+  - id: signal_05
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/kubernetes-debugging/references/crash-diagnosis.md."
+  - id: signal_06
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/kubernetes-debugging/references/network-debugging.md."
+  - id: signal_07
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/kubernetes-debugging/references/network-debugging.md."
+  - id: signal_08
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/kubernetes-debugging/references/network-debugging.md."
+  - id: signal_09
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/kubernetes-debugging/references/resource-debugging.md."
+  - id: signal_10
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/kubernetes-debugging/references/resource-debugging.md."
+  - id: signal_11
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/kubernetes-debugging/references/resource-debugging.md."
+
+config_edits:
+  - path: skills/kubernetes-debugging/SKILL.md
+    tier: 1
+    gold_added: '## Reference Loading Table
+
+
+      | Signal | Reference | Size |
+
+      |--------|-----------|------|
+
+      | CrashLoopBackOff, OOMKilled, config error, health check, liveness probe, ImagePullBackOff, image pull, registry auth, Pending, FailedScheduling, node affinity, taint, PVC | `references/crash-diagnosis.md` | ~140 lines |
+
+      | service resolution, DNS, nslookup, CoreDNS, port-forward, NetworkPolicy, ingress, egress | `references/network-debugging.md` | ~50 lines |
+
+      | CPU throttling, memory limit, OOMKill, ephemeral storage, DiskPressure, debug container, distroless, kubectl reference, rollout, exec | `references/resource-debugging.md` | ~100 lines |
+
+
+      **Load greedily.** If the user''s question touches any signal keyword, load the matching reference before responding. Multiple signals matching = load all matching references.
+
+
+      ### Triage Flow
+
+      ### Diagnosis Routing
+
+      Based on triage output, load the appropriate reference and follow its diagnosis flow:
+
+      | Symptom | Reference |
+
+      |---------|-----------|
+
+      | Pod status CrashLoopBackOff, ImagePullBackOff, or Pending | `references/crash-diagnosis.md` |
+
+      | Service unreachable, DNS failure, connection refused | `references/network-debugging.md` |
+
+      | CPU throttling, OOMKill, disk pressure, need debug container | `references/resource-debugging.md` |'
+    gold_removed: ''
+  - path: skills/kubernetes-debugging/references/crash-diagnosis.md
+    tier: 1
+    gold_added: "# Crash Diagnosis Reference\n\n> **Scope**: CrashLoopBackOff (OOMKilled, config errors, health check failures), ImagePullBackOff (auth, tags, network), and Pending pod diagnosis (scheduling, affinity, taints, PVC). Does NOT cover networking or resource monitoring.\n> **Version range**: Kubernetes 1.25+ (ephemeral containers assumed available)\n> **Generated**: 2026-04-16\n\n---\n\n## CrashLoopBackOff Diagnosis\n\nCrashLoopBackOff means the container starts, exits, and Kubernetes restarts it with exponential backoff. Do not `kubectl delete pod` to \"fix\" this -- the replacement pod will crash the same way, and you lose the previous container's logs. Read `--previous` logs and describe events first.\n\n### OOMKilled -- container exceeded memory limit\n\n```bash\n# Check termination reason\nkubectl describe pod <pod-name> -n <namespace> | grep -A 5 \"Last State\"\n# Look for: Reason: OOMKilled\n\n# Check resource limits vs actual usage\nkubectl top pod <pod-name> -n <namespace>\n```\n\nFix: Increase `resources.limits.memory` or fix the memory leak in the application. Do not blindly increase limits without checking actual usage first -- over-provisioning wastes cluster resources, and a memory leak will eventually exceed any limit you set. Run `kubectl top pod` under realistic load, then set limits to 1.5-2x observed peak.\n\n### Application configuration error -- missing env vars, bad config file, wrong DB host\n\n```bash\n# Check logs from the previous (crashed) instance\nkubectl logs <pod-name> -n <namespace> --previous\n\n# Verify environment variables are set correctly\nkubectl exec <pod-name> -n <namespace> -- env | sort\n\n# Check if ConfigMap/Secret is mounted\nkubectl describe pod <pod-name> -n <namespace> | grep -A 10 \"Mounts\"\n```\n\n### Health check failure -- liveness probe kills the container\n\n```bash\n# Check probe configuration\nkubectl describe pod <pod-name> -n <namespace> | grep -A 10 \"Liveness\"\n\n# Common issues:\n# - initialDelaySeconds too short for slow-starting apps\n# - Probe endpoint returns non-200 during startup\n# - Probe timeout too aggressive\n```\n\n```yaml\n# Fix: add a startup probe for slow-starting applications\nspec:\n  containers:\n    - name: app\n      startupProbe:\n        httpGet:\n          path: /healthz\n          port: 8080\n        failureThreshold: 30\n        periodSeconds: 10\n      livenessProbe:\n        httpGet:\n          path: /healthz\n          port: 8080\n        periodSeconds: 10\n        timeoutSeconds: 5\n```\n\n---\n\n## ImagePullBackOff Diagnosis\n\nThe kubelet cannot pull the container image.\n\n```bash\n# Check the exact error\nkubectl describe pod <pod-name> -n <namespace> | grep -A 5 \"Events\"\n# Look for: Failed to pull image, ErrImagePull, ImagePullBackOff\n```\n\n### Registry authentication -- private registry requires credentials\n\n```bash\n# Verify imagePullSecrets exist on the pod\nkubectl get pod <pod-name> -n <namespace> -o jsonpath='{.spec.imagePullSecrets}'\n\n# Check if the secret exists and has valid data\nkubectl get secret <pull-secret> -n <namespace> -o jsonpath='{.data.\\.dockerconfigjson}' | base64 -d\n```\n\n### Image tag does not exist -- typo or tag was overwritten\n\n```bash\n# Verify the image reference\nkubectl get pod <pod-name> -n <namespace> -o jsonpath='{.spec.containers[0].image}'\n\n# Test pulling manually on a node or locally\ndocker pull <image-reference>\n```\n\nDo not trust `:latest` tags -- they are mutable, so the image you tested locally may differ from what the node pulled. Always use image digests or immutable tags, and verify the exact image reference with the jsonpath command above.\n\n### Network issues -- node cannot reach the registry\n\n```bash\n# Check if the node has network access to the registry\nkubectl debug node/<node-name> -it --image=busybox -- nslookup registry.example.com\n```\n\n---\n\n## Pending Pods\n\nPods stuck in Pending state have not been scheduled to any node.\n\n```bash\n# Check scheduler events\nkubectl describe pod <pod-name> -n <namespace> | grep -A 10 \"Events\"\n# Look for: FailedScheduling, Insufficient cpu, Insufficient memory\n```\n\n### Resource constraints -- not enough CPU or memory on any node\n\n```bash\n# Check node capacity and allocatable resources\nkubectl describe nodes | grep -A 5 \"Allocated resources\"\n\n# Check resource requests across the cluster\nkubectl top nodes\n```\n\n### Node affinity or node selector mismatch\n\n```bash\n# Check what the pod requires\nkubectl get pod <pod-name> -n <namespace> -o jsonpath='{.spec.nodeSelector}'\nkubectl get pod <pod-name> -n <namespace> -o jsonpath='{.spec.affinity}'\n\n# Check node labels\nkubectl get nodes --show-labels\n```\n\n### Taints and tolerations\n\n```bash\n# Check node taints\nkubectl describe nodes | grep -A 3 \"Taints\"\n\n# Check pod tolerations\nkubectl get pod <pod-name> -n <namespace> -o jsonpath='{.spec.tolerations}'\n```\n\n### PersistentVolumeClaim not bound\n\n```bash\n# Check PVC status\nkubectl get pvc -n <namespace>\n\n# Describe the PVC for events\nkubectl describe pvc <pvc-name> -n <namespace>\n```"
+    gold_removed: ''
+  - path: skills/kubernetes-debugging/references/network-debugging.md
+    tier: 1
+    gold_added: "# Network Debugging Reference\n\n> **Scope**: Service resolution, DNS debugging, port-forwarding for local testing, and NetworkPolicy verification. Does NOT cover pod crash diagnosis or resource limits.\n> **Version range**: Kubernetes 1.25+ (ephemeral containers assumed available)\n> **Generated**: 2026-04-16\n\n---\n\n## Service Resolution -- pod cannot reach another service\n\n```bash\n# Verify the service exists and has endpoints\nkubectl get svc <service-name> -n <namespace>\nkubectl get endpoints <service-name> -n <namespace>\n\n# Check if endpoints are populated (empty = no matching pods)\nkubectl describe endpoints <service-name> -n <namespace>\n```\n\n---\n\n## DNS Debugging\n\n```bash\n# Run a DNS lookup from inside the cluster\nkubectl run dns-debug --rm -it --restart=Never --image=busybox:1.36 -n <namespace> -- \\\n  nslookup <service-name>.<namespace>.svc.cluster.local\n\n# Check CoreDNS pods are running\nkubectl get pods -n kube-system -l k8s-app=kube-dns\n\n# Check CoreDNS logs for errors\nkubectl logs -n kube-system -l k8s-app=kube-dns --tail=50\n```\n\n---\n\n## Port-Forward for Local Testing\n\n```bash\n# Forward a pod port to localhost\nkubectl port-forward pod/<pod-name> -n <namespace> 8080:8080\n\n# Forward a service port to localhost\nkubectl port-forward svc/<service-name> -n <namespace> 8080:80\n\n# Test the endpoint locally\ncurl -v http://localhost:8080/healthz\n```\n\n---\n\n## NetworkPolicy Blocking Traffic\n\nSee kubernetes-security skill for full policy patterns.\n\n```bash\n# List network policies in the namespace\nkubectl get networkpolicy -n <namespace>\n\n# Describe a specific policy to see ingress/egress rules\nkubectl describe networkpolicy <policy-name> -n <namespace>\n```"
+    gold_removed: ''
+  - path: skills/kubernetes-debugging/references/resource-debugging.md
+    tier: 1
+    gold_added: "# Resource Debugging Reference\n\n> **Scope**: CPU throttling detection, memory limits and OOMKill analysis, ephemeral storage pressure, ephemeral debug containers, and kubectl command reference table. Does NOT cover crash diagnosis root causes or networking.\n> **Version range**: Kubernetes 1.25+ (ephemeral containers assumed available)\n> **Generated**: 2026-04-16\n\n---\n\n## CPU Throttling -- container is being throttled by its CPU limit\n\n```bash\n# Check current usage vs limits\nkubectl top pod <pod-name> -n <namespace> --containers\n\n# Check throttling metrics (requires metrics-server or Prometheus)\n# Look for container_cpu_cfs_throttled_periods_total in metrics\nkubectl describe pod <pod-name> -n <namespace> | grep -A 5 \"Limits\"\n```\n\n---\n\n## Memory Limits -- OOMKill or high memory pressure\n\n```bash\n# Check if the pod was OOMKilled\nkubectl get pod <pod-name> -n <namespace> -o jsonpath='{.status.containerStatuses[0].lastState}'\n\n# Check current memory usage\nkubectl top pod <pod-name> -n <namespace> --containers\n\n# Check node memory pressure\nkubectl describe node <node-name> | grep -A 5 \"Conditions\"\n```\n\n---\n\n## Ephemeral Storage Pressure -- logs or temp files fill the node disk\n\n```bash\n# Check node disk pressure condition\nkubectl describe node <node-name> | grep -A 2 \"DiskPressure\"\n\n# Check pod ephemeral storage usage\nkubectl describe pod <pod-name> -n <namespace> | grep -A 3 \"ephemeral-storage\"\n```\n\n---\n\n## Ephemeral Debug Containers\n\nWhen a container has no shell (distroless, scratch), use ephemeral containers:\n\n```bash\n# Attach a debug container with networking tools\nkubectl debug -it <pod-name> -n <namespace> \\\n  --image=nicolaka/netshoot \\\n  --target=<container-name>\n\n# Inside the debug container, you can:\n# - Check network: curl, dig, tcpdump, ss\n# - Inspect filesystem: ls /proc/1/root (target container's filesystem)\n# - Check processes: ps aux\n```\n\n```bash\n# Debug a node directly\nkubectl debug node/<node-name> -it --image=ubuntu\n\n# This creates a pod with hostPID, hostNetwork, and mounts the node filesystem at /host\n# Useful for: checking kubelet logs, node networking, disk usage\nchroot /host\njournalctl -u kubelet --no-pager --tail=50\n```\n\n---\n\n## kubectl Commands Reference\n\n| Command | Purpose |\n|---------|---------|\n| `kubectl describe pod <pod> -n <ns>` | Full pod status, events, conditions |\n| `kubectl logs <pod> -n <ns> --previous` | Logs from the last crashed container |\n| `kubectl logs <pod> -n <ns> --tail=100 -f` | Stream last 100 lines and follow |\n| `kubectl get events -n <ns> --sort-by='.lastTimestamp'` | Namespace events in chronological order |\n| `kubectl top pod -n <ns>` | CPU and memory usage per pod |\n| `kubectl top nodes` | CPU and memory usage per node |\n| `kubectl get pod <pod> -n <ns> -o yaml` | Full pod spec and status in YAML |\n| `kubectl exec -it <pod> -n <ns> -- /bin/sh` | Shell into a running container |\n| `kubectl port-forward pod/<pod> -n <ns> 8080:8080` | Forward pod port to localhost |\n| `kubectl debug pod/<pod> -n <ns> --image=busybox -it` | Attach ephemeral debug container |\n| `kubectl rollout status deployment/<name> -n <ns>` | Watch deployment rollout progress |\n| `kubectl rollout undo deployment/<name> -n <ns>` | Roll back to previous revision |\n\n---\n\n## Error Handling\n\n### Error: \"kubectl exec\" fails with \"container not running\"\nCause: The container is in CrashLoopBackOff or has not started yet.\nSolution: Use `kubectl logs --previous` to get crash logs. If the container exits immediately, check the entrypoint command and environment variables.\n\n### Error: \"kubectl debug\" not available\nCause: Ephemeral containers require Kubernetes 1.25+ and the feature gate to be enabled.\nSolution: Check cluster version with `kubectl version`. For older clusters, create a standalone debug pod in the same namespace with `kubectl run`."
+    gold_removed: ''

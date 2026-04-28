@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: llamafarm-docsrules-add-prworkflowmd-with-lessons
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: llama-farm/llamafarm
+  pr: 807
+  base_commit: "807c2671b4596965cdc0364c7291a4cef1ff0bc2"
+  merge_commit: "11f5210cb075f798151c48867ed3b5d64e32cb27"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/rules/pr_workflow.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/rules/pr_workflow.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/rules/pr_workflow.md."
+
+config_edits:
+  - path: .claude/rules/pr_workflow.md
+    tier: 1
+    gold_added: "# Pull Request Workflow\n\n## Always verify CI after pushing\n\nAfter pushing commits to a PR, verify the state before declaring work done:\n\n- `gh pr view <num> --json statusCheckRollup` — check for `FAILURE` / `CANCELLED`\n- `gh api /repos/{owner}/{repo}/code-scanning/alerts?ref=refs/pull/<num>/head&state=open` — authoritative CodeQL state\n- If checks are long-running, wait and re-check rather than stopping at \"pushed\"\n\n`mergeStateStatus: BLOCKED` with `mergeable: MERGEABLE` and `reviewDecision: REVIEW_REQUIRED` means branch protection is waiting on a human reviewer, not a technical blocker.\n\n## Triaging bot reviewer comments\n\ncubic, qodo, github-advanced-security, and github-code-quality re-post the same findings on every new commit with updated line numbers. The comment list is full of duplicates; don't read it as the source of truth.\n\n- **CodeQL**: query `code-scanning/alerts?state=open` via API. Alerts reflect current head; inline comments reflect historical state.\n- **cubic / qodo**: filter `pulls/{num}/comments` by `commit_id` and only trust the latest commit's entries.\n- **Verify \"stale\" empirically**: grep the current file for the fix before dismissing a comment — cubic re-flags already-fixed items.\n\nWhen an alert is a known false positive with justification, dismiss via API rather than fighting the analyzer further:\n\n```\ngh api --method PATCH /repos/{owner}/{repo}/code-scanning/alerts/<num> \\\n  -f state=dismissed \\\n  -f dismissed_reason=\"false positive\" \\\n  -f dismissed_comment=\"<detailed justification referencing the sanitization>\"\n```\n\n## CodeQL py/path-injection: use the recognized pattern\n\nCodeQL's `py/path-injection` dataflow requires the sanitizer and sink in the same basic block. It recognizes this shape:\n\n```python\nroot_abs = os.path.abspath(env_var_or_param)\ncandidate = os.path.realpath(os.path.join(root_abs, safe_name))\nif (os.path.commonpath([root_abs, candidate]) == root_abs\n        and os.path.isfile(candidate)):\n    # use `candidate` here — CodeQL sees the guard as protecting the use\n    ...\n```\n\nPatterns that **don't** satisfy the analyzer despite being semantically safe:\n\n- Sanitization in a helper function — parameters become fresh taint sources on return\n- `candidate.startswith(root + os.sep)` — functionally equivalent but not in the recognized set\n- A single `commonpath` check at the top of a function, then multiple downstream uses — the sanitizer doesn't flow across basic blocks\n- `pathlib.Path` wrapping — `Path` methods re-introduce taint after a string-level check\n\nIf the above in-place pattern isn't achievable, either (a) restructure so every filesystem operation is in a compound conditional with a fresh `commonpath` check, or (b) dismiss via API with justification. See `common/llamafarm_common/model_utils.py::get_gguf_file_path`'s `GGUF_MODELS_DIR` lookup for a working example.\n\n## Pre-existing bugs can surface on merge\n\nWhen merging `main` into a feature branch, CI failures that look new may actually be pre-existing bugs that were dormant:\n\n- Concurrent-write races (e.g. `os.replace` on Windows) only fire under specific timing\n- Unicode encoding crashes only fire when log output happens to contain non-latin1 bytes (llama.cpp emits `Ġ` / `Ċ` byte-BPE markers)\n- Flaky tests pass on lucky runs and fail on others\n\nBefore assuming a failure is caused by your PR, check:\n\n1. Did the same test pass on the last green `main` CI run?\n2. Does your PR touch any file in the failing code path (`git diff --stat main..HEAD <path>`)?\n\nIf the failure is pre-existing but your merge triggers it, fix it in your PR anyway — it's blocking the merge — and note the root cause in the commit message so reviewers know it's not net-new from your work.\n\n## Windows runtime considerations\n\nPython runtimes that shell out to llama.cpp or process user-generated text on Windows should force UTF-8 on `stdout`/`stderr` at startup:\n\n```python\nif sys.platform == \"win32\":\n    try:\n        sys.stdout.reconfigure(encoding=\"utf-8\", errors=\"replace\")\n        sys.stderr.reconfigure(encoding=\"utf-8\", errors=\"replace\")\n    except (AttributeError, ValueError):\n        # Pre-3.7 or stream replaced by pytest capture / PyApp wrapper.\n        pass\n```\n\nWindows' default `cp1252` console codec crashes on characters like `\\u0120` (Ġ) and `\\u010a` (Ċ) that llama.cpp's native logger emits during tokenizer loading. This must run **before** any logger is configured."
+    gold_removed: ''

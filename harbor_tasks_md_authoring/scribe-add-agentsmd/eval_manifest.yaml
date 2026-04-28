@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: scribe-add-agentsmd
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: knuckleswtf/scribe
+  pr: 1055
+  base_commit: "b11b9b67699aedb357b6dafb2ec044156f813ca7"
+  merge_commit: "8ced1c29bbfd08064e6fb6798dda301ec66e5dad"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+
+config_edits:
+  - path: AGENTS.md
+    tier: 1
+    gold_added: "# Agent Guidelines for Scribe\n\nThis repository contains the source code for Scribe, a PHP package that generates API documentation for Laravel applications.\n\n## \U0001F6E0 Project Tooling & Commands\n\nThis project uses **Composer** for dependency management and scripts.\n- **Test Runner**: [Pest](https://pestphp.com/) (which wraps PHPUnit).\n- **Static Analysis**: [PHPStan](https://phpstan.org/).\n- **Code Style**: [PHP-CS-Fixer](https://cs.symfony.com/).\n\n### Key Commands\n\n| Action | Command | Description |\n|--------|---------|-------------|\n| **Run Tests** | `composer test` | Runs all tests using Pest. |\n| **Run Single Test** | `vendor/bin/pest --filter MethodName` | Runs a specific test method. |\n| **Run File Tests** | `vendor/bin/pest path/to/Test.php` | Runs all tests in a specific file. |\n| **Lint Code** | `composer lint` | Runs PHPStan analysis. |\n| **Check Style** | `composer style:check` | Checks code style without modifying files. |\n| **Fix Style** | `composer style:fix` | Automatically fixes code style issues. |\n\n> **Note**: Always run `composer test` and `composer lint` before submitting changes.\n\n## \U0001F4D0 Code Style & Conventions\n\nAdhere strictly to the existing style. The project generally follows **PSR-12**.\n\n### General PHP\n- **Version**: PHP 8.1+. Use modern features like typed properties, union types, and constructor promotion where appropriate.\n- **Strict Types**: Do **NOT** use `declare(strict_types=1);` unless strictly necessary or found in the file being edited (it is generally absent).\n- **Indentation**: 4 spaces.\n- **Arrays**: Use short array syntax `[]`.\n- **Trailing Commas**: Use trailing commas in multi-line arrays.\n\n### Naming\n- **Classes**: `PascalCase` (e.g., `PostmanCollectionWriter`).\n- **Methods**: `camelCase` (e.g., `generatePostmanCollection`).\n- **Variables**: `camelCase` (e.g., `$groupedEndpoints`).\n- **Constants**: `UPPER_CASE_WITH_UNDERSCORES`.\n\n### Imports & Namespaces\n- **Ordering**: Alphabetical order.\n- **Grouping**: Group standard library imports separately if applicable, but generally keep them sorted.\n- **Unused Imports**: Remove unused imports.\n\n### Type Hinting & Docblocks\n- **Types**: Use native PHP type hints (param and return types) whenever possible.\n    - Example: `public function writeDocs(array $groupedEndpoints): void`\n- **Docblocks**:\n    - Use PHPDoc for generic arrays to specify content types (e.g., `/** @param array<string, mixed> $config */`).\n    - Use `/** @var ClassName $var */` for inline type hinting when the static analyzer cannot infer it (e.g., resolving from container).\n    - Do not duplicate native type info in docblocks unless adding detail.\n\n### Laravel Integration\n- **Dependency Injection**: Prefer constructor injection.\n- **Helpers**: Use Laravel helpers (`app()`, `config()`, `public_path()`) where appropriate and consistent with existing code.\n- **Facades**: Facades are used (e.g., `Storage`, `Route`). Import them via `Illuminate\\Support\\Facades\\...`.\n\n## \U0001F9EA Testing Guidelines\n\n- **Framework**: Tests are written using PHPUnit class syntax (extending `BaseLaravelTest` or `TestCase`), but executed via Pest.\n- **Location**: Place unit tests in `tests/Unit/`.\n- **Naming**: Test classes end in `Test.php`. Test methods use the `/** @test */` annotation or start with `test`.\n- **Assertions**: Use standard PHPUnit assertions (e.g., `$this->assertEquals`, `$this->assertCount`).\n- **Mocking**: Use Mockery or Laravel's mocking helpers if applicable.\n\n## \U0001F4C2 File Structure\n\n- `src/`: Core package source code.\n    - `Writing/`: Logic for generating output files (HTML, Postman, OpenAPI).\n    - `Tools/`: Utility classes.\n    - `Attributes/`: PHP Attributes used by the package.\n- `tests/`: Test suite.\n- `resources/views/`: Blade templates for generated documentation.\n- `config/`: Configuration files.\n\n## \U0001F4DD Error Handling\n\n- Use specific exceptions where possible (e.g., `ScribeException`).\n- Handle errors gracefully, especially when parsing user code or configuration.\n- Use `ConsoleOutputUtils` (aliased as `c`) for CLI output in commands."
+    gold_removed: ''

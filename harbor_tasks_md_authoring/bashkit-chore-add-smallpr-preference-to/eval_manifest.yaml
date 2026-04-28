@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: bashkit-chore-add-smallpr-preference-to
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: everruns/bashkit
+  pr: 217
+  base_commit: "c9a8cad0690a694df7930461758ff501552b7dac"
+  merge_commit: "80b1d06c80c7f930265f534caece36e239b9ff6e"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+
+config_edits:
+  - path: AGENTS.md
+    tier: 1
+    gold_added: '- Prefer small, shippable PRs. Split large changes into independent, reviewable units.
+
+      - When asked to create separate PRs, follow that instruction—do not bundle unrelated changes.
+
+      '
+    gold_removed: ''

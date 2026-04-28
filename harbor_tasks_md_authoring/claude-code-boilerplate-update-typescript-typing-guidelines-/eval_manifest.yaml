@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: claude-code-boilerplate-update-typescript-typing-guidelines-
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: levu304/claude-code-boilerplate
+  pr: 2
+  base_commit: "10c43c9f1bb31c8746ff3a8d6c847a15b79faefb"
+  merge_commit: "c3263e83989c7198930a486f5c82b8cb26818775"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+
+config_edits:
+  - path: CLAUDE.md
+    tier: 1
+    gold_added: "#### Type Safety Requirements (STRICT)\n\n| Type | Status | Guideline |\n|------|--------|-----------|\n| `any` | **BANNED** | Never use `any` under any circumstances |\n| `unknown` | Allowed (avoid) | Acceptable but prefer explicit types |\n| Explicit types | **PREFERRED** | Always use concrete, specific types |\n\n**`any` Type - ABSOLUTE BAN:**\n```typescript\n// ❌ BANNED - No exceptions, including test files\nfunction process(data: any) { ... }\nconst result: any = fetchData();\n(value as any).property  // Type casting to any\n\n// ❌ BANNED - Even in test files\nconst mockData: any = { ... };\nexpect(result as any).toBe(...);\n```\n\n**`unknown` Type - Use Sparingly:**\n```typescript\n// ⚠️ ACCEPTABLE but avoid when possible\nfunction parseJson(input: string): unknown {\n  return JSON.parse(input);\n}\n\n// ✅ PREFERRED - Use type guards with unknown\nfunction isUser(value: unknown): value is User {\n  return typeof value === \"object\" && value !== null && \"id\" in value;\n}\n\n// ✅ BEST - Use explicit types with validation\nfunction parseUser(input: string): User {\n  const data = JSON.parse(input);\n  return userSchema.parse(data);  // Zod validation\n}\n```\n\n**Explicit Types - ALWAYS PREFERRED:**\n```typescript\n// ✅ CORRECT - Explicit return types\nfunction getUser(id: string): Promise<User> { ... }\n\n// ✅ CORRECT - Explicit parameter types\nfunction updateUser(id: string, data: UpdateUserInput): Promise<User> { ... }\n\n// ✅ CORRECT - Explicit variable types when inference is unclear\nconst users: User[] = [];\nconst config: AppConfig = loadConfig();\n```\n\n**Handling Third-Party Libraries:**\n```typescript\n// If library returns any, immediately type it\nconst response = await fetch(url);\nconst data: UserResponse = await response.json();  // Type immediately\n\n// Use Zod for runtime validation of external data\nconst validatedData = userResponseSchema.parse(data);\n```\n"
+    gold_removed: ''

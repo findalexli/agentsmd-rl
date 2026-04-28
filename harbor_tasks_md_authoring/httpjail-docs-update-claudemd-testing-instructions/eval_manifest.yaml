@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: httpjail-docs-update-claudemd-testing-instructions
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: coder/httpjail
+  pr: 48
+  base_commit: "f5fb78f08a8503c0c4fba1dead7366601fb700b5"
+  merge_commit: "1df4730ac96a5b86873f738fa601190abe34e935"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+
+config_edits:
+  - path: CLAUDE.md
+    tier: 1
+    gold_added: "The integration tests run against the binary built by Cargo; no manual environment variables are required. On Linux, run the strong-jail integration tests with sudo:\nsudo -E cargo test --test linux_integration\n```\n\nWeak-mode tests (environment-only, cross-platform) run without sudo:\n\n```bash\ncargo test --test weak_integration\n```\n\nRun the full suite:\n\n```bash\ncargo test\n- macOS uses weak mode (environment-only) and does not use PF. No root/sudo required for standard usage or tests.\n- To run integration tests on macOS, prefer the weak-mode suite:\n  ```bash\n  cargo test --test weak_integration\n  ```"
+    gold_removed: ''

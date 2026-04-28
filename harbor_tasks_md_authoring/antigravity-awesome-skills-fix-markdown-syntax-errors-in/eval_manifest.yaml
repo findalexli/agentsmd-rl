@@ -1,0 +1,24 @@
+version: "2.0"
+
+task:
+  name: antigravity-awesome-skills-fix-markdown-syntax-errors-in
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: sickn33/antigravity-awesome-skills
+  pr: 125
+  base_commit: "f561ba9e952da36809fa0f04b8843d84b54a1c9d"
+  merge_commit: "7fd7b1af544f769c06f909d1caa82cd2bef9d405"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/shopify-development/SKILL.md."
+
+config_edits:
+  - path: skills/shopify-development/SKILL.md
+    tier: 1
+    gold_added: 'description: |'
+    gold_removed: ''

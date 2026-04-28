@@ -1,0 +1,66 @@
+version: "2.0"
+
+task:
+  name: xarray-add-claudemd-with-development-setup
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: pydata/xarray
+  pr: 10692
+  base_commit: "175734fba7cc32550c7517a5df420a1bb9f44993"
+  merge_commit: "bd2a0355809e54bd947eeb22f4f001068b717f22"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+
+config_edits:
+  - path: CLAUDE.md
+    tier: 1
+    gold_added: '# xarray development setup
+
+
+      ## Setup
+
+
+      ```bash
+
+      uv sync
+
+      ```
+
+
+      ## Run tests
+
+
+      ```bash
+
+      uv run pytest xarray -n auto  # All tests in parallel
+
+      uv run pytest xarray/tests/test_dataarray.py  # Specific file
+
+      ```
+
+
+      ## Linting & type checking
+
+
+      ```bash
+
+      pre-commit run --all-files  # Includes ruff and other checks
+
+      uv run dmypy run  # Type checking with mypy
+
+      ```'
+    gold_removed: ''

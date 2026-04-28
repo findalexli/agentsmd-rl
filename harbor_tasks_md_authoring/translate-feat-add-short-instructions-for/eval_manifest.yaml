@@ -1,0 +1,76 @@
+version: "2.0"
+
+task:
+  name: translate-feat-add-short-instructions-for
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: translate/translate
+  pr: 5783
+  base_commit: "00efd05b012f95858432b665e31c1fad43acc0e1"
+  merge_commit: "c8691f95ef3e20ff774f13d70d61983433706d06"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/copilot-instructions.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/copilot-instructions.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/copilot-instructions.md."
+
+config_edits:
+  - path: .github/copilot-instructions.md
+    tier: 1
+    gold_added: '# Copilot Instructions for translate-toolkit
+
+
+      # Existing documentation
+
+
+      Follow existing contributor documentation in `docs/developers/`.
+
+
+      ## Code Style and Standards
+
+
+      - Follow PEP 8 standards
+
+      - Use type annotations
+
+
+      ### Linting and Formatting
+
+
+      - Pre-commit hooks are configured (`.pre-commit-config.yaml`)
+
+      - Use pylint for Python code quality
+
+      - Follow existing code formatting patterns
+
+      - Run `pre-commit run --all-files` before committing
+
+      - Type check new code with `mypy`
+
+
+      ## Documentation
+
+
+      - Document new feature in `docs/`
+
+
+      ### Dependencies
+
+
+      - Manage dependencies in `pyproject.toml`
+
+      - Use dependency groups for different environments (dev, test, docs, etc.)
+
+      - Keep dependencies up to date with security considerations'
+    gold_removed: ''

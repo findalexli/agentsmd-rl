@@ -1,0 +1,26 @@
+version: "2.0"
+
+task:
+  name: behavior-1k-add-documentation-links-to-claudeagentsmd
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: StanfordVL/BEHAVIOR-1K
+  pr: 2095
+  base_commit: "2376d97dff7f1ccc99d8b92201df702252776ce1"
+  merge_commit: "c2ad35b1a4497b76e4f36cdb27ef20c2d27c9af9"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+
+config_edits:
+  - path: AGENTS.md
+    tier: 1
+    gold_added: 'OmniGibson currently uses [Isaac Sim 5.1](https://docs.isaacsim.omniverse.nvidia.com/5.1.0/) and [Omniverse Kit 107.3.1](https://docs.omniverse.nvidia.com/kit/docs/kit-manual/107.3.1/). This [documentation for USDRT](https://docs.omniverse.nvidia.com/kit/docs/usdrt.scenegraph/7.6.1/index.html#usdrt-scenegraph-module) may also be especially useful for understanding Fabric and USD syncing. When following the links, make sure not to add an extra "docs/" to the href.
+
+      '
+    gold_removed: ''

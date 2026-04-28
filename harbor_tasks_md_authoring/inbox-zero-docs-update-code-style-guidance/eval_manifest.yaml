@@ -1,0 +1,38 @@
+version: "2.0"
+
+task:
+  name: inbox-zero-docs-update-code-style-guidance
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: elie222/inbox-zero
+  pr: 2382
+  base_commit: "0bf8d459a370afbecfe9869d9faaf9ce8a861576"
+  merge_commit: "acd0233cef5a8a7414739ca6fa077788aedf2a4f"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+
+config_edits:
+  - path: AGENTS.md
+    tier: 1
+    gold_added: '- Avoid premature abstraction. Small duplicated expressions are usually fine; extracting them often adds indirection without meaning.
+
+      - Do not duplicate substantial logic or correctness-sensitive rules. If copied code must stay in sync to avoid bugs, extract or centralize it early.
+
+      - Extract helpers when they make surrounding code clearer, name a meaningful domain concept, or keep shared behavior consistent across flows.
+
+      - Avoid large/nested ternaries. Prefer straightforward control flow, a small helper, or a lookup table when it improves readability.'
+    gold_removed: ''

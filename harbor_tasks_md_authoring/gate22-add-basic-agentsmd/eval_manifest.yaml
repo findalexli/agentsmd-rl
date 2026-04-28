@@ -1,0 +1,102 @@
+version: "2.0"
+
+task:
+  name: gate22-add-basic-agentsmd
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: aipotheosis-labs/gate22
+  pr: 135
+  base_commit: "ff07986b719f37eb6d19963c08ff5a151af52588"
+  merge_commit: "4b21e44f39489209e527888914c4d980723a3b7b"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+
+config_edits:
+  - path: AGENTS.md
+    tier: 1
+    gold_added: '# AGENTS.md
+
+
+      This document provides coding agents with detailed context about the Gate22 repository structure, build processes, testing procedures, and conventions.
+
+
+      ## Project Overview
+
+
+      Gate22 is an open-source MCP (Model Context Protocol) Gateway and Control Plane for AI governance.
+
+
+      - **Backend**: Python/FastAPI-based service that powers the control plane, MCP hosting, and Virtual MCP servers
+
+      - **Frontend**: Next.js 15 TypeScript application for the management portal
+
+
+      ## Repository Structure
+
+
+      ```
+
+      gate22/
+
+      ├── backend/          # Python backend services
+
+      │   ├── aci/         # Main application package
+
+      │   │   ├── alembic/        # Database migrations
+
+      │   │   ├── cli/            # Internal Admin CLI commands
+
+      │   │   ├── common/         # Shared utilities
+
+      │   │   ├── control_plane/  # FastAPI service for the control plane
+
+      │   │   ├── mcp/            # FastAPI service for the MCP servers (bundle)
+
+      │   │   └── virtual_mcp/    # FastAPI service for the Virtual MCP servers
+
+      │   ├── mcp_servers/         # MCP server definitions
+
+      │   ├── virtual_mcp_servers/ # Virtual MCP server definitions
+
+      │   ├── pyproject.toml       # Python dependencies
+
+      │   └── compose.yml          # Docker Compose configuration
+
+      ├── frontend/        # Next.js frontend application
+
+      │   ├── src/
+
+      │   │   ├── app/            # Next.js App Router pages
+
+      │   │   ├── features/       # Feature-based modules
+
+      │   │   ├── components/     # Shared UI components
+
+      │   │   └── lib/            # Utilities and shared logic
+
+      │   └── package.json        # Node.js dependencies
+
+      └── .pre-commit-config.yaml # Pre-commit hooks configuration
+
+      ```
+
+
+      ## Backend
+
+
+      ### Code Style & Quality'
+    gold_removed: ''

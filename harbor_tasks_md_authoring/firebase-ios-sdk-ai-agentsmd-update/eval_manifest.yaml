@@ -1,0 +1,49 @@
+version: "2.0"
+
+task:
+  name: firebase-ios-sdk-ai-agentsmd-update
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: firebase/firebase-ios-sdk
+  pr: 15874
+  base_commit: "304894865096e46934d4699ee74b7ad12f79ff11"
+  merge_commit: "ea2b2b9b9bab786a57291a1e2996b0b94cde02b1"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in FirebaseAI/Sources/AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in FirebaseAI/Sources/Extensions/Internal/AGENTS.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in FirebaseAI/Sources/Extensions/Internal/AGENTS.md."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in FirebaseAI/Sources/Extensions/Internal/AGENTS.md."
+
+config_edits:
+  - path: FirebaseAI/Sources/AGENTS.md
+    tier: 1
+    gold_added: '- **`GenerativeModelSession.swift`**: Defines the `GenerativeModelSession` class, which provides a simplified interface for single-turn interactions with a generative model. It''s particularly useful for generating typed objects from a model''s response using the `@Generable` macro, without the conversational turn-based structure of a `Chat`.'
+    gold_removed: ''
+  - path: FirebaseAI/Sources/Extensions/Internal/AGENTS.md
+    tier: 1
+    gold_added: '# Internal Extensions
+
+
+      This directory contains internal extensions to data models and other types. These extensions provide functionality that is specific to the internal workings of the Firebase AI SDK and are not part of the public API.
+
+
+      ## Files
+
+
+      -   **`GenerationSchema+Gemini.swift`**: This file extends `GenerationSchema` to provide a `toGeminiJSONSchema()` method. This method transforms the schema into a format that is compatible with the Gemini backend, including renaming properties like `x-order` to `propertyOrdering`. This file is conditionally compiled and is only available when `FoundationModels` can be imported.'
+    gold_removed: ''

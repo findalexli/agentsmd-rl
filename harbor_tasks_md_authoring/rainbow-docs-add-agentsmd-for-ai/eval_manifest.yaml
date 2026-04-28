@@ -1,0 +1,114 @@
+version: "2.0"
+
+task:
+  name: rainbow-docs-add-agentsmd-for-ai
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: rainbow-me/rainbow
+  pr: 7175
+  base_commit: "770a3fb78b5d130592c32562cca438d00b144c88"
+  merge_commit: "b19c05e5038f0dd9d40d38f8a321b70687691be7"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/CLAUDE.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+
+config_edits:
+  - path: .claude/CLAUDE.md
+    tier: 1
+    gold_added: '@../AGENTS.md'
+    gold_removed: ''
+  - path: AGENTS.md
+    tier: 1
+    gold_added: '# Rainbow
+
+
+      React Native crypto wallet app (iOS & Android). Uses React Navigation, custom store creators for state/data, and ethers/viem for blockchain interactions.
+
+
+      ## Verification
+
+
+      - **Type check (TS):** `yarn lint:ts`
+
+      - **Type check (JS):** `yarn lint:js-types` (checks JS files against an error baseline)
+
+      - **Lint (ESLint):** `yarn lint:js`
+
+      - **Lint all:** `yarn lint` (format + TS + JS)
+
+      - **Tests:** `yarn test` (Jest)
+
+      - **Single test:** `yarn jest path/to/test`
+
+      - **Cycle check:** `yarn check:cycles`
+
+
+      ## Architecture
+
+
+      ### State management
+
+
+      Custom store creators built on Zustand, defined in `src/state/internal/`:
+
+
+      - **`createRainbowStore`** -- general-purpose store with optional MMKV persistence. Use for client state.
+
+      - **`createQueryStore`** -- combines data fetching + state in one store. Reactive `$` params auto-refetch when dependencies change. Replaces the React Query + Zustand dual-store pattern. Use for server/async data.
+
+      - **`createDerivedStore`** -- read-only store that composes other stores. Use for computed/aggregated state.
+
+
+      Stores live in `src/state/` (one per domain) and in `src/features/*/data/stores/`. These in-repo creators are being replaced by the external [`stores`](https://github.com/christianbaroni/stores) package (same APIs: `createBaseStore`, `createQueryStore`, `createDerivedStore`). The migration is mostly an import swap.
+
+
+      Legacy systems still in use:
+
+
+      - **React Query** (`src/react-query/`) -- server state caching, being replaced by `createQueryStore`
+
+      - **Redux** (`src/redux/`) -- only for: charts, contacts, ENS registration, gas, settings
+
+
+      ### Source layout
+
+
+      The codebase is mid-migration toward domain-organized architecture. New code goes in `src/features/` with `ui/data/core` layer separation. Legacy code lives in flat top-level directories (`components/`, `screens/`, `hooks/`, `helpers/`, `utils/`).
+
+
+      Key non-obvious directories:
+
+
+      - `src/framework/` -- app-agnostic infrastructure (http, safe math, UI primitives)
+
+      - `src/__swaps__/` -- swap feature, aliased as `@/swaps` in tsconfig
+
+      - `src/graphql/` -- separate yarn workspace for GraphQL codegen
+
+
+      ## Code conventions
+
+
+      - **No barrel exports** -- import directly from source files, not `index.ts`. Barrels defeat tree-shaking, hide circular deps, and trigger cascading module loading. ESLint-enforced with a limited allowlist.
+
+      - **Type-only imports** -- use the `type` annotation for type-only imports (ESLint-enforced).
+
+      - **TypeScript over JavaScript** -- write all new files in `.ts`/`.tsx`. Remaining JS files are checked against an error baseline (`yarn lint:js-types`) -- don''t regress it.'
+    gold_removed: ''

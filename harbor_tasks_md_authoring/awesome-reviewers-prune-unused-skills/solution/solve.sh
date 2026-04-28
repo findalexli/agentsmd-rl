@@ -1,0 +1,2086 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+cd /workspace/awesome-reviewers
+
+# Idempotency guard
+if grep -qF "_skills/async-error-callbacks/SKILL.md" "_skills/async-error-callbacks/SKILL.md" && grep -qF "_skills/avoid-code-duplication/SKILL.md" "_skills/avoid-code-duplication/SKILL.md" && grep -qF "_skills/balance-organization-with-constraints/SKILL.md" "_skills/balance-organization-with-constraints/SKILL.md" && grep -qF "_skills/compatible-null-annotations/SKILL.md" "_skills/compatible-null-annotations/SKILL.md" && grep -qF "_skills/component-reuse-first/SKILL.md" "_skills/component-reuse-first/SKILL.md" && grep -qF "_skills/consistent-ai-interfaces/SKILL.md" "_skills/consistent-ai-interfaces/SKILL.md" && grep -qF "_skills/consistent-camelcase-naming/SKILL.md" "_skills/consistent-camelcase-naming/SKILL.md" && grep -qF "_skills/consistent-provider-options/SKILL.md" "_skills/consistent-provider-options/SKILL.md" && grep -qF "_skills/consistent-semantic-naming/SKILL.md" "_skills/consistent-semantic-naming/SKILL.md" && grep -qF "_skills/consistent-technical-term-translation/SKILL.md" "_skills/consistent-technical-term-translation/SKILL.md" && grep -qF "_skills/context-rich-log-messages/SKILL.md" "_skills/context-rich-log-messages/SKILL.md" && grep -qF "_skills/document-api-schemas/SKILL.md" "_skills/document-api-schemas/SKILL.md" && grep -qF "_skills/document-configuration-decisions/SKILL.md" "_skills/document-configuration-decisions/SKILL.md" && grep -qF "_skills/document-intentional-choices/SKILL.md" "_skills/document-intentional-choices/SKILL.md" && grep -qF "_skills/document-public-api-boundaries/SKILL.md" "_skills/document-public-api-boundaries/SKILL.md" && grep -qF "_skills/document-security-exceptions/SKILL.md" "_skills/document-security-exceptions/SKILL.md" && grep -qF "_skills/documentation-best-practices/SKILL.md" "_skills/documentation-best-practices/SKILL.md" && grep -qF "_skills/enforce-authentication-boundaries/SKILL.md" "_skills/enforce-authentication-boundaries/SKILL.md" && grep -qF "_skills/ensure-deterministic-queries/SKILL.md" "_skills/ensure-deterministic-queries/SKILL.md" && grep -qF "_skills/explicit-api-parameters/SKILL.md" "_skills/explicit-api-parameters/SKILL.md" && grep -qF "_skills/explicit-code-organization-patterns/SKILL.md" "_skills/explicit-code-organization-patterns/SKILL.md" && grep -qF "_skills/explicit-over-implicit-configuration/SKILL.md" "_skills/explicit-over-implicit-configuration/SKILL.md" && grep -qF "_skills/explicit-version-constraints/SKILL.md" "_skills/explicit-version-constraints/SKILL.md" && grep -qF "_skills/externalize-configuration-values/SKILL.md" "_skills/externalize-configuration-values/SKILL.md" && grep -qF "_skills/flexible-api-inputs/SKILL.md" "_skills/flexible-api-inputs/SKILL.md" && grep -qF "_skills/follow-naming-conventions/SKILL.md" "_skills/follow-naming-conventions/SKILL.md" && grep -qF "_skills/format-for-rendering-compatibility/SKILL.md" "_skills/format-for-rendering-compatibility/SKILL.md" && grep -qF "_skills/handle-errors-gracefully/SKILL.md" "_skills/handle-errors-gracefully/SKILL.md" && grep -qF "_skills/handle-exceptions-with-specificity/SKILL.md" "_skills/handle-exceptions-with-specificity/SKILL.md" && grep -qF "_skills/internationalize-ui-text/SKILL.md" "_skills/internationalize-ui-text/SKILL.md" && grep -qF "_skills/isolate-test-environments/SKILL.md" "_skills/isolate-test-environments/SKILL.md" && grep -qF "_skills/keep-tests-simple/SKILL.md" "_skills/keep-tests-simple/SKILL.md" && grep -qF "_skills/maintain-api-naming-consistency/SKILL.md" "_skills/maintain-api-naming-consistency/SKILL.md" && grep -qF "_skills/optimize-ci-type-checking/SKILL.md" "_skills/optimize-ci-type-checking/SKILL.md" && grep -qF "_skills/place-configurations-appropriately/SKILL.md" "_skills/place-configurations-appropriately/SKILL.md" && grep -qF "_skills/provide-actionable-examples/SKILL.md" "_skills/provide-actionable-examples/SKILL.md" && grep -qF "_skills/standardize-model-access/SKILL.md" "_skills/standardize-model-access/SKILL.md" && grep -qF "_skills/test-actual-functionality/SKILL.md" "_skills/test-actual-functionality/SKILL.md" && grep -qF "_skills/test-before-documenting/SKILL.md" "_skills/test-before-documenting/SKILL.md" && grep -qF "_skills/test-security-boundaries/SKILL.md" "_skills/test-security-boundaries/SKILL.md" && grep -qF "_skills/thread-safe-message-dispatching/SKILL.md" "_skills/thread-safe-message-dispatching/SKILL.md" && grep -qF "_skills/type-safe-null-handling/SKILL.md" "_skills/type-safe-null-handling/SKILL.md" && grep -qF "_skills/use-definite-assignment-assertions/SKILL.md" "_skills/use-definite-assignment-assertions/SKILL.md" && grep -qF "_skills/use-descriptive-names/SKILL.md" "_skills/use-descriptive-names/SKILL.md" && grep -qF "_skills/validate-connection-protocols/SKILL.md" "_skills/validate-connection-protocols/SKILL.md" && grep -qF "_skills/validate-environment-bindings/SKILL.md" "_skills/validate-environment-bindings/SKILL.md" && grep -qF "_skills/validate-pattern-matching/SKILL.md" "_skills/validate-pattern-matching/SKILL.md" && grep -qF "_skills/verify-ai-model-capabilities/SKILL.md" "_skills/verify-ai-model-capabilities/SKILL.md" && grep -qF "_skills/verify-properties-before-logging/SKILL.md" "_skills/verify-properties-before-logging/SKILL.md" && grep -qF "_skills/versioning-for-migrations/SKILL.md" "_skills/versioning-for-migrations/SKILL.md"; then
+  echo "Gold patch already applied."
+  exit 0
+fi
+
+git apply --whitespace=nowarn <<'PATCH'
+diff --git a/_skills/async-error-callbacks/SKILL.md b/_skills/async-error-callbacks/SKILL.md
+@@ -1,27 +0,0 @@
+----
+-name: async-error-callbacks
+-description: When handling asynchronous operations, especially those that might continue
+-  running in the background after the main consumer has moved on, provide error callback
+-  options to ensure errors are properly reported and handled. This pattern prevents
+-  silent failures in background tasks and enables proper logging, monitoring, and
+-  recovery.
+-version: '1.0'
+----
+-# Async error callbacks
+-
+-When handling asynchronous operations, especially those that might continue running in the background after the main consumer has moved on, provide error callback options to ensure errors are properly reported and handled. This pattern prevents silent failures in background tasks and enables proper logging, monitoring, and recovery.
+-
+-For example, when consuming streams:
+-
+-```typescript
+-// Without error handling - errors might be silently lost
+-result.consumeStream(); // no await
+-
+-// With error handling - errors are properly reported
+-result.consumeStream(error => {
+-  console.log('Error during background stream consumption: ', error);
+-  // Optional: report to monitoring system
+-});
+-```
+-
+-This approach is particularly important for background operations like stream consumption where the operation continues even when the client response is aborted (e.g., when a browser tab is closed). By implementing error callbacks, you ensure that errors are visible and actionable rather than silently failing.
+diff --git a/_skills/avoid-code-duplication/SKILL.md b/_skills/avoid-code-duplication/SKILL.md
+@@ -1,67 +0,0 @@
+----
+-name: avoid-code-duplication
+-description: Extract repeated code patterns into reusable functions, variables, or
+-  constants to improve maintainability and reduce the risk of inconsistencies. Look
+-  for similar code blocks that perform the same operations and consolidate them.
+-version: '1.0'
+----
+-# Avoid code duplication
+-
+-Extract repeated code patterns into reusable functions, variables, or constants to improve maintainability and reduce the risk of inconsistencies. Look for similar code blocks that perform the same operations and consolidate them.
+-
+-For repeated code blocks:
+-```python
+-# Instead of duplicated validation code:
+-def _validate_inputs(self):
+-    """Validate required inputs."""
+-    missing_fields = []
+-    for field_name in ["sink_name", "project_id"]:
+-        if not getattr(self, field_name):
+-            missing_fields.append(field_name)
+-
+-    if missing_fields:
+-        raise AirflowException(
+-            f"Required parameters are missing: {missing_fields}. These parameters must be passed as "
+-            "keyword parameters or as extra fields in Airflow connection definition."
+-        )
+-        
+-# Prefer a shared validation function:
+-def validate_required_fields(obj, fields):
+-    """Validate that required fields are present."""
+-    missing_fields = []
+-    for field_name in fields:
+-        if not getattr(obj, field_name):
+-            missing_fields.append(field_name)
+-
+-    if missing_fields:
+-        raise AirflowException(
+-            f"Required parameters are missing: {missing_fields}. These parameters must be passed as "
+-            "keyword parameters or as extra fields in Airflow connection definition."
+-        )
+-```
+-
+-For repeated values:
+-```python
+-# Instead of:
+-command = ["sudo", "-E", "-H", "-u", run_as_user, sys.executable, "-c", rexec_python_code]
+-log.info("Running command", command=command)
+-os.execvp("sudo", command)
+-
+-# Store in a variable to avoid duplication:
+-command = ["sudo", "-E", "-H", "-u", run_as_user, sys.executable, "-c", rexec_python_code]
+-log.info("Running command", command=command)
+-os.execvp("sudo", command)
+-```
+-
+-For repeated logic:
+-```python
+-# Instead of repeated conditionals:
+-if len(order_by_list) >= 1:
+-    order_by_columns.append(self.get_column_with_sort(order_by_list[0]))
+-if len(order_by_list) == 2:
+-    order_by_columns.append(self.get_column_with_sort(order_by_list[1]))
+-
+-# Use a loop:
+-for i in range(min(len(order_by_list), MAX_SORT_PARAMS)):
+-    order_by_columns.append(self.get_column_with_sort(order_by_list[i]))
+-```
+diff --git a/_skills/balance-organization-with-constraints/SKILL.md b/_skills/balance-organization-with-constraints/SKILL.md
+@@ -1,36 +0,0 @@
+----
+-name: balance-organization-with-constraints
+-description: When making code organization decisions, consider the broader impact
+-  beyond just eliminating duplication or following patterns. Sometimes a slightly
+-  less "clean" solution is preferable when it preserves type safety, maintains clear
+-  class responsibilities, or avoids exposing unnecessary implementation details.
+-version: '1.0'
+----
+-# Balance organization with constraints
+-
+-When making code organization decisions, consider the broader impact beyond just eliminating duplication or following patterns. Sometimes a slightly less "clean" solution is preferable when it preserves type safety, maintains clear class responsibilities, or avoids exposing unnecessary implementation details.
+-
+-Key considerations:
+-- **Type safety over DRY**: Minor code duplication may be acceptable if extraction would require type assertions or null checks
+-- **Class focus**: Avoid adding functionality to existing classes just for convenience; consider separate specialized classes instead
+-- **Interface clarity**: Don't implement interfaces that expose methods irrelevant to the class's primary purpose
+-
+-Example: Instead of extracting common code that would lose TypeScript type information:
+-```typescript
+-// Prefer this (preserves type safety)
+-if (this.#protocol === "sse") {
+-  this.#transport = new McpSSETransport(() => this.getWebSocket());
+-  await this.server.connect(this.#transport);
+-} else if (this.#protocol === "streamable-http") {
+-  this.#transport = new McpStreamableHttpTransport(/*...*/);
+-  await this.server.connect(this.#transport);
+-}
+-
+-// Over this (loses type information, requires assertions)
+-this.#transport = this.#protocol === "sse" 
+-  ? new McpSSETransport(/*...*/) 
+-  : new McpStreamableHttpTransport(/*...*/);
+-await this.server.connect(this.#transport!); // Type assertion needed
+-```
+-
+-The goal is maintainable code that serves developers well, not just adherence to abstract principles.
+diff --git a/_skills/compatible-null-annotations/SKILL.md b/_skills/compatible-null-annotations/SKILL.md
+@@ -1,29 +0,0 @@
+----
+-name: compatible-null-annotations
+-description: 'When annotating optional or nullable types in Python, ensure compatibility
+-  across all supported Python versions. For codebases supporting Python 3.9:'
+-version: '1.0'
+----
+-# Compatible null annotations
+-
+-When annotating optional or nullable types in Python, ensure compatibility across all supported Python versions. For codebases supporting Python 3.9:
+-
+-1. Add `from __future__ import annotations` at the top of files using the union type syntax:
+-   ```python
+-   from __future__ import annotations
+-   
+-   class ExInfo:
+-       name: str
+-       retry: bool
+-       description: str | None
+-   ```
+-
+-2. Alternatively, use `typing.Optional[X]` instead of `X | None` syntax:
+-   ```python
+-   import typing
+-   
+-   class CoderPrompts:
+-       repo_content_prefix: typing.Optional[str] = """Here are summaries..."""
+-   ```
+-
+-This ensures proper null handling with type annotations while maintaining backward compatibility with Python 3.9, preventing runtime errors like `TypeError: unsupported operand type(s) for |: 'type' and 'NoneType'`.
+diff --git a/_skills/component-reuse-first/SKILL.md b/_skills/component-reuse-first/SKILL.md
+@@ -1,71 +0,0 @@
+----
+-name: component-reuse-first
+-description: 'Always prioritize reusing existing components before creating new ones.
+-  This practice improves codebase consistency, reduces maintenance burden, and prevents
+-  duplication. When implementing new UI elements:'
+-version: '1.0'
+----
+-# Component reuse first
+-
+-Always prioritize reusing existing components before creating new ones. This practice improves codebase consistency, reduces maintenance burden, and prevents duplication. When implementing new UI elements:
+-
+-1. First search your codebase for similar functionality (e.g., search bars, filters, icons)
+-2. Use components from your UI library consistently rather than mixing with HTML elements
+-3. Choose the simplest component that satisfies requirements
+-
+-**Example - Bad:**
+-```jsx
+-// Creating a new input component when a SearchBar already exists
+-<InputGroup startElement={<FiHash size={14} />}>
+-  <Input
+-    maxW="200px"
+-    onChange={handleRunIdChange}
+-    placeholder={translate("dags:filters.runIdFilter")}
+-    value={filteredRunId ?? ""}
+-  />
+-</InputGroup>
+-```
+-
+-**Example - Good:**
+-```jsx
+-// Reusing the existing SearchBar component
+-<SearchBar
+-  onChange={handleRunIdChange}
+-  placeholder={translate("dags:filters.runIdFilter")}
+-  value={filteredRunId ?? ""}
+-/>
+-```
+-
+-**Example - Bad:**
+-```jsx
+-// Custom SVG implementation
+-const ChevronDownIcon = () => (
+-  <svg fill="currentColor" height="1em" viewBox="0 0 20 20" width="1em">
+-    <path
+-      clipRule="evenodd"
+-      d="M5.23 7.21a.75.75 0 011.06.02L10 11.085l3.71-3.855a.75.75 0 111.08 1.04l-4.24 4.4a.75.75 0 01-1.08 0l-4.24-4.4a.75.75 0 01.02-1.06z"
+-      fillRule="evenodd"
+-    />
+-  </svg>
+-);
+-```
+-
+-**Example - Good:**
+-```jsx
+-// Using existing icon library
+-import { FiChevronDown } from "react-icons/fi";
+-
+-// Then in your component
+-<FiChevronDown />
+-```
+-
+-Additionally, maintain framework consistency by using framework-specific patterns (like Chakra UI factories) rather than mixing with HTML elements:
+-
+-```jsx
+-// Instead of <details>...</details>
+-<chakra.details open={open} w="100%">
+-  {/* content */}
+-</chakra.details>
+-```
+-
+-This approach ensures better styling consistency, accessibility support, and reduces the need to reinvent existing functionality.
+diff --git a/_skills/consistent-ai-interfaces/SKILL.md b/_skills/consistent-ai-interfaces/SKILL.md
+@@ -1,32 +0,0 @@
+----
+-name: consistent-ai-interfaces
+-description: Maintain consistent naming patterns and parameter structures across AI
+-  provider implementations. This makes the SDK more intuitive and reduces developer
+-  friction when switching between different AI models or providers.
+-version: '1.0'
+----
+-# Consistent AI interfaces
+-
+-Maintain consistent naming patterns and parameter structures across AI provider implementations. This makes the SDK more intuitive and reduces developer friction when switching between different AI models or providers.
+-
+-Key practices:
+-- Use `.response` instead of `.rawResponse` for provider API responses
+-- Place provider-specific options under `providerOptions` parameter
+-- Ensure documentation examples accurately reflect the actual API capabilities and valid model identifiers
+-
+-Example:
+-```ts
+-// Preferred approach
+-const { response } = await embed({
+-  providerOptions: {
+-    // Provider-specific options here
+-  }
+-});
+-
+-// Instead of
+-const { rawResponse } = await embed({
+-  // Mixing provider-specific options at the top level
+-});
+-```
+-
+-When adding examples for AI providers, always verify that model identifiers are valid for the specific provider (e.g., using 'scribe_v1' for ElevenLabs transcription models rather than invalid identifiers).
+diff --git a/_skills/consistent-camelcase-naming/SKILL.md b/_skills/consistent-camelcase-naming/SKILL.md
+@@ -1,37 +0,0 @@
+----
+-name: consistent-camelcase-naming
+-description: Use camelCase consistently for all property names, method names, and
+-  configuration options, even when interacting with external APIs that use different
+-  conventions (like snake_case). This maintains codebase consistency and makes interfaces
+-  more predictable for developers.
+-version: '1.0'
+----
+-# Consistent camelCase naming
+-
+-Use camelCase consistently for all property names, method names, and configuration options, even when interacting with external APIs that use different conventions (like snake_case). This maintains codebase consistency and makes interfaces more predictable for developers.
+-
+-When encountering inconsistencies:
+-- Fix code to follow camelCase rather than propagating inconsistent naming
+-- Transform between naming conventions at API boundaries when necessary
+-
+-```typescript
+-// INCORRECT: Using external snake_case convention in internal code
+-const options = {
+-  file_format: 'mp3',
+-  timestamp_granularities: ['word']
+-};
+-
+-// CORRECT: Maintaining camelCase in internal code
+-const options = {
+-  fileFormat: 'mp3',
+-  timestampGranularities: ['word']
+-};
+-
+-// When sending to external API, transform as needed
+-sendToExternalApi({
+-  file_format: options.fileFormat,
+-  timestamp_granularities: options.timestampGranularities
+-});
+-```
+-
+-This approach creates a clear separation between internal naming conventions and external API requirements, leading to more consistent and maintainable code.
+diff --git a/_skills/consistent-provider-options/SKILL.md b/_skills/consistent-provider-options/SKILL.md
+@@ -1,41 +0,0 @@
+----
+-name: consistent-provider-options
+-description: When designing APIs that support multiple providers or service integrations,
+-  implement consistent patterns for handling provider-specific options. This includes
+-  proper validation, separation of request vs. non-request options, and clear type
+-  definitions.
+-version: '1.0'
+----
+-# Consistent provider options
+-
+-When designing APIs that support multiple providers or service integrations, implement consistent patterns for handling provider-specific options. This includes proper validation, separation of request vs. non-request options, and clear type definitions.
+-
+-Key practices:
+-1. Use schema validation for provider options before sending requests
+-2. Extract non-request options that shouldn't be sent to external APIs
+-3. Maintain consistent naming patterns across providers
+-4. Provide comprehensive type definitions with JSDoc comments
+-
+-```typescript
+-// Good practice: Extract non-request options before API calls
+-const { pollIntervalMillis, maxPollAttempts, ...providerRequestOptions } = 
+-  providerOptions.luma ?? {};
+-  
+-// Good practice: Use standardized validation
+-const openaiOptions = parseProviderOptions({
+-  provider: 'openai',
+-  providerOptions,
+-  schema: openaiProviderOptionsSchema,
+-});
+-
+-// Good practice: Well-documented provider option types
+-export type GladiaTranscriptionInitiateAPITypes = {
+-  /** URL to a Gladia file or to an external audio or video file */
+-  audio_url: string;
+-  /** [Alpha] Context to feed the transcription model with for better accuracy */
+-  context_prompt?: string;
+-  // Additional well-documented parameters...
+-};
+-```
+-
+-This approach ensures type safety, prevents sending unnecessary options to external APIs, and makes your code more maintainable as you add support for new providers or update existing integrations.
+diff --git a/_skills/consistent-semantic-naming/SKILL.md b/_skills/consistent-semantic-naming/SKILL.md
+@@ -1,52 +0,0 @@
+----
+-name: consistent-semantic-naming
+-description: 'Use clear, consistent, and semantic naming patterns across your codebase
+-  to improve readability and maintainability: 1. **Start function names with verbs**
+-  that describe the action being performed:'
+-version: '1.0'
+----
+-# Consistent semantic naming
+-
+-Use clear, consistent, and semantic naming patterns across your codebase to improve readability and maintainability:
+-
+-1. **Start function names with verbs** that describe the action being performed:
+-```typescript
+-// Good
+-createProviderDefinedToolFactory()
+-parseJson()
+-
+-// Avoid
+-providerDefinedToolFactory()
+-jsonParser()
+-```
+-
+-2. **Use descriptive names for generics** rather than single letters:
+-```typescript
+-// Good
+-interface Provider<LANGUAGE extends string, CONTEXT extends string>
+-
+-// Avoid
+-interface Provider<L extends string, C extends string>
+-```
+-
+-3. **Follow consistent case conventions**:
+-   - Use camelCase for object properties and variables
+-   - Start non-class/type variables (including schemas) with lowercase
+-   - Use consistent naming across similar APIs
+-
+-4. **Include units in variable names** to prevent ambiguity:
+-```typescript
+-// Good
+-durationInSeconds: number
+-maxParallelRequests: number
+-
+-// Avoid
+-duration: number
+-concurrency: number
+-```
+-
+-5. **Use standard terminology** in field names (e.g., `mediaType` for IANA media types)
+-
+-6. **Ensure test naming matches implementation** to avoid confusion and maintenance issues
+-
+-Following these conventions makes your code more self-documenting, easier to understand, and reduces the cognitive load for developers reading and maintaining the code.
+diff --git a/_skills/consistent-technical-term-translation/SKILL.md b/_skills/consistent-technical-term-translation/SKILL.md
+@@ -1,31 +0,0 @@
+----
+-name: consistent-technical-term-translation
+-description: 'When localizing an application, maintain consistent conventions for
+-  technical terms while respecting language-specific rules: 1. For acronyms, follow
+-  the target language''s capitalization conventions:'
+-version: '1.0'
+----
+-# Consistent technical term translation
+-
+-When localizing an application, maintain consistent conventions for technical terms while respecting language-specific rules:
+-
+-1. For acronyms, follow the target language's capitalization conventions:
+-   - In English: Use "Dag" with capitalized first letter only (not "DAG")
+-   - In Spanish: Use full capitalization for acronyms ("DAG") as per RAE guidelines
+-
+-2. For technical terms, prioritize what's familiar to developers in that language:
+-   - Keep universally recognized technical terms in English when they're commonly used by developers in the target language (e.g., "heartbeat", "token", "backend")
+-   - Use localized versions when they're more recognized by developers in that language (e.g., "커넥션" instead of "연결" for "connections" in Korean)
+-
+-3. Be consistent within each language across the entire application:
+-   ```json
+-   // English
+-   "dag_one": "Dag",
+-   "dagRun_one": "Dag Run",
+-   
+-   // Spanish
+-   "dag_one": "DAG",
+-   "dagRun_one": "Ejecución del DAG"
+-   ```
+-
+-This approach ensures that the UI remains intuitive for developers working in different languages while respecting established conventions in each target language.
+diff --git a/_skills/context-rich-log-messages/SKILL.md b/_skills/context-rich-log-messages/SKILL.md
+@@ -1,33 +0,0 @@
+----
+-name: context-rich-log-messages
+-description: Ensure log messages provide clear context about what happened, potential
+-  consequences, and actionable information for debugging. Choose appropriate log levels
+-  based on severity, and include exception details when catching errors.
+-version: '1.0'
+----
+-# Context-rich log messages
+-
+-Ensure log messages provide clear context about what happened, potential consequences, and actionable information for debugging. Choose appropriate log levels based on severity, and include exception details when catching errors.
+-
+-Good log messages significantly improve troubleshooting efficiency by providing developers with information needed to understand issues without requiring code examination.
+-
+-Examples:
+-```python
+-# Instead of vague messages:
+-log.warning("Failed to get user name from os: %s", e)
+-
+-# Provide context about impact:
+-log.warning("Failed to get user name from os: %s, not setting the triggering user", e)
+-
+-# When handling exceptions, log the full exception:
+-try:
+-    sqs_get_queue_attrs_response = self.sqs_client.get_queue_attributes(
+-        QueueUrl=queue_url, AttributeNames=["ApproximateNumberOfMessages"]
+-    )
+-    # Process response...
+-except Exception as e:
+-    # Include details for better debugging
+-    log.error("SQS connection health check failed: %s", e)
+-```
+-
+-Consider what information would be most helpful to developers trying to diagnose an issue from logs alone.
+diff --git a/_skills/document-api-schemas/SKILL.md b/_skills/document-api-schemas/SKILL.md
+@@ -1,42 +0,0 @@
+----
+-name: document-api-schemas
+-description: 'Add comprehensive JSDoc comments to all API interfaces, types, and schema
+-  definitions. This documentation should: 1. Include links to official external documentation
+-  when available'
+-version: '1.0'
+----
+-# Document API schemas
+-
+-Add comprehensive JSDoc comments to all API interfaces, types, and schema definitions. This documentation should:
+-
+-1. Include links to official external documentation when available
+-2. Describe each property in schema objects to provide context for their use
+-3. Be placed at the appropriate abstraction level to support inheritance in class hierarchies
+-4. Include example values where helpful
+-
+-This practice improves developer experience through enhanced IDE tooltips and makes the code more maintainable by new team members.
+-
+-Example:
+-
+-```typescript
+-/**
+- * Web search tool result error content
+- * @see https://docs.anthropic.com/en/docs/build-with-claude/tool-use/web-search-tool#errors
+- */
+-export interface AnthropicWebSearchToolResultErrorContent {
+-  /** Identifies this as a web search tool error response */
+-  type: 'web_search_tool_result_error';
+-  
+-  /** Error code from the API (e.g., 'max_uses_exceeded', 'too_many_requests') */
+-  error_code: string;
+-}
+-
+-// For schemas with multiple properties:
+-const providerOptionsSchema = z.object({
+-  /** Language code (ISO-639-1) for transcription, e.g. 'en-US' */
+-  language: z.string().nullish(),
+-  
+-  /** Start position in seconds for partial audio processing */
+-  audioStartAt: z.number().int().nullish(),
+-});
+-```
+diff --git a/_skills/document-configuration-decisions/SKILL.md b/_skills/document-configuration-decisions/SKILL.md
+@@ -1,45 +0,0 @@
+----
+-name: document-configuration-decisions
+-description: When modifying configuration files (package.json, tsconfig.json, etc.),
+-  document the reasoning behind significant changes and verify they don't introduce
+-  unexpected side effects. This is especially important for changes affecting dependencies
+-  and build processes.
+-version: '1.0'
+----
+-# Document configuration decisions
+-
+-When modifying configuration files (package.json, tsconfig.json, etc.), document the reasoning behind significant changes and verify they don't introduce unexpected side effects. This is especially important for changes affecting dependencies and build processes.
+-
+-For dependency management:
+-- Use fixed versions when compatibility between related packages is critical
+-- Organize dependencies appropriately based on project type (internal tool vs. publishable library)
+-
+-For build configurations:
+-- Follow best practices for your target environment
+-- Validate changes with thorough testing
+-
+-Example:
+-```json
+-// package.json
+-{
+-  "dependencies": {
+-    // Fixed version for critical dependencies with compatibility requirements
+-    "prettier": "3.5.3",
+-    "prettier-plugin-svelte": "3.2.7",
+-    
+-    // Regular dependency for internal tools (not peer/dev)
+-    "zod": "3.23.8"
+-  }
+-}
+-
+-// tsconfig.json
+-{
+-  "compilerOptions": {
+-    // Best practice for bundler targets (enables better dead code removal)
+-    "module": "ESNext",
+-    // Other settings...
+-  }
+-}
+-```
+-
+-When making these changes, document your reasoning in commit messages or inline comments to provide context for other developers.
+diff --git a/_skills/document-intentional-choices/SKILL.md b/_skills/document-intentional-choices/SKILL.md
+@@ -1,31 +0,0 @@
+----
+-name: document-intentional-choices
+-description: 'Add explanatory comments for non-obvious code decisions that might appear
+-  incorrect, unusual, or suboptimal to future contributors. Without such comments,
+-  code that looks unusual might be "fixed" during refactoring, introducing bugs. This
+-  is particularly important for:'
+-version: '1.0'
+----
+-# Document intentional choices
+-
+-Add explanatory comments for non-obvious code decisions that might appear incorrect, unusual, or suboptimal to future contributors. Without such comments, code that looks unusual might be "fixed" during refactoring, introducing bugs. This is particularly important for:
+-
+-- Deliberate error handling patterns
+-- Usage of internal/private methods
+-- Explicit attributes that could be detected automatically 
+-- Performance trade-offs
+-
+-For example:
+-
+-```python
+-# Deliberately returning 403 without details to avoid information leakage
+-raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Invalid token")
+-
+-# Using _get_response() only for initial message where parent sends unsolicited data
+-msg = comms_decoder._get_response()
+-
+-# Explicit attribute definition to prevent automatic detection which would be error-prone
+-dependent_tables: list[str] | None = None
+-```
+-
+-These comments explain the "why" behind code decisions that might not be immediately obvious, preventing well-intentioned changes that could break intended behavior.
+diff --git a/_skills/document-public-api-boundaries/SKILL.md b/_skills/document-public-api-boundaries/SKILL.md
+@@ -1,32 +0,0 @@
+----
+-name: document-public-api-boundaries
+-description: Clearly define and document the boundaries between public and internal
+-  APIs to guide developers on proper interface usage. Use dedicated namespaces (like
+-  the 'sdk' namespace) to distinguish public interfaces from internal implementations.
+-  Ensure all public interfaces have comprehensive documentation that accurately reflects
+-  behavior, with consistent...
+-version: '1.0'
+----
+-# Document public API boundaries
+-
+-Clearly define and document the boundaries between public and internal APIs to guide developers on proper interface usage. Use dedicated namespaces (like the 'sdk' namespace) to distinguish public interfaces from internal implementations. Ensure all public interfaces have comprehensive documentation that accurately reflects behavior, with consistent terminology across all references.
+-
+-When creating extension points for your API, document them thoroughly with examples:
+-
+-```python
+-# Example of a well-documented API extension point
+-class AirflowApiExtensionPlugin(AirflowPlugin):
+-    """Plugin that extends the Airflow API with custom endpoints.
+-    
+-    This plugin allows adding FastAPI applications to extend Airflow's API.
+-    """
+-    fastapi_apps = [
+-        {
+-            "app": app,  # FastAPI app instance
+-            "url_prefix": "/my-api-extension",  # URL prefix for all endpoints
+-            "name": "My API Extension",  # Descriptive name shown in UI
+-        }
+-    ]
+-```
+-
+-For client interfaces, document all available methods, parameters, and expected responses. Include information about error handling, authentication requirements, and rate limiting where applicable. Explicitly state which components are guaranteed to remain stable across versions and which may change, helping developers make informed decisions about API dependencies.
+diff --git a/_skills/document-security-exceptions/SKILL.md b/_skills/document-security-exceptions/SKILL.md
+@@ -1,20 +0,0 @@
+----
+-name: document-security-exceptions
+-description: When disabling security-related linter rules or bypassing security best
+-  practices, always include comments that explain why the exception is necessary,
+-  why it remains secure, and link to relevant security policies. This creates an audit
+-  trail and ensures future developers understand the security implications.
+-version: '1.0'
+----
+-# Document security exceptions
+-
+-When disabling security-related linter rules or bypassing security best practices, always include comments that explain why the exception is necessary, why it remains secure, and link to relevant security policies. This creates an audit trail and ensures future developers understand the security implications.
+-
+-Example:
+-```tsx
+-/* eslint-disable react/iframe-missing-sandbox */
+-// Exception justified: This iframe only loads content from our AuthManager 
+-// which is part of the deployment and considered trusted per our security policy:
+-// https://airflow.apache.org/docs/apache-airflow/stable/security/security_model.html
+-<iframe src={trustedSource} title="Auth content" />
+-```
+diff --git a/_skills/documentation-best-practices/SKILL.md b/_skills/documentation-best-practices/SKILL.md
+@@ -1,41 +0,0 @@
+----
+-name: documentation-best-practices
+-description: 'Documentation should follow established best practices to ensure clarity,
+-  consistency, and usefulness: 1. **Use proper link types**: Use relative links for
+-  internal resources and absolute HTTP links only for external resources.'
+-version: '1.0'
+----
+-# Documentation best practices
+-
+-Documentation should follow established best practices to ensure clarity, consistency, and usefulness:
+-
+-1. **Use proper link types**: Use relative links for internal resources and absolute HTTP links only for external resources.
+-   ```python
+-   # Good
+-   - `Task SDK Overview <../concepts/taskflow.html>`_
+-   
+-   # Bad
+-   - `Task SDK Overview <https://airflow.apache.org/docs/apache-airflow/stable/concepts/taskflow.html>`_
+-   ```
+-
+-2. **Write in complete sentences**: Ensure all descriptions, especially in API documentation and migration notes, are complete sentences with proper grammar and punctuation.
+-
+-3. **Document API components thoroughly**: Include docstrings for all API functions, methods, and classes with detailed information about parameters, return values, and usage examples.
+-   ```python
+-   @task
+-   def process_data(data_path: str, limit: Optional[int] = None) -> Dict[str, Any]:
+-       """
+-       Process data from the specified path with optional limit.
+-       
+-       :param data_path: Path to the data file to process
+-       :param limit: Maximum number of records to process, None for unlimited
+-       :return: Dictionary containing processed results
+-       """
+-       # Implementation
+-   ```
+-
+-4. **Document all API variants**: Ensure "sub" decorators and related API components (like `@task.skip_if`) are documented alongside their parent components.
+-
+-5. **Use enhanced documentation directives**: Use specialized directives like `exampleinclude` instead of `literalinclude` to provide "[sources]" links that give users access to complete context and code examples.
+-
+-Following these practices improves documentation usability, making it easier for developers to understand and correctly implement the documented functionality.
+diff --git a/_skills/enforce-authentication-boundaries/SKILL.md b/_skills/enforce-authentication-boundaries/SKILL.md
+@@ -1,35 +0,0 @@
+----
+-name: enforce-authentication-boundaries
+-description: 'Implement strict authentication boundaries and access controls to prevent
+-  security vulnerabilities: 1. When multiple authentication methods are supported,
+-  ensure they are mutually exclusive to prevent confusion about which method is active.
+-  Add validation code that raises explicit exceptions when conflicting credentials
+-  are provided.'
+-version: '1.0'
+----
+-# Enforce authentication boundaries
+-
+-Implement strict authentication boundaries and access controls to prevent security vulnerabilities:
+-
+-1. When multiple authentication methods are supported, ensure they are mutually exclusive to prevent confusion about which method is active. Add validation code that raises explicit exceptions when conflicting credentials are provided.
+-
+-Example:
+-```python
+-def authenticate(self):
+-    if self.jwt_token and self.username and self.password:
+-        raise AirflowException(
+-            "Both JWT and Password/Username authentication provided. "
+-            "Please configure only one authentication method."
+-        )
+-    
+-    if self.jwt_token:
+-        return self._authenticate_with_jwt()
+-    elif self.username and self.password:
+-        return self._authenticate_with_credentials()
+-    else:
+-        raise AirflowException("No valid authentication method configured")
+-```
+-
+-2. Restrict direct access to sensitive resources (like databases) by implementing authentication barriers and API-based access patterns. This follows the principle of least privilege, where components should only have the minimum access necessary to perform their functions.
+-
+-3. For token-based authentication systems, implement proper token lifecycle management including secure issuance, validation, renewal, and expiration handling through well-defined communication channels.
+diff --git a/_skills/ensure-deterministic-queries/SKILL.md b/_skills/ensure-deterministic-queries/SKILL.md
+@@ -1,42 +0,0 @@
+----
+-name: ensure-deterministic-queries
+-description: 'Build SQLAlchemy queries that are both efficient and deterministic to
+-  prevent unpredictable results and improve performance. When writing database queries:'
+-version: '1.0'
+----
+-# Ensure deterministic queries
+-
+-Build SQLAlchemy queries that are both efficient and deterministic to prevent unpredictable results and improve performance. When writing database queries:
+-
+-1. **Use SQLAlchemy's native operators** instead of Python's bitwise operators for better readability:
+-```python
+-# Instead of this:
+-query.where((DagFavorite.dag_id == DagModel.dag_id) & (DagFavorite.user_id == self.user_id))
+-
+-# Use this:
+-query.where(and_(DagFavorite.dag_id == DagModel.dag_id, DagFavorite.user_id == self.user_id))
+-```
+-
+-2. **Build queries with explicit control flow** for complex conditions:
+-```python
+-# Instead of adding a complex boolean expression:
+-query = ...
+-since_running = Log.dttm > last_running_time if last_running_time else True
+-query = query.where(Log.event == EVENT, since_running)
+-
+-# Prefer explicit conditional logic:
+-query = query.where(Log.event == EVENT)
+-if last_running_time:
+-    query = query.where(Log.dttm > last_running_time)
+-```
+-
+-3. **Always ensure deterministic ordering** by including a unique identifier (typically the primary key) as a secondary sort criterion:
+-```python
+-# Instead of:
+-query.order_by(AssetEvent.timestamp.asc())
+-
+-# Use:
+-query.order_by(AssetEvent.timestamp.asc(), AssetEvent.id.asc())
+-```
+-
+-4. **Review query filters carefully** to avoid overly restrictive WHERE clauses that might unintentionally exclude valid records. Consider the complete range of valid states and values that should be included in your results.
+diff --git a/_skills/explicit-api-parameters/SKILL.md b/_skills/explicit-api-parameters/SKILL.md
+@@ -1,45 +0,0 @@
+----
+-name: explicit-api-parameters
+-description: Design APIs with explicit parameters rather than implicit defaults or
+-  hidden behavior. When an API function requires specific data or configuration, make
+-  those requirements clear through the function signature instead of relying on optional
+-  parameters with complex fallback logic.
+-version: '1.0'
+----
+-# Explicit API parameters
+-
+-Design APIs with explicit parameters rather than implicit defaults or hidden behavior. When an API function requires specific data or configuration, make those requirements clear through the function signature instead of relying on optional parameters with complex fallback logic.
+-
+-This approach improves developer experience by making the API contract obvious and reducing confusion about what inputs are actually needed. Developers should be able to understand the API requirements without reading implementation details or documentation.
+-
+-For example, instead of having optional parameters with hidden default resolution:
+-```typescript
+-// Avoid: Hidden default behavior
+-async function routeEmail(email: Email, env: Env, options?: {
+-  defaultAgentName?: string;
+-  defaultAgentId?: string;
+-}) {
+-  // Complex internal logic to determine routing
+-}
+-
+-// Prefer: Explicit resolver requirement  
+-async function routeEmail(
+-  email: Email, 
+-  env: Env,
+-  resolver: EmailResolver<Env> // Required, not optional
+-) {
+-  // Clear contract - resolver is always needed
+-}
+-```
+-
+-Similarly, extract and pass only the specific data needed rather than entire objects:
+-```typescript
+-// Instead of passing entire request object
+-const error = await doStub.onSSEMcpMessage(sessionId, request);
+-
+-// Extract and pass only what's needed
+-const messageBody = await request.json();
+-const error = await doStub.onSSEMcpMessage(sessionId, messageBody);
+-```
+-
+-This principle applies to method parameters, configuration options, and data extraction - always favor explicit, clear interfaces over implicit behavior that requires developers to understand internal implementation details.
+diff --git a/_skills/explicit-code-organization-patterns/SKILL.md b/_skills/explicit-code-organization-patterns/SKILL.md
+@@ -1,43 +0,0 @@
+----
+-name: explicit-code-organization-patterns
+-description: 'Maintain clear and explicit code organization patterns by following
+-  these guidelines: 1. Use explicit property visibility in classes: - Prefer public
+-  properties over getters/setters when no additional logic is needed'
+-version: '1.0'
+----
+-# Explicit code organization patterns
+-
+-Maintain clear and explicit code organization patterns by following these guidelines:
+-
+-1. Use explicit property visibility in classes:
+-- Prefer public properties over getters/setters when no additional logic is needed
+-- Use private fields (#) for truly internal state
+-- Only use protected when inheritance is a core design requirement
+-
+-2. Keep imports and exports explicit:
+-- Avoid wildcard exports (export *)
+-- Import directly from source files rather than barrel files
+-- Control what gets exported from each module
+-
+-Example:
+-```typescript
+-// ❌ Avoid
+-export * from './utils';
+-import { something } from './index';
+-
+-class MyClass {
+-  private messages: Message[];
+-  getMessages() { return this.messages; }
+-}
+-
+-// ✅ Better
+-export { generateId, parseConfig } from './utils';
+-import { something } from './something';
+-
+-class MyClass {
+-  #internalState: string;
+-  messages: Message[]; // public property when no special handling needed
+-}
+-```
+-
+-This pattern improves code maintainability, makes dependencies clear, and helps control your public API surface.
+diff --git a/_skills/explicit-over-implicit-configuration/SKILL.md b/_skills/explicit-over-implicit-configuration/SKILL.md
+@@ -1,45 +0,0 @@
+----
+-name: explicit-over-implicit-configuration
+-description: Always prefer explicit configuration parameters over inferring behavior
+-  from indirect sources like image tags, naming conventions, or environment factors.
+-  When behavior needs to vary based on environment or version, introduce dedicated
+-  configuration parameters that users can explicitly set rather than relying on potentially
+-  unreliable metadata.
+-version: '1.0'
+----
+-# Explicit over implicit configuration
+-
+-Always prefer explicit configuration parameters over inferring behavior from indirect sources like image tags, naming conventions, or environment factors. When behavior needs to vary based on environment or version, introduce dedicated configuration parameters that users can explicitly set rather than relying on potentially unreliable metadata.
+-
+-This practice ensures that:
+-1. Configuration remains predictable even when users customize their environment
+-2. Breaking changes are avoided when indirect factors change
+-3. System behavior is easier to debug and understand
+-
+-For example, instead of:
+-{% raw %}
+-```yaml
+-# DON'T: Inferring behavior from image tag
+-{{- if hasPrefix .Values.images.gitSync.tag "v3" }}
+-  # Use v3 configuration
+-{{- else }}
+-  # Use v4 configuration
+-{{- end }}
+-```
+-{% endraw %}
+-
+-Use:
+-{% raw %}
+-```yaml
+-# DO: Explicit configuration parameter
+-gitSync:
+-  version: "v4"  # Explicit parameter users can set
+-{{- if eq .Values.gitSync.version "v3" }}
+-  # Use v3 configuration
+-{{- else }}
+-  # Use v4 configuration
+-{{- end }}
+-```
+-{% endraw %}
+-
+-When adding configuration parameters that might interact with existing ones, clearly document their relationships and ensure proper handling of all cases. For instance, document when certain parameters might be ignored under specific conditions, and consider providing mechanisms to merge or append user-defined values with defaults.
+diff --git a/_skills/explicit-version-constraints/SKILL.md b/_skills/explicit-version-constraints/SKILL.md
+@@ -1,23 +0,0 @@
+----
+-name: explicit-version-constraints
+-description: Always specify explicit version constraints for dependencies in configuration
+-  files (like pyproject.toml), particularly when dealing with Python version compatibility.
+-  Use conditional dependencies based on Python versions to handle compatibility issues,
+-  and include explanatory comments when adding constraints.
+-version: '1.0'
+----
+-# Explicit version constraints
+-
+-Always specify explicit version constraints for dependencies in configuration files (like pyproject.toml), particularly when dealing with Python version compatibility. Use conditional dependencies based on Python versions to handle compatibility issues, and include explanatory comments when adding constraints.
+-
+-For example:
+-```
+-# Python 3 saml is not compatible with Python 3.13 yet, so we pin it
+-"python3-saml>=1.16.0; python_version < \"3.13\"",
+-
+-# Specify different versions for different Python versions
+-"pandas>=2.1.2; python_version < \"3.13\"",
+-"pandas>=2.3.0; python_version >= \"3.13\"",
+-```
+-
+-This practice prevents build failures due to incomplete package metadata, especially when working with lowest compatible versions or when dependencies don't proactively specify Python version exclusions. Use an optimistic approach for upper bounds unless tests specifically indicate incompatibility.
+diff --git a/_skills/externalize-configuration-values/SKILL.md b/_skills/externalize-configuration-values/SKILL.md
+@@ -1,35 +0,0 @@
+----
+-name: externalize-configuration-values
+-description: Always externalize configuration values rather than hardcoding them directly
+-  in the code. This improves maintainability, enables easier configuration changes,
+-  and ensures consistency across the codebase.
+-version: '1.0'
+----
+-# Externalize configuration values
+-
+-Always externalize configuration values rather than hardcoding them directly in the code. This improves maintainability, enables easier configuration changes, and ensures consistency across the codebase.
+-
+-Key practices:
+-1. Replace hardcoded strings with values retrieved from a centralized configuration system
+-2. Ensure the correct configuration keys are used for specific components
+-3. Use standardized utility functions that honor user configuration settings
+-
+-Example:
+-```python
+-# Instead of this:
+-main_system = """Act as an expert software developer."""
+-
+-# Do this:
+-from . import prompt_manager
+-yaml_prompt_entry = prompt_manager.get_prompt_value('ComponentName', 'main_system')
+-
+-# And when reading files, respect user configuration:
+-# Instead of:
+-with open(file_path, 'r', encoding='utf-8') as file:
+-    content = file.read()
+-    
+-# Use utilities that honor user settings:
+-content = io.read_text(file_path)  # Respects --encoding setting
+-```
+-
+-This approach makes the codebase more flexible, easier to maintain, and respectful of user-defined settings.
+diff --git a/_skills/flexible-api-inputs/SKILL.md b/_skills/flexible-api-inputs/SKILL.md
+@@ -1,36 +0,0 @@
+----
+-name: flexible-api-inputs
+-description: Design APIs to accept flexible input formats and schema structures, ensuring
+-  a better developer experience while maintaining consistency in internal implementation.
+-version: '1.0'
+----
+-# Flexible API inputs
+-
+-Design APIs to accept flexible input formats and schema structures, ensuring a better developer experience while maintaining consistency in internal implementation.
+-
+-For input parameters, support multiple formats where reasonable:
+-```ts
+-// Instead of requiring only URL objects:
+-const { text } = await transcribe({
+-  model: revai.transcription('machine'),
+-  audio: new URL('https://example.com/audio.mp3'),
+-});
+-
+-// Also support string URLs:
+-const { text } = await transcribe({
+-  model: revai.transcription('machine'),
+-  audio: 'https://example.com/audio.mp3',
+-});
+-```
+-
+-For schema definitions, ensure support for flexible structures including additional properties where appropriate:
+-```ts
+-// Support additional properties in schemas
+-// e.g., using z.record(z.string()) or additionalProperties in JSON Schema
+-```
+-
+-When implementing format flexibility:
+-- Use consistent conversion mechanisms across the entire API surface rather than creating one-off solutions
+-- Consider schema limitations of underlying services
+-- Document supported formats clearly in the API documentation
+-- Plan for compatibility across different components that may share schemas
+diff --git a/_skills/follow-naming-conventions/SKILL.md b/_skills/follow-naming-conventions/SKILL.md
+@@ -1,40 +0,0 @@
+----
+-name: follow-naming-conventions
+-description: 'Use proper naming conventions to make code more readable and maintainable:
+-  1. **Functions should start with verbs** that describe their action: ```typescript'
+-version: '1.0'
+----
+-# Follow naming conventions
+-
+-Use proper naming conventions to make code more readable and maintainable:
+-
+-1. **Functions should start with verbs** that describe their action:
+-   ```typescript
+-   // Incorrect
+-   const hasChanges = () => { ... }
+-   
+-   // Correct
+-   const checkForChanges = () => { ... }
+-   ```
+-
+-2. **Use descriptive names for generated outputs** that include relevant context:
+-   ```typescript
+-   // Too generic
+-   element.download = `taskInstanceLogs.txt`;
+-   
+-   // Better - includes relevant identifiers
+-   element.download = `${dagId}-${taskId}-${runId}-${mapIndex}-${tryNumber}.txt`;
+-   ```
+-
+-3. **Maintain consistent casing** for related identifiers, especially when filtering or comparing:
+-   ```typescript
+-   // Define consistent casing pattern for categories
+-   const existingCategories = ["user", "docs", "admin", "browse"];
+-   
+-   // Use consistent transformation when comparing
+-   if (!existingCategories.includes(category.toLowerCase())) {
+-     // ...
+-   }
+-   ```
+-
+-Following these conventions improves code clarity and reduces confusion when maintaining code across a team.
+diff --git a/_skills/format-for-rendering-compatibility/SKILL.md b/_skills/format-for-rendering-compatibility/SKILL.md
+@@ -1,40 +0,0 @@
+----
+-name: format-for-rendering-compatibility
+-description: Documentation should be formatted appropriately for its intended rendering
+-  context and ensure discoverability. Consider how documentation files will be displayed
+-  in different environments (GitHub, websites, etc.) and choose appropriate file formats
+-  and structures.
+-version: '1.0'
+----
+-# Format for rendering compatibility
+-
+-Documentation should be formatted appropriately for its intended rendering context and ensure discoverability. Consider how documentation files will be displayed in different environments (GitHub, websites, etc.) and choose appropriate file formats and structures.
+-
+-Key practices:
+-- Use `.md` instead of `.mdx` unless you specifically need MDX features and have a rendering environment that supports them
+-- Be mindful of how headings and formatting in files like changelogs affect rendering in different contexts
+-- Ensure documentation files are linked from relevant locations so users can discover them
+-- Move detailed guides to dedicated files in appropriate directories (like `contributing/`) to keep main documentation concise
+-
+-Example:
+-```markdown
+-<!-- Good practice: Using appropriate extension and avoiding formatting that breaks rendering -->
+-# Contributing Guide
+-
+-## Overview
+-Brief introduction to contribution process
+-
+-## Detailed Guides
+-For more information, see:
+-- [How to create a codemod](./contributing/how-to-create-a-codemod.md)
+-- [Package structure](./contributing/packages.md)
+-
+-## Changelog Format
+-When creating a changeset, avoid using headings at the beginning of the message:
+-
+-```
+-feat(embedding-model-v2): add providerOptions
+-```
+-```
+-
+-By considering the rendering context, you ensure documentation remains accessible and displays correctly across different platforms.
+diff --git a/_skills/handle-errors-gracefully/SKILL.md b/_skills/handle-errors-gracefully/SKILL.md
+@@ -1,60 +0,0 @@
+----
+-name: handle-errors-gracefully
+-description: 'Always implement appropriate error handling to prevent crashes while
+-  providing clear feedback to users. Consider these principles: 1. **Decide on error
+-  propagation strategy**: Determine whether errors should be handled locally or propagated
+-  to a higher-level handler based on severity and recoverability.'
+-version: '1.0'
+----
+-# Handle errors gracefully
+-
+-Always implement appropriate error handling to prevent crashes while providing clear feedback to users. Consider these principles:
+-
+-1. **Decide on error propagation strategy**: Determine whether errors should be handled locally or propagated to a higher-level handler based on severity and recoverability.
+-
+-2. **Catch specific exceptions**: Target exact exception types rather than using broad catches.
+-
+-3. **Use consistent error reporting**: Utilize standardized error reporting mechanisms instead of print statements.
+-
+-4. **Consider platform-specific issues**: Anticipate and handle platform-dependent error scenarios.
+-
+-Example of proper error handling with clear propagation strategy:
+-
+-```python
+-def register_models(model_def_fnames):
+-    for model_def_fname in model_def_fnames:
+-        if not os.path.exists(model_def_fname):
+-            continue
+-        try:
+-            with open(model_def_fname, "r") as model_def_file:
+-                model_def = json.load(model_def_file)
+-        except json.JSONDecodeError as e:
+-            # Propagate critical configuration errors to main for centralized handling
+-            raise ConfigurationError(f"Invalid model definition in {model_def_fname}: {e}")
+-        except IOError as e:
+-            # Log but continue if a file can't be read
+-            io.tool_error(f"Could not read model definition: {e}")
+-```
+-
+-When handling cleanup operations, catch specific exceptions that might occur:
+-
+-```python
+-try:
+-    # Cleanup operation
+-    shutil.rmtree(self.tempdir)
+-except (OSError, PermissionError):
+-    pass  # Ignore cleanup errors (especially on Windows)
+-```
+-
+-For functions that might fail, clearly document return behavior and ensure consistent error state handling:
+-
+-```python
+-# Return values on error should be documented and consistent
+-try:
+-    self.repo.git.commit(cmd)
+-    return commit_hash, commit_message
+-except GitError as err:
+-    self.io.tool_error(f"Unable to commit: {err}")
+-    # Explicitly return None to make the error path obvious
+-    return None
+-```
+diff --git a/_skills/handle-exceptions-with-specificity/SKILL.md b/_skills/handle-exceptions-with-specificity/SKILL.md
+@@ -1,41 +0,0 @@
+----
+-name: handle-exceptions-with-specificity
+-description: Use specific exception types and avoid masking errors through overly
+-  broad exception handling or default values. This improves error diagnosis and system
+-  reliability.
+-version: '1.0'
+----
+-# Handle exceptions with specificity
+-
+-Use specific exception types and avoid masking errors through overly broad exception handling or default values. This improves error diagnosis and system reliability.
+-
+-Key guidelines:
+-1. Use concrete exception types instead of catching broad Exception classes
+-2. Don't provide default values that could mask errors
+-3. Don't swallow exceptions without proper handling
+-4. Create custom exceptions for domain-specific errors
+-
+-Example - Instead of:
+-```python
+-try:
+-    result = client.refresh_token(token)
+-except Exception as e:
+-    log.error("Error refreshing token: %s", e)
+-    return None
+-```
+-
+-Use:
+-```python
+-def refresh_token(self, refresh_token: str) -> str:
+-    """Refresh the access token for the user."""
+-    client = self._get_keycloak_client()
+-    tokens = client.refresh_token(refresh_token)
+-    log.info("Token refreshed successfully")
+-    return tokens["access_token"]
+-```
+-
+-This approach:
+-- Makes error scenarios explicit and traceable
+-- Prevents masking of underlying issues
+-- Improves system observability
+-- Enables proper error handling at appropriate levels
+diff --git a/_skills/internationalize-ui-text/SKILL.md b/_skills/internationalize-ui-text/SKILL.md
+@@ -1,41 +0,0 @@
+----
+-name: internationalize-ui-text
+-description: All user interface text must be internationalized using the appropriate
+-  i18n module instead of hardcoded strings. This ensures the application can be properly
+-  localized for different languages and regions.
+-version: '1.0'
+----
+-# Internationalize ui text
+-
+-All user interface text must be internationalized using the appropriate i18n module instead of hardcoded strings. This ensures the application can be properly localized for different languages and regions.
+-
+-Key implementation guidelines:
+-- Use the `useTranslation` hook to access translation strings
+-- Store translations in dedicated language files (e.g., `en/common.json`, `en/dashboard.json`)
+-- Ensure all UI elements are translatable including labels, placeholders, and aria-labels
+-- Do not use inline comments for translation hints
+-
+-Example:
+-```tsx
+-// Incorrect approach
+-<Heading ml={1} size="xs">
+-  Favorite Dags
+-</Heading>
+-
+-// Correct approach
+-import { useTranslation } from "react-i18next";
+-
+-// Within component
+-const { t: translate } = useTranslation("dashboard");
+-
+-<Heading ml={1} size="xs">
+-  {translate("favorite.favoriteDags")}
+-</Heading>
+-```
+-
+-When adding new UI text:
+-1. Update the appropriate translation file with a clear, descriptive key
+-2. Focus on maintaining translations for languages you're familiar with
+-3. Other languages will fall back to English until translated by appropriate contributors
+-
+-This practice improves accessibility, enables global adoption, and follows proper documentation standards for international software.
+diff --git a/_skills/isolate-test-environments/SKILL.md b/_skills/isolate-test-environments/SKILL.md
+@@ -1,28 +0,0 @@
+----
+-name: isolate-test-environments
+-description: 'Tests should be isolated from the production environment to prevent
+-  side effects and ensure reproducibility. This principle has two main applications:'
+-version: '1.0'
+----
+-# Isolate test environments
+-
+-Tests should be isolated from the production environment to prevent side effects and ensure reproducibility. This principle has two main applications:
+-
+-1. **Use proper temporary files**: Instead of writing test files to the current directory where they might overwrite real files, use the `tempfile` module to create isolated test files.
+-
+-2. **Establish correct directory context**: Ensure tests run in the appropriate directory context to prevent location-dependent failures.
+-
+-Example:
+-```python
+-# Good: Use temporary files instead of hardcoded paths
+-import tempfile
+-message_file_path = tempfile.mktemp()
+-main(["--message-file", message_file_path], input=DummyInput(), output=DummyOutput())
+-
+-# Good: Explicitly set the directory context for tests
+-with change_dir(testdir):
+-    # Test code runs in the correct context
+-    # ...
+-```
+-
+-Following these practices prevents tests from accidentally modifying real files and ensures they'll run consistently regardless of the current working directory.
+diff --git a/_skills/keep-tests-simple/SKILL.md b/_skills/keep-tests-simple/SKILL.md
+@@ -1,41 +0,0 @@
+----
+-name: keep-tests-simple
+-description: 'Tests should be straightforward, explicit, and free from complex logic
+-  or indirection. Avoid "magic" in tests that makes them harder to understand at a
+-  glance. When designing tests:'
+-version: '1.0'
+----
+-# Keep tests simple
+-
+-Tests should be straightforward, explicit, and free from complex logic or indirection. Avoid "magic" in tests that makes them harder to understand at a glance. When designing tests:
+-
+-1. Prefer explicit setup over helper functions that hide details:
+-```javascript
+-// Avoid:
+-const store = initStore(chats);
+-
+-// Prefer:
+-const store = new ChatStore({ chats });
+-```
+-
+-2. Inline test data directly rather than using complex extraction logic:
+-```javascript
+-// Avoid:
+-const text = content
+-  .filter(item => item.type === 'text' && !item.thought)
+-  .map(item => item.text)
+-  .join('');
+-
+-// Prefer:
+-expect(content).toMatchInlineSnapshot(`
+-  [
+-    { "type": "text", "text": "Hello, World!" },
+-  ]
+-`);
+-```
+-
+-3. Test one behavior per test case so they can fail independently and provide clear signals about what's broken.
+-
+-4. Make tests deterministic by stubbing variable elements like dates, timeouts, and IDs.
+-
+-Simple tests are easier to understand, debug, and maintain, serving effectively as both verification tools and living documentation of expected behavior.
+diff --git a/_skills/maintain-api-naming-consistency/SKILL.md b/_skills/maintain-api-naming-consistency/SKILL.md
+@@ -1,28 +0,0 @@
+----
+-name: maintain-api-naming-consistency
+-description: When working with AI model interfaces and result objects, ensure consistent
+-  property naming across related components. The AI ecosystem involves multiple providers
+-  and model types, making naming consistency crucial for maintainable code.
+-version: '1.0'
+----
+-# Maintain API naming consistency
+-
+-When working with AI model interfaces and result objects, ensure consistent property naming across related components. The AI ecosystem involves multiple providers and model types, making naming consistency crucial for maintainable code.
+-
+-For example, use the same property name consistently when accessing similar data from model results:
+-
+-```javascript
+-// INCORRECT
+-console.log('Responses:', result.responses);
+-
+-// CORRECT
+-console.log('Response:', result.response);
+-```
+-
+-This consistency should extend across different AI capabilities (text generation, transcription, embedding, etc.) to create a cohesive developer experience. Inconsistent naming patterns lead to:
+-
+-1. Developer confusion when switching between model types
+-2. Harder code maintenance as the application grows
+-3. Bugs from incorrectly accessing properties with similar purposes but different names
+-
+-When designing AI interfaces or extending existing ones, audit the naming patterns of related components and align new additions with established conventions. This is particularly important when working with response objects from different AI providers that may use varying terminology for similar concepts.
+diff --git a/_skills/optimize-ci-type-checking/SKILL.md b/_skills/optimize-ci-type-checking/SKILL.md
+@@ -1,33 +0,0 @@
+----
+-name: optimize-ci-type-checking
+-description: Configure separate TypeScript type-checking strategies for CI environments
+-  and local development. CI pipelines should run complete type checks that validate
+-  the entire codebase, while local development can use faster configurations to improve
+-  developer productivity.
+-version: '1.0'
+----
+-# Optimize CI type checking
+-
+-Configure separate TypeScript type-checking strategies for CI environments and local development. CI pipelines should run complete type checks that validate the entire codebase, while local development can use faster configurations to improve developer productivity.
+-
+-Example implementation:
+-```json
+-// package.json
+-{
+-  "scripts": {
+-    "type-check": "tsc --build",                       // Faster checks for local development
+-    "type-check:full": "tsc --build tsconfig.with-examples.json", // Comprehensive checks for CI
+-    "clean": "rimraf dist"                             // Add cleanup before builds
+-  }
+-}
+-```
+-
+-In your CI pipeline configuration, always use the more thorough type checking:
+-```yaml
+-# CI configuration
+-steps:
+-  - name: Type Check
+-    run: npm run type-check:full
+-```
+-
+-This approach ensures your CI pipeline catches all type errors while developers can work efficiently with faster feedback loops during local development. When changing build configurations, document the implications for the team and update CI pipelines accordingly.
+diff --git a/_skills/place-configurations-appropriately/SKILL.md b/_skills/place-configurations-appropriately/SKILL.md
+@@ -1,48 +0,0 @@
+----
+-name: place-configurations-appropriately
+-description: Configuration options should be organized based on their nature and scope
+-  of use. Place model-specific configurations in constructor parameters or config
+-  objects rather than in general settings objects that might be shared across models.
+-  Additionally, standardized settings should be consistent across providers and not
+-  duplicated in provider-specific options.
+-version: '1.0'
+----
+-# Place configurations appropriately
+-
+-Configuration options should be organized based on their nature and scope of use. Place model-specific configurations in constructor parameters or config objects rather than in general settings objects that might be shared across models. Additionally, standardized settings should be consistent across providers and not duplicated in provider-specific options.
+-
+-This organization improves code maintainability and prevents confusion about where settings should be defined or accessed.
+-
+-```typescript
+-// GOOD: Model-specific config in constructor parameters
+-constructor(
+-  modelId: OpenAICompatibleChatModelId,
+-  settings: OpenAICompatibleChatSettings,
+-  config: OpenAICompatibleChatConfig & {
+-    defaultObjectGenerationMode?: 'json' | 'tool' | undefined;
+-  }
+-) { ... }
+-
+-// BAD: Model-specific config in settings
+-export interface OpenAICompatibleChatSettings {
+-  user?: string;
+-  defaultObjectGenerationMode?: 'json' | 'tool' | undefined; // Should be in config instead
+-}
+-
+-// GOOD: Standardized settings not duplicated in provider options
+-// For settings like 'voice' that are standardized across providers
+-speech.generate("Hello world", {
+-  voice: "alloy",  // Top-level standardized setting
+-});
+-
+-// BAD: Duplicating standardized settings in provider options
+-speech.generate("Hello world", {
+-  providerOptions: {
+-    openai: {
+-      voice: "alloy",  // Duplicated standardized setting
+-    }
+-  }
+-});
+-```
+-
+-For common settings that apply across different providers (like 'voice' for speech models or 'language' for transcription), define them as top-level options rather than duplicating them in each provider's specific options.
+diff --git a/_skills/provide-actionable-examples/SKILL.md b/_skills/provide-actionable-examples/SKILL.md
+@@ -1,33 +0,0 @@
+----
+-name: provide-actionable-examples
+-description: Documentation should include concrete, executable code examples rather
+-  than vague instructions. Make your examples copy-paste ready with all necessary
+-  context and dependencies. When documenting features or APIs, show exactly how they
+-  should be used in practice.
+-version: '1.0'
+----
+-# Provide actionable examples
+-
+-Documentation should include concrete, executable code examples rather than vague instructions. Make your examples copy-paste ready with all necessary context and dependencies. When documenting features or APIs, show exactly how they should be used in practice.
+-
+-For example, instead of just stating:
+-```ts
+-// Don't do this
+-// You can pass provider options as an argument
+-```
+-
+-Provide a complete, executable example:
+-```ts
+-// Do this
+-const result = await embed({
+-  model: cohere.embedding('embed-english-v3.0'),
+-  input: 'Hello world',
+-  providerOptions: {
+-    cohere: {
+-      inputType: 'search_query'
+-    }
+-  }
+-});
+-```
+-
+-For pre-release or alpha software, clearly state limitations and expectations (e.g., "not for production use", "subject to breaking changes"). Always aim to create documentation that developers can immediately implement without needing to figure out missing pieces.
+diff --git a/_skills/standardize-model-access/SKILL.md b/_skills/standardize-model-access/SKILL.md
+@@ -1,40 +0,0 @@
+----
+-name: standardize-model-access
+-description: When integrating AI models into applications, provide consistent configuration
+-  methods that support different access patterns (direct API, chat interfaces, or
+-  intermediary services like LiteLLM).
+-version: '1.0'
+----
+-# Standardize model access
+-
+-When integrating AI models into applications, provide consistent configuration methods that support different access patterns (direct API, chat interfaces, or intermediary services like LiteLLM). 
+-
+-Key practices:
+-1. Support environment variables for flexible configuration (e.g., `LITELLM_BASE_URL`, `OPENAI_API_KEY`)
+-2. Handle both local and remote model access scenarios
+-3. Account for behavioral differences between chat and API modes of the same model
+-4. Use clear prefixing for different interaction modes
+-
+-Example:
+-```python
+-def create_model(model_name, **kwargs):
+-    # Support prefix-based mode selection
+-    COPY_PASTE_PREFIX = "cp:"
+-    copy_paste_mode = model_name.startswith(COPY_PASTE_PREFIX)
+-    if copy_paste_mode:
+-        model_name = model_name.removeprefix(COPY_PASTE_PREFIX)
+-    
+-    # Support environment variables for configuration
+-    base_url = os.environ.get("MODEL_API_BASE_URL")
+-    api_key = os.environ.get("MODEL_API_KEY")
+-    
+-    # Create appropriate client based on configuration
+-    if base_url:
+-        client = RemoteModelClient(base_url, api_key, model_name)
+-    else:
+-        client = LocalModelClient(model_name)
+-        
+-    return client
+-```
+-
+-This standardized approach improves maintainability when supporting multiple AI backends and simplifies switching between different deployment configurations.
+diff --git a/_skills/test-actual-functionality/SKILL.md b/_skills/test-actual-functionality/SKILL.md
+@@ -1,55 +0,0 @@
+----
+-name: test-actual-functionality
+-description: Ensure tests verify real operations and integration scenarios rather
+-  than just basic concepts or type definitions. Many test suites contain placeholder
+-  tests that only check if functions exist or verify simple type structures, but fail
+-  to test the actual behavior and interactions that matter in production.
+-version: '1.0'
+----
+-# Test actual functionality
+-
+-Ensure tests verify real operations and integration scenarios rather than just basic concepts or type definitions. Many test suites contain placeholder tests that only check if functions exist or verify simple type structures, but fail to test the actual behavior and interactions that matter in production.
+-
+-Tests should cover:
+-- Real operations (SQL queries, queue processing, RPC calls) not just type definitions
+-- Integration scenarios (multi-client state synchronization, server interactions)
+-- Preferred API patterns that the team wants developers to use
+-- Context-dependent functionality across different execution environments
+-
+-Example of inadequate testing:
+-```typescript
+-it("should understand queue concepts", () => {
+-  type QueueItem = { id: string; callback: string; payload: unknown; };
+-  const testQueueItem: QueueItem = { id: "queue-123", callback: "processData", payload: { data: "test" } };
+-  expect(testQueueItem.id).toBeDefined(); // Only tests type structure
+-});
+-```
+-
+-Example of proper functional testing:
+-```typescript
+-it("should process queue items and handle retries", async () => {
+-  const agent = await getAgentByName(env.TEST_AGENT, "queue-test");
+-  
+-  // Test actual queue operations
+-  await agent.enqueue("processData", { data: "test" });
+-  const result = await agent.processQueue();
+-  
+-  expect(result.processed).toBe(1);
+-  expect(result.failed).toBe(0);
+-});
+-
+-it("should sync state between multiple clients", async () => {
+-  const client1 = new AgentClient({ agent: "TestAgent", name: "client1" });
+-  const client2 = new AgentClient({ agent: "TestAgent", name: "client2" });
+-  
+-  const client2Updates = [];
+-  client2.onStateUpdate = (state) => client2Updates.push(state);
+-  
+-  client1.setState({ count: 5 });
+-  
+-  // Verify real multi-client synchronization
+-  expect(client2Updates).toContainEqual({ count: 5 });
+-});
+-```
+-
+-This approach ensures tests provide meaningful coverage of how systems actually behave in production rather than just verifying that code compiles or basic structures exist.
+diff --git a/_skills/test-before-documenting/SKILL.md b/_skills/test-before-documenting/SKILL.md
+@@ -1,56 +0,0 @@
+----
+-name: test-before-documenting
+-description: 'Always thoroughly test API features and endpoints before documenting
+-  them, especially when integrating with third-party services. Documentation should
+-  accurately reflect the actual behavior of the API, including:'
+-version: '1.0'
+----
+-# Test before documenting
+-
+-Always thoroughly test API features and endpoints before documenting them, especially when integrating with third-party services. Documentation should accurately reflect the actual behavior of the API, including:
+-
+-- Precise error descriptions that explain causes and resolutions
+-- Clear indication of limitations or inconsistencies across different providers
+-- Executable code examples that users can adapt to their needs
+-
+-For error documentation, focus on specific causes rather than general descriptions:
+-
+-```ts
+-// DON'T: Use vague descriptions
+-// "APICallError occurs when there's an issue during an API call"
+-
+-// DO: Be specific about error causes
+-// "APICallError occurs when a provider API returns an error response,
+-// typically due to invalid message structure. Always check the provider's
+-// error message for specific resolution steps."
+-```
+-
+-For third-party integrations, test thoroughly and document any limitations:
+-
+-```ts
+-// Example: Adding appropriate warnings for feature limitations
+-if (isGoogleProvider && options.includeThoughts) {
+-  console.warn('includeThoughts is not fully supported in all Google Generative AI models.');
+-}
+-```
+-
+-For code examples, ensure they are practical and executable:
+-
+-```ts
+-// DON'T: Use abstract placeholders without explanation
+-const { transcript } = await generateTranscript({
+-  model: openai.transcription('whisper-1'),
+-  audio: audioData, // What is audioData?
+-});
+-
+-// DO: Provide complete, executable examples
+-import fs from 'fs/promises';
+-
+-const audioData = await fs.readFile('./sample-audio.mp3');
+-const { transcript } = await generateTranscript({
+-  model: openai.transcription('whisper-1'),
+-  audio: audioData,
+-});
+-```
+-
+-This standard ensures that developers can rely on your documentation to accurately understand how to use your API properly, reducing confusion and support issues.
+diff --git a/_skills/test-security-boundaries/SKILL.md b/_skills/test-security-boundaries/SKILL.md
+@@ -1,31 +0,0 @@
+----
+-name: test-security-boundaries
+-description: Security mechanisms should be tested for both success and failure scenarios
+-  to ensure they properly enforce boundaries. Don't just test that security features
+-  work when enabled - also verify they correctly block unauthorized access when disabled
+-  or misconfigured.
+-version: '1.0'
+----
+-# Test security boundaries
+-
+-Security mechanisms should be tested for both success and failure scenarios to ensure they properly enforce boundaries. Don't just test that security features work when enabled - also verify they correctly block unauthorized access when disabled or misconfigured.
+-
+-For CORS implementations, test that cross-origin requests fail without proper headers:
+-
+-```typescript
+-it("should reject cross-origin requests without CORS headers", async () => {
+-  const request = new Request("http://localhost/agents/TestAgent/test", {
+-    method: "POST",
+-    headers: {
+-      Origin: "https://malicious-site.com"
+-    }
+-  });
+-
+-  const response = await routeAgentRequest(request, env, { cors: false });
+-  
+-  expect(response.status).toBe(403); // or appropriate error status
+-  expect(response.headers.get("Access-Control-Allow-Origin")).toBeNull();
+-});
+-```
+-
+-For authentication flows, create comprehensive test suites that cover edge cases, error conditions, and security boundaries rather than just happy path scenarios. Complex security mechanisms like OAuth require dedicated test coverage to ensure all attack vectors are properly defended against.
+diff --git a/_skills/thread-safe-message-dispatching/SKILL.md b/_skills/thread-safe-message-dispatching/SKILL.md
+@@ -1,61 +0,0 @@
+----
+-name: thread-safe-message-dispatching
+-description: When implementing communication between multiple threads, ensure that
+-  messages are correctly routed to their intended recipients. Avoid designs where
+-  all worker threads consume from a single shared queue when messages are intended
+-  for specific threads, as this creates race conditions where messages can be processed
+-  by the wrong thread.
+-version: '1.0'
+----
+-# Thread-safe message dispatching
+-
+-When implementing communication between multiple threads, ensure that messages are correctly routed to their intended recipients. Avoid designs where all worker threads consume from a single shared queue when messages are intended for specific threads, as this creates race conditions where messages can be processed by the wrong thread.
+-
+-Instead, consider one of these approaches:
+-1. Use separate queues for each recipient thread
+-2. Implement a central dispatcher that routes messages to the correct recipient
+-3. Use an event-based pattern with callbacks or futures
+-
+-Example of problematic code:
+-```python
+-def _server_loop(self, server: McpServer, loop: asyncio.AbstractEventLoop) -> None:
+-    while True:
+-        # All threads compete for the same messages
+-        msg: CallArguments = self.message_queue.get()
+-        
+-        # If message not for this server, discard it
+-        if msg.server_name != server.name:
+-            self.message_queue.task_done()
+-            continue
+-            
+-        # Process the message...
+-```
+-
+-Better implementation:
+-```python
+-class McpManager:
+-    def __init__(self):
+-        # One queue per server for proper message routing
+-        self.server_queues = {}  # server_name -> queue
+-        self.result_queue = queue.Queue()
+-        
+-    def add_server(self, server_name):
+-        self.server_queues[server_name] = queue.Queue()
+-        
+-    def _call(self, io, server_name, function, args={}):
+-        # Route message to specific server queue
+-        if server_name in self.server_queues:
+-            self.server_queues[server_name].put(CallArguments(server_name, function, args))
+-            result = self.result_queue.get()
+-            return result.response
+-        return None
+-        
+-    def _server_loop(self, server: McpServer, loop: asyncio.AbstractEventLoop) -> None:
+-        # Each server only processes its own messages
+-        server_queue = self.server_queues[server.name]
+-        while True:
+-            msg = server_queue.get()
+-            # Process message...
+-```
+-
+-This pattern prevents race conditions and ensures messages are always processed by their intended recipients.
+diff --git a/_skills/type-safe-null-handling/SKILL.md b/_skills/type-safe-null-handling/SKILL.md
+@@ -1,39 +0,0 @@
+----
+-name: type-safe-null-handling
+-description: Use TypeScript's type system and modern JavaScript features to prevent
+-  null reference errors. **TypeScript type safety:** - Prefer `never` over `undefined`
+-  for properties that shouldn't have values
+-version: '1.0'
+----
+-# Type-safe null handling
+-
+-Use TypeScript's type system and modern JavaScript features to prevent null reference errors. 
+-
+-**TypeScript type safety:**
+-- Prefer `never` over `undefined` for properties that shouldn't have values
+-- Use `unknown` instead of `any` when working with data of uncertain structure
+-- Validate data with zod schemas instead of using type assertions (`as`)
+-- Use proper type narrowing with type guards
+-
+-**Modern JavaScript null checks:**
+-- Use nullish coalescing (`??`) for default values:
+-```typescript
+-// Instead of this:
+-const citations = response.message.citations ? response.message.citations : [];
+-
+-// Do this:
+-const citations = response.message.citations ?? [];
+-```
+-
+-- Use optional chaining (`?.`) for accessing properties on potentially undefined objects:
+-```typescript
+-// Instead of this:
+-const contentType = requestClone.headers.get('content-type') || '';
+-if (contentType.startsWith('multipart/form-data')) { /*...*/ }
+-
+-// Do this:
+-const contentType = requestClone.headers.get('content-type');
+-if (contentType?.startsWith('multipart/form-data')) { /*...*/ }
+-```
+-
+-Following these patterns leads to more robust, self-documenting code and fewer runtime errors from unexpected null/undefined values.
+diff --git a/_skills/use-definite-assignment-assertions/SKILL.md b/_skills/use-definite-assignment-assertions/SKILL.md
+@@ -1,41 +0,0 @@
+----
+-name: use-definite-assignment-assertions
+-description: When you're certain a value will be initialized but TypeScript can't
+-  infer this, use the definite assignment assertion operator (`!`) instead of `as
+-  any` or suppressing type errors. This maintains type safety while avoiding unnecessary
+-  null checks throughout your codebase.
+-version: '1.0'
+----
+-# Use definite assignment assertions
+-
+-When you're certain a value will be initialized but TypeScript can't infer this, use the definite assignment assertion operator (`!`) instead of `as any` or suppressing type errors. This maintains type safety while avoiding unnecessary null checks throughout your codebase.
+-
+-Avoid this pattern:
+-```typescript
+-// Creates unnecessary undefined checks everywhere
+-#agent: Agent<Env, State> | undefined;
+-
+-// Or suppressing valid type concerns
+-// @ts-expect-error TODO: fix this type error
+-await this._drainStream(response.body);
+-
+-// Or forcing types unsafely  
+-}) as any
+-```
+-
+-Instead, use definite assignment assertions when you know the value will be there:
+-```typescript
+-// Tells TypeScript "trust us, it'll always be there"
+-#agent: Agent<Env, State>!;
+-```
+-
+-Or add proper null checks when the value might actually be null:
+-```typescript
+-// When the value could legitimately be null/undefined
+-if (response.body) {
+-  const reader = response.body.getReader();
+-  // ... handle the stream
+-}
+-```
+-
+-This approach maintains TypeScript's null safety benefits while eliminating false positives that lead to code pollution or unsafe type assertions.
+diff --git a/_skills/use-descriptive-names/SKILL.md b/_skills/use-descriptive-names/SKILL.md
+@@ -1,18 +0,0 @@
+----
+-name: use-descriptive-names
+-description: Choose clear, descriptive names for variables, methods, types, and parameters
+-  that unambiguously convey their purpose and avoid conflicts. Prefer full words over
+-  abbreviations and ensure names are specific enough to prevent clashes with inherited
+-  or similar functionality.
+-version: '1.0'
+----
+-# Use descriptive names
+-
+-Choose clear, descriptive names for variables, methods, types, and parameters that unambiguously convey their purpose and avoid conflicts. Prefer full words over abbreviations and ensure names are specific enough to prevent clashes with inherited or similar functionality.
+-
+-Examples of improvements:
+-- Use `options` instead of `opts` for better clarity
+-- Use `TransportType` instead of `Protocol` when the term "protocol" is overloaded in the domain
+-- Use `onMcpError` instead of `onError` to avoid conflicts with base class methods
+-
+-This practice reduces cognitive load, prevents naming conflicts during inheritance or composition, and makes code more maintainable by clearly expressing intent through naming.
+diff --git a/_skills/validate-connection-protocols/SKILL.md b/_skills/validate-connection-protocols/SKILL.md
+@@ -1,44 +0,0 @@
+----
+-name: validate-connection-protocols
+-description: Always validate network connection types, required parameters, and protocol-specific
+-  headers before processing requests. This prevents runtime errors and ensures proper
+-  connection handling across different network protocols.
+-version: '1.0'
+----
+-# validate connection protocols
+-
+-Always validate network connection types, required parameters, and protocol-specific headers before processing requests. This prevents runtime errors and ensures proper connection handling across different network protocols.
+-
+-For WebSocket connections, verify the Upgrade header and required parameters:
+-```typescript
+-// Validate WebSocket upgrade request
+-if (request.headers.get("Upgrade") !== "websocket") {
+-  return new Response("Expected WebSocket Upgrade request", {
+-    status: 400,
+-  });
+-}
+-
+-// Validate required parameters
+-const url = new URL(request.url);
+-const sessionId = url.searchParams.get("sessionId");
+-if (!sessionId) {
+-  return new Response("Missing sessionId", { status: 400 });
+-}
+-```
+-
+-Use URL paths to distinguish between different protocols and route accordingly:
+-```typescript
+-const path = url.pathname;
+-switch (path) {
+-  case "/sse": {
+-    // Handle SSE protocol
+-    break;
+-  }
+-  case "/websocket": {
+-    // Handle WebSocket protocol
+-    break;
+-  }
+-}
+-```
+-
+-Consider implementing connection limits and state management to prevent issues with multiple concurrent connections when your system expects only one active connection per session.
+diff --git a/_skills/validate-environment-bindings/SKILL.md b/_skills/validate-environment-bindings/SKILL.md
+@@ -1,40 +0,0 @@
+----
+-name: validate-environment-bindings
+-description: Always validate that environment bindings exist and are of the expected
+-  type before using them, and ensure external dependencies are properly configured
+-  in build scripts. Runtime binding validation prevents cryptic errors when bindings
+-  are missing or misconfigured, while proper build configuration prevents dynamic
+-  import issues in serverless environments.
+-version: '1.0'
+----
+-# Validate environment bindings
+-
+-Always validate that environment bindings exist and are of the expected type before using them, and ensure external dependencies are properly configured in build scripts. Runtime binding validation prevents cryptic errors when bindings are missing or misconfigured, while proper build configuration prevents dynamic import issues in serverless environments.
+-
+-For runtime validation, check both existence and type:
+-```ts
+-const bindingValue = env[binding as keyof typeof env] as unknown;
+-
+-// Ensure we have a binding of some sort
+-if (bindingValue == null || typeof bindingValue !== "object") {
+-  console.error(
+-    `Could not find binding for ${binding}. Did you update your wrangler configuration?`
+-  );
+-  return new Response("Invalid binding", { status: 500 });
+-}
+-
+-// Ensure that the binding is to a DurableObject
+-if (bindingValue.toString() !== "[object DurableObjectNamespace]") {
+-  return new Response("Invalid binding", { status: 500 });
+-}
+-```
+-
+-For build configuration, include external packages in your build scripts and use top-level imports instead of dynamic imports:
+-```ts
+-// In build.ts - add external packages
+-external: ["cloudflare:email", "other-external-packages"]
+-
+-// In code - use top-level imports
+-import { createMimeMessage } from "mimetext";
+-import { EmailMessage } from "cloudflare:email";
+-```
+diff --git a/_skills/validate-pattern-matching/SKILL.md b/_skills/validate-pattern-matching/SKILL.md
+@@ -1,63 +0,0 @@
+----
+-name: validate-pattern-matching
+-description: 'When implementing algorithms that involve pattern matching or data parsing,
+-  ensure robustness across all edge cases and clearly document the algorithm''s behavior.
+-  This is particularly important for:'
+-version: '1.0'
+----
+-# Validate pattern matching
+-
+-When implementing algorithms that involve pattern matching or data parsing, ensure robustness across all edge cases and clearly document the algorithm's behavior. This is particularly important for:
+-
+-1. Prefix matching and partial results - When matching strings against a set of possible values (like enums), consider how to handle ambiguous partial matches:
+-
+-```typescript
+-// Instead of returning any partial match:
+-const possibleEnumValues = enumValues.filter(enumValue =>
+-  enumValue.startsWith(result)
+-);
+-
+-// Consider uniqueness in your algorithm:
+-if (possibleEnumValues.length > 1) {
+-  // Handle ambiguous case - either return only the partial result
+-  // or require a complete match
+-  return { partial: result };
+-} else if (possibleEnumValues.length === 1) {
+-  // Return the full value when there's only one possible match
+-  return { complete: possibleEnumValues[0] };
+-}
+-```
+-
+-2. Binary format detection - When parsing binary data formats, account for metadata headers and format variations:
+-
+-```typescript
+-// Check for format-specific headers before pattern matching
+-const stripMetadata = (data: Uint8Array) => {
+-  // Detect specific header patterns (like ID3 for MP3)
+-  if (data[0] === 0x49 && data[1] === 0x44 && data[2] === 0x33) {
+-    // Calculate header size and return data without header
+-    const headerSize = calculateHeaderSize(data);
+-    return data.slice(headerSize);
+-  }
+-  return data; // No metadata found
+-};
+-
+-// Then perform format detection on clean data
+-const detectedFormat = detectFormat(stripMetadata(rawData));
+-```
+-
+-3. Iteration correctness - When processing collections as part of your algorithm, verify that you're iterating over the correct data structure:
+-
+-```typescript
+-// Incorrect: iterating over empty/wrong object
+-for (const key in emptyObject) { /* ... */ }
+-
+-// Correct: iterate over the object containing actual data
+-for (const key in dataObject) {
+-  if (dataObject[key] !== undefined) {
+-    processedData[key] = dataObject[key];
+-  }
+-}
+-```
+-
+-Always test pattern matching algorithms with comprehensive test cases covering edge cases like empty inputs, partial matches, and format variations.
+diff --git a/_skills/verify-ai-model-capabilities/SKILL.md b/_skills/verify-ai-model-capabilities/SKILL.md
+@@ -1,30 +0,0 @@
+----
+-name: verify-ai-model-capabilities
+-description: 'Always verify and accurately document AI model capabilities, supported
+-  formats, and limitations before implementation. Use consistent terminology (e.g.,
+-  "multi-modal" instead of "multimodal") and validate model features against official
+-  documentation sources. When documenting AI functionalities:'
+-version: '1.0'
+----
+-# Verify AI model capabilities
+-
+-Always verify and accurately document AI model capabilities, supported formats, and limitations before implementation. Use consistent terminology (e.g., "multi-modal" instead of "multimodal") and validate model features against official documentation sources. When documenting AI functionalities:
+-
+-1. Be explicit about supported features and limitations
+-2. Link to official documentation when describing specific capabilities
+-3. Don't assume cross-functionality unless confirmed
+-4. Use clear, concise language when describing input formats and parameters
+-
+-Example:
+-```typescript
+-// GOOD: Accurate, verified documentation with specific capabilities
+-// Groq's multi-modal models like `meta-llama/llama-4-scout-17b-16e-instruct` 
+-// support image inputs via URLs or base64-encoded data
+-// Source: https://groq.com/docs/models/llama-4-scout
+-
+-// BAD: Unverified or inaccurate information
+-// OpenAI's o4 model is available (incorrect - only o4-mini is publicly available)
+-// Assuming a model supports certain parameter formats without verification
+-```
+-
+-Maintaining accurate documentation saves development time, prevents integration errors, and helps teams properly utilize AI capabilities within their applications.
+diff --git a/_skills/verify-properties-before-logging/SKILL.md b/_skills/verify-properties-before-logging/SKILL.md
+@@ -1,25 +0,0 @@
+----
+-name: verify-properties-before-logging
+-description: When logging object properties, always verify that the property names
+-  exactly match the actual structure of the object being logged. Incorrect property
+-  names (like 'responses' instead of 'response') or non-existent properties will result
+-  in undefined values in logs, reducing their usefulness for debugging and troubleshooting.
+-version: '1.0'
+----
+-# Verify properties before logging
+-
+-When logging object properties, always verify that the property names exactly match the actual structure of the object being logged. Incorrect property names (like 'responses' instead of 'response') or non-existent properties will result in undefined values in logs, reducing their usefulness for debugging and troubleshooting.
+-
+-Example of problematic code:
+-```javascript
+-console.log('Responses:', result.responses);       // Incorrect property name
+-console.log('Provider Metadata:', result.providerMetadata);  // Non-existent property
+-```
+-
+-Corrected code:
+-```javascript
+-console.log('Response:', result.response);         // Correct property name
+-// Don't log properties that don't exist in the object
+-```
+-
+-Consider using optional chaining (`?.`) for nested properties or TypeScript to help catch these issues at compile time. For important logging in production code, consider adding runtime property existence checks before logging.
+diff --git a/_skills/versioning-for-migrations/SKILL.md b/_skills/versioning-for-migrations/SKILL.md
+@@ -1,24 +0,0 @@
+----
+-name: versioning-for-migrations
+-description: Use appropriate version bumps to signal migration requirements and maintain
+-  clear upgrade paths. Flag breaking changes with major version bumps to help with
+-  release notes and upgrade guides. External contributors should use patch bumps only,
+-  while minor and major version changes are reserved for the core team.
+-version: '1.0'
+----
+-# Versioning for migrations
+-
+-Use appropriate version bumps to signal migration requirements and maintain clear upgrade paths. Flag breaking changes with major version bumps to help with release notes and upgrade guides. External contributors should use patch bumps only, while minor and major version changes are reserved for the core team.
+-
+-Example:
+-```
+-# For breaking changes (core team only)
+-pnpm changeset
+-# Select 'major' for the bump type when removing APIs or making breaking changes
+-
+-# For external contributors
+-pnpm changeset
+-# Select 'patch' for all contribution changes
+-```
+-
+-This versioning strategy ensures users have clear signals about migration requirements and proper documentation is maintained for version transitions.
+PATCH
+
+echo "Gold patch applied."

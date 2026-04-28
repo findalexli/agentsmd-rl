@@ -1,0 +1,24 @@
+version: "2.0"
+
+task:
+  name: superset-small-agentsmd-twak
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: superset-sh/superset
+  pr: 165
+  base_commit: "025a4499a675289459da132b9a47e733519fce4b"
+  merge_commit: "09274bb057c8e1d922aab99f197afc458a88c363"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+
+config_edits:
+  - path: AGENTS.md
+    tier: 1
+    gold_added: '  - `packages/ui` - Shared UI components (shadcn/ui + TailwindCSS v4).'
+    gold_removed: ''

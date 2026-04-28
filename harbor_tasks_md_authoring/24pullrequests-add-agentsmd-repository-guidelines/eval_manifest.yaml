@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: 24pullrequests-add-agentsmd-repository-guidelines
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: 24pullrequests/24pullrequests
+  pr: 4853
+  base_commit: "221823325dcdb55f451ce89dfd3aedea42157342"
+  merge_commit: "4b549bba634c7fea4fd3230c0043598d88b25a7e"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+
+config_edits:
+  - path: AGENTS.md
+    tier: 1
+    gold_added: "# Repository Guidelines\n\nRepo-specific commands, conventions, and gotchas for contributors and coding agents.\n\n## Quick Start\n\nLocal prerequisites:\n\n- Ruby 4.0.0 (`.ruby-version`)\n- PostgreSQL\n- System libraries for `pg` (e.g., `libpq-dev` on Debian/Ubuntu)\n- A JavaScript runtime (Node is recommended and is used in the Docker image)\n- Google Chrome (required for Cuprite-driven JS/system specs)\n\n```bash\nbin/setup\n```\n\nIf you want to start the server separately:\n\n```bash\nbin/setup --skip-server\nbin/dev   # http://localhost:3000\n```\n\nDocker (see `docker-compose.yml`):\n\n```bash\ndocker compose build\ndocker compose up\n```\n\n## Project Structure\n\n- `app/`: Rails code (controllers, models, views, services, assets, decorators)\n- `config/`: environment config and initializers\n- `db/`: migrations, `schema.rb`, seeds\n- `lib/tasks/`: scheduled/manual rake tasks\n- `spec/`: primary test suite (RSpec)\n- `test/`: Action Mailer previews (e.g., `test/mailers/previews/`)\n- `docs/`, `design/`: documentation and design assets\n- `public/`, `vendor/`: static and vendored assets\n\n## Common Commands\n\nUpdate helper:\n\n```bash\nbin/update    # update deps + migrate + restart\n```\n\nRails basics:\n\n```bash\nbin/rails server\nbin/rails console\nbin/rails db:migrate\nbin/rails db:seed\n```\n\n## Testing\n\nRun the full suite:\n\n```bash\nbundle exec rake\n```\n\nRun a specific spec file (optionally at a line), matching README/Docker docs:\n\n```bash\nbundle exec rake SPEC=./spec/models/user_spec.rb\nbundle exec rake SPEC=./spec/models/user_spec.rb:42\n```\n\nOr run RSpec directly (uses `bin/rspec`):\n\n```bash\nbin/rspec spec/models/user_spec.rb:42\n```\n\nIf many specs fail after migrations, prepare the test DB/schema:\n\n```bash\nbundle exec rake db:test:prepare\n```\n\nCI parity (see `.github/workflows/ci.yml`):\n\n```bash\nRAILS_ENV=test bundle exec rake db:create db:migrate spec\n```\n\nDocker test examples:\n\n```bash\ndocker compose run app bundle exec rake\ndocker compose run app bundle exec rake SPEC=./spec/models/user_spec.rb:42\n```\n\nNote: the default `app` Docker image is suitable for non-JS specs. Specs with\n`js: true` use Capybara + Cuprite and require Chrome/Chromium in the container.\nRun JS/system specs on host (Quick Start) or extend the Docker image first.\n\nTest harness gotchas (read before changing time/network behavior):\n\n- Time is traveled for every example to `12/12/<current_year>` via Timecop.\n  The app is seasonal; date-range guards will behave differently outside\n  December.\n- External network calls are blocked by WebMock (localhost allowed). Specs must\n  stub HTTP calls.\n- DatabaseCleaner runs transactions by default and switches to truncation for\n  `js: true` specs.\n- JS/system specs use Capybara + Cuprite, which requires Chrome.\n- Deferred GC is enabled by default in specs. Set `DEFER_GC=0` to disable it.\n\nExample: stub a GitHub API call in a spec (WebMock):\n\n```ruby\nstub_request(:get, \"https://api.github.com/repos/ORG/REPO/contributors?per_page=100\").\n  to_return(:status => 200, :body => [{ login: \"example\" }].to_json,\n            headers: { 'Content-Type' => 'application/json' })\n```\n\n## Seasonal Behavior\n\nMany features and tasks are guarded by `Contribution.in_date_range?` and will\nno-op outside the active period (between Dec 1 and Dec 25, exclusive). Setting\n`DISABLED=1` forces `Contribution.in_date_range?` to return false.\n\n## Useful Rake Tasks\n\nThese tasks are mostly seasonal and may no-op outside December:\n\n```bash\nbundle exec rake tfpullrequests:prepare\nbundle exec rake pull_requests:download_pull_requests\nbundle exec rake pull_requests:update_pull_requests\nbundle exec rake emails:send_emails\n```\n\n## Coding Style & Conventions\n\n- Indentation: 2 spaces. Line endings: LF. Trim trailing whitespace\n  (`.editorconfig`).\n- Naming: Rails conventions (`snake_case` files/methods, `CamelCase`\n  classes/modules).\n- Keep diffs minimal and focused. Avoid drive-by modernizations (hash syntax,\n  mass refactors, reformatting).\n- Historical style preference (see `.rubocop.yml`): prefer `collect` over `map`,\n  `inject` over `reduce`, `find_all` over `select`, and `find` over `detect`.\n  Do not \"fix\" these in unrelated changes.\n- Note: `.rubocop.yml` exists as style reference, but RuboCop is not part of the\n  default bundle/CI today.\n\n## Security & Configuration Tips\n\n- GitHub OAuth uses `GITHUB_KEY`/`GITHUB_SECRET`. In development without keys,\n  the app falls back to a local `developer2` auth provider; GitHub-dependent\n  features may be stubbed.\n- Database settings can be overridden with `TFPULLREQUESTS_DATABASE_*` env vars\n  (see `config/database.yml`).\n- Optional local security scan: `bin/brakeman` (not enforced in CI).\n- Optional localization check: `bundle exec i18n-tasks health` (locale files live under `config/locales/`).\n\n## Commit & Pull Request Guidelines\n\n- Use short, imperative commit subjects (e.g., \"Fix tests\", \"Update dependencies\").\n- PRs should include: what/why, linked issue (if any), and screenshots for UI changes.\n- State how you tested (exact command(s) run).\n\n## Agent Guardrails\n\n- Ask first before editing `Gemfile*`, `db/migrate/*`, `Dockerfile`/`docker-compose.yml`, or `.github/workflows/*`.\n- Do not edit `db/schema.rb` by hand.\n- Prefer minimal, localized diffs; avoid unrelated refactors."
+    gold_removed: ''

@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: compass-chore-update-copilot-instructions
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: mongodb-js/compass
+  pr: 7781
+  base_commit: "8f557cd012426bdc25436e260f13a71bceaad3e2"
+  merge_commit: "a3a7ed145a7b9df7a6ecb0aa31a9c92a16df0eb0"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/copilot-instructions.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/copilot-instructions.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/copilot-instructions.md."
+
+config_edits:
+  - path: .github/copilot-instructions.md
+    tier: 1
+    gold_added: "- Be especially careful when adding effects—remember that [you might not need an effect](https://react.dev/learn/you-might-not-need-an-effect).\n- If you're reaching for a useReducer hook, consider if it's time to move this state and business logic to a Redux store instead.\n\n#### Avoid non-primitive values in render\n\nDefining non-primitive values in render (in function body or as component props) nullifies all memoization benefits.\n\n```tsx\n// ❌ Inline object/array props break memoization of child components\nconst MyComponent = ({ userId }) => {\n  return (\n    <MemoizedChild\n      options={['edit', 'delete']}\n      onClick={() => handleClick(userId)}\n    />\n  );\n};\n\n// ✅ Memoize or define outside render\nconst options = ['edit', 'delete'];\n\nconst MyComponent = ({ userId }) => {\n  const handleItemClick = useCallback(() => handleClick(userId), [userId]);\n\n  return <MemoizedChild options={options} onClick={handleItemClick} />;\n};\n```\n\nThe same applies to non-primitive properties constructed inside Redux `connect` functions—they remove any benefits of granular connections.\n\n```ts\n// ❌ Creates new array on every render, breaks memoization\nexport default connect((state) => ({\n  activeItems: state.items.filter((item) => item.isActive),\n}))(MyComponent);\n\n// ✅ Use memo to ensure the same array instance is returned if the items haven't changed\nconst MyComponent = ({ items }) => {\n  const activeItems = useMemo(\n    () => items.filter((item) => item.isActive),\n    [items]\n  );\n};\n\nexport default connect((state) => ({\n  items: state.items,\n}))(MyComponent);\n```\n#### Not all state belongs in Redux\n\nNot all state belongs in the Redux store - see [redux - organizing state FAQ](https://redux.js.org/faq/organizing-state#do-i-have-to-put-all-my-state-into-redux-should-i-ever-use-reacts-usestate-or-usereducer).\n\nState should go in Redux when:\n\n- Other parts of the application care about this data\n- You need to be able to create further derived data based on this original data\n- The same data is being used to drive multiple components\n- There is value in being able to restore this state to a given point in time (i.e., time travel debugging)\n- You want to cache the data (i.e., use what's in state if it's already there instead of re-requesting it)\n- You want to keep this data consistent while hot-reloading UI components (which may lose their internal state when swapped)\n\nIf none of these apply, local component state is likely more appropriate.\n\n- We're trying to stick to Redux style guide as close as possible, with two exceptions\n\n### Compass doesn’t use a single Redux store to manage the whole application state.\n\n### Use `connect` instead of Redux hooks inside feature modules\n\nComponents inside feature module boundaries must use the `connect` function to access store data, not Redux hooks like `useSelector` or `useDispatch`.\n\nThe `connect` function introduces a deliberate level of indirection, allowing you to write presentational-style components that receive all their values as props without being specifically dependent on Redux. This aligns with the React guidelines for building components (see [Thinking in React](https://react.dev/learn/thinking-in-react)).\n\n```ts\n// ❌ Don't do this inside a feature module\nimport { useSelector } from 'react-redux';\n\nconst MyComponent = () => {\n  const data = useSelector((state) => state.something);\n  // ...\n};\n\n// ✅ Do this instead\nimport { connect } from 'react-redux';\n\nconst MyComponent = ({ data }) => {\n  // ...\n};\n\nexport default connect((state) => ({\n  data: state.something,\n}))(MyComponent);\n```"
+    gold_removed: ''

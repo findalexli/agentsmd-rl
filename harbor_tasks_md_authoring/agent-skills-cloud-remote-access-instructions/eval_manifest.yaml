@@ -1,0 +1,89 @@
+version: "2.0"
+
+task:
+  name: agent-skills-cloud-remote-access-instructions
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: laravel/agent-skills
+  pr: 10
+  base_commit: "4ef4b9bd8b3676a4e92adcd6ab9353aec7065401"
+  merge_commit: "58982c5e07a5768660b2ac6937f315a398763ade"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in laravel-cloud/skills/deploying-laravel-cloud/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in laravel-cloud/skills/deploying-laravel-cloud/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in laravel-cloud/skills/deploying-laravel-cloud/SKILL.md."
+
+config_edits:
+  - path: laravel-cloud/skills/deploying-laravel-cloud/SKILL.md
+    tier: 1
+    gold_added: '## Remote Access
+
+
+      ### Tinker (> v0.2.0)
+
+
+      Run PHP code directly in a Cloud environment:
+
+
+      ```sh
+
+      cloud tinker {environment} --code=''Your PHP code here'' --timeout=60 -n
+
+      ```
+
+
+      - `--code` — PHP code to execute (required in non-interactive mode)
+
+      - `--timeout` — max seconds to wait for output (default: 60)
+
+
+      The code must explicitly output results using `echo`, `dump`, or similar — expressions alone produce no output.
+
+
+      Always pass `--code` and `-n` to avoid interactive prompts.
+
+
+      ### Remote Commands
+
+
+      Run shell commands on a Cloud environment:
+
+
+      ```sh
+
+      cloud command:run {environment} --cmd=''your command here'' -n
+
+      ```
+
+
+      - `--cmd` — the command to run (required in non-interactive mode)
+
+      - `--no-monitor` — skip real-time output streaming
+
+      - `--copy-output` — copy output to clipboard
+
+
+      Review past commands:
+
+
+      - `cloud command:list {environment} --json -n` — list command history
+
+      - `cloud command:get {commandId} --json -n` — get details and output of a specific command
+
+
+      Delegate `command:run` to a subagent when output may be long.
+
+      '
+    gold_removed: ''

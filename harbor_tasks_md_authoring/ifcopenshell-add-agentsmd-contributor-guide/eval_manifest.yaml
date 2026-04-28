@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: ifcopenshell-add-agentsmd-contributor-guide
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: IfcOpenShell/IfcOpenShell
+  pr: 7672
+  base_commit: "7978f1fb0887b67a93dc503dd30e73448d62b2c9"
+  merge_commit: "291e815770a9d6d3aa0d3c1bde13f1d14f3b3a7f"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+
+config_edits:
+  - path: AGENTS.md
+    tier: 1
+    gold_added: "<!-- This file was generated with the assistance of an AI coding tool. -->\n\n# AGENTS.md\n\nGuidelines for AI coding agents contributing to IfcOpenShell. This file is\nintended to be read by all AI agents regardless of platform (Claude Code,\nCopilot, Cursor, etc.) in addition to any tool-specific configuration files.\n\nHuman contributors using AI tools should also read this document carefully,\nas they are responsible for ensuring their contributions comply with these\nguidelines.\n\n## Project Overview\n\nIfcOpenShell is an open source library for working with Industry Foundation\nClasses (IFC). It provides C++ and Python APIs, geometry processing, and an\necosystem of tools including IfcConvert and the Bonsai Blender add-on.\n\n## Licensing\n\nAll contributions must be compatible with the project's licensing:\n\n- **Library code** (everything except Bonsai): **LGPL-3.0-or-later**\n- **Bonsai** (`src/bonsai/`): **GPL-3.0-or-later**\n\nThere is no Contributor License Agreement (CLA). By submitting a pull request,\nyou agree that your contribution is licensed under the applicable license above.\n\n## Indicating AI-Generated Code\n\nContributors must clearly indicate when code has been generated or\nsubstantially written by an AI tool.\n\n### Commits\n\nCommits that modify existing code must include a note in the **body** of the\ncommit message (not the subject line) indicating that the change was\nAI-generated. For example:\n\n```\nFix off-by-one error in element iteration\n\nThe loop termination condition was incorrect when processing\nIfcRelAggregates relationships.\n\nGenerated with the assistance of an AI coding tool.\n```\n\n### New Files\n\nNew files that are AI-generated must include a comment near the top of the\nfile indicating this. Use the appropriate comment syntax for the language:\n\n```python\n# This file was generated with the assistance of an AI coding tool.\n```\n\n```cpp\n// This file was generated with the assistance of an AI coding tool.\n```\n\n### Pull Requests\n\nPull requests containing AI-generated code must indicate in the PR description\nwhich parts of the contribution are AI-generated. If the entire PR is\nAI-generated, state that clearly. If only specific commits or files are\nAI-generated, identify them.\n\n## Pull Request Guidelines\n\n### Scope and Size\n\n- Each pull request should address a **single issue or feature**.\n- Do not mix unrelated changes (e.g., bug fixes with refactoring or style\n  changes) in the same PR.\n- Large pull requests should be broken down into **multiple small, standalone\n  commits** that are each easy to review independently. Rewrite commit history\n  for this purpose if necessary.\n- PRs that are minimal, focused solutions to a specific problem are much more\n  likely to be accepted.\n\n### What to Avoid\n\n- **Over-engineering**: Do not add features, abstractions, or configurability\n  beyond what is needed to solve the immediate problem.\n- **Scope creep**: Do not make changes to files or code that are not directly\n  related to the task at hand.\n- **Unnecessary additions**: Do not add docstrings, comments, type annotations,\n  or error handling to code you did not otherwise need to change.\n- **Cosmetic changes**: Do not reformat, rename, or reorganize code that is\n  unrelated to your change.\n\n## Commit Messages\n\n- The **subject line** must be **50 characters or less**.\n- Use the **imperative mood** (e.g., \"Fix crash in geometry kernel\", not\n  \"Fixed crash\" or \"Fixes crash\").\n- A commit message can be a single line if the purpose is obvious from the\n  subject alone.\n- Otherwise, add a blank line after the subject followed by a short explanation\n  of a few lines in the body.\n\n## Code Style\n\n### Python\n\n- **Line length**: 120 characters\n- **Formatter**: black\n- **Linter**: ruff\n- Configuration is in `pyproject.toml`\n\n### C++\n\n- **Standard**: C++17 minimum\n- **Formatter**: clang-format (configuration in `.clang-format`)\n- **Linter**: clang-tidy (configuration in `.clang-tidy`)\n\nRun linters and formatters **before submitting** your pull request. Do not rely\non CI to catch formatting issues.\n\n## Testing\n\n- Pull requests with test coverage are **much more likely to be merged**.\n- If tests are appropriate and feasible for your change, they should be\n  included.\n- Tests are not required for every change (e.g., documentation-only changes),\n  but the expectation is that testable code changes come with tests.\n- Python tests use **pytest** and are located in `test/` or `tests/` directories\n  within each package under `src/`.\n- Run the existing test suite for the package you modified before submitting.\n\n## Architecture Quick Reference\n\n### Directory Structure\n\n- `src/ifcparse/` — C++ IFC file parsing\n- `src/ifcgeom/` — C++ geometry processing (OpenCASCADE and CGAL kernels)\n- `src/serializers/` — Output format serializers (glTF, Collada, SVG, etc.)\n- `src/ifcwrap/` — SWIG Python bindings\n- `src/ifcconvert/` — CLI conversion tool\n- `src/ifcopenshell-python/` — Python API (`ifcopenshell` package)\n- `src/bonsai/` — Blender add-on (GPL-3.0-or-later)\n- `src/ifctester/` — IDS model auditing\n- `src/ifcpatch/` — IFC file manipulation scripts\n- `src/ifcdiff/` — IFC model comparison\n- `src/ifcclash/` — Clash detection\n- `src/ifccsv/` — Schedule import/export\n\n### IFC Schema Versions\n\nThe library supports IFC2x3 TC1, IFC4 Add2 TC1, IFC4x1, IFC4x2, and\nIFC4x3 Add2. Schema-specific code is compiled conditionally. Be aware of\nwhich schema versions your change affects."
+    gold_removed: ''

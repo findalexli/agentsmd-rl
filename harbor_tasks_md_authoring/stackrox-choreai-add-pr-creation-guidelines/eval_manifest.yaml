@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: stackrox-choreai-add-pr-creation-guidelines
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: stackrox/stackrox
+  pr: 17219
+  base_commit: "13ac26ebfef59b0bb1d1d1f372fca08d346bf1a9"
+  merge_commit: "189a850ce598e9d7061d7d8adee9c0a49d5c043e"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+
+config_edits:
+  - path: AGENTS.md
+    tier: 1
+    gold_added: "### Creating Pull Requests\n\nWhen creating pull requests, you must follow these requirements:\n\n- always create PRs as draft - use the `--draft` flag with `gh pr create`\n- this allows for review and additional changes before marking as ready for review\n- add the `ai-assisted` label to PRs created with AI assistance\n- PR title must follow the format enforced by `.github/workflows/check-pr-title.yaml`\n  - read the workflow file to understand exact requirements\n  - generally: conventional commit format (e.g., `fix(ui): description`) OR JIRA format (e.g., `ROX-123: description`)\n  - maximum 70 characters\n- PR description must follow the template (`.github/pull_request_template.md`)\n  - IMPORTANT: all sections, checkboxes, and structure must be preserved\n  - only remove: HTML comments (`<!-- -->`) and placeholder text (e.g., \"change me!\")\n  - do not remove: section headers, checkboxes, or any structural content\n  - fill in all required sections and check appropriate boxes\n  - be super brief and stick to facts\n  - use emojis only when necessary\n  - include: problem definition, considered alternatives, explain whys for chosen solution, if applicable.\n  - include benchmark results if applicable\n"
+    gold_removed: ''

@@ -1,0 +1,6546 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+cd /workspace/binance-skills-hub
+
+# Idempotency guard
+if grep -qF "skills/binance/algo/CHANGELOG.md" "skills/binance/algo/CHANGELOG.md" && grep -qF "skills/binance/algo/LICENSE.md" "skills/binance/algo/LICENSE.md" && grep -qF "skills/binance/algo/SKILL.md" "skills/binance/algo/SKILL.md" && grep -qF "skills/binance/algo/references/authentication.md" "skills/binance/algo/references/authentication.md" && grep -qF "skills/binance/alpha/CHANGELOG.md" "skills/binance/alpha/CHANGELOG.md" && grep -qF "skills/binance/alpha/LICENSE.md" "skills/binance/alpha/LICENSE.md" && grep -qF "skills/binance/alpha/SKILL.md" "skills/binance/alpha/SKILL.md" && grep -qF "skills/binance/alpha/references/authentication.md" "skills/binance/alpha/references/authentication.md" && grep -qF "skills/binance/assets/CHANGELOG.md" "skills/binance/assets/CHANGELOG.md" && grep -qF "skills/binance/assets/LICENSE.md" "skills/binance/assets/LICENSE.md" && grep -qF "skills/binance/assets/SKILL.md" "skills/binance/assets/SKILL.md" && grep -qF "skills/binance/assets/references/authentication.md" "skills/binance/assets/references/authentication.md" && grep -qF "skills/binance/convert/CHANGELOG.md" "skills/binance/convert/CHANGELOG.md" && grep -qF "skills/binance/convert/LICENSE.md" "skills/binance/convert/LICENSE.md" && grep -qF "skills/binance/convert/SKILL.md" "skills/binance/convert/SKILL.md" && grep -qF "skills/binance/convert/references/authentication.md" "skills/binance/convert/references/authentication.md" && grep -qF "skills/binance/derivatives-trading-coin-futures/CHANGELOG.md" "skills/binance/derivatives-trading-coin-futures/CHANGELOG.md" && grep -qF "skills/binance/derivatives-trading-coin-futures/LICENSE.md" "skills/binance/derivatives-trading-coin-futures/LICENSE.md" && grep -qF "skills/binance/derivatives-trading-coin-futures/SKILL.md" "skills/binance/derivatives-trading-coin-futures/SKILL.md" && grep -qF "skills/binance/derivatives-trading-coin-futures/references/authentication.md" "skills/binance/derivatives-trading-coin-futures/references/authentication.md" && grep -qF "skills/binance/derivatives-trading-options/CHANGELOG.md" "skills/binance/derivatives-trading-options/CHANGELOG.md" && grep -qF "skills/binance/derivatives-trading-options/LICENSE.md" "skills/binance/derivatives-trading-options/LICENSE.md" && grep -qF "skills/binance/derivatives-trading-options/SKILL.md" "skills/binance/derivatives-trading-options/SKILL.md" && grep -qF "skills/binance/derivatives-trading-options/references/authentication.md" "skills/binance/derivatives-trading-options/references/authentication.md" && grep -qF "skills/binance/derivatives-trading-portfolio-margin-pro/CHANGELOG.md" "skills/binance/derivatives-trading-portfolio-margin-pro/CHANGELOG.md" && grep -qF "skills/binance/derivatives-trading-portfolio-margin-pro/LICENSE.md" "skills/binance/derivatives-trading-portfolio-margin-pro/LICENSE.md" && grep -qF "skills/binance/derivatives-trading-portfolio-margin-pro/SKILL.md" "skills/binance/derivatives-trading-portfolio-margin-pro/SKILL.md" && grep -qF "skills/binance/derivatives-trading-portfolio-margin-pro/references/authenticatio" "skills/binance/derivatives-trading-portfolio-margin-pro/references/authentication.md" && grep -qF "skills/binance/derivatives-trading-portfolio-margin/CHANGELOG.md" "skills/binance/derivatives-trading-portfolio-margin/CHANGELOG.md" && grep -qF "skills/binance/derivatives-trading-portfolio-margin/LICENSE.md" "skills/binance/derivatives-trading-portfolio-margin/LICENSE.md" && grep -qF "skills/binance/derivatives-trading-portfolio-margin/SKILL.md" "skills/binance/derivatives-trading-portfolio-margin/SKILL.md" && grep -qF "skills/binance/derivatives-trading-portfolio-margin/references/authentication.md" "skills/binance/derivatives-trading-portfolio-margin/references/authentication.md" && grep -qF "skills/binance/derivatives-trading-usds-futures/CHANGELOG.md" "skills/binance/derivatives-trading-usds-futures/CHANGELOG.md" && grep -qF "skills/binance/derivatives-trading-usds-futures/LICENSE.md" "skills/binance/derivatives-trading-usds-futures/LICENSE.md" && grep -qF "skills/binance/derivatives-trading-usds-futures/SKILL.md" "skills/binance/derivatives-trading-usds-futures/SKILL.md" && grep -qF "skills/binance/derivatives-trading-usds-futures/references/authentication.md" "skills/binance/derivatives-trading-usds-futures/references/authentication.md" && grep -qF "skills/binance/margin-trading/CHANGELOG.md" "skills/binance/margin-trading/CHANGELOG.md" && grep -qF "skills/binance/margin-trading/LICENSE.md" "skills/binance/margin-trading/LICENSE.md" && grep -qF "skills/binance/margin-trading/SKILL.md" "skills/binance/margin-trading/SKILL.md" && grep -qF "skills/binance/margin-trading/references/authentication.md" "skills/binance/margin-trading/references/authentication.md" && grep -qF "skills/binance/simple-earn/CHANGELOG.md" "skills/binance/simple-earn/CHANGELOG.md" && grep -qF "skills/binance/simple-earn/LICENSE.md" "skills/binance/simple-earn/LICENSE.md" && grep -qF "skills/binance/simple-earn/SKILL.md" "skills/binance/simple-earn/SKILL.md" && grep -qF "skills/binance/simple-earn/references/authentication.md" "skills/binance/simple-earn/references/authentication.md" && grep -qF "skills/binance/spot/CHANGELOG.md" "skills/binance/spot/CHANGELOG.md" && grep -qF "skills/binance/spot/LICENSE.md" "skills/binance/spot/LICENSE.md" && grep -qF "skills/binance/spot/SKILL.md" "skills/binance/spot/SKILL.md" && grep -qF "skills/binance/spot/references/authentication.md" "skills/binance/spot/references/authentication.md" && grep -qF "skills/binance/sub-account/CHANGELOG.md" "skills/binance/sub-account/CHANGELOG.md" && grep -qF "skills/binance/sub-account/LICENSE.md" "skills/binance/sub-account/LICENSE.md" && grep -qF "skills/binance/sub-account/SKILL.md" "skills/binance/sub-account/SKILL.md" && grep -qF "skills/binance/sub-account/references/authentication.md" "skills/binance/sub-account/references/authentication.md" && grep -qF "skills/binance/vip-loan/CHANGELOG.md" "skills/binance/vip-loan/CHANGELOG.md" && grep -qF "skills/binance/vip-loan/LICENSE.md" "skills/binance/vip-loan/LICENSE.md" && grep -qF "skills/binance/vip-loan/SKILL.md" "skills/binance/vip-loan/SKILL.md" && grep -qF "skills/binance/vip-loan/references/authentication.md" "skills/binance/vip-loan/references/authentication.md"; then
+  echo "Gold patch already applied."
+  exit 0
+fi
+
+git apply --whitespace=nowarn <<'PATCH'
+diff --git a/skills/binance/algo/CHANGELOG.md b/skills/binance/algo/CHANGELOG.md
+@@ -1,11 +0,0 @@
+-# Changelog
+-
+-## 1.1.0 - 2026-03-24
+-
+-- Environmental variables or files can now be used as input for the API key and secret key.
+-- Fix signature generation for RSA and Ed25519 keys.
+-- Add `Openclaw` metadata to the User Agent header
+-
+-## 1.0.0 - 2026-03-19
+-
+-- Initial release
+\ No newline at end of file
+diff --git a/skills/binance/algo/LICENSE.md b/skills/binance/algo/LICENSE.md
+@@ -1,9 +0,0 @@
+-MIT License
+-
+-Copyright (c) 2026 Binance
+-
+-Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+-
+-The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+-
+-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+\ No newline at end of file
+diff --git a/skills/binance/algo/SKILL.md b/skills/binance/algo/SKILL.md
+@@ -1,232 +0,0 @@
+----
+-name: algo
+-description: Binance Algo request using the Binance API. Authentication requires API key and secret key. 
+-metadata:
+-  version: 1.1.0
+-  author: Binance
+-  openclaw:
+-    requires:
+-      bins:
+-        - curl
+-        - openssl
+-        - date
+-    homepage: https://github.com/binance/binance-skills-hub/tree/main/skills/binance/algo/SKILL.md
+-license: MIT
+----
+-
+-# Binance Algo Skill
+-
+-Algo request on Binance using authenticated API endpoints. Requires API key and secret key for certain endpoints. Return the result in JSON format.
+-
+-## Quick Reference
+-
+-| Endpoint | Description | Required | Optional | Authentication |
+-|----------|-------------|----------|----------|----------------|
+-| `/sapi/v1/algo/futures/order` (DELETE) | Cancel Algo Order(TRADE) | algoId | recvWindow | Yes |
+-| `/sapi/v1/algo/futures/openOrders` (GET) | Query Current Algo Open Orders(USER_DATA) | None | recvWindow | Yes |
+-| `/sapi/v1/algo/futures/historicalOrders` (GET) | Query Historical Algo Orders(USER_DATA) | None | symbol, side, startTime, endTime, page, pageSize, recvWindow | Yes |
+-| `/sapi/v1/algo/futures/subOrders` (GET) | Query Sub Orders(USER_DATA) | algoId | page, pageSize, recvWindow | Yes |
+-| `/sapi/v1/algo/futures/newOrderTwap` (POST) | Time-Weighted Average Price(Twap) New Order(TRADE) | symbol, side, quantity, duration | positionSide, clientAlgoId, reduceOnly, limitPrice, recvWindow | Yes |
+-| `/sapi/v1/algo/futures/newOrderVp` (POST) | Volume Participation(VP) New Order (TRADE) | symbol, side, quantity, urgency | positionSide, clientAlgoId, reduceOnly, limitPrice, recvWindow | Yes |
+-| `/sapi/v1/algo/spot/order` (DELETE) | Cancel Algo Order(TRADE) | algoId | recvWindow | Yes |
+-| `/sapi/v1/algo/spot/openOrders` (GET) | Query Current Algo Open Orders(USER_DATA) | None | recvWindow | Yes |
+-| `/sapi/v1/algo/spot/historicalOrders` (GET) | Query Historical Algo Orders(USER_DATA) | None | symbol, side, startTime, endTime, page, pageSize, recvWindow | Yes |
+-| `/sapi/v1/algo/spot/subOrders` (GET) | Query Sub Orders(USER_DATA) | algoId | page, pageSize, recvWindow | Yes |
+-| `/sapi/v1/algo/spot/newOrderTwap` (POST) | Time-Weighted Average Price(Twap) New Order(TRADE) | symbol, side, quantity, duration | clientAlgoId, limitPrice | Yes |
+-
+----
+-
+-## Parameters
+-
+-### Common Parameters
+-
+-* **algoId**: eg. 14511 (e.g., 1)
+-* **recvWindow**:  (e.g., 5000)
+-* **symbol**: Trading symbol eg. BTCUSDT (e.g., BTCUSDT)
+-* **side**: BUY or SELL (e.g., BUY)
+-* **startTime**: in milliseconds  eg.1641522717552 (e.g., 1623319461670)
+-* **endTime**: in milliseconds  eg.1641522526562 (e.g., 1641782889000)
+-* **page**: Default is 1 (e.g., 1)
+-* **pageSize**: MIN 1, MAX 100; Default 100 (e.g., 100)
+-* **symbol**: Trading symbol eg. BTCUSDT (e.g., BTCUSDT)
+-* **side**: Trading side ( BUY or SELL ) (e.g., BUY)
+-* **positionSide**: Default `BOTH` for One-way Mode ; `LONG` or `SHORT` for Hedge Mode. It must be sent in Hedge Mode. (e.g., BOTH)
+-* **quantity**: Quantity of base asset; Maximum notional per order is 200k, 2mm or 10mm, depending on symbol. Please reduce your size if you order is above the maximum notional per order. (e.g., 1.0)
+-* **duration**: Duration for TWAP orders in seconds. [300, 86400] (e.g., 5000)
+-* **clientAlgoId**: A unique id among Algo orders (length should be 32 characters)， If it is not sent, we will give default value (e.g., 1)
+-* **reduceOnly**: "true" or "false". Default "false"; Cannot be sent in Hedge Mode; Cannot be sent when you open a position
+-* **limitPrice**: Limit price of the order; If it is not sent, will place order by market price by default (e.g., 1.0)
+-* **urgency**: Represent the relative speed of the current execution; ENUM: LOW, MEDIUM, HIGH (e.g., LOW)
+-
+-
+-## Authentication
+-
+-For endpoints that require authentication, you will need to provide Binance API credentials.
+-Required credentials:
+-
+-* apiKey: Your Binance API key (for header)
+-* secretKey: Your Binance API secret (for signing)
+-
+-Base URLs:
+-* Mainnet: https://api.binance.com
+-
+-## Security
+-
+-### Share Credentials
+-
+-Users can provide Binance API credentials in different ways. The agent will try to retrieve automatically with the two first ways the credentials, but users can also explicitly tell the agent that they have set the credentials or stored them in a `.env` file, and the agent should re-read that file when they do. The agent can also make http requests with the two first methods without user confirmation.
+-
+-1. **Environment variables**
+-
+-Search for the following specific variables only (never dump the full environment):
+-
+-**Authorized environment variables**
+-- Mainnet: `BINANCE_API_KEY` and `BINANCE_SECRET_KEY`
+-
+-Read and use in a single exec call so the raw key never enters the agent's context:
+-```bash
+-KEY="$BINANCE_API_KEY"
+-SECRET="$BINANCE_SECRET_KEY"
+-
+-response=$(curl -s -X GET "$URL" \
+-  -H "X-MBX-APIKEY: $KEY" \
+-  --data-urlencode "param1=value1")
+-
+-echo "$response"
+-```
+-
+-Environment variables must be set before OpenClaw starts. They are inherited at process startup and cannot be injected into a running instance. If you need to add or update credentials without restarting, use a secrets file (see option 2).
+-
+-2. **Secrets file (.env)**
+-
+-Check `~/.openclaw/secrets.env` , `~/.env`, or a `.env` file in the workspace. Read individual keys with `grep`, never source the full file:
+-```bash
+-# Try all credential locations in order
+-API_KEY=$(grep '^BINANCE_API_KEY=' ~/.openclaw/secrets.env 2>/dev/null | cut -d= -f2-)
+-SECRET_KEY=$(grep '^BINANCE_SECRET_KEY=' ~/.openclaw/secrets.env 2>/dev/null | cut -d= -f2-)
+-
+-# Fallback: search .env in known directories (KEY=VALUE then raw line format)
+-for dir in ~/.openclaw ~; do
+-  [ -n "$API_KEY" ] && break
+-  env_file="$dir/.env"
+-  [ -f "$env_file" ] || continue
+-
+-  # Read first two lines
+-  line1=$(sed -n '1p' "$env_file")
+-  line2=$(sed -n '2p' "$env_file")
+-
+-  # Check if lines contain '=' indicating KEY=VALUE format
+-  if [[ "$line1" == *=* && "$line2" == *=* ]]; then
+-    API_KEY=$(grep '^BINANCE_API_KEY=' "$env_file" 2>/dev/null | cut -d= -f2-)
+-    SECRET_KEY=$(grep '^BINANCE_SECRET_KEY=' "$env_file" 2>/dev/null | cut -d= -f2-)
+-  else
+-    # Treat lines as raw values
+-    API_KEY="$line1"
+-    SECRET_KEY="$line2"
+-  fi
+-done
+-```
+-
+-This file can be updated at any time without restarting OpenClaw, keys are read fresh on each invocation. Users can tell you the variables are now set or stored in a `.env` file, and you should re-read that file when they do.
+-
+-3. **Inline file**
+-
+-Sending a file where the content is in the following format:
+-
+-```bash
+-abc123...xyz
+-secret123...key
+-```
+-
+-* Never run `printenv`, `env`, `export`, or set without a specific variable name
+-* Never run `grep` on `env` files without anchoring to a specific key ('`^VARNAME='`)
+-* Never source a secrets file into the shell environment (`source .env` or `. .env`)
+-* Only read credentials explicitly needed for the current task
+-* Never echo or log raw credentials in output or replies
+-* Never commit `TOOLS.md` to version control if it contains real credentials — add it to `.gitignore`
+-
+-### Never Disclose API Key and Secret
+-
+-Never disclose the location of the API key and secret file.
+-
+-Never send the API key and secret to any website other than Mainnet and Testnet.
+-
+-### Never Display Full Secrets
+-
+-When showing credentials to users:
+-- **API Key:** Show first 5 + last 4 characters: `su1Qc...8akf`
+-- **Secret Key:** Always mask, show only last 5: `***...aws1`
+-
+-Example response when asked for credentials:
+-Account: main
+-API Key: su1Qc...8akf
+-Secret: ***...aws1
+-
+-### Listing Accounts
+-
+-When listing accounts, show names and environment only — never keys:
+-Binance Accounts:
+-* main (Mainnet)
+-* futures-keys (Mainnet)
+-
+-### Transactions in Mainnet
+-
+-When performing transactions in mainnet, always confirm with the user before proceeding by asking them to write "CONFIRM" to proceed.
+-
+----
+-
+-## Binance Accounts
+-
+-### main
+-- API Key: your_mainnet_api_key
+-- Secret: your_mainnet_secret
+-
+-### TOOLS.md Structure
+-
+-```bash
+-## Binance Accounts
+-
+-### main
+-- API Key: abc123...xyz
+-- Secret: secret123...key
+-- Description: Primary trading account
+-
+-### futures-keys
+-- API Key: futures789...def
+-- Secret: futuressecret...uvw
+-- Description: Futures trading account
+-```
+-
+-## Agent Behavior
+-
+-1. Credentials requested: Mask secrets (show last 5 chars only)
+-2. Listing accounts: Show names and environment, never keys
+-3. Account selection: Ask if ambiguous, default to main
+-4. When doing a transaction in mainnet, confirm with user before by asking to write "CONFIRM" to proceed
+-5. New credentials: Prompt for name, environment, signing mode
+-
+-## Adding New Accounts
+-
+-When user provides new credentials by Inline file or message:
+-
+-* Ask for account name
+-* Store in `TOOLS.md` with masked display confirmation 
+-
+-## Signing Requests
+-
+-For trading endpoints that require a signature:
+-
+-1. **Detect key type first**, inspect the secret key format before signing.
+-2. Build query string with all parameters, including the timestamp (Unix ms).
+-3. Percent-encode the parameters using UTF-8 according to RFC 3986.
+-4. Sign query string with secretKey using HMAC SHA256, RSA, or Ed25519 (depending on the account configuration).
+-5. Append signature to query string.
+-6. Include `X-MBX-APIKEY` header.
+-
+-Otherwise, do not perform steps 4–6.
+-
+-## User Agent Header
+-
+-Include `User-Agent` header with the following string: `binance-algo/1.1.0 (Skill)`
+-
+-See [`references/authentication.md`](./references/authentication.md) for implementation details.
+diff --git a/skills/binance/algo/references/authentication.md b/skills/binance/algo/references/authentication.md
+@@ -1,126 +0,0 @@
+-# Binance Authentication
+-
+-All trading endpoints require either HMAC SHA256, RSA, or Ed25519 signed requests.
+-**Always detect the key type before signing**, do not assume HMAC.
+-
+-## Base URLs
+-
+-| Environment | URL |
+-|-------------|-----|
+-| Mainnet | https://api.binance.com |
+-
+-## Required Headers
+-
+-* `X-MBX-APIKEY`: your_api_key
+-* `User-Agent`: binance-algo/1.1.0 (Skill)
+-
+-## Signing Process
+-
+-### Step 1: Build Query String
+-
+-Include all parameters plus `timestamp` (current Unix time in milliseconds):
+-`timestamp=1234567890123`
+-
+-**Optional:** Add `recvWindow` (default 5000ms) for timestamp tolerance.
+-
+-### Step 2: Percent‑Encode Parameters
+-
+-Before generating the signature, **percent‑encode all parameter names and values using UTF‑8 encoding according to RFC 3986.**
+-Unreserved characters that must not be encoded: `A-Z a-z 0-9 - _ . ~`
+-
+-- Chinese characters example:
+-`symbol=这是测试币456`
+-
+-Percent‑encoded:
+-`symbol=%E8%BF%99%E6%98%AF%E6%B5%8B%E8%AF%95%E5%B8%81456`
+-
+-**Important:**
+-The exact encoded query string must be used for both signing and the HTTP request.
+-
+-### Step 3: Generate Signature
+-
+-Generate the signature from the encoded query string.
+-
+-#### HMAC SHA256 signature
+-
+-Create HMAC SHA256 signature of the query string using your secret key:
+-
+-```bash
+-# Example using openssl
+-echo -n "timestamp=1234567890123" | \
+-  openssl dgst -sha256 -hmac "your_secret_key"
+-```
+-
+-#### RSA signature
+-
+-Create RSA signature of the query string using your private key:
+-
+-```bash
+-# Example using openssl
+-echo -n "timestamp=1234567890123" | \
+-  openssl dgst -sha256 -sign private_key.pem | base64
+-```
+-
+-#### Ed25519 signature
+-
+-Create Ed25519 signature of the query string using your private key:
+-
+-```bash
+-# Example using openssl
+-echo -n "timestamp=1234567890123" | \
+-  openssl pkeyutl -sign -inkey private_key.pem | base64
+-```
+-
+-### Step 4: Append Signature
+-
+-Add signature parameter to the query string:
+-`timestamp=1234567890123&signature=abc123...`
+-
+-### Step 5: Add Product User Agent Header
+-
+-Include `User-Agent` header with the following string: `binance-algo/1.1.0 (Skill)`
+-
+-#### Complete Example
+-
+-Request:
+-```bash
+-curl -X GET "https://api.binance.com/sapi/v1/algo/futures/openOrders" \
+-  -H "X-MBX-APIKEY: your_api_key" \
+-  -H "User-Agent: binance-algo/1.1.0 (Skill)" \
+-  -d "timestamp=1234567890123&signature=..."
+-```
+-
+-```bash
+-#!/bin/bash
+-API_KEY="your_api_key"
+-SECRET_KEY="your_secret_key"
+-BASE_URL="https://api.binance.com"  
+-
+-# Get current timestamp
+-TIMESTAMP=$(date +%s000)
+-
+-# Build query string (without signature)
+-QUERY="timestamp=${TIMESTAMP}"
+-
+-# Generate signature
+-# For HMAC SHA256:
+-SIGNATURE=$(echo -n "$QUERY" | openssl dgst -sha256 -hmac "$SECRET_KEY" | cut -d' ' -f2)
+-
+-# For RSA or Ed25519, replace the above line with the appropriate signing command.
+-##  RSA:
+-# SIGNATURE=$(echo -n "$QUERY" | openssl dgst -sha256 -sign private_key.pem | base64)
+-
+-##  Ed25519:
+-# SIGNATURE=$(echo -n "$QUERY" | openssl pkeyutl -sign -inkey private_key.pem | base64)
+-
+-# Make request
+-curl -X GET "${BASE_URL}/sapi/v1/algo/futures/openOrders?${QUERY}&signature=${SIGNATURE}" \
+-  -H "X-MBX-APIKEY: ${API_KEY}"\
+-  -H "User-Agent: binance-algo/1.1.0 (Skill)"
+-```
+-
+-### Security Notes
+-
+-* Never share your secret key
+-* Use IP whitelist in Binance API settings
+-* Enable only required permissions (spot trading, no withdrawals)
+diff --git a/skills/binance/alpha/CHANGELOG.md b/skills/binance/alpha/CHANGELOG.md
+@@ -1,11 +0,0 @@
+-# Changelog
+-
+-## 1.1.0 - 2026-03-24
+-
+-- Environmental variables or files can now be used as input for the API key and secret key.
+-- Fix signature generation for RSA and Ed25519 keys.
+-- Add `Openclaw` metadata to the User Agent header
+-
+-## 1.0.0 - 2026-03-10
+-
+-- Initial release
+\ No newline at end of file
+diff --git a/skills/binance/alpha/LICENSE.md b/skills/binance/alpha/LICENSE.md
+@@ -1,9 +0,0 @@
+-MIT License
+-
+-Copyright (c) 2026 Binance
+-
+-Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+-
+-The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+-
+-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+\ No newline at end of file
+diff --git a/skills/binance/alpha/SKILL.md b/skills/binance/alpha/SKILL.md
+@@ -1,216 +0,0 @@
+----
+-name: alpha
+-description: Binance Alpha request using the Binance API. Authentication requires API key and secret key. 
+-metadata:
+-  version: 1.1.0
+-  author: Binance
+-  openclaw:
+-    requires:
+-      bins:
+-        - curl
+-        - openssl
+-        - date
+-    homepage: https://github.com/binance/binance-skills-hub/tree/main/skills/binance/alpha/SKILL.md
+-license: MIT
+----
+-
+-# Binance Alpha Skill
+-
+-Alpha request on Binance using authenticated API endpoints. Requires API key and secret key for certain endpoints. Return the result in JSON format.
+-
+-## Quick Reference
+-
+-| Endpoint | Description | Required | Optional | Authentication |
+-|----------|-------------|----------|----------|----------------|
+-| `/bapi/defi/v1/public/alpha-trade/ticker` (GET) | Ticker (24hr Price Statistics) | symbol | None | No |
+-| `/bapi/defi/v1/public/alpha-trade/agg-trades` (GET) | Aggregated Trades | symbol | fromId, startTime, endTime, limit | No |
+-| `/bapi/defi/v1/public/alpha-trade/get-exchange-info` (GET) | Get Exchange Info | None | None | No |
+-| `/bapi/defi/v1/public/alpha-trade/klines` (GET) | Klines (Candlestick Data) | symbol, interval | limit, startTime, endTime | No |
+-| `/bapi/defi/v1/public/wallet-direct/buw/wallet/cex/alpha/all/token/list` (GET) | Token List | None | None | No |
+-
+----
+-
+-## Parameters
+-
+-### Common Parameters
+-
+-* **symbol**: e.g., "ALPHA_175USDT" – use token ID from Token List
+-* **fromId**: starting trade ID to fetch from (e.g., 1)
+-* **startTime**: start timestamp (milliseconds) (e.g., 1623319461670)
+-* **endTime**: end timestamp (milliseconds) (e.g., 1641782889000)
+-* **limit**: number of results to return (default 500, max 1000) (e.g., 500)
+-* **interval**: e.g., "1h" – supported intervals: 1s, 15s, 1m, 3m, 5m, 15m, 30m, 1h, 2h, 4h, 6h, 8h, 12h, 1d, 3d, 1w, 1M
+-
+-
+-## Authentication
+-
+-For endpoints that require authentication, you will need to provide Binance API credentials.
+-Required credentials:
+-
+-* apiKey: Your Binance API key (for header)
+-* secretKey: Your Binance API secret (for signing)
+-
+-Base URLs:
+-* Mainnet: https://www.binance.com
+-
+-## Security
+-
+-### Share Credentials
+-
+-Users can provide Binance API credentials in different ways. The agent will try to retrieve automatically with the two first ways the credentials, but users can also explicitly tell the agent that they have set the credentials or stored them in a `.env` file, and the agent should re-read that file when they do. The agent can also make http requests with the two first methods without user confirmation.
+-
+-1. **Environment variables**
+-
+-Search for the following specific variables only (never dump the full environment):
+-
+-**Authorized environment variables**
+-- Mainnet: `BINANCE_API_KEY` and `BINANCE_SECRET_KEY`
+-
+-Read and use in a single exec call so the raw key never enters the agent's context:
+-```bash
+-KEY="$BINANCE_API_KEY"
+-SECRET="$BINANCE_SECRET_KEY"
+-
+-response=$(curl -s -X GET "$URL" \
+-  -H "X-MBX-APIKEY: $KEY" \
+-  --data-urlencode "param1=value1")
+-
+-echo "$response"
+-```
+-
+-Environment variables must be set before OpenClaw starts. They are inherited at process startup and cannot be injected into a running instance. If you need to add or update credentials without restarting, use a secrets file (see option 2).
+-
+-2. **Secrets file (.env)**
+-
+-Check `~/.openclaw/secrets.env` , `~/.env`, or a `.env` file in the workspace. Read individual keys with `grep`, never source the full file:
+-```bash
+-# Try all credential locations in order
+-API_KEY=$(grep '^BINANCE_API_KEY=' ~/.openclaw/secrets.env 2>/dev/null | cut -d= -f2-)
+-SECRET_KEY=$(grep '^BINANCE_SECRET_KEY=' ~/.openclaw/secrets.env 2>/dev/null | cut -d= -f2-)
+-
+-# Fallback: search .env in known directories (KEY=VALUE then raw line format)
+-for dir in ~/.openclaw ~; do
+-  [ -n "$API_KEY" ] && break
+-  env_file="$dir/.env"
+-  [ -f "$env_file" ] || continue
+-
+-  # Read first two lines
+-  line1=$(sed -n '1p' "$env_file")
+-  line2=$(sed -n '2p' "$env_file")
+-
+-  # Check if lines contain '=' indicating KEY=VALUE format
+-  if [[ "$line1" == *=* && "$line2" == *=* ]]; then
+-    API_KEY=$(grep '^BINANCE_API_KEY=' "$env_file" 2>/dev/null | cut -d= -f2-)
+-    SECRET_KEY=$(grep '^BINANCE_SECRET_KEY=' "$env_file" 2>/dev/null | cut -d= -f2-)
+-  else
+-    # Treat lines as raw values
+-    API_KEY="$line1"
+-    SECRET_KEY="$line2"
+-  fi
+-done
+-```
+-
+-This file can be updated at any time without restarting OpenClaw, keys are read fresh on each invocation. Users can tell you the variables are now set or stored in a `.env` file, and you should re-read that file when they do.
+-
+-3. **Inline file**
+-
+-Sending a file where the content is in the following format:
+-
+-```bash
+-abc123...xyz
+-secret123...key
+-```
+-
+-* Never run `printenv`, `env`, `export`, or set without a specific variable name
+-* Never run `grep` on `env` files without anchoring to a specific key ('`^VARNAME='`)
+-* Never source a secrets file into the shell environment (`source .env` or `. .env`)
+-* Only read credentials explicitly needed for the current task
+-* Never echo or log raw credentials in output or replies
+-* Never commit `TOOLS.md` to version control if it contains real credentials — add it to `.gitignore`
+-
+-### Never Disclose API Key and Secret
+-
+-Never disclose the location of the API key and secret file.
+-
+-Never send the API key and secret to any website other than Mainnet and Testnet.
+-
+-### Never Display Full Secrets
+-
+-When showing credentials to users:
+-- **API Key:** Show first 5 + last 4 characters: `su1Qc...8akf`
+-- **Secret Key:** Always mask, show only last 5: `***...aws1`
+-
+-Example response when asked for credentials:
+-Account: main
+-API Key: su1Qc...8akf
+-Secret: ***...aws1
+-
+-### Listing Accounts
+-
+-When listing accounts, show names and environment only — never keys:
+-Binance Accounts:
+-* main (Mainnet)
+-* futures-keys (Mainnet)
+-
+-### Transactions in Mainnet
+-
+-When performing transactions in mainnet, always confirm with the user before proceeding by asking them to write "CONFIRM" to proceed.
+-
+----
+-
+-## Binance Accounts
+-
+-### main
+-- API Key: your_mainnet_api_key
+-- Secret: your_mainnet_secret
+-
+-### TOOLS.md Structure
+-
+-```bash
+-## Binance Accounts
+-
+-### main
+-- API Key: abc123...xyz
+-- Secret: secret123...key
+-- Description: Primary trading account
+-
+-
+-### futures-keys
+-- API Key: futures789...def
+-- Secret: futuressecret...uvw
+-- Description: Futures trading account
+-```
+-
+-## Agent Behavior
+-
+-1. Credentials requested: Mask secrets (show last 5 chars only)
+-2. Listing accounts: Show names and environment, never keys
+-3. Account selection: Ask if ambiguous, default to main
+-4. When doing a transaction in mainnet, confirm with user before by asking to write "CONFIRM" to proceed
+-5. New credentials: Prompt for name, environment, signing mode
+-
+-## Adding New Accounts
+-
+-When user provides new credentials by Inline file or message:
+-
+-* Ask for account name
+-* Store in `TOOLS.md` with masked display confirmation 
+-
+-## Signing Requests
+-
+-For trading endpoints that require a signature:
+-
+-1. **Detect key type first**, inspect the secret key format before signing.
+-2. Build query string with all parameters, including the timestamp (Unix ms).
+-3. Percent-encode the parameters using UTF-8 according to RFC 3986.
+-4. Sign query string with secretKey using HMAC SHA256, RSA, or Ed25519 (depending on the account configuration).
+-5. Append signature to query string.
+-6. Include `X-MBX-APIKEY` header.
+-
+-Otherwise, do not perform steps 4–6.
+-
+-## User Agent Header
+-
+-Include `User-Agent` header with the following string: `binance-alpha/1.1.0 (Skill)`
+-
+-See [`references/authentication.md`](./references/authentication.md) for implementation details.
+diff --git a/skills/binance/alpha/references/authentication.md b/skills/binance/alpha/references/authentication.md
+@@ -1,126 +0,0 @@
+-# Binance Authentication
+-
+-All trading endpoints require either HMAC SHA256, RSA, or Ed25519 signed requests.
+-**Always detect the key type before signing**, do not assume HMAC.
+-
+-## Base URLs
+-
+-| Environment | URL |
+-|-------------|-----|
+-| Mainnet | https://www.binance.com |
+-
+-## Required Headers
+-
+-* `X-MBX-APIKEY`: your_api_key
+-* `User-Agent`: binance-alpha/1.1.0 (Skill)
+-
+-## Signing Process
+-
+-### Step 1: Build Query String
+-
+-Include all parameters plus `timestamp` (current Unix time in milliseconds):
+-`symbol=...&timestamp=1234567890123`
+-
+-**Optional:** Add `recvWindow` (default 5000ms) for timestamp tolerance.
+-
+-### Step 2: Percent‑Encode Parameters
+-
+-Before generating the signature, **percent‑encode all parameter names and values using UTF‑8 encoding according to RFC 3986.**
+-Unreserved characters that must not be encoded: `A-Z a-z 0-9 - _ . ~`
+-
+-- Chinese characters example:
+-`symbol=这是测试币456`
+-
+-Percent‑encoded:
+-`symbol=%E8%BF%99%E6%98%AF%E6%B5%8B%E8%AF%95%E5%B8%81456`
+-
+-**Important:**
+-The exact encoded query string must be used for both signing and the HTTP request.
+-
+-### Step 3: Generate Signature
+-
+-Generate the signature from the encoded query string.
+-
+-#### HMAC SHA256 signature
+-
+-Create HMAC SHA256 signature of the query string using your secret key:
+-
+-```bash
+-# Example using openssl
+-echo -n "symbol=...&timestamp=1234567890123" | \
+-  openssl dgst -sha256 -hmac "your_secret_key"
+-```
+-
+-#### RSA signature
+-
+-Create RSA signature of the query string using your private key:
+-
+-```bash
+-# Example using openssl
+-echo -n "symbol=...&timestamp=1234567890123" | \
+-  openssl dgst -sha256 -sign private_key.pem | base64
+-```
+-
+-#### Ed25519 signature
+-
+-Create Ed25519 signature of the query string using your private key:
+-
+-```bash
+-# Example using openssl
+-echo -n "symbol=...&timestamp=1234567890123" | \
+-  openssl pkeyutl -sign -inkey private_key.pem | base64
+-```
+-
+-### Step 4: Append Signature
+-
+-Add signature parameter to the query string:
+-`symbol=...&timestamp=1234567890123&signature=abc123...`
+-
+-### Step 5: Add Product User Agent Header
+-
+-Include `User-Agent` header with the following string: `binance-alpha/1.1.0 (Skill)`
+-
+-#### Complete Example
+-
+-Request:
+-```bash
+-curl -X GET "https://www.binance.com/bapi/defi/v1/public/alpha-trade/ticker" \
+-  -H "X-MBX-APIKEY: your_api_key" \
+-  -H "User-Agent: binance-alpha/1.1.0 (Skill)" \
+-  -d "symbol=...&timestamp=1234567890123&signature=..."
+-```
+-
+-```bash
+-#!/bin/bash
+-API_KEY="your_api_key"
+-SECRET_KEY="your_secret_key"
+-BASE_URL="https://www.binance.com"  
+-
+-# Get current timestamp
+-TIMESTAMP=$(date +%s000)
+-
+-# Build query string (without signature)
+-QUERY="symbol=...&timestamp=${TIMESTAMP}"
+-
+-# Generate signature
+-# For HMAC SHA256:
+-SIGNATURE=$(echo -n "$QUERY" | openssl dgst -sha256 -hmac "$SECRET_KEY" | cut -d' ' -f2)
+-
+-# For RSA or Ed25519, replace the above line with the appropriate signing command.
+-##  RSA:
+-# SIGNATURE=$(echo -n "$QUERY" | openssl dgst -sha256 -sign private_key.pem | base64)
+-
+-##  Ed25519:
+-# SIGNATURE=$(echo -n "$QUERY" | openssl pkeyutl -sign -inkey private_key.pem | base64)
+-
+-# Make request
+-curl -X GET "${BASE_URL}/bapi/defi/v1/public/alpha-trade/ticker?${QUERY}&signature=${SIGNATURE}" \
+-  -H "X-MBX-APIKEY: ${API_KEY}"\
+-  -H "User-Agent: binance-alpha/1.1.0 (Skill)"
+-```
+-
+-### Security Notes
+-
+-* Never share your secret key
+-* Use IP whitelist in Binance API settings
+-* Enable only required permissions (spot trading, no withdrawals)
+diff --git a/skills/binance/assets/CHANGELOG.md b/skills/binance/assets/CHANGELOG.md
+@@ -1,11 +0,0 @@
+-# Changelog
+-
+-## 1.1.0 - 2026-03-24
+-
+-- Environmental variables or files can now be used as input for the API key and secret key.
+-- Fix signature generation for RSA and Ed25519 keys.
+-- Add `Openclaw` metadata to the User Agent header
+-
+-## 1.0.0 - 2026-03-10
+-
+-- Initial release
+\ No newline at end of file
+diff --git a/skills/binance/assets/LICENSE.md b/skills/binance/assets/LICENSE.md
+@@ -1,9 +0,0 @@
+-MIT License
+-
+-Copyright (c) 2026 Binance
+-
+-Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+-
+-The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+-
+-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+\ No newline at end of file
+diff --git a/skills/binance/assets/SKILL.md b/skills/binance/assets/SKILL.md
+@@ -1,316 +0,0 @@
+----
+-name: assets
+-description: Binance Assets request using the Binance API. Authentication requires API key and secret key. 
+-metadata:
+-  version: 1.1.0
+-  author: Binance
+-  openclaw:
+-    requires:
+-      bins:
+-        - curl
+-        - openssl
+-        - date
+-    homepage: https://github.com/binance/binance-skills-hub/tree/main/skills/binance/assets/SKILL.md
+-license: MIT
+----
+-
+-# Binance Assets Skill
+-
+-Assets request on Binance using authenticated API endpoints. Requires API key and secret key for certain endpoints. Return the result in JSON format.
+-
+-## Quick Reference
+-
+-| Endpoint | Description | Required | Optional | Authentication |
+-|----------|-------------|----------|----------|----------------|
+-| `/sapi/v1/account/apiTradingStatus` (GET) | Account API Trading Status (USER_DATA) | None | recvWindow | Yes |
+-| `/sapi/v1/account/info` (GET) | Account info (USER_DATA) | None | recvWindow | Yes |
+-| `/sapi/v1/account/status` (GET) | Account Status (USER_DATA) | None | recvWindow | Yes |
+-| `/sapi/v1/account/apiRestrictions` (GET) | Get API Key Permission (USER_DATA) | None | recvWindow | Yes |
+-| `/sapi/v1/accountSnapshot` (GET) | Daily Account Snapshot (USER_DATA) | type | startTime, endTime, limit, recvWindow | Yes |
+-| `/sapi/v1/account/disableFastWithdrawSwitch` (POST) | Disable Fast Withdraw Switch (USER_DATA) | None | recvWindow | Yes |
+-| `/sapi/v1/account/enableFastWithdrawSwitch` (POST) | Enable Fast Withdraw Switch (USER_DATA) | None | recvWindow | Yes |
+-| `/sapi/v1/bnbBurn` (POST) | Toggle BNB Burn On Spot Trade And Margin Interest (USER_DATA) | None | spotBNBBurn, interestBNBBurn, recvWindow | Yes |
+-| `/sapi/v1/asset/assetDetail` (GET) | Asset Detail (USER_DATA) | None | asset, recvWindow | Yes |
+-| `/sapi/v1/asset/dust-btc` (POST) | Get Assets That Can Be Converted Into BNB (USER_DATA) | None | accountType, recvWindow | Yes |
+-| `/sapi/v1/asset/assetDividend` (GET) | Asset Dividend Record (USER_DATA) | None | asset, startTime, endTime, limit, recvWindow | Yes |
+-| `/sapi/v1/asset/ledger-transfer/cloud-mining/queryByPage` (GET) | Get Cloud-Mining payment and refund history (USER_DATA) | startTime, endTime | tranId, clientTranId, asset, current, size | Yes |
+-| `/sapi/v1/asset/dust-convert/convert` (POST) | Dust Convert (USER_DATA) | asset | clientId, targetAsset, thirdPartyClientId, dustQuotaAssetToTargetAssetPrice | Yes |
+-| `/sapi/v1/asset/dust-convert/query-convertible-assets` (POST) | Dust Convertible Assets (USER_DATA) | targetAsset | dustQuotaAssetToTargetAssetPrice | Yes |
+-| `/sapi/v1/asset/dribblet` (GET) | DustLog(USER_DATA) | None | accountType, startTime, endTime, recvWindow | Yes |
+-| `/sapi/v1/asset/dust` (POST) | Dust Transfer (USER_DATA) | asset | accountType, recvWindow | Yes |
+-| `/sapi/v1/asset/get-funding-asset` (POST) | Funding Wallet (USER_DATA) | None | asset, needBtcValuation, recvWindow | Yes |
+-| `/sapi/v1/spot/open-symbol-list` (GET) | Get Open Symbol List (MARKET_DATA) | None | None | No |
+-| `/sapi/v1/asset/custody/transfer-history` (GET) | Query User Delegation History(For Master Account)(USER_DATA) | email, startTime, endTime | type, asset, current, size, recvWindow | Yes |
+-| `/sapi/v1/asset/transfer` (GET) | Query User Universal Transfer History(USER_DATA) | type | startTime, endTime, current, size, fromSymbol, toSymbol, recvWindow | Yes |
+-| `/sapi/v1/asset/transfer` (POST) | User Universal Transfer (USER_DATA) | type, asset, amount | fromSymbol, toSymbol, recvWindow | Yes |
+-| `/sapi/v1/asset/wallet/balance` (GET) | Query User Wallet Balance (USER_DATA) | None | quoteAsset, recvWindow | Yes |
+-| `/sapi/v1/spot/delist-schedule` (GET) | Get symbols delist schedule for spot (MARKET_DATA) | None | recvWindow | No |
+-| `/sapi/v1/asset/tradeFee` (GET) | Trade Fee (USER_DATA) | None | symbol, recvWindow | Yes |
+-| `/sapi/v3/asset/getUserAsset` (POST) | User Asset (USER_DATA) | None | asset, needBtcValuation, recvWindow | Yes |
+-| `/sapi/v1/capital/config/getall` (GET) | All Coins' Information (USER_DATA) | None | recvWindow | Yes |
+-| `/sapi/v1/capital/deposit/address` (GET) | Deposit Address(supporting network) (USER_DATA) | coin | network, amount, recvWindow | Yes |
+-| `/sapi/v1/capital/deposit/hisrec` (GET) | Deposit History (supporting network) (USER_DATA) | None | includeSource, coin, status, startTime, endTime, offset, limit, recvWindow, txId | Yes |
+-| `/sapi/v1/capital/deposit/address/list` (GET) | Fetch deposit address list with network(USER_DATA) | coin | network | Yes |
+-| `/sapi/v1/capital/withdraw/address/list` (GET) | Fetch withdraw address list (USER_DATA) | None | None | Yes |
+-| `/sapi/v1/capital/withdraw/quota` (GET) | Fetch withdraw quota (USER_DATA) | None | None | Yes |
+-| `/sapi/v1/capital/deposit/credit-apply` (POST) | One click arrival deposit apply (for expired address deposit) (USER_DATA) | None | depositId, txId, subAccountId, subUserId | Yes |
+-| `/sapi/v1/capital/withdraw/history` (GET) | Withdraw History (supporting network) (USER_DATA) | None | coin, withdrawOrderId, status, offset, limit, idList, startTime, endTime, recvWindow | Yes |
+-| `/sapi/v1/capital/withdraw/apply` (POST) | Withdraw(USER_DATA) | coin, address, amount | withdrawOrderId, network, addressTag, transactionFeeFlag, name, walletType, recvWindow | Yes |
+-| `/sapi/v1/system/status` (GET) | System Status (System) | None | None | No |
+-| `/sapi/v1/addressVerify/list` (GET) | Fetch address verification list (USER_DATA) | None | recvWindow | Yes |
+-| `/sapi/v1/localentity/broker/deposit/provide-info` (PUT) | Submit Deposit Questionnaire (For local entities that require travel rule) (supporting network) (USER_DATA) | subAccountId, depositId, questionnaire, beneficiaryPii, signature | network, coin, amount, address, addressTag | Yes |
+-| `/sapi/v1/localentity/broker/withdraw/apply` (POST) | Broker Withdraw (for brokers of local entities that require travel rule) (USER_DATA) | address, coin, amount, withdrawOrderId, questionnaire, originatorPii, signature | addressTag, network, addressName, transactionFeeFlag, walletType | Yes |
+-| `/sapi/v2/localentity/deposit/history` (GET) | Deposit History V2 (for local entities that required travel rule) (supporting network) (USER_DATA) | None | depositId, txId, network, coin, retrieveQuestionnaire, startTime, endTime, offset, limit | Yes |
+-| `/sapi/v1/localentity/deposit/history` (GET) | Deposit History (for local entities that required travel rule) (supporting network) (USER_DATA) | None | trId, txId, tranId, network, coin, travelRuleStatus, pendingQuestionnaire, startTime, endTime, offset, limit | Yes |
+-| `/sapi/v2/localentity/deposit/provide-info` (PUT) | Submit Deposit Questionnaire V2 (For local entities that require travel rule) (supporting network) (USER_DATA) | depositId, questionnaire | None | Yes |
+-| `/sapi/v1/localentity/deposit/provide-info` (PUT) | Submit Deposit Questionnaire (For local entities that require travel rule) (supporting network) (USER_DATA) | tranId, questionnaire | None | Yes |
+-| `/sapi/v1/localentity/vasp` (GET) | VASP list (for local entities that require travel rule) (supporting network) (USER_DATA) | None | recvWindow | Yes |
+-| `/sapi/v1/localentity/questionnaire-requirements` (GET) | Check Questionnaire Requirements (for local entities that require travel rule) (supporting network) (USER_DATA) | None | recvWindow | Yes |
+-| `/sapi/v2/localentity/withdraw/history` (GET) | Withdraw History V2 (for local entities that require travel rule) (supporting network) (USER_DATA) | None | trId, txId, withdrawOrderId, network, coin, travelRuleStatus, offset, limit, startTime, endTime, recvWindow | Yes |
+-| `/sapi/v1/localentity/withdraw/history` (GET) | Withdraw History (for local entities that require travel rule) (supporting network) (USER_DATA) | None | trId, txId, withdrawOrderId, network, coin, travelRuleStatus, offset, limit, startTime, endTime, recvWindow | Yes |
+-| `/sapi/v1/localentity/withdraw/apply` (POST) | Withdraw (for local entities that require travel rule) (USER_DATA) | coin, address, amount, questionnaire | withdrawOrderId, network, addressTag, transactionFeeFlag, name, walletType, recvWindow | Yes |
+-
+----
+-
+-## Parameters
+-
+-### Common Parameters
+-
+-* **recvWindow**:  (e.g., 5000)
+-* **type**: 
+-* **startTime**:  (e.g., 1623319461670)
+-* **endTime**:  (e.g., 1641782889000)
+-* **limit**: min 7, max 30, default 7 (e.g., 7)
+-* **spotBNBBurn**: "true" or "false"; Determines whether to use BNB to pay for trading fees on SPOT
+-* **interestBNBBurn**: "true" or "false"; Determines whether to use BNB to pay for margin loan's interest
+-* **asset**: If asset is blank, then query all positive assets user have.
+-* **accountType**: `SPOT` or `MARGIN`,default `SPOT` (e.g., SPOT)
+-* **tranId**: The transaction id (e.g., 1)
+-* **clientTranId**: The unique flag (e.g., 1)
+-* **startTime**:  (e.g., 1623319461670)
+-* **endTime**:  (e.g., 1641782889000)
+-* **current**: current page, default 1, the min value is 1 (e.g., 1)
+-* **size**: page size, default 10, the max value is 100 (e.g., 10)
+-* **asset**: 
+-* **clientId**: A unique id for the request (e.g., 1)
+-* **targetAsset**: 
+-* **thirdPartyClientId**:  (e.g., 1)
+-* **dustQuotaAssetToTargetAssetPrice**:  (e.g., 1.0)
+-* **targetAsset**: 
+-* **needBtcValuation**: true or false
+-* **email**: 
+-* **type**: Delegate/Undelegate
+-* **fromSymbol**: 
+-* **toSymbol**: 
+-* **quoteAsset**: `USDT`, `ETH`, `USDC`, `BNB`, etc. default `BTC` (e.g., BTC)
+-* **symbol**: 
+-* **needBtcValuation**: Whether need btc valuation or not.
+-* **amount**:  (e.g., 1.0)
+-* **coin**: 
+-* **network**: 
+-* **amount**:  (e.g., 1.0)
+-* **includeSource**: Default: `false`, return `sourceAddress`field when set to `true`
+-* **coin**: 
+-* **status**: 0(0:Email Sent, 2:Awaiting Approval 3:Rejected 4:Processing 6:Completed)
+-* **offset**: Default: 0
+-* **txId**:  (e.g., 1)
+-* **depositId**: Deposit record Id, priority use (e.g., 1)
+-* **subAccountId**: Sub-accountId of Cloud user (e.g., 1)
+-* **subUserId**: Sub-userId of parent user (e.g., 1)
+-* **withdrawOrderId**: client side id for withdrawal, if provided in POST `/sapi/v1/capital/withdraw/apply`, can be used here for query. (e.g., 1)
+-* **idList**: id list returned in the response of POST `/sapi/v1/capital/withdraw/apply`, separated by `,`
+-* **address**: 
+-* **addressTag**: Secondary address identifier for coins like XRP,XMR etc.
+-* **transactionFeeFlag**: When making internal transfer, `true` for returning the fee to the destination account; `false` for returning the fee back to the departure account. Default `false`.
+-* **name**: Description of the address. Address book cap is 200, space in name should be encoded into `%20`
+-* **walletType**: The wallet type for withdraw，0-spot wallet ，1-funding wallet. Default walletType is the current "selected wallet" under wallet->Fiat and Spot/Funding->Deposit
+-* **subAccountId**: External user ID. (e.g., 1)
+-* **depositId**: Wallet deposit ID (e.g., 1)
+-* **questionnaire**: JSON format questionnaire answers.
+-* **beneficiaryPii**: JSON format beneficiary Pii.
+-* **address**: 
+-* **signature**: Must be the last parameter.
+-* **addressName**: Description of the address. Address book cap is 200, space in name should be encoded into `%20`
+-* **withdrawOrderId**: withdrawID defined by the client (i.e. client's internal withdrawID) (e.g., 1)
+-* **originatorPii**: JSON format originator Pii, see StandardPii section below
+-* **depositId**: Comma(,) separated list of wallet tran Ids. (e.g., 1)
+-* **retrieveQuestionnaire**: true: return `questionnaire` within response.
+-* **trId**: Comma(,) separated list of travel rule record Ids. (e.g., 1)
+-* **tranId**: Comma(,) separated list of wallet tran Ids. (e.g., 1)
+-* **travelRuleStatus**: 0:Completed,1:Pending,2:Failed
+-* **pendingQuestionnaire**: true: Only return records that pending deposit questionnaire. false/not provided: return all records.
+-* **tranId**: Wallet tran ID (e.g., 1)
+-
+-
+-## Authentication
+-
+-For endpoints that require authentication, you will need to provide Binance API credentials.
+-Required credentials:
+-
+-* apiKey: Your Binance API key (for header)
+-* secretKey: Your Binance API secret (for signing)
+-
+-Base URLs:
+-* Mainnet: https://api.binance.com
+-
+-## Security
+-
+-### Share Credentials
+-
+-Users can provide Binance API credentials in different ways. The agent will try to retrieve automatically with the two first ways the credentials, but users can also explicitly tell the agent that they have set the credentials or stored them in a `.env` file, and the agent should re-read that file when they do. The agent can also make http requests with the two first methods without user confirmation.
+-
+-1. **Environment variables**
+-
+-Search for the following specific variables only (never dump the full environment):
+-
+-**Authorized environment variables**
+-- Mainnet: `BINANCE_API_KEY` and `BINANCE_SECRET_KEY`
+-
+-Read and use in a single exec call so the raw key never enters the agent's context:
+-```bash
+-KEY="$BINANCE_API_KEY"
+-SECRET="$BINANCE_SECRET_KEY"
+-
+-response=$(curl -s -X GET "$URL" \
+-  -H "X-MBX-APIKEY: $KEY" \
+-  --data-urlencode "param1=value1")
+-
+-echo "$response"
+-```
+-
+-Environment variables must be set before OpenClaw starts. They are inherited at process startup and cannot be injected into a running instance. If you need to add or update credentials without restarting, use a secrets file (see option 2).
+-
+-2. **Secrets file (.env)**
+-
+-Check `~/.openclaw/secrets.env` , `~/.env`, or a `.env` file in the workspace. Read individual keys with `grep`, never source the full file:
+-```bash
+-# Try all credential locations in order
+-API_KEY=$(grep '^BINANCE_API_KEY=' ~/.openclaw/secrets.env 2>/dev/null | cut -d= -f2-)
+-SECRET_KEY=$(grep '^BINANCE_SECRET_KEY=' ~/.openclaw/secrets.env 2>/dev/null | cut -d= -f2-)
+-
+-# Fallback: search .env in known directories (KEY=VALUE then raw line format)
+-for dir in ~/.openclaw ~; do
+-  [ -n "$API_KEY" ] && break
+-  env_file="$dir/.env"
+-  [ -f "$env_file" ] || continue
+-
+-  # Read first two lines
+-  line1=$(sed -n '1p' "$env_file")
+-  line2=$(sed -n '2p' "$env_file")
+-
+-  # Check if lines contain '=' indicating KEY=VALUE format
+-  if [[ "$line1" == *=* && "$line2" == *=* ]]; then
+-    API_KEY=$(grep '^BINANCE_API_KEY=' "$env_file" 2>/dev/null | cut -d= -f2-)
+-    SECRET_KEY=$(grep '^BINANCE_SECRET_KEY=' "$env_file" 2>/dev/null | cut -d= -f2-)
+-  else
+-    # Treat lines as raw values
+-    API_KEY="$line1"
+-    SECRET_KEY="$line2"
+-  fi
+-done
+-```
+-
+-This file can be updated at any time without restarting OpenClaw, keys are read fresh on each invocation. Users can tell you the variables are now set or stored in a `.env` file, and you should re-read that file when they do.
+-
+-3. **Inline file**
+-
+-Sending a file where the content is in the following format:
+-
+-```bash
+-abc123...xyz
+-secret123...key
+-```
+-
+-* Never run `printenv`, `env`, `export`, or set without a specific variable name
+-* Never run `grep` on `env` files without anchoring to a specific key ('`^VARNAME='`)
+-* Never source a secrets file into the shell environment (`source .env` or `. .env`)
+-* Only read credentials explicitly needed for the current task
+-* Never echo or log raw credentials in output or replies
+-* Never commit `TOOLS.md` to version control if it contains real credentials — add it to `.gitignore`
+-
+-### Never Disclose API Key and Secret
+-
+-Never disclose the location of the API key and secret file.
+-
+-Never send the API key and secret to any website other than Mainnet and Testnet.
+-
+-### Never Display Full Secrets
+-
+-When showing credentials to users:
+-- **API Key:** Show first 5 + last 4 characters: `su1Qc...8akf`
+-- **Secret Key:** Always mask, show only last 5: `***...aws1`
+-
+-Example response when asked for credentials:
+-Account: main
+-API Key: su1Qc...8akf
+-Secret: ***...aws1
+-
+-### Listing Accounts
+-
+-When listing accounts, show names and environment only — never keys:
+-Binance Accounts:
+-* main (Mainnet)
+-* futures-keys (Mainnet)
+-
+-### Transactions in Mainnet
+-
+-When performing transactions in mainnet, always confirm with the user before proceeding by asking them to write "CONFIRM" to proceed.
+-
+----
+-
+-## Binance Accounts
+-
+-### main
+-- API Key: your_mainnet_api_key
+-- Secret: your_mainnet_secret
+-
+-### TOOLS.md Structure
+-
+-```bash
+-## Binance Accounts
+-
+-### main
+-- API Key: abc123...xyz
+-- Secret: secret123...key
+-- Description: Primary trading account
+-
+-
+-### futures-keys
+-- API Key: futures789...def
+-- Secret: futuressecret...uvw
+-- Description: Futures trading account
+-```
+-
+-## Agent Behavior
+-
+-1. Credentials requested: Mask secrets (show last 5 chars only)
+-2. Listing accounts: Show names and environment, never keys
+-3. Account selection: Ask if ambiguous, default to main
+-4. When doing a transaction in mainnet, confirm with user before by asking to write "CONFIRM" to proceed
+-5. New credentials: Prompt for name, environment, signing mode
+-
+-## Adding New Accounts
+-
+-When user provides new credentials by Inline file or message:
+-
+-* Ask for account name
+-* Store in `TOOLS.md` with masked display confirmation 
+-
+-## Signing Requests
+-
+-For trading endpoints that require a signature:
+-
+-1. **Detect key type first**, inspect the secret key format before signing.
+-2. Build query string with all parameters, including the timestamp (Unix ms).
+-3. Percent-encode the parameters using UTF-8 according to RFC 3986.
+-4. Sign query string with secretKey using HMAC SHA256, RSA, or Ed25519 (depending on the account configuration).
+-5. Append signature to query string.
+-6. Include `X-MBX-APIKEY` header.
+-
+-Otherwise, do not perform steps 4–6.
+-
+-## User Agent Header
+-
+-Include `User-Agent` header with the following string: `binance-wallet/1.1.0 (Skill)`
+-
+-See [`references/authentication.md`](./references/authentication.md) for implementation details.
+diff --git a/skills/binance/assets/references/authentication.md b/skills/binance/assets/references/authentication.md
+@@ -1,126 +0,0 @@
+-# Binance Authentication
+-
+-All trading endpoints require either HMAC SHA256, RSA, or Ed25519 signed requests.
+-**Always detect the key type before signing**, do not assume HMAC.
+-
+-## Base URLs
+-
+-| Environment | URL |
+-|-------------|-----|
+-| Mainnet | https://api.binance.com |
+-
+-## Required Headers
+-
+-* `X-MBX-APIKEY`: your_api_key
+-* `User-Agent`: binance-wallet/1.1.0 (Skill)
+-
+-## Signing Process
+-
+-### Step 1: Build Query String
+-
+-Include all parameters plus `timestamp` (current Unix time in milliseconds):
+-`timestamp=1234567890123`
+-
+-**Optional:** Add `recvWindow` (default 5000ms) for timestamp tolerance.
+-
+-### Step 2: Percent‑Encode Parameters
+-
+-Before generating the signature, **percent‑encode all parameter names and values using UTF‑8 encoding according to RFC 3986.**
+-Unreserved characters that must not be encoded: `A-Z a-z 0-9 - _ . ~`
+-
+-- Chinese characters example:
+-`symbol=这是测试币456`
+-
+-Percent‑encoded:
+-`symbol=%E8%BF%99%E6%98%AF%E6%B5%8B%E8%AF%95%E5%B8%81456`
+-
+-**Important:**
+-The exact encoded query string must be used for both signing and the HTTP request.
+-
+-### Step 3: Generate Signature
+-
+-Generate the signature from the encoded query string.
+-
+-#### HMAC SHA256 signature
+-
+-Create HMAC SHA256 signature of the query string using your secret key:
+-
+-```bash
+-# Example using openssl
+-echo -n "timestamp=1234567890123" | \
+-  openssl dgst -sha256 -hmac "your_secret_key"
+-```
+-
+-#### RSA signature
+-
+-Create RSA signature of the query string using your private key:
+-
+-```bash
+-# Example using openssl
+-echo -n "timestamp=1234567890123" | \
+-  openssl dgst -sha256 -sign private_key.pem | base64
+-```
+-
+-#### Ed25519 signature
+-
+-Create Ed25519 signature of the query string using your private key:
+-
+-```bash
+-# Example using openssl
+-echo -n "timestamp=1234567890123" | \
+-  openssl pkeyutl -sign -inkey private_key.pem | base64
+-```
+-
+-### Step 4: Append Signature
+-
+-Add signature parameter to the query string:
+-`timestamp=1234567890123&signature=abc123...`
+-
+-### Step 5: Add Product User Agent Header
+-
+-Include `User-Agent` header with the following string: `binance-wallet/1.1.0 (Skill)`
+-
+-#### Complete Example
+-
+-Request:
+-```bash
+-curl -X GET "https://api.binance.com/sapi/v1/account/apiTradingStatus" \
+-  -H "X-MBX-APIKEY: your_api_key" \
+-  -H "User-Agent: binance-wallet/1.1.0 (Skill)" \
+-  -d "timestamp=1234567890123&signature=..."
+-```
+-
+-```bash
+-#!/bin/bash
+-API_KEY="your_api_key"
+-SECRET_KEY="your_secret_key"
+-BASE_URL="https://api.binance.com"  
+-
+-# Get current timestamp
+-TIMESTAMP=$(date +%s000)
+-
+-# Build query string (without signature)
+-QUERY="timestamp=${TIMESTAMP}"
+-
+-# Generate signature
+-# For HMAC SHA256:
+-SIGNATURE=$(echo -n "$QUERY" | openssl dgst -sha256 -hmac "$SECRET_KEY" | cut -d' ' -f2)
+-
+-# For RSA or Ed25519, replace the above line with the appropriate signing command.
+-##  RSA:
+-# SIGNATURE=$(echo -n "$QUERY" | openssl dgst -sha256 -sign private_key.pem | base64)
+-
+-##  Ed25519:
+-# SIGNATURE=$(echo -n "$QUERY" | openssl pkeyutl -sign -inkey private_key.pem | base64)
+-
+-# Make request
+-curl -X GET "${BASE_URL}/sapi/v1/account/apiTradingStatus?${QUERY}&signature=${SIGNATURE}" \
+-  -H "X-MBX-APIKEY: ${API_KEY}"\
+-  -H "User-Agent: binance-wallet/1.1.0 (Skill)"
+-```
+-
+-### Security Notes
+-
+-* Never share your secret key
+-* Use IP whitelist in Binance API settings
+-* Enable only required permissions (spot trading, no withdrawals)
+diff --git a/skills/binance/convert/CHANGELOG.md b/skills/binance/convert/CHANGELOG.md
+@@ -1,11 +0,0 @@
+-# Changelog
+-
+-## 1.1.0 - 2026-03-24
+-
+-- Environmental variables or files can now be used as input for the API key and secret key.
+-- Fix signature generation for RSA and Ed25519 keys.
+-- Add `Openclaw` metadata to the User Agent header
+-
+-## 1.0.0 - 2026-03-17
+-
+-- Initial release
+\ No newline at end of file
+diff --git a/skills/binance/convert/LICENSE.md b/skills/binance/convert/LICENSE.md
+@@ -1,9 +0,0 @@
+-MIT License
+-
+-Copyright (c) 2026 Binance
+-
+-Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+-
+-The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+-
+-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+\ No newline at end of file
+diff --git a/skills/binance/convert/SKILL.md b/skills/binance/convert/SKILL.md
+@@ -1,236 +0,0 @@
+----
+-name: convert
+-description: Binance Convert request using the Binance API. Authentication requires API key and secret key. 
+-metadata:
+-  version: 1.1.0
+-  author: Binance
+-  openclaw:
+-    requires:
+-      bins:
+-        - curl
+-        - openssl
+-        - date
+-    homepage: https://github.com/binance/binance-skills-hub/tree/main/skills/binance/convert/SKILL.md
+-license: MIT
+----
+-
+-# Binance Convert Skill
+-
+-Convert request on Binance using authenticated API endpoints. Requires API key and secret key for certain endpoints. Return the result in JSON format.
+-
+-## Quick Reference
+-
+-| Endpoint | Description | Required | Optional | Authentication |
+-|----------|-------------|----------|----------|----------------|
+-| `/sapi/v1/convert/exchangeInfo` (GET) | List All Convert Pairs | None | fromAsset, toAsset | No |
+-| `/sapi/v1/convert/assetInfo` (GET) | Query order quantity precision per asset(USER_DATA) | None | recvWindow | Yes |
+-| `/sapi/v1/convert/acceptQuote` (POST) | Accept Quote (TRADE) | quoteId | recvWindow | Yes |
+-| `/sapi/v1/convert/limit/cancelOrder` (POST) | Cancel limit order (USER_DATA) | orderId | recvWindow | Yes |
+-| `/sapi/v1/convert/tradeFlow` (GET) | Get Convert Trade History(USER_DATA) | startTime, endTime | limit, recvWindow | Yes |
+-| `/sapi/v1/convert/orderStatus` (GET) | Order status(USER_DATA) | None | orderId, quoteId | Yes |
+-| `/sapi/v1/convert/limit/placeOrder` (POST) | Place limit order (USER_DATA) | baseAsset, quoteAsset, limitPrice, side, expiredType | baseAmount, quoteAmount, walletType, recvWindow | Yes |
+-| `/sapi/v1/convert/limit/queryOpenOrders` (GET) | Query limit open orders (USER_DATA) | None | recvWindow | Yes |
+-| `/sapi/v1/convert/getQuote` (POST) | Send Quote Request(USER_DATA) | fromAsset, toAsset | fromAmount, toAmount, walletType, validTime, recvWindow | Yes |
+-
+----
+-
+-## Parameters
+-
+-### Common Parameters
+-
+-* **fromAsset**: User spends coin
+-* **toAsset**: User receives coin
+-* **recvWindow**: The value cannot be greater than 60000 (e.g., 5000)
+-* **quoteId**:  (e.g., 1)
+-* **orderId**: The orderId from `placeOrder` api (e.g., 1)
+-* **startTime**:  (e.g., 1623319461670)
+-* **endTime**:  (e.g., 1641782889000)
+-* **limit**: Default 100, Max 1000 (e.g., 100)
+-* **orderId**: Either orderId or quoteId is required (e.g., 1)
+-* **quoteId**: Either orderId or quoteId is required (e.g., 1)
+-* **baseAsset**: base asset (use the response `fromIsBase` from `GET /sapi/v1/convert/exchangeInfo` api to check which one is baseAsset )
+-* **quoteAsset**: quote asset
+-* **limitPrice**: Symbol limit price (from baseAsset to quoteAsset) (e.g., 1.0)
+-* **baseAmount**: Base asset amount.  (One of `baseAmount` or `quoteAmount` is required) (e.g., 1.0)
+-* **quoteAmount**: Quote asset amount.  (One of `baseAmount` or `quoteAmount` is required) (e.g., 1.0)
+-* **side**: `BUY` or `SELL` (e.g., BUY)
+-* **walletType**: It is to choose which wallet of assets. The wallet selection is `SPOT`, `FUNDING` and `EARN`. Combination of wallet is supported i.e. `SPOT_FUNDING`, `FUNDING_EARN`, `SPOT_FUNDING_EARN` or `SPOT_EARN`  Default is `SPOT`.
+-* **expiredType**: 1_D, 3_D, 7_D, 30_D  (D means day)
+-* **fromAsset**: 
+-* **toAsset**: 
+-* **fromAmount**: When specified, it is the amount you will be debited after the conversion (e.g., 1.0)
+-* **toAmount**: When specified, it is the amount you will be credited after the conversion (e.g., 1.0)
+-* **validTime**: 10s, 30s, 1m, default 10s (e.g., 10s)
+-
+-
+-## Authentication
+-
+-For endpoints that require authentication, you will need to provide Binance API credentials.
+-Required credentials:
+-
+-* apiKey: Your Binance API key (for header)
+-* secretKey: Your Binance API secret (for signing)
+-
+-Base URLs:
+-* Mainnet: https://api.binance.com
+-
+-## Security
+-
+-### Share Credentials
+-
+-Users can provide Binance API credentials in different ways. The agent will try to retrieve automatically with the two first ways the credentials, but users can also explicitly tell the agent that they have set the credentials or stored them in a `.env` file, and the agent should re-read that file when they do. The agent can also make http requests with the two first methods without user confirmation.
+-
+-1. **Environment variables**
+-
+-Search for the following specific variables only (never dump the full environment):
+-
+-**Authorized environment variables**
+-- Mainnet: `BINANCE_API_KEY` and `BINANCE_SECRET_KEY`
+-
+-Read and use in a single exec call so the raw key never enters the agent's context:
+-```bash
+-KEY="$BINANCE_API_KEY"
+-SECRET="$BINANCE_SECRET_KEY"
+-
+-response=$(curl -s -X GET "$URL" \
+-  -H "X-MBX-APIKEY: $KEY" \
+-  --data-urlencode "param1=value1")
+-
+-echo "$response"
+-```
+-
+-Environment variables must be set before OpenClaw starts. They are inherited at process startup and cannot be injected into a running instance. If you need to add or update credentials without restarting, use a secrets file (see option 2).
+-
+-2. **Secrets file (.env)**
+-
+-Check `~/.openclaw/secrets.env` , `~/.env`, or a `.env` file in the workspace. Read individual keys with `grep`, never source the full file:
+-```bash
+-# Try all credential locations in order
+-API_KEY=$(grep '^BINANCE_API_KEY=' ~/.openclaw/secrets.env 2>/dev/null | cut -d= -f2-)
+-SECRET_KEY=$(grep '^BINANCE_SECRET_KEY=' ~/.openclaw/secrets.env 2>/dev/null | cut -d= -f2-)
+-
+-# Fallback: search .env in known directories (KEY=VALUE then raw line format)
+-for dir in ~/.openclaw ~; do
+-  [ -n "$API_KEY" ] && break
+-  env_file="$dir/.env"
+-  [ -f "$env_file" ] || continue
+-
+-  # Read first two lines
+-  line1=$(sed -n '1p' "$env_file")
+-  line2=$(sed -n '2p' "$env_file")
+-
+-  # Check if lines contain '=' indicating KEY=VALUE format
+-  if [[ "$line1" == *=* && "$line2" == *=* ]]; then
+-    API_KEY=$(grep '^BINANCE_API_KEY=' "$env_file" 2>/dev/null | cut -d= -f2-)
+-    SECRET_KEY=$(grep '^BINANCE_SECRET_KEY=' "$env_file" 2>/dev/null | cut -d= -f2-)
+-  else
+-    # Treat lines as raw values
+-    API_KEY="$line1"
+-    SECRET_KEY="$line2"
+-  fi
+-done
+-```
+-
+-This file can be updated at any time without restarting OpenClaw, keys are read fresh on each invocation. Users can tell you the variables are now set or stored in a `.env` file, and you should re-read that file when they do.
+-
+-3. **Inline file**
+-
+-Sending a file where the content is in the following format:
+-
+-```bash
+-abc123...xyz
+-secret123...key
+-```
+-
+-* Never run `printenv`, `env`, `export`, or set without a specific variable name
+-* Never run `grep` on `env` files without anchoring to a specific key ('`^VARNAME='`)
+-* Never source a secrets file into the shell environment (`source .env` or `. .env`)
+-* Only read credentials explicitly needed for the current task
+-* Never echo or log raw credentials in output or replies
+-* Never commit `TOOLS.md` to version control if it contains real credentials — add it to `.gitignore`
+-
+-### Never Disclose API Key and Secret
+-
+-Never disclose the location of the API key and secret file.
+-
+-Never send the API key and secret to any website other than Mainnet and Testnet.
+-
+-### Never Display Full Secrets
+-
+-When showing credentials to users:
+-- **API Key:** Show first 5 + last 4 characters: `su1Qc...8akf`
+-- **Secret Key:** Always mask, show only last 5: `***...aws1`
+-
+-Example response when asked for credentials:
+-Account: main
+-API Key: su1Qc...8akf
+-Secret: ***...aws1
+-
+-### Listing Accounts
+-
+-When listing accounts, show names and environment only — never keys:
+-Binance Accounts:
+-* main (Mainnet)
+-* futures-keys (Mainnet)
+-
+-### Transactions in Mainnet
+-
+-When performing transactions in mainnet, always confirm with the user before proceeding by asking them to write "CONFIRM" to proceed.
+-
+----
+-
+-## Binance Accounts
+-
+-### main
+-- API Key: your_mainnet_api_key
+-- Secret: your_mainnet_secret
+-
+-### TOOLS.md Structure
+-
+-```bash
+-## Binance Accounts
+-
+-### main
+-- API Key: abc123...xyz
+-- Secret: secret123...key
+-- Description: Primary trading account
+-
+-### futures-keys
+-- API Key: futures789...def
+-- Secret: futuressecret...uvw
+-- Description: Futures trading account
+-```
+-
+-## Agent Behavior
+-
+-1. Credentials requested: Mask secrets (show last 5 chars only)
+-2. Listing accounts: Show names and environment, never keys
+-3. Account selection: Ask if ambiguous, default to main
+-4. When doing a transaction in mainnet, confirm with user before by asking to write "CONFIRM" to proceed
+-5. New credentials: Prompt for name, environment, signing mode
+-
+-## Adding New Accounts
+-
+-When user provides new credentials by Inline file or message:
+-
+-* Ask for account name
+-* Store in `TOOLS.md` with masked display confirmation 
+-
+-## Signing Requests
+-
+-For trading endpoints that require a signature:
+-
+-1. **Detect key type first**, inspect the secret key format before signing.
+-2. Build query string with all parameters, including the timestamp (Unix ms).
+-3. Percent-encode the parameters using UTF-8 according to RFC 3986.
+-4. Sign query string with secretKey using HMAC SHA256, RSA, or Ed25519 (depending on the account configuration).
+-5. Append signature to query string.
+-6. Include `X-MBX-APIKEY` header.
+-
+-Otherwise, do not perform steps 4–6.
+-
+-## User Agent Header
+-
+-Include `User-Agent` header with the following string: `binance-convert/1.1.0 (Skill)`
+-
+-See [`references/authentication.md`](./references/authentication.md) for implementation details.
+diff --git a/skills/binance/convert/references/authentication.md b/skills/binance/convert/references/authentication.md
+@@ -1,126 +0,0 @@
+-# Binance Authentication
+-
+-All trading endpoints require either HMAC SHA256, RSA, or Ed25519 signed requests.
+-**Always detect the key type before signing**, do not assume HMAC.
+-
+-## Base URLs
+-
+-| Environment | URL |
+-|-------------|-----|
+-| Mainnet | https://api.binance.com |
+-
+-## Required Headers
+-
+-* `X-MBX-APIKEY`: your_api_key
+-* `User-Agent`: binance-convert/1.1.0 (Skill)
+-
+-## Signing Process
+-
+-### Step 1: Build Query String
+-
+-Include all parameters plus `timestamp` (current Unix time in milliseconds):
+-`timestamp=1234567890123`
+-
+-**Optional:** Add `recvWindow` (default 5000ms) for timestamp tolerance.
+-
+-### Step 2: Percent‑Encode Parameters
+-
+-Before generating the signature, **percent‑encode all parameter names and values using UTF‑8 encoding according to RFC 3986.**
+-Unreserved characters that must not be encoded: `A-Z a-z 0-9 - _ . ~`
+-
+-- Chinese characters example:
+-`symbol=这是测试币456`
+-
+-Percent‑encoded:
+-`symbol=%E8%BF%99%E6%98%AF%E6%B5%8B%E8%AF%95%E5%B8%81456`
+-
+-**Important:**
+-The exact encoded query string must be used for both signing and the HTTP request.
+-
+-### Step 3: Generate Signature
+-
+-Generate the signature from the encoded query string.
+-
+-#### HMAC SHA256 signature
+-
+-Create HMAC SHA256 signature of the query string using your secret key:
+-
+-```bash
+-# Example using openssl
+-echo -n "timestamp=1234567890123" | \
+-  openssl dgst -sha256 -hmac "your_secret_key"
+-```
+-
+-#### RSA signature
+-
+-Create RSA signature of the query string using your private key:
+-
+-```bash
+-# Example using openssl
+-echo -n "timestamp=1234567890123" | \
+-  openssl dgst -sha256 -sign private_key.pem | base64
+-```
+-
+-#### Ed25519 signature
+-
+-Create Ed25519 signature of the query string using your private key:
+-
+-```bash
+-# Example using openssl
+-echo -n "timestamp=1234567890123" | \
+-  openssl pkeyutl -sign -inkey private_key.pem | base64
+-```
+-
+-### Step 4: Append Signature
+-
+-Add signature parameter to the query string:
+-`timestamp=1234567890123&signature=abc123...`
+-
+-### Step 5: Add Product User Agent Header
+-
+-Include `User-Agent` header with the following string: `binance-convert/1.1.0 (Skill)`
+-
+-#### Complete Example
+-
+-Request:
+-```bash
+-curl -X GET "https://api.binance.com/sapi/v1/convert/exchangeInfo" \
+-  -H "X-MBX-APIKEY: your_api_key" \
+-  -H "User-Agent: binance-convert/1.1.0 (Skill)" \
+-  -d "timestamp=1234567890123&signature=..."
+-```
+-
+-```bash
+-#!/bin/bash
+-API_KEY="your_api_key"
+-SECRET_KEY="your_secret_key"
+-BASE_URL="https://api.binance.com"  
+-
+-# Get current timestamp
+-TIMESTAMP=$(date +%s000)
+-
+-# Build query string (without signature)
+-QUERY="timestamp=${TIMESTAMP}"
+-
+-# Generate signature
+-# For HMAC SHA256:
+-SIGNATURE=$(echo -n "$QUERY" | openssl dgst -sha256 -hmac "$SECRET_KEY" | cut -d' ' -f2)
+-
+-# For RSA or Ed25519, replace the above line with the appropriate signing command.
+-##  RSA:
+-# SIGNATURE=$(echo -n "$QUERY" | openssl dgst -sha256 -sign private_key.pem | base64)
+-
+-##  Ed25519:
+-# SIGNATURE=$(echo -n "$QUERY" | openssl pkeyutl -sign -inkey private_key.pem | base64)
+-
+-# Make request
+-curl -X GET "${BASE_URL}/sapi/v1/convert/exchangeInfo?${QUERY}&signature=${SIGNATURE}" \
+-  -H "X-MBX-APIKEY: ${API_KEY}"\
+-  -H "User-Agent: binance-convert/1.1.0 (Skill)"
+-```
+-
+-### Security Notes
+-
+-* Never share your secret key
+-* Use IP whitelist in Binance API settings
+-* Enable only required permissions (spot trading, no withdrawals)
+diff --git a/skills/binance/derivatives-trading-coin-futures/CHANGELOG.md b/skills/binance/derivatives-trading-coin-futures/CHANGELOG.md
+@@ -1,11 +0,0 @@
+-# Changelog
+-
+-## 1.1.0 - 2026-03-24
+-
+-- Environmental variables or files can now be used as input for the API key and secret key.
+-- Fix signature generation for RSA and Ed25519 keys.
+-- Add `Openclaw` metadata to the User Agent header
+-
+-## 1.0.0 - 2026-03-19
+-
+-- Initial release
+\ No newline at end of file
+diff --git a/skills/binance/derivatives-trading-coin-futures/LICENSE.md b/skills/binance/derivatives-trading-coin-futures/LICENSE.md
+@@ -1,9 +0,0 @@
+-MIT License
+-
+-Copyright (c) 2026 Binance
+-
+-Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+-
+-The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+-
+-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+\ No newline at end of file
+diff --git a/skills/binance/derivatives-trading-coin-futures/SKILL.md b/skills/binance/derivatives-trading-coin-futures/SKILL.md
+@@ -1,349 +0,0 @@
+----
+-name: derivatives-trading-coin-futures
+-description: Binance Derivatives-trading-coin-futures request using the Binance API. Authentication requires API key and secret key. Supports testnet and mainnet.
+-metadata:
+-  version: 1.1.0
+-  author: Binance
+-  openclaw:
+-    requires:
+-      bins:
+-        - curl
+-        - openssl
+-        - date
+-    homepage: https://github.com/binance/binance-skills-hub/tree/main/skills/binance/derivatives-trading-coin-futures/SKILL.md
+-license: MIT
+----
+-
+-# Binance Derivatives-trading-coin-futures Skill
+-
+-Derivatives-trading-coin-futures request on Binance using authenticated API endpoints. Requires API key and secret key for certain endpoints. Return the result in JSON format.
+-
+-## Quick Reference
+-
+-| Endpoint | Description | Required | Optional | Authentication |
+-|----------|-------------|----------|----------|----------------|
+-| `/dapi/v1/account` (GET) | Account Information (USER_DATA) | None | recvWindow | Yes |
+-| `/dapi/v1/balance` (GET) | Futures Account Balance (USER_DATA) | None | recvWindow | Yes |
+-| `/dapi/v1/positionSide/dual` (GET) | Get Current Position Mode(USER_DATA) | None | recvWindow | Yes |
+-| `/dapi/v1/positionSide/dual` (POST) | Change Position Mode(TRADE) | dualSidePosition | recvWindow | Yes |
+-| `/dapi/v1/order/asyn` (GET) | Get Download Id For Futures Order History (USER_DATA) | startTime, endTime | recvWindow | Yes |
+-| `/dapi/v1/trade/asyn` (GET) | Get Download Id For Futures Trade History (USER_DATA) | startTime, endTime | recvWindow | Yes |
+-| `/dapi/v1/income/asyn` (GET) | Get Download Id For Futures Transaction History(USER_DATA) | startTime, endTime | recvWindow | Yes |
+-| `/dapi/v1/order/asyn/id` (GET) | Get Futures Order History Download Link by Id (USER_DATA) | downloadId | recvWindow | Yes |
+-| `/dapi/v1/trade/asyn/id` (GET) | Get Futures Trade Download Link by Id(USER_DATA) | downloadId | recvWindow | Yes |
+-| `/dapi/v1/income/asyn/id` (GET) | Get Futures Transaction History Download Link by Id (USER_DATA) | downloadId | recvWindow | Yes |
+-| `/dapi/v1/income` (GET) | Get Income History(USER_DATA) | None | symbol, incomeType, startTime, endTime, page, limit, recvWindow | Yes |
+-| `/dapi/v1/leverageBracket` (GET) | Notional Bracket for Pair(USER_DATA) | None | pair, recvWindow | Yes |
+-| `/dapi/v2/leverageBracket` (GET) | Notional Bracket for Symbol(USER_DATA) | None | symbol, recvWindow | Yes |
+-| `/dapi/v1/commissionRate` (GET) | User Commission Rate (USER_DATA) | symbol | recvWindow | Yes |
+-| `/dapi/v1/ticker/24hr` (GET) | 24hr Ticker Price Change Statistics | None | symbol, pair | No |
+-| `/futures/data/basis` (GET) | Basis | pair, contractType, period | limit, startTime, endTime | No |
+-| `/dapi/v1/time` (GET) | Check Server time | None | None | No |
+-| `/dapi/v1/aggTrades` (GET) | Compressed/Aggregate Trades List | symbol | fromId, startTime, endTime, limit | No |
+-| `/dapi/v1/continuousKlines` (GET) | Continuous Contract Kline/Candlestick Data | pair, contractType, interval | startTime, endTime, limit | No |
+-| `/dapi/v1/exchangeInfo` (GET) | Exchange Information | None | None | No |
+-| `/dapi/v1/fundingInfo` (GET) | Get Funding Rate Info | None | None | No |
+-| `/dapi/v1/fundingRate` (GET) | Get Funding Rate History of Perpetual Futures | symbol | startTime, endTime, limit | No |
+-| `/dapi/v1/constituents` (GET) | Query Index Price Constituents | symbol | None | No |
+-| `/dapi/v1/indexPriceKlines` (GET) | Index Price Kline/Candlestick Data | pair, interval | startTime, endTime, limit | No |
+-| `/dapi/v1/premiumIndex` (GET) | Index Price and Mark Price | None | symbol, pair | No |
+-| `/dapi/v1/klines` (GET) | Kline/Candlestick Data | symbol, interval | startTime, endTime, limit | No |
+-| `/futures/data/globalLongShortAccountRatio` (GET) | Long/Short Ratio | pair, period | limit, startTime, endTime | No |
+-| `/dapi/v1/markPriceKlines` (GET) | Mark Price Kline/Candlestick Data | symbol, interval | startTime, endTime, limit | No |
+-| `/dapi/v1/historicalTrades` (GET) | Old Trades Lookup(MARKET_DATA) | symbol | limit, fromId | No |
+-| `/futures/data/openInterestHist` (GET) | Open Interest Statistics | pair, contractType, period | limit, startTime, endTime | No |
+-| `/dapi/v1/openInterest` (GET) | Open Interest | symbol | None | No |
+-| `/dapi/v1/depth` (GET) | Order Book | symbol | limit | No |
+-| `/dapi/v1/premiumIndexKlines` (GET) | Premium index Kline Data | symbol, interval | startTime, endTime, limit | No |
+-| `/dapi/v1/trades` (GET) | Recent Trades List | symbol | limit | No |
+-| `/dapi/v1/ticker/bookTicker` (GET) | Symbol Order Book Ticker | None | symbol, pair | No |
+-| `/dapi/v1/ticker/price` (GET) | Symbol Price Ticker | None | symbol, pair | No |
+-| `/futures/data/takerBuySellVol` (GET) | Taker Buy/Sell Volume | pair, contractType, period | limit, startTime, endTime | No |
+-| `/dapi/v1/ping` (GET) | Test Connectivity | None | None | No |
+-| `/futures/data/topLongShortAccountRatio` (GET) | Top Trader Long/Short Ratio (Accounts) | symbol, period | limit, startTime, endTime | No |
+-| `/futures/data/topLongShortPositionRatio` (GET) | Top Trader Long/Short Ratio (Positions) | pair, period | limit, startTime, endTime | No |
+-| `/dapi/v1/pmAccountInfo` (GET) | Classic Portfolio Margin Account Information (USER_DATA) | asset | recvWindow | Yes |
+-| `/dapi/v1/userTrades` (GET) | Account Trade List (USER_DATA) | None | symbol, pair, orderId, startTime, endTime, fromId, limit, recvWindow | Yes |
+-| `/dapi/v1/allOrders` (GET) | All Orders (USER_DATA) | None | symbol, pair, orderId, startTime, endTime, limit, recvWindow | Yes |
+-| `/dapi/v1/countdownCancelAll` (POST) | Auto-Cancel All Open Orders (TRADE) | symbol, countdownTime | recvWindow | Yes |
+-| `/dapi/v1/allOpenOrders` (DELETE) | Cancel All Open Orders(TRADE) | symbol | recvWindow | Yes |
+-| `/dapi/v1/batchOrders` (DELETE) | Cancel Multiple Orders(TRADE) | symbol | orderIdList, origClientOrderIdList, recvWindow | Yes |
+-| `/dapi/v1/batchOrders` (PUT) | Modify Multiple Orders(TRADE) | batchOrders | recvWindow | Yes |
+-| `/dapi/v1/batchOrders` (POST) | Place Multiple Orders(TRADE) | batchOrders | recvWindow | Yes |
+-| `/dapi/v1/order` (DELETE) | Cancel Order (TRADE) | symbol | orderId, origClientOrderId, recvWindow | Yes |
+-| `/dapi/v1/order` (PUT) | Modify Order (TRADE) | symbol, side | orderId, origClientOrderId, quantity, price, priceMatch, recvWindow | Yes |
+-| `/dapi/v1/order` (POST) | New Order (TRADE) | symbol, side, type | positionSide, timeInForce, quantity, reduceOnly, price, newClientOrderId, stopPrice, closePosition, activationPrice, callbackRate, workingType, priceProtect, newOrderRespType, priceMatch, selfTradePreventionMode, recvWindow | Yes |
+-| `/dapi/v1/order` (GET) | Query Order (USER_DATA) | symbol | orderId, origClientOrderId, recvWindow | Yes |
+-| `/dapi/v1/leverage` (POST) | Change Initial Leverage (TRADE) | symbol, leverage | recvWindow | Yes |
+-| `/dapi/v1/marginType` (POST) | Change Margin Type (TRADE) | symbol, marginType | recvWindow | Yes |
+-| `/dapi/v1/openOrders` (GET) | Current All Open Orders (USER_DATA) | None | symbol, pair, recvWindow | Yes |
+-| `/dapi/v1/orderAmendment` (GET) | Get Order Modify History (USER_DATA) | symbol | orderId, origClientOrderId, startTime, endTime, limit, recvWindow | Yes |
+-| `/dapi/v1/positionMargin/history` (GET) | Get Position Margin Change History(TRADE) | symbol | type, startTime, endTime, limit, recvWindow | Yes |
+-| `/dapi/v1/positionMargin` (POST) | Modify Isolated Position Margin(TRADE) | symbol, amount, type | positionSide, recvWindow | Yes |
+-| `/dapi/v1/adlQuantile` (GET) | Position ADL Quantile Estimation(USER_DATA) | None | symbol, recvWindow | Yes |
+-| `/dapi/v1/positionRisk` (GET) | Position Information(USER_DATA) | None | marginAsset, pair, recvWindow | Yes |
+-| `/dapi/v1/openOrder` (GET) | Query Current Open Order(USER_DATA) | symbol | orderId, origClientOrderId, recvWindow | Yes |
+-| `/dapi/v1/forceOrders` (GET) | User's Force Orders(USER_DATA) | None | symbol, autoCloseType, startTime, endTime, limit, recvWindow | Yes |
+-| `/dapi/v1/listenKey` (DELETE) | Close User Data Stream(USER_STREAM) | None | None | No |
+-| `/dapi/v1/listenKey` (PUT) | Keepalive User Data Stream (USER_STREAM) | None | None | No |
+-| `/dapi/v1/listenKey` (POST) | Start User Data Stream (USER_STREAM) | None | None | No |
+-
+----
+-
+-## Parameters
+-
+-### Common Parameters
+-
+-* **recvWindow**:  (e.g., 5000)
+-* **startTime**: Timestamp in ms (e.g., 1623319461670)
+-* **endTime**: Timestamp in ms (e.g., 1641782889000)
+-* **downloadId**: get by download id api (e.g., 1)
+-* **symbol**: 
+-* **incomeType**: "TRANSFER","WELCOME_BONUS", "FUNDING_FEE", "REALIZED_PNL", "COMMISSION", "INSURANCE_CLEAR", and "DELIVERED_SETTELMENT"
+-* **startTime**:  (e.g., 1623319461670)
+-* **endTime**:  (e.g., 1641782889000)
+-* **page**: 
+-* **limit**: Default 100; max 1000 (e.g., 100)
+-* **pair**: 
+-* **symbol**: 
+-* **pair**: BTCUSD
+-* **fromId**: ID to get aggregate trades from INCLUSIVE. (e.g., 1)
+-* **asset**: 
+-* **orderId**:  (e.g., 1)
+-* **orderId**:  (e.g., 1)
+-* **countdownTime**: countdown time, 1000 for 1 second. 0 to cancel the timer
+-* **orderIdList**: max length 10   e.g. [1234567,2345678]
+-* **origClientOrderIdList**: max length 10  e.g. ["my_id_1","my_id_2"], encode the double quotes. No space after comma.
+-* **origClientOrderId**:  (e.g., 1)
+-* **leverage**: target initial leverage: int from 1 to 125
+-* **dualSidePosition**: "true": Hedge Mode; "false": One-way Mode
+-* **type**: 1: Add position margin,2: Reduce position margin
+-* **amount**:  (e.g., 1.0)
+-* **batchOrders**: order list. Max 5 orders
+-* **quantity**: quantity measured by contract number, Cannot be sent with `closePosition`=`true` (e.g., 1.0)
+-* **price**:  (e.g., 1.0)
+-* **reduceOnly**: "true" or "false". default "false". Cannot be sent in Hedge Mode; cannot be sent with `closePosition`=`true`(Close-All)
+-* **newClientOrderId**: A unique id among open orders. Automatically generated if not sent. Can only be string following the rule: `^[\.A-Z\:/a-z0-9_-]{1,36}$` (e.g., 1)
+-* **stopPrice**: Used with `STOP/STOP_MARKET` or `TAKE_PROFIT/TAKE_PROFIT_MARKET` orders. (e.g., 1.0)
+-* **closePosition**: `true`, `false`；Close-All,used with `STOP_MARKET` or `TAKE_PROFIT_MARKET`.
+-* **activationPrice**: Used with `TRAILING_STOP_MARKET` orders, default as the latest price(supporting different `workingType`) (e.g., 1.0)
+-* **callbackRate**: Used with `TRAILING_STOP_MARKET` orders, min 0.1, max 10 where 1 for 1% (e.g., 1.0)
+-* **priceProtect**: "TRUE" or "FALSE", default "FALSE". Used with `STOP/STOP_MARKET` or `TAKE_PROFIT/TAKE_PROFIT_MARKET` orders.
+-* **batchOrders**: order list. Max 5 orders
+-* **marginAsset**: 
+-
+-
+-### Enums
+-
+-* **contractType**: PERPETUAL | CURRENT_QUARTER | NEXT_QUARTER | CURRENT_QUARTER_DELIVERING | NEXT_QUARTER_DELIVERING | PERPETUAL_DELIVERING
+-* **period**: 5m | 15m | 30m | 1h | 2h | 4h | 6h | 12h | 1d
+-* **interval**: 1m | 3m | 5m | 15m | 30m | 1h | 2h | 4h | 6h | 8h | 12h | 1d | 3d | 1w | 1M
+-* **marginType**: ISOLATED | CROSSED
+-* **positionSide**: BOTH | LONG | SHORT
+-* **type**: LIMIT | MARKET | STOP | STOP_MARKET | TAKE_PROFIT | TAKE_PROFIT_MARKET | TRAILING_STOP_MARKET
+-* **side**: BUY | SELL
+-* **priceMatch**: NONE | OPPONENT | OPPONENT_5 | OPPONENT_10 | OPPONENT_20 | QUEUE | QUEUE_5 | QUEUE_10 | QUEUE_20
+-* **timeInForce**: GTC | IOC | FOK | GTX
+-* **workingType**: MARK_PRICE | CONTRACT_PRICE
+-* **newOrderRespType**: ACK | RESULT
+-* **selfTradePreventionMode**: NONE | EXPIRE_TAKER | EXPIRE_BOTH | EXPIRE_MAKER
+-* **autoCloseType**: LIQUIDATION | ADL
+-
+-
+-## Authentication
+-
+-For endpoints that require authentication, you will need to provide Binance API credentials.
+-Required credentials:
+-
+-* apiKey: Your Binance API key (for header)
+-* secretKey: Your Binance API secret (for signing)
+-
+-Base URLs:
+-* Mainnet: https://dapi.binance.com
+-* Testnet: https://testnet.binancefuture.com
+-
+-## Security
+-
+-### Share Credentials
+-
+-Users can provide Binance API credentials in different ways. The agent will try to retrieve automatically with the two first ways the credentials, but users can also explicitly tell the agent that they have set the credentials or stored them in a `.env` file, and the agent should re-read that file when they do. The agent can also make http requests with the two first methods without user confirmation.
+-
+-1. **Environment variables**
+-
+-Search for the following specific variables only (never dump the full environment):
+-
+-**Authorized environment variables**
+-- Mainnet: `BINANCE_API_KEY` and `BINANCE_SECRET_KEY`
+-- Testnet: `BINANCE_TESTNET_API_KEY` and `BINANCE_TESTNET_SECRET_KEY`
+-
+-Read and use in a single exec call so the raw key never enters the agent's context:
+-```bash
+-KEY="$BINANCE_API_KEY"
+-SECRET="$BINANCE_SECRET_KEY"
+-
+-response=$(curl -s -X GET "$URL" \
+-  -H "X-MBX-APIKEY: $KEY" \
+-  --data-urlencode "param1=value1")
+-
+-echo "$response"
+-```
+-
+-Environment variables must be set before OpenClaw starts. They are inherited at process startup and cannot be injected into a running instance. If you need to add or update credentials without restarting, use a secrets file (see option 2).
+-
+-2. **Secrets file (.env)**
+-
+-Check `~/.openclaw/secrets.env` , `~/.env`, or a `.env` file in the workspace. Read individual keys with `grep`, never source the full file:
+-```bash
+-# Try all credential locations in order
+-API_KEY=$(grep '^BINANCE_API_KEY=' ~/.openclaw/secrets.env 2>/dev/null | cut -d= -f2-)
+-SECRET_KEY=$(grep '^BINANCE_SECRET_KEY=' ~/.openclaw/secrets.env 2>/dev/null | cut -d= -f2-)
+-
+-# Fallback: search .env in known directories (KEY=VALUE then raw line format)
+-for dir in ~/.openclaw ~; do
+-  [ -n "$API_KEY" ] && break
+-  env_file="$dir/.env"
+-  [ -f "$env_file" ] || continue
+-
+-  # Read first two lines
+-  line1=$(sed -n '1p' "$env_file")
+-  line2=$(sed -n '2p' "$env_file")
+-
+-  # Check if lines contain '=' indicating KEY=VALUE format
+-  if [[ "$line1" == *=* && "$line2" == *=* ]]; then
+-    API_KEY=$(grep '^BINANCE_API_KEY=' "$env_file" 2>/dev/null | cut -d= -f2-)
+-    SECRET_KEY=$(grep '^BINANCE_SECRET_KEY=' "$env_file" 2>/dev/null | cut -d= -f2-)
+-  else
+-    # Treat lines as raw values
+-    API_KEY="$line1"
+-    SECRET_KEY="$line2"
+-  fi
+-done
+-```
+-
+-This file can be updated at any time without restarting OpenClaw, keys are read fresh on each invocation. Users can tell you the variables are now set or stored in a `.env` file, and you should re-read that file when they do.
+-
+-3. **Inline file**
+-
+-Sending a file where the content is in the following format:
+-
+-```bash
+-abc123...xyz
+-secret123...key
+-```
+-
+-* Never run `printenv`, `env`, `export`, or set without a specific variable name
+-* Never run `grep` on `env` files without anchoring to a specific key ('`^VARNAME='`)
+-* Never source a secrets file into the shell environment (`source .env` or `. .env`)
+-* Only read credentials explicitly needed for the current task
+-* Never echo or log raw credentials in output or replies
+-* Never commit `TOOLS.md` to version control if it contains real credentials — add it to `.gitignore`
+-
+-### Never Disclose API Key and Secret
+-
+-Never disclose the location of the API key and secret file.
+-
+-Never send the API key and secret to any website other than Mainnet and Testnet.
+-
+-### Never Display Full Secrets
+-
+-When showing credentials to users:
+-- **API Key:** Show first 5 + last 4 characters: `su1Qc...8akf`
+-- **Secret Key:** Always mask, show only last 5: `***...aws1`
+-
+-Example response when asked for credentials:
+-Account: main
+-API Key: su1Qc...8akf
+-Secret: ***...aws1
+-Environment: Mainnet
+-
+-### Listing Accounts
+-
+-When listing accounts, show names and environment only — never keys:
+-Binance Accounts:
+-* main (Mainnet/Testnet)
+-* testnet-dev (Testnet)
+-* futures-keys (Mainnet)
+-
+-### Transactions in Mainnet
+-
+-When performing transactions in mainnet, always confirm with the user before proceeding by asking them to write "CONFIRM" to proceed.
+-
+----
+-
+-## Binance Accounts
+-
+-### main
+-- API Key: your_mainnet_api_key
+-- Secret: your_mainnet_secret
+-- Testnet: false 
+-
+-### testnet-dev
+-- API Key: your_testnet_api_key
+-- Secret: your_testnet_secret
+-- Testnet: true
+-
+-### TOOLS.md Structure
+-
+-```bash
+-## Binance Accounts
+-
+-### main
+-- API Key: abc123...xyz
+-- Secret: secret123...key
+-- Testnet: false
+-- Description: Primary trading account
+-
+-### testnet-dev
+-- API Key: test456...abc
+-- Secret: testsecret...xyz
+-- Testnet: true
+-- Description: Development/testing
+-
+-### futures-keys
+-- API Key: futures789...def
+-- Secret: futuressecret...uvw
+-- Testnet: false
+-- Description: Futures trading account
+-```
+-
+-## Agent Behavior
+-
+-1. Credentials requested: Mask secrets (show last 5 chars only)
+-2. Listing accounts: Show names and environment, never keys
+-3. Account selection: Ask if ambiguous, default to main
+-4. When doing a transaction in mainnet, confirm with user before by asking to write "CONFIRM" to proceed
+-5. New credentials: Prompt for name, environment, signing mode
+-6. When a request requires signing, if the request isn't an order and the API keys aren't described as `mainnet` or `testnet` keys, try to make request to the different base urls and see if it works, without asking the user. If it works, store the keys with the corresponding environment.
+-
+-## Adding New Accounts
+-
+-When user provides new credentials by Inline file or message:
+-
+-* Ask for account name
+-* Ask: Mainnet, Testnet 
+-* Store in `TOOLS.md` with masked display confirmation 
+-
+-## Signing Requests
+-
+-For trading endpoints that require a signature:
+-
+-1. **Detect key type first**, inspect the secret key format before signing.
+-2. Build query string with all parameters, including the timestamp (Unix ms).
+-3. Percent-encode the parameters using UTF-8 according to RFC 3986.
+-4. Sign query string with secretKey using HMAC SHA256, RSA, or Ed25519 (depending on the account configuration).
+-5. Append signature to query string.
+-6. Include `X-MBX-APIKEY` header.
+-
+-Otherwise, do not perform steps 4–6.
+-
+-## New Client Order ID 
+-
+-For endpoints that include the `newClientOrderId` parameter, the value must always start with `agent-`. If the parameter is not provided, `agent-` followed by 18 random alphanumeric characters will be generated automatically. If a value is provided, it will be prefixed with `agent-`
+-
+-Example: `agent-1a2b3c4d5e6f7g8h9i`
+-
+-## User Agent Header
+-
+-Include `User-Agent` header with the following string: `binance-derivatives-trading-coin-futures/1.1.0 (Skill)`
+-
+-See [`references/authentication.md`](./references/authentication.md) for implementation details.
+diff --git a/skills/binance/derivatives-trading-coin-futures/references/authentication.md b/skills/binance/derivatives-trading-coin-futures/references/authentication.md
+@@ -1,135 +0,0 @@
+-# Binance Authentication
+-
+-All trading endpoints require either HMAC SHA256, RSA, or Ed25519 signed requests.
+-**Always detect the key type before signing**, do not assume HMAC.
+-
+-## Base URLs
+-
+-| Environment | URL |
+-|-------------|-----|
+-| Mainnet | https://dapi.binance.com |
+-| Testnet | https://testnet.binancefuture.com |
+-
+-## Required Headers
+-
+-* `X-MBX-APIKEY`: your_api_key
+-* `User-Agent`: binance-derivatives-trading-coin-futures/1.1.0 (Skill)
+-
+-## Signing Process
+-
+-### Step 1: Build Query String
+-
+-Include all parameters plus `timestamp` (current Unix time in milliseconds):
+-`symbol=BTCUSD_PERP&side=BUY&type=MARKET&quantity=0.001&timestamp=1234567890123`
+-
+-**Optional:** Add `recvWindow` (default 5000ms) for timestamp tolerance.
+-
+-### Step 2: Percent‑Encode Parameters
+-
+-Before generating the signature, **percent‑encode all parameter names and values using UTF‑8 encoding according to RFC 3986.**
+-Unreserved characters that must not be encoded: `A-Z a-z 0-9 - _ . ~`
+-
+-- Chinese characters example:
+-`symbol=这是测试币456`
+-
+-Percent‑encoded:
+-`symbol=%E8%BF%99%E6%98%AF%E6%B5%8B%E8%AF%95%E5%B8%81456`
+-
+-**Important:**
+-The exact encoded query string must be used for both signing and the HTTP request.
+-
+-### Step 3: Generate Signature
+-
+-Generate the signature from the encoded query string.
+-
+-#### HMAC SHA256 signature
+-
+-Create HMAC SHA256 signature of the query string using your secret key:
+-
+-```bash
+-# Example using openssl
+-echo -n "symbol=BTCUSD_PERP&side=BUY&type=MARKET&quantity=0.001&timestamp=1234567890123" | \
+-  openssl dgst -sha256 -hmac "your_secret_key"
+-```
+-
+-#### RSA signature
+-
+-Create RSA signature of the query string using your private key:
+-
+-```bash
+-# Example using openssl
+-echo -n "symbol=BTCUSD_PERP&side=BUY&type=MARKET&quantity=0.001&timestamp=1234567890123" | \
+-  openssl dgst -sha256 -sign private_key.pem | base64
+-```
+-
+-#### Ed25519 signature
+-
+-Create Ed25519 signature of the query string using your private key:
+-
+-```bash
+-# Example using openssl
+-echo -n "symbol=BTCUSD_PERP&side=BUY&type=MARKET&quantity=0.001&timestamp=1234567890123" | \
+-  openssl pkeyutl -sign -inkey private_key.pem | base64
+-```
+-
+-### Step 4: Append Signature
+-
+-Add signature parameter to the query string:
+-`symbol=BTCUSD_PERP&side=BUY&type=MARKET&quantity=0.001&timestamp=1234567890123&signature=abc123...`
+-
+-### Step 5: Add Product User Agent Header
+-
+-Include `User-Agent` header with the following string: `binance-derivatives-trading-coin-futures/1.1.0 (Skill)`
+-
+-#### Complete Example
+-
+-Request:
+-```bash
+-curl -X POST "https://dapi.binance.com/dapi/v1/order" \
+-  -H "X-MBX-APIKEY: your_api_key" \
+-  -H "User-Agent: binance-derivatives-trading-coin-futures/1.1.0 (Skill)" \
+-  -d "symbol=BTCUSD_PERP&side=BUY&type=MARKET&quantity=0.001&timestamp=1234567890123&signature=..."
+-```
+-
+-```bash
+-#!/bin/bash
+-API_KEY="your_api_key"
+-SECRET_KEY="your_secret_key"
+-BASE_URL="https://dapi.binance.com"  # or https://testnet.binancefuture.com
+-
+-# Get current timestamp
+-TIMESTAMP=$(date +%s000)
+-
+-# Build query string (without signature)
+-QUERY="symbol=BTCUSD_PERP&side=BUY&type=MARKET&quantity=0.001&timestamp=${TIMESTAMP}"
+-
+-# Generate signature
+-# For HMAC SHA256:
+-SIGNATURE=$(echo -n "$QUERY" | openssl dgst -sha256 -hmac "$SECRET_KEY" | cut -d' ' -f2)
+-
+-# For RSA or Ed25519, replace the above line with the appropriate signing command.
+-##  RSA:
+-# SIGNATURE=$(echo -n "$QUERY" | openssl dgst -sha256 -sign private_key.pem | base64)
+-
+-##  Ed25519:
+-# SIGNATURE=$(echo -n "$QUERY" | openssl pkeyutl -sign -inkey private_key.pem | base64)
+-
+-# Make request
+-curl -X POST "${BASE_URL}/dapi/v1/order?${QUERY}&signature=${SIGNATURE}" \
+-  -H "X-MBX-APIKEY: ${API_KEY}"\
+-  -H "User-Agent: binance-derivatives-trading-coin-futures/1.1.0 (Skill)"
+-```
+-
+-If you get -1021 Timestamp outside recvWindow:
+-
+-1. Check server time: GET /dapi/v1/time
+-2. Sync your clock or adjust timestamp
+-3. Increase recvWindow (max 60000ms)
+-
+-### Security Notes
+-
+-* Never share your secret key
+-* Use IP whitelist in Binance API settings
+-* Enable only required permissions (spot trading, no withdrawals)
+-* Use testnet for development: https://testnet.binancefuture.com
+-* Testnet credentials are separate from mainnet
+diff --git a/skills/binance/derivatives-trading-options/CHANGELOG.md b/skills/binance/derivatives-trading-options/CHANGELOG.md
+@@ -1,11 +0,0 @@
+-# Changelog
+-
+-## 1.1.0 - 2026-03-24
+-
+-- Environmental variables or files can now be used as input for the API key and secret key.
+-- Fix signature generation for RSA and Ed25519 keys.
+-- Add `Openclaw` metadata to the User Agent header
+-
+-## 1.0.0 - 2026-03-19
+-
+-- Initial release
+\ No newline at end of file
+diff --git a/skills/binance/derivatives-trading-options/LICENSE.md b/skills/binance/derivatives-trading-options/LICENSE.md
+@@ -1,9 +0,0 @@
+-MIT License
+-
+-Copyright (c) 2026 Binance
+-
+-Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+-
+-The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+-
+-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+\ No newline at end of file
+diff --git a/skills/binance/derivatives-trading-options/SKILL.md b/skills/binance/derivatives-trading-options/SKILL.md
+@@ -1,309 +0,0 @@
+----
+-name: derivatives-trading-options
+-description: Binance Derivatives-trading-options request using the Binance API. Authentication requires API key and secret key. Supports testnet and mainnet.
+-metadata:
+-  version: 1.1.0
+-  author: Binance
+-  openclaw:
+-    requires:
+-      bins:
+-        - curl
+-        - openssl
+-        - date
+-    homepage: https://github.com/binance/binance-skills-hub/tree/main/skills/binance/derivatives-trading-options/SKILL.md
+-license: MIT
+----
+-
+-# Binance Derivatives-trading-options Skill
+-
+-Derivatives-trading-options request on Binance using authenticated API endpoints. Requires API key and secret key for certain endpoints. Return the result in JSON format.
+-
+-## Quick Reference
+-
+-| Endpoint | Description | Required | Optional | Authentication |
+-|----------|-------------|----------|----------|----------------|
+-| `/eapi/v1/bill` (GET) | Account Funding Flow (USER_DATA) | currency | recordId, startTime, endTime, limit, recvWindow | Yes |
+-| `/eapi/v1/marginAccount` (GET) | Option Margin Account Information (USER_DATA) | None | recvWindow | Yes |
+-| `/eapi/v1/block/order/execute` (POST) | Accept Block Trade Order (TRADE) | blockOrderMatchingKey | recvWindow | Yes |
+-| `/eapi/v1/block/order/execute` (GET) | Query Block Trade Details (USER_DATA) | blockOrderMatchingKey | recvWindow | Yes |
+-| `/eapi/v1/block/user-trades` (GET) | Account Block Trade List (USER_DATA) | None | endTime, startTime, underlying, recvWindow | Yes |
+-| `/eapi/v1/block/order/create` (DELETE) | Cancel Block Trade Order (TRADE) | blockOrderMatchingKey | recvWindow | Yes |
+-| `/eapi/v1/block/order/create` (PUT) | Extend Block Trade Order (TRADE) | blockOrderMatchingKey | recvWindow | Yes |
+-| `/eapi/v1/block/order/create` (POST) | New Block Trade Order (TRADE) | liquidity, legs | recvWindow | Yes |
+-| `/eapi/v1/block/order/orders` (GET) | Query Block Trade Order (TRADE) | None | blockOrderMatchingKey, endTime, startTime, underlying, recvWindow | Yes |
+-| `/eapi/v1/ticker` (GET) | 24hr Ticker Price Change Statistics | None | symbol | No |
+-| `/eapi/v1/time` (GET) | Check Server Time | None | None | No |
+-| `/eapi/v1/exchangeInfo` (GET) | Exchange Information | None | None | No |
+-| `/eapi/v1/exerciseHistory` (GET) | Historical Exercise Records | None | underlying, startTime, endTime, limit | No |
+-| `/eapi/v1/klines` (GET) | Kline/Candlestick Data | symbol, interval | startTime, endTime, limit | No |
+-| `/eapi/v1/openInterest` (GET) | Open Interest | underlyingAsset, expiration | None | No |
+-| `/eapi/v1/mark` (GET) | Option Mark Price | None | symbol | No |
+-| `/eapi/v1/depth` (GET) | Order Book | symbol | limit | No |
+-| `/eapi/v1/blockTrades` (GET) | Recent Block Trades List | None | symbol, limit | No |
+-| `/eapi/v1/trades` (GET) | Recent Trades List | symbol | limit | No |
+-| `/eapi/v1/index` (GET) | Index Price | underlying | None | No |
+-| `/eapi/v1/ping` (GET) | Test Connectivity | None | None | No |
+-| `/eapi/v1/countdownCancelAllHeartBeat` (POST) | Auto-Cancel All Open Orders (Kill-Switch) Heartbeat (TRADE) | underlyings | recvWindow | Yes |
+-| `/eapi/v1/countdownCancelAll` (GET) | Get Auto-Cancel All Open Orders (Kill-Switch) Config (TRADE) | None | underlying, recvWindow | Yes |
+-| `/eapi/v1/countdownCancelAll` (POST) | Set Auto-Cancel All Open Orders (Kill-Switch) Config (TRADE) | underlying, countdownTime | recvWindow | Yes |
+-| `/eapi/v1/mmp` (GET) | Get Market Maker Protection Config (TRADE) | None | underlying, recvWindow | Yes |
+-| `/eapi/v1/mmpReset` (POST) | Reset Market Maker Protection Config (TRADE) | None | underlying, recvWindow | Yes |
+-| `/eapi/v1/mmpSet` (POST) | Set Market Maker Protection Config (TRADE) | None | underlying, windowTimeInMilliseconds, frozenTimeInMilliseconds, qtyLimit, deltaLimit, recvWindow | Yes |
+-| `/eapi/v1/userTrades` (GET) | Account Trade List (USER_DATA) | None | symbol, fromId, startTime, endTime, limit, recvWindow | Yes |
+-| `/eapi/v1/allOpenOrdersByUnderlying` (DELETE) | Cancel All Option Orders By Underlying (TRADE) | underlying | recvWindow | Yes |
+-| `/eapi/v1/batchOrders` (DELETE) | Cancel Multiple Option Orders (TRADE) | symbol | orderIds, clientOrderIds, recvWindow | Yes |
+-| `/eapi/v1/batchOrders` (POST) | Place Multiple Orders(TRADE) | orders | recvWindow | Yes |
+-| `/eapi/v1/order` (DELETE) | Cancel Option Order (TRADE) | symbol | orderId, clientOrderId, recvWindow | Yes |
+-| `/eapi/v1/order` (POST) | New Order (TRADE) | symbol, side, type, quantity | price, timeInForce, reduceOnly, postOnly, newOrderRespType, clientOrderId, isMmp, recvWindow | Yes |
+-| `/eapi/v1/order` (GET) | Query Single Order (TRADE) | symbol | orderId, clientOrderId, recvWindow | Yes |
+-| `/eapi/v1/allOpenOrders` (DELETE) | Cancel all Option orders on specific symbol (TRADE) | symbol | recvWindow | Yes |
+-| `/eapi/v1/position` (GET) | Option Position Information (USER_DATA) | None | symbol, recvWindow | Yes |
+-| `/eapi/v1/openOrders` (GET) | Query Current Open Option Orders (USER_DATA) | None | symbol, orderId, startTime, endTime, recvWindow | Yes |
+-| `/eapi/v1/historyOrders` (GET) | Query Option Order History (TRADE) | symbol | orderId, startTime, endTime, limit, recvWindow | Yes |
+-| `/eapi/v1/commission` (GET) | User Commission (USER_DATA) | None | recvWindow | Yes |
+-| `/eapi/v1/exerciseRecord` (GET) | User Exercise Record (USER_DATA) | None | symbol, startTime, endTime, limit, recvWindow | Yes |
+-| `/eapi/v1/listenKey` (DELETE) | Close User Data Stream (USER_STREAM) | None | None | No |
+-| `/eapi/v1/listenKey` (PUT) | Keepalive User Data Stream (USER_STREAM) | None | None | No |
+-| `/eapi/v1/listenKey` (POST) | Start User Data Stream (USER_STREAM) | None | None | No |
+-
+----
+-
+-## Parameters
+-
+-### Common Parameters
+-
+-* **currency**: Asset type, only support USDT  as of now
+-* **recordId**: Return the recordId and subsequent data, the latest data is returned by default, e.g 100000 (e.g., 1)
+-* **startTime**: Start Time, e.g 1593511200000 (e.g., 1623319461670)
+-* **endTime**: End Time, e.g 1593512200000 (e.g., 1641782889000)
+-* **limit**: Number of result sets returned Default:100 Max:1000 (e.g., 100)
+-* **recvWindow**:  (e.g., 5000)
+-* **blockOrderMatchingKey**: 
+-* **underlying**: underlying, e.g BTCUSDT
+-* **liquidity**: Taker or Maker
+-* **legs**: Max 1 (only single leg supported), list of legs parameters in JSON; example: eapi/v1/block/order/create?orders=[{"symbol":"BTC-210115-35000-C", "price":"100","quantity":"0.0002","side":"BUY","type":"LIMIT"}]
+-* **blockOrderMatchingKey**: If specified, returns the specific block trade associated with the blockOrderMatchingKey
+-* **symbol**: Option trading pair, e.g BTC-200730-9000-C
+-* **symbol**: Option trading pair, e.g BTC-200730-9000-C
+-* **interval**: Time interval
+-* **underlyingAsset**: underlying asset, e.g ETH/BTC
+-* **expiration**: expiration date, e.g 221225
+-* **underlying**: Option underlying, e.g BTCUSDT
+-* **underlyings**: Option Underlying Symbols, e.g BTCUSDT,ETHUSDT
+-* **countdownTime**: Countdown time in milliseconds (ex. 1,000 for 1 second). 0 to disable the timer. Negative values (ex. -10000) are not accepted. Minimum acceptable value is 5,000
+-* **windowTimeInMilliseconds**: MMP Interval in milliseconds; Range (0,5000]
+-* **frozenTimeInMilliseconds**: MMP frozen time in milliseconds, if set to 0 manual reset is required
+-* **qtyLimit**: quantity limit (e.g., 1.0)
+-* **deltaLimit**: net delta limit (e.g., 1.0)
+-* **fromId**: Trade id to fetch from. Default gets most recent trades, e.g 4611875134427365376 (e.g., 1)
+-* **orderIds**: Order ID, e.g [4611875134427365377,4611875134427365378]
+-* **clientOrderIds**: User-defined order ID, e.g ["my_id_1","my_id_2"]
+-* **orderId**: Order ID, e.g 4611875134427365377 (e.g., 1)
+-* **clientOrderId**: User-defined order ID, e.g 10000 (e.g., 1)
+-* **quantity**: Order Quantity (e.g., 1.0)
+-* **price**: Order Price (e.g., 1.0)
+-* **reduceOnly**: Reduce Only（Default false） (e.g., false）)
+-* **postOnly**: Post Only（Default false） (e.g., false）)
+-* **isMmp**: is market maker protection order, true/false
+-* **orders**: order list. Max 10 orders
+-
+-
+-### Enums
+-
+-* **side**: BUY | SELL
+-* **type**: LIMIT
+-* **timeInForce**: GTC | IOC | FOK | GTX
+-* **newOrderRespType**: ACK | RESULT
+-
+-
+-## Authentication
+-
+-For endpoints that require authentication, you will need to provide Binance API credentials.
+-Required credentials:
+-
+-* apiKey: Your Binance API key (for header)
+-* secretKey: Your Binance API secret (for signing)
+-
+-Base URLs:
+-* Mainnet: https://eapi.binance.com
+-* Testnet: https://testnet.binancefuture.com
+-
+-## Security
+-
+-### Share Credentials
+-
+-Users can provide Binance API credentials in different ways. The agent will try to retrieve automatically with the two first ways the credentials, but users can also explicitly tell the agent that they have set the credentials or stored them in a `.env` file, and the agent should re-read that file when they do. The agent can also make http requests with the two first methods without user confirmation.
+-
+-1. **Environment variables**
+-
+-Search for the following specific variables only (never dump the full environment):
+-
+-**Authorized environment variables**
+-- Mainnet: `BINANCE_API_KEY` and `BINANCE_SECRET_KEY`
+-- Testnet: `BINANCE_TESTNET_API_KEY` and `BINANCE_TESTNET_SECRET_KEY`
+-
+-Read and use in a single exec call so the raw key never enters the agent's context:
+-```bash
+-KEY="$BINANCE_API_KEY"
+-SECRET="$BINANCE_SECRET_KEY"
+-
+-response=$(curl -s -X GET "$URL" \
+-  -H "X-MBX-APIKEY: $KEY" \
+-  --data-urlencode "param1=value1")
+-
+-echo "$response"
+-```
+-
+-Environment variables must be set before OpenClaw starts. They are inherited at process startup and cannot be injected into a running instance. If you need to add or update credentials without restarting, use a secrets file (see option 2).
+-
+-2. **Secrets file (.env)**
+-
+-Check `~/.openclaw/secrets.env` , `~/.env`, or a `.env` file in the workspace. Read individual keys with `grep`, never source the full file:
+-```bash
+-# Try all credential locations in order
+-API_KEY=$(grep '^BINANCE_API_KEY=' ~/.openclaw/secrets.env 2>/dev/null | cut -d= -f2-)
+-SECRET_KEY=$(grep '^BINANCE_SECRET_KEY=' ~/.openclaw/secrets.env 2>/dev/null | cut -d= -f2-)
+-
+-# Fallback: search .env in known directories (KEY=VALUE then raw line format)
+-for dir in ~/.openclaw ~; do
+-  [ -n "$API_KEY" ] && break
+-  env_file="$dir/.env"
+-  [ -f "$env_file" ] || continue
+-
+-  # Read first two lines
+-  line1=$(sed -n '1p' "$env_file")
+-  line2=$(sed -n '2p' "$env_file")
+-
+-  # Check if lines contain '=' indicating KEY=VALUE format
+-  if [[ "$line1" == *=* && "$line2" == *=* ]]; then
+-    API_KEY=$(grep '^BINANCE_API_KEY=' "$env_file" 2>/dev/null | cut -d= -f2-)
+-    SECRET_KEY=$(grep '^BINANCE_SECRET_KEY=' "$env_file" 2>/dev/null | cut -d= -f2-)
+-  else
+-    # Treat lines as raw values
+-    API_KEY="$line1"
+-    SECRET_KEY="$line2"
+-  fi
+-done
+-```
+-
+-This file can be updated at any time without restarting OpenClaw, keys are read fresh on each invocation. Users can tell you the variables are now set or stored in a `.env` file, and you should re-read that file when they do.
+-
+-3. **Inline file**
+-
+-Sending a file where the content is in the following format:
+-
+-```bash
+-abc123...xyz
+-secret123...key
+-```
+-
+-* Never run `printenv`, `env`, `export`, or set without a specific variable name
+-* Never run `grep` on `env` files without anchoring to a specific key ('`^VARNAME='`)
+-* Never source a secrets file into the shell environment (`source .env` or `. .env`)
+-* Only read credentials explicitly needed for the current task
+-* Never echo or log raw credentials in output or replies
+-* Never commit `TOOLS.md` to version control if it contains real credentials — add it to `.gitignore`
+-
+-### Never Disclose API Key and Secret
+-
+-Never disclose the location of the API key and secret file.
+-
+-Never send the API key and secret to any website other than Mainnet and Testnet.
+-
+-### Never Display Full Secrets
+-
+-When showing credentials to users:
+-- **API Key:** Show first 5 + last 4 characters: `su1Qc...8akf`
+-- **Secret Key:** Always mask, show only last 5: `***...aws1`
+-
+-Example response when asked for credentials:
+-Account: main
+-API Key: su1Qc...8akf
+-Secret: ***...aws1
+-Environment: Mainnet
+-
+-### Listing Accounts
+-
+-When listing accounts, show names and environment only — never keys:
+-Binance Accounts:
+-* main (Mainnet/Testnet)
+-* testnet-dev (Testnet)
+-* futures-keys (Mainnet)
+-
+-### Transactions in Mainnet
+-
+-When performing transactions in mainnet, always confirm with the user before proceeding by asking them to write "CONFIRM" to proceed.
+-
+----
+-
+-## Binance Accounts
+-
+-### main
+-- API Key: your_mainnet_api_key
+-- Secret: your_mainnet_secret
+-- Testnet: false 
+-
+-### testnet-dev
+-- API Key: your_testnet_api_key
+-- Secret: your_testnet_secret
+-- Testnet: true
+-
+-### TOOLS.md Structure
+-
+-```bash
+-## Binance Accounts
+-
+-### main
+-- API Key: abc123...xyz
+-- Secret: secret123...key
+-- Testnet: false
+-- Description: Primary trading account
+-
+-### testnet-dev
+-- API Key: test456...abc
+-- Secret: testsecret...xyz
+-- Testnet: true
+-- Description: Development/testing
+-
+-### futures-keys
+-- API Key: futures789...def
+-- Secret: futuressecret...uvw
+-- Testnet: false
+-- Description: Futures trading account
+-```
+-
+-## Agent Behavior
+-
+-1. Credentials requested: Mask secrets (show last 5 chars only)
+-2. Listing accounts: Show names and environment, never keys
+-3. Account selection: Ask if ambiguous, default to main
+-4. When doing a transaction in mainnet, confirm with user before by asking to write "CONFIRM" to proceed
+-5. New credentials: Prompt for name, environment, signing mode
+-6. When a request requires signing, if the request isn't an order and the API keys aren't described as `mainnet` or `testnet` keys, try to make request to the different base urls and see if it works, without asking the user. If it works, store the keys with the corresponding environment.
+-
+-## Adding New Accounts
+-
+-When user provides new credentials by Inline file or message:
+-
+-* Ask for account name
+-* Ask: Mainnet, Testnet 
+-* Store in `TOOLS.md` with masked display confirmation 
+-
+-## Signing Requests
+-
+-For trading endpoints that require a signature:
+-
+-1. **Detect key type first**, inspect the secret key format before signing.
+-2. Build query string with all parameters, including the timestamp (Unix ms).
+-3. Percent-encode the parameters using UTF-8 according to RFC 3986.
+-4. Sign query string with secretKey using HMAC SHA256, RSA, or Ed25519 (depending on the account configuration).
+-5. Append signature to query string.
+-6. Include `X-MBX-APIKEY` header.
+-
+-Otherwise, do not perform steps 4–6.
+-
+-## User Agent Header
+-
+-Include `User-Agent` header with the following string: `binance-derivatives-trading-options/1.1.0 (Skill)`
+-
+-See [`references/authentication.md`](./references/authentication.md) for implementation details.
+diff --git a/skills/binance/derivatives-trading-options/references/authentication.md b/skills/binance/derivatives-trading-options/references/authentication.md
+@@ -1,135 +0,0 @@
+-# Binance Authentication
+-
+-All trading endpoints require either HMAC SHA256, RSA, or Ed25519 signed requests.
+-**Always detect the key type before signing**, do not assume HMAC.
+-
+-## Base URLs
+-
+-| Environment | URL |
+-|-------------|-----|
+-| Mainnet | https://eapi.binance.com |
+-| Testnet | https://testnet.binancefuture.com |
+-
+-## Required Headers
+-
+-* `X-MBX-APIKEY`: your_api_key
+-* `User-Agent`: binance-derivatives-trading-options/1.1.0 (Skill)
+-
+-## Signing Process
+-
+-### Step 1: Build Query String
+-
+-Include all parameters plus `timestamp` (current Unix time in milliseconds):
+-`symbol=BTC-260327-120000-C&side=BUY&type=LIMIT&quantity=1&price=5&timestamp=1234567890123`
+-
+-**Optional:** Add `recvWindow` (default 5000ms) for timestamp tolerance.
+-
+-### Step 2: Percent‑Encode Parameters
+-
+-Before generating the signature, **percent‑encode all parameter names and values using UTF‑8 encoding according to RFC 3986.**
+-Unreserved characters that must not be encoded: `A-Z a-z 0-9 - _ . ~`
+-
+-- Chinese characters example:
+-`symbol=这是测试币456`
+-
+-Percent‑encoded:
+-`symbol=%E8%BF%99%E6%98%AF%E6%B5%8B%E8%AF%95%E5%B8%81456`
+-
+-**Important:**
+-The exact encoded query string must be used for both signing and the HTTP request.
+-
+-### Step 3: Generate Signature
+-
+-Generate the signature from the encoded query string.
+-
+-#### HMAC SHA256 signature
+-
+-Create HMAC SHA256 signature of the query string using your secret key:
+-
+-```bash
+-# Example using openssl
+-echo -n "symbol=BTC-260327-120000-C&side=BUY&type=LIMIT&quantity=1&price=5&timestamp=1234567890123" | \
+-  openssl dgst -sha256 -hmac "your_secret_key"
+-```
+-
+-#### RSA signature
+-
+-Create RSA signature of the query string using your private key:
+-
+-```bash
+-# Example using openssl
+-echo -n "symbol=BTC-260327-120000-C&side=BUY&type=LIMIT&quantity=1&price=5&timestamp=1234567890123" | \
+-  openssl dgst -sha256 -sign private_key.pem | base64
+-```
+-
+-#### Ed25519 signature
+-
+-Create Ed25519 signature of the query string using your private key:
+-
+-```bash
+-# Example using openssl
+-echo -n "symbol=BTC-260327-120000-C&side=BUY&type=LIMIT&quantity=1&price=5&timestamp=1234567890123" | \
+-  openssl pkeyutl -sign -inkey private_key.pem | base64
+-```
+-
+-### Step 4: Append Signature
+-
+-Add signature parameter to the query string:
+-`symbol=BTC-260327-120000-C&side=BUY&type=LIMIT&quantity=1&price=5&timestamp=1234567890123&signature=abc123...`
+-
+-### Step 5: Add Product User Agent Header
+-
+-Include `User-Agent` header with the following string: `binance-derivatives-trading-options/1.1.0 (Skill)`
+-
+-#### Complete Example
+-
+-Request:
+-```bash
+-curl --request POST \
+-  --url 'https://eapi.binance.com/eapi/v1/order?symbol=BTC-260327-120000-C&side=BUY&type=LIMIT&quantity=1&price=5&timeInForce=GTC&newOrderRespType=RESULT&recvWindow=999999999&timestamp=1772667645754&signature=...&selfProtectionMode=EXPIRE_BOTH' \
+-  -H "X-MBX-APIKEY: ${API_KEY}" \
+-  -H "User-Agent: binance-derivatives-trading-options/1.1.0 (Skill)"
+-```
+-
+-```bash
+-#!/bin/bash
+-API_KEY="your_api_key"
+-SECRET_KEY="your_secret_key"
+-BASE_URL="https://eapi.binance.com"  # or https://testnet.binancefuture.com
+-
+-# Get current timestamp
+-TIMESTAMP=$(date +%s000)
+-
+-# Build query string (without signature)
+-QUERY="symbol=BTC-260327-120000-C&side=BUY&type=LIMIT&quantity=1&price=5&timestamp=${TIMESTAMP}"
+-
+-# Generate signature
+-# For HMAC SHA256:
+-SIGNATURE=$(echo -n "$QUERY" | openssl dgst -sha256 -hmac "$SECRET_KEY" | cut -d' ' -f2)
+-
+-# For RSA or Ed25519, replace the above line with the appropriate signing command.
+-##  RSA:
+-# SIGNATURE=$(echo -n "$QUERY" | openssl dgst -sha256 -sign private_key.pem | base64)
+-
+-##  Ed25519:
+-# SIGNATURE=$(echo -n "$QUERY" | openssl pkeyutl -sign -inkey private_key.pem | base64)
+-
+-# Make request
+-curl -X POST "${BASE_URL}/eapi/v1/order?${QUERY}&signature=${SIGNATURE}" \
+-  -H "X-MBX-APIKEY: ${API_KEY}"\
+-  -H "User-Agent: binance-derivatives-trading-options/1.1.0 (Skill)"
+-```
+-
+-If you get -1021 Timestamp outside recvWindow:
+-
+-1. Check server time: GET /eapi/v1/time
+-2. Sync your clock or adjust timestamp
+-3. Increase recvWindow (max 60000ms)
+-
+-### Security Notes
+-
+-* Never share your secret key
+-* Use IP whitelist in Binance API settings
+-* Enable only required permissions (spot trading, no withdrawals)
+-* Use testnet for development: https://testnet.binancefuture.com
+-* Testnet credentials are separate from mainnet
+diff --git a/skills/binance/derivatives-trading-portfolio-margin-pro/CHANGELOG.md b/skills/binance/derivatives-trading-portfolio-margin-pro/CHANGELOG.md
+@@ -1,11 +0,0 @@
+-# Changelog
+-
+-## 1.1.0 - 2026-03-24
+-
+-- Environmental variables or files can now be used as input for the API key and secret key.
+-- Fix signature generation for RSA and Ed25519 keys.
+-- Add `Openclaw` metadata to the User Agent header
+-
+-## 1.0.0 - 2026-03-19
+-
+-- Initial release
+\ No newline at end of file
+diff --git a/skills/binance/derivatives-trading-portfolio-margin-pro/LICENSE.md b/skills/binance/derivatives-trading-portfolio-margin-pro/LICENSE.md
+@@ -1,9 +0,0 @@
+-MIT License
+-
+-Copyright (c) 2026 Binance
+-
+-Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+-
+-The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+-
+-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+\ No newline at end of file
+diff --git a/skills/binance/derivatives-trading-portfolio-margin-pro/SKILL.md b/skills/binance/derivatives-trading-portfolio-margin-pro/SKILL.md
+@@ -1,239 +0,0 @@
+----
+-name: derivatives-trading-portfolio-margin-pro
+-description: Binance Derivatives-trading-portfolio-margin-pro request using the Binance API. Authentication requires API key and secret key. 
+-metadata:
+-  version: 1.1.0
+-  author: Binance
+-  openclaw:
+-    requires:
+-      bins:
+-        - curl
+-        - openssl
+-        - date
+-    homepage: https://github.com/binance/binance-skills-hub/tree/main/skills/binance/derivatives-trading-portfolio-margin-pro/SKILL.md
+-license: MIT
+----
+-
+-# Binance Derivatives-trading-portfolio-margin-pro Skill
+-
+-Derivatives-trading-portfolio-margin-pro request on Binance using authenticated API endpoints. Requires API key and secret key for certain endpoints. Return the result in JSON format.
+-
+-## Quick Reference
+-
+-| Endpoint | Description | Required | Optional | Authentication |
+-|----------|-------------|----------|----------|----------------|
+-| `/sapi/v1/portfolio/bnb-transfer` (POST) | BNB transfer(USER_DATA) | amount, transferSide | recvWindow | Yes |
+-| `/sapi/v1/portfolio/repay-futures-switch` (POST) | Change Auto-repay-futures Status(TRADE) | autoRepay | recvWindow | Yes |
+-| `/sapi/v1/portfolio/repay-futures-switch` (GET) | Get Auto-repay-futures Status(USER_DATA) | None | recvWindow | Yes |
+-| `/sapi/v1/portfolio/repay` (POST) | Portfolio Margin Pro Bankruptcy Loan Repay | None | from, recvWindow | Yes |
+-| `/sapi/v1/portfolio/auto-collection` (POST) | Fund Auto-collection(USER_DATA) | None | recvWindow | Yes |
+-| `/sapi/v1/portfolio/asset-collection` (POST) | Fund Collection by Asset(USER_DATA) | asset | recvWindow | Yes |
+-| `/sapi/v2/portfolio/account` (GET) | Get Portfolio Margin Pro SPAN Account Info(USER_DATA) | None | recvWindow | Yes |
+-| `/sapi/v1/portfolio/account` (GET) | Get Portfolio Margin Pro Account Info(USER_DATA) | None | recvWindow | Yes |
+-| `/sapi/v1/portfolio/balance` (GET) | Get Portfolio Margin Pro Account Balance(USER_DATA) | None | asset, recvWindow | Yes |
+-| `/sapi/v1/portfolio/delta-mode` (GET) | Get Delta Mode Status(USER_DATA) | None | recvWindow | Yes |
+-| `/sapi/v1/portfolio/delta-mode` (POST) | Switch Delta Mode(TRADE) | deltaEnabled | recvWindow | Yes |
+-| `/sapi/v1/portfolio/earn-asset-balance` (GET) | Get Transferable Earn Asset Balance for Portfolio Margin (USER_DATA) | asset, transferType | recvWindow | Yes |
+-| `/sapi/v1/portfolio/pmLoan` (GET) | Query Portfolio Margin Pro Bankruptcy Loan Amount(USER_DATA) | None | recvWindow | Yes |
+-| `/sapi/v1/portfolio/interest-history` (GET) | Query Portfolio Margin Pro Negative Balance Interest History(USER_DATA) | None | asset, startTime, endTime, size, recvWindow | Yes |
+-| `/sapi/v1/portfolio/pmloan-history` (GET) | Query Portfolio Margin Pro Bankruptcy Loan Repay History(USER_DATA) | None | startTime, endTime, current, size, recvWindow | Yes |
+-| `/sapi/v1/portfolio/repay-futures-negative-balance` (POST) | Repay futures Negative Balance(USER_DATA) | None | from, recvWindow | Yes |
+-| `/sapi/v1/portfolio/earn-asset-transfer` (POST) | Transfer LDUSDT/RWUSD for Portfolio Margin(TRADE) | asset, transferType, amount | recvWindow | Yes |
+-| `/sapi/v1/portfolio/collateralRate` (GET) | Portfolio Margin Collateral Rate(MARKET_DATA) | None | None | No |
+-| `/sapi/v1/portfolio/margin-asset-leverage` (GET) | Get Portfolio Margin Asset Leverage(USER_DATA) | None | None | Yes |
+-| `/sapi/v2/portfolio/collateralRate` (GET) | Portfolio Margin Pro Tiered Collateral Rate(USER_DATA) | None | recvWindow | Yes |
+-| `/sapi/v1/portfolio/asset-index-price` (GET) | Query Portfolio Margin Asset Index Price (MARKET_DATA) | None | asset | No |
+-
+----
+-
+-## Parameters
+-
+-### Common Parameters
+-
+-* **amount**:  (e.g., 1.0)
+-* **transferSide**: "TO_UM","FROM_UM"
+-* **recvWindow**:  (e.g., 5000)
+-* **autoRepay**: Default: `true`; `false` for turn off the auto-repay futures negative balance function (e.g., true)
+-* **from**: SPOT or MARGIN，default SPOT (e.g., SPOT)
+-* **asset**: `LDUSDT` and `RWUSD`
+-* **asset**: 
+-* **transferType**: `EARN_TO_FUTURE` /`FUTURE_TO_EARN`
+-* **startTime**:  (e.g., 1623319461670)
+-* **endTime**:  (e.g., 1641782889000)
+-* **size**: Default:10 Max:100 (e.g., 10)
+-* **current**: Currently querying page. Start from 1. Default:1 (e.g., 1)
+-* **deltaEnabled**: `true` to enable Delta mode; `false` to disable Delta mode
+-
+-
+-## Authentication
+-
+-For endpoints that require authentication, you will need to provide Binance API credentials.
+-Required credentials:
+-
+-* apiKey: Your Binance API key (for header)
+-* secretKey: Your Binance API secret (for signing)
+-
+-Base URLs:
+-* Mainnet: https://api.binance.com
+-
+-## Security
+-
+-### Share Credentials
+-
+-Users can provide Binance API credentials in different ways. The agent will try to retrieve automatically with the two first ways the credentials, but users can also explicitly tell the agent that they have set the credentials or stored them in a `.env` file, and the agent should re-read that file when they do. The agent can also make http requests with the two first methods without user confirmation.
+-
+-1. **Environment variables**
+-
+-Search for the following specific variables only (never dump the full environment):
+-
+-**Authorized environment variables**
+-- Mainnet: `BINANCE_API_KEY` and `BINANCE_SECRET_KEY`
+-
+-Read and use in a single exec call so the raw key never enters the agent's context:
+-```bash
+-KEY="$BINANCE_API_KEY"
+-SECRET="$BINANCE_SECRET_KEY"
+-
+-response=$(curl -s -X GET "$URL" \
+-  -H "X-MBX-APIKEY: $KEY" \
+-  --data-urlencode "param1=value1")
+-
+-echo "$response"
+-```
+-
+-Environment variables must be set before OpenClaw starts. They are inherited at process startup and cannot be injected into a running instance. If you need to add or update credentials without restarting, use a secrets file (see option 2).
+-
+-2. **Secrets file (.env)**
+-
+-Check `~/.openclaw/secrets.env` , `~/.env`, or a `.env` file in the workspace. Read individual keys with `grep`, never source the full file:
+-```bash
+-# Try all credential locations in order
+-API_KEY=$(grep '^BINANCE_API_KEY=' ~/.openclaw/secrets.env 2>/dev/null | cut -d= -f2-)
+-SECRET_KEY=$(grep '^BINANCE_SECRET_KEY=' ~/.openclaw/secrets.env 2>/dev/null | cut -d= -f2-)
+-
+-# Fallback: search .env in known directories (KEY=VALUE then raw line format)
+-for dir in ~/.openclaw ~; do
+-  [ -n "$API_KEY" ] && break
+-  env_file="$dir/.env"
+-  [ -f "$env_file" ] || continue
+-
+-  # Read first two lines
+-  line1=$(sed -n '1p' "$env_file")
+-  line2=$(sed -n '2p' "$env_file")
+-
+-  # Check if lines contain '=' indicating KEY=VALUE format
+-  if [[ "$line1" == *=* && "$line2" == *=* ]]; then
+-    API_KEY=$(grep '^BINANCE_API_KEY=' "$env_file" 2>/dev/null | cut -d= -f2-)
+-    SECRET_KEY=$(grep '^BINANCE_SECRET_KEY=' "$env_file" 2>/dev/null | cut -d= -f2-)
+-  else
+-    # Treat lines as raw values
+-    API_KEY="$line1"
+-    SECRET_KEY="$line2"
+-  fi
+-done
+-```
+-
+-This file can be updated at any time without restarting OpenClaw, keys are read fresh on each invocation. Users can tell you the variables are now set or stored in a `.env` file, and you should re-read that file when they do.
+-
+-3. **Inline file**
+-
+-Sending a file where the content is in the following format:
+-
+-```bash
+-abc123...xyz
+-secret123...key
+-```
+-
+-* Never run `printenv`, `env`, `export`, or set without a specific variable name
+-* Never run `grep` on `env` files without anchoring to a specific key ('`^VARNAME='`)
+-* Never source a secrets file into the shell environment (`source .env` or `. .env`)
+-* Only read credentials explicitly needed for the current task
+-* Never echo or log raw credentials in output or replies
+-* Never commit `TOOLS.md` to version control if it contains real credentials — add it to `.gitignore`
+-
+-### Never Disclose API Key and Secret
+-
+-Never disclose the location of the API key and secret file.
+-
+-Never send the API key and secret to any website other than Mainnet and Testnet.
+-
+-### Never Display Full Secrets
+-
+-When showing credentials to users:
+-- **API Key:** Show first 5 + last 4 characters: `su1Qc...8akf`
+-- **Secret Key:** Always mask, show only last 5: `***...aws1`
+-
+-Example response when asked for credentials:
+-Account: main
+-API Key: su1Qc...8akf
+-Secret: ***...aws1
+-
+-### Listing Accounts
+-
+-When listing accounts, show names and environment only — never keys:
+-Binance Accounts:
+-* main (Mainnet)
+-* futures-keys (Mainnet)
+-
+-### Transactions in Mainnet
+-
+-When performing transactions in mainnet, always confirm with the user before proceeding by asking them to write "CONFIRM" to proceed.
+-
+----
+-
+-## Binance Accounts
+-
+-### main
+-- API Key: your_mainnet_api_key
+-- Secret: your_mainnet_secret
+-
+-### TOOLS.md Structure
+-
+-```bash
+-## Binance Accounts
+-
+-### main
+-- API Key: abc123...xyz
+-- Secret: secret123...key
+-- Description: Primary trading account
+-
+-
+-### futures-keys
+-- API Key: futures789...def
+-- Secret: futuressecret...uvw
+-- Description: Futures trading account
+-```
+-
+-## Agent Behavior
+-
+-1. Credentials requested: Mask secrets (show last 5 chars only)
+-2. Listing accounts: Show names and environment, never keys
+-3. Account selection: Ask if ambiguous, default to main
+-4. When doing a transaction in mainnet, confirm with user before by asking to write "CONFIRM" to proceed
+-5. New credentials: Prompt for name, environment, signing mode
+-
+-## Adding New Accounts
+-
+-When user provides new credentials by Inline file or message:
+-
+-* Ask for account name
+-* Store in `TOOLS.md` with masked display confirmation 
+-
+-## Signing Requests
+-
+-For trading endpoints that require a signature:
+-
+-1. **Detect key type first**, inspect the secret key format before signing.
+-2. Build query string with all parameters, including the timestamp (Unix ms).
+-3. Percent-encode the parameters using UTF-8 according to RFC 3986.
+-4. Sign query string with secretKey using HMAC SHA256, RSA, or Ed25519 (depending on the account configuration).
+-5. Append signature to query string.
+-6. Include `X-MBX-APIKEY` header.
+-
+-Otherwise, do not perform steps 4–6.
+-
+-## User Agent Header
+-
+-Include `User-Agent` header with the following string: `binance-derivatives-trading-portfolio-margin-pro/1.1.0 (Skill)`
+-
+-See [`references/authentication.md`](./references/authentication.md) for implementation details.
+diff --git a/skills/binance/derivatives-trading-portfolio-margin-pro/references/authentication.md b/skills/binance/derivatives-trading-portfolio-margin-pro/references/authentication.md
+@@ -1,126 +0,0 @@
+-# Binance Authentication
+-
+-All trading endpoints require either HMAC SHA256, RSA, or Ed25519 signed requests.
+-**Always detect the key type before signing**, do not assume HMAC.
+-
+-## Base URLs
+-
+-| Environment | URL |
+-|-------------|-----|
+-| Mainnet | https://api.binance.com |
+-
+-## Required Headers
+-
+-* `X-MBX-APIKEY`: your_api_key
+-* `User-Agent`: binance-derivatives-trading-portfolio-margin-pro/1.1.0 (Skill)
+-
+-## Signing Process
+-
+-### Step 1: Build Query String
+-
+-Include all parameters plus `timestamp` (current Unix time in milliseconds):
+-`timestamp=1234567890123`
+-
+-**Optional:** Add `recvWindow` (default 5000ms) for timestamp tolerance.
+-
+-### Step 2: Percent‑Encode Parameters
+-
+-Before generating the signature, **percent‑encode all parameter names and values using UTF‑8 encoding according to RFC 3986.**
+-Unreserved characters that must not be encoded: `A-Z a-z 0-9 - _ . ~`
+-
+-- Chinese characters example:
+-`symbol=这是测试币456`
+-
+-Percent‑encoded:
+-`symbol=%E8%BF%99%E6%98%AF%E6%B5%8B%E8%AF%95%E5%B8%81456`
+-
+-**Important:**
+-The exact encoded query string must be used for both signing and the HTTP request.
+-
+-### Step 3: Generate Signature
+-
+-Generate the signature from the encoded query string.
+-
+-#### HMAC SHA256 signature
+-
+-Create HMAC SHA256 signature of the query string using your secret key:
+-
+-```bash
+-# Example using openssl
+-echo -n "timestamp=1234567890123" | \
+-  openssl dgst -sha256 -hmac "your_secret_key"
+-```
+-
+-#### RSA signature
+-
+-Create RSA signature of the query string using your private key:
+-
+-```bash
+-# Example using openssl
+-echo -n "timestamp=1234567890123" | \
+-  openssl dgst -sha256 -sign private_key.pem | base64
+-```
+-
+-#### Ed25519 signature
+-
+-Create Ed25519 signature of the query string using your private key:
+-
+-```bash
+-# Example using openssl
+-echo -n "timestamp=1234567890123" | \
+-  openssl pkeyutl -sign -inkey private_key.pem | base64
+-```
+-
+-### Step 4: Append Signature
+-
+-Add signature parameter to the query string:
+-`timestamp=1234567890123&signature=abc123...`
+-
+-### Step 5: Add Product User Agent Header
+-
+-Include `User-Agent` header with the following string: `binance-derivatives-trading-portfolio-margin-pro/1.1.0 (Skill)`
+-
+-#### Complete Example
+-
+-Request:
+-```bash
+-curl -X GET "https://api.binance.com/sapi/v1/portfolio/repay-futures-switch" \
+-  -H "X-MBX-APIKEY: your_api_key" \
+-  -H "User-Agent: binance-derivatives-trading-portfolio-margin-pro/1.1.0 (Skill)" \
+-  -d "timestamp=1234567890123&signature=..."
+-```
+-
+-```bash
+-#!/bin/bash
+-API_KEY="your_api_key"
+-SECRET_KEY="your_secret_key"
+-BASE_URL="https://api.binance.com"  
+-
+-# Get current timestamp
+-TIMESTAMP=$(date +%s000)
+-
+-# Build query string (without signature)
+-QUERY="timestamp=${TIMESTAMP}"
+-
+-# Generate signature
+-# For HMAC SHA256:
+-SIGNATURE=$(echo -n "$QUERY" | openssl dgst -sha256 -hmac "$SECRET_KEY" | cut -d' ' -f2)
+-
+-# For RSA or Ed25519, replace the above line with the appropriate signing command.
+-##  RSA:
+-# SIGNATURE=$(echo -n "$QUERY" | openssl dgst -sha256 -sign private_key.pem | base64)
+-
+-##  Ed25519:
+-# SIGNATURE=$(echo -n "$QUERY" | openssl pkeyutl -sign -inkey private_key.pem | base64)
+-
+-# Make request
+-curl -X GET "${BASE_URL}/sapi/v1/portfolio/repay-futures-switch?${QUERY}&signature=${SIGNATURE}" \
+-  -H "X-MBX-APIKEY: ${API_KEY}"\
+-  -H "User-Agent: binance-derivatives-trading-portfolio-margin-pro/1.1.0 (Skill)"
+-```
+-
+-### Security Notes
+-
+-* Never share your secret key
+-* Use IP whitelist in Binance API settings
+-* Enable only required permissions (spot trading, no withdrawals)
+diff --git a/skills/binance/derivatives-trading-portfolio-margin/CHANGELOG.md b/skills/binance/derivatives-trading-portfolio-margin/CHANGELOG.md
+@@ -1,11 +0,0 @@
+-# Changelog
+-
+-## 1.1.0 - 2026-03-24
+-
+-- Environmental variables or files can now be used as input for the API key and secret key.
+-- Fix signature generation for RSA and Ed25519 keys.
+-- Add `Openclaw` metadata to the User Agent header
+-
+-## 1.0.0 - 2026-03-19
+-
+-- Initial release
+\ No newline at end of file
+diff --git a/skills/binance/derivatives-trading-portfolio-margin/LICENSE.md b/skills/binance/derivatives-trading-portfolio-margin/LICENSE.md
+@@ -1,9 +0,0 @@
+-MIT License
+-
+-Copyright (c) 2026 Binance
+-
+-Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+-
+-The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+-
+-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+\ No newline at end of file
+diff --git a/skills/binance/derivatives-trading-portfolio-margin/SKILL.md b/skills/binance/derivatives-trading-portfolio-margin/SKILL.md
+@@ -1,402 +0,0 @@
+----
+-name: derivatives-trading-portfolio-margin
+-description: Binance Derivatives-trading-portfolio-margin request using the Binance API. Authentication requires API key and secret key. Supports testnet and mainnet.
+-metadata:
+-  version: 1.1.0
+-  author: Binance
+-  openclaw:
+-    requires:
+-      bins:
+-        - curl
+-        - openssl
+-        - date
+-    homepage: https://github.com/binance/binance-skills-hub/tree/main/skills/binance/derivatives-trading-portfolio-margin/SKILL.md
+-license: MIT
+----
+-
+-# Binance Derivatives-trading-portfolio-margin Skill
+-
+-Derivatives-trading-portfolio-margin request on Binance using authenticated API endpoints. Requires API key and secret key for certain endpoints. Return the result in JSON format.
+-
+-## Quick Reference
+-
+-| Endpoint | Description | Required | Optional | Authentication |
+-|----------|-------------|----------|----------|----------------|
+-| `/papi/v1/balance` (GET) | Account Balance(USER_DATA) | None | asset, recvWindow | Yes |
+-| `/papi/v1/account` (GET) | Account Information(USER_DATA) | None | recvWindow | Yes |
+-| `/papi/v1/bnb-transfer` (POST) | BNB transfer (TRADE) | amount, transferSide | recvWindow | Yes |
+-| `/papi/v1/cm/leverageBracket` (GET) | CM Notional and Leverage Brackets(USER_DATA) | None | symbol, recvWindow | Yes |
+-| `/papi/v1/repay-futures-switch` (POST) | Change Auto-repay-futures Status(TRADE) | autoRepay | recvWindow | Yes |
+-| `/papi/v1/repay-futures-switch` (GET) | Get Auto-repay-futures Status(USER_DATA) | None | recvWindow | Yes |
+-| `/papi/v1/cm/leverage` (POST) | Change CM Initial Leverage (TRADE) | symbol, leverage | recvWindow | Yes |
+-| `/papi/v1/cm/positionSide/dual` (POST) | Change CM Position Mode(TRADE) | dualSidePosition | recvWindow | Yes |
+-| `/papi/v1/cm/positionSide/dual` (GET) | Get CM Current Position Mode(USER_DATA) | None | recvWindow | Yes |
+-| `/papi/v1/um/leverage` (POST) | Change UM Initial Leverage(TRADE) | symbol, leverage | recvWindow | Yes |
+-| `/papi/v1/um/positionSide/dual` (POST) | Change UM Position Mode(TRADE) | dualSidePosition | recvWindow | Yes |
+-| `/papi/v1/um/positionSide/dual` (GET) | Get UM Current Position Mode(USER_DATA) | None | recvWindow | Yes |
+-| `/papi/v1/auto-collection` (POST) | Fund Auto-collection(TRADE) | None | recvWindow | Yes |
+-| `/papi/v1/asset-collection` (POST) | Fund Collection by Asset(TRADE) | asset | recvWindow | Yes |
+-| `/papi/v1/cm/account` (GET) | Get CM Account Detail(USER_DATA) | None | recvWindow | Yes |
+-| `/papi/v1/cm/income` (GET) | Get CM Income History(USER_DATA) | None | symbol, incomeType, startTime, endTime, page, limit, recvWindow | Yes |
+-| `/papi/v1/um/order/asyn` (GET) | Get Download Id For UM Futures Order History (USER_DATA) | startTime, endTime | recvWindow | Yes |
+-| `/papi/v1/um/trade/asyn` (GET) | Get Download Id For UM Futures Trade History (USER_DATA) | startTime, endTime | recvWindow | Yes |
+-| `/papi/v1/um/income/asyn` (GET) | Get Download Id For UM Futures Transaction History (USER_DATA) | startTime, endTime | recvWindow | Yes |
+-| `/papi/v1/margin/marginInterestHistory` (GET) | Get Margin Borrow/Loan Interest History(USER_DATA) | None | asset, startTime, endTime, current, size, archived, recvWindow | Yes |
+-| `/papi/v2/um/account` (GET) | Get UM Account Detail V2(USER_DATA) | None | recvWindow | Yes |
+-| `/papi/v1/um/account` (GET) | Get UM Account Detail(USER_DATA) | None | recvWindow | Yes |
+-| `/papi/v1/um/accountConfig` (GET) | UM Futures Account Configuration(USER_DATA) | None | recvWindow | Yes |
+-| `/papi/v1/um/order/asyn/id` (GET) | Get UM Futures Order Download Link by Id(USER_DATA) | downloadId | recvWindow | Yes |
+-| `/papi/v1/um/symbolConfig` (GET) | UM Futures Symbol Configuration(USER_DATA) | None | symbol, recvWindow | Yes |
+-| `/papi/v1/um/trade/asyn/id` (GET) | Get UM Futures Trade Download Link by Id(USER_DATA) | downloadId | recvWindow | Yes |
+-| `/papi/v1/um/income/asyn/id` (GET) | Get UM Futures Transaction Download Link by Id(USER_DATA) | downloadId | recvWindow | Yes |
+-| `/papi/v1/um/income` (GET) | Get UM Income History(USER_DATA) | None | symbol, incomeType, startTime, endTime, page, limit, recvWindow | Yes |
+-| `/papi/v1/cm/commissionRate` (GET) | Get User Commission Rate for CM(USER_DATA) | symbol | recvWindow | Yes |
+-| `/papi/v1/um/commissionRate` (GET) | Get User Commission Rate for UM(USER_DATA) | symbol | recvWindow | Yes |
+-| `/papi/v1/margin/maxBorrowable` (GET) | Margin Max Borrow(USER_DATA) | asset | recvWindow | Yes |
+-| `/papi/v1/um/apiTradingStatus` (GET) | Portfolio Margin UM Trading Quantitative Rules Indicators(USER_DATA) | None | symbol, recvWindow | Yes |
+-| `/papi/v1/cm/positionRisk` (GET) | Query CM Position Information(USER_DATA) | None | marginAsset, pair, recvWindow | Yes |
+-| `/papi/v1/margin/marginLoan` (GET) | Query Margin Loan Record(USER_DATA) | asset | txId, startTime, endTime, current, size, archived, recvWindow | Yes |
+-| `/papi/v1/margin/maxWithdraw` (GET) | Query Margin Max Withdraw(USER_DATA) | asset | recvWindow | Yes |
+-| `/papi/v1/margin/repayLoan` (GET) | Query Margin repay Record(USER_DATA) | asset | txId, startTime, endTime, current, size, archived, recvWindow | Yes |
+-| `/papi/v1/portfolio/interest-history` (GET) | Query Portfolio Margin Negative Balance Interest History(USER_DATA) | None | asset, startTime, endTime, size, recvWindow | Yes |
+-| `/papi/v1/um/positionRisk` (GET) | Query UM Position Information(USER_DATA) | None | symbol, recvWindow | Yes |
+-| `/papi/v1/portfolio/negative-balance-exchange-record` (GET) | Query User Negative Balance Auto Exchange Record (USER_DATA) | startTime, endTime | recvWindow | Yes |
+-| `/papi/v1/rateLimit/order` (GET) | Query User Rate Limit (USER_DATA) | None | recvWindow | Yes |
+-| `/papi/v1/repay-futures-negative-balance` (POST) | Repay futures Negative Balance(USER_DATA) | None | recvWindow | Yes |
+-| `/papi/v1/um/leverageBracket` (GET) | UM Notional and Leverage Brackets (USER_DATA) | None | symbol, recvWindow | Yes |
+-| `/papi/v1/ping` (GET) | Test Connectivity | None | None | No |
+-| `/papi/v1/cm/userTrades` (GET) | CM Account Trade List(USER_DATA) | None | symbol, pair, startTime, endTime, fromId, limit, recvWindow | Yes |
+-| `/papi/v1/cm/adlQuantile` (GET) | CM Position ADL Quantile Estimation(USER_DATA) | None | symbol, recvWindow | Yes |
+-| `/papi/v1/cm/conditional/allOpenOrders` (DELETE) | Cancel All CM Open Conditional Orders(TRADE) | symbol | recvWindow | Yes |
+-| `/papi/v1/cm/allOpenOrders` (DELETE) | Cancel All CM Open Orders(TRADE) | symbol | recvWindow | Yes |
+-| `/papi/v1/um/conditional/allOpenOrders` (DELETE) | Cancel All UM Open Conditional Orders (TRADE) | symbol | recvWindow | Yes |
+-| `/papi/v1/um/allOpenOrders` (DELETE) | Cancel All UM Open Orders(TRADE) | symbol | recvWindow | Yes |
+-| `/papi/v1/cm/conditional/order` (DELETE) | Cancel CM Conditional Order(TRADE) | symbol | strategyId, newClientStrategyId, recvWindow | Yes |
+-| `/papi/v1/cm/conditional/order` (POST) | New CM Conditional Order(TRADE) | symbol, side, strategyType | positionSide, timeInForce, quantity, reduceOnly, price, workingType, priceProtect, newClientStrategyId, stopPrice, activationPrice, callbackRate, recvWindow | Yes |
+-| `/papi/v1/cm/order` (DELETE) | Cancel CM Order(TRADE) | symbol | orderId, origClientOrderId, recvWindow | Yes |
+-| `/papi/v1/cm/order` (PUT) | Modify CM Order(TRADE) | symbol, side, quantity, price | orderId, origClientOrderId, priceMatch, recvWindow | Yes |
+-| `/papi/v1/cm/order` (POST) | New CM Order(TRADE) | symbol, side, type | positionSide, timeInForce, quantity, reduceOnly, price, priceMatch, newClientOrderId, newOrderRespType, recvWindow | Yes |
+-| `/papi/v1/cm/order` (GET) | Query CM Order(USER_DATA) | symbol | orderId, origClientOrderId, recvWindow | Yes |
+-| `/papi/v1/margin/allOpenOrders` (DELETE) | Cancel Margin Account All Open Orders on a Symbol(TRADE) | symbol | recvWindow | Yes |
+-| `/papi/v1/margin/orderList` (DELETE) | Cancel Margin Account OCO Orders(TRADE) | symbol | orderListId, listClientOrderId, newClientOrderId, recvWindow | Yes |
+-| `/papi/v1/margin/orderList` (GET) | Query Margin Account's OCO (USER_DATA) | None | orderListId, origClientOrderId, recvWindow | Yes |
+-| `/papi/v1/margin/order` (DELETE) | Cancel Margin Account Order(TRADE) | symbol | orderId, origClientOrderId, newClientOrderId, recvWindow | Yes |
+-| `/papi/v1/margin/order` (POST) | New Margin Order(TRADE) | symbol, side, type | quantity, quoteOrderQty, price, stopPrice, newClientOrderId, newOrderRespType, icebergQty, sideEffectType, timeInForce, selfTradePreventionMode, autoRepayAtCancel, recvWindow | Yes |
+-| `/papi/v1/margin/order` (GET) | Query Margin Account Order (USER_DATA) | symbol | orderId, origClientOrderId, recvWindow | Yes |
+-| `/papi/v1/um/conditional/order` (DELETE) | Cancel UM Conditional Order(TRADE) | symbol | strategyId, newClientStrategyId, recvWindow | Yes |
+-| `/papi/v1/um/conditional/order` (POST) | New UM Conditional Order (TRADE) | symbol, side, strategyType | positionSide, timeInForce, quantity, reduceOnly, price, workingType, priceProtect, newClientStrategyId, stopPrice, activationPrice, callbackRate, priceMatch, selfTradePreventionMode, goodTillDate, recvWindow | Yes |
+-| `/papi/v1/um/order` (DELETE) | Cancel UM Order(TRADE) | symbol | orderId, origClientOrderId, recvWindow | Yes |
+-| `/papi/v1/um/order` (PUT) | Modify UM Order(TRADE) | symbol, side, quantity, price | orderId, origClientOrderId, priceMatch, recvWindow | Yes |
+-| `/papi/v1/um/order` (POST) | New UM Order (TRADE) | symbol, side, type | positionSide, timeInForce, quantity, reduceOnly, price, newClientOrderId, newOrderRespType, priceMatch, selfTradePreventionMode, goodTillDate, recvWindow | Yes |
+-| `/papi/v1/um/order` (GET) | Query UM Order (USER_DATA) | symbol | orderId, origClientOrderId, recvWindow | Yes |
+-| `/papi/v1/um/feeBurn` (GET) | Get UM Futures BNB Burn Status (USER_DATA) | None | recvWindow | Yes |
+-| `/papi/v1/um/feeBurn` (POST) | Toggle BNB Burn On UM Futures Trade (TRADE) | feeBurn | recvWindow | Yes |
+-| `/papi/v1/marginLoan` (POST) | Margin Account Borrow(MARGIN) | asset, amount | recvWindow | Yes |
+-| `/papi/v1/margin/order/oco` (POST) | Margin Account New OCO(TRADE) | symbol, side, quantity, price, stopPrice | listClientOrderId, limitClientOrderId, limitIcebergQty, stopClientOrderId, stopLimitPrice, stopIcebergQty, stopLimitTimeInForce, newOrderRespType, sideEffectType, recvWindow | Yes |
+-| `/papi/v1/margin/repay-debt` (POST) | Margin Account Repay Debt(TRADE) | asset | amount, specifyRepayAssets, recvWindow | Yes |
+-| `/papi/v1/repayLoan` (POST) | Margin Account Repay(MARGIN) | asset, amount | recvWindow | Yes |
+-| `/papi/v1/margin/myTrades` (GET) | Margin Account Trade List (USER_DATA) | symbol | orderId, startTime, endTime, fromId, limit, recvWindow | Yes |
+-| `/papi/v1/cm/conditional/allOrders` (GET) | Query All CM Conditional Orders(USER_DATA) | None | symbol, strategyId, startTime, endTime, limit, recvWindow | Yes |
+-| `/papi/v1/cm/allOrders` (GET) | Query All CM Orders (USER_DATA) | symbol | pair, orderId, startTime, endTime, limit, recvWindow | Yes |
+-| `/papi/v1/cm/conditional/openOrders` (GET) | Query All Current CM Open Conditional Orders (USER_DATA) | None | symbol, recvWindow | Yes |
+-| `/papi/v1/cm/openOrders` (GET) | Query All Current CM Open Orders(USER_DATA) | None | symbol, pair, recvWindow | Yes |
+-| `/papi/v1/um/conditional/openOrders` (GET) | Query All Current UM Open Conditional Orders(USER_DATA) | None | symbol, recvWindow | Yes |
+-| `/papi/v1/um/openOrders` (GET) | Query All Current UM Open Orders(USER_DATA) | None | symbol, recvWindow | Yes |
+-| `/papi/v1/margin/allOrders` (GET) | Query All Margin Account Orders (USER_DATA) | symbol | orderId, startTime, endTime, limit, recvWindow | Yes |
+-| `/papi/v1/um/conditional/allOrders` (GET) | Query All UM Conditional Orders(USER_DATA) | None | symbol, strategyId, startTime, endTime, limit, recvWindow | Yes |
+-| `/papi/v1/um/allOrders` (GET) | Query All UM Orders(USER_DATA) | symbol | orderId, startTime, endTime, limit, recvWindow | Yes |
+-| `/papi/v1/cm/conditional/orderHistory` (GET) | Query CM Conditional Order History(USER_DATA) | symbol | strategyId, newClientStrategyId, recvWindow | Yes |
+-| `/papi/v1/cm/orderAmendment` (GET) | Query CM Modify Order History(TRADE) | symbol | orderId, origClientOrderId, startTime, endTime, limit, recvWindow | Yes |
+-| `/papi/v1/cm/conditional/openOrder` (GET) | Query Current CM Open Conditional Order(USER_DATA) | symbol | strategyId, newClientStrategyId, recvWindow | Yes |
+-| `/papi/v1/cm/openOrder` (GET) | Query Current CM Open Order (USER_DATA) | symbol | orderId, origClientOrderId, recvWindow | Yes |
+-| `/papi/v1/margin/openOrders` (GET) | Query Current Margin Open Order (USER_DATA) | symbol | recvWindow | Yes |
+-| `/papi/v1/um/conditional/openOrder` (GET) | Query Current UM Open Conditional Order(USER_DATA) | symbol | strategyId, newClientStrategyId, recvWindow | Yes |
+-| `/papi/v1/um/openOrder` (GET) | Query Current UM Open Order(USER_DATA) | symbol | orderId, origClientOrderId, recvWindow | Yes |
+-| `/papi/v1/margin/openOrderList` (GET) | Query Margin Account's Open OCO (USER_DATA) | None | recvWindow | Yes |
+-| `/papi/v1/margin/allOrderList` (GET) | Query Margin Account's all OCO (USER_DATA) | None | fromId, startTime, endTime, limit, recvWindow | Yes |
+-| `/papi/v1/um/conditional/orderHistory` (GET) | Query UM Conditional Order History(USER_DATA) | symbol | strategyId, newClientStrategyId, recvWindow | Yes |
+-| `/papi/v1/um/orderAmendment` (GET) | Query UM Modify Order History(TRADE) | symbol | orderId, origClientOrderId, startTime, endTime, limit, recvWindow | Yes |
+-| `/papi/v1/cm/forceOrders` (GET) | Query User's CM Force Orders(USER_DATA) | None | symbol, autoCloseType, startTime, endTime, limit, recvWindow | Yes |
+-| `/papi/v1/margin/forceOrders` (GET) | Query User's Margin Force Orders(USER_DATA) | None | startTime, endTime, current, size, recvWindow | Yes |
+-| `/papi/v1/um/forceOrders` (GET) | Query User's UM Force Orders (USER_DATA) | None | symbol, autoCloseType, startTime, endTime, limit, recvWindow | Yes |
+-| `/papi/v1/um/userTrades` (GET) | UM Account Trade List(USER_DATA) | symbol | startTime, endTime, fromId, limit, recvWindow | Yes |
+-| `/papi/v1/um/adlQuantile` (GET) | UM Position ADL Quantile Estimation(USER_DATA) | None | symbol, recvWindow | Yes |
+-| `/papi/v1/listenKey` (DELETE) | Close User Data Stream(USER_STREAM) | None | None | No |
+-| `/papi/v1/listenKey` (PUT) | Keepalive User Data Stream (USER_STREAM) | None | None | No |
+-| `/papi/v1/listenKey` (POST) | Start User Data Stream(USER_STREAM) | None | None | No |
+-
+----
+-
+-## Parameters
+-
+-### Common Parameters
+-
+-* **asset**: 
+-* **recvWindow**:  (e.g., 5000)
+-* **amount**:  (e.g., 1.0)
+-* **transferSide**: "TO_UM","FROM_UM"
+-* **symbol**: 
+-* **autoRepay**: Default: `true`; `false` for turn off the auto-repay futures negative balance function (e.g., true)
+-* **symbol**: 
+-* **leverage**: target initial leverage: int from 1 to 125
+-* **dualSidePosition**: "true": Hedge Mode; "false": One-way Mode
+-* **asset**: 
+-* **incomeType**: TRANSFER, WELCOME_BONUS, REALIZED_PNL, FUNDING_FEE, COMMISSION, INSURANCE_CLEAR, REFERRAL_KICKBACK, COMMISSION_REBATE, API_REBATE, CONTEST_REWARD, CROSS_COLLATERAL_TRANSFER, OPTIONS_PREMIUM_FEE, OPTIONS_SETTLE_PROFIT, INTERNAL_TRANSFER, AUTO_EXCHANGE, DELIVERED_SETTELMENT, COIN_SWAP_DEPOSIT, COIN_SWAP_WITHDRAW, POSITION_LIMIT_INCREASE_FEE
+-* **startTime**: Timestamp in ms to get funding from INCLUSIVE. (e.g., 1623319461670)
+-* **endTime**: Timestamp in ms to get funding until INCLUSIVE. (e.g., 1641782889000)
+-* **page**: 
+-* **limit**: Default 100; max 1000 (e.g., 100)
+-* **startTime**:  (e.g., 1623319461670)
+-* **endTime**:  (e.g., 1641782889000)
+-* **current**: Currently querying page. Start from 1. Default:1 (e.g., 1)
+-* **size**: Default:10 Max:100 (e.g., 10)
+-* **archived**: Default: `false`. Set to `true` for archived data from 6 months ago
+-* **downloadId**: get by download id api (e.g., 1)
+-* **marginAsset**: 
+-* **pair**: 
+-* **txId**: the `tranId` in `POST/papi/v1/marginLoan` (e.g., 1)
+-* **fromId**: Trade id to fetch from. Default gets most recent trades. (e.g., 1)
+-* **strategyId**:  (e.g., 1)
+-* **newClientStrategyId**:  (e.g., 1)
+-* **orderId**:  (e.g., 1)
+-* **origClientOrderId**:  (e.g., 1)
+-* **orderListId**: Either `orderListId` or `listClientOrderId` must be provided (e.g., 1)
+-* **listClientOrderId**: Either `orderListId` or `listClientOrderId` must be provided (e.g., 1)
+-* **newClientOrderId**: Used to uniquely identify this cancel. Automatically generated by default (e.g., 1)
+-* **quantity**: Order quantity (e.g., 1.0)
+-* **limitClientOrderId**: A unique Id for the limit order (e.g., 1)
+-* **price**:  (e.g., 1.0)
+-* **limitIcebergQty**:  (e.g., 1.0)
+-* **stopClientOrderId**: A unique Id for the stop loss/stop loss limit leg (e.g., 1)
+-* **stopPrice**:  (e.g., 1.0)
+-* **stopLimitPrice**: If provided, stopLimitTimeInForce is required. (e.g., 1.0)
+-* **stopIcebergQty**:  (e.g., 1.0)
+-* **amount**: 
+-* **specifyRepayAssets**: Specific asset list to repay debt; Can be added in batch, separated by commas
+-* **quantity**:  (e.g., 1.0)
+-* **reduceOnly**: "true" or "false". default "false". Cannot be sent in Hedge Mode .
+-* **price**:  (e.g., 1.0)
+-* **priceProtect**: "TRUE" or "FALSE", default "FALSE". Used with `STOP/STOP_MARKET` or `TAKE_PROFIT/TAKE_PROFIT_MARKET` orders
+-* **stopPrice**: Used with `STOP/STOP_MARKET` or `TAKE_PROFIT/TAKE_PROFIT_MARKET` orders. (e.g., 1.0)
+-* **activationPrice**: Used with `TRAILING_STOP_MARKET` orders, default as the mark price (e.g., 1.0)
+-* **callbackRate**: Used with `TRAILING_STOP_MARKET` orders, min 0.1, max 5 where 1 for 1% (e.g., 1.0)
+-* **quoteOrderQty**:  (e.g., 1.0)
+-* **icebergQty**: Used with `LIMIT`, `STOP_LOSS_LIMIT`, and `TAKE_PROFIT_LIMIT` to create an iceberg order (e.g., 1.0)
+-* **autoRepayAtCancel**: Only when MARGIN_BUY or AUTO_BORROW_REPAY order takes effect, true means that the debt generated by the order needs to be repay after the order is cancelled. The default is true (e.g., true)
+-* **goodTillDate**: order cancel time for timeInForce `GTD`, mandatory when `timeInforce` set to `GTD`; order the timestamp only retains second-level precision, ms part will be ignored; The goodTillDate timestamp must be greater than the current time plus 600 seconds and smaller than 253402300799000Mode. It must be sent in Hedge Mode.
+-* **feeBurn**: "true": Fee Discount On; "false": Fee Discount Off
+-
+-
+-### Enums
+-
+-* **side**: BUY | SELL
+-* **stopLimitTimeInForce**: GTC | IOC | FOK
+-* **newOrderRespType**: ACK | RESULT
+-* **sideEffectType**: NO_SIDE_EFFECT | MARGIN_BUY | AUTO_REPAY
+-* **priceMatch**: NONE | OPPONENT | OPPONENT_5 | OPPONENT_10 | OPPONENT_20 | QUEUE | QUEUE_5 | QUEUE_10 | QUEUE_20
+-* **positionSide**: BOTH | LONG | SHORT
+-* **strategyType**: STOP | STOP_MARKET | LIMIT_MAKER | TAKE_PROFIT | TAKE_PROFIT_MARKET | TRAILING_STOP_MARKET
+-* **timeInForce**: GTC | IOC | FOK | GTX
+-* **workingType**: MARK_PRICE
+-* **type**: LIMIT | MARKET
+-* **selfTradePreventionMode**: NONE | EXPIRE_TAKER | EXPIRE_BOTH | EXPIRE_MAKER
+-* **autoCloseType**: LIQUIDATION | ADL
+-
+-
+-## Authentication
+-
+-For endpoints that require authentication, you will need to provide Binance API credentials.
+-Required credentials:
+-
+-* apiKey: Your Binance API key (for header)
+-* secretKey: Your Binance API secret (for signing)
+-
+-Base URLs:
+-* Mainnet: https://papi.binance.com
+-* Testnet: https://testnet.binancefuture.com
+-
+-## Security
+-
+-### Share Credentials
+-
+-Users can provide Binance API credentials in different ways. The agent will try to retrieve automatically with the two first ways the credentials, but users can also explicitly tell the agent that they have set the credentials or stored them in a `.env` file, and the agent should re-read that file when they do. The agent can also make http requests with the two first methods without user confirmation.
+-
+-1. **Environment variables**
+-
+-Search for the following specific variables only (never dump the full environment):
+-
+-**Authorized environment variables**
+-- Mainnet: `BINANCE_API_KEY` and `BINANCE_SECRET_KEY`
+-- Testnet: `BINANCE_TESTNET_API_KEY` and `BINANCE_TESTNET_SECRET_KEY`
+-
+-Read and use in a single exec call so the raw key never enters the agent's context:
+-```bash
+-KEY="$BINANCE_API_KEY"
+-SECRET="$BINANCE_SECRET_KEY"
+-
+-response=$(curl -s -X GET "$URL" \
+-  -H "X-MBX-APIKEY: $KEY" \
+-  --data-urlencode "param1=value1")
+-
+-echo "$response"
+-```
+-
+-Environment variables must be set before OpenClaw starts. They are inherited at process startup and cannot be injected into a running instance. If you need to add or update credentials without restarting, use a secrets file (see option 2).
+-
+-2. **Secrets file (.env)**
+-
+-Check `~/.openclaw/secrets.env` , `~/.env`, or a `.env` file in the workspace. Read individual keys with `grep`, never source the full file:
+-```bash
+-# Try all credential locations in order
+-API_KEY=$(grep '^BINANCE_API_KEY=' ~/.openclaw/secrets.env 2>/dev/null | cut -d= -f2-)
+-SECRET_KEY=$(grep '^BINANCE_SECRET_KEY=' ~/.openclaw/secrets.env 2>/dev/null | cut -d= -f2-)
+-
+-# Fallback: search .env in known directories (KEY=VALUE then raw line format)
+-for dir in ~/.openclaw ~; do
+-  [ -n "$API_KEY" ] && break
+-  env_file="$dir/.env"
+-  [ -f "$env_file" ] || continue
+-
+-  # Read first two lines
+-  line1=$(sed -n '1p' "$env_file")
+-  line2=$(sed -n '2p' "$env_file")
+-
+-  # Check if lines contain '=' indicating KEY=VALUE format
+-  if [[ "$line1" == *=* && "$line2" == *=* ]]; then
+-    API_KEY=$(grep '^BINANCE_API_KEY=' "$env_file" 2>/dev/null | cut -d= -f2-)
+-    SECRET_KEY=$(grep '^BINANCE_SECRET_KEY=' "$env_file" 2>/dev/null | cut -d= -f2-)
+-  else
+-    # Treat lines as raw values
+-    API_KEY="$line1"
+-    SECRET_KEY="$line2"
+-  fi
+-done
+-```
+-
+-This file can be updated at any time without restarting OpenClaw, keys are read fresh on each invocation. Users can tell you the variables are now set or stored in a `.env` file, and you should re-read that file when they do.
+-
+-3. **Inline file**
+-
+-Sending a file where the content is in the following format:
+-
+-```bash
+-abc123...xyz
+-secret123...key
+-```
+-
+-* Never run `printenv`, `env`, `export`, or set without a specific variable name
+-* Never run `grep` on `env` files without anchoring to a specific key ('`^VARNAME='`)
+-* Never source a secrets file into the shell environment (`source .env` or `. .env`)
+-* Only read credentials explicitly needed for the current task
+-* Never echo or log raw credentials in output or replies
+-* Never commit `TOOLS.md` to version control if it contains real credentials — add it to `.gitignore`
+-
+-### Never Disclose API Key and Secret
+-
+-Never disclose the location of the API key and secret file.
+-
+-Never send the API key and secret to any website other than Mainnet and Testnet.
+-
+-### Never Display Full Secrets
+-
+-When showing credentials to users:
+-- **API Key:** Show first 5 + last 4 characters: `su1Qc...8akf`
+-- **Secret Key:** Always mask, show only last 5: `***...aws1`
+-
+-Example response when asked for credentials:
+-Account: main
+-API Key: su1Qc...8akf
+-Secret: ***...aws1
+-Environment: Mainnet
+-
+-### Listing Accounts
+-
+-When listing accounts, show names and environment only — never keys:
+-Binance Accounts:
+-* main (Mainnet/Testnet)
+-* testnet-dev (Testnet)
+-* futures-keys (Mainnet)
+-
+-### Transactions in Mainnet
+-
+-When performing transactions in mainnet, always confirm with the user before proceeding by asking them to write "CONFIRM" to proceed.
+-
+----
+-
+-## Binance Accounts
+-
+-### main
+-- API Key: your_mainnet_api_key
+-- Secret: your_mainnet_secret
+-- Testnet: false 
+-
+-### testnet-dev
+-- API Key: your_testnet_api_key
+-- Secret: your_testnet_secret
+-- Testnet: true
+-
+-### TOOLS.md Structure
+-
+-```bash
+-## Binance Accounts
+-
+-### main
+-- API Key: abc123...xyz
+-- Secret: secret123...key
+-- Testnet: false
+-- Description: Primary trading account
+-
+-### testnet-dev
+-- API Key: test456...abc
+-- Secret: testsecret...xyz
+-- Testnet: true
+-- Description: Development/testing
+-
+-### futures-keys
+-- API Key: futures789...def
+-- Secret: futuressecret...uvw
+-- Testnet: false
+-- Description: Futures trading account
+-```
+-
+-## Agent Behavior
+-
+-1. Credentials requested: Mask secrets (show last 5 chars only)
+-2. Listing accounts: Show names and environment, never keys
+-3. Account selection: Ask if ambiguous, default to main
+-4. When doing a transaction in mainnet, confirm with user before by asking to write "CONFIRM" to proceed
+-5. New credentials: Prompt for name, environment, signing mode
+-6. When a request requires signing, if the request isn't an order and the API keys aren't described as `mainnet` or `testnet` keys, try to make request to the different base urls and see if it works, without asking the user. If it works, store the keys with the corresponding environment.
+-
+-## Adding New Accounts
+-
+-When user provides new credentials by Inline file or message:
+-
+-* Ask for account name
+-* Ask: Mainnet, Testnet 
+-* Store in `TOOLS.md` with masked display confirmation 
+-
+-## Signing Requests
+-
+-For trading endpoints that require a signature:
+-
+-1. **Detect key type first**, inspect the secret key format before signing.
+-2. Build query string with all parameters, including the timestamp (Unix ms).
+-3. Percent-encode the parameters using UTF-8 according to RFC 3986.
+-4. Sign query string with secretKey using HMAC SHA256, RSA, or Ed25519 (depending on the account configuration).
+-5. Append signature to query string.
+-6. Include `X-MBX-APIKEY` header.
+-
+-Otherwise, do not perform steps 4–6.
+-
+-## New Client Order ID 
+-
+-For endpoints that include the `newClientOrderId` parameter, the value must always start with `agent-`. If the parameter is not provided, `agent-` followed by 18 random alphanumeric characters will be generated automatically. If a value is provided, it will be prefixed with `agent-`
+-
+-Example: `agent-1a2b3c4d5e6f7g8h9i`
+-
+-## User Agent Header
+-
+-Include `User-Agent` header with the following string: `binance-derivatives-trading-portfolio-margin/1.1.0 (Skill)`
+-
+-See [`references/authentication.md`](./references/authentication.md) for implementation details.
+diff --git a/skills/binance/derivatives-trading-portfolio-margin/references/authentication.md b/skills/binance/derivatives-trading-portfolio-margin/references/authentication.md
+@@ -1,129 +0,0 @@
+-# Binance Authentication
+-
+-All trading endpoints require either HMAC SHA256, RSA, or Ed25519 signed requests.
+-**Always detect the key type before signing**, do not assume HMAC.
+-
+-## Base URLs
+-
+-| Environment | URL |
+-|-------------|-----|
+-| Mainnet | https://papi.binance.com |
+-| Testnet | https://testnet.binancefuture.com |
+-
+-## Required Headers
+-
+-* `X-MBX-APIKEY`: your_api_key
+-* `User-Agent`: binance-derivatives-trading-portfolio-margin/1.1.0 (Skill)
+-
+-## Signing Process
+-
+-### Step 1: Build Query String
+-
+-Include all parameters plus `timestamp` (current Unix time in milliseconds):
+-`timestamp=1234567890123`
+-
+-**Optional:** Add `recvWindow` (default 5000ms) for timestamp tolerance.
+-
+-### Step 2: Percent‑Encode Parameters
+-
+-Before generating the signature, **percent‑encode all parameter names and values using UTF‑8 encoding according to RFC 3986.**
+-Unreserved characters that must not be encoded: `A-Z a-z 0-9 - _ . ~`
+-
+-- Chinese characters example:
+-`symbol=这是测试币456`
+-
+-Percent‑encoded:
+-`symbol=%E8%BF%99%E6%98%AF%E6%B5%8B%E8%AF%95%E5%B8%81456`
+-
+-**Important:**
+-The exact encoded query string must be used for both signing and the HTTP request.
+-
+-### Step 3: Generate Signature
+-
+-Generate the signature from the encoded query string.
+-
+-#### HMAC SHA256 signature
+-
+-Create HMAC SHA256 signature of the query string using your secret key:
+-
+-```bash
+-# Example using openssl
+-echo -n "timestamp=1234567890123" | \
+-  openssl dgst -sha256 -hmac "your_secret_key"
+-```
+-
+-#### RSA signature
+-
+-Create RSA signature of the query string using your private key:
+-
+-```bash
+-# Example using openssl
+-echo -n "timestamp=1234567890123" | \
+-  openssl dgst -sha256 -sign private_key.pem | base64
+-```
+-
+-#### Ed25519 signature
+-
+-Create Ed25519 signature of the query string using your private key:
+-
+-```bash
+-# Example using openssl
+-echo -n "timestamp=1234567890123" | \
+-  openssl pkeyutl -sign -inkey private_key.pem | base64
+-```
+-
+-### Step 4: Append Signature
+-
+-Add signature parameter to the query string:
+-`timestamp=1234567890123&signature=abc123...`
+-
+-### Step 5: Add Product User Agent Header
+-
+-Include `User-Agent` header with the following string: `binance-derivatives-trading-portfolio-margin/1.1.0 (Skill)`
+-
+-#### Complete Example
+-
+-Request:
+-```bash
+-curl -X GET "https://papi.binance.com/papi/v1/balance" \
+-  -H "X-MBX-APIKEY: your_api_key" \
+-  -H "User-Agent: binance-derivatives-trading-portfolio-margin/1.1.0 (Skill)" \
+-  -d "timestamp=1234567890123&signature=..."
+-```
+-
+-```bash
+-#!/bin/bash
+-API_KEY="your_api_key"
+-SECRET_KEY="your_secret_key"
+-BASE_URL="https://papi.binance.com"  # or https://testnet.binancefuture.com
+-
+-# Get current timestamp
+-TIMESTAMP=$(date +%s000)
+-
+-# Build query string (without signature)
+-QUERY="timestamp=${TIMESTAMP}"
+-
+-# Generate signature
+-# For HMAC SHA256:
+-SIGNATURE=$(echo -n "$QUERY" | openssl dgst -sha256 -hmac "$SECRET_KEY" | cut -d' ' -f2)
+-
+-# For RSA or Ed25519, replace the above line with the appropriate signing command.
+-##  RSA:
+-# SIGNATURE=$(echo -n "$QUERY" | openssl dgst -sha256 -sign private_key.pem | base64)
+-
+-##  Ed25519:
+-# SIGNATURE=$(echo -n "$QUERY" | openssl pkeyutl -sign -inkey private_key.pem | base64)
+-
+-# Make request
+-curl -X GET "${BASE_URL}/papi/v1/balance?${QUERY}&signature=${SIGNATURE}" \
+-  -H "X-MBX-APIKEY: ${API_KEY}"\
+-  -H "User-Agent: binance-derivatives-trading-portfolio-margin/1.1.0 (Skill)"
+-```
+-
+-### Security Notes
+-
+-* Never share your secret key
+-* Use IP whitelist in Binance API settings
+-* Enable only required permissions (spot trading, no withdrawals)
+-* Use testnet for development: https://testnet.binancefuture.com
+-* Testnet credentials are separate from mainnet
+diff --git a/skills/binance/derivatives-trading-usds-futures/CHANGELOG.md b/skills/binance/derivatives-trading-usds-futures/CHANGELOG.md
+@@ -1,11 +0,0 @@
+-# Changelog
+-
+-## 1.1.0 - 2026-03-24
+-
+-- Environmental variables or files can now be used as input for the API key and secret key.
+-- Fix signature generation for RSA and Ed25519 keys.
+-- Add `Openclaw` metadata to the User Agent header
+-
+-## 1.0.0 - 2026-03-10
+-
+-- Initial release
+\ No newline at end of file
+diff --git a/skills/binance/derivatives-trading-usds-futures/LICENSE.md b/skills/binance/derivatives-trading-usds-futures/LICENSE.md
+@@ -1,9 +0,0 @@
+-MIT License
+-
+-Copyright (c) 2026 Binance
+-
+-Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+-
+-The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+-
+-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+\ No newline at end of file
+diff --git a/skills/binance/derivatives-trading-usds-futures/SKILL.md b/skills/binance/derivatives-trading-usds-futures/SKILL.md
+@@ -1,398 +0,0 @@
+----
+-name: derivatives-trading-usds-futures
+-description: Binance Derivatives-trading-usds-futures request using the Binance API. Authentication requires API key and secret key. Supports testnet and mainnet.
+-metadata:
+-  version: 1.1.0
+-  author: Binance
+-  openclaw:
+-    requires:
+-      bins:
+-        - curl
+-        - openssl
+-        - date
+-    homepage: https://github.com/binance/binance-skills-hub/tree/main/skills/binance/derivatives-trading-usds-futures/SKILL.md
+-license: MIT
+----
+-
+-# Binance Derivatives-trading-usds-futures Skill
+-
+-Derivatives-trading-usds-futures request on Binance using authenticated API endpoints. Requires API key and secret key for certain endpoints. Return the result in JSON format.
+-
+-## Quick Reference
+-
+-| Endpoint | Description | Required | Optional | Authentication |
+-|----------|-------------|----------|----------|----------------|
+-| `/fapi/v1/accountConfig` (GET) | Futures Account Configuration(USER_DATA) | None | recvWindow | Yes |
+-| `/fapi/v2/account` (GET) | Account Information V2(USER_DATA) | None | recvWindow | Yes |
+-| `/fapi/v3/account` (GET) | Account Information V3(USER_DATA) | None | recvWindow | Yes |
+-| `/fapi/v2/balance` (GET) | Futures Account Balance V2 (USER_DATA) | None | recvWindow | Yes |
+-| `/fapi/v3/balance` (GET) | Futures Account Balance V3 (USER_DATA) | None | recvWindow | Yes |
+-| `/fapi/v1/apiTradingStatus` (GET) | Futures Trading Quantitative Rules Indicators (USER_DATA) | None | symbol, recvWindow | Yes |
+-| `/fapi/v1/feeBurn` (GET) | Get BNB Burn Status (USER_DATA) | None | recvWindow | Yes |
+-| `/fapi/v1/feeBurn` (POST) | Toggle BNB Burn On Futures Trade (TRADE) | feeBurn | recvWindow | Yes |
+-| `/fapi/v1/multiAssetsMargin` (GET) | Get Current Multi-Assets Mode (USER_DATA) | None | recvWindow | Yes |
+-| `/fapi/v1/multiAssetsMargin` (POST) | Change Multi-Assets Mode (TRADE) | multiAssetsMargin | recvWindow | Yes |
+-| `/fapi/v1/positionSide/dual` (GET) | Get Current Position Mode(USER_DATA) | None | recvWindow | Yes |
+-| `/fapi/v1/positionSide/dual` (POST) | Change Position Mode(TRADE) | dualSidePosition | recvWindow | Yes |
+-| `/fapi/v1/order/asyn` (GET) | Get Download Id For Futures Order History (USER_DATA) | startTime, endTime | recvWindow | Yes |
+-| `/fapi/v1/trade/asyn` (GET) | Get Download Id For Futures Trade History (USER_DATA) | startTime, endTime | recvWindow | Yes |
+-| `/fapi/v1/income/asyn` (GET) | Get Download Id For Futures Transaction History(USER_DATA) | startTime, endTime | recvWindow | Yes |
+-| `/fapi/v1/order/asyn/id` (GET) | Get Futures Order History Download Link by Id (USER_DATA) | downloadId | recvWindow | Yes |
+-| `/fapi/v1/trade/asyn/id` (GET) | Get Futures Trade Download Link by Id(USER_DATA) | downloadId | recvWindow | Yes |
+-| `/fapi/v1/income/asyn/id` (GET) | Get Futures Transaction History Download Link by Id (USER_DATA) | downloadId | recvWindow | Yes |
+-| `/fapi/v1/income` (GET) | Get Income History (USER_DATA) | None | symbol, incomeType, startTime, endTime, page, limit, recvWindow | Yes |
+-| `/fapi/v1/leverageBracket` (GET) | Notional and Leverage Brackets (USER_DATA) | None | symbol, recvWindow | Yes |
+-| `/fapi/v1/rateLimit/order` (GET) | Query User Rate Limit (USER_DATA) | None | recvWindow | Yes |
+-| `/fapi/v1/symbolConfig` (GET) | Symbol Configuration(USER_DATA) | None | symbol, recvWindow | Yes |
+-| `/fapi/v1/commissionRate` (GET) | User Commission Rate (USER_DATA) | symbol | recvWindow | Yes |
+-| `/fapi/v1/convert/acceptQuote` (POST) | Accept the offered quote (USER_DATA) | quoteId | recvWindow | Yes |
+-| `/fapi/v1/convert/exchangeInfo` (GET) | List All Convert Pairs | None | fromAsset, toAsset | No |
+-| `/fapi/v1/convert/orderStatus` (GET) | Order status(USER_DATA) | None | orderId, quoteId | Yes |
+-| `/fapi/v1/convert/getQuote` (POST) | Send Quote Request(USER_DATA) | fromAsset, toAsset | fromAmount, toAmount, validTime, recvWindow | Yes |
+-| `/fapi/v1/ticker/24hr` (GET) | 24hr Ticker Price Change Statistics | None | symbol | No |
+-| `/fapi/v1/symbolAdlRisk` (GET) | ADL Risk | None | symbol | No |
+-| `/futures/data/basis` (GET) | Basis | pair, contractType, period, limit | startTime, endTime | No |
+-| `/fapi/v1/time` (GET) | Check Server Time | None | None | No |
+-| `/fapi/v1/indexInfo` (GET) | Composite Index Symbol Information | None | symbol | No |
+-| `/fapi/v1/aggTrades` (GET) | Compressed/Aggregate Trades List | symbol | fromId, startTime, endTime, limit | No |
+-| `/fapi/v1/continuousKlines` (GET) | Continuous Contract Kline/Candlestick Data | pair, contractType, interval | startTime, endTime, limit | No |
+-| `/futures/data/delivery-price` (GET) | Quarterly Contract Settlement Price | pair | None | No |
+-| `/fapi/v1/exchangeInfo` (GET) | Exchange Information | None | None | No |
+-| `/fapi/v1/fundingRate` (GET) | Get Funding Rate History | None | symbol, startTime, endTime, limit | No |
+-| `/fapi/v1/fundingInfo` (GET) | Get Funding Rate Info | None | None | No |
+-| `/fapi/v1/constituents` (GET) | Query Index Price Constituents | symbol | None | No |
+-| `/fapi/v1/indexPriceKlines` (GET) | Index Price Kline/Candlestick Data | pair, interval | startTime, endTime, limit | No |
+-| `/fapi/v1/insuranceBalance` (GET) | Query Insurance Fund Balance Snapshot | None | symbol | No |
+-| `/fapi/v1/klines` (GET) | Kline/Candlestick Data | symbol, interval | startTime, endTime, limit | No |
+-| `/futures/data/globalLongShortAccountRatio` (GET) | Long/Short Ratio | symbol, period | limit, startTime, endTime | No |
+-| `/fapi/v1/markPriceKlines` (GET) | Mark Price Kline/Candlestick Data | symbol, interval | startTime, endTime, limit | No |
+-| `/fapi/v1/premiumIndex` (GET) | Mark Price | None | symbol | No |
+-| `/fapi/v1/assetIndex` (GET) | Multi-Assets Mode Asset Index | None | symbol | No |
+-| `/fapi/v1/historicalTrades` (GET) | Old Trades Lookup (MARKET_DATA) | symbol | limit, fromId | No |
+-| `/futures/data/openInterestHist` (GET) | Open Interest Statistics | symbol, period | limit, startTime, endTime | No |
+-| `/fapi/v1/openInterest` (GET) | Open Interest | symbol | None | No |
+-| `/fapi/v1/rpiDepth` (GET) | RPI Order Book | symbol | limit | No |
+-| `/fapi/v1/depth` (GET) | Order Book | symbol | limit | No |
+-| `/fapi/v1/premiumIndexKlines` (GET) | Premium index Kline Data | symbol, interval | startTime, endTime, limit | No |
+-| `/fapi/v1/trades` (GET) | Recent Trades List | symbol | limit | No |
+-| `/fapi/v1/ticker/bookTicker` (GET) | Symbol Order Book Ticker | None | symbol | No |
+-| `/fapi/v2/ticker/price` (GET) | Symbol Price Ticker V2 | None | symbol | No |
+-| `/fapi/v1/ticker/price` (GET) | Symbol Price Ticker | None | symbol | No |
+-| `/futures/data/takerlongshortRatio` (GET) | Taker Buy/Sell Volume | symbol, period | limit, startTime, endTime | No |
+-| `/fapi/v1/ping` (GET) | Test Connectivity | None | None | No |
+-| `/futures/data/topLongShortAccountRatio` (GET) | Top Trader Long/Short Ratio (Accounts) | symbol, period | limit, startTime, endTime | No |
+-| `/futures/data/topLongShortPositionRatio` (GET) | Top Trader Long/Short Ratio (Positions) | symbol, period | limit, startTime, endTime | No |
+-| `/fapi/v1/tradingSchedule` (GET) | Trading Schedule | None | None | No |
+-| `/fapi/v1/pmAccountInfo` (GET) | Classic Portfolio Margin Account Information (USER_DATA) | asset | recvWindow | Yes |
+-| `/fapi/v1/userTrades` (GET) | Account Trade List (USER_DATA) | symbol | orderId, startTime, endTime, fromId, limit, recvWindow | Yes |
+-| `/fapi/v1/allOrders` (GET) | All Orders (USER_DATA) | symbol | orderId, startTime, endTime, limit, recvWindow | Yes |
+-| `/fapi/v1/countdownCancelAll` (POST) | Auto-Cancel All Open Orders (TRADE) | symbol, countdownTime | recvWindow | Yes |
+-| `/fapi/v1/algoOrder` (DELETE) | Cancel Algo Order (TRADE) | None | algoId, clientAlgoId, recvWindow | Yes |
+-| `/fapi/v1/algoOrder` (POST) | New Algo Order(TRADE) | algoType, symbol, side, type | positionSide, timeInForce, quantity, price, triggerPrice, workingType, priceMatch, closePosition, priceProtect, reduceOnly, activatePrice, callbackRate, clientAlgoId, newOrderRespType, selfTradePreventionMode, goodTillDate, recvWindow | Yes |
+-| `/fapi/v1/algoOrder` (GET) | Query Algo Order (USER_DATA) | None | algoId, clientAlgoId, recvWindow | Yes |
+-| `/fapi/v1/algoOpenOrders` (DELETE) | Cancel All Algo Open Orders (TRADE) | symbol | recvWindow | Yes |
+-| `/fapi/v1/allOpenOrders` (DELETE) | Cancel All Open Orders (TRADE) | symbol | recvWindow | Yes |
+-| `/fapi/v1/batchOrders` (DELETE) | Cancel Multiple Orders (TRADE) | symbol | orderIdList, origClientOrderIdList, recvWindow | Yes |
+-| `/fapi/v1/batchOrders` (PUT) | Modify Multiple Orders(TRADE) | batchOrders | recvWindow | Yes |
+-| `/fapi/v1/batchOrders` (POST) | Place Multiple Orders(TRADE) | batchOrders | recvWindow | Yes |
+-| `/fapi/v1/order` (DELETE) | Cancel Order (TRADE) | symbol | orderId, origClientOrderId, recvWindow | Yes |
+-| `/fapi/v1/order` (PUT) | Modify Order (TRADE) | symbol, side, quantity, price | orderId, origClientOrderId, priceMatch, recvWindow | Yes |
+-| `/fapi/v1/order` (POST) | New Order(TRADE) | symbol, side, type | positionSide, timeInForce, quantity, reduceOnly, price, newClientOrderId, newOrderRespType, priceMatch, selfTradePreventionMode, goodTillDate, recvWindow | Yes |
+-| `/fapi/v1/order` (GET) | Query Order (USER_DATA) | symbol | orderId, origClientOrderId, recvWindow | Yes |
+-| `/fapi/v1/leverage` (POST) | Change Initial Leverage(TRADE) | symbol, leverage | recvWindow | Yes |
+-| `/fapi/v1/marginType` (POST) | Change Margin Type(TRADE) | symbol, marginType | recvWindow | Yes |
+-| `/fapi/v1/openAlgoOrders` (GET) | Current All Algo Open Orders (USER_DATA) | None | algoType, symbol, algoId, recvWindow | Yes |
+-| `/fapi/v1/openOrders` (GET) | Current All Open Orders (USER_DATA) | None | symbol, recvWindow | Yes |
+-| `/fapi/v1/orderAmendment` (GET) | Get Order Modify History (USER_DATA) | symbol | orderId, origClientOrderId, startTime, endTime, limit, recvWindow | Yes |
+-| `/fapi/v1/positionMargin/history` (GET) | Get Position Margin Change History (TRADE) | symbol | type, startTime, endTime, limit, recvWindow | Yes |
+-| `/fapi/v1/positionMargin` (POST) | Modify Isolated Position Margin(TRADE) | symbol, amount, type | positionSide, recvWindow | Yes |
+-| `/fapi/v1/order/test` (POST) | Test Order(TRADE) | symbol, side, type | positionSide, timeInForce, quantity, reduceOnly, price, newClientOrderId, stopPrice, closePosition, activationPrice, callbackRate, workingType, priceProtect, newOrderRespType, priceMatch, selfTradePreventionMode, goodTillDate, recvWindow | Yes |
+-| `/fapi/v1/adlQuantile` (GET) | Position ADL Quantile Estimation(USER_DATA) | None | symbol, recvWindow | Yes |
+-| `/fapi/v2/positionRisk` (GET) | Position Information V2 (USER_DATA) | None | symbol, recvWindow | Yes |
+-| `/fapi/v3/positionRisk` (GET) | Position Information V3 (USER_DATA) | None | symbol, recvWindow | Yes |
+-| `/fapi/v1/allAlgoOrders` (GET) | Query All Algo Orders (USER_DATA) | symbol | algoId, startTime, endTime, page, limit, recvWindow | Yes |
+-| `/fapi/v1/openOrder` (GET) | Query Current Open Order (USER_DATA) | symbol | orderId, origClientOrderId, recvWindow | Yes |
+-| `/fapi/v1/stock/contract` (POST) | Futures TradFi Perps Contract(USER_DATA) | None | recvWindow | Yes |
+-| `/fapi/v1/forceOrders` (GET) | User's Force Orders (USER_DATA) | None | symbol, autoCloseType, startTime, endTime, limit, recvWindow | Yes |
+-| `/fapi/v1/listenKey` (DELETE) | Close User Data Stream (USER_STREAM) | None | None | No |
+-| `/fapi/v1/listenKey` (PUT) | Keepalive User Data Stream (USER_STREAM) | None | None | No |
+-| `/fapi/v1/listenKey` (POST) | Start User Data Stream (USER_STREAM) | None | None | No |
+-
+----
+-
+-## Parameters
+-
+-### Common Parameters
+-
+-* **recvWindow**:  (e.g., 5000)
+-* **symbol**: 
+-* **startTime**: Timestamp in ms (e.g., 1623319461670)
+-* **endTime**: Timestamp in ms (e.g., 1641782889000)
+-* **downloadId**: get by download id api (e.g., 1)
+-* **incomeType**: TRANSFER, WELCOME_BONUS, REALIZED_PNL, FUNDING_FEE, COMMISSION, INSURANCE_CLEAR, REFERRAL_KICKBACK, COMMISSION_REBATE, API_REBATE, CONTEST_REWARD, CROSS_COLLATERAL_TRANSFER, OPTIONS_PREMIUM_FEE, OPTIONS_SETTLE_PROFIT, INTERNAL_TRANSFER, AUTO_EXCHANGE, DELIVERED_SETTELMENT, COIN_SWAP_DEPOSIT, COIN_SWAP_WITHDRAW, POSITION_LIMIT_INCREASE_FEE, STRATEGY_UMFUTURES_TRANSFER，FEE_RETURN，BFUSD_REWARD
+-* **startTime**:  (e.g., 1623319461670)
+-* **endTime**:  (e.g., 1641782889000)
+-* **page**: 
+-* **limit**: Default 100; max 1000 (e.g., 100)
+-* **feeBurn**: "true": Fee Discount On; "false": Fee Discount Off
+-* **symbol**: 
+-* **quoteId**:  (e.g., 1)
+-* **fromAsset**: User spends coin
+-* **toAsset**: User receives coin
+-* **orderId**: Either orderId or quoteId is required (e.g., 1)
+-* **quoteId**: Either orderId or quoteId is required (e.g., 1)
+-* **fromAsset**: 
+-* **toAsset**: 
+-* **fromAmount**: When specified, it is the amount you will be debited after the conversion (e.g., 1.0)
+-* **toAmount**: When specified, it is the amount you will be credited after the conversion (e.g., 1.0)
+-* **validTime**: 10s, default 10s (e.g., 10s)
+-* **pair**: 
+-* **limit**: Default 30,Max 500 (e.g., 30)
+-* **fromId**: ID to get aggregate trades from INCLUSIVE. (e.g., 1)
+-* **asset**: 
+-* **orderId**:  (e.g., 1)
+-* **countdownTime**: countdown time, 1000 for 1 second. 0 to cancel the timer
+-* **algoId**:  (e.g., 1)
+-* **clientAlgoId**:  (e.g., 1)
+-* **orderIdList**: max length 10   e.g. [1234567,2345678]
+-* **origClientOrderIdList**: max length 10  e.g. ["my_id_1","my_id_2"], encode the double quotes. No space after comma.
+-* **origClientOrderId**:  (e.g., 1)
+-* **leverage**: target initial leverage: int from 1 to 125
+-* **multiAssetsMargin**: "true": Multi-Assets Mode; "false": Single-Asset Mode
+-* **dualSidePosition**: "true": Hedge Mode; "false": One-way Mode
+-* **algoType**: 
+-* **type**: 1: Add position margin，2: Reduce position margin
+-* **amount**:  (e.g., 1.0)
+-* **type**: 
+-* **batchOrders**: order list. Max 5 orders
+-* **quantity**: Order quantity, cannot be sent with `closePosition=true` (e.g., 1.0)
+-* **price**:  (e.g., 1.0)
+-* **algoType**: Only support `CONDITIONAL`
+-* **quantity**:  (e.g., 1.0)
+-* **price**:  (e.g., 1.0)
+-* **triggerPrice**:  (e.g., 1.0)
+-* **closePosition**: `true`, `false`；Close-All，used with `STOP_MARKET` or `TAKE_PROFIT_MARKET`.
+-* **priceProtect**: "TRUE" or "FALSE", default "FALSE". Used with `STOP/STOP_MARKET` or `TAKE_PROFIT/TAKE_PROFIT_MARKET` orders.
+-* **reduceOnly**: "true" or "false". default "false". Cannot be sent in Hedge Mode
+-* **activatePrice**: Used with `TRAILING_STOP_MARKET` orders, default as the latest price(supporting different `workingType`) (e.g., 1.0)
+-* **callbackRate**: Used with `TRAILING_STOP_MARKET` orders, min 0.1, max 5 where 1 for 1% (e.g., 1.0)
+-* **goodTillDate**: order cancel time for timeInForce `GTD`, mandatory when `timeInforce` set to `GTD`; order the timestamp only retains second-level precision, ms part will be ignored; The goodTillDate timestamp must be greater than the current time plus 600 seconds and smaller than 253402300799000
+-* **newClientOrderId**: A unique id among open orders. Automatically generated if not sent. Can only be string following the rule: `^[\.A-Z\:/a-z0-9_-]{1,36}$` (e.g., 1)
+-* **stopPrice**: Used with `STOP/STOP_MARKET` or `TAKE_PROFIT/TAKE_PROFIT_MARKET` orders. (e.g., 1.0)
+-* **activationPrice**: Used with `TRAILING_STOP_MARKET` orders, default as the latest price(supporting different `workingType`) (e.g., 1.0)
+-* **batchOrders**: order list. Max 5 orders
+-
+-
+-### Enums
+-
+-* **contractType**: PERPETUAL | CURRENT_MONTH | NEXT_MONTH | CURRENT_QUARTER | NEXT_QUARTER | PERPETUAL_DELIVERING
+-* **period**: 5m | 15m | 30m | 1h | 2h | 4h | 6h | 12h | 1d
+-* **interval**: 1m | 3m | 5m | 15m | 30m | 1h | 2h | 4h | 6h | 8h | 12h | 1d | 3d | 1w | 1M
+-* **marginType**: ISOLATED | CROSSED
+-* **positionSide**: BOTH | LONG | SHORT
+-* **side**: BUY | SELL
+-* **priceMatch**: NONE | OPPONENT | OPPONENT_5 | OPPONENT_10 | OPPONENT_20 | QUEUE | QUEUE_5 | QUEUE_10 | QUEUE_20
+-* **timeInForce**: GTC | IOC | FOK | GTX | GTD | RPI
+-* **workingType**: MARK_PRICE | CONTRACT_PRICE
+-* **newOrderRespType**: ACK | RESULT
+-* **selfTradePreventionMode**: EXPIRE_TAKER | EXPIRE_BOTH | EXPIRE_MAKER
+-* **autoCloseType**: LIQUIDATION | ADL
+-
+-
+-## Authentication
+-
+-For endpoints that require authentication, you will need to provide Binance API credentials.
+-Required credentials:
+-
+-* apiKey: Your Binance API key (for header)
+-* secretKey: Your Binance API secret (for signing)
+-
+-Base URLs:
+-* Mainnet: https://fapi.binance.com
+-* Testnet: https://demo-fapi.binance.com
+-
+-## Security
+-
+-### Share Credentials
+-
+-Users can provide Binance API credentials in different ways. The agent will try to retrieve automatically with the two first ways the credentials, but users can also explicitly tell the agent that they have set the credentials or stored them in a `.env` file, and the agent should re-read that file when they do. The agent can also make http requests with the two first methods without user confirmation.
+-
+-1. **Environment variables**
+-
+-Search for the following specific variables only (never dump the full environment):
+-
+-**Authorized environment variables**
+-- Mainnet: `BINANCE_API_KEY` and `BINANCE_SECRET_KEY`
+-- Testnet: `BINANCE_TESTNET_API_KEY` and `BINANCE_TESTNET_SECRET_KEY`
+-
+-Read and use in a single exec call so the raw key never enters the agent's context:
+-```bash
+-KEY="$BINANCE_API_KEY"
+-SECRET="$BINANCE_SECRET_KEY"
+-
+-response=$(curl -s -X GET "$URL" \
+-  -H "X-MBX-APIKEY: $KEY" \
+-  --data-urlencode "param1=value1")
+-
+-echo "$response"
+-```
+-
+-Environment variables must be set before OpenClaw starts. They are inherited at process startup and cannot be injected into a running instance. If you need to add or update credentials without restarting, use a secrets file (see option 2).
+-
+-2. **Secrets file (.env)**
+-
+-Check `~/.openclaw/secrets.env` , `~/.env`, or a `.env` file in the workspace. Read individual keys with `grep`, never source the full file:
+-```bash
+-# Try all credential locations in order
+-API_KEY=$(grep '^BINANCE_API_KEY=' ~/.openclaw/secrets.env 2>/dev/null | cut -d= -f2-)
+-SECRET_KEY=$(grep '^BINANCE_SECRET_KEY=' ~/.openclaw/secrets.env 2>/dev/null | cut -d= -f2-)
+-
+-# Fallback: search .env in known directories (KEY=VALUE then raw line format)
+-for dir in ~/.openclaw ~; do
+-  [ -n "$API_KEY" ] && break
+-  env_file="$dir/.env"
+-  [ -f "$env_file" ] || continue
+-
+-  # Read first two lines
+-  line1=$(sed -n '1p' "$env_file")
+-  line2=$(sed -n '2p' "$env_file")
+-
+-  # Check if lines contain '=' indicating KEY=VALUE format
+-  if [[ "$line1" == *=* && "$line2" == *=* ]]; then
+-    API_KEY=$(grep '^BINANCE_API_KEY=' "$env_file" 2>/dev/null | cut -d= -f2-)
+-    SECRET_KEY=$(grep '^BINANCE_SECRET_KEY=' "$env_file" 2>/dev/null | cut -d= -f2-)
+-  else
+-    # Treat lines as raw values
+-    API_KEY="$line1"
+-    SECRET_KEY="$line2"
+-  fi
+-done
+-```
+-
+-This file can be updated at any time without restarting OpenClaw, keys are read fresh on each invocation. Users can tell you the variables are now set or stored in a `.env` file, and you should re-read that file when they do.
+-
+-3. **Inline file**
+-
+-Sending a file where the content is in the following format:
+-
+-```bash
+-abc123...xyz
+-secret123...key
+-```
+-
+-* Never run `printenv`, `env`, `export`, or set without a specific variable name
+-* Never run `grep` on `env` files without anchoring to a specific key ('`^VARNAME='`)
+-* Never source a secrets file into the shell environment (`source .env` or `. .env`)
+-* Only read credentials explicitly needed for the current task
+-* Never echo or log raw credentials in output or replies
+-* Never commit `TOOLS.md` to version control if it contains real credentials — add it to `.gitignore`
+-
+-### Never Disclose API Key and Secret
+-
+-Never disclose the location of the API key and secret file.
+-
+-Never send the API key and secret to any website other than Mainnet and Testnet.
+-
+-### Never Display Full Secrets
+-
+-When showing credentials to users:
+-- **API Key:** Show first 5 + last 4 characters: `su1Qc...8akf`
+-- **Secret Key:** Always mask, show only last 5: `***...aws1`
+-
+-Example response when asked for credentials:
+-Account: main
+-API Key: su1Qc...8akf
+-Secret: ***...aws1
+-Environment: Mainnet
+-
+-### Listing Accounts
+-
+-When listing accounts, show names and environment only — never keys:
+-Binance Accounts:
+-* main (Mainnet/Testnet)
+-* testnet-dev (Testnet)
+-* futures-keys (Mainnet)
+-
+-### Transactions in Mainnet
+-
+-When performing transactions in mainnet, always confirm with the user before proceeding by asking them to write "CONFIRM" to proceed.
+-
+----
+-
+-## Binance Accounts
+-
+-### main
+-- API Key: your_mainnet_api_key
+-- Secret: your_mainnet_secret
+-- Testnet: false 
+-
+-### testnet-dev
+-- API Key: your_testnet_api_key
+-- Secret: your_testnet_secret
+-- Testnet: true
+-
+-### TOOLS.md Structure
+-
+-```bash
+-## Binance Accounts
+-
+-### main
+-- API Key: abc123...xyz
+-- Secret: secret123...key
+-- Testnet: false
+-- Description: Primary trading account
+-
+-### testnet-dev
+-- API Key: test456...abc
+-- Secret: testsecret...xyz
+-- Testnet: true
+-- Description: Development/testing
+-
+-### futures-keys
+-- API Key: futures789...def
+-- Secret: futuressecret...uvw
+-- Testnet: false
+-- Description: Futures trading account
+-```
+-
+-## Agent Behavior
+-
+-1. Credentials requested: Mask secrets (show last 5 chars only)
+-2. Listing accounts: Show names and environment, never keys
+-3. Account selection: Ask if ambiguous, default to main
+-4. When doing a transaction in mainnet, confirm with user before by asking to write "CONFIRM" to proceed
+-5. New credentials: Prompt for name, environment, signing mode
+-6. When a request requires signing, if the request isn't an order and the API keys aren't described as `mainnet` or `testnet` keys, try to make request to the different base urls and see if it works, without asking the user. If it works, store the keys with the corresponding environment.
+-
+-## Adding New Accounts
+-
+-When user provides new credentials by Inline file or message:
+-
+-* Ask for account name
+-* Ask: Mainnet, Testnet 
+-* Store in `TOOLS.md` with masked display confirmation 
+-
+-## Signing Requests
+-
+-For trading endpoints that require a signature:
+-
+-1. **Detect key type first**, inspect the secret key format before signing.
+-2. Build query string with all parameters, including the timestamp (Unix ms).
+-3. Percent-encode the parameters using UTF-8 according to RFC 3986.
+-4. Sign query string with secretKey using HMAC SHA256, RSA, or Ed25519 (depending on the account configuration).
+-5. Append signature to query string.
+-6. Include `X-MBX-APIKEY` header.
+-
+-Otherwise, do not perform steps 4–6.
+-
+-## New Client Order ID 
+-
+-For endpoints that include the `newClientOrderId` parameter, the value must always start with `agent-`. If the parameter is not provided, `agent-` followed by 18 random alphanumeric characters will be generated automatically. If a value is provided, it will be prefixed with `agent-`
+-
+-Example: `agent-1a2b3c4d5e6f7g8h9i`
+-
+-## User Agent Header
+-
+-Include `User-Agent` header with the following string: `binance-derivatives-trading-usds-futures/1.1.0 (Skill)`
+-
+-See [`references/authentication.md`](./references/authentication.md) for implementation details.
+diff --git a/skills/binance/derivatives-trading-usds-futures/references/authentication.md b/skills/binance/derivatives-trading-usds-futures/references/authentication.md
+@@ -1,135 +0,0 @@
+-# Binance Authentication
+-
+-All trading endpoints require either HMAC SHA256, RSA, or Ed25519 signed requests.
+-**Always detect the key type before signing**, do not assume HMAC.
+-
+-## Base URLs
+-
+-| Environment | URL |
+-|-------------|-----|
+-| Mainnet | https://fapi.binance.com |
+-| Testnet | https://demo-fapi.binance.com |
+-
+-## Required Headers
+-
+-* `X-MBX-APIKEY`: your_api_key
+-* `User-Agent`: binance-derivatives-trading-usds-futures/1.1.0 (Skill)
+-
+-## Signing Process
+-
+-### Step 1: Build Query String
+-
+-Include all parameters plus `timestamp` (current Unix time in milliseconds):
+-`symbol=BTCUSDT&side=BUY&type=MARKET&quantity=0.001&timestamp=1234567890123`
+-
+-**Optional:** Add `recvWindow` (default 5000ms) for timestamp tolerance.
+-
+-### Step 2: Percent‑Encode Parameters
+-
+-Before generating the signature, **percent‑encode all parameter names and values using UTF‑8 encoding according to RFC 3986.**
+-Unreserved characters that must not be encoded: `A-Z a-z 0-9 - _ . ~`
+-
+-- Chinese characters example:
+-`symbol=这是测试币456`
+-
+-Percent‑encoded:
+-`symbol=%E8%BF%99%E6%98%AF%E6%B5%8B%E8%AF%95%E5%B8%81456`
+-
+-**Important:**
+-The exact encoded query string must be used for both signing and the HTTP request.
+-
+-### Step 3: Generate Signature
+-
+-Generate the signature from the encoded query string.
+-
+-#### HMAC SHA256 signature
+-
+-Create HMAC SHA256 signature of the query string using your secret key:
+-
+-```bash
+-# Example using openssl
+-echo -n "symbol=BTCUSDT&side=BUY&type=MARKET&quantity=0.001&timestamp=1234567890123" | \
+-  openssl dgst -sha256 -hmac "your_secret_key"
+-```
+-
+-#### RSA signature
+-
+-Create RSA signature of the query string using your private key:
+-
+-```bash
+-# Example using openssl
+-echo -n "symbol=BTCUSDT&side=BUY&type=MARKET&quantity=0.001&timestamp=1234567890123" | \
+-  openssl dgst -sha256 -sign private_key.pem | base64
+-```
+-
+-#### Ed25519 signature
+-
+-Create Ed25519 signature of the query string using your private key:
+-
+-```bash
+-# Example using openssl
+-echo -n "symbol=BTCUSDT&side=BUY&type=MARKET&quantity=0.001&timestamp=1234567890123" | \
+-  openssl pkeyutl -sign -inkey private_key.pem | base64
+-```
+-
+-### Step 4: Append Signature
+-
+-Add signature parameter to the query string:
+-`symbol=BTCUSDT&side=BUY&type=MARKET&quantity=0.001&timestamp=1234567890123&signature=abc123...`
+-
+-### Step 5: Add Product User Agent Header
+-
+-Include `User-Agent` header with the following string: `binance-derivatives-trading-usds-futures/1.1.0 (Skill)`
+-
+-#### Complete Example
+-
+-Request:
+-```bash
+-curl -X POST "https://fapi.binance.com/fapi/v1/order" \
+-  -H "X-MBX-APIKEY: your_api_key" \
+-  -H "User-Agent: binance-derivatives-trading-usds-futures/1.q.0 (Skill)" \
+-  -d "symbol=BTCUSDT&side=BUY&type=MARKET&quantity=0.001&timestamp=1234567890123&signature=..."
+-```
+-
+-```bash
+-#!/bin/bash
+-API_KEY="your_api_key"
+-SECRET_KEY="your_secret_key"
+-BASE_URL="https://fapi.binance.com"  # or https://demo-fapi.binance.com
+-
+-# Get current timestamp
+-TIMESTAMP=$(date +%s000)
+-
+-# Build query string (without signature)
+-QUERY="symbol=BTCUSDT&side=BUY&type=MARKET&quantity=0.001&timestamp=${TIMESTAMP}"
+-
+-# Generate signature
+-# For HMAC SHA256:
+-SIGNATURE=$(echo -n "$QUERY" | openssl dgst -sha256 -hmac "$SECRET_KEY" | cut -d' ' -f2)
+-
+-# For RSA or Ed25519, replace the above line with the appropriate signing command.
+-##  RSA:
+-# SIGNATURE=$(echo -n "$QUERY" | openssl dgst -sha256 -sign private_key.pem | base64)
+-
+-##  Ed25519:
+-# SIGNATURE=$(echo -n "$QUERY" | openssl pkeyutl -sign -inkey private_key.pem | base64)
+-
+-# Make request
+-curl -X POST "${BASE_URL}/fapi/v1/order?${QUERY}&signature=${SIGNATURE}" \
+-  -H "X-MBX-APIKEY: ${API_KEY}"\
+-  -H "User-Agent: binance-derivatives-trading-usds-futures/1.1.0 (Skill)"
+-```
+-
+-If you get -1021 Timestamp outside recvWindow:
+-
+-1. Check server time: GET /fapi/v1/time
+-2. Sync your clock or adjust timestamp
+-3. Increase recvWindow (max 60000ms)
+-
+-### Security Notes
+-
+-* Never share your secret key
+-* Use IP whitelist in Binance API settings
+-* Enable only required permissions (spot trading, no withdrawals)
+-* Use testnet for development: https://demo-fapi.binance.com
+-* Testnet credentials are separate from mainnet
+diff --git a/skills/binance/margin-trading/CHANGELOG.md b/skills/binance/margin-trading/CHANGELOG.md
+@@ -1,11 +0,0 @@
+-# Changelog
+-
+-## 1.1.0 - 2026-03-24
+-
+-- Environmental variables or files can now be used as input for the API key and secret key.
+-- Fix signature generation for RSA and Ed25519 keys.
+-- Add `Openclaw` metadata to the User Agent header
+-
+-## 1.0.0 - 2026-03-10
+-
+-- Initial release
+\ No newline at end of file
+diff --git a/skills/binance/margin-trading/LICENSE.md b/skills/binance/margin-trading/LICENSE.md
+@@ -1,9 +0,0 @@
+-MIT License
+-
+-Copyright (c) 2026 Binance
+-
+-Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+-
+-The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+-
+-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+\ No newline at end of file
+diff --git a/skills/binance/margin-trading/SKILL.md b/skills/binance/margin-trading/SKILL.md
+@@ -1,369 +0,0 @@
+----
+-name: margin-trading
+-description: Binance Margin-trading request using the Binance API. Authentication requires API key and secret key. 
+-metadata:
+-  version: 1.1.0
+-  author: Binance
+-  openclaw:
+-    requires:
+-      bins:
+-        - curl
+-        - openssl
+-        - date
+-    homepage: https://github.com/binance/binance-skills-hub/tree/main/skills/binance/margin-trading/SKILL.md
+-license: MIT
+----
+-
+-# Binance Margin-trading Skill
+-
+-Margin-trading request on Binance using authenticated API endpoints. Requires API key and secret key for certain endpoints. Return the result in JSON format.
+-
+-## Quick Reference
+-
+-| Endpoint | Description | Required | Optional | Authentication |
+-|----------|-------------|----------|----------|----------------|
+-| `/sapi/v1/margin/max-leverage` (POST) | Adjust cross margin max leverage (USER_DATA) | maxLeverage | None | Yes |
+-| `/sapi/v1/margin/isolated/account` (DELETE) | Disable Isolated Margin Account (TRADE) | symbol | recvWindow | Yes |
+-| `/sapi/v1/margin/isolated/account` (POST) | Enable Isolated Margin Account (TRADE) | symbol | recvWindow | Yes |
+-| `/sapi/v1/margin/isolated/account` (GET) | Query Isolated Margin Account Info (USER_DATA) | None | symbols, recvWindow | Yes |
+-| `/sapi/v1/bnbBurn` (GET) | Get BNB Burn Status (USER_DATA) | None | recvWindow | Yes |
+-| `/sapi/v1/margin/tradeCoeff` (GET) | Get Summary of Margin account (USER_DATA) | None | recvWindow | Yes |
+-| `/sapi/v1/margin/capital-flow` (GET) | Query Cross Isolated Margin Capital Flow (USER_DATA) | None | asset, symbol, type, startTime, endTime, fromId, limit, recvWindow | Yes |
+-| `/sapi/v1/margin/account` (GET) | Query Cross Margin Account Details (USER_DATA) | None | recvWindow | Yes |
+-| `/sapi/v1/margin/crossMarginData` (GET) | Query Cross Margin Fee Data (USER_DATA) | None | vipLevel, coin, recvWindow | Yes |
+-| `/sapi/v1/margin/isolated/accountLimit` (GET) | Query Enabled Isolated Margin Account Limit (USER_DATA) | None | recvWindow | Yes |
+-| `/sapi/v1/margin/isolatedMarginData` (GET) | Query Isolated Margin Fee Data (USER_DATA) | None | vipLevel, symbol, recvWindow | Yes |
+-| `/sapi/v1/margin/interestHistory` (GET) | Get Interest History (USER_DATA) | None | asset, isolatedSymbol, startTime, endTime, current, size, recvWindow | Yes |
+-| `/sapi/v1/margin/next-hourly-interest-rate` (GET) | Get future hourly interest rate (USER_DATA) | assets, isIsolated | None | Yes |
+-| `/sapi/v1/margin/borrow-repay` (POST) | Margin account borrow/repay(MARGIN) | asset, isIsolated, symbol, amount, type | recvWindow | Yes |
+-| `/sapi/v1/margin/borrow-repay` (GET) | Query borrow/repay records in Margin account(USER_DATA) | type | asset, isolatedSymbol, txId, startTime, endTime, current, size, recvWindow | Yes |
+-| `/sapi/v1/margin/interestRateHistory` (GET) | Query Margin Interest Rate History (USER_DATA) | asset | vipLevel, startTime, endTime, recvWindow | Yes |
+-| `/sapi/v1/margin/maxBorrowable` (GET) | Query Max Borrow (USER_DATA) | asset | isolatedSymbol, recvWindow | Yes |
+-| `/sapi/v1/margin/crossMarginCollateralRatio` (GET) | Cross margin collateral ratio (MARKET_DATA) | None | None | No |
+-| `/sapi/v1/margin/allPairs` (GET) | Get All Cross Margin Pairs (MARKET_DATA) | None | symbol | No |
+-| `/sapi/v1/margin/isolated/allPairs` (GET) | Get All Isolated Margin Symbol(MARKET_DATA) | None | symbol, recvWindow | No |
+-| `/sapi/v1/margin/allAssets` (GET) | Get All Margin Assets (MARKET_DATA) | None | asset | No |
+-| `/sapi/v1/margin/delist-schedule` (GET) | Get Delist Schedule (MARKET_DATA) | None | recvWindow | No |
+-| `/sapi/v1/margin/limit-price-pairs` (GET) | Get Limit Price Pairs(MARKET_DATA) | None | None | No |
+-| `/sapi/v1/margin/list-schedule` (GET) | Get list Schedule (MARKET_DATA) | None | recvWindow | No |
+-| `/sapi/v1/margin/risk-based-liquidation-ratio` (GET) | Get Margin Asset Risk-Based Liquidation Ratio (MARKET_DATA) | None | None | No |
+-| `/sapi/v1/margin/restricted-asset` (GET) | Get Margin Restricted Assets (MARKET_DATA) | None | None | No |
+-| `/sapi/v1/margin/isolatedMarginTier` (GET) | Query Isolated Margin Tier Data (USER_DATA) | symbol | tier, recvWindow | Yes |
+-| `/sapi/v1/margin/leverageBracket` (GET) | Query Liability Coin Leverage Bracket in Cross Margin Pro Mode(MARKET_DATA) | None | None | No |
+-| `/sapi/v1/margin/priceIndex` (GET) | Query Margin PriceIndex (MARKET_DATA) | symbol | None | No |
+-| `/sapi/v1/margin/available-inventory` (GET) | Query Margin Available Inventory(USER_DATA) | type | None | Yes |
+-| `/sapi/v1/margin/listen-key` (DELETE) | Close User Data Stream (USER_STREAM) | None | None | No |
+-| `/sapi/v1/margin/listen-key` (PUT) | Keepalive User Data Stream (USER_STREAM) | listenKey | None | No |
+-| `/sapi/v1/margin/listen-key` (POST) | Start User Data Stream (USER_STREAM) | None | None | No |
+-| `/sapi/v1/margin/apiKey` (POST) | Create Special Key(Low-Latency Trading)(TRADE) | apiName | symbol, ip, publicKey, permissionMode, recvWindow | Yes |
+-| `/sapi/v1/margin/apiKey` (DELETE) | Delete Special Key(Low-Latency Trading)(TRADE) | None | apiName, symbol, recvWindow | Yes |
+-| `/sapi/v1/margin/apiKey` (GET) | Query Special key(Low Latency Trading)(TRADE) | None | symbol, recvWindow | Yes |
+-| `/sapi/v1/margin/apiKey/ip` (PUT) | Edit ip for Special Key(Low-Latency Trading)(TRADE) | ip | symbol, recvWindow | Yes |
+-| `/sapi/v1/margin/forceLiquidationRec` (GET) | Get Force Liquidation Record (USER_DATA) | None | startTime, endTime, isolatedSymbol, current, size, recvWindow | Yes |
+-| `/sapi/v1/margin/exchange-small-liability` (GET) | Get Small Liability Exchange Coin List (USER_DATA) | None | recvWindow | Yes |
+-| `/sapi/v1/margin/exchange-small-liability` (POST) | Small Liability Exchange (MARGIN) | assetNames | recvWindow | Yes |
+-| `/sapi/v1/margin/exchange-small-liability-history` (GET) | Get Small Liability Exchange History (USER_DATA) | current, size | startTime, endTime, recvWindow | Yes |
+-| `/sapi/v1/margin/openOrders` (DELETE) | Margin Account Cancel all Open Orders on a Symbol (TRADE) | symbol | isIsolated, recvWindow | Yes |
+-| `/sapi/v1/margin/openOrders` (GET) | Query Margin Account's Open Orders (USER_DATA) | None | symbol, isIsolated, recvWindow | Yes |
+-| `/sapi/v1/margin/orderList` (DELETE) | Margin Account Cancel OCO (TRADE) | symbol | isIsolated, orderListId, listClientOrderId, newClientOrderId, recvWindow | Yes |
+-| `/sapi/v1/margin/orderList` (GET) | Query Margin Account's OCO (USER_DATA) | None | isIsolated, symbol, orderListId, origClientOrderId, recvWindow | Yes |
+-| `/sapi/v1/margin/order` (DELETE) | Margin Account Cancel Order (TRADE) | symbol | isIsolated, orderId, origClientOrderId, newClientOrderId, recvWindow | Yes |
+-| `/sapi/v1/margin/order` (POST) | Margin Account New Order (TRADE) | symbol, side, type | isIsolated, quantity, quoteOrderQty, price, stopPrice, newClientOrderId, icebergQty, newOrderRespType, sideEffectType, timeInForce, selfTradePreventionMode, autoRepayAtCancel, recvWindow | Yes |
+-| `/sapi/v1/margin/order` (GET) | Query Margin Account's Order (USER_DATA) | symbol | isIsolated, orderId, origClientOrderId, recvWindow | Yes |
+-| `/sapi/v1/margin/order/oco` (POST) | Margin Account New OCO (TRADE) | symbol, side, quantity, price, stopPrice | isIsolated, listClientOrderId, limitClientOrderId, limitIcebergQty, stopClientOrderId, stopLimitPrice, stopIcebergQty, stopLimitTimeInForce, newOrderRespType, sideEffectType, selfTradePreventionMode, autoRepayAtCancel, recvWindow | Yes |
+-| `/sapi/v1/margin/order/oto` (POST) | Margin Account New OTO (TRADE) | symbol, workingType, workingSide, workingPrice, workingQuantity, workingIcebergQty, pendingType, pendingSide, pendingQuantity | isIsolated, listClientOrderId, newOrderRespType, sideEffectType, selfTradePreventionMode, autoRepayAtCancel, workingClientOrderId, workingTimeInForce, pendingClientOrderId, pendingPrice, pendingStopPrice, pendingTrailingDelta, pendingIcebergQty, pendingTimeInForce | Yes |
+-| `/sapi/v1/margin/order/otoco` (POST) | Margin Account New OTOCO (TRADE) | symbol, workingType, workingSide, workingPrice, workingQuantity, pendingSide, pendingQuantity, pendingAboveType | isIsolated, sideEffectType, autoRepayAtCancel, listClientOrderId, newOrderRespType, selfTradePreventionMode, workingClientOrderId, workingIcebergQty, workingTimeInForce, pendingAboveClientOrderId, pendingAbovePrice, pendingAboveStopPrice, pendingAboveTrailingDelta, pendingAboveIcebergQty, pendingAboveTimeInForce, pendingBelowType, pendingBelowClientOrderId, pendingBelowPrice, pendingBelowStopPrice, pendingBelowTrailingDelta, pendingBelowIcebergQty, pendingBelowTimeInForce | Yes |
+-| `/sapi/v1/margin/manual-liquidation` (POST) | Margin Manual Liquidation(MARGIN) | type | symbol, recvWindow | Yes |
+-| `/sapi/v1/margin/rateLimit/order` (GET) | Query Current Margin Order Count Usage (TRADE) | None | isIsolated, symbol, recvWindow | Yes |
+-| `/sapi/v1/margin/allOrderList` (GET) | Query Margin Account's all OCO (USER_DATA) | None | isIsolated, symbol, fromId, startTime, endTime, limit, recvWindow | Yes |
+-| `/sapi/v1/margin/allOrders` (GET) | Query Margin Account's All Orders (USER_DATA) | symbol | isIsolated, orderId, startTime, endTime, limit, recvWindow | Yes |
+-| `/sapi/v1/margin/openOrderList` (GET) | Query Margin Account's Open OCO (USER_DATA) | None | isIsolated, symbol, recvWindow | Yes |
+-| `/sapi/v1/margin/myTrades` (GET) | Query Margin Account's Trade List (USER_DATA) | symbol | isIsolated, orderId, startTime, endTime, fromId, limit, recvWindow | Yes |
+-| `/sapi/v1/margin/myPreventedMatches` (GET) | Query Prevented Matches(USER_DATA) | symbol | preventedMatchId, orderId, fromPreventedMatchId, recvWindow, isIsolated | Yes |
+-| `/sapi/v1/margin/api-key-list` (GET) | Query Special key List(Low Latency Trading)(TRADE) | None | symbol, recvWindow | Yes |
+-| `/sapi/v1/margin/transfer` (GET) | Get Cross Margin Transfer History (USER_DATA) | None | asset, type, startTime, endTime, current, size, isolatedSymbol, recvWindow | Yes |
+-| `/sapi/v1/margin/maxTransferable` (GET) | Query Max Transfer-Out Amount (USER_DATA) | asset | isolatedSymbol, recvWindow | Yes |
+-
+----
+-
+-## Parameters
+-
+-### Common Parameters
+-
+-* **maxLeverage**: Can only adjust 3 , 5 or 10，Example: maxLeverage = 5 or 3 for Cross Margin Classic; maxLeverage=10 for Cross Margin Pro 10x leverage or 20x if compliance allows.
+-* **symbol**: 
+-* **recvWindow**: No more than 60000 (e.g., 5000)
+-* **asset**: 
+-* **symbol**: isolated margin pair
+-* **type**: Transfer Type: ROLL_IN, ROLL_OUT
+-* **startTime**: Only supports querying data from the past 90 days. (e.g., 1623319461670)
+-* **endTime**:  (e.g., 1641782889000)
+-* **fromId**: If `fromId` is set, data with `id` greater than `fromId` will be returned. Otherwise, the latest data will be returned. (e.g., 1)
+-* **limit**: Limit on the number of data records returned per request. Default: 500; Maximum: 1000. (e.g., 500)
+-* **vipLevel**: User's current specific margin data will be returned if vipLevel is omitted (e.g., 1)
+-* **coin**: 
+-* **symbols**: Max 5 symbols can be sent; separated by ",". e.g. "BTCUSDT,BNBUSDT,ADAUSDT"
+-* **isolatedSymbol**: isolated symbol
+-* **current**: Currently querying page. Start from 1. Default:1 (e.g., 1)
+-* **size**: Default:10 Max:100 (e.g., 10)
+-* **assets**: List of assets, separated by commas, up to 20
+-* **isIsolated**: for isolated margin or not, "TRUE", "FALSE"
+-* **asset**: 
+-* **isIsolated**: `TRUE` for Isolated Margin, `FALSE` for Cross Margin, Default `FALSE` (e.g., FALSE)
+-* **amount**: 
+-* **type**: `MARGIN`,`ISOLATED`
+-* **txId**: `tranId` in `POST /sapi/v1/margin/loan` (e.g., 1)
+-* **tier**: All margin tier data will be returned if tier is omitted
+-* **listenKey**: 
+-* **apiName**: 
+-* **ip**: Can be added in batches, separated by commas. Max 30 for an API key
+-* **publicKey**: 1. If publicKey is inputted it will create an RSA or Ed25519 key.  2. Need to be encoded to URL-encoded format
+-* **permissionMode**: This parameter is only for the Ed25519 API key, and does not effact for other encryption methods. The value can be TRADE (TRADE for all permissions) or READ (READ for USER_DATA, FIX_API_READ_ONLY). The default value is TRADE. (e.g., value)
+-* **apiName**: 
+-* **ip**: Can be added in batches, separated by commas. Max 30 for an API key
+-* **current**: Currently querying page. Start from 1. Default:1 (e.g., 1)
+-* **size**: Default:10, Max:100 (e.g., 10)
+-* **isIsolated**: For isolated margin or not, "TRUE", "FALSE", default "FALSE"
+-* **orderListId**: Either `orderListId` or `listClientOrderId` must be provided (e.g., 1)
+-* **listClientOrderId**: Either `orderListId` or `listClientOrderId` must be provided (e.g., 1)
+-* **newClientOrderId**: Used to uniquely identify this cancel. Automatically generated by default (e.g., 1)
+-* **orderId**:  (e.g., 1)
+-* **origClientOrderId**:  (e.g., 1)
+-* **quantity**:  (e.g., 1.0)
+-* **limitClientOrderId**: A unique Id for the limit order (e.g., 1)
+-* **price**:  (e.g., 1.0)
+-* **limitIcebergQty**:  (e.g., 1.0)
+-* **stopClientOrderId**: A unique Id for the stop loss/stop loss limit leg (e.g., 1)
+-* **stopPrice**:  (e.g., 1.0)
+-* **stopLimitPrice**: If provided, `stopLimitTimeInForce` is required. (e.g., 1.0)
+-* **stopIcebergQty**:  (e.g., 1.0)
+-* **stopLimitTimeInForce**: Valid values are `GTC`/`FOK`/`IOC`
+-* **sideEffectType**: NO_SIDE_EFFECT, MARGIN_BUY, AUTO_REPAY,AUTO_BORROW_REPAY; default NO_SIDE_EFFECT. More info in FAQ (e.g., NO_SIDE_EFFECT)
+-* **selfTradePreventionMode**: The allowed enums is dependent on what is configured on the symbol. The possible supported values are EXPIRE_TAKER, EXPIRE_MAKER, EXPIRE_BOTH, NONE (e.g., NONE)
+-* **autoRepayAtCancel**: Only when MARGIN_BUY or AUTO_BORROW_REPAY order takes effect, true means that the debt generated by the order needs to be repay after the order is cancelled. The default is true (e.g., true)
+-* **workingType**: Supported values: `LIMIT`, `LIMIT_MAKER`
+-* **workingSide**: BUY, SELL
+-* **workingClientOrderId**: Arbitrary unique ID among open orders for the working order. Automatically generated if not sent. (e.g., 1)
+-* **workingPrice**:  (e.g., 1.0)
+-* **workingQuantity**:  (e.g., 1.0)
+-* **workingIcebergQty**: This can only be used if `workingTimeInForce` is `GTC`. (e.g., 1.0)
+-* **workingTimeInForce**: GTC,IOC,FOK
+-* **pendingType**: Supported values: Order Types Note that `MARKET` orders using `quoteOrderQty` are not supported. (e.g., Order Types)
+-* **pendingSide**: BUY, SELL
+-* **pendingClientOrderId**: Arbitrary unique ID among open orders for the pending order. Automatically generated if not sent. (e.g., 1)
+-* **pendingPrice**:  (e.g., 1.0)
+-* **pendingStopPrice**:  (e.g., 1.0)
+-* **pendingTrailingDelta**:  (e.g., 1.0)
+-* **pendingQuantity**:  (e.g., 1.0)
+-* **pendingIcebergQty**: This can only be used if `pendingTimeInForce` is `GTC`. (e.g., 1.0)
+-* **pendingTimeInForce**: GTC,IOC,FOK
+-* **workingIcebergQty**: This can only be used if `workingTimeInForce` is `GTC`. (e.g., 1.0)
+-* **pendingAboveType**: Supported values: `LIMIT_MAKER`, `STOP_LOSS`, and `STOP_LOSS_LIMIT`
+-* **pendingAboveClientOrderId**: Arbitrary unique ID among open orders for the pending above order. Automatically generated if not sent. (e.g., 1)
+-* **pendingAbovePrice**:  (e.g., 1.0)
+-* **pendingAboveStopPrice**:  (e.g., 1.0)
+-* **pendingAboveTrailingDelta**:  (e.g., 1.0)
+-* **pendingAboveIcebergQty**: This can only be used if `pendingAboveTimeInForce` is `GTC`. (e.g., 1.0)
+-* **pendingAboveTimeInForce**: 
+-* **pendingBelowType**: Supported values: `LIMIT_MAKER`, `STOP_LOSS`, and `STOP_LOSS_LIMIT`
+-* **pendingBelowClientOrderId**: Arbitrary unique ID among open orders for the pending below order. Automatically generated if not sent. (e.g., 1)
+-* **pendingBelowPrice**:  (e.g., 1.0)
+-* **pendingBelowStopPrice**:  (e.g., 1.0)
+-* **pendingBelowTrailingDelta**:  (e.g., 1.0)
+-* **pendingBelowIcebergQty**: This can only be used if `pendingBelowTimeInForce` is `GTC`. (e.g., 1.0)
+-* **pendingBelowTimeInForce**: 
+-* **quantity**:  (e.g., 1.0)
+-* **quoteOrderQty**:  (e.g., 1.0)
+-* **price**:  (e.g., 1.0)
+-* **stopPrice**: Used with `STOP_LOSS`, `STOP_LOSS_LIMIT`, `TAKE_PROFIT`, and `TAKE_PROFIT_LIMIT` orders. (e.g., 1.0)
+-* **icebergQty**: Used with `LIMIT`, `STOP_LOSS_LIMIT`, and `TAKE_PROFIT_LIMIT` to create an iceberg order. (e.g., 1.0)
+-* **preventedMatchId**:  (e.g., 1)
+-* **fromPreventedMatchId**:  (e.g., 1)
+-* **assetNames**: The assets list of small liability exchange， Example: assetNames = BTC,ETH
+-
+-
+-### Enums
+-
+-* **side**: BUY | SELL
+-* **newOrderRespType**: ACK | RESULT | FULL
+-* **timeInForce**: GTC | IOC | FOK
+-
+-
+-## Authentication
+-
+-For endpoints that require authentication, you will need to provide Binance API credentials.
+-Required credentials:
+-
+-* apiKey: Your Binance API key (for header)
+-* secretKey: Your Binance API secret (for signing)
+-
+-Base URLs:
+-* Mainnet: https://api.binance.com
+-
+-## Security
+-
+-### Share Credentials
+-
+-Users can provide Binance API credentials in different ways. The agent will try to retrieve automatically with the two first ways the credentials, but users can also explicitly tell the agent that they have set the credentials or stored them in a `.env` file, and the agent should re-read that file when they do. The agent can also make http requests with the two first methods without user confirmation.
+-
+-1. **Environment variables**
+-
+-Search for the following specific variables only (never dump the full environment):
+-
+-**Authorized environment variables**
+-- Mainnet: `BINANCE_API_KEY` and `BINANCE_SECRET_KEY`
+-
+-Read and use in a single exec call so the raw key never enters the agent's context:
+-```bash
+-KEY="$BINANCE_API_KEY"
+-SECRET="$BINANCE_SECRET_KEY"
+-
+-response=$(curl -s -X GET "$URL" \
+-  -H "X-MBX-APIKEY: $KEY" \
+-  --data-urlencode "param1=value1")
+-
+-echo "$response"
+-```
+-
+-Environment variables must be set before OpenClaw starts. They are inherited at process startup and cannot be injected into a running instance. If you need to add or update credentials without restarting, use a secrets file (see option 2).
+-
+-2. **Secrets file (.env)**
+-
+-Check `~/.openclaw/secrets.env` , `~/.env`, or a `.env` file in the workspace. Read individual keys with `grep`, never source the full file:
+-```bash
+-# Try all credential locations in order
+-API_KEY=$(grep '^BINANCE_API_KEY=' ~/.openclaw/secrets.env 2>/dev/null | cut -d= -f2-)
+-SECRET_KEY=$(grep '^BINANCE_SECRET_KEY=' ~/.openclaw/secrets.env 2>/dev/null | cut -d= -f2-)
+-
+-# Fallback: search .env in known directories (KEY=VALUE then raw line format)
+-for dir in ~/.openclaw ~; do
+-  [ -n "$API_KEY" ] && break
+-  env_file="$dir/.env"
+-  [ -f "$env_file" ] || continue
+-
+-  # Read first two lines
+-  line1=$(sed -n '1p' "$env_file")
+-  line2=$(sed -n '2p' "$env_file")
+-
+-  # Check if lines contain '=' indicating KEY=VALUE format
+-  if [[ "$line1" == *=* && "$line2" == *=* ]]; then
+-    API_KEY=$(grep '^BINANCE_API_KEY=' "$env_file" 2>/dev/null | cut -d= -f2-)
+-    SECRET_KEY=$(grep '^BINANCE_SECRET_KEY=' "$env_file" 2>/dev/null | cut -d= -f2-)
+-  else
+-    # Treat lines as raw values
+-    API_KEY="$line1"
+-    SECRET_KEY="$line2"
+-  fi
+-done
+-```
+-
+-This file can be updated at any time without restarting OpenClaw, keys are read fresh on each invocation. Users can tell you the variables are now set or stored in a `.env` file, and you should re-read that file when they do.
+-
+-3. **Inline file**
+-
+-Sending a file where the content is in the following format:
+-
+-```bash
+-abc123...xyz
+-secret123...key
+-```
+-
+-* Never run `printenv`, `env`, `export`, or set without a specific variable name
+-* Never run `grep` on `env` files without anchoring to a specific key ('`^VARNAME='`)
+-* Never source a secrets file into the shell environment (`source .env` or `. .env`)
+-* Only read credentials explicitly needed for the current task
+-* Never echo or log raw credentials in output or replies
+-* Never commit `TOOLS.md` to version control if it contains real credentials — add it to `.gitignore`
+-
+-### Never Disclose API Key and Secret
+-
+-Never disclose the location of the API key and secret file.
+-
+-Never send the API key and secret to any website other than Mainnet and Testnet.
+-
+-### Never Display Full Secrets
+-
+-When showing credentials to users:
+-- **API Key:** Show first 5 + last 4 characters: `su1Qc...8akf`
+-- **Secret Key:** Always mask, show only last 5: `***...aws1`
+-
+-Example response when asked for credentials:
+-Account: main
+-API Key: su1Qc...8akf
+-Secret: ***...aws1
+-
+-### Listing Accounts
+-
+-When listing accounts, show names and environment only — never keys:
+-Binance Accounts:
+-* main (Mainnet)
+-* futures-keys (Mainnet)
+-
+-### Transactions in Mainnet
+-
+-When performing transactions in mainnet, always confirm with the user before proceeding by asking them to write "CONFIRM" to proceed.
+-
+----
+-
+-## Binance Accounts
+-
+-### main
+-- API Key: your_mainnet_api_key
+-- Secret: your_mainnet_secret
+-
+-### TOOLS.md Structure
+-
+-```bash
+-## Binance Accounts
+-
+-### main
+-- API Key: abc123...xyz
+-- Secret: secret123...key
+-- Description: Primary trading account
+-
+-
+-### futures-keys
+-- API Key: futures789...def
+-- Secret: futuressecret...uvw
+-- Description: Futures trading account
+-```
+-
+-## Agent Behavior
+-
+-1. Credentials requested: Mask secrets (show last 5 chars only)
+-2. Listing accounts: Show names and environment, never keys
+-3. Account selection: Ask if ambiguous, default to main
+-4. When doing a transaction in mainnet, confirm with user before by asking to write "CONFIRM" to proceed
+-5. New credentials: Prompt for name, environment, signing mode
+-
+-## Adding New Accounts
+-
+-When user provides new credentials by Inline file or message:
+-
+-* Ask for account name
+-* Store in `TOOLS.md` with masked display confirmation 
+-
+-## Signing Requests
+-
+-For trading endpoints that require a signature:
+-
+-1. **Detect key type first**, inspect the secret key format before signing.
+-2. Build query string with all parameters, including the timestamp (Unix ms).
+-3. Percent-encode the parameters using UTF-8 according to RFC 3986.
+-4. Sign query string with secretKey using HMAC SHA256, RSA, or Ed25519 (depending on the account configuration).
+-5. Append signature to query string.
+-6. Include `X-MBX-APIKEY` header.
+-
+-Otherwise, do not perform steps 4–6.
+-
+-## New Client Order ID 
+-
+-For endpoints that include the `newClientOrderId` parameter, the value must always start with `agent-`. If the parameter is not provided, `agent-` followed by 18 random alphanumeric characters will be generated automatically. If a value is provided, it will be prefixed with `agent-`
+-
+-Example: `agent-1a2b3c4d5e6f7g8h9i`
+-
+-## User Agent Header
+-
+-Include `User-Agent` header with the following string: `binance-margin-trading/1.1.0 (Skill)`
+-
+-See [`references/authentication.md`](./references/authentication.md) for implementation details.
+diff --git a/skills/binance/margin-trading/references/authentication.md b/skills/binance/margin-trading/references/authentication.md
+@@ -1,126 +0,0 @@
+-# Binance Authentication
+-
+-All trading endpoints require either HMAC SHA256, RSA, or Ed25519 signed requests.
+-**Always detect the key type before signing**, do not assume HMAC.
+-
+-## Base URLs
+-
+-| Environment | URL |
+-|-------------|-----|
+-| Mainnet | https://api.binance.com |
+-
+-## Required Headers
+-
+-* `X-MBX-APIKEY`: your_api_key
+-* `User-Agent`: binance-margin-trading/1.1.0 (Skill)
+-
+-## Signing Process
+-
+-### Step 1: Build Query String
+-
+-Include all parameters plus `timestamp` (current Unix time in milliseconds):
+-`timestamp=1234567890123`
+-
+-**Optional:** Add `recvWindow` (default 5000ms) for timestamp tolerance.
+-
+-### Step 2: Percent‑Encode Parameters
+-
+-Before generating the signature, **percent‑encode all parameter names and values using UTF‑8 encoding according to RFC 3986.**
+-Unreserved characters that must not be encoded: `A-Z a-z 0-9 - _ . ~`
+-
+-- Chinese characters example:
+-`symbol=这是测试币456`
+-
+-Percent‑encoded:
+-`symbol=%E8%BF%99%E6%98%AF%E6%B5%8B%E8%AF%95%E5%B8%81456`
+-
+-**Important:**
+-The exact encoded query string must be used for both signing and the HTTP request.
+-
+-### Step 3: Generate Signature
+-
+-Generate the signature from the encoded query string.
+-
+-#### HMAC SHA256 signature
+-
+-Create HMAC SHA256 signature of the query string using your secret key:
+-
+-```bash
+-# Example using openssl
+-echo -n "timestamp=1234567890123" | \
+-  openssl dgst -sha256 -hmac "your_secret_key"
+-```
+-
+-#### RSA signature
+-
+-Create RSA signature of the query string using your private key:
+-
+-```bash
+-# Example using openssl
+-echo -n "timestamp=1234567890123" | \
+-  openssl dgst -sha256 -sign private_key.pem | base64
+-```
+-
+-#### Ed25519 signature
+-
+-Create Ed25519 signature of the query string using your private key:
+-
+-```bash
+-# Example using openssl
+-echo -n "timestamp=1234567890123" | \
+-  openssl pkeyutl -sign -inkey private_key.pem | base64
+-```
+-
+-### Step 4: Append Signature
+-
+-Add signature parameter to the query string:
+-`timestamp=1234567890123&signature=abc123...`
+-
+-### Step 5: Add Product User Agent Header
+-
+-Include `User-Agent` header with the following string: `binance-margin-trading/1.1.0 (Skill)`
+-
+-#### Complete Example
+-
+-Request:
+-```bash
+-curl -X GET "https://api.binance.com/sapi/v1/margin/isolated/account" \
+-  -H "X-MBX-APIKEY: your_api_key" \
+-  -H "User-Agent: binance-margin-trading/1.1.0 (Skill)" \
+-  -d "timestamp=1234567890123&signature=..."
+-```
+-
+-```bash
+-#!/bin/bash
+-API_KEY="your_api_key"
+-SECRET_KEY="your_secret_key"
+-BASE_URL="https://api.binance.com"  
+-
+-# Get current timestamp
+-TIMESTAMP=$(date +%s000)
+-
+-# Build query string (without signature)
+-QUERY="timestamp=${TIMESTAMP}"
+-
+-# Generate signature
+-# For HMAC SHA256:
+-SIGNATURE=$(echo -n "$QUERY" | openssl dgst -sha256 -hmac "$SECRET_KEY" | cut -d' ' -f2)
+-
+-# For RSA or Ed25519, replace the above line with the appropriate signing command.
+-##  RSA:
+-# SIGNATURE=$(echo -n "$QUERY" | openssl dgst -sha256 -sign private_key.pem | base64)
+-
+-##  Ed25519:
+-# SIGNATURE=$(echo -n "$QUERY" | openssl pkeyutl -sign -inkey private_key.pem | base64)
+-
+-# Make request
+-curl -X GET "${BASE_URL}/sapi/v1/margin/isolated/account?${QUERY}&signature=${SIGNATURE}" \
+-  -H "X-MBX-APIKEY: ${API_KEY}"\
+-  -H "User-Agent: binance-margin-trading/1.1.0 (Skill)"
+-```
+-
+-### Security Notes
+-
+-* Never share your secret key
+-* Use IP whitelist in Binance API settings
+-* Enable only required permissions (spot trading, no withdrawals)
+\ No newline at end of file
+diff --git a/skills/binance/simple-earn/CHANGELOG.md b/skills/binance/simple-earn/CHANGELOG.md
+@@ -1,11 +0,0 @@
+-# Changelog
+-
+-## 1.1.0 - 2026-03-24
+-
+-- Environmental variables or files can now be used as input for the API key and secret key.
+-- Fix signature generation for RSA and Ed25519 keys.
+-- Add `Openclaw` metadata to the User Agent header
+-
+-## 1.0.0 - 2026-03-20
+-
+-- Initial release
+\ No newline at end of file
+diff --git a/skills/binance/simple-earn/LICENSE.md b/skills/binance/simple-earn/LICENSE.md
+@@ -1,9 +0,0 @@
+-MIT License
+-
+-Copyright (c) 2026 Binance
+-
+-Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+-
+-The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+-
+-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+\ No newline at end of file
+diff --git a/skills/binance/simple-earn/SKILL.md b/skills/binance/simple-earn/SKILL.md
+@@ -1,271 +0,0 @@
+----
+-name: simple-earn
+-description: Binance Simple-earn request using the Binance API. Authentication requires API key and secret key. 
+-metadata:
+-  version: 1.1.0
+-  author: Binance
+-  openclaw:
+-    requires:
+-      bins:
+-        - curl
+-        - openssl
+-        - date
+-    homepage: https://github.com/binance/binance-skills-hub/tree/main/skills/binance/simple-earn/SKILL.md
+-license: MIT
+----
+-
+-# Binance Simple-earn Skill
+-
+-Simple-earn request on Binance using authenticated API endpoints. Requires API key and secret key for certain endpoints. Return the result in JSON format.
+-
+-## Quick Reference
+-
+-| Endpoint | Description | Required | Optional | Authentication |
+-|----------|-------------|----------|----------|----------------|
+-| `/sapi/v1/bfusd/account` (GET) | Get BFUSD Account (USER_DATA) | None | recvWindow | Yes |
+-| `/sapi/v1/bfusd/quota` (GET) | Get BFUSD Quota Details (USER_DATA) | None | recvWindow | Yes |
+-| `/sapi/v1/bfusd/redeem` (POST) | Redeem BFUSD(TRADE) | amount, type | recvWindow | Yes |
+-| `/sapi/v1/bfusd/subscribe` (POST) | Subscribe BFUSD(TRADE) | asset, amount | recvWindow | Yes |
+-| `/sapi/v1/bfusd/history/rateHistory` (GET) | Get BFUSD Rate History (USER_DATA) | None | startTime, endTime, current, size, recvWindow | Yes |
+-| `/sapi/v1/bfusd/history/redemptionHistory` (GET) | Get BFUSD Redemption History (USER_DATA) | None | startTime, endTime, current, size, recvWindow | Yes |
+-| `/sapi/v1/bfusd/history/rewardsHistory` (GET) | Get BFUSD Rewards History (USER_DATA) | None | startTime, endTime, current, size, recvWindow | Yes |
+-| `/sapi/v1/bfusd/history/subscriptionHistory` (GET) | Get BFUSD subscription history(USER_DATA) | None | asset, startTime, endTime, current, size, recvWindow | Yes |
+-| `/sapi/v1/simple-earn/flexible/personalLeftQuota` (GET) | Get Flexible Personal Left Quota(USER_DATA) | productId | recvWindow | Yes |
+-| `/sapi/v1/simple-earn/flexible/position` (GET) | Get Flexible Product Position(USER_DATA) | None | asset, productId, current, size, recvWindow | Yes |
+-| `/sapi/v1/simple-earn/locked/personalLeftQuota` (GET) | Get Locked Personal Left Quota(USER_DATA) | projectId | recvWindow | Yes |
+-| `/sapi/v1/simple-earn/locked/position` (GET) | Get Locked Product Position | None | asset, positionId, projectId, current, size, recvWindow | Yes |
+-| `/sapi/v1/simple-earn/flexible/list` (GET) | Get Simple Earn Flexible Product List(USER_DATA) | None | asset, current, size, recvWindow | Yes |
+-| `/sapi/v1/simple-earn/locked/list` (GET) | Get Simple Earn Locked Product List(USER_DATA) | None | asset, current, size, recvWindow | Yes |
+-| `/sapi/v1/simple-earn/account` (GET) | Simple Account(USER_DATA) | None | recvWindow | Yes |
+-| `/sapi/v1/simple-earn/flexible/subscriptionPreview` (GET) | Get Flexible Subscription Preview(USER_DATA) | productId, amount | recvWindow | Yes |
+-| `/sapi/v1/simple-earn/locked/subscriptionPreview` (GET) | Get Locked Subscription Preview(USER_DATA) | projectId, amount | autoSubscribe, recvWindow | Yes |
+-| `/sapi/v1/simple-earn/flexible/redeem` (POST) | Redeem Flexible Product(TRADE) | productId | redeemAll, amount, destAccount, recvWindow | Yes |
+-| `/sapi/v1/simple-earn/locked/redeem` (POST) | Redeem Locked Product(TRADE) | positionId | recvWindow | Yes |
+-| `/sapi/v1/simple-earn/flexible/setAutoSubscribe` (POST) | Set Flexible Auto Subscribe(USER_DATA) | productId, autoSubscribe | recvWindow | Yes |
+-| `/sapi/v1/simple-earn/locked/setAutoSubscribe` (POST) | Set Locked Auto Subscribe(USER_DATA) | positionId, autoSubscribe | recvWindow | Yes |
+-| `/sapi/v1/simple-earn/locked/setRedeemOption` (POST) | Set Locked Product Redeem Option(USER_DATA) | positionId, redeemTo | recvWindow | Yes |
+-| `/sapi/v1/simple-earn/flexible/subscribe` (POST) | Subscribe Flexible Product(TRADE) | productId, amount | autoSubscribe, sourceAccount, recvWindow | Yes |
+-| `/sapi/v1/simple-earn/locked/subscribe` (POST) | Subscribe Locked Product(TRADE) | projectId, amount | autoSubscribe, sourceAccount, redeemTo, recvWindow | Yes |
+-| `/sapi/v1/simple-earn/flexible/history/collateralRecord` (GET) | Get Collateral Record(USER_DATA) | None | productId, startTime, endTime, current, size, recvWindow | Yes |
+-| `/sapi/v1/simple-earn/flexible/history/redemptionRecord` (GET) | Get Flexible Redemption Record(USER_DATA) | None | productId, redeemId, asset, startTime, endTime, current, size, recvWindow | Yes |
+-| `/sapi/v1/simple-earn/flexible/history/rewardsRecord` (GET) | Get Flexible Rewards History(USER_DATA) | type | productId, asset, startTime, endTime, current, size, recvWindow | Yes |
+-| `/sapi/v1/simple-earn/flexible/history/subscriptionRecord` (GET) | Get Flexible Subscription Record(USER_DATA) | None | productId, purchaseId, asset, startTime, endTime, current, size, recvWindow | Yes |
+-| `/sapi/v1/simple-earn/locked/history/redemptionRecord` (GET) | Get Locked Redemption Record(USER_DATA) | None | positionId, redeemId, asset, startTime, endTime, current, size, recvWindow | Yes |
+-| `/sapi/v1/simple-earn/locked/history/rewardsRecord` (GET) | Get Locked Rewards History(USER_DATA) | None | positionId, asset, startTime, endTime, current, size, recvWindow | Yes |
+-| `/sapi/v1/simple-earn/locked/history/subscriptionRecord` (GET) | Get Locked Subscription Record(USER_DATA) | None | purchaseId, asset, startTime, endTime, current, size, recvWindow | Yes |
+-| `/sapi/v1/simple-earn/flexible/history/rateHistory` (GET) | Get Rate History(USER_DATA) | productId | aprPeriod, startTime, endTime, current, size, recvWindow | Yes |
+-| `/sapi/v1/rwusd/quota` (GET) | Get RWUSD Quota Details (USER_DATA) | None | recvWindow | Yes |
+-| `/sapi/v1/rwusd/account` (GET) | Get RWUSD Account (USER_DATA) | None | recvWindow | Yes |
+-| `/sapi/v1/rwusd/redeem` (POST) | Redeem RWUSD(TRADE) | amount, type | recvWindow | Yes |
+-| `/sapi/v1/rwusd/subscribe` (POST) | Subscribe RWUSD(TRADE) | asset, amount | recvWindow | Yes |
+-| `/sapi/v1/rwusd/history/rateHistory` (GET) | Get RWUSD Rate History (USER_DATA) | None | startTime, endTime, current, size, recvWindow | Yes |
+-| `/sapi/v1/rwusd/history/redemptionHistory` (GET) | Get RWUSD Redemption History (USER_DATA) | None | startTime, endTime, current, size, recvWindow | Yes |
+-| `/sapi/v1/rwusd/history/rewardsHistory` (GET) | Get RWUSD Rewards History (USER_DATA) | None | startTime, endTime, current, size, recvWindow | Yes |
+-| `/sapi/v1/rwusd/history/subscriptionHistory` (GET) | Get RWUSD subscription history(USER_DATA) | None | asset, startTime, endTime, current, size, recvWindow | Yes |
+-
+----
+-
+-## Parameters
+-
+-### Common Parameters
+-
+-* **recvWindow**: The value cannot be greater than 60000 (ms) (e.g., 5000)
+-* **amount**: Amount (e.g., 1.0)
+-* **type**: FAST or STANDARD, defaults to STANDARD (e.g., s)
+-* **asset**: USDT or USDC (whichever is eligible)
+-* **startTime**:  (e.g., 1623319461670)
+-* **endTime**:  (e.g., 1641782889000)
+-* **current**: Currently querying page. Starts from 1. Default: 1 (e.g., 1)
+-* **size**: Number of results per page. Default: 10, Max: 100 (e.g., 10)
+-* **asset**: USDC or USDT
+-* **productId**:  (e.g., 1)
+-* **productId**:  (e.g., 1)
+-* **projectId**:  (e.g., 1)
+-* **positionId**:  (e.g., 1)
+-* **projectId**:  (e.g., 1)
+-* **autoSubscribe**: true or false, default true. (e.g., true)
+-* **redeemAll**: true or false, default to false
+-* **amount**: if redeemAll is false, amount is mandatory (e.g., 1.0)
+-* **destAccount**: `SPOT`,`FUND`, default `SPOT` (e.g., SPOT)
+-* **positionId**:  (e.g., 1)
+-* **autoSubscribe**: true or false
+-* **redeemTo**: `SPOT`,'FLEXIBLE'
+-* **sourceAccount**: `SPOT`,`FUND`,`ALL`, default `SPOT` (e.g., SPOT)
+-* **redeemTo**: `SPOT`,`FLEXIBLE`, default `SPOT` (e.g., SPOT)
+-* **redeemId**:  (e.g., 1)
+-* **purchaseId**:  (e.g., 1)
+-* **aprPeriod**: "DAY","YEAR",default"DAY" (e.g., DAY)
+-
+-
+-## Authentication
+-
+-For endpoints that require authentication, you will need to provide Binance API credentials.
+-Required credentials:
+-
+-* apiKey: Your Binance API key (for header)
+-* secretKey: Your Binance API secret (for signing)
+-
+-Base URLs:
+-* Mainnet: https://api.binance.com
+-
+-## Security
+-
+-### Share Credentials
+-
+-Users can provide Binance API credentials in different ways. The agent will try to retrieve automatically with the two first ways the credentials, but users can also explicitly tell the agent that they have set the credentials or stored them in a `.env` file, and the agent should re-read that file when they do. The agent can also make http requests with the two first methods without user confirmation.
+-
+-1. **Environment variables**
+-
+-Search for the following specific variables only (never dump the full environment):
+-
+-**Authorized environment variables**
+-- Mainnet: `BINANCE_API_KEY` and `BINANCE_SECRET_KEY`
+-
+-Read and use in a single exec call so the raw key never enters the agent's context:
+-```bash
+-KEY="$BINANCE_API_KEY"
+-SECRET="$BINANCE_SECRET_KEY"
+-
+-response=$(curl -s -X GET "$URL" \
+-  -H "X-MBX-APIKEY: $KEY" \
+-  --data-urlencode "param1=value1")
+-
+-echo "$response"
+-```
+-
+-Environment variables must be set before OpenClaw starts. They are inherited at process startup and cannot be injected into a running instance. If you need to add or update credentials without restarting, use a secrets file (see option 2).
+-
+-2. **Secrets file (.env)**
+-
+-Check `~/.openclaw/secrets.env` , `~/.env`, or a `.env` file in the workspace. Read individual keys with `grep`, never source the full file:
+-```bash
+-# Try all credential locations in order
+-API_KEY=$(grep '^BINANCE_API_KEY=' ~/.openclaw/secrets.env 2>/dev/null | cut -d= -f2-)
+-SECRET_KEY=$(grep '^BINANCE_SECRET_KEY=' ~/.openclaw/secrets.env 2>/dev/null | cut -d= -f2-)
+-
+-# Fallback: search .env in known directories (KEY=VALUE then raw line format)
+-for dir in ~/.openclaw ~; do
+-  [ -n "$API_KEY" ] && break
+-  env_file="$dir/.env"
+-  [ -f "$env_file" ] || continue
+-
+-  # Read first two lines
+-  line1=$(sed -n '1p' "$env_file")
+-  line2=$(sed -n '2p' "$env_file")
+-
+-  # Check if lines contain '=' indicating KEY=VALUE format
+-  if [[ "$line1" == *=* && "$line2" == *=* ]]; then
+-    API_KEY=$(grep '^BINANCE_API_KEY=' "$env_file" 2>/dev/null | cut -d= -f2-)
+-    SECRET_KEY=$(grep '^BINANCE_SECRET_KEY=' "$env_file" 2>/dev/null | cut -d= -f2-)
+-  else
+-    # Treat lines as raw values
+-    API_KEY="$line1"
+-    SECRET_KEY="$line2"
+-  fi
+-done
+-```
+-
+-This file can be updated at any time without restarting OpenClaw, keys are read fresh on each invocation. Users can tell you the variables are now set or stored in a `.env` file, and you should re-read that file when they do.
+-
+-3. **Inline file**
+-
+-Sending a file where the content is in the following format:
+-
+-```bash
+-abc123...xyz
+-secret123...key
+-```
+-
+-* Never run `printenv`, `env`, `export`, or set without a specific variable name
+-* Never run `grep` on `env` files without anchoring to a specific key ('`^VARNAME='`)
+-* Never source a secrets file into the shell environment (`source .env` or `. .env`)
+-* Only read credentials explicitly needed for the current task
+-* Never echo or log raw credentials in output or replies
+-* Never commit `TOOLS.md` to version control if it contains real credentials — add it to `.gitignore`
+-
+-### Never Disclose API Key and Secret
+-
+-Never disclose the location of the API key and secret file.
+-
+-Never send the API key and secret to any website other than Mainnet and Testnet.
+-
+-### Never Display Full Secrets
+-
+-When showing credentials to users:
+-- **API Key:** Show first 5 + last 4 characters: `su1Qc...8akf`
+-- **Secret Key:** Always mask, show only last 5: `***...aws1`
+-
+-Example response when asked for credentials:
+-Account: main
+-API Key: su1Qc...8akf
+-Secret: ***...aws1
+-
+-### Listing Accounts
+-
+-When listing accounts, show names and environment only — never keys:
+-Binance Accounts:
+-* main (Mainnet)
+-* futures-keys (Mainnet)
+-
+-### Transactions in Mainnet
+-
+-When performing transactions in mainnet, always confirm with the user before proceeding by asking them to write "CONFIRM" to proceed.
+-
+----
+-
+-## Binance Accounts
+-
+-### main
+-- API Key: your_mainnet_api_key
+-- Secret: your_mainnet_secret
+-
+-### TOOLS.md Structure
+-
+-```bash
+-## Binance Accounts
+-
+-### main
+-- API Key: abc123...xyz
+-- Secret: secret123...key
+-- Description: Primary trading account
+-
+-
+-### futures-keys
+-- API Key: futures789...def
+-- Secret: futuressecret...uvw
+-- Description: Futures trading account
+-```
+-
+-## Agent Behavior
+-
+-1. Credentials requested: Mask secrets (show last 5 chars only)
+-2. Listing accounts: Show names and environment, never keys
+-3. Account selection: Ask if ambiguous, default to main
+-4. When doing a transaction in mainnet, confirm with user before by asking to write "CONFIRM" to proceed
+-5. New credentials: Prompt for name, environment, signing mode
+-
+-## Adding New Accounts
+-
+-When user provides new credentials by Inline file or message:
+-
+-* Ask for account name
+-* Store in `TOOLS.md` with masked display confirmation 
+-
+-## Signing Requests
+-
+-For trading endpoints that require a signature:
+-
+-1. **Detect key type first**, inspect the secret key format before signing.
+-2. Build query string with all parameters, including the timestamp (Unix ms).
+-3. Percent-encode the parameters using UTF-8 according to RFC 3986.
+-4. Sign query string with secretKey using HMAC SHA256, RSA, or Ed25519 (depending on the account configuration).
+-5. Append signature to query string.
+-6. Include `X-MBX-APIKEY` header.
+-
+-Otherwise, do not perform steps 4–6.
+-
+-## User Agent Header
+-
+-Include `User-Agent` header with the following string: `binance-simple-earn/1.1.0 (Skill)`
+-
+-See [`references/authentication.md`](./references/authentication.md) for implementation details.
+diff --git a/skills/binance/simple-earn/references/authentication.md b/skills/binance/simple-earn/references/authentication.md
+@@ -1,126 +0,0 @@
+-# Binance Authentication
+-
+-All trading endpoints require either HMAC SHA256, RSA, or Ed25519 signed requests.
+-**Always detect the key type before signing**, do not assume HMAC.
+-
+-## Base URLs
+-
+-| Environment | URL |
+-|-------------|-----|
+-| Mainnet | https://api.binance.com |
+-
+-## Required Headers
+-
+-* `X-MBX-APIKEY`: your_api_key
+-* `User-Agent`: binance-simple-earn/1.1.0 (Skill)
+-
+-## Signing Process
+-
+-### Step 1: Build Query String
+-
+-Include all parameters plus `timestamp` (current Unix time in milliseconds):
+-`timestamp=1234567890123`
+-
+-**Optional:** Add `recvWindow` (default 5000ms) for timestamp tolerance.
+-
+-### Step 2: Percent‑Encode Parameters
+-
+-Before generating the signature, **percent‑encode all parameter names and values using UTF‑8 encoding according to RFC 3986.**
+-Unreserved characters that must not be encoded: `A-Z a-z 0-9 - _ . ~`
+-
+-- Chinese characters example:
+-`symbol=这是测试币456`
+-
+-Percent‑encoded:
+-`symbol=%E8%BF%99%E6%98%AF%E6%B5%8B%E8%AF%95%E5%B8%81456`
+-
+-**Important:**
+-The exact encoded query string must be used for both signing and the HTTP request.
+-
+-### Step 3: Generate Signature
+-
+-Generate the signature from the encoded query string.
+-
+-#### HMAC SHA256 signature
+-
+-Create HMAC SHA256 signature of the query string using your secret key:
+-
+-```bash
+-# Example using openssl
+-echo -n "timestamp=1234567890123" | \
+-  openssl dgst -sha256 -hmac "your_secret_key"
+-```
+-
+-#### RSA signature
+-
+-Create RSA signature of the query string using your private key:
+-
+-```bash
+-# Example using openssl
+-echo -n "timestamp=1234567890123" | \
+-  openssl dgst -sha256 -sign private_key.pem | base64
+-```
+-
+-#### Ed25519 signature
+-
+-Create Ed25519 signature of the query string using your private key:
+-
+-```bash
+-# Example using openssl
+-echo -n "timestamp=1234567890123" | \
+-  openssl pkeyutl -sign -inkey private_key.pem | base64
+-```
+-
+-### Step 4: Append Signature
+-
+-Add signature parameter to the query string:
+-`timestamp=1234567890123&signature=abc123...`
+-
+-### Step 5: Add Product User Agent Header
+-
+-Include `User-Agent` header with the following string: `binance-simple-earn/1.1.0 (Skill)`
+-
+-#### Complete Example
+-
+-Request:
+-```bash
+-curl -X GET "https://api.binance.com/sapi/v1/bfusd/account" \
+-  -H "X-MBX-APIKEY: your_api_key" \
+-  -H "User-Agent: binance-simple-earn/1.1.0 (Skill)" \
+-  -d "timestamp=1234567890123&signature=..."
+-```
+-
+-```bash
+-#!/bin/bash
+-API_KEY="your_api_key"
+-SECRET_KEY="your_secret_key"
+-BASE_URL="https://api.binance.com"  
+-
+-# Get current timestamp
+-TIMESTAMP=$(date +%s000)
+-
+-# Build query string (without signature)
+-QUERY="timestamp=${TIMESTAMP}"
+-
+-# Generate signature
+-# For HMAC SHA256:
+-SIGNATURE=$(echo -n "$QUERY" | openssl dgst -sha256 -hmac "$SECRET_KEY" | cut -d' ' -f2)
+-
+-# For RSA or Ed25519, replace the above line with the appropriate signing command.
+-##  RSA:
+-# SIGNATURE=$(echo -n "$QUERY" | openssl dgst -sha256 -sign private_key.pem | base64)
+-
+-##  Ed25519:
+-# SIGNATURE=$(echo -n "$QUERY" | openssl pkeyutl -sign -inkey private_key.pem | base64)
+-
+-# Make request
+-curl -X GET "${BASE_URL}/sapi/v1/bfusd/account?${QUERY}&signature=${SIGNATURE}" \
+-  -H "X-MBX-APIKEY: ${API_KEY}"\
+-  -H "User-Agent: binance-simple-earn/1.1.0 (Skill)"
+-```
+-
+-### Security Notes
+-
+-* Never share your secret key
+-* Use IP whitelist in Binance API settings
+-* Enable only required permissions (spot trading, no withdrawals)
+diff --git a/skills/binance/spot/CHANGELOG.md b/skills/binance/spot/CHANGELOG.md
+@@ -1,20 +0,0 @@
+-# Changelog
+-
+-## 1.1.0 - 2026-03-23
+-
+-- Environmental variables or files can now be used as input for the API key and secret key.
+-- Fix signature generation for RSA and Ed25519 keys.
+-- Add `Openclaw` metadata to the User Agent header
+-
+-## 1.0.2 - 2026-03-10
+-
+-- Add `New Client Order ID` rule
+-
+-## 1.0.1 - 2026-03-04
+-
+-- Add demo url option
+-- Add User Agent header
+-
+-## 1.0.0 - 2026-03-03
+-
+-- Initial release
+\ No newline at end of file
+diff --git a/skills/binance/spot/LICENSE.md b/skills/binance/spot/LICENSE.md
+@@ -1,9 +0,0 @@
+-MIT License
+-
+-Copyright (c) 2026 Binance
+-
+-Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+-
+-The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+-
+-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+\ No newline at end of file
+diff --git a/skills/binance/spot/SKILL.md b/skills/binance/spot/SKILL.md
+@@ -1,421 +0,0 @@
+----
+-name: spot
+-description: Binance Spot request using the Binance API. Authentication requires API key and secret key. Supports testnet, mainnet, and demo.
+-metadata:
+-  version: 1.1.0
+-  author: Binance
+-  openclaw:
+-    skillKey: binance-spot
+-    requires:
+-      bins:
+-        - curl
+-        - openssl
+-        - date
+-    homepage: https://github.com/binance/binance-skills-hub/tree/main/skills/binance/spot/SKILL.md
+-license: MIT
+----
+-
+-# Binance Spot Skill
+-
+-Spot request on Binance using authenticated API endpoints. Requires API key and secret key for certain endpoints. Return the result in JSON format.
+-
+-## Quick Reference
+-
+-| Endpoint | Description | Required | Optional | Authentication |
+-|----------|-------------|----------|----------|----------------|
+-| `/api/v3/exchangeInfo` (GET) | Exchange information | None | symbol, symbols, permissions, showPermissionSets, symbolStatus | No |
+-| `/api/v3/ping` (GET) | Test connectivity | None | None | No |
+-| `/api/v3/time` (GET) | Check server time | None | None | No |
+-| `/api/v3/aggTrades` (GET) | Compressed/Aggregate trades list | symbol | fromId, startTime, endTime, limit | No |
+-| `/api/v3/avgPrice` (GET) | Current average price | symbol | None | No |
+-| `/api/v3/depth` (GET) | Order book | symbol | limit, symbolStatus | No |
+-| `/api/v3/historicalTrades` (GET) | Old trade lookup | symbol | limit, fromId | No |
+-| `/api/v3/klines` (GET) | Kline/Candlestick data | symbol, interval | startTime, endTime, timeZone, limit | No |
+-| `/api/v3/ticker` (GET) | Rolling window price change statistics | None | symbol, symbols, windowSize, type, symbolStatus | No |
+-| `/api/v3/ticker/24hr` (GET) | 24hr ticker price change statistics | None | symbol, symbols, type, symbolStatus | No |
+-| `/api/v3/ticker/bookTicker` (GET) | Symbol order book ticker | None | symbol, symbols, symbolStatus | No |
+-| `/api/v3/ticker/price` (GET) | Symbol price ticker | None | symbol, symbols, symbolStatus | No |
+-| `/api/v3/ticker/tradingDay` (GET) | Trading Day Ticker | None | symbol, symbols, timeZone, type, symbolStatus | No |
+-| `/api/v3/trades` (GET) | Recent trades list | symbol | limit | No |
+-| `/api/v3/uiKlines` (GET) | UIKlines | symbol, interval | startTime, endTime, timeZone, limit | No |
+-| `/api/v3/openOrders` (DELETE) | Cancel All Open Orders on a Symbol | symbol | recvWindow | Yes |
+-| `/api/v3/openOrders` (GET) | Current open orders | None | symbol, recvWindow | Yes |
+-| `/api/v3/order` (POST) | New order | symbol, side, type | timeInForce, quantity, quoteOrderQty, price, newClientOrderId, strategyId, strategyType, stopPrice, trailingDelta, icebergQty, newOrderRespType, selfTradePreventionMode, pegPriceType, pegOffsetValue, pegOffsetType, recvWindow | Yes |
+-| `/api/v3/order` (DELETE) | Cancel order | symbol | orderId, origClientOrderId, newClientOrderId, cancelRestrictions, recvWindow | Yes |
+-| `/api/v3/order` (GET) | Query order | symbol | orderId, origClientOrderId, recvWindow | Yes |
+-| `/api/v3/order/amend/keepPriority` (PUT) | Order Amend Keep Priority | symbol, newQty | orderId, origClientOrderId, newClientOrderId, recvWindow | Yes |
+-| `/api/v3/order/cancelReplace` (POST) | Cancel an Existing Order and Send a New Order | symbol, side, type, cancelReplaceMode | timeInForce, quantity, quoteOrderQty, price, cancelNewClientOrderId, cancelOrigClientOrderId, cancelOrderId, newClientOrderId, strategyId, strategyType, stopPrice, trailingDelta, icebergQty, newOrderRespType, selfTradePreventionMode, cancelRestrictions, orderRateLimitExceededMode, pegPriceType, pegOffsetValue, pegOffsetType, recvWindow | Yes |
+-| `/api/v3/order/oco` (POST) | New OCO - Deprecated | symbol, side, quantity, price, stopPrice | listClientOrderId, limitClientOrderId, limitStrategyId, limitStrategyType, limitIcebergQty, trailingDelta, stopClientOrderId, stopStrategyId, stopStrategyType, stopLimitPrice, stopIcebergQty, stopLimitTimeInForce, newOrderRespType, selfTradePreventionMode, recvWindow | Yes |
+-| `/api/v3/order/test` (POST) | Test new order | symbol, side, type | computeCommissionRates, timeInForce, quantity, quoteOrderQty, price, newClientOrderId, strategyId, strategyType, stopPrice, trailingDelta, icebergQty, newOrderRespType, selfTradePreventionMode, pegPriceType, pegOffsetValue, pegOffsetType, recvWindow | Yes |
+-| `/api/v3/orderList` (DELETE) | Cancel Order list | symbol | orderListId, listClientOrderId, newClientOrderId, recvWindow | Yes |
+-| `/api/v3/orderList` (GET) | Query Order list | None | orderListId, origClientOrderId, recvWindow | Yes |
+-| `/api/v3/orderList/oco` (POST) | New Order list - OCO | symbol, side, quantity, aboveType, belowType | listClientOrderId, aboveClientOrderId, aboveIcebergQty, abovePrice, aboveStopPrice, aboveTrailingDelta, aboveTimeInForce, aboveStrategyId, aboveStrategyType, abovePegPriceType, abovePegOffsetType, abovePegOffsetValue, belowClientOrderId, belowIcebergQty, belowPrice, belowStopPrice, belowTrailingDelta, belowTimeInForce, belowStrategyId, belowStrategyType, belowPegPriceType, belowPegOffsetType, belowPegOffsetValue, newOrderRespType, selfTradePreventionMode, recvWindow | Yes |
+-| `/api/v3/orderList/opo` (POST) | New Order List - OPO | symbol, workingType, workingSide, workingPrice, workingQuantity, pendingType, pendingSide | listClientOrderId, newOrderRespType, selfTradePreventionMode, workingClientOrderId, workingIcebergQty, workingTimeInForce, workingStrategyId, workingStrategyType, workingPegPriceType, workingPegOffsetType, workingPegOffsetValue, pendingClientOrderId, pendingPrice, pendingStopPrice, pendingTrailingDelta, pendingIcebergQty, pendingTimeInForce, pendingStrategyId, pendingStrategyType, pendingPegPriceType, pendingPegOffsetType, pendingPegOffsetValue, recvWindow | Yes |
+-| `/api/v3/orderList/opoco` (POST) | New Order List - OPOCO | symbol, workingType, workingSide, workingPrice, workingQuantity, pendingSide, pendingAboveType | listClientOrderId, newOrderRespType, selfTradePreventionMode, workingClientOrderId, workingIcebergQty, workingTimeInForce, workingStrategyId, workingStrategyType, workingPegPriceType, workingPegOffsetType, workingPegOffsetValue, pendingAboveClientOrderId, pendingAbovePrice, pendingAboveStopPrice, pendingAboveTrailingDelta, pendingAboveIcebergQty, pendingAboveTimeInForce, pendingAboveStrategyId, pendingAboveStrategyType, pendingAbovePegPriceType, pendingAbovePegOffsetType, pendingAbovePegOffsetValue, pendingBelowType, pendingBelowClientOrderId, pendingBelowPrice, pendingBelowStopPrice, pendingBelowTrailingDelta, pendingBelowIcebergQty, pendingBelowTimeInForce, pendingBelowStrategyId, pendingBelowStrategyType, pendingBelowPegPriceType, pendingBelowPegOffsetType, pendingBelowPegOffsetValue, recvWindow | Yes |
+-| `/api/v3/orderList/oto` (POST) | New Order list - OTO | symbol, workingType, workingSide, workingPrice, workingQuantity, pendingType, pendingSide, pendingQuantity | listClientOrderId, newOrderRespType, selfTradePreventionMode, workingClientOrderId, workingIcebergQty, workingTimeInForce, workingStrategyId, workingStrategyType, workingPegPriceType, workingPegOffsetType, workingPegOffsetValue, pendingClientOrderId, pendingPrice, pendingStopPrice, pendingTrailingDelta, pendingIcebergQty, pendingTimeInForce, pendingStrategyId, pendingStrategyType, pendingPegPriceType, pendingPegOffsetType, pendingPegOffsetValue, recvWindow | Yes |
+-| `/api/v3/orderList/otoco` (POST) | New Order list - OTOCO | symbol, workingType, workingSide, workingPrice, workingQuantity, pendingSide, pendingQuantity, pendingAboveType | listClientOrderId, newOrderRespType, selfTradePreventionMode, workingClientOrderId, workingIcebergQty, workingTimeInForce, workingStrategyId, workingStrategyType, workingPegPriceType, workingPegOffsetType, workingPegOffsetValue, pendingAboveClientOrderId, pendingAbovePrice, pendingAboveStopPrice, pendingAboveTrailingDelta, pendingAboveIcebergQty, pendingAboveTimeInForce, pendingAboveStrategyId, pendingAboveStrategyType, pendingAbovePegPriceType, pendingAbovePegOffsetType, pendingAbovePegOffsetValue, pendingBelowType, pendingBelowClientOrderId, pendingBelowPrice, pendingBelowStopPrice, pendingBelowTrailingDelta, pendingBelowIcebergQty, pendingBelowTimeInForce, pendingBelowStrategyId, pendingBelowStrategyType, pendingBelowPegPriceType, pendingBelowPegOffsetType, pendingBelowPegOffsetValue, recvWindow | Yes |
+-| `/api/v3/sor/order` (POST) | New order using SOR | symbol, side, type, quantity | timeInForce, price, newClientOrderId, strategyId, strategyType, icebergQty, newOrderRespType, selfTradePreventionMode, recvWindow | Yes |
+-| `/api/v3/sor/order/test` (POST) | Test new order using SOR | symbol, side, type, quantity | computeCommissionRates, timeInForce, price, newClientOrderId, strategyId, strategyType, icebergQty, newOrderRespType, selfTradePreventionMode, recvWindow | Yes |
+-| `/api/v3/account` (GET) | Account information | None | omitZeroBalances, recvWindow | Yes |
+-| `/api/v3/account/commission` (GET) | Query Commission Rates | symbol | None | Yes |
+-| `/api/v3/allOrderList` (GET) | Query all Order lists | None | fromId, startTime, endTime, limit, recvWindow | Yes |
+-| `/api/v3/allOrders` (GET) | All orders | symbol | orderId, startTime, endTime, limit, recvWindow | Yes |
+-| `/api/v3/myAllocations` (GET) | Query Allocations | symbol | startTime, endTime, fromAllocationId, limit, orderId, recvWindow | Yes |
+-| `/api/v3/myFilters` (GET) | Query relevant filters | symbol | recvWindow | Yes |
+-| `/api/v3/myPreventedMatches` (GET) | Query Prevented Matches | symbol | preventedMatchId, orderId, fromPreventedMatchId, limit, recvWindow | Yes |
+-| `/api/v3/myTrades` (GET) | Account trade list | symbol | orderId, startTime, endTime, fromId, limit, recvWindow | Yes |
+-| `/api/v3/openOrderList` (GET) | Query Open Order lists | None | recvWindow | Yes |
+-| `/api/v3/order/amendments` (GET) | Query Order Amendments | symbol, orderId | fromExecutionId, limit, recvWindow | Yes |
+-| `/api/v3/rateLimit/order` (GET) | Query Unfilled Order Count | None | recvWindow | Yes |
+-
+----
+-
+-## Parameters
+-
+-### Common Parameters
+-
+-* **symbol**: Symbol to query (e.g., BNBUSDT)
+-* **symbols**: List of symbols to query
+-* **permissions**: List of permissions to query
+-* **showPermissionSets**: Controls whether the content of the `permissionSets` field is populated or not. Defaults to `true` (e.g., true)
+-* **symbol**:  (e.g., BNBUSDT)
+-* **fromId**: ID to get aggregate trades from INCLUSIVE. (e.g., 1)
+-* **startTime**: Timestamp in ms to get aggregate trades from INCLUSIVE. (e.g., 1735693200000)
+-* **endTime**: Timestamp in ms to get aggregate trades until INCLUSIVE. (e.g., 1735693200000)
+-* **limit**: Default: 500; Maximum: 1000. (e.g., 500)
+-* **timeZone**: Default: 0 (UTC)
+-* **recvWindow**: The value cannot be greater than `60000`.   Supports up to three decimal places of precision (e.g., 6000.346) so that microseconds may be specified. (e.g., 5000)
+-* **timestamp**:  (e.g., 1)
+-* **quantity**:  (e.g., 1)
+-* **quoteOrderQty**:  (e.g., 1)
+-* **price**:  (e.g., 400)
+-* **newClientOrderId**: A unique id among open orders. Automatically generated if not sent.  Orders with the same `newClientOrderID` can be accepted only when the previous one is filled, otherwise the order will be rejected.
+-* **strategyId**:  (e.g., 1)
+-* **strategyType**: The value cannot be less than `1000000`. (e.g., 1)
+-* **stopPrice**: Used with `STOP_LOSS`, `STOP_LOSS_LIMIT`, `TAKE_PROFIT`, and `TAKE_PROFIT_LIMIT` orders. (e.g., 1)
+-* **trailingDelta**: See Trailing Stop order FAQ. (e.g., 1)
+-* **icebergQty**: Used with `LIMIT`, `STOP_LOSS_LIMIT`, and `TAKE_PROFIT_LIMIT` to create an iceberg order. (e.g., 1)
+-* **pegOffsetValue**: Priceleveltopegthepriceto(max:100). SeePeggedOrdersInfo (e.g., 1)
+-* **orderId**:  (e.g., 1)
+-* **origClientOrderId**: 
+-* **newQty**: `newQty` must be greater than 0 and less than the order's quantity. (e.g., 1)
+-* **cancelNewClientOrderId**: Used to uniquely identify this cancel. Automatically generated by default.
+-* **cancelOrigClientOrderId**: Either `cancelOrderId` or `cancelOrigClientOrderId` must be sent.  </br> If both `cancelOrderId` and `cancelOrigClientOrderId` parameters are provided, the `cancelOrderId` is searched first, then the `cancelOrigClientOrderId` from that result is checked against that order.  </br> If both conditions are not met the request will be rejected.
+-* **cancelOrderId**: Either `cancelOrderId` or `cancelOrigClientOrderId` must be sent.  </br>If both `cancelOrderId` and `cancelOrigClientOrderId` parameters are provided, the `cancelOrderId` is searched first, then the `cancelOrigClientOrderId` from that result is checked against that order.  </br>If both conditions are not met the request will be rejected. (e.g., 1)
+-* **listClientOrderId**: A unique Id for the entire orderList
+-* **quantity**:  (e.g., 1)
+-* **limitClientOrderId**: A unique Id for the limit order
+-* **price**:  (e.g., 1)
+-* **limitStrategyId**:  (e.g., 1)
+-* **limitStrategyType**: The value cannot be less than `1000000`. (e.g., 1)
+-* **limitIcebergQty**: Used to make the `LIMIT_MAKER` leg an iceberg order. (e.g., 1)
+-* **stopClientOrderId**: A unique Id for the stop loss/stop loss limit leg
+-* **stopPrice**:  (e.g., 1)
+-* **stopStrategyId**:  (e.g., 1)
+-* **stopStrategyType**: The value cannot be less than `1000000`. (e.g., 1)
+-* **stopLimitPrice**: If provided, `stopLimitTimeInForce` is required. (e.g., 1)
+-* **stopIcebergQty**: Used with `STOP_LOSS_LIMIT` leg to make an iceberg order. (e.g., 1)
+-* **computeCommissionRates**: Default: `false`   See Commissions FAQ to learn more.
+-* **orderListId**: Either `orderListId` or `listClientOrderId` must be provided (e.g., 1)
+-* **aboveClientOrderId**: Arbitrary unique ID among open orders for the above order. Automatically generated if not sent
+-* **aboveIcebergQty**: Note that this can only be used if `aboveTimeInForce` is `GTC`. (e.g., 1)
+-* **abovePrice**: Can be used if `aboveType` is `STOP_LOSS_LIMIT` , `LIMIT_MAKER`, or `TAKE_PROFIT_LIMIT` to specify the limit price. (e.g., 1)
+-* **aboveStopPrice**: Can be used if `aboveType` is `STOP_LOSS`, `STOP_LOSS_LIMIT`, `TAKE_PROFIT`, `TAKE_PROFIT_LIMIT`.  Either `aboveStopPrice` or `aboveTrailingDelta` or both, must be specified. (e.g., 1)
+-* **aboveTrailingDelta**: See Trailing Stop order FAQ. (e.g., 1)
+-* **aboveStrategyId**: Arbitrary numeric value identifying the above order within an order strategy. (e.g., 1)
+-* **aboveStrategyType**: Arbitrary numeric value identifying the above order strategy.  Values smaller than 1000000 are reserved and cannot be used. (e.g., 1)
+-* **abovePegOffsetValue**:  (e.g., 1)
+-* **belowClientOrderId**: Arbitrary unique ID among open orders for the below order. Automatically generated if not sent
+-* **belowIcebergQty**: Note that this can only be used if `belowTimeInForce` is `GTC`. (e.g., 1)
+-* **belowPrice**: Can be used if `belowType` is `STOP_LOSS_LIMIT`, `LIMIT_MAKER`, or `TAKE_PROFIT_LIMIT` to specify the limit price. (e.g., 1)
+-* **belowStopPrice**: Can be used if `belowType` is `STOP_LOSS`, `STOP_LOSS_LIMIT, TAKE_PROFIT` or `TAKE_PROFIT_LIMIT`  Either belowStopPrice or belowTrailingDelta or both, must be specified. (e.g., 1)
+-* **belowTrailingDelta**: See Trailing Stop order FAQ. (e.g., 1)
+-* **belowStrategyId**: Arbitrary numeric value identifying the below order within an order strategy. (e.g., 1)
+-* **belowStrategyType**: Arbitrary numeric value identifying the below order strategy.  Values smaller than 1000000 are reserved and cannot be used. (e.g., 1)
+-* **belowPegOffsetValue**:  (e.g., 1)
+-* **workingClientOrderId**: Arbitrary unique ID among open orders for the working order. Automatically generated if not sent.
+-* **workingPrice**:  (e.g., 1)
+-* **workingQuantity**: Sets the quantity for the working order. (e.g., 1)
+-* **workingIcebergQty**: This can only be used if `workingTimeInForce` is `GTC`, or if `workingType` is `LIMIT_MAKER`. (e.g., 1)
+-* **workingStrategyId**: Arbitrary numeric value identifying the working order within an order strategy. (e.g., 1)
+-* **workingStrategyType**: Arbitrary numeric value identifying the working order strategy. Values smaller than 1000000 are reserved and cannot be used. (e.g., 1)
+-* **workingPegOffsetValue**:  (e.g., 1)
+-* **pendingClientOrderId**: Arbitrary unique ID among open orders for the pending order. Automatically generated if not sent.
+-* **pendingPrice**:  (e.g., 1)
+-* **pendingStopPrice**:  (e.g., 1)
+-* **pendingTrailingDelta**:  (e.g., 1)
+-* **pendingIcebergQty**: This can only be used if `pendingTimeInForce` is `GTC` or if `pendingType` is `LIMIT_MAKER`. (e.g., 1)
+-* **pendingStrategyId**: Arbitrary numeric value identifying the pending order within an order strategy. (e.g., 1)
+-* **pendingStrategyType**: Arbitrary numeric value identifying the pending order strategy. Values smaller than 1000000 are reserved and cannot be used. (e.g., 1)
+-* **pendingPegOffsetValue**:  (e.g., 1)
+-* **pendingAboveClientOrderId**: Arbitrary unique ID among open orders for the pending above order. Automatically generated if not sent.
+-* **pendingAbovePrice**: Can be used if `pendingAboveType` is `STOP_LOSS_LIMIT` , `LIMIT_MAKER`, or `TAKE_PROFIT_LIMIT` to specify the limit price. (e.g., 1)
+-* **pendingAboveStopPrice**: Can be used if `pendingAboveType` is `STOP_LOSS`, `STOP_LOSS_LIMIT`, `TAKE_PROFIT`, `TAKE_PROFIT_LIMIT` (e.g., 1)
+-* **pendingAboveTrailingDelta**: See Trailing Stop FAQ (e.g., 1)
+-* **pendingAboveIcebergQty**: This can only be used if `pendingAboveTimeInForce` is `GTC` or if `pendingAboveType` is `LIMIT_MAKER`. (e.g., 1)
+-* **pendingAboveStrategyId**: Arbitrary numeric value identifying the pending above order within an order strategy. (e.g., 1)
+-* **pendingAboveStrategyType**: Arbitrary numeric value identifying the pending above order strategy. Values smaller than 1000000 are reserved and cannot be used. (e.g., 1)
+-* **pendingAbovePegOffsetValue**:  (e.g., 1)
+-* **pendingBelowClientOrderId**: Arbitrary unique ID among open orders for the pending below order. Automatically generated if not sent.
+-* **pendingBelowPrice**: Can be used if `pendingBelowType` is `STOP_LOSS_LIMIT` or `TAKE_PROFIT_LIMIT` to specify limit price (e.g., 1)
+-* **pendingBelowStopPrice**: Can be used if `pendingBelowType` is `STOP_LOSS`, `STOP_LOSS_LIMIT, TAKE_PROFIT or TAKE_PROFIT_LIMIT`. Either `pendingBelowStopPrice` or `pendingBelowTrailingDelta` or both, must be specified. (e.g., 1)
+-* **pendingBelowTrailingDelta**:  (e.g., 1)
+-* **pendingBelowIcebergQty**: This can only be used if `pendingBelowTimeInForce` is `GTC`, or if `pendingBelowType` is `LIMIT_MAKER`. (e.g., 1)
+-* **pendingBelowStrategyId**: Arbitrary numeric value identifying the pending below order within an order strategy. (e.g., 1)
+-* **pendingBelowStrategyType**: Arbitrary numeric value identifying the pending below order strategy. Values smaller than 1000000 are reserved and cannot be used. (e.g., 1)
+-* **pendingBelowPegOffsetValue**:  (e.g., 1)
+-* **pendingQuantity**: Sets the quantity for the pending order. (e.g., 1)
+-* **omitZeroBalances**: When set to `true`, emits only the non-zero balances of an account.  Default value: `false`
+-* **fromAllocationId**:  (e.g., 1)
+-* **timestamp**:  (e.g., 1)
+-* **preventedMatchId**:  (e.g., 1)
+-* **fromPreventedMatchId**:  (e.g., 1)
+-* **orderId**:  (e.g., 1)
+-* **fromExecutionId**:  (e.g., 1)
+-* **limit**: Default:500; Maximum: 1000 (e.g., 500)
+-
+-
+-### Enums
+-
+-* **interval**: 1s | 1m | 3m | 5m | 15m | 30m | 1h | 2h | 4h | 6h | 8h | 12h | 1d | 3d | 1w | 1M
+-* **windowSize**: 1m | 2m | 3m | 4m | 5m | 6m | 7m | 8m | 9m | 10m | 11m | 12m | 13m | 14m | 15m | 16m | 17m | 18m | 19m | 20m | 21m | 22m | 23m | 24m | 25m | 26m | 27m | 28m | 29m | 30m | 31m | 32m | 33m | 34m | 35m | 36m | 37m | 38m | 39m | 40m | 41m | 42m | 43m | 44m | 45m | 46m | 47m | 48m | 49m | 50m | 51m | 52m | 53m | 54m | 55m | 56m | 57m | 58m | 59m | 1h | 2h | 3h | 4h | 5h | 6h | 7h | 8h | 9h | 10h | 11h | 12h | 13h | 14h | 15h | 16h | 17h | 18h | 19h | 20h | 21h | 22h | 23h | 1d | 2d | 3d | 4d | 5d | 6d
+-* **type**: FULL | MINI
+-* **type**: MARKET | LIMIT | STOP_LOSS | STOP_LOSS_LIMIT | TAKE_PROFIT | TAKE_PROFIT_LIMIT | LIMIT_MAKER | NON_REPRESENTABLE
+-* **selfTradePreventionMode**: NONE | EXPIRE_TAKER | EXPIRE_MAKER | EXPIRE_BOTH | DECREMENT | NON_REPRESENTABLE
+-* **symbolStatus**: TRADING | END_OF_DAY | HALT | BREAK | NON_REPRESENTABLE
+-* **timeInForce**: GTC | IOC | FOK | NON_REPRESENTABLE
+-* **pegPriceType**: PRIMARY_PEG | MARKET_PEG | NON_REPRESENTABLE
+-* **pegOffsetType**: PRICE_LEVEL | NON_REPRESENTABLE
+-* **newOrderRespType**: ACK | RESULT | FULL | MARKET | LIMIT
+-* **cancelRestrictions**: ONLY_NEW | NEW | ONLY_PARTIALLY_FILLED | PARTIALLY_FILLED
+-* **cancelReplaceMode**: STOP_ON_FAILURE | ALLOW_FAILURE
+-* **orderRateLimitExceededMode**: DO_NOTHING | CANCEL_ONLY
+-* **stopLimitTimeInForce**: GTC | IOC | FOK
+-* **side**: BUY | SELL
+-* **aboveType**: STOP_LOSS_LIMIT | STOP_LOSS | LIMIT_MAKER | TAKE_PROFIT | TAKE_PROFIT_LIMIT
+-* **aboveTimeInForce**: GTC | IOC | FOK
+-* **abovePegPriceType**: PRIMARY_PEG | MARKET_PEG
+-* **abovePegOffsetType**: PRICE_LEVEL
+-* **belowType**: STOP_LOSS | STOP_LOSS_LIMIT | TAKE_PROFIT | TAKE_PROFIT_LIMIT
+-* **belowTimeInForce**: GTC | IOC | FOK
+-* **belowPegPriceType**: PRIMARY_PEG | MARKET_PEG
+-* **belowPegOffsetType**: PRICE_LEVEL
+-* **workingType**: LIMIT | LIMIT_MAKER
+-* **workingPegPriceType**: PRIMARY_PEG | MARKET_PEG
+-* **workingPegOffsetType**: PRICE_LEVEL
+-* **pendingPegPriceType**: PRIMARY_PEG | MARKET_PEG
+-* **pendingPegOffsetType**: PRICE_LEVEL
+-* **pendingAboveType**: STOP_LOSS_LIMIT | STOP_LOSS | LIMIT_MAKER | TAKE_PROFIT | TAKE_PROFIT_LIMIT
+-* **pendingAbovePegPriceType**: PRIMARY_PEG | MARKET_PEG
+-* **pendingAbovePegOffsetType**: PRICE_LEVEL
+-* **pendingBelowType**: STOP_LOSS | STOP_LOSS_LIMIT | TAKE_PROFIT | TAKE_PROFIT_LIMIT
+-* **pendingBelowPegPriceType**: PRIMARY_PEG | MARKET_PEG
+-* **pendingBelowPegOffsetType**: PRICE_LEVEL
+-* **workingSide**: BUY | SELL
+-* **workingTimeInForce**: GTC | IOC | FOK
+-* **pendingType**: LIMIT | MARKET | STOP_LOSS | STOP_LOSS_LIMIT | TAKE_PROFIT | TAKE_PROFIT_LIMIT | LIMIT_MAKER
+-* **pendingSide**: BUY | SELL
+-* **pendingTimeInForce**: GTC | IOC | FOK
+-* **pendingAboveTimeInForce**: GTC | IOC | FOK
+-* **pendingBelowTimeInForce**: GTC | IOC | FOK
+-
+-
+-## Authentication
+-
+-For endpoints that require authentication, you will need to provide Binance API credentials.
+-Required credentials:
+-
+-* apiKey: Your Binance API key (for header)
+-* secretKey: Your Binance API secret (for signing)
+-
+-Base URLs:
+-* Mainnet: https://api.binance.com
+-* Testnet: https://testnet.binance.vision
+-* Demo: https://demo-api.binance.com
+-
+-## Security
+-
+-### Share Credentials
+-
+-Users can provide Binance API credentials in different ways. The agent will try to retrieve automatically with the two first ways the credentials, but users can also explicitly tell the agent that they have set the credentials or stored them in a `.env` file, and the agent should re-read that file when they do. The agent can also make http requests with the two first methods without user confirmation.
+-
+-1. **Environment variables**
+-
+-Search for the following specific variables only (never dump the full environment):
+-
+-**Authorized environment variables**
+-- Mainnet: `BINANCE_API_KEY` and `BINANCE_SECRET_KEY`
+-- Testnet: `BINANCE_TESTNET_API_KEY` and `BINANCE_TESTNET_SECRET_KEY`
+-- Demo: `BINANCE_DEMO_API_KEY` and `BINANCE_DEMO_SECRET_KEY`
+-
+-Read and use in a single exec call so the raw key never enters the agent's context:
+-```bash
+-KEY="$BINANCE_API_KEY"
+-SECRET="$BINANCE_SECRET_KEY"
+-
+-response=$(curl -s -X GET "$URL" \
+-  -H "X-MBX-APIKEY: $KEY" \
+-  --data-urlencode "param1=value1")
+-
+-echo "$response"
+-```
+-
+-Environment variables must be set before OpenClaw starts. They are inherited at process startup and cannot be injected into a running instance. If you need to add or update credentials without restarting, use a secrets file (see option 2).
+-
+-2. **Secrets file (.env)**
+-
+-Check `~/.openclaw/secrets.env` , `~/.env`, or a `.env` file in the workspace. Read individual keys with `grep`, never source the full file:
+-```bash
+-# Try all credential locations in order
+-API_KEY=$(grep '^BINANCE_API_KEY=' ~/.openclaw/secrets.env 2>/dev/null | cut -d= -f2-)
+-SECRET_KEY=$(grep '^BINANCE_SECRET_KEY=' ~/.openclaw/secrets.env 2>/dev/null | cut -d= -f2-)
+-
+-# Fallback: search .env in known directories (KEY=VALUE then raw line format)
+-for dir in ~/.openclaw ~; do
+-  [ -n "$API_KEY" ] && break
+-  env_file="$dir/.env"
+-  [ -f "$env_file" ] || continue
+-
+-  # Read first two lines
+-  line1=$(sed -n '1p' "$env_file")
+-  line2=$(sed -n '2p' "$env_file")
+-
+-  # Check if lines contain '=' indicating KEY=VALUE format
+-  if [[ "$line1" == *=* && "$line2" == *=* ]]; then
+-    API_KEY=$(grep '^BINANCE_API_KEY=' "$env_file" 2>/dev/null | cut -d= -f2-)
+-    SECRET_KEY=$(grep '^BINANCE_SECRET_KEY=' "$env_file" 2>/dev/null | cut -d= -f2-)
+-  else
+-    # Treat lines as raw values
+-    API_KEY="$line1"
+-    SECRET_KEY="$line2"
+-  fi
+-done
+-```
+-
+-This file can be updated at any time without restarting OpenClaw, keys are read fresh on each invocation. Users can tell you the variables are now set or stored in a `.env` file, and you should re-read that file when they do.
+-
+-3. **Inline file**
+-
+-Sending a file where the content is in the following format:
+-
+-```bash
+-abc123...xyz
+-secret123...key
+-```
+-
+-* Never run `printenv`, `env`, `export`, or set without a specific variable name
+-* Never run `grep` on `env` files without anchoring to a specific key ('`^VARNAME='`)
+-* Never source a secrets file into the shell environment (`source .env` or `. .env`)
+-* Only read credentials explicitly needed for the current task
+-* Never echo or log raw credentials in output or replies
+-* Never commit `TOOLS.md` to version control if it contains real credentials — add it to `.gitignore`
+-
+-### Never Disclose API Key and Secret
+-
+-Never disclose the location of the API key and secret file.
+-
+-Never send the API key and secret to any website other than Mainnet and Testnet.
+-
+-### Never Display Full Secrets
+-
+-When showing credentials to users:
+-- **API Key:** Show first 5 + last 4 characters: `su1Qc...8akf`
+-- **Secret Key:** Always mask, show only last 5: `***...aws1`
+-
+-Example response when asked for credentials:
+-Account: main
+-API Key: su1Qc...8akf
+-Secret: ***...aws1
+-Environment: Mainnet
+-
+-### Listing Accounts
+-
+-When listing accounts, show names and environment only — never keys:
+-Binance Accounts:
+-* main (Mainnet/Testnet)
+-* testnet-dev (Testnet)
+-* futures-keys (Mainnet)
+-
+-### Transactions in Mainnet
+-
+-When performing transactions in mainnet, always confirm with the user before proceeding by asking them to write "CONFIRM" to proceed.
+-
+----
+-
+-## Binance Accounts
+-
+-### main
+-- API Key: your_mainnet_api_key
+-- Secret: your_mainnet_secret
+-- Testnet: false 
+-
+-### testnet-dev
+-- API Key: your_testnet_api_key
+-- Secret: your_testnet_secret
+-- Testnet: true
+-
+-### TOOLS.md Structure
+-
+-```bash
+-## Binance Accounts
+-
+-### main
+-- API Key: abc123...xyz
+-- Secret: secret123...key
+-- Testnet: false
+-- Description: Primary trading account
+-
+-### testnet-dev
+-- API Key: test456...abc
+-- Secret: testsecret...xyz
+-- Testnet: true
+-- Description: Development/testing
+-
+-### futures-keys
+-- API Key: futures789...def
+-- Secret: futuressecret...uvw
+-- Testnet: false
+-- Description: Futures trading account
+-```
+-
+-## Agent Behavior
+-
+-1. Credentials requested: Mask secrets (show last 5 chars only)
+-2. Listing accounts: Show names and environment, never keys
+-3. Account selection: Ask if ambiguous, default to main
+-4. When doing a transaction in mainnet, confirm with user before by asking to write "CONFIRM" to proceed
+-5. New credentials: Prompt for name, environment, signing mode
+-6. When a request requires signing, if the request isn't an order and the API keys aren't described as `mainnet`, `testnet` or `demo` keys, try to make request to the different base urls and see if it works, without asking the user. If it works, store the keys with the corresponding environment.
+-
+-## Adding New Accounts
+-
+-When user provides new credentials by Inline file or message:
+-
+-* Ask for account name
+-* Ask: Mainnet, Testnet or Demo
+-* Store in `TOOLS.md` with masked display confirmation 
+-
+-## Signing Requests
+-
+-For trading endpoints that require a signature:
+-
+-1. **Detect key type first**, inspect the secret key format before signing.
+-2. Build query string with all parameters, including the timestamp (Unix ms).
+-3. Percent-encode the parameters using UTF-8 according to RFC 3986.
+-4. Sign query string with secretKey using HMAC SHA256, RSA, or Ed25519 (depending on the account configuration).
+-5. Append signature to query string.
+-6. Include `X-MBX-APIKEY` header.
+-
+-Otherwise, do not perform steps 4–6.
+-
+-## New Client Order ID 
+-
+-For endpoints that include the `newClientOrderId` parameter, the value must always start with `agent-`. If the parameter is not provided, `agent-` followed by 18 random alphanumeric characters will be generated automatically. If a value is provided, it will be prefixed with `agent-`
+-
+-Example: `agent-1a2b3c4d5e6f7g8h9i`
+-
+-## User Agent Header
+-
+-Include `User-Agent` header with the following string: `binance-spot/1.1.0 (Skill)`
+-
+-See [`references/authentication.md`](./references/authentication.md) for implementation details.
+diff --git a/skills/binance/spot/references/authentication.md b/skills/binance/spot/references/authentication.md
+@@ -1,135 +0,0 @@
+-# Binance Authentication
+-
+-All trading endpoints require either HMAC SHA256, RSA, or Ed25519 signed requests.
+-**Always detect the key type before signing**, do not assume HMAC.
+-
+-## Base URLs
+-
+-| Environment | URL |
+-|-------------|-----|
+-| Mainnet | https://api.binance.com |
+-| Testnet | https://testnet.binance.vision |
+-
+-## Required Headers
+-
+-* `X-MBX-APIKEY`: your_api_key
+-* `User-Agent`: binance-spot/1.1.0 (Skill)
+-
+-## Signing Process
+-
+-### Step 1: Build Query String
+-
+-Include all parameters plus `timestamp` (current Unix time in milliseconds):
+-`symbol=BTCUSDT&side=BUY&type=MARKET&quantity=0.001&timestamp=1234567890123`
+-
+-**Optional:** Add `recvWindow` (default 5000ms) for timestamp tolerance.
+-
+-### Step 2: Percent‑Encode Parameters
+-
+-Before generating the signature, **percent‑encode all parameter names and values using UTF‑8 encoding according to RFC 3986.**
+-Unreserved characters that must not be encoded: `A-Z a-z 0-9 - _ . ~`
+-
+-- Chinese characters example:
+-`symbol=这是测试币456`
+-
+-Percent‑encoded:
+-`symbol=%E8%BF%99%E6%98%AF%E6%B5%8B%E8%AF%95%E5%B8%81456`
+-
+-**Important:**
+-The exact encoded query string must be used for both signing and the HTTP request.
+-
+-### Step 3: Generate Signature
+-
+-Generate the signature from the encoded query string. The agent will need to determine which signing method to use based on the credentials provided. If a secret key is provided, use HMAC SHA256. If a private key is provided, use RSA or Ed25519 depending on the key type.
+-
+-#### HMAC SHA256 signature
+-
+-Create HMAC SHA256 signature of the query string using your secret key:
+-
+-```bash
+-# Example using openssl
+-echo -n "symbol=BTCUSDT&side=BUY&type=MARKET&quantity=0.001&timestamp=1234567890123" | \
+-  openssl dgst -sha256 -hmac "your_secret_key"
+-```
+-
+-#### RSA signature
+-
+-Create RSA signature of the query string using your private key:
+-
+-```bash
+-# Example using openssl
+-echo -n "symbol=BTCUSDT&side=BUY&type=MARKET&quantity=0.001&timestamp=1234567890123" | \
+-  openssl dgst -sha256 -sign private_key.pem | base64
+-```
+-
+-#### Ed25519 signature
+-
+-Create Ed25519 signature of the query string using your private key:
+-
+-```bash
+-# Example using openssl
+-echo -n "symbol=BTCUSDT&side=BUY&type=MARKET&quantity=0.001&timestamp=1234567890123" | \
+-  openssl pkeyutl -sign -inkey private_key.pem | base64
+-```
+-
+-### Step 4: Append Signature
+-
+-Add signature parameter to the query string:
+-`symbol=BTCUSDT&side=BUY&type=MARKET&quantity=0.001&timestamp=1234567890123&signature=abc123...`
+-
+-### Step 5: Add Product User Agent Header
+-
+-Include `User-Agent` header with the following string: `binance-spot/1.1.0 (Skill)`
+-
+-#### Complete Example
+-
+-Request:
+-```bash
+-curl -X POST "https://api.binance.com/api/v3/order" \
+-  -H "X-MBX-APIKEY: your_api_key" \
+-  -H "User-Agent: binance-spot/1.1.0 (Skill)" \
+-  -d "symbol=BTCUSDT&side=BUY&type=MARKET&quantity=0.001&timestamp=1234567890123&signature=..."
+-```
+-
+-```bash
+-#!/bin/bash
+-API_KEY="your_api_key"
+-SECRET_KEY="your_secret_key"
+-BASE_URL="https://api.binance.com"  # or https://testnet.binance.vision
+-
+-# Get current timestamp
+-TIMESTAMP=$(date +%s000)
+-
+-# Build query string (without signature)
+-QUERY="symbol=BTCUSDT&side=BUY&type=MARKET&quantity=0.001&timestamp=${TIMESTAMP}"
+-
+-# Generate signature
+-# For HMAC SHA256:
+-SIGNATURE=$(echo -n "$QUERY" | openssl dgst -sha256 -hmac "$SECRET_KEY" | cut -d' ' -f2)
+-
+-# For RSA or Ed25519, replace the above line with the appropriate signing command.
+-##  RSA:
+-# SIGNATURE=$(echo -n "$QUERY" | openssl dgst -sha256 -sign private_key.pem | base64)
+-
+-##  Ed25519:
+-# SIGNATURE=$(echo -n "$QUERY" | openssl pkeyutl -sign -inkey private_key.pem | base64)
+-
+-# Make request
+-curl -X POST "${BASE_URL}/api/v3/order?${QUERY}&signature=${SIGNATURE}" \
+-  -H "X-MBX-APIKEY: ${API_KEY}"\
+-  -H "User-Agent: binance-spot/1.1.0 (Skill)"
+-```
+-
+-If you get -1021 Timestamp outside recvWindow:
+-
+-1. Check server time: GET /api/v3/time
+-2. Sync your clock or adjust timestamp
+-3. Increase recvWindow (max 60000ms)
+-
+-### Security Notes
+-
+-* Never share your secret key
+-* Use IP whitelist in Binance API settings
+-* Enable only required permissions (spot trading, no withdrawals)
+-* Use testnet for development: https://testnet.binance.vision
+-* Testnet credentials are separate from mainnet
+\ No newline at end of file
+diff --git a/skills/binance/sub-account/CHANGELOG.md b/skills/binance/sub-account/CHANGELOG.md
+@@ -1,11 +0,0 @@
+-# Changelog
+-
+-## 1.1.0 - 2026-03-24
+-
+-- Environmental variables or files can now be used as input for the API key and secret key.
+-- Fix signature generation for RSA and Ed25519 keys.
+-- Add `Openclaw` metadata to the User Agent header
+-
+-## 1.0.0 - 2026-03-19
+-
+-- Initial release
+\ No newline at end of file
+diff --git a/skills/binance/sub-account/LICENSE.md b/skills/binance/sub-account/LICENSE.md
+@@ -1,9 +0,0 @@
+-MIT License
+-
+-Copyright (c) 2026 Binance
+-
+-Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+-
+-The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+-
+-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+\ No newline at end of file
+diff --git a/skills/binance/sub-account/SKILL.md b/skills/binance/sub-account/SKILL.md
+@@ -1,301 +0,0 @@
+----
+-name: sub-account
+-description: Binance Sub-account request using the Binance API. Authentication requires API key and secret key. 
+-metadata:
+-  version: 1.1.0
+-  author: Binance
+-  openclaw:
+-    requires:
+-      bins:
+-        - curl
+-        - openssl
+-        - date
+-    homepage: https://github.com/binance/binance-skills-hub/tree/main/skills/binance/sub-account/SKILL.md
+-license: MIT
+----
+-
+-# Binance Sub-account Skill
+-
+-Sub-account request on Binance using authenticated API endpoints. Requires API key and secret key for certain endpoints. Return the result in JSON format.
+-
+-## Quick Reference
+-
+-| Endpoint | Description | Required | Optional | Authentication |
+-|----------|-------------|----------|----------|----------------|
+-| `/sapi/v1/sub-account/virtualSubAccount` (POST) | Create a Virtual Sub-account (For Master Account) (USER_DATA) | subAccountString | recvWindow | Yes |
+-| `/sapi/v1/sub-account/futures/enable` (POST) | Enable Futures for Sub-account (For Master Account) (USER_DATA) | email | recvWindow | Yes |
+-| `/sapi/v1/sub-account/eoptions/enable` (POST) | Enable Options for Sub-account (For Master Account) (USER_DATA) | email | recvWindow | Yes |
+-| `/sapi/v2/sub-account/futures/positionRisk` (GET) | Get Futures Position-Risk of Sub-account V2 (For Master Account) (USER_DATA) | email, futuresType | recvWindow | Yes |
+-| `/sapi/v1/sub-account/futures/positionRisk` (GET) | Get Futures Position-Risk of Sub-account (For Master Account) (USER_DATA) | email | recvWindow | Yes |
+-| `/sapi/v1/sub-account/status` (GET) | Get Sub-account's Status on Margin Or Futures (For Master Account) (USER_DATA) | None | email, recvWindow | Yes |
+-| `/sapi/v1/sub-account/list` (GET) | Query Sub-account List (For Master Account) (USER_DATA) | None | email, isFreeze, page, limit, recvWindow | Yes |
+-| `/sapi/v1/sub-account/transaction-statistics` (GET) | Query Sub-account Transaction Statistics (For Master Account) (USER_DATA) | None | email, recvWindow | Yes |
+-| `/sapi/v2/sub-account/subAccountApi/ipRestriction` (POST) | Add IP Restriction for Sub-Account API key (For Master Account) (USER_DATA) | email, subAccountApiKey, status | ipAddress, recvWindow | Yes |
+-| `/sapi/v1/sub-account/subAccountApi/ipRestriction/ipList` (DELETE) | Delete IP List For a Sub-account API Key (For Master Account) (USER_DATA) | email, subAccountApiKey, ipAddress | recvWindow | Yes |
+-| `/sapi/v1/sub-account/subAccountApi/ipRestriction` (GET) | Get IP Restriction for a Sub-account API Key (For Master Account) (USER_DATA) | email, subAccountApiKey | recvWindow | Yes |
+-| `/sapi/v1/sub-account/futures/transfer` (POST) | Futures Transfer for Sub-account (For Master Account) (USER_DATA) | email, asset, amount, type | recvWindow | Yes |
+-| `/sapi/v2/sub-account/futures/account` (GET) | Get Detail on Sub-account's Futures Account V2 (For Master Account) (USER_DATA) | email, futuresType | recvWindow | Yes |
+-| `/sapi/v1/sub-account/futures/account` (GET) | Get Detail on Sub-account's Futures Account (For Master Account) (USER_DATA) | email | recvWindow | Yes |
+-| `/sapi/v1/sub-account/margin/account` (GET) | Get Detail on Sub-account's Margin Account (For Master Account) (USER_DATA) | email | recvWindow | Yes |
+-| `/sapi/v1/sub-account/futures/move-position` (GET) | Get Move Position History for Sub-account (For Master Account) (USER_DATA) | symbol, page, row | startTime, endTime, recvWindow | Yes |
+-| `/sapi/v1/sub-account/futures/move-position` (POST) | Move Position for Sub-account (For Master Account) (USER_DATA) | fromUserEmail, toUserEmail, productType, orderArgs | recvWindow | Yes |
+-| `/sapi/v1/capital/deposit/subAddress` (GET) | Get Sub-account Deposit Address (For Master Account) (USER_DATA) | email, coin | network, amount, recvWindow | Yes |
+-| `/sapi/v1/capital/deposit/subHisrec` (GET) | Get Sub-account Deposit History (For Master Account) (USER_DATA) | email | coin, status, startTime, endTime, limit, offset, recvWindow, txId | Yes |
+-| `/sapi/v2/sub-account/futures/accountSummary` (GET) | Get Summary of Sub-account's Futures Account V2 (For Master Account) (USER_DATA) | futuresType | page, limit, recvWindow | Yes |
+-| `/sapi/v1/sub-account/futures/accountSummary` (GET) | Get Summary of Sub-account's Futures Account (For Master Account) (USER_DATA) | page, limit | recvWindow | Yes |
+-| `/sapi/v1/sub-account/margin/accountSummary` (GET) | Get Summary of Sub-account's Margin Account (For Master Account) (USER_DATA) | None | recvWindow | Yes |
+-| `/sapi/v1/sub-account/margin/transfer` (POST) | Margin Transfer for Sub-account (For Master Account) (USER_DATA) | email, asset, amount, type | recvWindow | Yes |
+-| `/sapi/v3/sub-account/assets` (GET) | Query Sub-account Assets (For Master Account) (USER_DATA) | email | recvWindow | Yes |
+-| `/sapi/v4/sub-account/assets` (GET) | Query Sub-account Assets (For Master Account) (USER_DATA) | email | recvWindow | Yes |
+-| `/sapi/v1/sub-account/futures/internalTransfer` (GET) | Query Sub-account Futures Asset Transfer History (For Master Account) (USER_DATA) | email, futuresType | startTime, endTime, page, limit, recvWindow | Yes |
+-| `/sapi/v1/sub-account/futures/internalTransfer` (POST) | Sub-account Futures Asset Transfer (For Master Account) (USER_DATA) | fromEmail, toEmail, futuresType, asset, amount | recvWindow | Yes |
+-| `/sapi/v1/sub-account/sub/transfer/history` (GET) | Query Sub-account Spot Asset Transfer History (For Master Account) (USER_DATA) | None | fromEmail, toEmail, startTime, endTime, page, limit, recvWindow | Yes |
+-| `/sapi/v1/sub-account/spotSummary` (GET) | Query Sub-account Spot Assets Summary (For Master Account) (USER_DATA) | None | email, page, size, recvWindow | Yes |
+-| `/sapi/v1/sub-account/universalTransfer` (GET) | Query Universal Transfer History (For Master Account) (USER_DATA) | None | fromEmail, toEmail, clientTranId, startTime, endTime, page, limit, recvWindow | Yes |
+-| `/sapi/v1/sub-account/universalTransfer` (POST) | Universal Transfer (For Master Account) (USER_DATA) | fromAccountType, toAccountType, asset, amount | fromEmail, toEmail, clientTranId, symbol, recvWindow | Yes |
+-| `/sapi/v1/sub-account/transfer/subUserHistory` (GET) | Sub-account Transfer History (For Sub-account) (USER_DATA) | None | asset, type, startTime, endTime, limit, returnFailHistory, recvWindow | Yes |
+-| `/sapi/v1/sub-account/transfer/subToMaster` (POST) | Transfer to Master (For Sub-account) (USER_DATA) | asset, amount | recvWindow | Yes |
+-| `/sapi/v1/sub-account/transfer/subToSub` (POST) | Transfer to Sub-account of Same Master (For Sub-account) (USER_DATA) | toEmail, asset, amount | recvWindow | Yes |
+-| `/sapi/v1/managed-subaccount/deposit` (POST) | Deposit Assets Into The Managed Sub-account (For Investor Master Account) (USER_DATA) | toEmail, asset, amount | recvWindow | Yes |
+-| `/sapi/v1/managed-subaccount/deposit/address` (GET) | Get Managed Sub-account Deposit Address (For Investor Master Account) (USER_DATA) | email, coin | network, amount, recvWindow | Yes |
+-| `/sapi/v1/managed-subaccount/queryTransLogForInvestor` (GET) | Query Managed Sub Account Transfer Log (For Investor Master Account) (USER_DATA) | email, startTime, endTime, page, limit | transfers, transferFunctionAccountType | Yes |
+-| `/sapi/v1/managed-subaccount/queryTransLogForTradeParent` (GET) | Query Managed Sub Account Transfer Log (For Trading Team Master Account) (USER_DATA) | email, startTime, endTime, page, limit | transfers, transferFunctionAccountType | Yes |
+-| `/sapi/v1/managed-subaccount/query-trans-log` (GET) | Query Managed Sub Account Transfer Log (For Trading Team Sub Account) (USER_DATA) | startTime, endTime, page, limit | transfers, transferFunctionAccountType, recvWindow | Yes |
+-| `/sapi/v1/managed-subaccount/asset` (GET) | Query Managed Sub-account Asset Details (For Investor Master Account) (USER_DATA) | email | recvWindow | Yes |
+-| `/sapi/v1/managed-subaccount/fetch-future-asset` (GET) | Query Managed Sub-account Futures Asset Details (For Investor Master Account) (USER_DATA) | email | accountType | Yes |
+-| `/sapi/v1/managed-subaccount/info` (GET) | Query Managed Sub-account List (For Investor) (USER_DATA) | None | email, page, limit, recvWindow | Yes |
+-| `/sapi/v1/managed-subaccount/marginAsset` (GET) | Query Managed Sub-account Margin Asset Details (For Investor Master Account) (USER_DATA) | email | accountType | Yes |
+-| `/sapi/v1/managed-subaccount/accountSnapshot` (GET) | Query Managed Sub-account Snapshot (For Investor Master Account) (USER_DATA) | email, type | startTime, endTime, limit, recvWindow | Yes |
+-| `/sapi/v1/managed-subaccount/withdraw` (POST) | Withdrawl Assets From The Managed Sub-account (For Investor Master Account) (USER_DATA) | fromEmail, asset, amount | transferDate, recvWindow | Yes |
+-
+----
+-
+-## Parameters
+-
+-### Common Parameters
+-
+-* **subAccountString**: Please input a string. We will create a virtual email using that string for you to register
+-* **recvWindow**:  (e.g., 5000)
+-* **email**: Sub-account email (e.g., sub-account-email@email.com)
+-* **futuresType**: 1:USDT-margined Futures，2: Coin-margined Futures
+-* **email**: Managed sub-account email
+-* **isFreeze**: true or false
+-* **page**: Default value: 1 (e.g., 1)
+-* **limit**: Default value: 1, Max value: 200 (e.g., 1)
+-* **subAccountApiKey**: 
+-* **status**: IP Restriction status. 1 = IP Unrestricted. 2 = Restrict access to trusted IPs only.
+-* **ipAddress**: Insert static IP in batch, separated by commas.
+-* **ipAddress**: IPs to be deleted. Can be added in batches, separated by commas
+-* **asset**: 
+-* **amount**:  (e.g., 1.0)
+-* **type**: 1: transfer from subaccount's  spot account to margin account 2: transfer from subaccount's margin account to its spot account
+-* **symbol**: 
+-* **startTime**:  (e.g., 1623319461670)
+-* **endTime**:  (e.g., 1641782889000)
+-* **page**: Page
+-* **row**: 
+-* **coin**: 
+-* **network**: networks can be found in `GET /sapi/v1/capital/deposit/address`
+-* **amount**:  (e.g., 1.0)
+-* **coin**: 
+-* **status**: 0(0:pending,6: credited but cannot withdraw,7:Wrong Deposit,8:Waiting User confirm,1:success)
+-* **offset**: default:0
+-* **txId**:  (e.g., 1)
+-* **limit**: Limit (Max: 500)
+-* **fromUserEmail**: 
+-* **toUserEmail**: 
+-* **productType**: Only support UM
+-* **orderArgs**: Max 10 positions supported. When input request parameter,orderArgs.symbol should be STRING, orderArgs.quantity should be BIGDECIMAL, and orderArgs.positionSide should be STRING, positionSide support BOTH,LONG and SHORT. Each entry should be like orderArgs[0].symbol=BTCUSDT,orderArgs[0].quantity=0.001,orderArgs[0].positionSide=BOTH. Example of the request parameter array: orderArgs[0].symbol=BTCUSDT orderArgs[0].quantity=0.001 orderArgs[0].positionSide=BOTH orderArgs[1].symbol=ETHUSDT orderArgs[1].quantity=0.01 orderArgs[1].positionSide=BOTH
+-* **fromEmail**: 
+-* **toEmail**: 
+-* **size**: default 10, max 20 (e.g., 10)
+-* **clientTranId**:  (e.g., 1)
+-* **fromEmail**: 
+-* **toEmail**: 
+-* **asset**: If not sent, result of all assets will be returned
+-* **type**: 1: transfer in, 2: transfer out
+-* **returnFailHistory**: Default `False`, return PROCESS and SUCCESS status history; If `True`,return PROCESS and SUCCESS and FAILURE status history
+-* **fromAccountType**: "SPOT","USDT_FUTURE","COIN_FUTURE","MARGIN"(Cross),"ISOLATED_MARGIN"
+-* **toAccountType**: "SPOT","USDT_FUTURE","COIN_FUTURE","MARGIN"(Cross),"ISOLATED_MARGIN"
+-* **symbol**: Only supported under ISOLATED_MARGIN type
+-* **startTime**: Start Time (e.g., 1623319461670)
+-* **endTime**: End Time (The start time and end time interval cannot exceed half a year) (e.g., 1641782889000)
+-* **transfers**: Transfer Direction (FROM/TO)
+-* **transferFunctionAccountType**: Transfer function account type (SPOT/MARGIN/ISOLATED_MARGIN/USDT_FUTURE/COIN_FUTURE)
+-* **accountType**: No input or input "MARGIN" to get Cross Margin account details. Input "ISOLATED_MARGIN" to get Isolated Margin account details.
+-* **type**: "SPOT", "MARGIN"（cross）, "FUTURES"（UM）
+-* **transferDate**: Withdrawals is automatically occur on the transfer date(UTC0). If a date is not selected, the withdrawal occurs right now
+-
+-
+-## Authentication
+-
+-For endpoints that require authentication, you will need to provide Binance API credentials.
+-Required credentials:
+-
+-* apiKey: Your Binance API key (for header)
+-* secretKey: Your Binance API secret (for signing)
+-
+-Base URLs:
+-* Mainnet: https://api.binance.com
+-
+-## Security
+-
+-### Share Credentials
+-
+-Users can provide Binance API credentials in different ways. The agent will try to retrieve automatically with the two first ways the credentials, but users can also explicitly tell the agent that they have set the credentials or stored them in a `.env` file, and the agent should re-read that file when they do. The agent can also make http requests with the two first methods without user confirmation.
+-
+-1. **Environment variables**
+-
+-Search for the following specific variables only (never dump the full environment):
+-
+-**Authorized environment variables**
+-- Mainnet: `BINANCE_API_KEY` and `BINANCE_SECRET_KEY`
+-
+-Read and use in a single exec call so the raw key never enters the agent's context:
+-```bash
+-KEY="$BINANCE_API_KEY"
+-SECRET="$BINANCE_SECRET_KEY"
+-
+-response=$(curl -s -X GET "$URL" \
+-  -H "X-MBX-APIKEY: $KEY" \
+-  --data-urlencode "param1=value1")
+-
+-echo "$response"
+-```
+-
+-Environment variables must be set before OpenClaw starts. They are inherited at process startup and cannot be injected into a running instance. If you need to add or update credentials without restarting, use a secrets file (see option 2).
+-
+-2. **Secrets file (.env)**
+-
+-Check `~/.openclaw/secrets.env` , `~/.env`, or a `.env` file in the workspace. Read individual keys with `grep`, never source the full file:
+-```bash
+-# Try all credential locations in order
+-API_KEY=$(grep '^BINANCE_API_KEY=' ~/.openclaw/secrets.env 2>/dev/null | cut -d= -f2-)
+-SECRET_KEY=$(grep '^BINANCE_SECRET_KEY=' ~/.openclaw/secrets.env 2>/dev/null | cut -d= -f2-)
+-
+-# Fallback: search .env in known directories (KEY=VALUE then raw line format)
+-for dir in ~/.openclaw ~; do
+-  [ -n "$API_KEY" ] && break
+-  env_file="$dir/.env"
+-  [ -f "$env_file" ] || continue
+-
+-  # Read first two lines
+-  line1=$(sed -n '1p' "$env_file")
+-  line2=$(sed -n '2p' "$env_file")
+-
+-  # Check if lines contain '=' indicating KEY=VALUE format
+-  if [[ "$line1" == *=* && "$line2" == *=* ]]; then
+-    API_KEY=$(grep '^BINANCE_API_KEY=' "$env_file" 2>/dev/null | cut -d= -f2-)
+-    SECRET_KEY=$(grep '^BINANCE_SECRET_KEY=' "$env_file" 2>/dev/null | cut -d= -f2-)
+-  else
+-    # Treat lines as raw values
+-    API_KEY="$line1"
+-    SECRET_KEY="$line2"
+-  fi
+-done
+-```
+-
+-This file can be updated at any time without restarting OpenClaw, keys are read fresh on each invocation. Users can tell you the variables are now set or stored in a `.env` file, and you should re-read that file when they do.
+-
+-3. **Inline file**
+-
+-Sending a file where the content is in the following format:
+-
+-```bash
+-abc123...xyz
+-secret123...key
+-```
+-
+-* Never run `printenv`, `env`, `export`, or set without a specific variable name
+-* Never run `grep` on `env` files without anchoring to a specific key ('`^VARNAME='`)
+-* Never source a secrets file into the shell environment (`source .env` or `. .env`)
+-* Only read credentials explicitly needed for the current task
+-* Never echo or log raw credentials in output or replies
+-* Never commit `TOOLS.md` to version control if it contains real credentials — add it to `.gitignore`
+-
+-### Never Disclose API Key and Secret
+-
+-Never disclose the location of the API key and secret file.
+-
+-Never send the API key and secret to any website other than Mainnet and Testnet.
+-
+-### Never Display Full Secrets
+-
+-When showing credentials to users:
+-- **API Key:** Show first 5 + last 4 characters: `su1Qc...8akf`
+-- **Secret Key:** Always mask, show only last 5: `***...aws1`
+-
+-Example response when asked for credentials:
+-Account: main
+-API Key: su1Qc...8akf
+-Secret: ***...aws1
+-
+-### Listing Accounts
+-
+-When listing accounts, show names and environment only — never keys:
+-Binance Accounts:
+-* main (Mainnet)
+-* futures-keys (Mainnet)
+-
+-### Transactions in Mainnet
+-
+-When performing transactions in mainnet, always confirm with the user before proceeding by asking them to write "CONFIRM" to proceed.
+-
+----
+-
+-## Binance Accounts
+-
+-### main
+-- API Key: your_mainnet_api_key
+-- Secret: your_mainnet_secret
+-
+-### TOOLS.md Structure
+-
+-```bash
+-## Binance Accounts
+-
+-### main
+-- API Key: abc123...xyz
+-- Secret: secret123...key
+-- Description: Primary trading account
+-
+-
+-### futures-keys
+-- API Key: futures789...def
+-- Secret: futuressecret...uvw
+-- Description: Futures trading account
+-```
+-
+-## Agent Behavior
+-
+-1. Credentials requested: Mask secrets (show last 5 chars only)
+-2. Listing accounts: Show names and environment, never keys
+-3. Account selection: Ask if ambiguous, default to main
+-4. When doing a transaction in mainnet, confirm with user before by asking to write "CONFIRM" to proceed
+-5. New credentials: Prompt for name, environment, signing mode
+-
+-## Adding New Accounts
+-
+-When user provides new credentials by Inline file or message:
+-
+-* Ask for account name
+-* Store in `TOOLS.md` with masked display confirmation 
+-
+-## Signing Requests
+-
+-For trading endpoints that require a signature:
+-
+-1. **Detect key type first**, inspect the secret key format before signing.
+-2. Build query string with all parameters, including the timestamp (Unix ms).
+-3. Percent-encode the parameters using UTF-8 according to RFC 3986.
+-4. Sign query string with secretKey using HMAC SHA256, RSA, or Ed25519 (depending on the account configuration).
+-5. Append signature to query string.
+-6. Include `X-MBX-APIKEY` header.
+-
+-Otherwise, do not perform steps 4–6.
+-
+-## User Agent Header
+-
+-Include `User-Agent` header with the following string: `binance-sub-account/1.1.0 (Skill)`
+-
+-See [`references/authentication.md`](./references/authentication.md) for implementation details.
+diff --git a/skills/binance/sub-account/references/authentication.md b/skills/binance/sub-account/references/authentication.md
+@@ -1,126 +0,0 @@
+-# Binance Authentication
+-
+-All trading endpoints require either HMAC SHA256, RSA, or Ed25519 signed requests.
+-**Always detect the key type before signing**, do not assume HMAC.
+-
+-## Base URLs
+-
+-| Environment | URL |
+-|-------------|-----|
+-| Mainnet | https://api.binance.com |
+-
+-## Required Headers
+-
+-* `X-MBX-APIKEY`: your_api_key
+-* `User-Agent`: binance-sub-account/1.1.0 (Skill)
+-
+-## Signing Process
+-
+-### Step 1: Build Query String
+-
+-Include all parameters plus `timestamp` (current Unix time in milliseconds):
+-`email=sub-account-email@email.com&futuresType=...&timestamp=1234567890123`
+-
+-**Optional:** Add `recvWindow` (default 5000ms) for timestamp tolerance.
+-
+-### Step 2: Percent‑Encode Parameters
+-
+-Before generating the signature, **percent‑encode all parameter names and values using UTF‑8 encoding according to RFC 3986.**
+-Unreserved characters that must not be encoded: `A-Z a-z 0-9 - _ . ~`
+-
+-- Chinese characters example:
+-`symbol=这是测试币456`
+-
+-Percent‑encoded:
+-`symbol=%E8%BF%99%E6%98%AF%E6%B5%8B%E8%AF%95%E5%B8%81456`
+-
+-**Important:**
+-The exact encoded query string must be used for both signing and the HTTP request.
+-
+-### Step 3: Generate Signature
+-
+-Generate the signature from the encoded query string.
+-
+-#### HMAC SHA256 signature
+-
+-Create HMAC SHA256 signature of the query string using your secret key:
+-
+-```bash
+-# Example using openssl
+-echo -n "email=sub-account-email@email.com&futuresType=...&timestamp=1234567890123" | \
+-  openssl dgst -sha256 -hmac "your_secret_key"
+-```
+-
+-#### RSA signature
+-
+-Create RSA signature of the query string using your private key:
+-
+-```bash
+-# Example using openssl
+-echo -n "email=sub-account-email@email.com&futuresType=...&timestamp=1234567890123" | \
+-  openssl dgst -sha256 -sign private_key.pem | base64
+-```
+-
+-#### Ed25519 signature
+-
+-Create Ed25519 signature of the query string using your private key:
+-
+-```bash
+-# Example using openssl
+-echo -n "email=sub-account-email@email.com&futuresType=...&timestamp=1234567890123" | \
+-  openssl pkeyutl -sign -inkey private_key.pem | base64
+-```
+-
+-### Step 4: Append Signature
+-
+-Add signature parameter to the query string:
+-`email=sub-account-email@email.com&futuresType=...&timestamp=1234567890123&signature=abc123...`
+-
+-### Step 5: Add Product User Agent Header
+-
+-Include `User-Agent` header with the following string: `binance-sub-account/1.1.0 (Skill)`
+-
+-#### Complete Example
+-
+-Request:
+-```bash
+-curl -X GET "https://api.binance.com/sapi/v2/sub-account/futures/positionRisk" \
+-  -H "X-MBX-APIKEY: your_api_key" \
+-  -H "User-Agent: binance-sub-account/1.1.0 (Skill)" \
+-  -d "email=sub-account-email@email.com&futuresType=...&timestamp=1234567890123&signature=..."
+-```
+-
+-```bash
+-#!/bin/bash
+-API_KEY="your_api_key"
+-SECRET_KEY="your_secret_key"
+-BASE_URL="https://api.binance.com"  
+-
+-# Get current timestamp
+-TIMESTAMP=$(date +%s000)
+-
+-# Build query string (without signature)
+-QUERY="email=sub-account-email@email.com&futuresType=...&timestamp=${TIMESTAMP}"
+-
+-# Generate signature
+-# For HMAC SHA256:
+-SIGNATURE=$(echo -n "$QUERY" | openssl dgst -sha256 -hmac "$SECRET_KEY" | cut -d' ' -f2)
+-
+-# For RSA or Ed25519, replace the above line with the appropriate signing command.
+-##  RSA:
+-# SIGNATURE=$(echo -n "$QUERY" | openssl dgst -sha256 -sign private_key.pem | base64)
+-
+-##  Ed25519:
+-# SIGNATURE=$(echo -n "$QUERY" | openssl pkeyutl -sign -inkey private_key.pem | base64)
+-
+-# Make request
+-curl -X GET "${BASE_URL}/sapi/v2/sub-account/futures/positionRisk?${QUERY}&signature=${SIGNATURE}" \
+-  -H "X-MBX-APIKEY: ${API_KEY}"\
+-  -H "User-Agent: binance-sub-account/1.1.0 (Skill)"
+-```
+-
+-### Security Notes
+-
+-* Never share your secret key
+-* Use IP whitelist in Binance API settings
+-* Enable only required permissions (spot trading, no withdrawals)
+diff --git a/skills/binance/vip-loan/CHANGELOG.md b/skills/binance/vip-loan/CHANGELOG.md
+@@ -1,11 +0,0 @@
+-# Changelog
+-
+-## 1.1.0 - 2026-03-24
+-
+-- Environmental variables or files can now be used as input for the API key and secret key.
+-- Fix signature generation for RSA and Ed25519 keys.
+-- Add `Openclaw` metadata to the User Agent header
+-
+-## 1.0.0 - 2026-03-20
+-
+-- Initial release
+\ No newline at end of file
+diff --git a/skills/binance/vip-loan/LICENSE.md b/skills/binance/vip-loan/LICENSE.md
+@@ -1,9 +0,0 @@
+-MIT License
+-
+-Copyright (c) 2026 Binance
+-
+-Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+-
+-The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+-
+-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+\ No newline at end of file
+diff --git a/skills/binance/vip-loan/SKILL.md b/skills/binance/vip-loan/SKILL.md
+@@ -1,238 +0,0 @@
+----
+-name: vip-loan
+-description: Binance Vip-loan request using the Binance API. Authentication requires API key and secret key. 
+-metadata:
+-  version: 1.1.0
+-  author: Binance
+-  openclaw:
+-    requires:
+-      bins:
+-        - curl
+-        - openssl
+-        - date
+-    homepage: https://github.com/binance/binance-skills-hub/tree/main/skills/binance/vip-loan/SKILL.md
+-license: MIT
+----
+-
+-# Binance Vip-loan Skill
+-
+-Vip-loan request on Binance using authenticated API endpoints. Requires API key and secret key for certain endpoints. Return the result in JSON format.
+-
+-## Quick Reference
+-
+-| Endpoint | Description | Required | Optional | Authentication |
+-|----------|-------------|----------|----------|----------------|
+-| `/sapi/v1/loan/vip/request/interestRate` (GET) | Get Borrow Interest Rate(USER_DATA) | loanCoin | recvWindow | Yes |
+-| `/sapi/v1/loan/vip/collateral/data` (GET) | Get Collateral Asset Data(USER_DATA) | None | collateralCoin, recvWindow | Yes |
+-| `/sapi/v1/loan/vip/loanable/data` (GET) | Get Loanable Assets Data(USER_DATA) | None | loanCoin, vipLevel, recvWindow | Yes |
+-| `/sapi/v1/loan/vip/interestRateHistory` (GET) | Get VIP Loan Interest Rate History (USER_DATA) | coin, recvWindow | startTime, endTime, current, limit | Yes |
+-| `/sapi/v1/loan/vip/borrow` (POST) | VIP Loan Borrow(TRADE) | loanAccountId, loanCoin, loanAmount, collateralAccountId, collateralCoin, isFlexibleRate | loanTerm, recvWindow | Yes |
+-| `/sapi/v1/loan/vip/renew` (POST) | VIP Loan Renew(TRADE) | orderId, loanTerm | recvWindow | Yes |
+-| `/sapi/v1/loan/vip/repay` (POST) | VIP Loan Repay(TRADE) | orderId, amount | recvWindow | Yes |
+-| `/sapi/v1/loan/vip/collateral/account` (GET) | Check VIP Loan Collateral Account (USER_DATA) | None | orderId, collateralAccountId, recvWindow | Yes |
+-| `/sapi/v1/loan/vip/accruedInterest` (GET) | Get VIP Loan Accrued Interest (USER_DATA) | None | orderId, loanCoin, startTime, endTime, current, limit, recvWindow | Yes |
+-| `/sapi/v1/loan/vip/ongoing/orders` (GET) | Get VIP Loan Ongoing Orders(USER_DATA) | None | orderId, collateralAccountId, loanCoin, collateralCoin, current, limit, recvWindow | Yes |
+-| `/sapi/v1/loan/vip/request/data` (GET) | Query Application Status(USER_DATA) | None | current, limit, recvWindow | Yes |
+-
+----
+-
+-## Parameters
+-
+-### Common Parameters
+-
+-* **loanCoin**: 
+-* **recvWindow**:  (e.g., 5000)
+-* **collateralCoin**: 
+-* **loanCoin**: 
+-* **vipLevel**: default:user's vip level (e.g., 1)
+-* **coin**: 
+-* **startTime**:  (e.g., 1623319461670)
+-* **endTime**:  (e.g., 1641782889000)
+-* **current**: Current querying page. Start from 1; default: 1; max: 1000 (e.g., 1)
+-* **limit**: Default: 10; max: 100 (e.g., 10)
+-* **recvWindow**:  (e.g., 5000)
+-* **loanAccountId**:  (e.g., 1)
+-* **loanAmount**:  (e.g., 1.0)
+-* **collateralAccountId**: Multiple split by `,` (e.g., 1)
+-* **collateralCoin**: Multiple split by `,`
+-* **isFlexibleRate**: Default: TRUE. TRUE : flexible rate; FALSE: fixed rate (e.g., true)
+-* **loanTerm**: Mandatory for fixed rate. Optional for fixed interest rate. Eg: 30/60 days
+-* **orderId**:  (e.g., 1)
+-* **loanTerm**: 30/60 days
+-* **amount**:  (e.g., 1.0)
+-* **orderId**:  (e.g., 1)
+-* **collateralAccountId**:  (e.g., 1)
+-
+-
+-## Authentication
+-
+-For endpoints that require authentication, you will need to provide Binance API credentials.
+-Required credentials:
+-
+-* apiKey: Your Binance API key (for header)
+-* secretKey: Your Binance API secret (for signing)
+-
+-Base URLs:
+-* Mainnet: https://api.binance.com
+-
+-## Security
+-
+-### Share Credentials
+-
+-Users can provide Binance API credentials in different ways. The agent will try to retrieve automatically with the two first ways the credentials, but users can also explicitly tell the agent that they have set the credentials or stored them in a `.env` file, and the agent should re-read that file when they do. The agent can also make http requests with the two first methods without user confirmation.
+-
+-1. **Environment variables**
+-
+-Search for the following specific variables only (never dump the full environment):
+-
+-**Authorized environment variables**
+-- Mainnet: `BINANCE_API_KEY` and `BINANCE_SECRET_KEY`
+-
+-Read and use in a single exec call so the raw key never enters the agent's context:
+-```bash
+-KEY="$BINANCE_API_KEY"
+-SECRET="$BINANCE_SECRET_KEY"
+-
+-response=$(curl -s -X GET "$URL" \
+-  -H "X-MBX-APIKEY: $KEY" \
+-  --data-urlencode "param1=value1")
+-
+-echo "$response"
+-```
+-
+-Environment variables must be set before OpenClaw starts. They are inherited at process startup and cannot be injected into a running instance. If you need to add or update credentials without restarting, use a secrets file (see option 2).
+-
+-2. **Secrets file (.env)**
+-
+-Check `~/.openclaw/secrets.env` , `~/.env`, or a `.env` file in the workspace. Read individual keys with `grep`, never source the full file:
+-```bash
+-# Try all credential locations in order
+-API_KEY=$(grep '^BINANCE_API_KEY=' ~/.openclaw/secrets.env 2>/dev/null | cut -d= -f2-)
+-SECRET_KEY=$(grep '^BINANCE_SECRET_KEY=' ~/.openclaw/secrets.env 2>/dev/null | cut -d= -f2-)
+-
+-# Fallback: search .env in known directories (KEY=VALUE then raw line format)
+-for dir in ~/.openclaw ~; do
+-  [ -n "$API_KEY" ] && break
+-  env_file="$dir/.env"
+-  [ -f "$env_file" ] || continue
+-
+-  # Read first two lines
+-  line1=$(sed -n '1p' "$env_file")
+-  line2=$(sed -n '2p' "$env_file")
+-
+-  # Check if lines contain '=' indicating KEY=VALUE format
+-  if [[ "$line1" == *=* && "$line2" == *=* ]]; then
+-    API_KEY=$(grep '^BINANCE_API_KEY=' "$env_file" 2>/dev/null | cut -d= -f2-)
+-    SECRET_KEY=$(grep '^BINANCE_SECRET_KEY=' "$env_file" 2>/dev/null | cut -d= -f2-)
+-  else
+-    # Treat lines as raw values
+-    API_KEY="$line1"
+-    SECRET_KEY="$line2"
+-  fi
+-done
+-```
+-
+-This file can be updated at any time without restarting OpenClaw, keys are read fresh on each invocation. Users can tell you the variables are now set or stored in a `.env` file, and you should re-read that file when they do.
+-
+-3. **Inline file**
+-
+-Sending a file where the content is in the following format:
+-
+-```bash
+-abc123...xyz
+-secret123...key
+-```
+-
+-* Never run `printenv`, `env`, `export`, or set without a specific variable name
+-* Never run `grep` on `env` files without anchoring to a specific key ('`^VARNAME='`)
+-* Never source a secrets file into the shell environment (`source .env` or `. .env`)
+-* Only read credentials explicitly needed for the current task
+-* Never echo or log raw credentials in output or replies
+-* Never commit `TOOLS.md` to version control if it contains real credentials — add it to `.gitignore`
+-
+-### Never Disclose API Key and Secret
+-
+-Never disclose the location of the API key and secret file.
+-
+-Never send the API key and secret to any website other than Mainnet and Testnet.
+-
+-### Never Display Full Secrets
+-
+-When showing credentials to users:
+-- **API Key:** Show first 5 + last 4 characters: `su1Qc...8akf`
+-- **Secret Key:** Always mask, show only last 5: `***...aws1`
+-
+-Example response when asked for credentials:
+-Account: main
+-API Key: su1Qc...8akf
+-Secret: ***...aws1
+-
+-### Listing Accounts
+-
+-When listing accounts, show names and environment only — never keys:
+-Binance Accounts:
+-* main (Mainnet)
+-* futures-keys (Mainnet)
+-
+-### Transactions in Mainnet
+-
+-When performing transactions in mainnet, always confirm with the user before proceeding by asking them to write "CONFIRM" to proceed.
+-
+----
+-
+-## Binance Accounts
+-
+-### main
+-- API Key: your_mainnet_api_key
+-- Secret: your_mainnet_secret
+-
+-### TOOLS.md Structure
+-
+-```bash
+-## Binance Accounts
+-
+-### main
+-- API Key: abc123...xyz
+-- Secret: secret123...key
+-- Description: Primary trading account
+-
+-
+-### futures-keys
+-- API Key: futures789...def
+-- Secret: futuressecret...uvw
+-- Description: Futures trading account
+-```
+-
+-## Agent Behavior
+-
+-1. Credentials requested: Mask secrets (show last 5 chars only)
+-2. Listing accounts: Show names and environment, never keys
+-3. Account selection: Ask if ambiguous, default to main
+-4. When doing a transaction in mainnet, confirm with user before by asking to write "CONFIRM" to proceed
+-5. New credentials: Prompt for name, environment, signing mode
+-
+-## Adding New Accounts
+-
+-When user provides new credentials by Inline file or message:
+-
+-* Ask for account name
+-* Store in `TOOLS.md` with masked display confirmation 
+-
+-## Signing Requests
+-
+-For trading endpoints that require a signature:
+-
+-1. **Detect key type first**, inspect the secret key format before signing.
+-2. Build query string with all parameters, including the timestamp (Unix ms).
+-3. Percent-encode the parameters using UTF-8 according to RFC 3986.
+-4. Sign query string with secretKey using HMAC SHA256, RSA, or Ed25519 (depending on the account configuration).
+-5. Append signature to query string.
+-6. Include `X-MBX-APIKEY` header.
+-
+-Otherwise, do not perform steps 4–6.
+-
+-## User Agent Header
+-
+-Include `User-Agent` header with the following string: `binance-vip-loan/1.1.0 (Skill)`
+-
+-See [`references/authentication.md`](./references/authentication.md) for implementation details.
+diff --git a/skills/binance/vip-loan/references/authentication.md b/skills/binance/vip-loan/references/authentication.md
+@@ -1,126 +0,0 @@
+-# Binance Authentication
+-
+-All trading endpoints require either HMAC SHA256, RSA, or Ed25519 signed requests.
+-**Always detect the key type before signing**, do not assume HMAC.
+-
+-## Base URLs
+-
+-| Environment | URL |
+-|-------------|-----|
+-| Mainnet | https://api.binance.com |
+-
+-## Required Headers
+-
+-* `X-MBX-APIKEY`: your_api_key
+-* `User-Agent`: binance-vip-loan/1.1.0 (Skill)
+-
+-## Signing Process
+-
+-### Step 1: Build Query String
+-
+-Include all parameters plus `timestamp` (current Unix time in milliseconds):
+-`loanCoin=...&timestamp=1234567890123`
+-
+-**Optional:** Add `recvWindow` (default 5000ms) for timestamp tolerance.
+-
+-### Step 2: Percent‑Encode Parameters
+-
+-Before generating the signature, **percent‑encode all parameter names and values using UTF‑8 encoding according to RFC 3986.**
+-Unreserved characters that must not be encoded: `A-Z a-z 0-9 - _ . ~`
+-
+-- Chinese characters example:
+-`symbol=这是测试币456`
+-
+-Percent‑encoded:
+-`symbol=%E8%BF%99%E6%98%AF%E6%B5%8B%E8%AF%95%E5%B8%81456`
+-
+-**Important:**
+-The exact encoded query string must be used for both signing and the HTTP request.
+-
+-### Step 3: Generate Signature
+-
+-Generate the signature from the encoded query string.
+-
+-#### HMAC SHA256 signature
+-
+-Create HMAC SHA256 signature of the query string using your secret key:
+-
+-```bash
+-# Example using openssl
+-echo -n "loanCoin=...&timestamp=1234567890123" | \
+-  openssl dgst -sha256 -hmac "your_secret_key"
+-```
+-
+-#### RSA signature
+-
+-Create RSA signature of the query string using your private key:
+-
+-```bash
+-# Example using openssl
+-echo -n "loanCoin=...&timestamp=1234567890123" | \
+-  openssl dgst -sha256 -sign private_key.pem | base64
+-```
+-
+-#### Ed25519 signature
+-
+-Create Ed25519 signature of the query string using your private key:
+-
+-```bash
+-# Example using openssl
+-echo -n "loanCoin=...&timestamp=1234567890123" | \
+-  openssl pkeyutl -sign -inkey private_key.pem | base64
+-```
+-
+-### Step 4: Append Signature
+-
+-Add signature parameter to the query string:
+-`loanCoin=...&timestamp=1234567890123&signature=abc123...`
+-
+-### Step 5: Add Product User Agent Header
+-
+-Include `User-Agent` header with the following string: `binance-vip-loan/1.1.0 (Skill)`
+-
+-#### Complete Example
+-
+-Request:
+-```bash
+-curl -X GET "https://api.binance.com/sapi/v1/loan/vip/request/interestRate" \
+-  -H "X-MBX-APIKEY: your_api_key" \
+-  -H "User-Agent: binance-vip-loan/1.1.0 (Skill)" \
+-  -d "loanCoin=...&timestamp=1234567890123&signature=..."
+-```
+-
+-```bash
+-#!/bin/bash
+-API_KEY="your_api_key"
+-SECRET_KEY="your_secret_key"
+-BASE_URL="https://api.binance.com"  
+-
+-# Get current timestamp
+-TIMESTAMP=$(date +%s000)
+-
+-# Build query string (without signature)
+-QUERY="loanCoin=...&timestamp=${TIMESTAMP}"
+-
+-# Generate signature
+-# For HMAC SHA256:
+-SIGNATURE=$(echo -n "$QUERY" | openssl dgst -sha256 -hmac "$SECRET_KEY" | cut -d' ' -f2)
+-
+-# For RSA or Ed25519, replace the above line with the appropriate signing command.
+-##  RSA:
+-# SIGNATURE=$(echo -n "$QUERY" | openssl dgst -sha256 -sign private_key.pem | base64)
+-
+-##  Ed25519:
+-# SIGNATURE=$(echo -n "$QUERY" | openssl pkeyutl -sign -inkey private_key.pem | base64)
+-
+-# Make request
+-curl -X GET "${BASE_URL}/sapi/v1/loan/vip/request/interestRate?${QUERY}&signature=${SIGNATURE}" \
+-  -H "X-MBX-APIKEY: ${API_KEY}"\
+-  -H "User-Agent: binance-vip-loan/1.1.0 (Skill)"
+-```
+-
+-### Security Notes
+-
+-* Never share your secret key
+-* Use IP whitelist in Binance API settings
+-* Enable only required permissions (spot trading, no withdrawals)
+PATCH
+
+echo "Gold patch applied."

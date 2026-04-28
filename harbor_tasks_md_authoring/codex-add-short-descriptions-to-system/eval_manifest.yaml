@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: codex-add-short-descriptions-to-system
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: openai/codex
+  pr: 8301
+  base_commit: "8120c8765b3321242d533da68d37f127eb37558b"
+  merge_commit: "f4371d2f6c3e41800201038aa61bc2d178ff88ed"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in codex-rs/core/src/skills/assets/samples/plan/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in codex-rs/core/src/skills/assets/samples/skill-creator/SKILL.md."
+
+config_edits:
+  - path: codex-rs/core/src/skills/assets/samples/plan/SKILL.md
+    tier: 1
+    gold_added: '  short-description: Generate a plan for a complex task'
+    gold_removed: ''
+  - path: codex-rs/core/src/skills/assets/samples/skill-creator/SKILL.md
+    tier: 1
+    gold_added: "metadata:\n  short-description: Create or update a skill"
+    gold_removed: ''

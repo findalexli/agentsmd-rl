@@ -1,0 +1,63 @@
+version: "2.0"
+
+task:
+  name: flashinfer-bench-claude-update-skills-on-hugging
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: flashinfer-ai/flashinfer-bench
+  pr: 174
+  base_commit: "aecab0b0acd898e9d20f3b9cf252b92b4d5c3e99"
+  merge_commit: "3dd02887ee962173c9428f4752e6662885ca26cd"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/add-reference-tests/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/add-reference-tests/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/extract-kernel-definitions/SKILL.md."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/extract-kernel-definitions/SKILL.md."
+  - id: signal_04
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/extract-kernel-definitions/SKILL.md."
+  - id: signal_05
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+
+config_edits:
+  - path: .claude/skills/add-reference-tests/SKILL.md
+    tier: 1
+    gold_added: '#### For Model Constants: HuggingFace + SGLang (Required)
+
+
+      **Note**: See [extract-kernel-definitions](../extract-kernel-definitions/SKILL.md#for-model-constants-huggingface--sglang-required) for detailed guidance on sourcing model constants from HuggingFace and SGLang.'
+    gold_removed: ''
+  - path: .claude/skills/extract-kernel-definitions/SKILL.md
+    tier: 1
+    gold_added: '### For Model Constants: HuggingFace + SGLang (Required)
+
+
+      **IMPORTANT**: Always refer to the HuggingFace model page first (`https://huggingface.co/{org}/{model-name}`) for authoritative model constants when creating definitions for new kernels. Download `config.json` from the model repo for values like `hidden_size`, `num_experts`, `topk`, etc.
+
+
+      Use SGLang (`tmp/sglang/python/sglang/srt/models/{model_name}.py`) for runtime-specific constants like `page_size` and tensor parallel configurations (e.g. `num_attention_heads`, `num_local_experts`).'
+    gold_removed: ''
+  - path: CLAUDE.md
+    tier: 1
+    gold_added: '**IMPORTANT**: When creating definitions for new kernels, always refer to the HuggingFace model page (`https://huggingface.co/{org}/{model-name}`) to obtain authoritative model constants from `config.json`. Cross-reference with SGLang implementation for runtime-specific values like `page_size`.
+
+      '
+    gold_removed: ''

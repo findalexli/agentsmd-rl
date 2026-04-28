@@ -1,0 +1,662 @@
+version: "2.0"
+
+task:
+  name: openui-cursor-rules-changes
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: thesysdev/openui
+  pr: 206
+  base_commit: "493fa162ff98b8910ab5114499850da7be5a53cc"
+  merge_commit: "0f285cac2dbdbbdb7a360e5c9466902c11fbbccc"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .cursor/rules/styling-rule.mdc."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .cursor/rules/styling-rule.mdc."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .cursor/rules/styling-rule.mdc."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .cursor/rules/use-pnpm.mdc."
+  - id: signal_04
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .cursor/rules/use-pnpm.mdc."
+  - id: signal_05
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .cursor/rules/use-pnpm.mdc."
+
+config_edits:
+  - path: .cursor/rules/styling-rule.mdc
+    tier: 1
+    gold_added: "---\ndescription: Comprehensive SCSS styling guidelines for the Crayon React UI component library\nglobs: *.scss,*.tsx,*.ts\nalwaysApply: true\n---\n\n# Crayon UI Styling System\n\n## Overview\n\nCrayon UI uses a comprehensive design system with SCSS utilities, CSS custom properties, and consistent component patterns. All styling must follow these guidelines to maintain design consistency and component reusability.\n\n## Core Principles\n\n### 1. Use cssUtils.scss for All Design Tokens\n\n**Always import and use `cssUtils.scss` instead of hardcoded values:**\n\n```scss\n@use \"../../cssUtils\" as cssUtils;\n\n// ✅ Correct - Use design tokens\n.my-component {\n  background-color: cssUtils.$bg-container;\n  color: cssUtils.$primary-text;\n  padding: cssUtils.$spacing-m;\n  border-radius: cssUtils.$rounded-m;\n  @include cssUtils.typography(body, default);\n}\n\n// ❌ Incorrect - Hardcoded values\n.my-component {\n  background-color: #ffffff;\n  color: #000000;\n  padding: 16px;\n  border-radius: 8px;\n  font-family: \"Inter\", sans-serif;\n}\n```\n\n### 2. Component Architecture\n\n#### File Structure\n\nEach component should follow this structure:\n\n```FileStructure\ncomponents/ComponentName/\n├── ComponentName.tsx      # Main component\n├── ComponentName.scss     # Component styles\n├── index.ts              # Exports\n├── dependencies.ts       # External dependencies\n└── stories/              # Storybook stories\n    └── ComponentName.stories.tsx\n```\n\n#### CSS Class Naming Convention\n\nUse the `.crayon-component-name` prefix with BEM-like modifiers:\n\n```scss\n.crayon-button {\n  // Base styles\n\n  &-primary {\n    // Primary variant styles\n  }\n\n  &-secondary {\n    // Secondary variant styles\n  }\n\n  &-small {\n    // Small size variant\n  }\n\n  &-large {\n    // Large size variant\n  }\n\n  &__icon {\n    // Component element (like icon inside button)\n  }\n\n  &--disabled {\n    // Component state modifier\n  }\n}\n```\n\n### 3. Typography System\n\n#### Available Typography Mixins\n\n```scss\n// Body text variants\n@include cssUtils.typography(body, default); // Regular body text\n@include cssUtils.typography(body, small); // Smaller body text\n@include cssUtils.typography(body, large); // Larger body text\n@include cssUtils.typography(body, heavy); // Bold body text\n\n// Label variants\n@include cssUtils.typography(label, default); // Regular labels\n@include cssUtils.typography(label, small); // Small labels\n@include cssUtils.typography(label, large); // Large labels\n\n// Heading variants\n@include cssUtils.typography(heading, large); // H1 equivalent\n@include cssUtils.typography(heading, medium); // H2 equivalent\n@include cssUtils.typography(heading, small); // H3 equivalent\n\n// Number variants (for data display)\n@include cssUtils.typography(number, default); // Regular numbers\n@include cssUtils.typography(number, large); // Large numbers\n@include cssUtils.typography(number, title); // Title numbers\n```\n\n### 4. Color System\n\n#### Background Colors\n\n```scss\ncssUtils.$bg-fill          // Main background\ncssUtils.$bg-container     // Card/container backgrounds\ncssUtils.$bg-overlay       // Modal/overlay backgrounds\ncssUtils.$bg-sunk          // Input field backgrounds\ncssUtils.$bg-elevated      // Elevated surfaces\ncssUtils.$bg-danger        // Error/danger backgrounds\ncssUtils.$bg-success       // Success backgrounds\ncssUtils.$bg-info          // Info backgrounds\n```\n\n#### Interactive Colors\n\n```scss\ncssUtils.$interactive-default      // Default button background\ncssUtils.$interactive-hover        // Hover state\ncssUtils.$interactive-pressed      // Pressed/active state\ncssUtils.$interactive-disabled     // Disabled state\ncssUtils.$interactive-accent       // Primary action color\n```\n\n#### Text Colors\n\n```scss\ncssUtils.$primary-text      // Main text color\ncssUtils.$secondary-text    // Secondary/muted text\ncssUtils.$disabled-text     // Disabled text\ncssUtils.$accent-primary-text    // Primary accent text\ncssUtils.$success-primary-text   // Success text\ncssUtils.$danger-primary-text    // Error text\n```\n\n#### Stroke/Border Colors\n\n```scss\ncssUtils.$stroke-default           // Default borders\ncssUtils.$stroke-interactive-el    // Interactive element borders\ncssUtils.$stroke-emphasis          // Emphasis borders\ncssUtils.$stroke-accent            // Accent borders\ncssUtils.$stroke-danger            // Error borders\n```\n\n### 5. Spacing System\n\nUse the predefined spacing scale:\n\n```scss\ncssUtils.$spacing-0     // 0px\ncssUtils.$spacing-3xs   // 2px\ncssUtils.$spacing-2xs   // 4px\ncssUtils.$spacing-xs    // 8px\ncssUtils.$spacing-s     // 12px\ncssUtils.$spacing-m     // 16px\ncssUtils.$spacing-l     // 20px\ncssUtils.$spacing-xl    // 24px\ncssUtils.$spacing-2xl   // 32px\ncssUtils.$spacing-3xl   // 40px\n```\n\n### 6. Border Radius System\n\n```scss\ncssUtils.$rounded-0     // 0px (sharp corners)\ncssUtils.$rounded-3xs   // 2px\ncssUtils.$rounded-2xs   // 4px\ncssUtils.$rounded-xs    // 6px\ncssUtils.$rounded-s     // 8px\ncssUtils.$rounded-m     // 12px\ncssUtils.$rounded-l     // 16px\ncssUtils.$rounded-xl    // 20px\ncssUtils.$rounded-full  // 9999px (fully rounded)\n```\n\n### 7. Shadow System\n\n```scss\ncssUtils.$shadow-s      // Small shadow\ncssUtils.$shadow-m      // Medium shadow\ncssUtils.$shadow-l      // Large shadow\ncssUtils.$shadow-xl     // Extra large shadow\ncssUtils.$shadow-2xl    // 2X large shadow\ncssUtils.$shadow-3xl    // 3X large shadow\n```\n\n## Component Patterns\n\n### Standard Component Variants\n\nMost components should support these variants:\n\n#### Size Variants\n\n```scss\n&-small {\n  padding: calc(cssUtils.$spacing-2xs - 1px) cssUtils.$spacing-s;\n  @include cssUtils.typography(body, small);\n}\n\n&-medium {\n  padding: calc(cssUtils.$spacing-xs - 1px) cssUtils.$spacing-m;\n  @include cssUtils.typography(body, default);\n}\n\n&-large {\n  padding: calc(cssUtils.$spacing-s - 1px) cssUtils.$spacing-l;\n  @include cssUtils.typography(body, large);\n}\n```\n\n#### Button Variants\n\n```scss\n&-primary {\n  background-color: cssUtils.$interactive-accent;\n  color: cssUtils.$accent-primary-text;\n  border-color: cssUtils.$stroke-accent;\n\n  &:not(:disabled):hover {\n    background-color: cssUtils.$interactive-accent-hover;\n  }\n\n  &:disabled {\n    background-color: cssUtils.$interactive-accent-disabled;\n    cursor: not-allowed;\n  }\n}\n\n&-secondary {\n  background-color: cssUtils.$interactive-default;\n  color: cssUtils.$primary-text;\n  border-color: cssUtils.$stroke-interactive-el;\n\n  &:not(:disabled):hover {\n    background-color: cssUtils.$interactive-hover;\n  }\n}\n```\n\n### Form Components Pattern\n\n```scss\n.crayon-input {\n  @include cssUtils.typography(body, default);\n  border: 1px solid cssUtils.$stroke-default;\n  border-radius: cssUtils.$rounded-m;\n  background-color: cssUtils.$bg-sunk;\n  color: cssUtils.$primary-text;\n\n  &::placeholder {\n    color: cssUtils.$secondary-text;\n  }\n\n  &:focus {\n    outline: none;\n    border-color: cssUtils.$stroke-emphasis;\n  }\n\n  &:disabled {\n    background-color: cssUtils.$bg-sunk;\n    color: cssUtils.$disabled-text;\n    cursor: not-allowed;\n  }\n\n  &-error {\n    border-color: cssUtils.$stroke-danger-emphasis;\n  }\n}\n```\n\n## Best Practices\n\n### 1. Avoid Magic Numbers\n\nAlways use design tokens instead of hardcoded values:\n\n```scss\n// ✅ Good\npadding: cssUtils.$spacing-m;\nborder-radius: cssUtils.$rounded-m;\n\n// ❌ Bad\npadding: 16px;\nborder-radius: 8px;\n```\n\n### 2. Consistent State Handling\n\nUse the `:not(:disabled)` pattern for hover/active states:\n\n```scss\n&:not(:disabled):hover {\n  background-color: cssUtils.$interactive-hover;\n}\n\n&:not(:disabled):active {\n  background-color: cssUtils.$interactive-pressed;\n}\n```\n\n### 3. Responsive Design\n\nFor responsive components, use CSS custom properties that can be controlled via JavaScript:\n\n```scss\n.my-responsive-component {\n  gap: var(--component-gap, cssUtils.$spacing-m);\n  padding: var(--component-padding, cssUtils.$spacing-m);\n}\n```\n\n### 4. Component Composition\n\nPrefer composition over complex variants. Create small, focused components that can be combined:\n\n```tsx\n// ✅ Good - Composable\n<Card>\n  <CardHeader>\n    <Title>Card Title</Title>\n  </CardHeader>\n  <CardContent>\n    <Text>Content</Text>\n    <Button variant=\"primary\">Action</Button>\n  </CardContent>\n</Card>\n\n// ❌ Avoid - Overly complex single component\n<ComplexCard\n  title=\"Card Title\"\n  content=\"Content\"\n  buttonText=\"Action\"\n  buttonVariant=\"primary\"\n  showHeader={true}\n  headerVariant=\"large\"\n/>\n```\n\n### 5. CSS Custom Properties for Theming\n\nUse CSS custom properties for values that might need to be overridden:\n\n```scss\n.crayon-themeable-component {\n  --component-bg: #{cssUtils.$bg-container};\n  --component-text: #{cssUtils.$primary-text};\n\n  background-color: var(--component-bg);\n  color: var(--component-text);\n}\n```\n\n### 6. Accessibility Considerations\n\n- Always include focus states\n- Use appropriate color contrasts (handled by design tokens)\n- Support keyboard navigation\n- Include proper ARIA attributes in component markup\n\n### 7. Performance\n\n- Avoid deeply nested selectors\n- Use efficient CSS selectors\n- Minimize CSS specificity conflicts\n- Consider CSS-in-JS only when necessary (prefer SCSS for static styles)\n\n## When to Create New Components\n\n### ✅ Create a new component when\n\n- The UI pattern is reusable across multiple features\n- It has its own distinct behavior and API\n- It needs specific accessibility features\n- It represents a semantic UI concept (Button, Input, Card, etc.)\n\n### ✅ Extend existing components when\n\n- Adding a variant that fits the existing API\n- Creating a domain-specific version of a generic component\n- The new component is just a styled wrapper\n\n### ❌ Don't\
+      \ create new components for\n\n- One-off styling needs (use CSS classes or inline styles)\n- Layout-only components (use CSS Grid/Flexbox)\n- Text styling (use typography mixins)\n\n## Migration Guide\n\nWhen updating existing components:\n\n1. **Audit current styles** - Check for hardcoded values\n2. **Replace with tokens** - Use cssUtils variables\n3. **Update naming** - Ensure BEM-like class names\n4. **Add missing states** - Include hover, focus, disabled, active states\n5. **Test thoroughly** - Verify all variants work correctly\n\n## Tooling\n\n- **SCSS Compilation**: `pnpm build:scss`\n- **Linting**: ESLint with custom rules\n- **Storybook**: For component development and testing\n- **Design Tokens**: All available in `cssUtils.scss`\n\n## Questions?\n\nWhen in doubt:\n\n1. Check existing components for similar patterns\n2. Look at `cssUtils.scss` for available tokens\n3. Ask in #design-system Slack channel\n4. Reference the design system documentation"
+    gold_removed: ''
+  - path: .cursor/rules/use-pnpm.mdc
+    tier: 1
+    gold_added: '---
+
+      description: Comprehensive pnpm package manager guidelines for the Crayon monorepo
+
+      globs: package.json,*.json,*.toml
+
+      alwaysApply: true
+
+      ---
+
+
+      # Crayon Package Management with pnpm
+
+
+      ## Overview
+
+
+      Crayon uses **pnpm** as its package manager instead of npm. pnpm provides better performance, disk efficiency, and strict dependency management. This document covers all pnpm usage patterns for the Crayon monorepo.
+
+
+      ## Why pnpm?
+
+
+      ### Benefits Over npm
+
+
+      - **Faster installs**: Uses hard links for node_modules
+
+      - **Disk efficient**: Single copy of packages across projects
+
+      - **Strict dependency resolution**: No phantom dependencies
+
+      - **Better workspace support**: Native monorepo management
+
+      - **Security**: Prevents dependency confusion attacks
+
+
+      ### Key Differences
+
+
+      - `node_modules` structure is different (flat with symlinks)
+
+      - Stricter dependency isolation
+
+      - Faster cold installs and updates
+
+
+      ## Core Commands
+
+
+      ### Package Installation
+
+
+      ```bash
+
+      # Install all dependencies (equivalent to npm install)
+
+      pnpm install
+
+
+      # Install specific package
+
+      pnpm add <package-name>
+
+
+      # Install dev dependency
+
+      pnpm add -D <package-name>
+
+
+      # Install peer dependency
+
+      pnpm add -P <package-name>
+
+
+      # Remove package
+
+      pnpm remove <package-name>
+
+      ```
+
+
+      ### Running Scripts
+
+
+      ```bash
+
+      # Run script from package.json (equivalent to npm run)
+
+      pnpm run <script-name>
+
+
+      # Run script in specific workspace
+
+      pnpm --filter <package-name> run <script-name>
+
+
+      # Run script in all workspaces
+
+      pnpm --recursive run <script-name>
+
+      ```
+
+
+      ## Workspace Management
+
+
+      Crayon uses pnpm workspaces for its monorepo structure. Here are the key workspace commands:
+
+
+      ### Workspace Structure
+
+
+      ```fileStructure
+
+      js/
+
+      ├── packages/
+
+      │   ├── react-core/
+
+      │   ├── react-ui/
+
+      │   └── stream/
+
+      └── pnpm-workspace.yaml
+
+      ```
+
+
+      ### Common Workspace Commands
+
+
+      ```bash
+
+      # Install all dependencies across workspaces
+
+      pnpm install
+
+
+      # Run command in specific package
+
+      pnpm --filter react-ui run build
+
+
+      # Run command in all packages
+
+      pnpm --recursive run build
+
+
+      # Add dependency to specific package
+
+      pnpm --filter react-ui add lodash
+
+
+      # Run tests across all packages
+
+      pnpm --recursive run test
+
+      ```
+
+
+      ## Available Scripts by Package
+
+
+      ### React UI Package (`js/packages/react-ui/`)
+
+
+      ```bash
+
+      # Development
+
+      pnpm storybook              # Start Storybook dev server
+
+      pnpm watch                  # Watch mode with concurrent builds
+
+
+      # Building
+
+      pnpm build                  # Full build (SCSS + TypeScript + Tailwind)
+
+      pnpm build:tsc              # TypeScript compilation only
+
+      pnpm build:scss             # SCSS compilation only
+
+      pnpm build:plugin           # Tailwind plugin build
+
+      pnpm build:storybook        # Storybook production build
+
+
+      # Code Quality
+
+      pnpm lint:check             # Run ESLint
+
+      pnpm lint:fix               # Fix ESLint issues
+
+      pnpm format:check           # Check Prettier formatting
+
+      pnpm format:fix             # Fix Prettier formatting
+
+      pnpm ci                     # CI pipeline (lint + format check)
+
+      ```
+
+
+      ### React Core Package (`js/packages/react-core/`)
+
+
+      ```bash
+
+      # Building
+
+      pnpm build                  # TypeScript compilation
+
+      pnpm watch                  # Watch mode
+
+
+      # Code Quality
+
+      pnpm lint:check
+
+      pnpm lint:fix
+
+      pnpm format:check
+
+      pnpm format:fix
+
+      ```
+
+
+      ### Stream Package (`js/packages/stream/`)
+
+
+      ```bash
+
+      # Building
+
+      pnpm build                  # TypeScript compilation
+
+      pnpm watch                  # Watch mode
+
+
+      # Code Quality
+
+      pnpm lint:check
+
+      pnpm lint:fix
+
+      pnpm format:check
+
+      pnpm format:fix
+
+      ```
+
+
+      ### Python Package (`py/`)
+
+
+      ```bash
+
+      # Using Poetry (not pnpm)
+
+      poetry install              # Install dependencies
+
+      poetry run <command>        # Run commands with Poetry
+
+      poetry shell               # Activate virtual environment
+
+      ```
+
+
+      ## Common Development Workflows
+
+
+      ### Setting Up Development Environment
+
+
+      ```bash
+
+      # Clone and setup the project
+
+      git clone <repository-url>
+
+      cd crayon
+
+
+      # Install all dependencies
+
+      pnpm install
+
+
+      # Start development servers
+
+      pnpm --filter react-ui storybook    # UI development
+
+      ```
+
+
+      ### Building for Production
+
+
+      ```bash
+
+      # Build all packages
+
+      pnpm --recursive run build
+
+
+      # Or build specific packages
+
+      pnpm --filter react-ui run build
+
+      pnpm --filter react-core run build
+
+      ```
+
+
+      ### Code Quality Checks
+
+
+      ```bash
+
+      # Check all packages
+
+      pnpm --recursive run lint:check
+
+      pnpm --recursive run format:check
+
+
+      # Fix issues in all packages
+
+      pnpm --recursive run lint:fix
+
+      pnpm --recursive run format:fix
+
+      ```
+
+
+      ### Adding New Dependencies
+
+
+      ```bash
+
+      # Add to specific package
+
+      pnpm --filter react-ui add <package-name>
+
+      pnpm --filter react-ui add -D <package-name>  # dev dependency
+
+
+      # Add to root (shared tooling)
+
+      pnpm add -D -w <package-name>
+
+      ```
+
+
+      ## Best Practices
+
+
+      ### 1. Always Use pnpm
+
+
+      ```bash
+
+      # ✅ Correct
+
+      pnpm install
+
+      pnpm add lodash
+
+
+      # ❌ Incorrect
+
+      npm install
+
+      npm install lodash
+
+      yarn add lodash
+
+      ```
+
+
+      ### 2. Use Workspace Filters
+
+
+      ```bash
+
+      # ✅ Specific package operations
+
+      pnpm --filter react-ui run build
+
+
+      # ✅ All packages
+
+      pnpm --recursive run test
+
+
+      # ❌ Avoid running in wrong context
+
+      cd js/packages/react-ui && pnpm run build  # Less efficient
+
+      ```
+
+
+      ### 3. Dependency Management
+
+
+      ```bash
+
+      # ✅ Add dependencies to correct packages
+
+      pnpm --filter react-ui add react-dom  # Runtime dependency
+
+      pnpm --filter react-ui add -D @types/react  # Dev dependency
+
+
+      # ❌ Don''t add to wrong package
+
+      pnpm add react  # Would add to root, not to package
+
+      ```
+
+
+      ### 4. Script Organization
+
+
+      ```bash
+
+      # ✅ Use consistent script names across packages
+
+      "build": "tsc"
+
+      "watch": "tsc --watch"
+
+      "lint:check": "eslint ."
+
+      "lint:fix": "eslint --fix ."
+
+      "format:check": "prettier --check ."
+
+      "format:fix": "prettier --write ."
+
+      ```
+
+
+      ### 5. Lockfile Management
+
+
+      ```bash
+
+      # ✅ Always commit pnpm-lock.yaml changes
+
+      git add pnpm-lock.yaml
+
+
+      # ❌ Don''t modify lockfile manually
+
+      # ❌ Don''t delete lockfile without reason
+
+      ```
+
+
+      ## Troubleshooting
+
+
+      ### Common Issues
+
+
+      #### 1. "ELIFECYCLE" Errors
+
+
+      ```bash
+
+      # Clear node_modules and reinstall
+
+      pnpm clean-install
+
+      # or
+
+      rm -rf node_modules pnpm-lock.yaml && pnpm install
+
+      ```
+
+
+      #### 2. Workspace Not Found
+
+
+      ```bash
+
+      # Check workspace configuration
+
+      cat pnpm-workspace.yaml
+
+
+      # Ensure package has name in package.json
+
+      grep ''"name"'' packages/*/package.json
+
+      ```
+
+
+      #### 3. Dependency Resolution Issues
+
+
+      ```bash
+
+      # Clear cache and reinstall
+
+      pnpm store prune
+
+      pnpm install --force
+
+      ```
+
+
+      #### 4. Script Not Found
+
+
+      ```bash
+
+      # Check available scripts
+
+      pnpm run
+
+
+      # Check package.json scripts section
+
+      cat package.json | jq ''.scripts''
+
+      ```
+
+
+      ### Performance Tips
+
+
+      ```bash
+
+      # Use frozen lockfile for CI
+
+      pnpm install --frozen-lockfile
+
+
+      # Skip optional dependencies
+
+      pnpm install --ignore-optional
+
+
+      # Use specific package filters to avoid unnecessary work
+
+      pnpm --filter react-ui run build  # Only build UI package
+
+      ```
+
+
+      ## Migration from npm/yarn
+
+
+      ### npm to pnpm equivalents
+
+
+      | npm                    | pnpm                |
+
+      | ---------------------- | ------------------- |
+
+      | `npm install`          | `pnpm install`      |
+
+      | `npm install <pkg>`    | `pnpm add <pkg>`    |
+
+      | `npm install -D <pkg>` | `pnpm add -D <pkg>` |
+
+      | `npm uninstall <pkg>`  | `pnpm remove <pkg>` |
+
+      | `npm run <script>`     | `pnpm run <script>` |
+
+      | `npm ls`               | `pnpm ls`           |
+
+      | `npm outdated`         | `pnpm outdated`     |
+
+
+      ### yarn to pnpm equivalents
+
+
+      | yarn                | pnpm                |
+
+      | ------------------- | ------------------- |
+
+      | `yarn`              | `pnpm install`      |
+
+      | `yarn add <pkg>`    | `pnpm add <pkg>`    |
+
+      | `yarn add -D <pkg>` | `pnpm add -D <pkg>` |
+
+      | `yarn remove <pkg>` | `pnpm remove <pkg>` |
+
+      | `yarn run <script>` | `pnpm run <script>` |
+
+
+      ## Questions?
+
+
+      When in doubt:
+
+
+      1. Check this document first
+
+      2. Use `pnpm --help` for command options
+
+      3. Check existing CI/CD scripts for patterns
+
+      4. Ask in #engineering Slack channel
+
+
+      Remember: **Always use pnpm, never npm or yarn** for any package management tasks in this project.'
+    gold_removed: ''

@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: lago-front-misc-udpate-agentmd
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: getlago/lago-front
+  pr: 2745
+  base_commit: "51b279c43a523ff9cc7b57adaffa7bc70223bccb"
+  merge_commit: "842394dafa225004e8ebe10a42d606ea6b9ef3f2"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+
+config_edits:
+  - path: AGENTS.md
+    tier: 1
+    gold_added: "### No Nested Ternary\n\nPrevent anything deeper than 2 levels.\n\n```tsx\n// ❌ Bad\nconst role = isAdmin ? (isManager ? \"Manager\" : \"Admin\") : \"User\";\n\n// ✅ Good\nfunction getRole(): string {\n  if (!isAdmin) return \"User\"\n  if (isManager) return \"Manager\"\n\n  return \"Admin\"\n}\n\nconst role = getRole()\n```\n\n### Prefer Early Returns\n\nMakes the code way more readable.\n\n```tsx\n// ❌ Bad\nfunction getStatus(user) {\n  let status;\n  if (user.isActive) {\n    if (user.isAdmin) {\n      status = \"Admin\";\n    } else {\n      status = \"Active\";\n    }\n  } else {\n    status = \"Inactive\";\n  }\n  return status;\n}\n\n// ✅ Good\nfunction getStatus(user) {\n  if (!user.isActive) return \"Inactive\";\n  if (user.isAdmin) return \"Admin\";\n  return \"Active\";\n}\n```\n\n### Prefer Logic Out of JSX\n\nExtract any logic above, when it starts to be complex.\n\n```tsx\n// ❌ Bad\nreturn (\n  <div>\n    {score > 80 ? \"High\" : score > 50 ? \"Medium\" : \"Low\"}\n  </div>\n);\n\n// ✅ Good\nlet label;\nif (score > 80) {\n  label = \"High\";\n} else if (score > 50) {\n  label = \"Medium\";\n} else {\n  label = \"Low\";\n}\n\nreturn (\n  <div>\n    {label}\n  </div>\n);\n```\n"
+    gold_removed: ''

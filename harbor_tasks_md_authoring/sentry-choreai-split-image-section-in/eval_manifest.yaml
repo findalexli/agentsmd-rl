@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: sentry-choreai-split-image-section-in
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: getsentry/sentry
+  pr: 101271
+  base_commit: "21ba6b958ad89ddf7d2def0e144b021b7a7a9f9f"
+  merge_commit: "c303c8287be4440bf323fd65d9b5bdf597d57f83"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in static/AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in static/AGENTS.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in static/AGENTS.md."
+
+config_edits:
+  - path: static/AGENTS.md
+    tier: 1
+    gold_added: "##### Splitting layout and typography\n\n- Split Layout from Typography by directly using Flex, Grid, Stack or Container and Text or Heading components\n\n```tsx\n// ❌ Do not couple typography with layout\nconst Component = styled('div')`\n  display: flex;\n  flex-directon: column;\n  color: ${p => p.theme.subText};\n  font-size: ${p => p.theme.fontSize.lg};\n`;\n\n// ✅ Use the Layout primitives and Text component\n<Flex direction=\"column\">\n  <Text muted size=\"lg\">...</Text>\n<Flex>\n```\n\n#### Assets\n\n##### Avatars\nUse the core avatar components (<UserAvatar/>, <TeamAvatar/>, <ProjectAvatar/>, <OrganizationAvatar/>, <SentryAppAvatar/>, <DocIntegrationAvatar/>) from `static/app/components/core/avatar` for avatars.\n// ✅ Use Image component and src loader\nimport {UserAvatar} from 'sentry/components/core/avatar/userAvatar';\nimport {useUser} from 'sentry/utils/useUser';\n// ❌ Do not use raw intrinsic elements or static paths\nfunction Component() {\n  return (\n    <img\n      src=\"/path/to/image.jpg\"\n      style={{\n        border,\n        width: 20,\n        height: 20,\n        borderRadius: '50%',\n        objectFit: 'cover',\n        display: 'inline-block',\n      }}\n    />\n  );\n}\n\nfunction Component() {\n  const user = useUser();\n  return <UserAvatar user={user} />;\n}\n\nFor lists of avatars, use <AvatarList>."
+    gold_removed: ''

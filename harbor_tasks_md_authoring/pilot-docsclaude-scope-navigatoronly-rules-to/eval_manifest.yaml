@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: pilot-docsclaude-scope-navigatoronly-rules-to
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: qf-studio/pilot
+  pr: 2327
+  base_commit: "811e3091e77adbb30636895e540115e65b0eb543"
+  merge_commit: "7180185746652173871e0f2ecf6532b94850d690"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+
+config_edits:
+  - path: CLAUDE.md
+    tier: 1
+    gold_added: "## Who is reading this file?\n\nThis project ships an autonomous executor (Pilot) that runs Claude Code\nagainst this very repo to implement tickets. That means this `CLAUDE.md`\nis read by two very different kinds of sessions:\n\n1. **Pilot-executor sessions** — spawned by `pilot start` to implement a\n   specific GitHub issue. The prompt describes a concrete task and expects\n   code changes, a commit, and a PR. **In these sessions, YOU ARE Pilot.\n   Implement the task directly. The \"Navigator + Pilot pipeline\" rules in\n   the next section DO NOT apply — you are the execution leg of that\n   pipeline.** Signals you're in this mode:\n   - Prompt begins with `GitHub Issue #NNN:` or `Task:`\n   - No interactive user is following up\n   - CWD is inside a pilot worktree or a branch named `pilot/GH-*`\n2. **Interactive dev sessions** — a human developer is planning or\n   reviewing work on the Pilot project itself. In these, follow the\n   Navigator + Pilot pipeline below.\n\nWhen in doubt, look at the incoming prompt: if it hands you a specific\ntask with file paths and expected outputs, implement it. If it's a human\nasking open-ended questions about the project, plan via Navigator.\n\n## ⚠️ WORKFLOW: Navigator + Pilot Pipeline (interactive sessions only)\n\n**If this is an interactive dev session**, use Navigator to plan and Pilot\nto execute:\n### Rules (interactive sessions)\n- ❌ In *interactive* sessions, do not write code directly — defer to\n  Pilot so the knowledge graph and quality gates run\n- ❌ Do not make commits manually from an interactive planning session\n- ❌ Do not create PRs manually from an interactive planning session\n\nPilot-executor sessions are the exception: they MUST write code, commit,\nand push — that's their entire job."
+    gold_removed: ''

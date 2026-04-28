@@ -1,0 +1,24 @@
+version: "2.0"
+
+task:
+  name: cc-sdd-fix-correct-path-separator-to
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: gotalab/cc-sdd
+  pr: 169
+  base_commit: "dcbd81d0178ad43ffe271e5b56e9d9121a154de9"
+  merge_commit: "3094379867b17ef5150c499e9b89abc00fc9309f"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in tools/cc-sdd/templates/agents/windsurf-skills/docs/AGENTS.md."
+
+config_edits:
+  - path: tools/cc-sdd/templates/agents/windsurf-skills/docs/AGENTS.md
+    tier: 1
+    gold_added: Skills are located in `.windsurf/skills/kiro-*/SKILL.md`
+    gold_removed: ''

@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: liam-chore-simplify-claudemd-documentation
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: liam-hq/liam
+  pr: 3505
+  base_commit: "3dbaa104e97783866c4b296d6a7d698ad0ec8b73"
+  merge_commit: "4dd66e330ccc2cef7d168091ff4e8f7b5c8dbe03"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+
+config_edits:
+  - path: CLAUDE.md
+    tier: 1
+    gold_added: "- pnpm dev - Start dev servers\n- cd frontend/apps/app && pnpm dev - Start dev server for specific package\n- pnpm build - Build all packages\n- pnpm lint - Run linting and formatting\n- pnpm test - Run tests\n- pnpm fmt - Run format code\n### App-specific Commands\n````bash\npnpm --filter @liam-hq/app dev\n# Format code\npnpm --filter @liam-hq/agent fmt\n# Test\npnpm --filter @liam-hq/agent test\nFor database migration and type generation workflows, see @docs/migrationOpsContext.md.\n\n\n- **Frontend**: React 19, Next.js 15, TypeScript\n### Core Principle: **Less is more**\n\nKeep every implementation as small and obvious as possible.\n\n\n- **Let the code speak** – If you need a multi-paragraph comment, refactor until intent is obvious\n\n\n  if (!userId) console.warn(\"Using generated ID\"); // Extra handling\n  return db.save(id, data);\n  return db.save(userId, data); // Simple and clear\n````\n\n\n\n\n\n\n- [`docs/langgraph/README.md`](docs/langgraph/README.md) - LangGraph.js complete guide"
+    gold_removed: ''

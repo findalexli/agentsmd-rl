@@ -1,0 +1,103 @@
+version: "2.0"
+
+task:
+  name: codeflash-docs-improve-claude-rules-based
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: codeflash-ai/codeflash
+  pr: 1851
+  base_commit: "e5980c1f2a44de5fe7b34612a74af26fc396e244"
+  merge_commit: "4822d1a8909c98492e837eb5ab4936a74546153d"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/rules/code-style.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/rules/code-style.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/rules/code-style.md."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/rules/git.md."
+  - id: signal_04
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/rules/git.md."
+  - id: signal_05
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/rules/git.md."
+  - id: signal_06
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/rules/testing.md."
+  - id: signal_07
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/rules/testing.md."
+  - id: signal_08
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_09
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_10
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+
+config_edits:
+  - path: .claude/rules/code-style.md
+    tier: 1
+    gold_added: '- **Docstrings**: Do not add docstrings to new or changed code unless the user explicitly asks for them — not even one-liners. The codebase intentionally keeps functions self-documenting through clear naming and type annotations
+
+      - **Types**: Match the type annotation style of surrounding code — the codebase uses annotations, so add them in new code
+
+      - **Verification**: Use `uv run prek` to verify code — it handles ruff, ty, mypy in one pass. Don''t run `ruff`, `mypy`, or `python -c "import ..."` separately; `prek` is the single verification command'
+    gold_removed: ''
+  - path: .claude/rules/git.md
+    tier: 1
+    gold_added: '## Commits
+
+      - Never commit, amend, or push without explicit permission
+
+      - Don''t commit intermediate states — wait until the full implementation is complete, reviewed, and explicitly approved before committing. If the user corrects direction mid-implementation, incorporate the correction before any commit
+
+      - Always create a new branch from `main` before starting any new work — never commit directly to `main` or reuse an existing feature branch for unrelated changes
+
+      - Merge for simple syncs, rebase when branches have diverged significantly
+
+      - When committing to an external/third-party repo, follow that repo''s own conventions for versioning, changelog, and CI
+
+
+      ## Pull Requests
+
+      - PR titles should use conventional format
+
+      - Keep the PR body short and straight to the point
+
+      - If related to a Linear issue, include `CF-#` in the body
+
+      - Branch naming: `cf-#-title` (lowercase, hyphenated), no other prefixes/suffixes'
+    gold_removed: ''
+  - path: .claude/rules/testing.md
+    tier: 1
+    gold_added: '- Use pytest''s `tmp_path` fixture for temp directories — do not use `tempfile.mkdtemp()`, `tempfile.TemporaryDirectory()`, or `NamedTemporaryFile`. Some existing tests still use `tempfile` but new tests must use `tmp_path`.
+
+      - Always call `.resolve()` on Path objects before passing them to functions under test — this ensures absolute paths and resolves symlinks. Example: `source_file = (tmp_path / "example.py").resolve()`'
+    gold_removed: ''
+  - path: CLAUDE.md
+    tier: 1
+    gold_added: "- **Bug fix workflow** — follow these steps in order, do not skip ahead:\n  1. Read the relevant code to understand the bug\n  2. Write a test that reproduces the bug (run it to confirm it fails)\n  3. Spawn subagents (using the Agent tool) to attempt the fix — each subagent should apply a fix and run the test to prove it passes\n  4. Review the subagent results, pick the best fix, and apply it\n  5. Never jump straight to writing a fix yourself — always go through steps 1-4"
+    gold_removed: ''

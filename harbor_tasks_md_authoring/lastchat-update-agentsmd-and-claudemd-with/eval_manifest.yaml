@@ -1,0 +1,36 @@
+version: "2.0"
+
+task:
+  name: lastchat-update-agentsmd-and-claudemd-with
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: Cocolalilal/LastChat
+  pr: 25
+  base_commit: "7cac6ef01691762ea881f9058245db2c104726af"
+  merge_commit: "347f8b47aa5ad3fcc9b16ff1ddb5f60bfb4ef7e4"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+
+config_edits:
+  - path: AGENTS.md
+    tier: 1
+    gold_added: "# AGENTS.md\n\n## 1. Core Principles & Design Philosophy\n\n**App Name:** LastChat (Repo: RikkaHub)\n\n**The \"Fidget Toy\" Philosophy:**\nLastChat is not just a tool; it is designed to be a \"fidget toy\".\n-   **Feel:** Interactions must be playful, physics-based, and deeply satisfying.\n-   **Tactile Feedback:** High-quality haptics are non-negotiable. Every tap, toggle, and drag must have appropriate feedback.\n-   **Motion:** **Strictly NO Linear (Tween) animations.** All motion must use physics-based interpolators (springs) to convey momentum and weight.\n\n**Persona & Communication:**\n-   **Tone:** Informal, enthusiastic, and transparent. We celebrate \"glow-ups\" (improvements) and own our mistakes.\n-   **Security (Sentinel Persona):** \"Local First\". Privacy is paramount. No hardcoded secrets. Least Privilege. Validate all inputs.\n\n**Workflow:**\n-   **Iterative Polish:** We prefer iterative \"glow-ups\" of specific components over massive, risky refactors.\n-   **Robustness:** The app must be crash-resistant. `NullPointerException` is the enemy.\n\n## 2. Architecture & Codebase Structure\n\n### Modules\n-   `app/`: Main application module. Contains UI (Compose), Core Logic, DI, Data Layers, and Room Database.\n-   `ai/`: Abstraction layer for AI providers (OpenAI, Google, Anthropic).\n-   `common/`: Shared utilities and extensions.\n-   `highlight/`: Syntax highlighting features.\n-   `search/`: Search functionality (Exa, Tavily, Zhipu).\n-   `tts/`: Text-to-Speech implementation.\n\n### Key Technologies\n-   **Language:** Kotlin (uses experimental `kotlin.uuid.Uuid`).\n-   **UI:** Jetpack Compose (Material You 3 Expressive / Android 16).\n-   **Dependency Injection:** Koin.\n-   **Database:** Room.\n-   **Network:** OkHttp (with SSE support).\n-   **Serialization:** Kotlinx Serialization.\n\n## 3. Coding Standards & Best Practices\n\n### Performance & Concurrency\n-   **I/O Operations:** MUST be explicitly executed on `Dispatchers.IO`.\n    -   *Crucial:* `AppScope` defaults to `Dispatchers.Default`. Do not block the main thread or the default dispatcher with I/O.\n-   **Compose Optimization:**\n    -   **Lists:** Never pass mutable collections (`SnapshotStateList`) directly to `LazyColumn` items. Use `derivedStateOf` to pass simple, immutable states (e.g., `Boolean`) to prevent unnecessary recompositions.\n-   **AI Context:** Prioritize token economy and vector memory efficiency. Use caching.\n\n### Robustness & Safety\n-   **JSON Handling:**\n    -   **STRICTLY PROHIBITED:** Non-null assertions (`!!`) on JSON elements.\n    -   **REQUIRED:** Use safe type checks (`is JsonArray`, `jsonPrimitiveOrNull`).\n-   **State Management:**\n    -   When updating `StateFlow` in services (e.g., `ChatService`), **snapshot** the current value into a local variable before applying complex transformations to avoid race conditions.\n\n### Serialization\n-   Use `me.rerere.rikkahub.utils.JsonInstant` (or `JsonInstantPretty`).\n    -   *Note:* It ignores unknown keys but **does not** apply snake_case strategies. Field mapping must be manual for external APIs.\n\n## 4. UI/UX Guidelines\n\n### Design Language\n-   **Standard:** Material You 3 Expressive / Android 16.\n-   **Shapes:** Adhere strictly to `me.rerere.rikkahub.ui.theme.AppShapes`:\n    -   **Cards:** `AppShapes.CardLarge` (28.dp), `AppShapes.CardMedium` (24.dp).\n    -   **Buttons:** `AppShapes.ButtonPill` (50%).\n\n### Haptics (Critical)\n-   **Library:** Use the custom `PremiumHaptics` wrapper.\n    -   `import me.rerere.rikkahub.ui.hooks.rememberPremiumHaptics`\n    -   `import me.rerere.rikkahub.ui.hooks.HapticPattern`\n-   **Usage:**\n    -   **Do not** use `LocalHapticFeedback`.\n    -   **Interactive Elements:** Buttons (like `BackButton`) must scale down to `0.85f` on press and trigger `HapticPattern.Pop`.\n    -   **Patterns:**\n        -   Click/Toggle: `HapticPattern.Pop`\n        -   Heavy Action/Drop: `HapticPattern.Thud`\n        -   Success: `HapticPattern.Success`\n\n### Animation\n-   **Standard Spec:** `spring(dampingRatio = 0.5f, stiffness = 400f)`\n-   **Bouncy/Clicky Spec:** `spring(dampingRatio = 0.6f, stiffness = 300f)`\n-   **Prohibited:** `tween` or linear animations.\n\n## 5. Specific Feature Guidelines\n\n### RAG & Embeddings\n-   **Persistence:** Embeddings are stored in source entities (`MemoryEntity`, `ChatEpisodeEntity`) **AND** `EmbeddingCacheDAO`.\n-   **Sync:** Operations (add/update/delete) must synchronize both stores.\n-   **Retrieval:** Always prefer existing entity embeddings over re-computation.\n\n### Documentation\n-   **Bolt's Journal:** Record significant performance learnings or critical insights in `.jules/bolt.md` following the existing format.\n\n## 6. Testing & Operations\n-   **Unit Tests:** Place in `src/test`. Cover parsing and logic.\n-   **Instrumented Tests:** Place in `src/androidTest`. Cover flows.\n-   **Commit Guidelines:** Use Conventional Commits (`feat:`, `fix:`, `chore:`).\n-   **Language Support:** Do not submit new languages unless explicitly requested."
+    gold_removed: ''
+  - path: CLAUDE.md
+    tier: 1
+    gold_added: ''
+    gold_removed: ''

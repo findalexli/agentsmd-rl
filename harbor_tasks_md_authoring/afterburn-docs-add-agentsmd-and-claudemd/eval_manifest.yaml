@@ -1,0 +1,79 @@
+version: "2.0"
+
+task:
+  name: afterburn-docs-add-agentsmd-and-claudemd
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: coreos/afterburn
+  pr: 1271
+  base_commit: "033fa45071e3096f039d6e725da7d13afb6ab9b2"
+  merge_commit: "ef3d69cabddb9665081ea680a26fffe43125f071"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_04
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_05
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+
+config_edits:
+  - path: AGENTS.md
+    tier: 1
+    gold_added: "# Afterburn\n\nOne-shot agent for cloud-like platforms. Retrieves instance metadata (attributes, SSH keys, hostname, network config) from provider-specific endpoints and applies it to the local system. Used on Fedora CoreOS and similar immutable Linux distributions.\n\n## Tech Stack\n\n- **Language**: Rust (edition 2021, MSRV 1.84.1)\n- **CLI**: clap v4 (derive)\n- **HTTP**: reqwest (blocking)\n- **Serialization**: serde, serde_json, serde_yaml, serde-xml-rs\n- **Logging**: slog (structured logging)\n- **Error Handling**: anyhow\n- **Testing**: Built-in #[test] + mockito for HTTP mocking\n- **Build**: Cargo + GNU Make\n- **Packaging**: RPM (Fedora)\n\n## Architecture\n\n```\nsrc/\n  main.rs              # Entry point\n  cli/                 # CLI argument parsing (clap derive)\n  metadata.rs          # Top-level provider dispatch\n  network.rs           # Network interface/config types\n  providers/           # Cloud provider implementations (one subdir each)\n    mod.rs             # MetadataProvider trait definition\n    aws/ gcp/ microsoft/ openstack/ ...  # 22 providers\n  retry/               # HTTP retry/client logic\n  util/                # Utilities (cmdline, DHCP, etc.)\ndracut/30afterburn/    # Dracut initramfs module + systemd units\nsystemd/               # Systemd service unit templates\ntests/\n  fixtures/            # Test fixture data (JSON/YAML metadata)\n  tmt/                 # TMT integration test plans\ndocs/                  # Jekyll documentation (GitHub Pages)\n```\n\nEach provider implements the `MetadataProvider` trait (`src/providers/mod.rs`) with default no-op methods for: `attributes()`, `hostname()`, `ssh_keys()`, `networks()`, `boot_checkin()`, etc.\n\n## Build Commands\n\n- `make` - Build systemd units + `cargo build --release`\n- `make test` - `cargo test --all-targets --release`\n- `make fmt` - `cargo fmt -- --check -l`\n- `make lint` - `cargo clippy --all-targets -- -D warnings`\n- `make validate-fixtures` - Validate test fixtures against upstream schemas\n- `make install` - Install binary, systemd units, and dracut modules\n\n## Code Style\n\n- Default `rustfmt` formatting (no custom config)\n- `clippy` with `-D warnings` (all warnings are errors)\n- Apache 2.0 license headers at top of source files\n- `slog` for logging (not `log` or `tracing`)\n- `anyhow` with `.context()` for error handling\n- Module organization: `mod.rs` pattern for provider directories\n\n## Testing\n\n- **Unit tests**: Inline `#[cfg(test)] mod tests` blocks within source files\n- **Mock tests**: Separate `mock_tests.rs` per provider using `mockito` for HTTP mocking\n- **Fixture tests**: `tests.rs` files loading data from `tests/fixtures/` (kubevirt, proxmoxve)\n- **Fixture validation**: `python3 tests/fixtures/validate.py` checks against upstream schemas\n- Run `cargo test --all-targets` before submitting changes\n\n## Commit Conventions\n\n**Format**: `<subsystem>: <What changed>`\n\nExamples:\n- `kubevirt: Support static gateway and DNS with DHCP`\n- `microsoft/azure: Fix SharedConfig parsing of XML attributes`\n- `docs/release-notes: update for release 5.10.0`\n- `cargo: Afterburn release 5.10.0`\n\n**Style**: Subject max 70 chars, body wrapped at 80 chars. Imperative tense preferred. Lowercase subsystem, capitalized description.\n\n## Important Rules\n\n- **Do not edit CI workflows** (`.github/workflows/*.yml`, `.copr/Makefile`) -- synced from `coreos/repo-templates`\n- **Every PR must update `docs/release-notes.md`** (enforced by CI; use `skip-notes` label to override)\n- **DCO required**: Contributors agree to the Developer Certificate of Origin\n- **Fork-and-PR workflow** from topic branches based on `main`\n- Release commits: `cargo: Afterburn release {{version}}` (signed)\n\n## Resources\n\n- [Supported platforms](docs/platforms.md)\n- [Contributing guide](docs/contributing.md)\n- [Development docs](docs/development.md)\n- [Attributes reference](docs/usage/attributes.md)"
+    gold_removed: ''
+  - path: CLAUDE.md
+    tier: 1
+    gold_added: '@AGENTS.md
+
+
+      ## Claude Code Specific Workflows
+
+
+      ### Testing
+
+
+      Run before submitting changes:
+
+      ```
+
+      cargo test --all-targets
+
+      cargo clippy --all-targets -- -D warnings
+
+      cargo fmt -- --check -l
+
+      ```
+
+
+      ### Adding a New Provider
+
+
+      Each provider lives in `src/providers/<name>/` and implements the `MetadataProvider` trait from `src/providers/mod.rs`. See existing providers (e.g., `src/providers/hetzner/`) for the pattern. Register new providers in `src/metadata.rs`.
+
+
+      ### CI Files
+
+
+      Do NOT modify `.github/workflows/*.yml` or `.copr/Makefile` -- these are synced from `coreos/repo-templates`.'
+    gold_removed: ''

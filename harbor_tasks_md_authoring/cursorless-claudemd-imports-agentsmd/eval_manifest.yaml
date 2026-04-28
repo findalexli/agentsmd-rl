@@ -1,0 +1,36 @@
+version: "2.0"
+
+task:
+  name: cursorless-claudemd-imports-agentsmd
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: cursorless-dev/cursorless
+  pr: 3165
+  base_commit: "db6b1edf8c2191f71a2e7584d697d501ae660503"
+  merge_commit: "f7b9637d1c9376795a9cd460496a43d1773cd574"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+
+config_edits:
+  - path: AGENTS.md
+    tier: 1
+    gold_added: "## Documentation Structure\n\n- Main documentation is in `/packages/cursorless-org-docs/src/docs/user/README.md`\n- Spoken forms are defined in `/cursorless-talon/src/spoken_forms.json`\n- Contributing documentation is in `/packages/cursorless-org-docs/src/docs/contributing/`\n\n## Project Organization\n\n- Main extension code is in `/packages/cursorless-vscode/`\n- Engine code is in `/packages/cursorless-engine/`\n- Tests are in `data/fixtures/recorded/`\n- Language-specific parsing is defined in the `queries/*.scm` files\n\n## Build and Test\n\n- Always run lint and typecheck when making changes:\n  - `pnpm run lint`\n  - `pnpm run typecheck`\n- Tests can be run with:\n  - `pnpm test`\n\n## Documentation Conventions\n\nWhen documenting actions or modifiers:\n\n- Include a brief description of what the item does\n- Include the format/syntax\n- Include at least one example\n- For versatile actions like `drink`, `pour`, `drop`, `float`, and `puff`, explain their behavior with different scope types\n- Always document special behaviors with different scope types\n\n## Implementation Notes\n\n- Many actions (`drop`, `float`, `puff`) work with both line and non-line targets\n- Always check test fixtures in `/data/fixtures/recorded/` to understand behavior\n- Implementation for many actions is in `/packages/cursorless-engine/src/actions/`\n\n\n## Pull Request Guidelines\n\n- Any feedback should be addressed in code or replied to\n- Tests should be included for new functionality\n- Documentation should be updated to reflect changes\n- Make sure changes are consistent with the project architecture"
+    gold_removed: ''
+  - path: CLAUDE.md
+    tier: 1
+    gold_added: ''
+    gold_removed: ''

@@ -1,0 +1,63 @@
+version: "2.0"
+
+task:
+  name: uportal-docsagents-align-agentsmd-to-java
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: uPortal-Project/uPortal
+  pr: 2947
+  base_commit: "eeff1083a8bfee9bc3c422ead996e41a65ff99d5"
+  merge_commit: "6ddf2c94fb534e1893e86f4cdf47b786532e1a27"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+
+config_edits:
+  - path: AGENTS.md
+    tier: 1
+    gold_added: 'This project uses [SDKMAN](https://sdkman.io/) to manage Java versions. uPortal and uPortal-start both require **Java 11**. Common commands:
+
+      # Install Java 11 (required for uPortal and uPortal-start)
+
+      sdk install java 11.0.30-amzn
+
+      sdk use java 11.0.30-amzn
+
+      sdk default java 11.0.30-amzn
+
+      Each repo has a `.sdkmanrc` that pins the expected version — `sdk env` inside the repo auto-activates it.
+
+      | `./gradlew install` fails | Java version mismatch | Use `sdk use java 11.0.30-amzn` |
+
+      Source compiles under Java 11, so Java 9–11 language features and APIs (`var`, `List.of()`, `Map.of()`, `Optional.isEmpty()`, `String.isBlank()`, etc.) are all fair game. The ban line is **Java 12 and later**.
+
+
+      | Switch expressions with `->` | Java 14+ | Use classic `switch` statements |
+
+      | Text blocks (`"""..."""`) | Java 15+ | Use concatenated string literals |
+
+      | Records | Java 16+ | Use regular classes |
+
+      | Pattern matching for `instanceof` | Java 16+ | Use classic `instanceof` + cast |
+
+      | Sealed classes, `non-sealed`, `permits` | Java 17+ | Use regular classes with package-private constructors |
+
+      | Pattern matching for `switch` | Java 21+ | Use classic `switch` statements |
+
+      [ ] No Java 12+ language features or APIs used
+
+      - 🚫 **Never do:** Guess at requirements. Add features that weren''t asked for. "Improve" code adjacent to your change. Use Java 12+ features or APIs. Commit secrets.'
+    gold_removed: ''

@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: mnelab-add-agentsmd
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: cbrnr/mnelab
+  pr: 614
+  base_commit: "9077a0071773e4bf3688b83ce7fe6a0c8914ca9c"
+  merge_commit: "5034b0f76b46ff4db3f244c283d016f6b1650df2"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+
+config_edits:
+  - path: AGENTS.md
+    tier: 1
+    gold_added: "# AGENTS.md\n\nGuidelines for AI coding agents working on this repository.\n\n## Project setup\n\n- This project uses [uv](https://docs.astral.sh/uv/) for package and environment management.\n- Install dependencies with `uv sync --all-groups --all-extras`.\n- Run the app with `uv run mnelab`.\n- Run tests with `uv run pytest`.\n\n## Code style\n\n- Formatting is enforced by [Ruff](https://docs.astral.sh/ruff/). Run both of the following before committing:\n  ```\n  ruff check --select I --fix\n  ruff format\n  ```\n- Line length is 88 characters (the default). This limit applies to all code, including docstrings.\n- Docstrings follow [NumPy style](https://numpydoc.readthedocs.io/en/latest/format.html), but use standard Markdown syntax instead of reStructuredText. In particular, inline code uses single backticks (`` `x` ``), not double backticks (` ``x`` `).\n- Inline comments should start with a lower-case letter and be a single sentence where possible.\n\n## Changelog\n\nEvery PR must include an entry in the `[UNRELEASED]` section of [CHANGELOG.md](CHANGELOG.md). Add it under the appropriate subsection (`### ✨ Added`, `### \U0001F527 Fixed`, `### \U0001F300 Changed`, or `### \U0001F5D1️ Removed`). Follow the existing style: a single sentence starting with a capital letter, followed by the PR link and author in parentheses, e.g.:\n\n```\n- Add support for XYZ ([#123](https://github.com/cbrnr/mnelab/pull/123) by [Your Name](https://github.com/yourname))\n```\n\n## Commit messages\n\n- Use the imperative mood and start with a capital letter (e.g., `Fix crash when loading XDF files`).\n- Keep the subject line concise (72 characters or fewer)."
+    gold_removed: ''

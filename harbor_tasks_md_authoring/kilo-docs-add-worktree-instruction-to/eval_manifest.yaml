@@ -1,0 +1,24 @@
+version: "2.0"
+
+task:
+  name: kilo-docs-add-worktree-instruction-to
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: Kilo-Org/kilo
+  pr: 508
+  base_commit: "4b09f7f2d194be30007eb05df75bb98f675d1a14"
+  merge_commit: "ecd764be5856332a9118ae25311b582368fe0938"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+
+config_edits:
+  - path: AGENTS.md
+    tier: 1
+    gold_added: '- You may be running in a git worktree. All changes must be made in your current working directory — never modify files in the main repo checkout.'
+    gold_removed: ''

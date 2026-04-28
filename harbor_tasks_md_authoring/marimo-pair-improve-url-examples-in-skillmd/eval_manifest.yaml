@@ -1,0 +1,55 @@
+version: "2.0"
+
+task:
+  name: marimo-pair-improve-url-examples-in-skillmd
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: marimo-team/marimo-pair
+  pr: 23
+  base_commit: "fafeb8eea79c0fb4c019aa05643ad305c44cb68d"
+  merge_commit: "9fe05bf1b55b88b072ca5b9e735bc25d050b5080"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in SKILL.md."
+
+config_edits:
+  - path: SKILL.md
+    tier: 1
+    gold_added: '| Execute code (by URL) | `bash scripts/execute-code.sh --url http://localhost:2718 -c "code"` | same (with `url` param) |
+
+
+      Scripts auto-discover sessions from the local server registry. Use
+
+      `--port` to target a specific server when multiple are running,
+
+      `--session` to target a specific session when multiple notebooks are
+
+      open on the same server, or `--url` to skip discovery and connect to a
+
+      server by URL (e.g. `--url http://localhost:2718`). Set the
+
+      `MARIMO_TOKEN` env var to authenticate when the server has token auth
+
+      enabled (`--token` flag also works but exposes the token in process
+
+      listings). If the server was started with `--mcp`, you''ll have MCP tools
+
+      available as an alternative.
+
+      # target a specific port (skips auto-selection when multiple servers run)
+
+      bash scripts/execute-code.sh --port 2718 -c "1 + 1"'
+    gold_removed: ''

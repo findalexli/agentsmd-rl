@@ -1,0 +1,234 @@
+version: "2.0"
+
+task:
+  name: gum-improve-claude-skills
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: vchelaru/Gum
+  pr: 2262
+  base_commit: "4e1ab5472805e54a897f40593f35ba3852a0bf4b"
+  merge_commit: "5314a0cb2c88536d463092047e9d63c60c588183"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/gum-property-assignment/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/gum-tool-plugins/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/gum-tool-plugins/SKILL.md."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/gum-tool-plugins/SKILL.md."
+  - id: signal_04
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/gum-tool-save-classes/SKILL.md."
+  - id: signal_05
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/gum-tool-selection/SKILL.md."
+  - id: signal_06
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/gum-tool-selection/SKILL.md."
+  - id: signal_07
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/gum-tool-selection/SKILL.md."
+  - id: signal_08
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/gum-tool-undo/SKILL.md."
+  - id: signal_09
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/gum-tool-variable-grid/SKILL.md."
+  - id: signal_10
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/gum-tool-variable-grid/SKILL.md."
+  - id: signal_11
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/gum-tool-variable-grid/SKILL.md."
+
+config_edits:
+  - path: .claude/skills/gum-property-assignment/SKILL.md
+    tier: 1
+    gold_added: 'name: gum-property-assignment'
+    gold_removed: ''
+  - path: .claude/skills/gum-tool-plugins/SKILL.md
+    tier: 1
+    gold_added: '---
+
+      name: gum-tool-plugins
+
+      description: Reference guide for the Gum tool''s plugin system. Load this when working on plugin registration, PluginBase, InternalPlugin, PluginManager, plugin events, or finding which internal plugin owns a feature.
+
+      ---
+
+
+      # Gum Tool Plugin System Reference
+
+
+      ## Architecture
+
+
+      The plugin system uses MEF (Managed Extensibility Framework) for discovery. All plugins are marked with `[Export(typeof(PluginBase))]` and auto-discovered at startup.
+
+
+      ### Class Hierarchy
+
+
+      - `IPlugin` — minimal interface: `StartUp()`, `ShutDown(PluginShutDownReason)`, `FriendlyName`, `UniqueId`, `Version`
+
+      - `PluginBase` — concrete base with all event declarations and pre-injected helper services (`_guiCommands`, `_fileCommands`, `_tabManager`, `_menuStripManager`, `_dialogService`)
+
+      - `InternalPlugin` — base for internal plugins; provides default `ShutDown()` returning `false` and auto-generates `FriendlyName`
+
+
+      ### Internal vs. External
+
+
+      **Internal plugins** live in `Gum/Plugins/InternalPlugins/`, inherit from `InternalPlugin`, and are compiled into Gum.exe.
+
+
+      **External plugins** are separate .dlls loaded from `[GumExecutableDirectory]\Plugins\` at runtime. They inherit from `PluginBase` directly.
+
+
+      The type check `is InternalPlugin` is used at runtime — internal plugins receive events before external ones.
+
+
+      ## Key Files
+
+
+      | File | Purpose |
+
+      |------|---------|
+
+      | `Gum/Plugins/BaseClasses/PluginBase.cs` | All event declarations + helper services |
+
+      | `Gum/Plugins/BaseClasses/InternalPlugin.cs` | Base for internal plugins |
+
+      | `Gum/Plugins/PluginManager.cs` | Loads plugins via MEF, routes all events via `Call*` methods |
+
+      | `Gum/Plugins/PluginContainer.cs` | Wraps each plugin; tracks enabled state and failure info |
+
+      | `Gum/Plugins/InternalPlugins/` | All built-in plugin subfolders |
+
+
+      ## Plugin Lifecycle
+
+
+      `StartUp()` is called once on load — subscribe to events here. `ShutDown(PluginShutDownReason)` is called on unload. Service dependencies are injected via `Locator.GetRequiredService<T>()` (typically called in the constructor, not `StartUp`). If any plugin handler throws, `PluginContainer` disables that plugin for the rest of the session.
+
+
+      ## Internal Plugin Map
+
+
+      Each internal plugin lives in `Gum/Plugins/InternalPlugins/[FeatureName]/` with a `Main[FeatureName]Plugin.cs` entry point.
+
+
+      | Feature | Plugin Folder |
+
+      |---------|--------------|
+
+      | Element tree view | `TreeView/` |
+
+      | Variables/Properties tab | `VariableGrid/` |
+
+      | State panel | `StatePlugin/` |
+
+      | Behaviors panel | `Behaviors/` |
+
+      | Output panel | `Output/` |
+
+      | Alignment controls | `AlignmentButtons/` |
+
+      | Menu strip | `MenuStripPlugin/` |
+
+      | Undo/History | `Undos/` |
+
+      | Delete dialog | `Delete/` |
+
+
+      ## Common Events
+
+
+      All events are defined on `PluginBase` — subscribe in `StartUp()`. The full list is in `PluginBase.cs`. Most-used categories:
+
+
+      - **Selection**: `ElementSelected`, `InstanceSelected`, `ReactToStateSaveSelected`, `BehaviorSelected`, `TreeNodeSelected`
+
+      - **Variable changes**: `VariableSet`, `VariableSetLate`
+
+      - **Element lifecycle**: `ElementAdd`, `ElementDelete`, `ElementRename`, `ElementDuplicate`, `ElementReloaded`
+
+      - **Instance lifecycle**: `InstanceAdd`, `InstanceDelete`, `InstanceRename`, `InstanceReordered`
+
+      - **Project**: `ProjectLoad`, `BeforeProjectSave`, `AfterProjectSave`
+
+      - **Wireframe**: `WireframeRefreshed`, `BeforeRender`, `AfterRender`, `CameraChanged`
+
+
+      **Query events** (plugins return values to intercept behavior): `TryHandleDelete`, `GetSelectedIpsos`, `VariableExcluded`, `GetDeleteStateResponse`, `CreateGraphicalUiElement`
+
+
+      ## Non-Obvious Behaviors
+
+
+      **Event ordering**: `PluginManager` sorts with `OrderBy(!(item is InternalPlugin))`, so internal plugins always handle events before external ones.
+
+
+      **VariableSet vs. VariableSetLate**: Two events for the same change. Use `VariableSet` to respond to a change; use `VariableSetLate` for cleanup/refresh that should run after all other plugins have responded.
+
+
+      **Finding which plugin owns a feature**: Search `StartUp()` methods for the event subscription. E.g., to find what handles `VariableSet`, grep for `VariableSet +=` in `InternalPlugins/`. The subscribing plugin is the owner.'
+    gold_removed: ''
+  - path: .claude/skills/gum-tool-save-classes/SKILL.md
+    tier: 1
+    gold_added: 'name: gum-tool-save-classes'
+    gold_removed: ''
+  - path: .claude/skills/gum-tool-selection/SKILL.md
+    tier: 1
+    gold_added: 'name: gum-tool-selection
+
+      `HandlePush` returns `bool`: `true` means this handler claims the gesture and sets `IsActive = true`; `false` passes to the next handler or the rectangle selector.
+
+      `IsActive = true` signals that a handler owns the current drag gesture. It suppresses the rectangle selector — `SelectionManager` passes `isHandlerActive = true` to `RectangleSelector.HandleDrag`, which returns immediately. Must be set in `HandlePush` when claiming a gesture and reset in `OnRelease`.
+
+      The rectangle selector activates on drag when no handler is active and the cursor is not over the element body (or Shift is held for additive selection), after a minimum drag distance is exceeded. `SelectionManager` passes `isHandlerActive` based on whether any handler''s `IsActive` is `true`.
+
+      `GetElementsInRectangle()` finds visible elements whose bounds intersect the drag rectangle, skipping `ScreenSave` elements and instances where `Locked == true`. On release, it either replaces the selection or toggles additively (Shift held).
+
+      `InstanceSave.Locked` is defined in `GumDataTypes/InstanceSave.cs`. The helper `EditorContext.IsSelectionLocked()` (in `Tool/EditorTabPlugin_XNA/Editors/EditorContext.cs`) returns `true` when the selected instance is locked.
+
+      When a locked instance is selected and the cursor is over one of its polygon verts, `PolygonPointInputHandler.HandlePush` must: detect the vert, set `IsActive = true` (to suppress the rectangle selector), but not set `_grabbedIndex` (so `OnDrag` is a no-op), and return `true` to consume the push. Without setting `IsActive`, the rectangle selector activates on drag because the cursor over a vert is typically not "over body".
+
+      `LockedSelectionVisual` draws a dashed bounding rectangle for a locked selected instance, replacing the resize handles that would normally appear. It shows regardless of the instance''s `Visible` property. Registered in `StandardWireframeEditor`; not used in `PolygonWireframeEditor`.
+
+      Locked instances cannot be canvas-clicked or rectangle-selected, but **can always be selected via the tree view** — the only way to select a locked instance to unlock it. Multi-selection of mixed locked/unlocked is supported; transforms apply only to unlocked members.
+
+      Tracked in `SelectionManager.ProcessInputForSelection()` — set to `true` when the selected instance is locked and the cursor is over the body. Used in `ProcessRectangleSelection()` to prevent deselection when the user releases the mouse over a locked body without dragging.'
+    gold_removed: ''
+  - path: .claude/skills/gum-tool-undo/SKILL.md
+    tier: 1
+    gold_added: 'name: gum-tool-undo'
+    gold_removed: ''
+  - path: .claude/skills/gum-tool-variable-grid/SKILL.md
+    tier: 1
+    gold_added: "---\nname: gum-tool-variable-grid\ndescription: Reference guide for Gum's Variables tab and DataUiGrid system. Load this when working on the Variables tab, DataUiGrid control, MemberCategory, InstanceMember, category population, property grid refresh, or category expansion state persistence.\n---\n\n# Gum Variables Tab & DataUiGrid Reference\n\n## Overview\n\nThe **Variables tab** displays and edits properties of the selected element, instance, state, or behavior. Built on `DataUiGrid` (a WPF `ItemsControl` subclass) from the `WpfDataUi` library. Categories render as collapsible `Expander` sections.\n\n---\n\n## Architecture Layers\n\n```\n[User selects object]\n        ↓\n[MainVariableGridPlugin] (event subscription)\n        ↓\n[PropertyGridManager.RefreshDataGrid()]\n        ↓\n[ElementSaveDisplayer.GetCategories()]\n        ↓ (produces List<MemberCategory>)\n[DataUiGrid.SetCategories()]\n        ↓\n[WPF Expander per MemberCategory, rows per InstanceMember]\n```\n\n---\n\n## Key Files\n\n| Purpose | File Path |\n|---------|-----------|\n| DataUiGrid control | `WpfDataUi/DataUiGrid.cs` |\n| DataUiGrid XAML template | `WpfDataUi/Themes/Generic.xaml` |\n| MemberCategory / InstanceMember models | `WpfDataUi/DataTypes/` |\n| Gum-specific member subclass | `Gum/Plugins/InternalPlugins/VariableGrid/StateReferencingInstanceMember.cs` |\n| Plugin wiring selection events | `Gum/Plugins/InternalPlugins/VariableGrid/MainVariableGridPlugin.cs` |\n| Category population manager | `Gum/Plugins/InternalPlugins/VariableGrid/PropertyGridManager.cs` |\n| Category factory | `Gum/Plugins/InternalPlugins/VariableGrid/ElementSaveDisplayer.cs` |\n| Behavior categories | `Gum/Plugins/InternalPlugins/VariableGrid/BehaviorShowingLogic.cs` |\n| Host UserControl | `Gum/Plugins/InternalPlugins/VariableGrid/MainPropertyGrid.xaml(.cs)` |\n\n---\n\n## Non-Obvious Behaviors\n\n### SetCategories Expansion Preservation\n\n`DataUiGrid.SetCategories()` captures `{name → IsExpanded}` from existing categories, replaces the list, then re-applies the saved values by name. Category collapse state persists across selection changes within a session. `IsExpanded` is `Mode=TwoWay` in the XAML template so user gestures write back to the model immediately.\n\n### Structural Rebuild vs. Partial Refresh\n\n`PropertyGridManager.RefreshDataGrid` tracks the previous display target (element, state, instances, behavior). If unchanged and `force=false`, it calls `Refresh()` to update values without recreating categories. If the target changed, it calls `SetCategories` with a fresh list from `ElementSaveDisplayer`. Pass `force: true` to always rebuild.\n\n### Multi-Select Path\n\nWhen multiple instances are selected, `SetMultipleCategoryLists` is used instead of `SetCategories`. `MultiSelectInstanceMember` wrappers coordinate synchronized edits across all selected instances and record a single undo after all values are set.\n\n### StateReferencingInstanceMember\n\nAll members in the Variables tab use `StateReferencingInstanceMember` (subclass of `InstanceMember`), not the generic reflection path. Its `IsReadOnly` returns `true` when `InstanceSave?.Locked == true`. Its `IsDefault` returns `true` when the value is absent from the selected state (not inherited from defaults).\n\n---\n\n## Refresh Trigger Flow\n\n```\nSelection changed\n  → MainVariableGridPlugin.Handle*Selected()\n  → PropertyGridManager.RefreshEntireGrid(force: true)\n  → RefreshDataGrid(...)\n     ├─ Target changed?\n     │   yes → ElementSaveDisplayer.GetCategories()\n     │          → DataUiGrid.SetCategories()     ← preserves IsExpanded by name\n     └─ Target same?\n             → DataUiGrid.Refresh()              ← only updates member values\n```\n\nVariable set by UI:\n```\nInstanceMember.AfterSetByUi\n  → StateReferencingInstanceMember.NotifyVariableLogic()\n  → PropertyGridManager.RefreshEntireGrid(force: false)\n  → DataUiGrid.Refresh()   (no structural rebuild needed)\n```\n\n---\n\n## Common Patterns\n\n### Making a category collapsed by default\n\nSet `IsExpanded = false` on the `MemberCategory` before passing to `SetCategories`. The first time the category appears it uses the incoming value; subsequent appearances restore the user's last state.\n\n### Forcing a full grid rebuild\n\nCall `PropertyGridManager.RefreshEntireGrid(force: true)`. The `force` flag bypasses the same-target optimization and always recreates categories."
+    gold_removed: ''
+  - path: .claude/skills/variable-grid/SKILL.md
+    tier: 1
+    gold_added: ''
+    gold_removed: ''

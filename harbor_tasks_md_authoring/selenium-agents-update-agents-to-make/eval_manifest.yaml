@@ -1,0 +1,277 @@
+version: "2.0"
+
+task:
+  name: selenium-agents-update-agents-to-make
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: SeleniumHQ/selenium
+  pr: 17366
+  base_commit: "a75eb73e6118e63c200c4d74b2df92c816580668"
+  merge_commit: "31ee1221d6cae9f6e5e686ae5a0258d6e4bd6dfc"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/copilot-instructions.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/copilot-instructions.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_04
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_05
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.local.md."
+  - id: signal_06
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_07
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in dotnet/AGENTS.md."
+  - id: signal_08
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in dotnet/AGENTS.md."
+  - id: signal_09
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in dotnet/AGENTS.md."
+  - id: signal_10
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in java/AGENTS.md."
+  - id: signal_11
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in java/AGENTS.md."
+  - id: signal_12
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in java/AGENTS.md."
+  - id: signal_13
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in javascript/selenium-webdriver/AGENTS.md."
+  - id: signal_14
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in javascript/selenium-webdriver/AGENTS.md."
+  - id: signal_15
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in javascript/selenium-webdriver/AGENTS.md."
+  - id: signal_16
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in py/AGENTS.md."
+  - id: signal_17
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in py/AGENTS.md."
+  - id: signal_18
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in py/AGENTS.md."
+  - id: signal_19
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in rb/AGENTS.md."
+  - id: signal_20
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in rb/AGENTS.md."
+  - id: signal_21
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in rb/AGENTS.md."
+  - id: signal_22
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in rust/AGENTS.md."
+  - id: signal_23
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in rust/AGENTS.md."
+  - id: signal_24
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in rust/AGENTS.md."
+
+config_edits:
+  - path: .github/copilot-instructions.md
+    tier: 1
+    gold_added: 'Always read AGENTS.md before answering.
+
+      After any code change, run or suggest running `./go format` to prevent CI failures from formatter checks.'
+    gold_removed: ''
+  - path: AGENTS.md
+    tier: 1
+    gold_added: '## Formatting
+
+      After making code changes, always run (or instruct the user to run):
+
+      ```
+
+      ./go format
+
+      ```
+
+      This invokes the Rake `:format` task, which:
+
+      - Runs `buildifier` on all Bazel (`BUILD`, `*.bzl`, `WORKSPACE`) files — always, for every change
+
+      - Runs `update_copyright` to add/refresh Apache license headers — always, for every change
+
+      - Runs formatters for all bindings by default (pass `-<lang>` flags to skip specific ones, e.g. `-java`)
+
+
+      `./go format` auto-fixes files in place. After running it, check `git diff` to see if any files were
+
+      modified — if so, those changes must be committed. CI runs `./go format` then fails if `git diff` is
+
+      non-empty, so un-formatted code will fail CI.
+
+      For stricter lint checks beyond formatting, use `./go lint`.
+
+
+      - Run or suggest running `./go format` before pushing to prevent CI failures'
+    gold_removed: ''
+  - path: CLAUDE.local.md
+    tier: 1
+    gold_added: '
+
+      After any code change, run or suggest running `./go format` to prevent CI failures from formatter checks.'
+    gold_removed: ''
+  - path: CLAUDE.md
+    tier: 1
+    gold_added: '
+
+      After any code change, run or suggest running `./go format` to prevent CI failures from formatter checks.'
+    gold_removed: ''
+  - path: dotnet/AGENTS.md
+    tier: 1
+    gold_added: '
+
+      ## Formatting
+
+      C# files are formatted with **`dotnet format`** (style + whitespace).
+
+      Run `./go format` after changes; it will auto-fix most violations.
+
+
+      Key rules enforced (from `dotnet/.editorconfig`):
+
+      - **Namespaces**: file-scoped (`namespace Foo.Bar;` not block-wrapped)
+
+      - **Using directives**: placed **outside** the namespace block; `System` namespaces sorted first
+
+      - **Braces**: Allman style — opening brace on its own line for all blocks
+
+      - **Spacing**: no space after cast, space after commas, space around binary operators
+
+      - Remove unnecessary `using` directives (IDE0005 treated as warning)'
+    gold_removed: ''
+  - path: java/AGENTS.md
+    tier: 1
+    gold_added: '
+
+      ## Formatting
+
+      Java files are formatted with **google-java-format** (Google Java Style Guide).
+
+      Run `./go format` after changes; it will auto-fix all style issues.
+
+
+      Key rules enforced:
+
+      - 2-space indentation (no tabs)
+
+      - Column limit: 100 characters
+
+      - Braces on the same line (K&R style), including single-statement bodies
+
+      - Imports: organized and sorted consistently'
+    gold_removed: ''
+  - path: javascript/selenium-webdriver/AGENTS.md
+    tier: 1
+    gold_added: '
+
+      ## Formatting
+
+
+      JavaScript files are formatted with **Prettier**.
+
+      Run `./go format` after changes; it will auto-fix all style issues.
+
+
+      Active Prettier config (`.prettierrc`):
+
+
+      - `printWidth`: **120** characters
+
+      - `singleQuote`: **true** (use `''` not `"`)
+
+      - `semi`: **false** (no semicolons)
+
+      - `trailingComma`: **"all"** (trailing commas everywhere ES5+ allows)
+
+      - `endOfLine`: **"lf"** (Unix line endings only)'
+    gold_removed: ''
+  - path: py/AGENTS.md
+    tier: 1
+    gold_added: "\n## Formatting\n\nPython files are formatted with **ruff format** and checked with **ruff check**.\nRun `./go format` after changes; it will auto-fix formatting. Then check `git diff` to see what changed.\nRun `./go lint` to also run linting (stricter).\n\nKey rules enforced (from `py/pyproject.toml`):\n- Line length: **120 characters**\n- Target version: Python 3.10+\n- Ruff lint rules active: `D, E, F, I, PT, UP, RUF, TID252`\n  - `I` = import ordering (imports must be sorted; `isort`-compatible)\n  - `UP` = use modern Python idioms (e.g. `X | None` instead of `Optional[X]`)\n  - `E/F` = pycodestyle / pyflakes errors (unused imports, undefined names, etc.)"
+    gold_removed: ''
+  - path: rb/AGENTS.md
+    tier: 1
+    gold_added: '
+
+      ## Formatting
+
+      Ruby files are formatted with **RuboCop** (target Ruby 3.2).
+
+      Run `./go format` after changes; it will auto-fix most violations (`-a` flag).
+
+
+      Key rules enforced (from `rb/.rubocop.yml`):
+
+      - No spaces inside hash literal braces: `{key: val}` not `{ key: val }`
+
+      - Line length limit applies (comments excluded); keep lines reasonably short
+
+      - RuboCop plugins active: `rubocop-performance`, `rubocop-rake`, `rubocop-rspec`
+
+      - Any violation at `Fatal` severity (`--fail-level F`) blocks CI'
+    gold_removed: ''
+  - path: rust/AGENTS.md
+    tier: 1
+    gold_added: '
+
+      ## Formatting
+
+      Rust files are formatted with **rustfmt** (standard Rust formatting, no custom config).
+
+      Run `./go format` after changes; it will auto-fix all style issues.
+
+
+      Key rules enforced:
+
+      - Standard Rust style (rustfmt defaults): 4-space indentation, 100-char line length
+
+      - `use` statements grouped and sorted per standard conventions'
+    gold_removed: ''

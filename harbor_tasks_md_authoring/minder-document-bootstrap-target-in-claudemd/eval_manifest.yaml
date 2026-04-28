@@ -1,0 +1,85 @@
+version: "2.0"
+
+task:
+  name: minder-document-bootstrap-target-in-claudemd
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: mindersec/minder
+  pr: 5947
+  base_commit: "68092f24ef5452a9ec11e059f82aee36be2ca107"
+  merge_commit: "bd8ef91d7d26d44c61e10916e62172bf473f5aa2"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+
+config_edits:
+  - path: CLAUDE.md
+    tier: 1
+    gold_added: '**Required tools:**
+
+      - OpenSSL (for key generation)
+
+
+      **Build tools (installed via `make bootstrap`):**
+
+      - protoc plugins (grpc-gateway, protoc-gen-go, etc.)
+
+      - mockgen (mock generation)
+
+      - yq (YAML processing)
+
+      - fga (OpenFGA CLI)
+
+      - helm-docs (Helm documentation)
+
+
+      **Runtime services (via Docker):**
+
+      - PostgreSQL (database)
+
+      - Keycloak (authentication)
+
+      - NATS (message queue)
+
+
+      ### Initial Setup
+
+
+      Before building or running Minder, install all build dependencies and initialize configuration:
+
+
+      ```bash
+
+      # Install build tools and initialize configuration
+
+      make bootstrap
+
+      ```
+
+
+      This command will:
+
+      - Install all Go-based build tools (sqlc, protoc plugins, mockgen, etc.)
+
+      - Create `config.yaml` and `server-config.yaml` from example templates (if they don''t exist)
+
+      - Generate encryption keys in `.ssh/` directory for token signing
+
+
+      **Note**: Run `make bootstrap` once after cloning the repository. You may need to run it again if build tool versions change.
+
+      make bootstrap      # Install build tools and initialize configuration (run once)'
+    gold_removed: ''

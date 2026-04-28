@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: unitsnet-add-claudemd-for-claude-code
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: angularsen/UnitsNet
+  pr: 1621
+  base_commit: "2add629ea9f469a7d179328fa58e140381c75f74"
+  merge_commit: "e04e7b8176a7c9deb9506714721e42fcbb2161fd"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+
+config_edits:
+  - path: CLAUDE.md
+    tier: 1
+    gold_added: "# CLAUDE.md\n\nThis file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.\n\n## Project Overview\n\nUnitsNet is a .NET library that provides strongly-typed physical units and quantities, enabling safe and intuitive unit conversions in code. The library uses code generation from JSON definitions to create type-safe APIs for over 130 physical quantities.\n\n## Key Commands\n\n### Build and Test\n- **Build project**: `build.bat` or `dotnet build UnitsNet.slnx`\n- **Build all targets** (including nanoFramework): `build-all-targets.bat`\n- **Run tests**: `test.bat` or `dotnet test UnitsNet.slnx`\n- **Run single test**: `dotnet test UnitsNet.Tests --filter \"FullyQualifiedName~TestClassName.TestMethodName\"`\n- **Clean artifacts**: `clean.bat`\n\n### Code Generation\n- **Generate code from JSON definitions**: `generate-code.bat` or `dotnet run --project CodeGen`\n  - Always run this after modifying any JSON files in `Common/UnitDefinitions/`\n  - The generator reads 131 JSON definition files and creates C# code\n\n### Development Workflow\n1. Modify unit definitions in `Common/UnitDefinitions/*.json`\n2. Run `generate-code.bat` to regenerate C# code\n3. Run `build.bat` to compile and test\n4. Use `test.bat` for isolated test runs\n\n## Code Architecture\n\n### Project Structure\n- **UnitsNet/**: Main library with quantity types and units\n  - `GeneratedCode/`: Auto-generated from JSON definitions (do not edit manually)\n  - `CustomCode/`: Hand-written code extending generated types\n- **UnitsNet.Tests/**: Comprehensive test suite\n- **CodeGen/**: Code generation tool that creates C# from JSON definitions\n- **Common/UnitDefinitions/**: 131 JSON files defining physical quantities\n- **UnitsNet.NumberExtensions/**: Extension methods for numeric types\n- **UnitsNet.Serialization.*/**: JSON.NET and System.Text.Json serialization support\n- **UnitsNet.NanoFramework/**: Support for embedded .NET nanoFramework\n\n### Code Generation Process\nThe project uses a sophisticated code generation system:\n1. JSON definitions in `Common/UnitDefinitions/` describe units, conversions, and localizations\n2. `CodeGen` project processes these to generate:\n   - Quantity types (e.g., `Length`, `Mass`)\n   - Unit enums (e.g., `LengthUnit`, `MassUnit`)\n   - Conversion logic and unit abbreviations\n3. Generated code goes to `*/GeneratedCode/` folders\n4. Custom code in `*/CustomCode/` extends generated types\n\n### Key Classes and Patterns\n- **IQuantity**: Base interface for all quantity types\n- **Quantity**: Static class for dynamic quantity operations\n- **UnitConverter**: Handles conversions between units\n- **QuantityParser/UnitParser**: Parse strings to quantities/units\n- **UnitsNetSetup**: Configuration singleton\n\n### Adding or Modifying Units\n1. Edit or create JSON file in `Common/UnitDefinitions/`\n2. Follow conversion function guidelines:\n   - Use multiplication for `FromUnitToBaseFunc`\n   - Use division for `FromBaseToUnitFunc`\n   - Prefer scientific notation (1e3, 1e-5)\n3. Run `generate-code.bat`\n4. Add tests if needed\n\n## Important Conventions\n\n### Coding Standards\n- Follow `.editorconfig` specifications\n- Use ReSharper settings in `UnitsNet.sln.DotSettings`\n- Treat warnings as errors (except obsolete warnings)\n- Add file headers to new files\n\n### Unit Definition Rules\n- Base units are chosen for each quantity (e.g., meter for Length)\n- All conversions go through the base unit\n- Use superscript in abbreviations: cm², m³\n- Compound units format: N·m (dot), km/h (slash)\n\n### Testing\n- Test class naming: `<Type>Tests`\n- Test method naming: `<method>_<condition>_<result>`\n- Tests accept error margin of 1E-5 for most units\n\n## Special Considerations\n\n### .NET nanoFramework Support\n- Separate projects for nanoFramework compatibility\n- Use `build-all-targets.bat` to include nanoFramework builds\n- Limited feature set compared to full .NET\n\n### Performance\n- Conversion functions are compiled to delegates for performance\n- All conversions go through base units (potential for small errors)\n- Precision goal is 1E-5 for most units\n\n### Localization\n- Unit abbreviations support multiple cultures\n- JSON definitions include translations for various languages\n- Default culture: Thread.CurrentCulture, fallback to en-US\n\n## Common Tasks\n\n### Find specific quantity or unit implementation\n- Quantity types: `UnitsNet/GeneratedCode/Quantities/*.g.cs`\n- Unit enums: `UnitsNet/GeneratedCode/Units/*.g.cs`\n- Custom extensions: `UnitsNet/CustomCode/Quantities/*.extra.cs`\n- Unit definitions: `Common/UnitDefinitions/*.json`\n\n### Debug code generation\n- Generator entry: `CodeGen/Program.cs`\n- Generator logic: `CodeGen/Generators/`\n- Enable verbose logging: Check Serilog configuration in Program.cs\n\n### Run performance benchmarks\n- Execute: `dotnet run -c Release --project UnitsNet.Benchmark`\n- Results saved to `Artifacts/` folder"
+    gold_removed: ''

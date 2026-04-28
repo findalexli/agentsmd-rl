@@ -1,0 +1,391 @@
+version: "2.0"
+
+task:
+  name: spotlight-chore-update-cursor-rules
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: getsentry/spotlight
+  pr: 1193
+  base_commit: "7287f4b641c26405c6c3c6b361b0ab63998940db"
+  merge_commit: "2492f5975419e36a97a6c9e5d8b8c38da5249821"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in packages/spotlight/.cursor/rules/overview.mdc."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in packages/spotlight/.cursor/rules/overview.mdc."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in packages/spotlight/.cursor/rules/overview.mdc."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in packages/spotlight/src/electron/.cursor/rules/electron.mdc."
+  - id: signal_04
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in packages/spotlight/src/electron/.cursor/rules/electron.mdc."
+  - id: signal_05
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in packages/spotlight/src/electron/.cursor/rules/electron.mdc."
+  - id: signal_06
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in packages/spotlight/src/server/.cursor/rules/server.mdc."
+  - id: signal_07
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in packages/spotlight/src/server/.cursor/rules/server.mdc."
+  - id: signal_08
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in packages/spotlight/src/server/.cursor/rules/server.mdc."
+  - id: signal_09
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in packages/spotlight/src/server/cli/.cursor/rules/cli.mdc."
+  - id: signal_10
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in packages/spotlight/src/server/cli/.cursor/rules/cli.mdc."
+  - id: signal_11
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in packages/spotlight/src/server/cli/.cursor/rules/cli.mdc."
+  - id: signal_12
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in packages/spotlight/src/server/mcp/.cursor/rules/mcp.mdc."
+  - id: signal_13
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in packages/spotlight/src/server/mcp/.cursor/rules/mcp.mdc."
+  - id: signal_14
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in packages/spotlight/src/server/mcp/.cursor/rules/mcp.mdc."
+  - id: signal_15
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in packages/spotlight/src/ui/.cursor/rules/ui.mdc."
+  - id: signal_16
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in packages/spotlight/src/ui/.cursor/rules/ui.mdc."
+  - id: signal_17
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in packages/spotlight/src/ui/.cursor/rules/ui.mdc."
+  - id: signal_18
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in packages/website/.cursor/rules/website.mdc."
+  - id: signal_19
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in packages/website/.cursor/rules/website.mdc."
+  - id: signal_20
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in packages/website/.cursor/rules/website.mdc."
+
+config_edits:
+  - path: .cursor/rules/.cursor/rules/routing.mdc
+    tier: 1
+    gold_added: ''
+    gold_removed: ''
+  - path: .cursor/rules/general-guidelines.mdc
+    tier: 1
+    gold_added: ''
+    gold_removed: ''
+  - path: packages/spotlight/.cursor/rules/overview.mdc
+    tier: 1
+    gold_added: '---
+
+      description: Overview of the Spotlight package - the main package containing UI, server, and Electron app
+
+      globs:
+
+      alwaysApply: true
+
+      ---
+
+
+      # Spotlight Package Overview
+
+
+      The `@spotlightjs/spotlight` package is a unified package containing the UI, server (sidecar), CLI, and Electron desktop application.
+
+
+      ## The `spotlight` CLI
+
+
+      Spotlight provides a CLI tool called `spotlight` that users run from the terminal. It''s the main way developers interact with Spotlight.
+
+
+      ### Available Commands
+
+
+      ```bash
+
+      # Run your app with Spotlight (wraps your process, sets env vars)
+
+      spotlight run # detects package.json and docker compose
+
+      spotlight run npm run dev
+
+      spotlight run docker compose up
+
+
+      # Start the sidecar server only (listens on port 8969)
+
+      spotlight
+
+      spotlight server
+
+      spotlight --port 3000
+
+
+      # Tail/stream events to terminal
+
+      spotlight tail                    # All events
+
+      spotlight tail errors             # Only errors
+
+      spotlight tail traces logs        # Multiple types
+
+      spotlight tail --format json      # Different output format
+
+
+      # Start MCP server for AI assistants (Cursor, Claude, etc.)
+
+      spotlight mcp
+
+
+      # Show help
+
+      spotlight help
+
+      spotlight --help
+
+      ```
+
+
+      ### Key Points
+
+
+      - `spotlight run <command>` - Most common usage. Wraps your application, auto-detects Docker Compose or package.json scripts, sets `SENTRY_SPOTLIGHT` env var
+
+      - `spotlight` (no args) - Starts the sidecar server with UI on http://localhost:8969
+
+      - `spotlight tail` - Streams events to terminal, useful for debugging without UI
+
+      - `spotlight mcp` - Starts MCP server for AI coding assistants
+
+
+      ### CLI Implementation
+
+
+      - Entry point: `src/run.ts` → `src/server/cli.ts`
+
+      - Commands: `src/server/cli/` directory (run.ts, tail.ts, mcp.ts, server.ts, help.ts)
+
+      - Binary defined in `package.json`: `"bin": { "spotlight": "./dist/run.js" }`
+
+
+      ## Electron Desktop App
+
+
+      Spotlight is also available as a standalone desktop app (see `electron/.cursor/rules`).
+
+
+      - **Main process**: `src/electron/main/index.ts` - Window, tray, menus, runs sidecar
+
+      - **Renderer**: `src/electron-index.tsx` - Entry point for UI in Electron
+
+      - **Build config**: `vite.electron.config.ts`
+
+      - **Packaging**: `electron-builder.cjs`
+
+
+      The desktop app:
+
+      - Runs the sidecar server internally (no need for `spotlight run`)
+
+      - Shows a system tray icon (macOS/Windows)
+
+      - Supports auto-updates
+
+      - Uses `IS_ELECTRON` constant for UI adaptations (see `ui/.cursor/rules`)
+
+
+      ```bash
+
+      pnpm dev:electron    # Run Electron in development
+
+      pnpm build:electron  # Build Electron app
+
+      pnpm build:mac       # Package for macOS
+
+      ```
+
+
+      ## Package Structure
+
+
+      ```
+
+      src/
+
+      ├── ui/              # React-based UI (see ui/.cursor/rules)
+
+      ├── server/          # Node.js server/sidecar (see server/.cursor/rules)
+
+      │   ├── cli/        # CLI commands (see cli/.cursor/rules)
+
+      │   └── mcp/        # MCP server (see mcp/.cursor/rules)
+
+      ├── electron/        # Electron main process (see electron/.cursor/rules)
+
+      ├── shared/          # Shared constants between UI and server
+
+      ├── index.tsx        # UI entry point (web)
+
+      ├── electron-index.tsx  # UI entry point (Electron)
+
+      ├── run.ts           # CLI entry point
+
+      └── instrument.ts    # Sentry instrumentation
+
+      ```
+
+
+      ## Build System
+
+
+      Multiple Vite configurations for different targets:
+
+
+      - `vite.ui.config.ts` - UI bundle (web)
+
+      - `vite.node.config.ts` - Server/CLI bundle
+
+      - `vite.electron.config.ts` - Electron app (sets `__IS_ELECTRON__`)
+
+      - `vite.dev.config.ts` - Development server
+
+
+      ## Development Commands
+
+
+      ```bash
+
+      # From repository root
+
+      pnpm dev            # UI + server concurrently
+
+      pnpm dev:ui         # UI only (Vite dev server)
+
+      pnpm dev:server     # Server only (Node with --watch)
+
+      pnpm dev:electron   # Electron app with HMR
+
+
+      # Testing
+
+      pnpm test           # Run unit tests (Vitest)
+
+      pnpm test:dev       # Run tests in watch mode
+
+      pnpm test:e2e       # Run all E2E tests
+
+      pnpm test:e2e:cli   # CLI E2E tests
+
+      pnpm test:e2e:ui    # UI E2E tests (Playwright)
+
+      ```
+
+
+      ## Key Dependencies
+
+
+      - **UI**: React, React Router, Zustand, Tailwind CSS, Shiki
+
+      - **Server**: Hono, @hono/node-server, @sentry/node
+
+      - **MCP**: @modelcontextprotocol/sdk, Zod
+
+      - **Electron**: electron, electron-builder, electron-updater, electron-store
+
+
+      ## Testing
+
+
+      - **Unit tests**: Vitest with happy-dom for UI components
+
+      - **E2E tests**: Playwright for UI and CLI testing
+
+      - **Config files**: `vitest.config.ts`, `vitest.cli.config.ts`, `playwright.config.ts`
+
+
+      ## Exports
+
+
+      The package exports:
+
+
+      ```typescript
+
+      // Main server API
+
+      import { setupSpotlight } from ''@spotlightjs/spotlight'';
+
+
+      // SDK utilities
+
+      import { pushToSpotlightBuffer } from ''@spotlightjs/spotlight/sdk'';
+
+      ```
+
+
+      ## Environment Variables
+
+
+      - `SENTRY_SPOTLIGHT` - URL to Spotlight sidecar (auto-set by `spotlight run`)
+
+      - `SPOTLIGHT_DEBUG` - Enable debug logging
+
+      - `SPOTLIGHT_CAPTURE` - Capture incoming envelopes to files'
+    gold_removed: ''
+  - path: packages/spotlight/src/electron/.cursor/rules/electron.mdc
+    tier: 1
+    gold_added: "---\ndescription: Electron desktop app development guidelines\nglobs:\nalwaysApply: true\n---\n\n# Electron App Guidelines\n\nThe Spotlight desktop app packages the UI and server into a standalone Electron application.\n\n## Architecture\n\n```\nElectron App\n├── Main Process (Node.js)\n│   ├── electron/main/index.ts   # Window, tray, menus, auto-update\n│   ├── Runs sidecar server      # setupSpotlight() on port 8969\n│   └── IPC handlers\n│\n└── Renderer Process (Chromium)\n    ├── electron-index.tsx       # Entry point, Sentry init\n    └── UI (React app)           # Same as web UI, with IS_ELECTRON=true\n```\n\n## Main Process (`electron/main/index.ts`)\n\nThe main process handles:\n\n### Window Management\n```typescript\nconst win = new BrowserWindow({\n  titleBarStyle: 'hidden',           // Custom title bar\n  trafficLightPosition: { x: 16, y: 16 },  // macOS traffic lights\n  webPreferences: {\n    nodeIntegration: true,\n    sandbox: false,\n  },\n});\n\n// Load UI\nif (process.env.VITE_DEV_SERVER_URL) {\n  win.loadURL(process.env.VITE_DEV_SERVER_URL);  // Dev\n} else {\n  win.loadFile(path.join(__dirname, '../renderer/index.html'));  // Prod\n}\n```\n\n### Sidecar Server\nThe main process runs the sidecar server internally:\n```typescript\nimport { setupSpotlight } from '../../server/main';\n\nawait setupSpotlight({\n  port: DEFAULT_PORT,  // 8969\n  incomingPayload: storeIncomingPayload,\n  isStandalone: true,\n});\n```\n\n### System Tray\n- Tray icon with context menu\n- Click to show/hide window\n- \"Start at Login\" option\n- Linux: No tray (quit on window close)\n\n### Auto-Update\n```typescript\nimport { autoUpdater } from 'electron-updater';\n\nautoUpdater.checkForUpdates();\nautoUpdater.on('update-downloaded', () => {\n  // Prompt user to restart\n});\n```\n\n### Menus\n- Application menu (File, Edit, View, Window, Settings, Help)\n- Settings: \"Send Error Reports\", \"Send Payload to Sentry\", \"Start at Login\"\n\n### Persistent Settings\n```typescript\nimport Store from 'electron-store';\nconst store = new Store();\n\nstore.get('sentry-enabled');\nstore.set('sentry-enabled', true);\n```\n\n### Drag Bar Injection\nThe main process injects a drag bar element after the page loads:\n```typescript\nwin.webContents.executeJavaScript(`\n  const dragBar = document.createElement('div');\n  dragBar.id = 'electron-top-drag-bar';\n  dragBar.style.cssText = 'position:fixed;top:0;left:0;right:0;height:40px;-webkit-app-region:drag;z-index:99999;';\n  document.body.appendChild(dragBar);\n`);\n```\n\n## Renderer Process (`electron-index.tsx`)\n\nEntry point for the UI in Electron:\n\n```typescript\nimport { init as ElectronSentryInit } from '@sentry/electron/renderer';\nimport { init as ReactSentryInit } from '@sentry/react';\nimport { _init } from './index';\n\n// Electron-specific Sentry initialization\nElectronSentryInit({\n  dsn: '...',\n  integrations: getIntegrations(true),\n}, ReactSentryInit);\n\n// Initialize the React app\n_init();\n```\n\n## UI Adaptations for Electron\n\n### `IS_ELECTRON` Constant\n\nBuild-time constant set by `vite.electron.config.ts`:\n\n```typescript\n// vite.electron.config.ts\ndefine: {\n  __IS_ELECTRON__: true,\n}\n\n// lib/isElectron.ts\nexport const IS_ELECTRON = typeof __IS_ELECTRON__ !== 'undefined' && __IS_ELECTRON__;\n```\n\n### Conditional Rendering\n\nUse `IS_ELECTRON` to adapt UI for the desktop app:\n\n```tsx\nimport { IS_ELECTRON } from '@spotlight/ui/lib/isElectron';\n\n// Add padding for the 40px drag bar\n<div className={cn('flex-1', IS_ELECTRON && 'pt-10')}>\n\n// Sidebar header margin\n<header className={cn('p-4', IS_ELECTRON && 'mt-10')}>\n```\n\n### Router\n\nElectron uses `HashRouter` instead of `BrowserRouter` because it loads from `file://` protocol:\n\n```tsx\n// lib/Router.tsx\nif (IS_ELECTRON) {\n  return <HashRouter>{children}</HashRouter>;\n}\nreturn <BrowserRouter>{children}</BrowserRouter>;\n```\n\n## Build & Packaging\n\n### Vite Config (`vite.electron.config.ts`)\n\n```typescript\nimport electron from 'vite-plugin-electron/simple';\n\nexport default defineConfig({\n  plugins: [\n    electron({\n      main: {\n        entry: 'src/electron/main/index.ts',\n        vite: {\n          build: { outDir: 'dist-electron/main' },\n        },\n      },\n    }),\n  ],\n  define: {\n    __IS_ELECTRON__: true,\n  },\n  build: {\n    outDir: 'dist-electron/renderer',\n  },\n});\n```\n\n### Electron Builder (`electron-builder.cjs`)\n\nPackages the app for distribution:\n- macOS: `.dmg`, code signing, notarization\n- Windows: `.exe` installer\n- Linux: `.AppImage`\n\n### Resources\n\n```\nresources/\n├── icons/\n│   ├── mac/icon.icns\n│   ├── win/icon.ico\n│   └── png/              # Various sizes\n└── tray/\n    ├── logoTemplate.png  # macOS tray (template image)\n    └── logoTemplate.ico  # Windows tray\n```\n\n## Development\n\n```bash\npnpm dev:electron    # Start Electron in dev mode with HMR\n```\n\nIn dev mode:\n- Main process rebuilds on change\n- Renderer uses Vite dev server (`VITE_DEV_SERVER_URL`)\n- Auto-update uses `dev-app-update.yml`\n\n## Platform Differences\n\n| Feature | macOS | Windows | Linux |\n|---------|-------|---------|-------|\n| Tray icon | Yes | Yes | No (quit on close) |\n| Title bar | Hidden + traffic lights | Default | Default |\n| Auto-update | DMG | NSIS | AppImage |\n| Start at login | Yes | Yes | Depends on DE |\n\n## Sentry Integration\n\n- Main process: `@sentry/electron/main`\n- Renderer process: `@sentry/electron/renderer` + `@sentry/react`\n- User consent dialogs for error reporting\n- Optionally attach incoming payloads for debugging"
+    gold_removed: ''
+  - path: packages/spotlight/src/server/.cursor/rules/server.mdc
+    tier: 1
+    gold_added: "---\ndescription: Server/sidecar development guidelines using Hono framework\nglobs:\nalwaysApply: true\n---\n\n# Server Development Guidelines\n\nThe Spotlight server (sidecar) is a Node.js HTTP server built with Hono that receives, stores, and streams telemetry data.\n\n## Framework\n\nUses **Hono** with `@hono/node-server` for the HTTP server.\n\n## Project Structure\n\n```\nserver/\n├── main.ts           # Server setup, startServer(), setupSpotlight()\n├── cli.ts            # CLI entry point and argument parsing\n├── cli/              # CLI command handlers (see cli/.cursor/rules)\n├── mcp/              # MCP server (see mcp/.cursor/rules)\n├── routes/           # HTTP route handlers\n│   ├── index.ts      # Route composition\n│   ├── stream/       # SSE streaming endpoints\n│   ├── health.ts     # Health check\n│   ├── clear.ts      # Buffer clear endpoint\n│   └── contextlines/ # Source context resolution\n├── parser/           # Envelope parsing logic\n├── formatters/       # Output formatters (human, json, logfmt, md)\n├── handlers/         # Request handlers\n├── utils/            # Utility functions\n├── types/            # TypeScript type definitions\n├── constants.ts      # Server constants\n├── logger.ts         # Logging utilities\n├── messageBuffer.ts  # Event storage buffer\n└── sdk.ts            # SDK utilities for external integrations\n```\n\n## Route Patterns\n\nRoutes are modular Hono routers composed in `routes/index.ts`:\n\n```typescript\nimport { Hono } from 'hono';\nimport type { HonoEnv } from '../types/env';\n\nconst router = new Hono<HonoEnv>()\n  .get('/path', ctx => {\n    return ctx.json({ status: 'ok' });\n  })\n  .post('/path', async ctx => {\n    const body = await ctx.req.json();\n    // Process...\n    return ctx.body(null, 200);\n  });\n\nexport default router;\n```\n\n### Composing Routes\n\n```typescript\n// routes/index.ts\nimport { Hono } from 'hono';\nimport streamRouter from './stream/index';\nimport healthRouter from './health';\n\nconst router = new Hono();\nrouter.route('/stream', streamRouter);\nrouter.route('/health', healthRouter);\n\nexport default router;\n```\n\n## Middleware\n\n### CORS\n\n```typescript\nimport { cors } from 'hono/cors';\n\napp.use(cors({\n  origin: async origin => isAllowedOrigin(origin) ? origin : null,\n}));\n```\n\n### Custom Middleware\n\n```typescript\napp.use(async (ctx, next) => {\n  ctx.header('X-Custom-Header', 'value');\n  ctx.set('customKey', value); // Set context variable\n  await next();\n});\n```\n\n## Server-Sent Events (SSE)\n\nStreaming implemented in `routes/stream/streaming.ts`:\n\n```typescript\nimport { streamSSE } from './streaming';\n\nrouter.get('/stream', ctx => {\n  return streamSSE(ctx, async stream => {\n    const sub = buffer.subscribe(container => {\n      stream.writeSSE({\n        id: container.id,\n        event: contentType,\n        data: JSON.stringify(data),\n      });\n    });\n\n    stream.onAbort(() => buffer.unsubscribe(sub));\n  });\n});\n```\n\n## Message Buffer\n\n`MessageBuffer` in `messageBuffer.ts` stores incoming envelopes:\n\n```typescript\nimport { getBuffer } from './utils/index';\n\nconst buffer = getBuffer();\n\n// Add data\nbuffer.put(container);\n\n// Subscribe to new data\nconst sub = buffer.subscribe(callback);\nbuffer.unsubscribe(sub);\n\n// Read data with filters\nconst envelopes = buffer.read({ timeWindow: 60 });\nconst envelopes = buffer.read({ filename: 'auth.ts' });\n```\n\n## Envelope Parsing\n\nParse incoming Sentry envelopes in `parser/`:\n\n```typescript\nimport { processEnvelope } from './parser/index';\n\nconst parsed = processEnvelope({\n  contentType: container.getContentType(),\n  data: container.getData(),\n});\n\nconst [envelopeHeader, items] = parsed.envelope;\n```\n\n## Formatters\n\nMultiple output formats in `formatters/`:\n\n- `human/` - Human-readable terminal output\n- `json/` - JSON format\n- `logfmt/` - Logfmt format\n- `md/` - Markdown format (for MCP/AI)\n\n```typescript\nimport { applyFormatter, humanFormatters } from './formatters/index';\n\nconst output = applyFormatter(humanFormatters, type, payload, envelopeHeader);\n```\n\n## Tracing\n\nUse Sentry spans for request tracing:\n\n```typescript\nimport { startSpan } from '@sentry/node';\n\nawait startSpan({\n  name: `HTTP ${method} ${path}`,\n  op: 'sidecar.http.get',\n  attributes: { /* ... */ },\n}, async span => {\n  // Handle request\n  span.setAttribute('http.response.status_code', status);\n});\n```\n\n## Type Definitions\n\n```typescript\n// types/env.ts - Hono environment\nexport type HonoEnv = {\n  Variables: {\n    basePath?: string;\n    incomingPayload?: (data: string) => void;\n  };\n};\n\n// types/cli.ts - CLI handler options\nexport type CLIHandlerOptions = {\n  port: number;\n  cmdArgs: string[];\n  format: FormatterType;\n  // ...\n};\n```\n\n## Constants\n\n```typescript\n// constants.ts\nexport const DEFAULT_PORT = 8969;\nexport const SERVER_IDENTIFIER = 'spotlight-sidecar';\nexport const SENTRY_CONTENT_TYPE = 'application/x-sentry-envelope';\n```"
+    gold_removed: ''
+  - path: packages/spotlight/src/server/cli/.cursor/rules/cli.mdc
+    tier: 1
+    gold_added: "---\ndescription: CLI command development guidelines for Spotlight\nglobs:\nalwaysApply: true\n---\n\n# CLI Development Guidelines\n\nThis directory contains the implementation of the `spotlight` CLI commands.\n\n## Commands\n\n| Command | Description | Handler |\n|---------|-------------|---------|\n| `spotlight run <cmd>` | Wraps and runs an application with Spotlight | `run.ts` |\n| `spotlight` / `spotlight server` | Starts the sidecar server (default) | `server.ts` |\n| `spotlight tail [types]` | Streams events to terminal | `tail.ts` |\n| `spotlight mcp` | Starts MCP server for AI assistants | `mcp.ts` |\n| `spotlight help` | Shows help message | `help.ts` |\n\nEntry point is `../cli.ts` which handles argument parsing and routes via `CLI_CMD_MAP`.\n\n## CLI Handler Pattern\n\nEach command exports a default async function:\n\n```typescript\nimport type { CLIHandlerOptions } from '../types/cli';\n\nexport default async function commandName({\n  port,\n  cmdArgs,\n  basePath,\n  filesToServe,\n  format,\n  allowedOrigins,\n}: CLIHandlerOptions) {\n  // Command implementation\n}\n```\n\n### CLIHandlerOptions\n\n```typescript\ntype CLIHandlerOptions = {\n  port: number;\n  cmdArgs: string[];         // Additional arguments after command\n  basePath?: string;         // Path for static files\n  filesToServe?: Record<string, Buffer>;\n  format: FormatterType;     // human | json | logfmt | md\n  allowedOrigins: string[];  // CORS origins\n};\n```\n\n## Argument Parsing\n\nUses `parseArgs` from `node:util` in `../cli.ts`:\n\n```typescript\nimport { parseArgs } from 'node:util';\n\nconst { values, positionals } = parseArgs({\n  args: process.argv.slice(2),\n  options: {\n    port: { type: 'string', short: 'p' },\n    debug: { type: 'boolean', short: 'd', default: false },\n    format: { type: 'string', short: 'f', default: 'human' },\n    'allowed-origin': { type: 'string', short: 'A', multiple: true },\n    help: { type: 'boolean', short: 'h' },\n  },\n  allowPositionals: true,\n});\n```\n\n## Command Details\n\n### `spotlight run` (run.ts)\n\nWraps and runs application processes with Spotlight environment:\n\n- Auto-detects Docker Compose (`docker-compose.yml`) or package.json scripts\n- Sets `SENTRY_SPOTLIGHT` environment variable for the child process\n- Captures stdout/stderr and sends as logs to Spotlight\n- Uses `host.docker.internal` for Docker containers to reach host\n\n```typescript\nconst runCmd = spawn(cmdArgs[0], cmdArgs.slice(1), {\n  env: {\n    ...process.env,\n    SENTRY_SPOTLIGHT: spotlightUrl,\n    NEXT_PUBLIC_SENTRY_SPOTLIGHT: spotlightUrl,\n  },\n  stdio: ['inherit', 'pipe', 'pipe'],\n});\n```\n\n### `spotlight tail` (tail.ts)\n\nStreams events to terminal:\n\n```typescript\n// Supported event types\nconst NAME_TO_TYPE_MAPPING = {\n  traces: ['transaction', 'span'],\n  logs: ['log'],\n  errors: ['event'],\n  attachments: ['attachment'],\n};\n\n// Magic words for all types\nconst EVERYTHING_MAGIC_WORDS = ['everything', 'all', '*'];\n```\n\n### `spotlight mcp` (mcp.ts)\n\nStarts MCP server in stdio mode for AI assistants:\n\n```typescript\nimport { createMCPInstance } from '../mcp/mcp';\nimport { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';\n\nconst mcpInstance = createMCPInstance();\nconst transport = new StdioServerTransport();\nawait mcpInstance.connect(transport);\n```\n\n## Output Formatters\n\nSupport multiple output formats via `../formatters/`:\n\n- `human` - Human-readable colored output (default)\n- `json` - JSON format\n- `logfmt` - Logfmt format\n- `md` - Markdown format\n\n```bash\nspotlight tail --format json\nspotlight tail -f logfmt\n```\n\n## Logging\n\nUse the logger from `../logger.ts`:\n\n```typescript\nimport { logger, enableDebugLogging } from '../logger';\n\nlogger.info('Message');\nlogger.error('Error message');\nlogger.debug('Debug info'); // Only when --debug flag\n```\n\n## Metrics\n\nTrack CLI usage with Sentry metrics:\n\n```typescript\nimport { metrics } from '@sentry/node';\n\nmetrics.count('cli.invocation', 1, {\n  attributes: { command: 'run', format: 'human' },\n});\n```\n\n## Testing\n\nCLI E2E tests in `tests/e2e/cli/`:\n\n```bash\npnpm test:e2e:cli  # Run CLI E2E tests\n```"
+    gold_removed: ''
+  - path: packages/spotlight/src/server/mcp/.cursor/rules/mcp.mdc
+    tier: 1
+    gold_added: "---\ndescription: MCP (Model Context Protocol) server development guidelines\nglobs:\nalwaysApply: true\n---\n\n# MCP Server Guidelines\n\nThe MCP server enables AI coding assistants to access Spotlight telemetry data via the Model Context Protocol.\n\n## Overview\n\n- **SDK**: `@modelcontextprotocol/sdk` for MCP server implementation\n- **Transport**: stdio (standard input/output) for communication with AI clients\n- **Validation**: Zod v3 for input schema validation\n- **Output**: Markdown-formatted text for AI consumption\n\n## Files\n\n```\nmcp/\n├── mcp.ts         # createMCPInstance() - tool registration\n└── constants.ts   # Response constants (NO_ERRORS_CONTENT, etc.)\n```\n\n## Creating the MCP Instance\n\n```typescript\nimport { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';\nimport { wrapMcpServerWithSentry } from '@sentry/node';\n\nexport function createMCPInstance() {\n  const mcp = wrapMcpServerWithSentry(\n    new McpServer({\n      name: 'spotlight-mcp',\n      version: String(process.env.npm_package_version),\n    }),\n  );\n\n  // Register tools...\n\n  return mcp;\n}\n```\n\n## Tool Registration Pattern\n\n```typescript\nimport { z } from 'zod/v3';\nimport type { TextContent } from '@modelcontextprotocol/sdk/types.js';\n\nmcp.registerTool(\n  'tool_name',\n  {\n    title: 'Human-Readable Title',\n    description: `**Purpose:** Brief description of what the tool does.\n\n**When to use:**\n- Condition 1\n- Condition 2\n\n**Example calls:**\n\\`\\`\\`json\ntool_name({ param: \"value\" })\n\\`\\`\\`\n\n**Parameter hints:**\n• param: Description of parameter`,\n    inputSchema: {\n      param: z.string().describe('Parameter description'),\n      optionalParam: z.number().optional().describe('Optional parameter'),\n    },\n  },\n  async args => {\n    // Tool implementation\n    const data = getBuffer().read(args.filters);\n    \n    if (data.length === 0) {\n      return NO_DATA_CONTENT; // Return appropriate empty response\n    }\n\n    const content: TextContent[] = [];\n    \n    for (const item of data) {\n      content.push({\n        type: 'text',\n        text: formatItem(item), // Format for AI consumption\n      });\n    }\n\n    return { content };\n  },\n);\n```\n\n## Input Schema with Zod\n\nUse Zod v3 (`zod/v3`) for input validation:\n\n```typescript\nimport { z } from 'zod/v3';\n\nconst inputSchema = {\n  filters: z.union([\n    z.object({\n      timeWindow: z.number().describe('Seconds to look back'),\n    }),\n    z.object({\n      filename: z.string().describe('Filename to filter by'),\n    }),\n    z.object({\n      limit: z.number().describe('Max results'),\n      offset: z.number().default(0).describe('Skip N results'),\n    }).optional(),\n  ]),\n};\n```\n\n## Accessing Telemetry Data\n\nUse the message buffer to read stored envelopes:\n\n```typescript\nimport { getBuffer } from '../utils/index';\n\n// Read with time window filter\nconst envelopes = getBuffer().read({ timeWindow: 60 }); // Last 60 seconds\n\n// Read with filename filter\nconst envelopes = getBuffer().read({ filename: 'auth.tsx' });\n\n// Read all\nconst envelopes = getBuffer().read({ all: true });\n```\n\n## Formatters for AI Output\n\nUse markdown formatters from `formatters/md/` for AI-friendly output:\n\n```typescript\nimport { formatErrorEnvelope } from '../formatters/md/errors';\nimport { formatLogEnvelope } from '../formatters/md/logs';\nimport { formatTraceSummary, buildSpanTree, renderSpanTree } from '../formatters/md/traces';\n\n// Format errors\nconst errorText = await formatErrorEnvelope(envelope);\n\n// Format logs\nconst logText = await formatLogEnvelope(envelope);\n\n// Format traces\nconst traceSummary = formatTraceSummary(trace);\nconst spanTree = buildSpanTree(trace);\nconst treeLines = renderSpanTree(spanTree);\n```\n\n## Error Handling\n\nAlways capture exceptions with context:\n\n```typescript\nimport { captureException } from '@sentry/node';\n\ntry {\n  // Process data\n} catch (err) {\n  captureException(err, { \n    extra: { context: 'Error formatting envelope in MCP' } \n  });\n}\n```\n\n## Response Constants\n\nDefine in `constants.ts`:\n\n```typescript\nexport const NO_ERRORS_CONTENT = {\n  content: [{\n    type: 'text',\n    text: 'No errors found in the specified time period.',\n  }],\n};\n\nexport const NO_LOGS_CONTENT = {\n  content: [{\n    type: 'text',\n    text: 'No logs found in the specified time period.',\n  }],\n};\n```\n\n## Available Tools\n\nCurrent tools in `mcp.ts`:\n\n1. **search_errors** - Search for runtime errors and exceptions\n2. **search_logs** - Search application logs\n3. **search_traces** - List performance traces\n4. **get_traces** - Get detailed span tree for a trace\n\n## Testing\n\nTest MCP tools by running:\n\n```bash\nspotlight mcp  # Starts MCP server in stdio mode\n```"
+    gold_removed: ''
+  - path: packages/spotlight/src/ui/.cursor/rules/ui.mdc
+    tier: 1
+    gold_added: "---\ndescription: UI development guidelines for the Spotlight React application\nglobs:\nalwaysApply: true\n---\n\n# UI Development Guidelines\n\nThe Spotlight UI is a React application for visualizing telemetry data (errors, traces, logs).\n\n## Server Connection (SSE)\n\nThe UI connects to the sidecar server via **Server-Sent Events (SSE)**.\n\n### Connection Flow\n\n```\nsidecar.ts (connectToSidecar)\n    ↓\nEventSource → GET /stream?base64=1&client=spotlight-ui\n    ↓\nListens for content-type events (application/x-sentry-envelope)\n    ↓\ntelemetry/index.tsx (listener callback)\n    ↓\nuseSentryStore.getState().pushEnvelope(envelope)\n    ↓\nStore processes → events, traces, logs, profiles\n```\n\n### Key Files\n\n- `sidecar.ts` - `connectToSidecar()` establishes SSE connection\n- `telemetry/index.tsx` - `Telemetry` component manages connection lifecycle\n- `store/slices/envelopesSlice.ts` - `pushEnvelope()` processes incoming data\n\n### Connection Code\n\n```tsx\n// sidecar.ts\nexport function connectToSidecar(\n  sidecarUrl: string,\n  contentTypeListeners: Record<string, (event: string) => void>,\n  setOnline: (online: boolean) => void,\n) {\n  const source = new EventSource(`${sidecarUrl}/stream?base64=1`);\n  \n  for (const [contentType, listener] of Object.entries(contentTypeListeners)) {\n    source.addEventListener(contentType, (event) => listener(event.data));\n  }\n  \n  source.addEventListener('open', () => setOnline(true));\n  source.addEventListener('error', () => setOnline(false));\n  \n  return () => { /* cleanup */ };\n}\n```\n\n### Usage in Telemetry Component\n\n```tsx\n// telemetry/index.tsx\nexport function Telemetry({ sidecarUrl }: { sidecarUrl: string }) {\n  const [isOnline, setOnline] = useState(false);\n\n  const listener = useCallback((event: string) => {\n    const envelope = JSON.parse(event);\n    useSentryStore.getState().pushEnvelope(envelope);\n  }, []);\n\n  useEffect(\n    () => connectToSidecar(sidecarUrl, { [SENTRY_CONTENT_TYPE]: listener }, setOnline),\n    [sidecarUrl, listener],\n  );\n\n  return <TelemetryView isOnline={isOnline} />;\n}\n```\n\n## Routing\n\nUse **React Router v6** for all navigation. The URL is the source of truth for navigation state.\n\n### Router Setup\n\n`lib/Router.tsx` provides the appropriate router based on environment:\n- `BrowserRouter` for standalone web\n- `HashRouter` for Electron (file:// protocol)\n\n### Navigation Patterns\n\n```tsx\nimport { Link, useParams, useSearchParams, useNavigate } from 'react-router-dom';\n\n// Get state from URL\nconst { traceId, spanId } = useParams();\nconst [searchParams] = useSearchParams();\n\n// Programmatic navigation\nconst navigate = useNavigate();\nnavigate('/telemetry/traces');\n\n// Link component\n<Link to={`/telemetry/traces/${trace.trace_id}/context`}>View Trace</Link>\n```\n\n### Route Structure\n\n```\n/telemetry/\n├── traces/\n│   └── :traceId/\n│       └── context\n├── errors/\n│   └── :eventId\n├── logs/\n│   └── :logId\n└── insights/\n```\n\n**Important**: Do NOT manage navigation state in local component state. Extract it from URL parameters.\n\n## State Management\n\nUse **Zustand** with the slice pattern for global state.\n\n### Store Structure\n\n```\nstore/\n├── store.ts          # Combined store (creates all slices)\n├── types.ts          # Type definitions\n├── slices/\n│   ├── envelopesSlice.ts  # pushEnvelope(), raw envelope storage\n│   ├── eventsSlice.ts     # pushEvent(), error events\n│   ├── tracesSlice.ts     # Trace data\n│   ├── logsSlice.ts       # Log data\n│   ├── profilesSlice.ts   # Profile data\n│   ├── sdksSlice.ts       # SDK info\n│   ├── settingsSlice.ts   # UI settings\n│   ├── subscriptionsSlice.ts  # Event subscriptions\n│   └── sharedSlice.ts     # Shared helpers (getEventById, resetData, etc.)\n└── utils/            # Processing utilities\n    ├── traceProcessor.ts\n    ├── logProcessor.ts\n    └── profileProcessor.ts\n```\n\n### Data Flow\n\n1. `pushEnvelope(envelope)` - Entry point for all incoming data\n2. Extracts items from envelope, identifies SDK\n3. Calls `pushEvent()` for each supported item type\n4. `pushEvent()` routes to appropriate processor:\n   - Error events → store in eventsById\n   - Trace events → `processTransactionEvent()` → tracesById\n   - Log events → `processLogItems()` → logsById\n   - Profile events → `processProfileEvent()` → profilesByTraceId\n\n### Usage Pattern\n\n```tsx\nimport useSentryStore from '../store';\n\nfunction Component() {\n  // Select specific state\n  const traces = useSentryStore(state => state.getTraces());\n  const events = useSentryStore(state => state.getEvents());\n  \n  // Get actions\n  const resetData = useSentryStore(state => state.resetData);\n  \n  // Direct store access (outside React)\n  useSentryStore.getState().pushEnvelope(envelope);\n}\n```\n\n## Styling\n\nUse **Tailwind CSS** with the `cn()` utility for conditional classes.\n\n```tsx\nimport { cn } from '@spotlight/ui/lib/cn';\n\n<div className={cn(\n  'base-classes px-4 py-2',\n  isSelected && 'bg-primary-800',\n  variant === 'error' ? 'text-red-400' : 'text-green-400'\n)}>\n```\n\n## Component Organization\n\n```\nui/\n├── sidecar.ts       # connectToSidecar() - SSE connection\n├── ui/              # Reusable primitives (badge, button, table, tooltip)\n├── lib/             # Utilities and hooks\n├── telemetry/\n│   ├── index.tsx    # Telemetry component (connection setup)\n│   ├── components/  # Feature components\n│   │   ├── shared/  # Shared components (DateTime, JsonViewer, etc.)\n│   │   ├── traces/  # Trace-specific components\n│   │   ├── events/  # Error event components\n│   │   └── log/     # Log components\n│   ├── tabs/        # Tab views (TracesTab, ErrorsTab, LogsTab, InsightsTab)\n│   ├── store/       # Zustand store\n│   └── hooks/       # Custom hooks\n└── assets/          # SVG icons\n```\n\n## Path Aliases\n\n- `@spotlight/ui/` maps to `src/ui/`\n- `@spotlight/shared/` maps to `src/shared/`\n\n```tsx\nimport { cn } from '@spotlight/ui/lib/cn';\nimport { SENTRY_CONTENT_TYPE } from '@spotlight/shared/constants';\n```\n\n## Electron Awareness\n\nUse `IS_ELECTRON` for conditional rendering:\n\n```tsx\nimport { IS_ELECTRON } from '@spotlight/ui/lib/isElectron';\n\n<div className={cn('flex-1', IS_ELECTRON && 'pt-10')}>\n```\n\n## Component Patterns\n\n### Function Components with Inline Props\n\n```tsx\nexport default function TraceItem({ trace, className }: { \n  trace: Trace; \n  className?: string;\n}) {\n  const { traceId } = useParams();\n  const isSelected = traceId === trace.trace_id;\n  \n  return (\n    <Link to={`/telemetry/traces/${trace.trace_id}`}>\n      {/* ... */}\n    </Link>\n  );\n}\n```\n\n### Custom Hooks\n\n```tsx\n// hooks/useDebounce.ts\nexport function useDebounce<T>(value: T, delay: number): T {\n  const [debouncedValue, setDebouncedValue] = useState(value);\n  \n  useEffect(() => {\n    const timer = setTimeout(() => setDebouncedValue(value), delay);\n    return () => clearTimeout(timer);\n  }, [value, delay]);\n  \n  return debouncedValue;\n}\n```\n\n## Testing\n\n- Use `@testing-library/react` for component tests\n- Test files: `*.test.tsx` or `*.spec.tsx`\n- Run with `pnpm test` or `pnpm test:dev` for watch mode"
+    gold_removed: ''
+  - path: packages/website/.cursor/rules/website.mdc
+    tier: 1
+    gold_added: "---\ndescription: Rules for the Spotlight documentation website\nglobs:\nalwaysApply: true\n---\n\n# Website Package Guidelines\n\nThis is the Spotlight documentation website built with Astro and Starlight.\n\n## Tech Stack\n\n- **Framework**: Astro 5 with Starlight documentation theme\n- **Styling**: Tailwind CSS v4 via `@tailwindcss/vite`\n- **Components**: Astro (`.astro`) for static content, React (`.tsx`) for interactive elements\n- **Content**: MDX files with frontmatter\n\n## Project Structure\n\n```\nsrc/\n├── components/          # Reusable components\n│   ├── docs/           # Documentation-specific components\n│   └── homepage/       # Landing page components\n├── content/\n│   ├── config.ts       # Content collection config\n│   └── docs/           # MDX documentation pages\n├── lib/                # Utility functions\n├── pages/              # Astro pages (index.astro)\n├── tailwind.css        # Tailwind entry point\n└── theme.css           # Custom theme styles\npublic/                 # Static assets\n```\n\n## Documentation Pages\n\nMDX files in `src/content/docs/` require frontmatter:\n\n```mdx\n---\ntitle: Page Title\ndescription: Brief description for SEO\nsidebar:\n  order: 0  # Optional: controls sidebar position\n---\n\nContent here...\n```\n\n## Component Patterns\n\n### Astro Components (`.astro`)\nUse for static content, layouts, and server-rendered pages:\n\n```astro\n---\nimport Layout from '../components/Layout.astro';\nconst { title } = Astro.props;\n---\n\n<Layout title={title}>\n  <slot />\n</Layout>\n```\n\n### React Components (`.tsx`)\nUse for interactive elements that need client-side state:\n\n```tsx\nexport default function InteractiveComponent({ prop }: { prop: string }) {\n  const [state, setState] = useState(false);\n  return <button onClick={() => setState(!state)}>{prop}</button>;\n}\n```\n\n## Configuration\n\n- `astro.config.mjs` - Astro configuration, Starlight sidebar, integrations\n- `tailwind.config.mjs` - Tailwind theme customization\n- `tsconfig.json` - TypeScript configuration\n\n## Starlight Features\n\n- Sidebar defined in `astro.config.mjs` under `starlight.sidebar`\n- Custom components override defaults via `starlight.components`\n- Use `@astrojs/starlight/components` for built-in components (Tabs, TabItem, etc.)\n\n## Commands\n\n```bash\npnpm dev:website    # Start dev server (from root)\npnpm dev            # Start dev server (from this directory)\npnpm build          # Build for production\npnpm preview        # Preview production build\n```"
+    gold_removed: ''

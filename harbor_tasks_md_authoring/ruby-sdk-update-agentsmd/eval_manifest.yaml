@@ -1,0 +1,30 @@
+version: "2.0"
+
+task:
+  name: ruby-sdk-update-agentsmd
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: modelcontextprotocol/ruby-sdk
+  pr: 182
+  base_commit: "11aea51c42425ef67d1591131f808bb11641c2b8"
+  merge_commit: "14ef006cd3608a67f9ace924a4b850634616d182"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+
+config_edits:
+  - path: AGENTS.md
+    tier: 1
+    gold_added: '- Dependencies: `json-schema` >= 4.1 - Schema validation
+
+      3. **Server registration**: `server.define_tool(name: "my_tool") { ... }`'
+    gold_removed: ''

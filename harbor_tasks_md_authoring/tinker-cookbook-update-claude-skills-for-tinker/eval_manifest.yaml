@@ -1,0 +1,172 @@
+version: "2.0"
+
+task:
+  name: tinker-cookbook-update-claude-skills-for-tinker
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: thinking-machines-lab/tinker-cookbook
+  pr: 479
+  base_commit: "bef826856a0f06ed500ff793da1072c8670489a7"
+  merge_commit: "abf244d66366cbc379dbbcda6e20f991cb4ce6a1"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/checkpoints/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/checkpoints/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/checkpoints/SKILL.md."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/logging/SKILL.md."
+  - id: signal_04
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/logging/SKILL.md."
+  - id: signal_05
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/logging/SKILL.md."
+  - id: signal_06
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/manage-skills/SKILL.md."
+  - id: signal_07
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/manage-skills/SKILL.md."
+  - id: signal_08
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/manage-skills/SKILL.md."
+  - id: signal_09
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/tinker-cli/SKILL.md."
+  - id: signal_10
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/tinker-cli/SKILL.md."
+  - id: signal_11
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/tinker-cli/SKILL.md."
+  - id: signal_12
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/tinker-sdk/SKILL.md."
+  - id: signal_13
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/tinker-sdk/SKILL.md."
+  - id: signal_14
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/tinker-sdk/SKILL.md."
+  - id: signal_15
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/tinker-types/SKILL.md."
+  - id: signal_16
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/tinker-types/SKILL.md."
+  - id: signal_17
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/tinker-types/SKILL.md."
+
+config_edits:
+  - path: .claude/skills/checkpoints/SKILL.md
+    tier: 1
+    gold_added: '## Managing checkpoints (REST API / CLI)
+
+
+      Beyond saving and loading during training, you can manage checkpoints via the REST API or CLI. See `/tinker-sdk` for RestClient details and `/tinker-cli` for CLI commands.
+
+
+      ```python
+
+      from tinker import ServiceClient
+
+      rest = ServiceClient().create_rest_client()
+
+
+      # List all your checkpoints
+
+      checkpoints = rest.list_user_checkpoints(limit=100)
+
+
+      # Publish a checkpoint (make it publicly accessible)
+
+      rest.publish_checkpoint_from_tinker_path("tinker://...")
+
+
+      # Set TTL (auto-delete after N seconds)
+
+      rest.set_checkpoint_ttl_from_tinker_path("tinker://...", ttl_seconds=86400)
+
+
+      # Delete a checkpoint
+
+      rest.delete_checkpoint_from_tinker_path("tinker://...")
+
+      ```
+
+
+      Or via CLI:
+
+      ```bash
+
+      tinker checkpoint list
+
+      tinker checkpoint publish <TINKER_PATH>
+
+      tinker checkpoint set-ttl <TINKER_PATH> --ttl 86400
+
+      tinker checkpoint delete <TINKER_PATH>
+
+      ```
+
+
+      - `delete` is permanent — there is no undo'
+    gold_removed: ''
+  - path: .claude/skills/logging/SKILL.md
+    tier: 1
+    gold_added: "description: Guide for training outputs, metrics logging, logtree reports, tracing/profiling, and debugging training runs. Use when the user asks about training logs, metrics, debugging, tracing, profiling, timing, Gantt charts, or understanding training output files.\n- `tinker_cookbook/utils/trace.py` — Tracing/profiling (`@scope`, `trace_iteration`, Gantt charts)\n| `timing_spans.jsonl` | JSONL | Per-iteration span timing data (from `trace_iteration`) |\n| `trace_events.jsonl` | JSONL | Perfetto/Chrome Trace format events (from `trace_init`) |\n| `gantt_NNNNNN.html` | HTML | Plotly Gantt chart of span timeline (optional) |\n**Timing** (from `trace_iteration`):\n- `time/total` — iteration wall-clock duration\n- `time/<name>` — single-call duration (e.g., `time/train_step`)\n- `time/<name>:total`, `time/<name>:count`, `time/<name>:mean`, `time/<name>:max` — aggregates for functions called multiple times (e.g., `time/sample_async:total`)\nContains full text of prompts, model responses, grading details. Walk the tree recursively looking for nodes with `data.type == \"conversation\"` to extract conversations. See `docs/rl/rl-logging.mdx` for the full schema.\nOpen `train_iteration_NNNNNN.html` in a browser for a human-readable view of rollouts with collapsible sections. `num_groups_to_log` (default: 4) controls how many trajectory groups get detailed logging.\n## Tracing & profiling\n\nThe `tinker_cookbook/utils/trace` module provides per-iteration profiling across all training modules (RL, SL, DPO, distillation).\n\n### Core API\n\n```python\nfrom tinker_cookbook.utils import trace\n\n# Initialize Perfetto trace collector (optional — writes trace_events.jsonl)\ntrace.trace_init()\n\n# In training loop — collect per-iteration timing\nfor i_batch in range(n_batches):\n    with trace.trace_iteration(step=i_batch) as window:\n        # All @scope-decorated calls are automatically recorded\n        await gather_rollouts(...)\n        await train_step(...)\n\n    # Get timing metrics for this iteration\n    metrics.update(window.get_timing_metrics())\n\n    # Persist span data for post-hoc analysis\n    window.write_spans_jsonl(log_path / \"timing_spans.jsonl\", step=i_batch)\n\n    # Optional: Gantt chart visualization (requires plotly)\n    trace.save_gantt_chart_html(window, i_batch, log_path / f\"gantt_{i_batch}.html\")\n```\n\n### Instrumenting your code\n\n```python\nfrom tinker_cookbook.utils import trace\n\n# Decorator — automatically traces function calls\n@trace.scope\nasync def my_training_step(tc, batch):\n    result = await tc.forward_backward_async(data=batch, loss_fn=\"cross_entropy\")\n    return result\n\n# Inline span — for timing a code block without a dedicated function\nasync with trace.scope_span(\"data_prep\"):\n    batch = prepare_next_batch(...)\n\n# Sync variant\nwith trace.scope_span_sync(\"data_prep\"):\n    batch = prepare_next_batch(...)\n```\n\n`@scope` and `scope_span` are no-ops when called outside `trace_iteration` — safe to leave in production.\n\n### Viewing Perfetto traces\n\n```bash\n# Convert JSONL to JSON for visualization\nuv run python -m tinker_cookbook.utils.trace trace_events.jsonl trace.json\n# Open trace.json in chrome://tracing or https://ui.perfetto.dev/\n```\n"
+    gold_removed: ''
+  - path: .claude/skills/manage-skills/SKILL.md
+    tier: 1
+    gold_added: '### Layer 1: Tinker SDK (`tinker-sdk`, `tinker-types`, `tinker-cli`)
+
+      **Scope:** Raw Tinker Python SDK APIs — ServiceClient, TrainingClient, SamplingClient, RestClient, types, errors, and CLI commands.
+
+      **Auto-invocation:** Yes — triggers when users ask about Tinker API basics or CLI usage.
+
+      │   ├── tinker-sdk/          # ServiceClient, TrainingClient, SamplingClient, RestClient APIs
+
+      │   ├── tinker-types/        # Datum, ModelInput, TensorData, response types, error types
+
+      │   └── tinker-cli/          # tinker CLI: run/checkpoint management, download, publish'
+    gold_removed: ''
+  - path: .claude/skills/tinker-cli/SKILL.md
+    tier: 1
+    gold_added: "---\nname: tinker-cli\ndescription: Guide for the Tinker CLI — managing training runs, checkpoints, downloading weights, and publishing to HuggingFace. Use when the user asks about CLI commands, listing runs, managing checkpoints from the terminal, or uploading to HF Hub.\n---\n\n# Tinker CLI\n\nThe `tinker` CLI is installed with the Tinker Python SDK. It provides commands for managing training runs and checkpoints from the terminal.\n\nRequires `TINKER_API_KEY` environment variable to be set.\n\n## Global options\n\n```bash\ntinker --format table   # Rich table output (default)\ntinker --format json    # JSON output (for scripting)\n```\n\n## Training runs\n\n```bash\n# List recent training runs\ntinker run list\ntinker run list --limit 50\n\n# Show details for a specific run\ntinker run info <RUN_ID>\n\n# Custom columns\ntinker run list --columns id,model,lora,updated,status,checkpoint\n```\n\nAvailable columns: `id`, `model`, `owner`, `lora`, `updated`, `status`, `checkpoint`, `checkpoint_time`.\n\n## Checkpoints\n\n### List and inspect\n\n```bash\n# List checkpoints for a specific run\ntinker checkpoint list --run-id <RUN_ID>\n\n# List all your checkpoints across runs\ntinker checkpoint list\ntinker checkpoint list --limit 50\n\n# Show checkpoint details\ntinker checkpoint info <TINKER_PATH>\n```\n\n### Download\n\n```bash\n# Download and extract a checkpoint\ntinker checkpoint download <TINKER_PATH>\ntinker checkpoint download <TINKER_PATH> --output ./my-adapter\ntinker checkpoint download <TINKER_PATH> --force  # Overwrite existing\n```\n\n### Visibility\n\n```bash\n# Make a checkpoint publicly accessible\ntinker checkpoint publish <TINKER_PATH>\n\n# Make a checkpoint private\ntinker checkpoint unpublish <TINKER_PATH>\n```\n\n### TTL (expiration)\n\n```bash\n# Set checkpoint to expire in 24 hours\ntinker checkpoint set-ttl <TINKER_PATH> --ttl 86400\n\n# Remove expiration (keep indefinitely)\ntinker checkpoint set-ttl <TINKER_PATH> --remove\n```\n\n### Delete\n\n```bash\n# Delete checkpoints (with confirmation prompt)\ntinker checkpoint delete <TINKER_PATH>\n\n# Delete without confirmation\ntinker checkpoint delete <TINKER_PATH> -y\n\n# Delete multiple\ntinker checkpoint delete <PATH1> <PATH2> <PATH3>\n```\n\n### Upload to HuggingFace Hub\n\n```bash\n# Push checkpoint to HuggingFace\ntinker checkpoint push-hf <TINKER_PATH> --repo user/my-model\n\n# Push as public repo\ntinker checkpoint push-hf <TINKER_PATH> --repo user/my-model --public\n\n# Advanced options\ntinker checkpoint push-hf <TINKER_PATH> \\\n    --repo user/my-model \\\n    --revision main \\\n    --commit-message \"Upload fine-tuned model\" \\\n    --create-pr \\\n    --no-model-card\n```\n\nOptions: `--repo`, `--public`, `--revision`, `--commit-message`, `--create-pr`, `--allow-pattern`, `--ignore-pattern`, `--no-model-card`.\n\n## Version\n\n```bash\ntinker version   # e.g. \"tinker 0.15.0\"\n```\n\n## Common patterns\n\n### Script-friendly output\n```bash\n# Get checkpoint paths as JSON for scripting\ntinker checkpoint list --format json | jq '.[].tinker_path'\n\n# Get run IDs\ntinker run list --format json | jq '.[].id'\n```\n\n### Typical workflow\n```bash\n# 1. Find your training run\ntinker run list\n\n# 2. List checkpoints for that run\ntinker checkpoint list --run-id <RUN_ID>\n\n# 3. Download the final checkpoint\ntinker checkpoint download tinker://<RUN_ID>/sampler_weights/final -o ./adapter\n\n# 4. Or push directly to HuggingFace\ntinker checkpoint push-hf tinker://<RUN_ID>/sampler_weights/final --repo user/my-model\n```\n\n## Common pitfalls\n- `TINKER_API_KEY` must be set — the CLI reads it from the environment\n- Checkpoint paths use the format `tinker://<run-id>/<type>/<checkpoint-id>`\n- `push-hf` uploads the raw checkpoint — for merged HF models, use `weights.build_hf_model()` in Python first (see `/weights` skill)\n- `delete` is permanent and irreversible — use `-y` flag carefully"
+    gold_removed: ''
+  - path: .claude/skills/tinker-sdk/SKILL.md
+    tier: 1
+    gold_added: "description: Guide for using the Tinker Python SDK APIs — ServiceClient, TrainingClient, SamplingClient, RestClient, forward_backward, optim_step, sampling, and async patterns. Use when the user asks about Tinker API basics, how to call training/sampling, or how the SDK works.\n- `docs/api-reference/serviceclient.md` — ServiceClient API\n- `docs/api-reference/restclient.md` — RestClient API\n## ServiceClient (entry point)\n\n`ServiceClient` is the main entry point. All other clients are created from it.\nfrom tinker import ServiceClient\n\nsvc = ServiceClient(user_metadata={\"experiment\": \"v1\"}, project_id=\"my-project\")\n\n# Create a new LoRA training client\ntc = svc.create_lora_training_client(\n    base_model=\"Qwen/Qwen3-8B\",\n    rank=32,\n    seed=None,\n    train_mlp=True,\n    train_attn=True,\n    train_unembed=True,\n)\n\n# Resume from a training checkpoint\ntc = svc.create_training_client_from_state(path=\"tinker://...\")              # weights only\ntc = svc.create_training_client_from_state_with_optimizer(path=\"tinker://...\") # weights + optimizer\n# Create a sampling client\nsc = svc.create_sampling_client(model_path=\"tinker://...\", base_model=None, retry_config=None)\n\n# Create a REST client for checkpoint/run management\nrest = svc.create_rest_client()\n\n# Query available models\ncaps = svc.get_server_capabilities()  # returns GetServerCapabilitiesResponse\n```\n\nAll creation methods have `_async` variants.\n\n## TrainingClient\n```python\n# Forward/backward pass (compute loss + gradients)\n# Forward-only pass (compute loss, no gradients — useful for eval)\nresult = tc.forward(data=[datum1, datum2], loss_fn=\"cross_entropy\")\n\n# Custom loss function\nresult = tc.forward_backward_custom(data=[datum1, datum2], loss_fn=my_custom_loss_fn)\n\ntc.save_state(name=\"step_100\", ttl_seconds=None)                # Full state (resumable)\ntc.save_weights_for_sampler(name=\"step_100_sampler\", ttl_seconds=None)  # Sampler-only\n\n# Save + get SamplingClient in one call\nsc = tc.save_weights_and_get_sampling_client(name=\"step_100\")\ntc.load_state_with_optimizer(path=\"tinker://...\")\n\n# Metadata\ninfo = tc.get_info()          # GetInfoResponse (model name, LoRA rank, tokenizer)\ntokenizer = tc.get_tokenizer()  # HuggingFace tokenizer\n### Loss functions\n- `\"cross_entropy\"` — Standard SL loss\n- `\"importance_sampling\"` — On-policy RL (default for GRPO)\n- `\"ppo\"` — Proximal Policy Optimization\n- `\"cispo\"` — Conservative Importance Sampling PPO\n- `\"dro\"` — Distributionally Robust Optimization\n\nSee `docs/losses.mdx` for details and `loss_fn_config` parameters.\n\n**Key pattern:** Submit `forward_backward_async` and `optim_step_async` back-to-back before awaiting — this overlaps GPU computation with data preparation.\nfrom tinker import SamplingParams\n    include_prompt_logprobs=False,   # Set True to get per-token prompt logprobs\n    topk_prompt_logprobs=0,          # Top-K logprobs per prompt token (0 = disabled)\n\n# Get logprobs for existing tokens (no generation)\nlogprobs_response = sc.compute_logprobs(prompt=model_input)\n\n# Metadata\nbase_model = sc.get_base_model()    # Base model name string\ntokenizer = sc.get_tokenizer()      # HuggingFace tokenizer\nSamplingClient is picklable for multiprocessing use.\n## RestClient\n\nFor managing training runs and checkpoints. See also the `/tinker-cli` skill for CLI equivalents.\nrest = svc.create_rest_client()\n# Training runs\nruns = rest.list_training_runs(limit=20, offset=0, access_scope=\"owned\")\nrun = rest.get_training_run(training_run_id=\"...\")\nrun = rest.get_training_run_by_tinker_path(tinker_path=\"tinker://...\")\n# Checkpoints\ncheckpoints = rest.list_checkpoints(training_run_id=\"...\")\nall_checkpoints = rest.list_user_checkpoints(limit=100, offset=0)\nrest.delete_checkpoint(training_run_id=\"...\", checkpoint_id=\"...\")\nrest.delete_checkpoint_from_tinker_path(tinker_path=\"tinker://...\")\n\n# Checkpoint visibility\nrest.publish_checkpoint_from_tinker_path(tinker_path=\"tinker://...\")    # Make public\nrest.unpublish_checkpoint_from_tinker_path(tinker_path=\"tinker://...\")  # Make private\n\n# Checkpoint TTL\nrest.set_checkpoint_ttl_from_tinker_path(tinker_path=\"tinker://...\", ttl_seconds=86400)\n\n# Download URL\nurl_resp = rest.get_checkpoint_archive_url_from_tinker_path(tinker_path=\"tinker://...\")\n\n# Checkpoint metadata\ninfo = rest.get_weights_info_by_tinker_path(tinker_path=\"tinker://...\")\nAll RestClient methods have `_async` variants.\n\n- **Use ServiceClient** to create clients — `TrainingClient` and `SamplingClient` cannot be constructed directly\n- Submit `forward_backward_async` + `optim_step_async` back-to-back before awaiting\n- `forward()` computes loss without gradients — use for eval, not training"
+    gold_removed: ''
+  - path: .claude/skills/tinker-types/SKILL.md
+    tier: 1
+    gold_added: "description: Reference for Tinker SDK types — Datum, ModelInput, TensorData, SamplingParams, response types, error types, and helper functions. Use when the user needs to build training data, construct model inputs, understand response objects, or handle errors.\n## Core data types\n### Type hierarchy\n### ModelInput\nfrom tinker import ModelInput\n\nmi = ModelInput.from_ints([1, 2, 3, 4, 5])  # From token list\ntokens = mi.to_ints()                        # Back to list\nlength = mi.length                           # Token count (property)\nmi2 = mi.append(chunk)                       # Append a chunk\nmi3 = mi.append_int(42)                      # Append a single token\nmi_empty = ModelInput.empty()                # Empty input\n### TensorData\nfrom tinker import TensorData\n\ntd = TensorData.from_numpy(np.array([1.0, 0.0, 1.0]))  # From numpy\ntd = TensorData.from_torch(torch.tensor([1.0, 0.0]))    # From torch\narr = td.to_numpy()                                       # Back to numpy\ntensor = td.to_torch()                                    # Back to torch\nlst = td.tolist()                                         # Back to list\n# Fields: data (flat list), dtype (\"int64\"|\"float32\"), shape (optional)\n### Datum\nfrom tinker import Datum, ModelInput, TensorData\n    loss_fn_inputs={\"weights\": TensorData.from_numpy(weights_array)},\n## Configuration types\n### SamplingParams\nfrom tinker import SamplingParams\n    max_tokens=256,        # Max generation length\n    temperature=1.0,       # Sampling temperature\n    top_k=50,              # Top-K sampling (-1 = no limit)\n    top_p=0.95,            # Nucleus sampling\n    stop=[\"<|eot_id|>\"],   # Stop sequences (strings or token IDs)\n    seed=42,               # Reproducible seed\n### AdamParams\nfrom tinker import AdamParams\n    beta1=0.9,             # Gradient moving average\n    beta2=0.95,            # Gradient squared moving average\n    eps=1e-12,             # Numerical stability\n    weight_decay=0.0,      # Decoupled weight decay\n    grad_clip_norm=1.0,    # Global gradient norm clipping (0.0 = disabled)\n### LoraConfig\n```python\nfrom tinker import LoraConfig\n\nconfig = LoraConfig(\n    rank=32,               # LoRA rank\n    seed=None,             # Initialization seed\n    train_mlp=True,        # Train MLP layers\n    train_attn=True,       # Train attention layers\n    train_unembed=True,    # Train unembedding layer\n)\n```\n\n## Response types\n### ForwardBackwardOutput\nReturned by `forward_backward()` and `forward()`:\n```python\nresult = tc.forward_backward(data=batch, loss_fn=\"cross_entropy\")\nresult.metrics              # dict[str, float] — training metrics (includes loss)\nresult.loss_fn_outputs      # list[LossFnOutput] — per-sample outputs\nresult.loss_fn_output_type  # str — loss output class name\n```\n### SampleResponse / SampledSequence\nReturned by `sample()`:\nresponse = sc.sample(prompt=mi, num_samples=4, sampling_params=params)\nresponse.sequences                # list[SampledSequence]\nresponse.prompt_logprobs          # Optional[list[Optional[float]]] — per-prompt-token logprobs\nresponse.topk_prompt_logprobs     # Optional[list[Optional[list[tuple[int, float]]]]] — top-K\n\nfor seq in response.sequences:\n    seq.tokens       # list[int] — generated token IDs\n    seq.logprobs     # Optional[list[float]] — per-token logprobs\n    seq.stop_reason  # StopReason: \"length\" | \"stop\"\n```\n### Other response types\n- `OptimStepResponse` — confirms parameter update\n- `SaveWeightsResponse` — `path: str` (tinker:// path to saved weights)\n- `LoadWeightsResponse` — confirms loaded weights\n- `GetInfoResponse` — `model_data: ModelData` (model_name, lora_rank, tokenizer_id)\n- `GetServerCapabilitiesResponse` — `supported_models: list[SupportedModel]`\n- `WeightsInfoResponse` — `base_model`, `lora_rank`, `is_lora`, `train_mlp`, `train_attn`, `train_unembed`\n## Checkpoint and run types\n\n```python\nfrom tinker import TrainingRun, Checkpoint, CheckpointType, ParsedCheckpointTinkerPath\n\n# TrainingRun — metadata about a training run\nrun.training_run_id    # str\nrun.base_model         # str\nrun.is_lora            # bool\nrun.lora_rank          # Optional[int]\nrun.last_checkpoint    # Optional[Checkpoint]\nrun.user_metadata      # Optional[dict[str, str]]\n\n# Checkpoint — metadata about a saved checkpoint\nckpt.checkpoint_id     # str\nckpt.checkpoint_type   # CheckpointType: \"training\" | \"sampler\"\nckpt.tinker_path       # str (tinker:// path)\nckpt.size_bytes        # Optional[int]\nckpt.public            # bool\nckpt.expires_at        # Optional[datetime]\n\n# Parse a tinker:// path\nparsed = ParsedCheckpointTinkerPath.from_tinker_path(\"tinker://run-id/weights/ckpt-id\")\nparsed.training_run_id  # str\nparsed.checkpoint_type  # CheckpointType\nparsed.checkpoint_id    # str\n## Error types\n\nAll exceptions inherit from `tinker.TinkerError`:\n- **`APIError`** → **`APIStatusError`**: `BadRequestError` (400), `AuthenticationError` (401), `PermissionDeniedError` (403), `NotFoundError` (404), `ConflictError` (409), `UnprocessableEntityError` (422), `RateLimitError` (429), `InternalServerError` (500+)\n- **`APIConnectionError`**, **`APITimeoutError`**, **`APIResponseValidationError`**\n- **`RequestFailedError`** — async request failure with error category\n\n## Cookbook helper functions\n\nUse these instead of manual Datum construction:\n- `tinker_cookbook.supervised.data.conversation_to_datum(messages, renderer, max_length, train_on_what)` — full SL pipeline\n- `tinker_cookbook.supervised.common.datum_from_model_input_weights(model_input, weights, max_length)` — from ModelInput + weights\n- `renderer.build_supervised_example(messages)` — returns `(ModelInput, weights)`\n- Use helper functions instead of manual dict construction for Datum\n- `ModelInput.length` is a property, not a method\n- Handle `tinker.RateLimitError` in production code with exponential backoff"
+    gold_removed: ''

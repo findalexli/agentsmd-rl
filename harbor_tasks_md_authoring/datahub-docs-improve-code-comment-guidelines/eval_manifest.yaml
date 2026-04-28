@@ -1,0 +1,88 @@
+version: "2.0"
+
+task:
+  name: datahub-docs-improve-code-comment-guidelines
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: datahub-project/datahub
+  pr: 14620
+  base_commit: "3401821f60406569b02148c40e118034e939e0c0"
+  merge_commit: "5a8be79c71240fd77f589190af6d49d1946a8755"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+
+config_edits:
+  - path: CLAUDE.md
+    tier: 1
+    gold_added: '### Code Comments
+
+
+      Only add comments that provide real value beyond what the code already expresses.
+
+
+      **Do NOT** add comments for:
+
+
+      - Obvious operations (`# Get user by ID`, `// Create connection`)
+
+      - What the code does when it''s self-evident (`# Loop through items`, `// Set variable to true`)
+
+      - Restating parameter names or return types already in signatures
+
+      - Basic language constructs (`# Import modules`, `// End of function`)
+
+
+      **DO** add comments for:
+
+
+      - **Why** something is done, especially non-obvious business logic or workarounds
+
+      - **Context** about external constraints, API quirks, or domain knowledge
+
+      - **Warnings** about gotchas, performance implications, or side effects
+
+      - **References** to tickets, RFCs, or external documentation that explain decisions
+
+      - **Complex algorithms** or mathematical formulas that aren''t immediately clear
+
+      - **Temporary solutions** with TODOs and context for future improvements
+
+
+      Examples:
+
+
+      ```python
+
+      # Good: Explains WHY and provides context
+
+      # Use a 30-second timeout because Snowflake''s query API can hang indefinitely
+
+      # on large result sets. See issue #12345.
+
+      connection_timeout = 30
+
+
+      # Bad: Restates what''s obvious from code
+
+      # Set connection timeout to 30 seconds
+
+      connection_timeout = 30
+
+      ```
+
+      '
+    gold_removed: ''

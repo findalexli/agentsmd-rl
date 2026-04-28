@@ -1,0 +1,24 @@
+version: "2.0"
+
+task:
+  name: recce-choredocs-relax-coauthoredby-trailer-in
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: DataRecce/recce
+  pr: 1332
+  base_commit: "1dafb04a7b1aec14f8ceb3e5e3b158c9df11d995"
+  merge_commit: "baf35b232be85a31470b2e2baf668a4860a41afe"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+
+config_edits:
+  - path: CLAUDE.md
+    tier: 1
+    gold_added: '**Commits:** Always use `--signoff` and include a `Co-Authored-By: Claude <noreply@anthropic.com>` trailer (version pin optional — if included, use the current model)'
+    gold_removed: ''

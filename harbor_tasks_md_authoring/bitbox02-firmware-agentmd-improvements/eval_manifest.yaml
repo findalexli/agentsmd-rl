@@ -1,0 +1,37 @@
+version: "2.0"
+
+task:
+  name: bitbox02-firmware-agentmd-improvements
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: BitBoxSwiss/bitbox02-firmware
+  pr: 1774
+  base_commit: "93878521b8c19e0cd0284ba8f3bbbb371c39da32"
+  merge_commit: "13d09c4db64211d6ff192edeb63e5da722252eb0"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+
+config_edits:
+  - path: AGENTS.md
+    tier: 1
+    gold_added: 'Any shell command can be run inside docker using `./scripts/docker_exec.sh <command>` - do not use
+
+      `bash -lc` before the command.
+
+
+      For Rust code changes, run `cd src/rust && cargo fmt` to format the code.'
+    gold_removed: ''

@@ -1,0 +1,105 @@
+version: "2.0"
+
+task:
+  name: go-workflows-add-comprehensive-linting-instructions-to
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: cschleiden/go-workflows
+  pr: 452
+  base_commit: "0d07083be7139783e08f7f03aa120eb7d3541813"
+  merge_commit: "ed82bcb89f18d4b08db8be8b1c913b448f1d481f"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+
+config_edits:
+  - path: AGENTS.md
+    tier: 1
+    gold_added: '
+
+      The project uses golangci-lint v2 with a custom analyzer plugin for workflow code validation. There are multiple ways to run the linter:
+
+
+      #### Recommended: Using Makefile (Preferred)
+
+      # Run the full linter suite with custom analyzer - Takes ~12-15 seconds.
+
+      make lint
+
+      ```
+
+      This will:
+
+      - Check if golangci-lint is installed
+
+      - Build the custom analyzer plugin
+
+      - Run all configured linters from `.golangci.yml`
+
+
+      #### Manual Setup
+
+      If you need to install golangci-lint or run it manually:
+
+
+      ```bash
+
+      # Install golangci-lint v2 (required for this project)
+
+      go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.4.0
+
+      # Run the full linter configuration - Takes ~12-15 seconds.
+
+      golangci-lint run --timeout=5m
+
+      **Note:** The project uses golangci-lint v2.4.0 configuration. Version v1.x will not work with the `.golangci.yml` configuration file.
+
+
+      #### Workaround: Basic Linting (When Custom Analyzer Has Issues)
+
+      If the custom analyzer has version compatibility issues:
+
+
+      ```bash
+
+      # Run basic linting without custom analyzer - Takes ~12 seconds.
+
+      golangci-lint run --disable-all --enable=gofmt,govet,ineffassign,misspell --timeout=5m
+
+      ```
+
+
+      #### Available Linters
+
+      The `.golangci.yml` configuration enables multiple linters including:
+
+      - **Code Quality**: staticcheck, unused, ineffassign, wastedassign
+
+      - **Bug Detection**: govet, makezero, prealloc, predeclared
+
+      - **Style & Formatting**: gofmt, whitespace, tagalign
+
+      - **Testing**: testifylint, tparallel
+
+      - **Custom**: goworkflows (workflow-specific validation, currently commented out)
+
+
+      3. **Linting:** `make lint` or `golangci-lint run --timeout=5m` - Should pass with no new violations
+
+      4. **Code Formatting:** `make fmt` - Ensure code is properly formatted
+
+      5. **Sample Execution:** At least one sample must run successfully'
+    gold_removed: ''

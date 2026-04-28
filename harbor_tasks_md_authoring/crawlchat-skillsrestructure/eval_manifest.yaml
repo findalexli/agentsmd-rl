@@ -1,0 +1,56 @@
+version: "2.0"
+
+task:
+  name: crawlchat-skillsrestructure
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: crawlchat/crawlchat
+  pr: 541
+  base_commit: "65aa9f5fd98556ac8b324d390b4915a4201dd5d8"
+  merge_commit: "b736970244e73ded526660db42105fa06440b771"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/claw/setup-collection/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/claw/setup-collection/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/claw/setup-collection/SKILL.md."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/claw/setup-dev/SKILL.md."
+  - id: signal_04
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/claw/setup-dev/SKILL.md."
+  - id: signal_05
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/claw/setup-dev/SKILL.md."
+
+config_edits:
+  - path: skills/claw/setup-collection/SKILL.md
+    tier: 1
+    gold_added: "---\nname: crawlchat-setup-collection\ndescription: |\n  CrawlChat knowledge collection creation and syncing.\n  Use when:\n  - Creating knowledge collections (web sources)\n  - Debugging MongoDB/pgvector/embedding issues\n  - Troubleshooting source-sync OOM or connection pool errors\n---\n\n# CrawlChat Knowledge Collection Setup Guide\n\nThis guide covers creating and syncing a knowledge collection (web source) in CrawlChat.\n\n## Prerequisites\n\nFollow setup-dev skill first to have the dev server running.\n\n## Create a Knowledge Group\n\n### 1. Navigate to Knowledge page\n\nOpen: http://localhost:5173/knowledge\n\n### 2. Create a new group\n\nClick **\"Add group\"** and fill in:\n\n- **Name:** Docs (or your preferred name)\n- **URL:** https://docs.crawlchat.app (or your target website)\n- **Source Type:** Web\n\nClick **\"Create\"** to add the group.\n\n### 3. Start fetching\n\nOn the knowledge page, find your group and click **\"Refetch it\"** to start crawling.\n\n---\n\n## Common Issues & Fixes\n\n### Issue 1: MongoDB Unique Constraint Error\n\n**Error:**\n```\nPrismaClientKnownRequestError: Unique constraint failed on the constraint: `ScrapeItem_knowledgeGroupId_sourcePageId_key`\n```\n\n**Fix:** Drop the unique index from MongoDB:\n\n```bash\ndocker exec crawlchat-local-database-1 mongosh --eval 'db.getSiblingDB(\"crawlchat\").getCollection(\"ScrapeItem\").dropIndex(\"ScrapeItem_knowledgeGroupId_sourcePageId_key\")'\n```\n\n### Issue 2: Source-sync OOM / Connection Pool Exhausted\n\n**Symptoms:**\n- `sorry, too many clients already` (pgvector)\n- Process killed by OOM killer\n\n**Fix:** Reduce worker concurrency in `source-sync/src/worker.ts`:\n\n```typescript\n// Change from:\nconcurrency: 4,\n\n// To:\nconcurrency: 1,\n```\n\n### Issue 3: OpenRouter API Key Missing\n\n**Error:** Embedding API calls fail\n\n**Fix:** Add your OpenRouter API key to `.env`:\n\n```\nOPENROUTER_API_KEY=sk-or-v1-your-key-here\n```\n\nGet a free key from: https://openrouter.ai\n\n### Issue 4: Embedding API Response Error\n\n**Error:**\n```\nCannot read properties of undefined (reading '0')\n```\n\n**Cause:** The embedding API response validation is missing in `packages/indexer/src/earth-indexer.ts`.\n\n**Fix:** Add null-safe check in `makeEmbedding()`:\n\n```typescript\nconst data = await response.json();\nif (!data?.data?.[0]?.embedding) {\n  throw new Error(`Embedding API error: ${JSON.stringify(data)}`);\n}\nreturn data.data[0].embedding;\n```\n\n---\n\n## Useful Commands\n\n### Check embeddings in pgvector\n\n```bash\ndocker exec crawlchat-local-pgvector-1 psql -U postgres -d crawlchat -c \"SELECT COUNT(*) FROM earth_embeddings;\"\n```\n\n### Restart dev server\n\n```bash\ncd /root/.openclaw/workspace/crawlchat\npkill -9 -f \"tsx\"\nnpm run dev:core\n```\n\n### Restart only front (if server crashes)\n\n```bash\ncd /root/.openclaw/workspace/crawlchat/front\nnpm run dev\n```\n\n---\n\n## Troubleshooting\n\n| Symptom | Solution |\n|---------|----------|\n| \"too many clients already\" pgvector | Restart pgvector: `docker restart crawlchat-local-pgvector-1` |\n| OOM kills processes | Reduce concurrency to 1, or run only needed services |\n| Frontend not loading | Check port 5173, try `fuser -k 5173/tcp` to free port |\n| Login page crashes | Ensure `SELF_HOSTED=true` in `.env` |\n| Magic link not working | Check server logs for the link URL |"
+    gold_removed: ''
+  - path: skills/claw/setup-collection/setup-collection.md
+    tier: 1
+    gold_added: ''
+    gold_removed: ''
+  - path: skills/claw/setup-dev/SKILL.md
+    tier: 1
+    gold_added: "---\nname: crawlchat-setup-dev\ndescription: |\n  CrawlChat development server setup, login flow, and troubleshooting.\n  Use when:\n  - Starting/stopping the CrawlChat dev environment\n  - Logging in with magic links during development\n  - Debugging common dev issues (ports, MongoDB, Redis)\n  - Following best practices (browser size, git branches)\n---\n\n# CrawlChat Dev Server Setup Guide\n\n## Prerequisites\n\n- MongoDB running on port 27017 (with replicaSet rs0)\n- Redis running on port 6379\n- Node.js 22+\n\n## Steps to Start Dev Server\n\n### 1. Kill any existing processes on port 3000\n\n```bash\nlsof -ti:3000 | xargs -r kill -9\n```\n\n### 2. Start the dev server\n\n```bash\ncd /root/.openclaw/workspace/crawlchat\nnpm run dev:core\n```\n\nThis runs:\n- Frontend on `http://localhost:5173/`\n- Server on `http://localhost:3000/`\n- Source-sync on `http://localhost:3007/`\n\n**Note:** If you get `EADDRINUSE: address already in use :::3000`, kill the process first using step 1.\n\n### 3. Create the .env file (if missing)\n\n```bash\ncp .env.example .env\n```\n\n### 4. Configure default indexer and signup plan\n\nEdit `.env`:\n\n```env\nDEFAULT_INDEXER=earth\nDEFAULT_SIGNUP_PLAN_ID=accelerate-yearly\n```\n\n### 5. Restart the dev server to apply .env changes\n\n```bash\n# Kill the running dev server (Ctrl+C or pkill)\npkill -9 -f \"node.*crawlchat\"\npkill -9 -f \"turbo\"\n\n# Restart\nnpm run dev:core\n```\n\n---\n\n## Login Flow (Magic Link)\n\n### 1. Navigate to login page\n\nOpen: http://localhost:5173/login\n\n### 2. Enter email and click Login\n\nEnter `test@test.com` (or any email) in the email field.\n\n### 3. Find the magic link in server logs\n\nThe magic link will be logged to the terminal where `npm run dev:core` is running:\n\n```\nSend email {\n  to: 'test@test.com',\n  subject: 'Login to CrawlChat',\n  text: '...http://localhost:5173/login/verify?token=U2FsdGVkX...'\n}\n```\n\n### 4. Visit the magic link\n\nOpen the URL from the logs in your browser to complete login.\n\n---\n\n## Useful Commands\n\n### Check if MongoDB is running\n\n```bash\npgrep -la mongod\n# Should show: mongod --replSet rs0 --bind_ip_all --noauth\n```\n\n### Kill all dev processes\n\n```bash\npkill -9 -f \"node.*crawlchat\"\npkill -9 -f \"turbo\"\n```\n\n### Set browser to desktop 16:9 size (1920x1080)\n\n```bash\n# Using OpenClaw browser control\nbrowser act --profile openclaw --request '{\"kind\": \"resize\", \"width\": 1920, \"height\": 1080}'\n```\n\n---\n\n## Troubleshooting\n\n- **Login page crashes with \"RESEND_KEY must be set\"**: Ensure `SELF_HOSTED=true` is in `.env` (copied from `.env.example`)\n- **Port 3000 already in use**: Kill the existing process first\n- **Redis connection error**: Ensure Redis is running on `redis://localhost:6379`\n\n---\n\n## Best Practices\n\n### Browser Resolution\n- Always use browser in desktop 16:9 resolution (1920x1080) for consistent UI testing:\n\n```bash\nbrowser act --profile openclaw --request '{\"kind\": \"resize\", \"width\": 1920, \"height\": 1080}'\n```\n\n### UI Changes & Screenshots\n- When making UI-related changes, always include browser screenshots in:\n  - Pull requests\n  - Chat discussions for review\n\n### Git Branching\n- Always create new branches from `main` unless a specific feature branch is required:\n\n```bash\ngit checkout main\ngit pull main\ngit checkout -b feature/your-feature-name\n```"
+    gold_removed: ''
+  - path: skills/claw/setup-dev/setup-dev.md
+    tier: 1
+    gold_added: ''
+    gold_removed: ''

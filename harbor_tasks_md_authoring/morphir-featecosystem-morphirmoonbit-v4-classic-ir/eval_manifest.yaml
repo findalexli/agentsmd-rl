@@ -1,0 +1,24 @@
+version: "2.0"
+
+task:
+  name: morphir-featecosystem-morphirmoonbit-v4-classic-ir
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: finos/morphir
+  pr: 620
+  base_commit: "7a21ee70354b9ac29895928d8e391cd0f00649f0"
+  merge_commit: "e940e8509cdce9a7154d790a0b6049ecd4783f6d"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in ecosystem/AGENTS.md."
+
+config_edits:
+  - path: ecosystem/AGENTS.md
+    tier: 1
+    gold_added: When morphir-go, morphir-python, or others are added, they will live under `ecosystem/` with the same pattern. Document any language- or repo-specific usage in this file.
+    gold_removed: ''

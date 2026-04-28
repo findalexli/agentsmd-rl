@@ -1,0 +1,79 @@
+version: "2.0"
+
+task:
+  name: xurl-fixskill-harden-xurl-skillmd-against
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: xdevplatform/xurl
+  pr: 34
+  base_commit: "595ed0781a828a67cb734a7bf94fc2e0354774c2"
+  merge_commit: "4a56f8ea01c6daf6cb8b738f40bfd56db432d210"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in SKILL.md."
+
+config_edits:
+  - path: SKILL.md
+    tier: 1
+    gold_added: 'This skill requires the `xurl` CLI utility: <https://github.com/xdevplatform/xurl>.
+
+
+      ### Secret Safety (Mandatory)
+
+
+      - Never read, print, parse, summarize, upload, or send `~/.xurl` (or copies of it) to the LLM context.
+
+      - Never ask the user to paste credentials/tokens into chat.
+
+      - The user must fill `~/.xurl` with required secrets manually on their own machine.
+
+      - Do not recommend or execute auth commands with inline secrets in agent/LLM sessions.
+
+      - Warn that using CLI secret options in agent sessions can leak credentials (prompt/context, logs, shell history).
+
+      - Never use `--verbose` / `-v` in agent/LLM sessions; it can expose sensitive headers/tokens in output.
+
+      - Sensitive flags that must never be used in agent commands: `--bearer-token`, `--consumer-key`, `--consumer-secret`, `--access-token`, `--token-secret`, `--client-id`, `--client-secret`.
+
+      - To verify whether at least one app with credentials is already registered, run: `xurl auth status`.
+
+
+      App credential registration must be done manually by the user outside the agent/LLM session.
+
+      After credentials are registered, authenticate with:
+
+      ```bash
+
+      For multiple pre-configured apps, switch between them:
+
+      Examples with inline secret flags are intentionally omitted. If OAuth1 or app-only auth is needed, the user must run those commands manually outside agent/LLM context.
+
+      Tokens are persisted to `~/.xurl` in YAML format. Each app has its own isolated tokens. Do not read this file through the agent/LLM. Once authenticated, every command below will auto‑attach the right `Authorization` header.
+
+      | Register app | Manual, outside agent (do not pass secrets via agent) |
+
+      | Update app creds | Manual, outside agent (do not pass secrets via agent) |
+
+      | `--verbose` | `-v` | Forbidden in agent/LLM sessions (can leak auth headers/tokens) |
+
+      # App credentials must already be configured manually outside agent/LLM context.
+
+      # Authenticate users on each pre-configured app
+
+      - **Multiple apps:** Each app has its own isolated credentials and tokens. Configure credentials manually outside agent/LLM context, then switch with `xurl auth default` or `--app`.
+
+      - **Token storage:** `~/.xurl` is YAML. Each app stores its own credentials and tokens. Never read or send this file to LLM context.'
+    gold_removed: ''

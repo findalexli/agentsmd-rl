@@ -1,0 +1,145 @@
+version: "2.0"
+
+task:
+  name: mudblazor-build-streamline-agentsmd
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: MudBlazor/MudBlazor
+  pr: 12359
+  base_commit: "b592ce2e3d5a39a1e817f6acdfffddc7ca2f587b"
+  merge_commit: "ba6e02dc8428fbe797052420ae40cab4630f554a"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+
+config_edits:
+  - path: AGENTS.md
+    tier: 1
+    gold_added: '## Core Commands and Timings
+
+      ### Build and Test (CRITICAL TIMINGS)
+
+      - Use when: Build failures occur or unexplained issues
+
+      - Builds 15+ projects including docs and source generators
+
+
+      ### Formatting (REQUIRED)
+
+
+      ```bash
+
+      dotnet format src/MudBlazor.slnx
+
+      ```
+
+      - MUST run before finalizing changes
+
+      - CI will fail if code is not properly formatted
+
+      ### Other Commands
+
+
+      ```bash
+
+      # Run test viewer (for visual debugging of tests)
+
+      dotnet run --project src/MudBlazor.UnitTests.Viewer/MudBlazor.UnitTests.Viewer.csproj
+
+
+      # Pack for local testing
+
+      dotnet pack src/MudBlazor/MudBlazor.csproj -c Release -o ./LocalNuGet -p:Version=8.0.0-custom
+
+      ```
+
+
+      ### Troubleshooting
+
+      2. Common issues: blank lines after attributes, missing UTF-8 BOM, incorrect indentation
+
+      - **src/.editorconfig** - C# code style rules (Roslyn defaults + MudBlazor team overrides)
+
+      - Build first is required; use the Build and Test sequence above.
+
+      - Always use `--no-build` for tests after a successful build.
+
+      - Run a specific test:
+
+      **GOOD example:**
+
+      **BAD example:**
+
+      **BAD:**
+
+      **GOOD:**
+
+      **BAD (FORBIDDEN):**
+
+      **GOOD (REQUIRED):**
+
+      **BAD:**
+
+      **GOOD:**
+
+      **BAD:**
+
+      **GOOD:**
+
+      <component name>: <short description in imperative>
+
+      Example: `DateRangePicker: Fix initializing DateRange with null values`
+
+      ## Workflow Checkpoints (REQUIRED)
+
+      ### Before Starting Work
+
+      - Always check initial state by running the Build and Test sequence (skip Clean unless needed).
+
+      ### After Changes
+
+      1. Clean if needed (use the Clean command above)
+
+      2. Format code (REQUIRED - MUST run before finalizing changes)
+
+      3. Run the Build and Test sequence
+
+      4. (Optional) Run docs locally with the Docs Server command above
+
+      ## Development Workflow by Task Type
+
+      3. Build and test iteratively using the Build and Test sequence
+
+      4. Before finalizing, run `dotnet format src/MudBlazor.slnx` (REQUIRED)
+
+      5. Run docs locally to verify (optional)
+
+      2. Run the Build command to generate files (MudBlazor.Docs.Compiler)
+
+      3. Build and run tests using the Build and Test sequence
+
+      4. Debug visually if needed with the test viewer command
+
+      5. **Breaking existing tests** - Run full test suite before finalizing changes
+
+      6. **Build timeouts** - Set timeout to at least 180 seconds for builds, 120 seconds for tests
+
+      7. **Missing `--no-build` flag** - Always use when running tests after a successful build
+
+      8. **Forgetting to run `dotnet format`** - MUST run `dotnet format src/MudBlazor.slnx` before finalizing changes
+
+      **Keep changes compatible with all checks.**'
+    gold_removed: ''

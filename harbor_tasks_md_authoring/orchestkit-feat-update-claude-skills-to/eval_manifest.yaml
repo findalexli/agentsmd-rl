@@ -1,0 +1,120 @@
+version: "2.0"
+
+task:
+  name: orchestkit-feat-update-claude-skills-to
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: yonatangross/orchestkit
+  pr: 5
+  base_commit: "57a0bd1c67f787f1cef9671eecc9b9b9d4245018"
+  merge_commit: "cfd66ae90fd0f0305b679b09a29cc792fdbb4b51"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/agents/database-engineer.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/api-design-framework/examples/skillforge-api-design.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/api-design-framework/examples/skillforge-api-design.md."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/api-design-framework/examples/skillforge-api-design.md."
+  - id: signal_04
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/langgraph-human-in-loop/SKILL.md."
+  - id: signal_05
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/langgraph-human-in-loop/SKILL.md."
+  - id: signal_06
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/langgraph-supervisor/examples/skillforge-analysis-workflow.md."
+  - id: signal_07
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/langgraph-supervisor/examples/skillforge-analysis-workflow.md."
+  - id: signal_08
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/langgraph-supervisor/examples/skillforge-analysis-workflow.md."
+  - id: signal_09
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/observability-monitoring/SKILL.md."
+  - id: signal_10
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/observability-monitoring/SKILL.md."
+  - id: signal_11
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/observability-monitoring/SKILL.md."
+  - id: signal_12
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/observability-monitoring/checklists/monitoring-implementation-checklist.md."
+  - id: signal_13
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/observability-monitoring/checklists/monitoring-implementation-checklist.md."
+  - id: signal_14
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/observability-monitoring/checklists/monitoring-implementation-checklist.md."
+  - id: signal_15
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/pgvector-search/references/metadata-filtering.md."
+  - id: signal_16
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/pgvector-search/references/metadata-filtering.md."
+  - id: signal_17
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/unit-testing/examples/skillforge-test-strategy.md."
+
+config_edits:
+  - path: .claude/agents/database-engineer.md
+    tier: 1
+    gold_added: 6. Ensure PostgreSQL 18 modern features are used
+    gold_removed: ''
+  - path: .claude/skills/api-design-framework/examples/skillforge-api-design.md
+    tier: 1
+    gold_added: "    # 2. Normalize custom analysis_id if provided (optional)\n        else None  # Let DB generate UUID v7 via server_default\n    # PostgreSQL 18 generates UUID v7 via server_default=text(\"uuidv7()\")\n    created_analysis = await analysis_repo.create_analysis(\n        analysis_id=analysis_uuid,  # None → DB generates UUID v7\n    analysis_uuid = cast(\"AnalysisID\", created_analysis.id)"
+    gold_removed: ''
+  - path: .claude/skills/langgraph-human-in-loop/SKILL.md
+    tier: 1
+    gold_added: "import uuid_utils  # pip install uuid-utils (UUID v7 for Python < 3.14)\n\n    config = {\"configurable\": {\"thread_id\": str(uuid_utils.uuid7())}}"
+    gold_removed: ''
+  - path: .claude/skills/langgraph-supervisor/examples/skillforge-analysis-workflow.md
+    tier: 1
+    gold_added: "async def analyze_content(url: str, content: str, db: AsyncSession = Depends(get_db)):\n    # Create analysis record - PostgreSQL 18 generates UUID v7 via server_default\n    analysis = Analysis(url=url, content_type=\"article\", status=\"pending\")\n    db.add(analysis)\n    await db.flush()  # Get DB-generated UUID v7\n    analysis_id = str(analysis.id)"
+    gold_removed: ''
+  - path: .claude/skills/observability-monitoring/SKILL.md
+    tier: 1
+    gold_added: "import uuid_utils  # pip install uuid-utils (UUID v7 support for Python < 3.14)\n    # Get or generate correlation ID (UUID v7 for time-ordering in distributed traces)\n    correlation_id = request.headers.get(\"X-Correlation-ID\") or str(uuid_utils.uuid7())"
+    gold_removed: ''
+  - path: .claude/skills/observability-monitoring/checklists/monitoring-implementation-checklist.md
+    tier: 1
+    gold_added: "import uuid_utils  # pip install uuid-utils (UUID v7 for Python < 3.14)\n    # Get or generate correlation ID (UUID v7 for time-ordering in traces)\n    correlation_id = request.headers.get(\"X-Correlation-ID\") or str(uuid_utils.uuid7())"
+    gold_removed: ''
+  - path: .claude/skills/pgvector-search/references/metadata-filtering.md
+    tier: 1
+    gold_added: "import uuid_utils  # pip install uuid-utils (UUID v7 for Python < 3.14)\n        id=uuid_utils.uuid7(),\n        id=uuid_utils.uuid7(),\n        id=uuid_utils.uuid7(),"
+    gold_removed: ''
+  - path: .claude/skills/unit-testing/examples/skillforge-test-strategy.md
+    tier: 1
+    gold_added: '        image: pgvector/pgvector:pg18'
+    gold_removed: ''

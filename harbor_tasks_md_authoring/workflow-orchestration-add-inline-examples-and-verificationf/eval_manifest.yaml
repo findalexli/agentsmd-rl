@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: workflow-orchestration-add-inline-examples-and-verificationf
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: vxcozy/workflow-orchestration
+  pr: 2
+  base_commit: "78f5e5dde3eb6d7ad7ce1e1472dd06315dbfd79d"
+  merge_commit: "fbc9e65bf711849b71f1f692dd131128b61d8dcc"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in SKILL.md."
+
+config_edits:
+  - path: SKILL.md
+    tier: 1
+    gold_added: "**Template:**\n\n```\nAgent({\n  description: \"Search auth patterns\",\n  prompt: \"Find all authentication middleware in src/ and list file paths with a one-line summary of each.\"\n})\n```\n\n**Inline example** (full template in [references/lessons-format.md](references/lessons-format.md)):\n\n```markdown\n## 2024-01-10 - Testing\n**Mistake**: Mocks hid real API behavior; production broke\n**Pattern**: Over-mocking created false confidence\n**Rule**: Include at least one integration test hitting real services\n**Applied**: All API endpoints, external service integrations\n```\n- If verification fails → return to the plan step and revise before retrying\n5. **Verify Results**: Run tests and confirm behavior before marking done\n6. **Handle Failures**: If verification fails → re-plan (step 1), don't push through\n7. **Document Results**: Add review to `tasks/todo.md`\n8. **Capture Lessons**: Update `tasks/lessons.md` after corrections\n\n**Inline example** (full templates in [references/task-templates.md](references/task-templates.md)):\n\n```markdown\n# Task: Fix memory leak in WebSocket handler\n## Plan\n- [ ] Reproduce the issue locally\n- [ ] Identify leak source with profiler\n- [ ] Implement fix\n- [ ] Verification: Memory stable over 1000 connections\n```"
+    gold_removed: ''

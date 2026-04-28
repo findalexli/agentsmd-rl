@@ -1,0 +1,96 @@
+version: "2.0"
+
+task:
+  name: arkenv-add-cursor-rules
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: yamcodes/arkenv
+  pr: 271
+  base_commit: "f1f3c5e1e65a727bbf46387b8b3e5ee9cc502a9e"
+  merge_commit: "f6a2fb1fa9216285a61389ca45045516fb91109f"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .cursor/rules/arktype.mdc."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .cursor/rules/arktype.mdc."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .cursor/rules/arktype.mdc."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .cursor/rules/coding-guidelines.mdc."
+  - id: signal_04
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .cursor/rules/coding-guidelines.mdc."
+  - id: signal_05
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .cursor/rules/coding-guidelines.mdc."
+  - id: signal_06
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .cursor/rules/monorepo.mdc."
+  - id: signal_07
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .cursor/rules/monorepo.mdc."
+  - id: signal_08
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .cursor/rules/monorepo.mdc."
+  - id: signal_09
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .cursor/rules/pnpm.mdc."
+  - id: signal_10
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .cursor/rules/pnpm.mdc."
+  - id: signal_11
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .cursor/rules/pnpm.mdc."
+  - id: signal_12
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .cursor/rules/test-patterns.mdc."
+  - id: signal_13
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .cursor/rules/test-patterns.mdc."
+  - id: signal_14
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .cursor/rules/test-patterns.mdc."
+
+config_edits:
+  - path: .cursor/rules/arktype.mdc
+    tier: 1
+    gold_added: "---\ndescription: ArkType-specific patterns and conventions\nglobs:\n  - \"packages/arkenv/**/*.ts\"\nalwaysApply: false\n---\n\n# ArkType Patterns\n\nThis project is built on [ArkType](https://arktype.io/), TypeScript's 1:1 validator.\n\n## Core Concepts\n\n- Use ArkType's `type()` function to define schemas\n- Leverage ArkType's type inference for TypeScript types\n- Use the scoped `$` type system for custom types (see `scope.ts`)\n\n## Schema Definition\n\nDefine environment variable schemas using ArkType syntax:\n\n```typescript\nimport { type } from \"arktype\";\n\nconst env = createEnv({\n  HOST: \"string.host\", // Custom host type\n  PORT: \"number.port\", // Custom port type\n  NODE_ENV: \"'development' | 'production' | 'test'\", // Union type\n});\n```\n\n## Type Validation\n\n- ArkType validates at runtime\n- TypeScript types are inferred from the schema\n- Invalid values throw `ArkEnvError`\n\n## Custom Types\n\nCustom types are defined in `scope.ts` using ArkType's scoped type system:\n\n```typescript\nimport { $ } from \"./scope\";\n\n// Custom types are defined using $ and available as:\n// \"string.host\", \"number.port\", etc.\n```\n\n## Type Inference\n\n- Use `type.infer` to extract TypeScript types from schemas\n- The return type of `createEnv` is inferred from the schema\n- No manual type definitions needed\n\n## Error Handling\n\n- ArkType returns `type.errors` for validation failures\n- Convert to `ArkEnvError` for user-friendly messages\n- Error messages include variable name and expected type\n\n## Best Practices\n\n- Keep schemas readable and TypeScript-like\n- Use union types for enums (e.g., `\"'dev' | 'prod'\"`)\n- Leverage ArkType's built-in types where possible\n- Custom types should be defined in `scope.ts` for reusability\n\n## Example\n\n```typescript\nimport arkenv from \"arkenv\";\n\nconst env = arkenv({\n  HOST: \"string.host\",\n  PORT: \"number.port\",\n  NODE_ENV: \"'development' | 'production' | 'test'\",\n  DEBUG: \"boolean\",\n  TIMEOUT: \"number >= 0\",\n});\n\n// TypeScript knows the exact types:\n// env.HOST: string (validated as host)\n// env.PORT: number (validated as port 0-65535)\n// env.NODE_ENV: \"development\" | \"production\" | \"test\"\n// env.DEBUG: boolean\n// env.TIMEOUT: number (>= 0)\n```"
+    gold_removed: ''
+  - path: .cursor/rules/coding-guidelines.mdc
+    tier: 1
+    gold_added: "---\ndescription: Coding guidelines and standards for ArkEnv\nglobs:\n  - \"**/*.ts\"\n  - \"**/*.tsx\"\nalwaysApply: true\n---\n\n# Coding Guidelines\n\n## TypeScript\n\n- Prefer `type` over `interface` for type definitions\n- Use TypeScript 5.1+ features when appropriate\n- Leverage `const` type parameters for better inference\n- Use JSDoc comments for public APIs\n\n## Code Style\n\nThis project uses [Biome](https://biomejs.dev/) for formatting and linting. The configuration is in `biome.jsonc`.\n\n### Key Style Rules\n\n- **Indentation**: Use tabs (not spaces)\n- **Quotes**: Use double quotes for strings\n- **Imports**: Organize imports automatically (Biome handles this)\n- **Types**: Use `type` instead of `interface`\n- **Type inference**: Avoid explicit types when TypeScript can infer them (`noInferrableTypes` error)\n- **Const assertions**: Use `as const` where appropriate (`useAsConstAssertion` error)\n\n### Linting Rules\n\n- **Parameter assignment**: Don't reassign function parameters (`noParameterAssign` error)\n- **Const assertions**: Always use `as const` for immutable values (`useAsConstAssertion` error)\n- **Default parameters**: Place default parameters last (`useDefaultParameterLast` error)\n- **Enums**: Always initialize enum values (`useEnumInitializers` error)\n- **Self-closing elements**: Use self-closing JSX elements (`useSelfClosingElements` error)\n- **Single variable declarations**: Declare one variable per statement (`useSingleVarDeclarator` error)\n- **Unused template literals**: Avoid unnecessary template literals (`noUnusedTemplateLiteral` error)\n- **Number namespace**: Prefer `Number.parseInt` over global `parseInt` (`useNumberNamespace` error)\n- **Console usage**: Console usage is a warning (allowed in `bin/` and examples/playgrounds)\n\n## File Organization\n\n- Co-locate tests: `Component.tsx` next to `Component.test.tsx`\n- Use barrel exports (`index.ts`) for package entry points\n- Keep files focused and single-purpose\n\n## Naming Conventions\n\n- **Files**: Use kebab-case for files (`create-env.ts`)\n- **Functions**: Use camelCase (`createEnv`)\n- **Types**: Use PascalCase (`ArkEnvError`)\n- **Constants**: Use UPPER_SNAKE_CASE for environment variables and constants\n\n## Documentation\n\n- Use JSDoc comments for public APIs\n- Include examples in JSDoc when helpful\n- Document complex type logic\n\n## Error Handling\n\n- Use `ArkEnvError` for environment variable validation errors\n- Provide clear, actionable error messages\n- Include the variable name and expected type in errors\n\n## Performance\n\n- Keep bundle size small (< 1kB gzipped goal)\n- Avoid unnecessary dependencies\n- Prefer tree-shakeable exports"
+    gold_removed: ''
+  - path: .cursor/rules/monorepo.mdc
+    tier: 1
+    gold_added: "---\ndescription: Monorepo structure and conventions\nglobs:\n  - \"**/package.json\"\n  - \"turbo.json\"\nalwaysApply: true\n---\n\n# Monorepo Guidelines\n\nThis is a pnpm + Turborepo monorepo.\n\n## Directory Structure\n\n```\narkenv/\n├── packages/          # Published npm packages\n│   ├── arkenv/       # Core package\n│   └── vite-plugin/  # Vite plugin package\n├── apps/             # Applications\n│   ├── www/          # Documentation site (Next.js)\n│   └── playgrounds/  # Playground apps for testing\n├── examples/         # Example projects\n├── tooling/          # Development tools (not published)\n└── turbo.json        # Turborepo configuration\n```\n\n## Package Types\n\n### Published Packages (`packages/`)\n- These are published to npm\n- Require changesets for versioning\n- Must have proper exports and types\n- Examples: `arkenv`, `@arkenv/vite-plugin`\n\n### Applications (`apps/`)\n- Not published to npm\n- May depend on workspace packages\n- Examples: `www`, `playgrounds/*`\n\n### Examples (`examples/`)\n- Standalone example projects\n- Not published\n- May have their own lock files\n- Used as test fixtures\n\n### Tooling (`tooling/`)\n- Development and testing tools\n- Not published to npm\n- Excluded from changesets\n- Examples: `playwright-www`\n\n## Turborepo\n\nTasks are defined in `turbo.json`. Common tasks:\n- `build` - Build packages\n- `dev` - Development mode\n- `typecheck` - Type checking\n- `test` - Run tests\n- `test:e2e` - End-to-end tests\n\n## Filtering\n\nUse Turborepo filters to run tasks on specific packages:\n\n```bash\n# Run build for specific package\nturbo run build --filter=arkenv\n\n# Run tests for all packages\nturbo run test --filter=./packages/*\n\n# Run for package and its dependencies\nturbo run build --filter=www...\n```\n\n## Changesets\n\n- Published packages require changesets\n- Create changeset with: `pnpm changeset`\n- Changesets are in `.changeset/` directory\n- Examples and tooling don't need changesets\n\n## Dependencies Between Packages\n\n- Use `workspace:*` protocol for workspace dependencies\n- `packages/arkenv` should not depend on other workspace packages\n- `packages/vite-plugin` depends on `arkenv`\n- `apps/www` may depend on workspace packages\n\n## Build Output\n\n- Package builds go to `dist/` directory\n- Build output should be gitignored\n- Source files are in `src/` directory\n\n## Publishing\n\n- Only packages in `packages/` are published\n- Publishing is handled by changesets\n- Run `pnpm release` to publish after merging PRs"
+    gold_removed: ''
+  - path: .cursor/rules/pnpm.mdc
+    tier: 1
+    gold_added: "---\ndescription: pnpm package manager guidelines\nglobs:\n  - \"**/package.json\"\n  - \"pnpm-lock.yaml\"\n  - \"pnpm-workspace.yaml\"\nalwaysApply: true\n---\n\n# pnpm Guidelines\n\nThis monorepo uses **pnpm** as the package manager.\n\n## Package Manager\n\n- Always use `pnpm` for all package management operations\n- Never use `npm` or `yarn` commands\n- The project uses `pnpm@10.20.0` (specified in `packageManager` field)\n\n## Common Commands\n\n```bash\n# Install dependencies\npnpm install\n\n# Add a dependency to a workspace package\npnpm add <package> --filter <workspace-name>\n\n# Add a dev dependency\npnpm add -D <package> --filter <workspace-name>\n\n# Run a script in a specific package\npnpm --filter <workspace-name> <script>\n\n# Run a script across all packages\npnpm run <script>\n```\n\n## Workspace Structure\n\nThis is a pnpm workspace monorepo. Packages are defined in:\n- `packages/` - Published npm packages\n- `apps/` - Applications (www, playgrounds)\n- `tooling/` - Development tools (not published)\n- `examples/` - Example projects\n\n## Workspace Protocol\n\nWhen referencing workspace packages, use the `workspace:*` protocol:\n\n```json\n{\n  \"dependencies\": {\n    \"arkenv\": \"workspace:*\"\n  }\n}\n```\n\n## Only Built Dependencies\n\nCertain dependencies are configured to use `onlyBuiltDependencies` in `pnpm.onlyBuiltDependencies`. These are typically native dependencies that need special handling:\n\n- `@biomejs/biome`\n- `@sentry/cli`\n- `@swc/core`\n- `@tailwindcss/oxide`\n- `@vercel/speed-insights`\n- `esbuild`\n- `sharp`\n\n## Lock File\n\n- Always commit `pnpm-lock.yaml`\n- Never manually edit the lock file\n- Run `pnpm install` to update the lock file when dependencies change"
+    gold_removed: ''
+  - path: .cursor/rules/test-patterns.mdc
+    tier: 1
+    gold_added: "---\ndescription: Testing patterns and guidelines\nglobs:\n  - \"**/*.test.ts\"\n  - \"**/*.test.tsx\"\n  - \"**/__tests__/**/*.ts\"\n  - \"**/__tests__/**/*.tsx\"\nalwaysApply: true\n---\n\n# Test Patterns\n\n## Testing Philosophy\n\n**\"Examples as Test Fixtures\"** - Examples serve dual purposes:\n1. **Documentation** - Show real-world usage patterns\n2. **Test Fixtures** - Provide real projects to test against\n\n**\"Test the User Journey\"** - End-to-end tests validate complete user workflows in real applications.\n\n## Test Structure\n\n### Unit Tests (`packages/arkenv/src/*.test.ts`)\n- Test individual functions and edge cases\n- Validate error handling and type checking\n- Fast, isolated tests for core logic\n- Co-locate with source: `create-env.ts` → `create-env.test.ts`\n\n### Integration Tests (`packages/vite-plugin/src/*.test.ts`)\n- Test the vite plugin using the `with-vite-react-ts` example as a fixture\n- Validate that the plugin works with real Vite projects\n- Use fixture-based testing pattern (see `__fixtures__` directory)\n\n### End-to-End Tests (`tooling/playwright-www/`)\n- Test complete user workflows in the www application\n- Validate real browser behavior across Chromium, Firefox, and WebKit\n- Focus on user-facing behavior, not implementation details\n\n## Component Testing (www app)\n\n**Test behavior, not aesthetics.** Focus on what users can do and what the component guarantees through its API.\n\n### What We Test\n- **Public API** - props, events, and component contract\n- **User behavior** - clicks, typing, focus, keyboard, ARIA\n- **State transitions** - loading, success, error, disabled states\n- **Accessibility** - focus order, keyboard activation, aria attributes\n- **Side effects** - UI changes that affect user experience\n\n### What We Don't Test\n- Pure styling or CSS classes\n- Library internals (Radix/shadcn)\n- Implementation details (hooks, setState, private variables)\n- Visual variants (use Storybook instead)\n\n## Test Framework\n\n- Use **Vitest** for unit and integration tests\n- Use **Playwright** for end-to-end tests\n- Use **Testing Library** for component tests (with `user-event` for real user simulation)\n\n## Test Patterns\n\n### Unit Test Example\n\n```typescript\nimport { describe, expect, it } from \"vitest\";\nimport { createEnv } from \"./create-env\";\n\ndescribe(\"createEnv\", () => {\n  it(\"should validate string env variables\", () => {\n    process.env.TEST_STRING = \"hello\";\n    const env = createEnv({\n      TEST_STRING: \"string\",\n    });\n    expect(env.TEST_STRING).toBe(\"hello\");\n  });\n});\n```\n\n### Fixture-Based Integration Test Example\n\n```typescript\nimport { readdirSync } from \"node:fs\";\nimport { join } from \"node:path\";\nimport { describe } from \"vitest\";\n\nconst fixturesDir = join(__dirname, \"__fixtures__\");\n\nfor (const name of readdirSync(fixturesDir)) {\n  describe(`Fixture: ${name}`, () => {\n    // Test each fixture\n  });\n}\n```\n\n### Component Test Example\n\n```typescript\nimport { render, screen } from \"@testing-library/react\";\nimport userEvent from \"@testing-library/user-event\";\nimport { describe, expect, it } from \"vitest\";\nimport { Component } from \"./component\";\n\ndescribe(\"Component\", () => {\n  it(\"should handle user interaction\", async () => {\n    const user = userEvent.setup();\n    render(<Component />);\n    \n    const button = screen.getByRole(\"button\", { name: /submit/i });\n    await user.click(button);\n    \n    expect(screen.getByText(\"Success\")).toBeInTheDocument();\n  });\n});\n```\n\n## Running Tests\n\n```bash\n# Run all tests\npnpm test -- --run\n\n# Run specific package tests\npnpm test --project arkenv -- --run\npnpm test --project vite-plugin -- --run\n\n# Run end-to-end tests\npnpm run test:e2e\n\n# Run e2e with UI\npnpm run test:e2e:ui\n```\n\n## Test Organization\n\n- Keep tests fast, deterministic, and parallelizable\n- Mock at component boundaries (network, time, context)\n- Query by role, name, label, and text (accessibility first)\n- Use `beforeEach`/`afterEach` for cleanup, not `beforeAll`/`afterAll` when possible\n\n## Coverage Goals\n\n- ✅ Environment variable parsing and validation\n- ✅ Type checking and error handling\n- ✅ Default value handling\n- ✅ Custom type validation (host, port, etc.)\n- ✅ Plugin integration with Vite\n- ✅ Real project build testing using examples as fixtures"
+    gold_removed: ''

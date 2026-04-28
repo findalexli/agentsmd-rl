@@ -1,0 +1,24 @@
+version: "2.0"
+
+task:
+  name: storybook-set-up-copilot-coding-agent
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: storybookjs/storybook
+  pr: 33887
+  base_commit: "512098b0a9e05fe75a096a2fdc1ee4e41a0acbaf"
+  merge_commit: "e9cfa91a679e6cf4ca780cccf702317699c88611"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/copilot-instructions.md."
+
+config_edits:
+  - path: .github/copilot-instructions.md
+    tier: 1
+    gold_added: '- **Package Manager**: Yarn 4.10.3'
+    gold_removed: ''

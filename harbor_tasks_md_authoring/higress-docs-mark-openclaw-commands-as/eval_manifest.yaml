@@ -1,0 +1,53 @@
+version: "2.0"
+
+task:
+  name: higress-docs-mark-openclaw-commands-as
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: higress-group/higress
+  pr: 3478
+  base_commit: "b33e2be5e9961987a9c2eeb960a7db2549de94a1"
+  merge_commit: "6935a44d5315726a3788a012d19440f3bbc582e8"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/higress-openclaw-integration/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/higress-openclaw-integration/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/higress-openclaw-integration/SKILL.md."
+
+config_edits:
+  - path: .claude/skills/higress-openclaw-integration/SKILL.md
+    tier: 1
+    gold_added: '```
+
+
+      **⚠️ Tell user to run the following commands manually in their terminal (interactive commands, cannot be executed by AI agent):**
+
+      ```bash
+
+      # Step 1: Enable the plugin
+
+
+      # Step 2: Configure provider (interactive - will prompt for Gateway URL, API Key, models, etc.)
+
+
+      # Step 3: Restart OpenClaw gateway to apply changes
+
+      openclaw gateway restart
+
+      The `openclaw models auth login` command will interactively prompt for:
+
+      After configuration and restart, Higress models are available in OpenClaw with `higress/` prefix (e.g., `higress/glm-4`, `higress/auto`).
+
+      3. **OpenClaw Integration**: The `openclaw models auth login` and `openclaw gateway restart` commands are **interactive** and must be run by the user manually in their terminal'
+    gold_removed: ''

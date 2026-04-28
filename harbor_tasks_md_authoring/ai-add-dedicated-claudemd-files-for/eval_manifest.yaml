@@ -1,0 +1,446 @@
+version: "2.0"
+
+task:
+  name: ai-add-dedicated-claudemd-files-for
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: symfony/ai
+  pr: 449
+  base_commit: "c1991ef7c2210698bc69574a614b4c8e481a79b4"
+  merge_commit: "af9c23b596807aa6e04b4c3d54221e68b82c60cd"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in demo/CLAUDE.md."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in demo/CLAUDE.md."
+  - id: signal_04
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in demo/CLAUDE.md."
+  - id: signal_05
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in examples/CLAUDE.md."
+  - id: signal_06
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in examples/CLAUDE.md."
+  - id: signal_07
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in examples/CLAUDE.md."
+  - id: signal_08
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in src/agent/CLAUDE.md."
+  - id: signal_09
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in src/agent/CLAUDE.md."
+  - id: signal_10
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in src/agent/CLAUDE.md."
+  - id: signal_11
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in src/ai-bundle/CLAUDE.md."
+  - id: signal_12
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in src/ai-bundle/CLAUDE.md."
+  - id: signal_13
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in src/ai-bundle/CLAUDE.md."
+  - id: signal_14
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in src/platform/CLAUDE.md."
+  - id: signal_15
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in src/platform/CLAUDE.md."
+  - id: signal_16
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in src/platform/CLAUDE.md."
+  - id: signal_17
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in src/store/CLAUDE.md."
+  - id: signal_18
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in src/store/CLAUDE.md."
+  - id: signal_19
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in src/store/CLAUDE.md."
+
+config_edits:
+  - path: CLAUDE.md
+    tier: 1
+    gold_added: '- Use project specific exceptions instead of global exception classes like \RuntimeException, \InvalidArgumentException etc.
+
+      - NEVER mention Claude as co-author in commits'
+    gold_removed: ''
+  - path: demo/CLAUDE.md
+    tier: 1
+    gold_added: "# CLAUDE.md\n\nThis file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.\n\n## Project Overview\n\nThis is a Symfony 7.3 demo application showcasing AI integration capabilities using Symfony AI components. The application demonstrates various AI use cases including RAG (Retrieval Augmented Generation), streaming chat, multimodal interactions, and MCP (Model Context Protocol) server functionality.\n\n## Architecture\n\n### Core Components\n- **Chat Systems**: Multiple specialized chat implementations in `src/` (Blog, YouTube, Wikipedia, Audio, Stream)\n- **Twig LiveComponents**: Interactive UI components using Symfony UX for real-time chat interfaces  \n- **AI Agents**: Configured agents with different models, tools, and system prompts\n- **Vector Store**: ChromaDB integration for embedding storage and similarity search\n- **MCP Tools**: Model Context Protocol tools for extending agent capabilities\n\n### Key Technologies\n- Symfony 7.3 with UX components (LiveComponent, Turbo, Typed)\n- OpenAI GPT-4o-mini models and embeddings\n- ChromaDB vector database\n- FrankenPHP runtime\n- Docker Compose for ChromaDB service\n\n## Development Commands\n\n### Environment Setup\n```bash\n# Start ChromaDB service\ndocker compose up -d\n\n# Install dependencies\ncomposer install\n\n# Set OpenAI API key\necho \"OPENAI_API_KEY='sk-...'\" > .env.local\n\n# Initialize vector store\nsymfony console app:blog:embed -vv\n\n# Test vector store\nsymfony console app:blog:query\n\n# Start development server\nsymfony serve -d\n```\n\n### Testing\n```bash\n# Run all tests\nvendor/bin/phpunit\n\n# Run specific test\nvendor/bin/phpunit tests/SmokeTest.php\n\n# Run with coverage\nvendor/bin/phpunit --coverage-text\n```\n\n### Code Quality\n```bash\n# Fix code style (uses PHP CS Fixer via Shim)\nvendor/bin/php-cs-fixer fix\n\n# Static analysis\nvendor/bin/phpstan analyse\n```\n\n### MCP Server\n```bash\n# Start MCP server\nsymfony console mcp:server\n\n# Test MCP server (paste in terminal)\n{\"method\":\"tools/list\",\"jsonrpc\":\"2.0\",\"id\":1}\n```\n\n## Configuration Structure\n\n### AI Configuration (`config/packages/ai.yaml`)\n- **Agents**: Multiple pre-configured agents (blog, stream, youtube, wikipedia, audio)\n- **Platform**: OpenAI integration with API key from environment\n- **Store**: ChromaDB vector store for similarity search\n- **Indexer**: Text embedding model configuration\n\n### Chat Implementations\nEach chat type follows the pattern:\n- `Chat` class: Handles message flow and session management\n- `TwigComponent` class: LiveComponent for UI interaction\n- Agent configuration in `ai.yaml`\n\n### Session Management\nChat history stored in Symfony sessions with component-specific keys (e.g., 'blog-chat', 'stream-chat').\n\n## Development Notes\n\n- Uses PHP 8.4+ with strict typing and modern PHP features\n- All AI agents use OpenAI GPT-4o-mini by default\n- Vector embeddings use OpenAI's text-ada-002 model\n- ChromaDB runs on port 8080 (mapped from container port 8000)\n- Application follows Symfony best practices with dependency injection\n- LiveComponents provide real-time UI updates without custom JavaScript\n- MCP server enables tool integration for AI agents"
+    gold_removed: ''
+  - path: examples/CLAUDE.md
+    tier: 1
+    gold_added: "# CLAUDE.md\n\nThis file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.\n\n## Project Overview\n\nThis is the examples directory of the Symfony AI monorepo, containing standalone examples demonstrating component usage across different AI platforms. The examples serve as both reference implementations and integration tests.\n\n## Development Commands\n\n### Setup\n```bash\n# Install dependencies\ncomposer install\n\n# Link local AI components for development\n../link\n\n# Start Docker services for store examples\ndocker compose up -d\n```\n\n### Running Examples\n\n#### Standalone Examples\n```bash\n# Run a specific example\nphp openai/chat.php\n\n# Run with verbose output to see HTTP and tool calls\nphp openai/toolcall-stream.php -vvv\n```\n\n#### Example Runner\n```bash\n# Run all examples in parallel\n./runner\n\n# Run examples from specific subdirectories\n./runner openai mistral\n\n# Filter examples by name pattern\n./runner --filter=toolcall\n```\n\n### Environment Configuration\nExamples require API keys configured in `.env.local`. Copy from `.env` template and add your keys for the platforms you want to test.\n\n## Architecture\n\n### Directory Structure\n- Each subdirectory represents a different AI platform (openai/, anthropic/, gemini/, etc.)\n- `misc/` contains cross-platform examples\n- `rag/` contains RAG (Retrieval Augmented Generation) examples\n- `toolbox/` contains utility tools and integrations\n- `bootstrap.php` provides common setup and utilities for all examples\n\n### Common Patterns\n- All examples use the shared `bootstrap.php` for setup\n- Examples follow a consistent structure with platform-specific clients\n- Verbose output (`-vv`, `-vvv`) shows detailed HTTP requests and responses\n- Examples demonstrate both synchronous and streaming capabilities\n\n### Dependencies\nExamples use `@dev` versions of Symfony AI components:\n- `symfony/ai-platform`\n- `symfony/ai-agent` \n- `symfony/ai-store`\n\n## Testing\nExamples serve as integration tests. The runner executes them in parallel to verify all components work correctly across different platforms."
+    gold_removed: ''
+  - path: src/agent/CLAUDE.md
+    tier: 1
+    gold_added: "# CLAUDE.md\n\nThis file provides guidance to Claude Code (claude.ai/code) when working with code in the Agent component.\n\n## Component Overview\n\nThe Agent component provides a framework for building AI agents that interact with users and perform tasks. It sits on top of the Platform component and optionally integrates with the Store component for memory capabilities.\n\n## Architecture\n\nThe Agent component follows a processor-based architecture:\n\n### Core Classes\n- **Agent** (`src/Agent.php`): Main agent class that orchestrates input/output processing\n- **AgentInterface** (`src/AgentInterface.php`): Contract for agent implementations\n- **Chat** (`src/Chat.php`): High-level chat interface with conversation management\n- **Input/Output** (`src/Input.php`, `src/Output.php`): Data containers for processing pipeline\n\n### Processing Pipeline\n- **InputProcessorInterface** (`src/InputProcessorInterface.php`): Contract for input processors\n- **OutputProcessorInterface** (`src/OutputProcessorInterface.php`): Contract for output processors\n\n### Key Features\n- **Memory System** (`src/Memory/`): Conversation memory with embedding support\n- **Toolbox** (`src/Toolbox/`): Tool integration for function calling capabilities\n- **Structured Output** (`src/StructuredOutput/`): Support for typed responses\n- **Message Stores** (`src/Chat/MessageStore/`): Persistence for chat conversations\n\n## Development Commands\n\n### Testing\n```bash\n# Run all tests\nvendor/bin/phpunit\n\n# Run specific test\nvendor/bin/phpunit tests/AgentTest.php\n\n# Run tests with coverage\nvendor/bin/phpunit --coverage-html coverage/\n```\n\n### Code Quality\n```bash\n# Static analysis (from component directory)\nvendor/bin/phpstan analyse\n\n# Code style fixing (from monorepo root)\ncd ../../.. && vendor/bin/php-cs-fixer fix src/agent/\n```\n\n## Component-Specific Architecture\n\n### Input/Output Processing Chain\nThe agent uses a middleware-like pattern:\n1. Input processors modify requests before sending to the platform\n2. Platform processes the request  \n3. Output processors modify responses before returning\n\n### Built-in Processors\n- **SystemPromptInputProcessor**: Adds system prompts to conversations\n- **ModelOverrideInputProcessor**: Allows runtime model switching\n- **MemoryInputProcessor**: Adds conversation context from memory providers\n\n### Memory Providers\n- **StaticMemoryProvider**: Simple in-memory storage\n- **EmbeddingProvider**: Vector-based semantic memory using Store component\n\n### Tool Integration\nThe Toolbox system enables function calling:\n- Tools are auto-discovered via attributes\n- Fault-tolerant execution with error handling\n- Event system for tool lifecycle management\n\n## Dependencies\n\nThe Agent component depends on:\n- **Platform component**: Required for AI model communication\n- **Store component**: Optional, for embedding-based memory\n- **Symfony components**: HttpClient, Serializer, PropertyAccess, Clock\n\n## Testing Patterns\n\n- Use `MockHttpClient` for HTTP mocking instead of response mocking\n- Test processors independently from the main Agent class\n- Use fixtures from `/fixtures` for multimodal content testing\n- Prefer `self::assert*` over `$this->assert*` in tests\n\n## Development Notes\n\n- All new classes should have `@author` tags\n- Use component-specific exceptions from `src/Exception/`\n- Follow Symfony coding standards with `@Symfony` PHP CS Fixer rules\n- The component is marked as experimental and subject to BC breaks"
+    gold_removed: ''
+  - path: src/ai-bundle/CLAUDE.md
+    tier: 1
+    gold_added: '# CLAUDE.md
+
+
+      This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+
+
+      ## Project Overview
+
+
+      The Symfony AI Bundle is an integration bundle that provides Symfony dependency injection configuration for the Symfony AI components (Platform, Agent, Store). It enables declarative configuration of AI agents, platforms, vector stores, and indexers through semantic YAML configuration and PHP attributes.
+
+
+      ## Architecture
+
+
+      ### Core Integration Points
+
+      - **Platform Integration**: Configures AI platforms (OpenAI, Anthropic, Azure, Gemini, etc.) as services
+
+      - **Agent Configuration**: Sets up AI agents with tools, processors, and system prompts
+
+      - **Store Configuration**: Configures vector stores for document retrieval (ChromaDB, Pinecone, etc.)
+
+      - **Security Integration**: Provides `#[IsGrantedTool]` attribute for tool-level authorization
+
+      - **Profiler Integration**: Adds debug toolbar integration for monitoring AI interactions
+
+
+      ### Key Components
+
+      - `AiBundle.php`: Main bundle class handling service configuration and compiler passes
+
+      - `ProcessorCompilerPass.php`: Compiler pass for registering input/output processors
+
+      - Security system with `IsGrantedToolAttributeListener` for runtime permission checks
+
+      - Profiler data collector and traceable decorators for debugging
+
+
+      ## Development Commands
+
+
+      ### Testing
+
+      Run the test suite using PHPUnit 11:
+
+      ```bash
+
+      vendor/bin/phpunit
+
+      ```
+
+
+      Run specific test file:
+
+      ```bash
+
+      vendor/bin/phpunit tests/DependencyInjection/AiBundleTest.php
+
+      ```
+
+
+      Run tests with coverage:
+
+      ```bash
+
+      vendor/bin/phpunit --coverage-html coverage/
+
+      ```
+
+
+      ### Static Analysis
+
+      Run PHPStan analysis:
+
+      ```bash
+
+      vendor/bin/phpstan analyse
+
+      ```
+
+
+      The bundle uses PHPStan level 6 and includes custom extension rules for Symfony AI components.
+
+
+      ### Code Quality
+
+      This bundle follows the parent monorepo''s PHP CS Fixer configuration. Code style fixes should be run from the monorepo root.
+
+
+      ## Configuration Architecture
+
+
+      The bundle processes configuration through several main sections:
+
+
+      ### Platform Configuration
+
+      Supports multiple AI platforms through factory classes:
+
+      - Anthropic, OpenAI, Azure OpenAI, Gemini, Vertex AI
+
+      - Each platform creates a `Platform` service with HTTP client integration
+
+      - Automatic service aliasing when only one platform is configured
+
+
+      ### Agent Configuration
+
+      Creates `Agent` services with:
+
+      - Model configuration (class, name, options)
+
+      - Tool integration via `#[AsTool]` attribute or explicit service references
+
+      - Input/Output processor chains for request/response handling
+
+      - System prompt configuration with optional tool inclusion
+
+      - Token usage tracking for supported platforms
+
+
+      ### Store Configuration
+
+      Supports vector stores for document retrieval:
+
+      - Local stores (memory, cache)
+
+      - Cloud stores (Azure Search, Pinecone, Qdrant)
+
+      - Database stores (MongoDB, ClickHouse, Neo4j)
+
+
+      ### Security Integration
+
+      - `#[IsGrantedTool]` attribute for method-level authorization
+
+      - Integration with Symfony Security component
+
+      - Runtime permission checking through event listeners
+
+
+      ## Service Registration Patterns
+
+
+      ### Attribute-Based Registration
+
+      The bundle automatically registers services tagged with:
+
+      - `#[AsTool]` - Tool registration with name and description
+
+      - `#[AsInputProcessor]` - Input processor for specific agents
+
+      - `#[AsOutputProcessor]` - Output processor for specific agents
+
+
+      ### Interface-Based Autoconfiguration
+
+      Automatic tagging for:
+
+      - `InputProcessorInterface` → `ai.agent.input_processor`
+
+      - `OutputProcessorInterface` → `ai.agent.output_processor`
+
+      - `ModelClientInterface` → `ai.platform.model_client`
+
+
+      ## Debug and Development Features
+
+
+      ### Profiler Integration
+
+      In debug mode, the bundle provides:
+
+      - Traceable decorators for platforms and toolboxes
+
+      - Data collector for Symfony Profiler toolbar
+
+      - Monitoring of AI interactions and token usage
+
+
+      ### Error Handling
+
+      - Fault-tolerant toolbox wrapper for graceful tool failures
+
+      - Comprehensive exception hierarchy with bundle-specific exceptions
+
+      - Clear error messages for missing dependencies
+
+
+      ## Testing Patterns
+
+
+      The test suite demonstrates:
+
+      - Bundle configuration testing with `AiBundleTest`
+
+      - Compiler pass testing for processor registration
+
+      - Security integration testing with mock authorization checker
+
+      - Profiler data collection and tracing functionality
+
+
+      Tests use PHPUnit 11 with strict configuration and coverage requirements.'
+    gold_removed: ''
+  - path: src/platform/CLAUDE.md
+    tier: 1
+    gold_added: "# CLAUDE.md\n\nThis file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.\n\n## Platform Component Overview\n\nThis is the Platform component of the Symfony AI monorepo - a unified abstraction for interacting with AI platforms like OpenAI, Anthropic, Azure, Gemini, VertexAI, Ollama, and others. The component provides consistent interfaces regardless of the underlying AI provider.\n\n## Development Commands\n\n### Testing\n```bash\n# Run all tests\nvendor/bin/phpunit\n\n# Run specific test\nvendor/bin/phpunit tests/ModelTest.php\n\n# Run tests with coverage\nvendor/bin/phpunit --coverage-html coverage\n```\n\n### Code Quality\n```bash\n# Run PHPStan static analysis\nvendor/bin/phpstan analyse\n\n# Fix code style (run from project root)\ncd ../../.. && vendor/bin/php-cs-fixer fix src/platform/\n```\n\n### Installing Dependencies\n```bash\ncomposer install\n\n# Update dependencies\ncomposer update\n```\n\n## Architecture\n\n### Core Classes\n- **Platform**: Main entry point implementing `PlatformInterface`\n- **Model**: Represents AI models with provider-specific configurations\n- **Contract**: Abstract contracts for different AI capabilities (chat, embedding, speech, etc.)\n- **Message**: Message system for AI interactions\n- **Tool**: Function calling capabilities\n- **Bridge**: Provider-specific implementations (OpenAI, Anthropic, etc.)\n\n### Key Directories\n- `src/Bridge/`: Provider-specific implementations\n- `src/Contract/`: Abstract contracts and interfaces  \n- `src/Message/`: Message handling system\n- `src/Tool/`: Function calling and tool definitions\n- `src/Result/`: Result types and converters\n- `src/Exception/`: Platform-specific exceptions\n\n### Provider Support\nThe component supports multiple AI providers through Bridge implementations:\n- OpenAI (GPT models, DALL-E, Whisper)\n- Anthropic (Claude models)\n- Azure OpenAI\n- Google Gemini\n- VertexAI\n- AWS Bedrock\n- Ollama\n- And many others (see composer.json keywords)\n\n## Testing Architecture\n\n- Uses PHPUnit 11+ with strict configuration\n- Test fixtures located in `../../fixtures` for multi-modal content\n- Mock HTTP client pattern preferred over response mocking\n- Component follows Symfony coding standards"
+    gold_removed: ''
+  - path: src/store/CLAUDE.md
+    tier: 1
+    gold_added: '# CLAUDE.md
+
+
+      This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+
+
+      ## Project Overview
+
+
+      This is the Store component of the Symfony AI ecosystem, providing a low-level abstraction for storing and retrieving documents in vector stores. The component enables Retrieval Augmented Generation (RAG) applications by offering unified interfaces for various vector database implementations.
+
+
+      ## Development Commands
+
+
+      ### Testing
+
+      Run the full test suite:
+
+      ```bash
+
+      vendor/bin/phpunit
+
+      ```
+
+
+      Run tests for a specific bridge (e.g., InMemory):
+
+      ```bash
+
+      vendor/bin/phpunit tests/Bridge/Local/InMemoryStoreTest.php
+
+      ```
+
+
+      Run a single test method:
+
+      ```bash
+
+      vendor/bin/phpunit --filter testMethodName
+
+      ```
+
+
+      ### Code Quality
+
+      Run PHPStan static analysis:
+
+      ```bash
+
+      vendor/bin/phpstan analyse
+
+      ```
+
+
+      ### Installation
+
+      Install dependencies:
+
+      ```bash
+
+      composer install
+
+      ```
+
+
+      ## Architecture
+
+
+      ### Core Interfaces
+
+      - **StoreInterface**: Main interface defining `add()` and `query()` methods for vector document storage and retrieval
+
+      - **ManagedStoreInterface**: Extension interface providing `setup()` and `drop()` methods for store lifecycle management
+
+      - **Indexer**: High-level service that converts TextDocuments to VectorDocuments and stores them in batches
+
+
+      ### Bridge Pattern Architecture
+
+      The component follows a bridge pattern with implementations for multiple vector stores:
+
+
+      **Database Bridges**: Postgres, MariaDB, ClickHouse, MongoDB, Neo4j, SurrealDB
+
+      **Cloud Service Bridges**: Azure AI Search, Pinecone
+
+      **Search Engine Bridges**: Meilisearch, Typesense, Weaviate, Qdrant, Milvus
+
+      **Local Bridges**: InMemoryStore, CacheStore (PSR-6)
+
+      **External Service Bridges**: ChromaDb (requires codewithkyrian/chromadb-php)
+
+
+      ### Document System
+
+      - **TextDocument**: Input documents containing text and metadata
+
+      - **VectorDocument**: Documents with embedded vectors for storage
+
+      - **Vectorizer**: Converts TextDocuments to VectorDocuments using AI Platform
+
+      - **Transformers**: ChainTransformer, TextSplitTransformer, ChunkDelayTransformer for document preprocessing
+
+
+      ### Key Dependencies
+
+      - **symfony/ai-platform**: For AI model integration and vectorization
+
+      - **psr/log**: For logging throughout the indexing process
+
+      - **symfony/http-client**: For HTTP-based vector store communication
+
+
+      ### Test Architecture
+
+      Tests follow the same bridge structure as source code, with each store implementation having corresponding test classes. Tests use PHPUnit 11+ with strict configuration for coverage and error handling.'
+    gold_removed: ''

@@ -1,0 +1,49 @@
+version: "2.0"
+
+task:
+  name: docs-add-icons-to-claudemd
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: langchain-ai/docs
+  pr: 2657
+  base_commit: "c8ba02b2249a88cd94c6ec0d0903470d8ce9385e"
+  merge_commit: "0750623e007d2c3eb326b1bb5fcfd58283b25bc4"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+
+config_edits:
+  - path: CLAUDE.md
+    tier: 1
+    gold_added: '## Icons
+
+
+      This project uses the **Tabler** icon library (`"icons": { "library": "tabler" }` in `docs.json`). When adding or updating icons:
+
+
+      - Use Tabler icon names only. Browse available icons at https://tabler.io/icons
+
+      - Tabler uses lowercase kebab-case (e.g., `home`, `settings`, `alert-triangle`, `player-play`)
+
+      - Brand icons require the `brand-` prefix (e.g., `brand-github`, `brand-python`, `brand-openai`)
+
+      - For providers or brands without a Tabler icon, use a local SVG file in `src/images/providers/` with `currentColor` for theme adaptability (e.g., `icon="/images/providers/anthropic-icon.svg"`)
+
+      - Common Tabler names that differ from FontAwesome: `home` (not `house`), `tool`/`tools` (not `wrench`), `player-play` (not `play`), `bulb` (not `lightbulb`), `alert-triangle` (not `exclamation-triangle`), `school` (not `graduation-cap`)
+
+
+      - Do not use FontAwesome icon names — this project uses the Tabler icon library. Verify icon names at https://tabler.io/icons'
+    gold_removed: ''

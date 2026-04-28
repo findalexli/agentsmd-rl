@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: ingress-intel-total-conversion-add-claudemd-with-version-man
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: IITC-CE/ingress-intel-total-conversion
+  pr: 859
+  base_commit: "8216b90a46002849c13c886642ee064fa82270a5"
+  merge_commit: "cebc606c91ce4b9e555a0ff0c2949284ec0b1f7a"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+
+config_edits:
+  - path: CLAUDE.md
+    tier: 1
+    gold_added: "# Claude Commands for IITC-CE\n\n## Version Management\n\n### Update Plugin and Core Versions\n\nCommand: `/version-update` or simply ask Claude to \"update versions\"\n\nThis command will:\n\n1. **Check plugin changes since last release**:\n   - Find the last release commit (search for \"release\" in commit messages)\n   - Check git history for each plugin since last release\n   - Identify plugins that have changes but haven't had version bumps\n\n2. **Update plugin versions**:\n   - For each changed plugin, determine version increment based on change type:\n     - **Patch version** (0.3.4 → 0.3.5): Bug fixes, eslint fixes, small improvements\n     - **Minor version** (0.3.4 → 0.4.0): New features, API changes, significant enhancements\n   - Add changelog entries describing the changes with appropriate detail level\n\n3. **Update core version**:\n   - Check `core/` directory changes since last release\n   - Increment minor version in `core/total-conversion-build.js` (e.g., 0.40.0 → 0.41.0)\n   - Add changelog entries for core improvements\n   - Focus on user-visible changes and bug fixes\n\n4. **Update mobile app version**:\n   - Update `versionName` in `mobile/app/build.gradle` to match core version\n   - Change from `versionName \"0.40.0\"` to `versionName \"0.41.0\"`\n\n### Process Steps:\n1. `git log --oneline [last-release-commit]..HEAD -- plugins/[plugin-name].js`\n2. Check if version in plugin header needs updating\n3. Add concise changelog entries (like \"Fix portal snap positioning bug\")\n4. `git log --oneline [last-release-commit]..HEAD -- core/`\n5. Update core version and changelog\n6. Exclude translation commits and mobile-specific changes from core changelog\n\n### Example Changelog Entries:\n- **Plugin**: `'Fix portal snap positioning bug'`\n- **Core**: `'Fix RegionScore tooltip HTML rendering'`, `'Update MODs display colors'`\n\nKeep descriptions concise and user-focused, avoiding technical implementation details."
+    gold_removed: ''

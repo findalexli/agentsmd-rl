@@ -1,0 +1,105 @@
+version: "2.0"
+
+task:
+  name: dd-sdk-ios-rename-and-namespace-claude-skills
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: DataDog/dd-sdk-ios
+  pr: 2755
+  base_commit: "ecddcab5a4bf8d3746efc811192c11d52bd18296"
+  merge_commit: "98bc5a79b2388ae23b092b0bc8166b9aaa5edd94"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/git-branch/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/git-commit/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/open-pr/SKILL.md."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/open-pr/SKILL.md."
+  - id: signal_04
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/open-pr/SKILL.md."
+  - id: signal_05
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/running-tests/SKILL.md."
+  - id: signal_06
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/xcode-file-management/SKILL.md."
+  - id: signal_07
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_08
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_09
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+
+config_edits:
+  - path: .claude/skills/git-branch/SKILL.md
+    tier: 1
+    gold_added: 'name: dd-sdk-ios:git-branch'
+    gold_removed: ''
+  - path: .claude/skills/git-commit/SKILL.md
+    tier: 1
+    gold_added: 'name: dd-sdk-ios:git-commit'
+    gold_removed: ''
+  - path: .claude/skills/open-pr/SKILL.md
+    tier: 1
+    gold_added: 'name: dd-sdk-ios:open-pr
+
+      The repo has a PR template at `.github/PULL_REQUEST_TEMPLATE.md`. Read it and fill in all sections.
+
+
+      **Before running the command**, show the user the proposed PR title and full body and ask for confirmation. Only run `gh pr create` after the user approves.'
+    gold_removed: ''
+  - path: .claude/skills/running-tests/SKILL.md
+    tier: 1
+    gold_added: 'name: dd-sdk-ios:running-tests'
+    gold_removed: ''
+  - path: .claude/skills/xcode-file-management/SKILL.md
+    tier: 1
+    gold_added: 'name: dd-sdk-ios:xcode-file-management'
+    gold_removed: ''
+  - path: CLAUDE.md
+    tier: 1
+    gold_added: '## Available Skills
+
+
+      Use these skills (via `/skill-name`) for common workflows in this project:
+
+
+      | Skill | When to use |
+
+      |---|---|
+
+      | `dd-sdk-ios:git-branch` | Creating a new branch for a JIRA ticket or feature |
+
+      | `dd-sdk-ios:git-commit` | Committing changes (signed commits, message format) |
+
+      | `dd-sdk-ios:open-pr` | Opening a pull request against `develop` |
+
+      | `dd-sdk-ios:running-tests` | Running unit, module, or integration tests |
+
+      | `dd-sdk-ios:xcode-file-management` | Adding, removing, moving, or renaming Swift source files |
+
+      '
+    gold_removed: ''

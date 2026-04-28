@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: ag-charts-ag15953-improve-agentsmd-based-upon
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: ag-grid/ag-charts
+  pr: 5305
+  base_commit: "5c86dfe3c6c5dd6e377f7f9aa02e514adbe6fb75"
+  merge_commit: "6f394f0a600915a425465b37abad5722f769c270"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in tools/prompts/AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in tools/prompts/AGENTS.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in tools/prompts/AGENTS.md."
+
+config_edits:
+  - path: tools/prompts/AGENTS.md
+    tier: 1
+    gold_added: "-   **Test verification patterns:** When writing or modifying tests, review similar tests to ensure consistent verification patterns (e.g., if similar tests verify domains, your tests should too).\n### Testing Best Practices\n\n-   **Test real implementations, not helpers**: Avoid creating test helper functions that duplicate production logic. Instead, test the actual implementation through its public API (e.g., using `DataSet` to test data operations rather than a helper function that reimplements the logic).\n-   **Look for existing patterns first**: Before writing new tests, review similar existing tests to maintain consistency in:\n    -   Verification patterns (e.g., if similar tests verify domains, yours should too)\n    -   Test structure and organization\n    -   Assertion styles and completeness\n-   **Test completeness checklist**:\n    -   Do similar tests verify more properties that this one should also verify?\n    -   Are all important outputs verified (data, keys, columns, domains, metadata, etc.)?\n    -   Does this test exercise the real code path users will hit?\n-   **Naming clarity**: Variable and parameter names should clearly convey intent, especially for boolean flags (e.g., `columnNeedValueOf` is clearer than `columnValueTypes` for a boolean array).\n\n-   **Self-review before committing**:\n    -   Read through your changes as if you were the reviewer\n    -   Check for consistency with similar existing code patterns\n    -   For test changes, verify completeness by comparing with related tests in the same file\n    -   Ensure naming clearly conveys intent (especially for boolean/flag variables)\n-   **For test changes**:\n    -   Ensure tests exercise real implementations, not test-only helper functions\n    -   Verify consistency: if similar tests check X, all related tests should check X\n    -   Look for opportunities to improve test coverage without adding redundancy"
+    gold_removed: ''

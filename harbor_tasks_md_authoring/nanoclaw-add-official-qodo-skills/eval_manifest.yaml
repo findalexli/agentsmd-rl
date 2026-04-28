@@ -1,0 +1,233 @@
+version: "2.0"
+
+task:
+  name: nanoclaw-add-official-qodo-skills
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: qwibitai/nanoclaw
+  pr: 428
+  base_commit: "226b520131fbdbdbd2758fbf6ae4b1a2b7cf680f"
+  merge_commit: "1ff1fd6bc7411065d6d3cc5f16f727e1138b083d"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/get-qodo-rules/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/get-qodo-rules/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/get-qodo-rules/SKILL.md."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/get-qodo-rules/references/output-format.md."
+  - id: signal_04
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/get-qodo-rules/references/output-format.md."
+  - id: signal_05
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/get-qodo-rules/references/output-format.md."
+  - id: signal_06
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/get-qodo-rules/references/pagination.md."
+  - id: signal_07
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/get-qodo-rules/references/pagination.md."
+  - id: signal_08
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/get-qodo-rules/references/pagination.md."
+  - id: signal_09
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/get-qodo-rules/references/repository-scope.md."
+  - id: signal_10
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/get-qodo-rules/references/repository-scope.md."
+  - id: signal_11
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/get-qodo-rules/references/repository-scope.md."
+  - id: signal_12
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/qodo-pr-resolver/SKILL.md."
+  - id: signal_13
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/qodo-pr-resolver/SKILL.md."
+  - id: signal_14
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/qodo-pr-resolver/SKILL.md."
+  - id: signal_15
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/qodo-pr-resolver/resources/providers.md."
+  - id: signal_16
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/qodo-pr-resolver/resources/providers.md."
+  - id: signal_17
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/qodo-pr-resolver/resources/providers.md."
+  - id: signal_18
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_19
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+
+config_edits:
+  - path: .claude/skills/get-qodo-rules/SKILL.md
+    tier: 1
+    gold_added: "---\nname: get-qodo-rules\ndescription: \"Loads org- and repo-level coding rules from Qodo before code tasks begin, ensuring all generation and modification follows team standards. Use before any code generation or modification task when rules are not already loaded. Invoke when user asks to write, edit, refactor, or review code, or when starting implementation planning.\"\nversion: 2.0.0\nallowed-tools: [\"Bash\"]\ntriggers:\n  - \"get.?qodo.?rules\"\n  - \"get.?rules\"\n  - \"load.?qodo.?rules\"\n  - \"load.?rules\"\n  - \"fetch.?qodo.?rules\"\n  - \"fetch.?rules\"\n  - \"qodo.?rules\"\n  - \"coding.?rules\"\n  - \"code.?rules\"\n  - \"before.?cod\"\n  - \"start.?coding\"\n  - \"write.?code\"\n  - \"implement\"\n  - \"create.*code\"\n  - \"build.*feature\"\n  - \"add.*feature\"\n  - \"fix.*bug\"\n  - \"refactor\"\n  - \"modify.*code\"\n  - \"update.*code\"\n---\n\n# Get Qodo Rules Skill\n\n## Description\n\nFetches repository-specific coding rules from the Qodo platform API before code generation or modification tasks. Rules include security requirements, coding standards, quality guidelines, and team conventions that must be applied during code generation.\n**Use** before any code generation or modification task when rules are not already loaded. Invoke when user asks to write, edit, refactor, or review code, or when starting implementation planning.\n**Skip** if \"Qodo Rules Loaded\" already appears in conversation context\n\n---\n\n## Workflow\n\n### Step 1: Check if Rules Already Loaded\n\nIf rules are already loaded (look for \"Qodo Rules Loaded\" in recent messages), skip to step 6.\n\n### Step 2: Verify working in a git repository\n\n- Check that the current directory is inside a git repository. If not, inform the user that a git repository is required and exit gracefully.\n- Extract the repository scope from the git `origin` remote URL. If no remote is found, exit silently. If the URL cannot be parsed, inform the user and exit gracefully.\n- Detect module-level scope: if inside a `modules/*` subdirectory, use it as the query scope; otherwise use repository-wide scope.\n\nSee [repository scope detection](references/repository-scope.md) for details.\n\n### Step 3: Verify Qodo Configuration\n\nCheck that the required Qodo configuration is present. The default location is `~/.qodo/config.json`.\n\n- **API key**: Read from `~/.qodo/config.json` (`API_KEY` field). If not found, inform the user that an API key is required and provide setup instructions, then exit gracefully.\n- **Environment name**: Read from `~/.qodo/config.json` (`ENVIRONMENT_NAME` field), with `QODO_ENVIRONMENT_NAME` environment variable taking precedence. If not found, inform the user that an API key is required and provide setup instructions, then exit gracefully.\n\n### Step 4: Fetch Rules with Pagination\n\n- Fetch all pages from the API (50 rules per page) until no more results are returned.\n- On each page, handle HTTP errors and exit gracefully with a user-friendly message.\n- Accumulate all rules across pages into a single list.\n- Stop after 100 pages maximum (safety limit).\n- If no rules are found after all pages, inform the user and exit gracefully.\n\nSee [pagination details](references/pagination.md) for the full algorithm and error handling.\n\n### Step 5: Format and Output Rules\n\n- Print the \"\U0001F4CB Qodo Rules Loaded\" header with repository scope, scope context, and total rule count.\n- Group rules by severity and print each non-empty group: ERROR, WARNING, RECOMMENDATION.\n- Each rule is formatted as: `- **{name}** ({category}): {description}`\n- End output with `---`.\n\nSee [output format details](references/output-format.md) for the exact format.\n\n### Step 6: Apply Rules by Severity\n\n| Severity | Enforcement | When Skipped |\n|---|---|---|\n| **ERROR** | Must comply, non-negotiable. Add comment documenting compliance (e.g., `# Following Qodo rule: No Hardcoded Credentials`) | Explain to user and ask for guidance |\n| **WARNING** | Should comply by default | Briefly explain why in response |\n| **RECOMMENDATION** | Consider when appropriate | No action needed |\n\n### Step 7: Report\n\nAfter code generation, inform the user about rule application:\n- **ERROR rules applied**: List which rules were followed\n- **WARNING rules skipped**: Explain why\n- **No rules applicable**: Inform: \"No Qodo rules were applicable to this code change\"\n- **RECOMMENDATION rules**: Mention only if they influenced a design decision\n\n---\n\n## How Scope Levels Work\n\nDetermines scope from git remote and working directory (see [Step 2](#step-2-verify-working-in-a-git-repository)):\n\n**Scope Hierarchy**:\n- **Universal** (`/`) - applies everywhere\n- **Org Level** (`/org/`) - applies to organization\n- **Repo Level** (`/org/repo/`) - applies to repository\n- **Path Level** (`/org/repo/path/`) - applies to specific paths\n\n---\n\n## Configuration\n\nSee `~/.qodo/config.json` for API key setup. Set `QODO_ENVIRONMENT_NAME` env var or `ENVIRONMENT_NAME` in config to select environment.\n\n---\n\n## Common Mistakes\n\n- **Re-running when rules are loaded** - Check for \"Qodo Rules Loaded\" in context first\n- **Missing compliance comments on ERROR rules** - ERROR rules require a comment documenting compliance\n- **Forgetting to report when no rules apply** - Always inform the user when no rules were applicable, so they know the rules system is active\n- **Not in git repo** - Inform the user that a git repository is required and exit gracefully; do not attempt code generation\n- **No API key** - Inform the user with setup instructions; set `QODO_API_KEY` or create `~/.qodo/config.json`\n- **No rules found** - Inform the user; set up rules at app.qodo.ai"
+    gold_removed: ''
+  - path: .claude/skills/get-qodo-rules/references/output-format.md
+    tier: 1
+    gold_added: '# Formatting and Outputting Rules
+
+
+      ## Output Structure
+
+
+      Print the following header:
+
+
+      ```
+
+      # 📋 Qodo Rules Loaded
+
+
+      Scope: `{QUERY_SCOPE}`
+
+      Rules loaded: **{TOTAL_RULES}** (universal, org level, repo level, and path level rules)
+
+
+      These rules must be applied during code generation based on severity:
+
+      ```
+
+
+      ## Grouping by Severity
+
+
+      Group rules into three sections and print each non-empty section:
+
+
+      **ERROR** (`severity == "error"`):
+
+      ```
+
+      ## ❌ ERROR Rules (Must Comply) - {count}
+
+
+      - **{name}** ({category}): {description}
+
+      ```
+
+
+      **WARNING** (`severity == "warning"`):
+
+      ```
+
+      ## ⚠️  WARNING Rules (Should Comply) - {count}
+
+
+      - **{name}** ({category}): {description}
+
+      ```
+
+
+      **RECOMMENDATION** (`severity == "recommendation"`):
+
+      ```
+
+      ## 💡 RECOMMENDATION Rules (Consider) - {count}
+
+
+      - **{name}** ({category}): {description}
+
+      ```
+
+
+      End output with `---`.'
+    gold_removed: ''
+  - path: .claude/skills/get-qodo-rules/references/pagination.md
+    tier: 1
+    gold_added: "# Fetching Rules with Pagination\n\nThe API returns rules in pages of 50. All pages must be fetched to ensure no rules are missed.\n\n## Algorithm\n\n1. Start with `page=1`, `page_size=50`, accumulate results in an empty list\n2. Request: `GET {API_URL}/rules?scopes={ENCODED_SCOPE}&state=active&page={PAGE}&page_size=50`\n   - Header: `Authorization: Bearer {API_KEY}`\n3. On non-200 response, handle the error and exit gracefully:\n   - `401` — invalid/expired API key\n   - `403` — access forbidden\n   - `404` — endpoint not found (check `QODO_ENVIRONMENT_NAME`)\n   - `429` — rate limit exceeded\n   - `5xx` — API temporarily unavailable\n   - connection error — check internet connection\n4. Parse `rules` array from JSON response body\n5. Append page rules to accumulated list\n6. If rules returned on this page < 50 → last page, stop\n7. Otherwise increment page and repeat from step 2\n8. Safety limit: stop after 100 pages (5000 rules max)\n\n## API URL\n\nConstruct `{API_URL}` from `ENVIRONMENT_NAME` (read from `~/.qodo/config.json`):\n\n| `ENVIRONMENT_NAME` | `{API_URL}` |\n|---|---|\n| set (e.g. `staging`) | `https://qodo-platform.staging.qodo.ai/rules/v1` |\n\n## After Fetching\n\nIf total rules == 0, inform the user no rules are configured for the repository scope and exit gracefully."
+    gold_removed: ''
+  - path: .claude/skills/get-qodo-rules/references/repository-scope.md
+    tier: 1
+    gold_added: '# Repository Scope Detection
+
+
+      ## Extracting Repository Scope from Git Remote URL
+
+
+      Parse the `origin` remote URL to derive the scope path. Both URL formats are supported:
+
+
+      - SSH: `git@github.com:org/repo.git` → `/org/repo/`
+
+      - HTTPS: `https://github.com/org/repo.git` → `/org/repo/`
+
+
+      If no remote is found, exit silently. If the URL cannot be parsed, inform the user and exit gracefully.
+
+
+      ## Module-Level Scope Detection
+
+
+      If the current working directory is inside a `modules/*` subdirectory relative to the repository root, use it as the query scope:
+
+
+      - `modules/rules/src/service.py` → query scope: `/org/repo/modules/rules/`
+
+      - repository root or any other path → query scope: `/org/repo/`
+
+
+      ## Scope Hierarchy
+
+
+      The API returns all rules matching the query scope via prefix matching:
+
+
+      | Query scope | Rules returned |
+
+      |---|---|
+
+      | `/org/repo/modules/rules/` | universal + org + repo + path-level rules |
+
+      | `/org/repo/` | universal + org + repo-level rules |'
+    gold_removed: ''
+  - path: .claude/skills/qodo-pr-resolver/SKILL.md
+    tier: 1
+    gold_added: "---\nname: qodo-pr-resolver\ndescription: Review and resolve PR issues with Qodo - get AI-powered code review issues and fix them interactively (GitHub, GitLab, Bitbucket, Azure DevOps)\nversion: 0.3.0\ntriggers:\n  - qodo.?pr.?resolver\n  - pr.?resolver\n  - resolve.?pr\n  - qodo.?fix\n  - fix.?qodo\n  - qodo.?review\n  - review.?qodo\n  - qodo.?issues?\n  - show.?qodo\n  - get.?qodo\n  - qodo.?resolve\n---\n\n# Qodo PR Resolver\n\nFetch Qodo review issues for your current branch's PR/MR, fix them interactively or in batch, and reply to each inline comment with the decision. Supports GitHub, GitLab, Bitbucket, and Azure DevOps.\n\n## Prerequisites\n\n### Required Tools:\n- **Git** - For branch operations\n- **Git Provider CLI** - One of: `gh` (GitHub), `glab` (GitLab), `bb` (Bitbucket), or `az` (Azure DevOps)\n\n**Installation and authentication details:** See [providers.md](./resources/providers.md) for provider-specific setup instructions.\n\n### Required Context:\n- Must be in a git repository\n- Repository must be hosted on a supported git provider (GitHub, GitLab, Bitbucket, or Azure DevOps)\n- Current branch must have an open PR/MR\n- PR/MR must have been reviewed by Qodo (pr-agent-pro bot, qodo-merge[bot], etc.)\n\n### Quick Check:\n```bash\ngit --version                                    # Check git installed\ngit remote get-url origin                        # Identify git provider\n```\n\nSee [providers.md](./resources/providers.md) for provider-specific verification commands.\n\n## Understanding Qodo Reviews\n\nQodo (formerly Codium AI) is an AI-powered code review tool that analyzes PRs/MRs with compliance checks, bug detection, and code quality suggestions.\n\n### Bot Identifiers\nLook for comments from: **`pr-agent-pro`**, **`pr-agent-pro-staging`**, **`qodo-merge[bot]`**, **`qodo-ai[bot]`**\n\n### Review Comment Types\n1. **PR Compliance Guide** \U0001F50D - Security/ticket/custom compliance with \U0001F7E2/\U0001F7E1/\U0001F534/⚪ indicators\n2. **PR Code Suggestions** ✨ - Categorized improvements with importance ratings\n3. **Code Review by Qodo** - Structured issues with \U0001F41E/\U0001F4D8/\U0001F4CE sections and agent prompts (most detailed)\n\n## Instructions\n\nWhen the user asks for a code review, to see Qodo issues, or fix Qodo comments:\n\n### Step 0: Check code push status\n\nCheck for uncommitted changes, unpushed commits, and get the current branch.\n\n#### Scenario A: Uncommitted changes exist\n\n- Inform: \"⚠️ You have uncommitted changes. These won't be included in the Qodo review.\"\n- Ask: \"Would you like to commit and push them first?\"\n- If yes: Wait for user action, then proceed to Step 1\n- If no: Warn \"Proceeding with review of pushed code only\" and continue to Step 1\n\n#### Scenario B: Unpushed commits exist\n\n(no uncommitted changes)\n\n- Inform: \"⚠️ You have N unpushed commits. Qodo hasn't reviewed them yet.\"\n- Ask: \"Would you like to push them now?\"\n- If yes: Execute `git push`, inform \"Pushed! Qodo will review shortly. Please wait ~5 minutes then run this skill again.\"\n- Exit skill (don't proceed - Qodo needs time to review)\n- If no: Warn \"Proceeding with existing PR review\" and continue to Step 1\n\n#### Scenario C: Everything pushed\n\n(both uncommitted changes and unpushed commits are empty)\n\n- Proceed to Step 1\n\n### Step 1: Detect git provider\n\nDetect git provider from the remote URL (`git remote get-url origin`).\n\nSee [providers.md](./resources/providers.md) for provider detection patterns.\n\n### Step 2: Find the open PR/MR\n\nFind the open PR/MR for this branch using the provider's CLI.\n\nSee [providers.md § Find Open PR/MR](./resources/providers.md#find-open-prmr) for provider-specific commands.\n\n### Step 3: Get Qodo review comments\n\nGet the Qodo review comments using the provider's CLI.\n\nQodo typically posts both a **summary comment** (PR-level, containing all issues) and **inline review comments** (one per issue, attached to specific lines of code). You must fetch both.\n\nSee [providers.md § Fetch Review Comments](./resources/providers.md#fetch-review-comments) for provider-specific commands.\n\nLook for comments where the author is \"qodo-merge[bot]\", \"pr-agent-pro\", \"pr-agent-pro-staging\" or similar Qodo bot name.\n\n#### Step 3a: Check if review is still in progress\n\n- If any comment contains \"Come back again in a few minutes\" or \"An AI review agent is analysing this pull request\", the review is still running\n- In this case, inform the user: \"⏳ Qodo review is still in progress. Please wait a few minutes and try again.\"\n- Exit early - don't try to parse incomplete reviews\n\n#### Step 3b: Deduplicate issues\n\nDeduplicate issues across summary and inline comments:\n\n- Qodo posts each issue in two places: once in the **summary comment** (PR-level) and once as an **inline review comment** (attached to the specific code line). These will share the same issue title.\n- Qodo may also post multiple summary comments (Compliance Guide, Code Suggestions, Code Review, etc.) where issues can overlap with slightly different wording.\n- Deduplicate by matching on **issue title** (primary key - the same title means the same issue):\n  - If an issue appears in both the summary comment and as an inline comment, merge them into a single issue\n  - Prefer the **inline comment** for file location (it has the exact line context)\n  - Prefer the **summary comment** for severity, type, and agent prompt (it is more detailed)\n  - **IMPORTANT:** Preserve each issue's **inline review comment ID** — you will need it later (Step 8) to reply directly to that comment with the decision\n- Also deduplicate across multiple summary comments by location (file path + line numbers) as a secondary key\n- If the same issue appears in multiple places, combine the agent prompts\n\n### Step 4: Parse and display the issues\n\n- Extract the review body/comments from Qodo's review\n- Parse out individual issues/suggestions\n- **IMPORTANT: Preserve Qodo's exact issue titles verbatim** — do not rename, paraphrase, or summarize them. Use the title exactly as Qodo wrote it.\n- **IMPORTANT: Preserve Qodo's original ordering** — display issues in the same order Qodo listed them. Qodo already orders by severity.\n- Extract location, issue description, and suggested fix\n- Extract the agent prompt from Qodo's suggestion (the description of what needs to be fixed)\n\n#### Severity mapping\n\nDerive severity from Qodo's action level and position:\n\n1. **Action level determines severity range:**\n   - **\"Action required\"** issues → Can only be \U0001F534 CRITICAL or \U0001F7E0 HIGH\n   - **\"Review recommended\"** / **\"Remediation recommended\"** issues → Can only be \U0001F7E1 MEDIUM or ⚪ LOW\n   - **\"Other\"** / **\"Advisory comments\"** issues → Always ⚪ LOW (lowest priority)\n\n2. **Qodo's position within each action level determines the specific severity:**\n   - Group issues by action level (\"Action required\" vs \"Review recommended\" vs \"Other\")\n   - Within \"Action required\" and \"Review recommended\" groups: earlier positions → higher severity, later positions → lower severity\n   - Split point: roughly first half of each group gets the higher severity, second half gets the lower\n   - All \"Other\" issues are treated as ⚪ LOW regardless of position\n\n**Example:** 7 \"Action required\" issues would be split as:\n- Issues 1-3: \U0001F534 CRITICAL\n- Issues 4-7: \U0001F7E0 HIGH\n- Result: No MEDIUM or LOW issues (because there are no \"Review recommended\" or \"Other\" issues)\n\n**Example:** 5 \"Action required\" + 3 \"Review recommended\" + 2 \"Other\" issues would be split as:\n- Issues 1-2 or 1-3: \U0001F534 CRITICAL (first ~half of \"Action required\")\n- Issues 3-5 or 4-5: \U0001F7E0 HIGH (second ~half of \"Action required\")\n- Issues 6-7: \U0001F7E1 MEDIUM (first ~half of \"Review recommended\")\n- Issue 8: ⚪ LOW (second ~half of \"Review recommended\")\n- Issues 9-10: ⚪ LOW (all \"Other\" issues)\n\n**Action guidelines:**\n- \U0001F534 CRITICAL / \U0001F7E0 HIGH (\"Action required\"): Always \"Fix\"\n- \U0001F7E1 MEDIUM (\"Review recommended\"): Usually \"Fix\", can \"Defer\" if low impact\n- ⚪ LOW (\"Review recommended\" or \"Other\"): Can be \"Defer\" unless quick to fix; \"Other\" issues are lowest priority\n\n#### Output format\n\nDisplay as a markdown table in Qodo's exact original ordering (do NOT reorder by severity - Qodo's order IS the severity ranking):\n\n```\nQodo Issues for PR #123: [PR Title]\n\n| # | Severity | Issue Title | Issue Details | Type | Action |\n|---|----------|-------------|---------------|------|--------|\n| 1 | \U0001F534 CRITICAL | Insecure authentication check | • **Location:** src/auth/service.py:42<br><br>• **Issue:** Authorization logic is inverted | \U0001F41E Bug ⛨ Security | Fix |\n| 2 | \U0001F534 CRITICAL | Missing input validation | • **Location:** src/api/handlers.py:156<br><br>• **Issue:** User input not sanitized before database query | \U0001F4D8 Rule violation ⛯ Reliability | Fix |\n| 3 | \U0001F7E0 HIGH | Database query not awaited | • **Location:** src/db/repository.py:89<br><br>• **Issue:** Async call missing await keyword | \U0001F41E Bug ✓ Correctness | Fix |\n```\n\n### Step 5: Ask user for fix preference\n\nAfter displaying the table, ask the user how they want to proceed using AskUserQuestion:\n\n**Options:**\n- \U0001F50D \"Review each issue\" - Review and approve/defer each issue individually (recommended for careful review)\n- ⚡ \"Auto-fix all\" - Automatically apply all fixes marked as \"Fix\" without individual approval (faster, but less control)\n- ❌ \"Cancel\" - Exit without making changes\n\n**Based on the user's choice:**\n- If \"Review each issue\": Proceed to Step 6 (manual review)\n- If \"Auto-fix all\": Skip to Step 7 (auto-fix mode - apply all \"Fix\" issues automatically using Qodo's agent prompts)\n- If \"Cancel\": Exit the skill\n\n### Step 6: Review\
+      \ and fix issues (manual mode)\n\nIf \"Review each issue\" was selected:\n\n- For each issue marked as \"Fix\" (starting with CRITICAL):\n  - Read the relevant file(s) to understand the current code\n  - Implement the fix by **executing the Qodo agent prompt as a direct instruction**. The agent prompt is the fix specification — follow it literally, do not reinterpret or improvise a different solution. Only deviate if the prompt is clearly outdated relative to the current code (e.g. references lines that no longer exist).\n  - Calculate the proposed fix in memory (DO NOT use Edit or Write tool yet)\n  - **Present the fix and ask for approval in a SINGLE step:**\n    1. Show a brief header with issue title and location\n    2. **Show Qodo's agent prompt in full** so the user can verify the fix matches it\n    3. Display current code snippet\n    4. Display proposed change as markdown diff\n    5. Immediately use AskUserQuestion with these options:\n       - ✅ \"Apply fix\" - Apply the proposed change\n       - ⏭️ \"Defer\" - Skip this issue (will prompt for reason)\n       - \U0001F527 \"Modify\" - User wants to adjust the fix first\n  - **WAIT for user's choice via AskUserQuestion**\n  - **If \"Apply fix\" selected:**\n    - Apply change using Edit tool (or Write if creating new file)\n    - Reply to the Qodo inline comment with the decision (see Step 8 for inline reply commands)\n    - Git commit the fix: `git add <modified-files> && git commit -m \"fix: <issue title>\"`\n    - Confirm: \"✅ Fix applied, commented, and committed!\"\n    - Mark issue as completed\n  - **If \"Defer\" selected:**\n    - Ask for deferral reason using AskUserQuestion\n    - Reply to the Qodo inline comment with the deferral (see Step 8 for inline reply commands)\n    - Record reason and move to next issue\n  - **If \"Modify\" selected:**\n    - Inform user they can make changes manually\n    - Move to next issue\n- Continue until all \"Fix\" issues are addressed or the user decides to stop\n\n#### Important notes\n\n**Single-step approval with AskUserQuestion:**\n- NO native Edit UI (no persistent permissions possible)\n- Each fix requires explicit approval via custom question\n- Clearer options, no risk of accidental auto-approval\n\n**CRITICAL:** Single validation only - do NOT show the diff separately and then ask. Combine the diff display and the question into ONE message. The user should see: brief context → current code → proposed diff → AskUserQuestion, all at once.\n\n**Example:** Show location, Qodo's guidance, current code, proposed diff, then AskUserQuestion with options (✅ Apply fix / ⏭️ Defer / \U0001F527 Modify). Wait for user choice, apply via Edit tool if approved.\n\n### Step 7: Auto-fix mode\n\nIf \"Auto-fix all\" was selected:\n\n- For each issue marked as \"Fix\" (starting with CRITICAL):\n  - Read the relevant file(s) to understand the current code\n  - Implement the fix by **executing the Qodo agent prompt as a direct instruction**. The agent prompt is the fix specification — follow it literally, do not reinterpret or improvise a different solution. Only deviate if the prompt is clearly outdated relative to the current code (e.g. references lines that no longer exist).\n  - Apply the fix using Edit tool\n  - Reply to the Qodo inline comment with the decision (see Step 8 for inline reply commands)\n  - Git commit the fix: `git add <modified-files> && git commit -m \"fix: <issue title>\"`\n  - Report each fix with the agent prompt that was followed:\n    > ✅ **Fixed: [Issue Title]** at `[Location]`\n    > **Agent prompt:** [the Qodo agent prompt used]\n  - Mark issue as completed\n- After all auto-fixes are applied, display summary:\n  - List of all issues that were fixed\n  - List of any issues that were skipped (with reasons)\n\n### Step 8: Post summary to PR/MR\n\n**REQUIRED:** After all issues have been reviewed (fixed or deferred), ALWAYS post a comment summarizing the actions taken, even if all issues were deferred.\n\nSee [providers.md § Post Summary Comment](./resources/providers.md#post-summary-comment) for provider-specific commands and summary format.\n\n**After posting the summary, resolve the Qodo review comment:**\n\nFind the Qodo \"Code Review by Qodo\" comment and mark it as resolved or react to acknowledge it.\n\nSee [providers.md § Resolve Qodo Review Comment](./resources/providers.md#resolve-qodo-review-comment) for provider-specific commands.\n\nIf resolve fails (comment not found, API error), continue — the summary comment is the important part.\n\n### Step 9: Push to remote\n\nIf any fixes were applied (commits were created in Steps 6/7), ask the user if they want to push:\n- If yes: `git push`\n- If no: Inform them they can push later with `git push`\n\n**Important:** If all issues were deferred, there are no commits to push — skip this step.\n\n### Special cases\n\n#### Unsupported git provider\n\nIf the remote URL doesn't match GitHub, GitLab, Bitbucket, or Azure DevOps, inform the user and exit.\n\nSee [providers.md § Error Handling](./resources/providers.md#error-handling) for details.\n\n#### No PR/MR exists\n\n- Inform: \"No PR/MR found for branch `<branch-name>`\"\n- Ask: \"Would you like me to create a PR/MR?\"\n- If yes: Use appropriate CLI to create PR/MR (see [providers.md § Create PR/MR](./resources/providers.md#create-prmr-special-case)), then inform \"PR created! Qodo will review it shortly. Run this skill again in ~5 minutes.\"\n- If no: Exit skill\n\n**IMPORTANT:** Do NOT proceed without a PR/MR\n\n#### No Qodo review yet\n\n- Check if PR/MR has comments from Qodo bots (pr-agent-pro, qodo-merge[bot], etc.)\n- If no Qodo comments found: Inform \"Qodo hasn't reviewed this PR/MR yet. Please wait a few minutes for Qodo to analyze it.\"\n- Exit skill (do NOT attempt manual review)\n\n**IMPORTANT:** This skill only works with Qodo reviews, not manual reviews\n\n#### Review in progress\n\nIf \"Come back again in a few minutes\" message is found, inform user to wait and try again, then exit.\n\n#### Missing CLI tool\n\nIf the detected provider's CLI is not installed, provide installation instructions and exit.\n\nSee [providers.md § Error Handling](./resources/providers.md#error-handling) for provider-specific installation commands.\n\n#### Inline reply commands\n\nUsed per-issue in Steps 6 and 7 to reply to Qodo's inline comments:\n\nUse the inline comment ID preserved during deduplication (Step 3b) to reply directly to Qodo's comment.\n\nSee [providers.md § Reply to Inline Comments](./resources/providers.md#reply-to-inline-comments) for provider-specific commands and reply format.\n\nKeep replies short (one line). If a reply fails, log it and continue."
+    gold_removed: ''
+  - path: .claude/skills/qodo-pr-resolver/resources/providers.md
+    tier: 1
+    gold_added: "# Git Provider Commands Reference\n\nThis document contains all provider-specific CLI commands and API interactions for the Qodo PR Resolver skill. Reference this file when implementing provider-specific operations.\n\n## Supported Providers\n\n- GitHub (via `gh` CLI)\n- GitLab (via `glab` CLI)\n- Bitbucket (via `bb` CLI)\n- Azure DevOps (via `az` CLI with DevOps extension)\n\n## Provider Detection\n\nDetect the git provider from the remote URL:\n\n```bash\ngit remote get-url origin\n```\n\nMatch against:\n- `github.com` → GitHub\n- `gitlab.com` → GitLab\n- `bitbucket.org` → Bitbucket\n- `dev.azure.com` → Azure DevOps\n\n## Prerequisites by Provider\n\n### GitHub\n\n**CLI:** `gh`\n- **Install:** `brew install gh` or [cli.github.com](https://cli.github.com/)\n- **Authenticate:** `gh auth login`\n- **Verify:**\n  ```bash\n  gh --version && gh auth status\n  ```\n\n### GitLab\n\n**CLI:** `glab`\n- **Install:** `brew install glab` or [glab.readthedocs.io](https://glab.readthedocs.io/)\n- **Authenticate:** `glab auth login`\n- **Verify:**\n  ```bash\n  glab --version && glab auth status\n  ```\n\n### Bitbucket\n\n**CLI:** `bb` or API access\n- **Install:** See [bitbucket.org/product/cli](https://bitbucket.org/product/cli)\n- **Verify:**\n  ```bash\n  bb --version\n  ```\n\n### Azure DevOps\n\n**CLI:** `az` with DevOps extension\n- **Install:** `brew install azure-cli` or [docs.microsoft.com/cli/azure](https://docs.microsoft.com/cli/azure)\n- **Install extension:** `az extension add --name azure-devops`\n- **Authenticate:** `az login` then `az devops configure --defaults organization=https://dev.azure.com/yourorg project=yourproject`\n- **Verify:**\n  ```bash\n  az --version && az devops\n  ```\n\n## Find Open PR/MR\n\nGet the PR/MR number for the current branch:\n\n### GitHub\n\n```bash\ngh pr list --head <branch-name> --state open --json number,title\n```\n\n### GitLab\n\n```bash\nglab mr list --source-branch <branch-name> --state opened\n```\n\n### Bitbucket\n\n```bash\nbb pr list --source-branch <branch-name> --state OPEN\n```\n\n### Azure DevOps\n\n```bash\naz repos pr list --source-branch <branch-name> --status active --output json\n```\n\n## Fetch Review Comments\n\nQodo posts both **summary comments** (PR-level) and **inline review comments** (per-line). Fetch both.\n\n### GitHub\n\n```bash\n# PR-level comments (includes the summary comment with all issues)\ngh pr view <pr-number> --json comments\n\n# Inline review comments (per-line comments on specific code)\ngh api repos/{owner}/{repo}/pulls/<pr-number>/comments\n```\n\n### GitLab\n\n```bash\n# All MR notes including inline comments\nglab mr view <mr-iid> --comments\n```\n\n### Bitbucket\n\n```bash\n# All PR comments including inline comments\nbb pr view <pr-id> --comments\n```\n\n### Azure DevOps\n\n```bash\n# PR-level threads (includes summary comments)\naz repos pr show --id <pr-id> --output json\n\n# All PR threads including inline comments\naz repos pr policy list --id <pr-id> --output json\naz repos pr thread list --id <pr-id> --output json\n```\n\n## Reply to Inline Comments\n\nUse the inline comment ID preserved during deduplication to reply directly to Qodo's comments.\n\n### GitHub\n\n```bash\ngh api repos/{owner}/{repo}/pulls/<pr-number>/comments/<inline-comment-id>/replies \\\n  -X POST \\\n  -f body='<reply-body>'\n```\n\n**Reply format:**\n- **Fixed:** `✅ **Fixed** — <brief description of what was changed>`\n- **Deferred:** `⏭️ **Deferred** — <reason for deferring>`\n\n### GitLab\n\n```bash\nglab api \"/projects/:id/merge_requests/<mr-iid>/discussions/<discussion-id>/notes\" \\\n  -X POST \\\n  -f body='<reply-body>'\n```\n\n### Bitbucket\n\n```bash\nbb api \"/2.0/repositories/{workspace}/{repo}/pullrequests/<pr-id>/comments\" \\\n  -X POST \\\n  -f 'content.raw=<reply-body>' \\\n  -f 'parent.id=<inline-comment-id>'\n```\n\n### Azure DevOps\n\n```bash\naz repos pr thread comment add \\\n  --id <pr-id> \\\n  --thread-id <thread-id> \\\n  --content '<reply-body>'\n```\n\n## Post Summary Comment\n\nAfter reviewing all issues, post a summary comment to the PR/MR.\n\n### GitHub\n\n```bash\ngh pr comment <pr-number> --body '<comment-body>'\n```\n\n### GitLab\n\n```bash\nglab mr comment <mr-iid> --message '<comment-body>'\n```\n\n### Bitbucket\n\n```bash\nbb pr comment <pr-id> '<comment-body>'\n```\n\n### Azure DevOps\n\n```bash\naz repos pr thread create \\\n  --id <pr-id> \\\n  --comment-content '<comment-body>'\n```\n\n**Summary format:**\n\n```markdown\n## Qodo Fix Summary\n\nReviewed and addressed Qodo review issues:\n\n### ✅ Fixed Issues\n- **Issue Title** (Severity) - Brief description of what was fixed\n\n### ⏭️ Deferred Issues\n- **Issue Title** (Severity) - Reason for deferring\n\n---\n*Generated by Qodo PR Resolver skill*\n```\n\n## Resolve Qodo Review Comment\n\nAfter posting the summary, resolve the main Qodo review comment.\n\n**Steps:**\n1. Fetch all PR/MR comments\n2. Find the Qodo bot comment containing \"Code Review by Qodo\"\n3. Resolve or react to the comment\n\n### GitHub\n\n```bash\n# 1. Fetch comments to find the comment ID\ngh pr view <pr-number> --json comments\n\n# 2. React with thumbs up to acknowledge\ngh api \"repos/{owner}/{repo}/issues/comments/<comment-id>/reactions\" \\\n  -X POST \\\n  -f content='+1'\n```\n\n### GitLab\n\n```bash\n# 1. Fetch discussions to find the discussion ID\nglab api \"/projects/:id/merge_requests/<mr-iid>/discussions\"\n\n# 2. Resolve the discussion\nglab api \"/projects/:id/merge_requests/<mr-iid>/discussions/<discussion-id>\" \\\n  -X PUT \\\n  -f resolved=true\n```\n\n### Bitbucket\n\n```bash\n# Fetch comments via bb api, find the comment ID, then update to resolved status\nbb api \"/2.0/repositories/{workspace}/{repo}/pullrequests/<pr-id>/comments/<comment-id>\" \\\n  -X PUT \\\n  -f 'resolved=true'\n```\n\n### Azure DevOps\n\n```bash\n# Mark the thread as resolved\naz repos pr thread update \\\n  --id <pr-id> \\\n  --thread-id <thread-id> \\\n  --status resolved\n```\n\n## Create PR/MR (Special Case)\n\nIf no PR/MR exists for the current branch, offer to create one.\n\n### GitHub\n\n```bash\ngh pr create --title '<title>' --body '<body>'\n```\n\n### GitLab\n\n```bash\nglab mr create --title '<title>' --description '<body>'\n```\n\n### Bitbucket\n\n```bash\nbb pr create --title '<title>' --description '<body>'\n```\n\n### Azure DevOps\n\n```bash\naz repos pr create \\\n  --title '<title>' \\\n  --description '<body>' \\\n  --source-branch <branch-name> \\\n  --target-branch main\n```\n\n## Error Handling\n\n### Missing CLI Tool\n\nIf the detected provider's CLI is not installed:\n1. Inform the user: \"❌ Missing required CLI tool: `<cli-name>`\"\n2. Provide installation instructions from the Prerequisites section\n3. Exit the skill\n\n### Unsupported Provider\n\nIf the remote URL doesn't match any supported provider:\n1. Inform: \"❌ Unsupported git provider detected: `<url>`\"\n2. List supported providers: GitHub, GitLab, Bitbucket, Azure DevOps\n3. Exit the skill\n\n### API Failures\n\nIf inline reply or summary posting fails:\n- Log the error\n- Continue with remaining operations\n- The workflow should not abort due to comment posting failures"
+    gold_removed: ''
+  - path: CLAUDE.md
+    tier: 1
+    gold_added: '| `/qodo-pr-resolver` | Fetch and fix Qodo PR review issues interactively or in batch |
+
+      | `/get-qodo-rules` | Load org- and repo-level coding rules from Qodo before code tasks |'
+    gold_removed: ''

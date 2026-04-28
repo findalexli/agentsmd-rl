@@ -1,0 +1,30 @@
+version: "2.0"
+
+task:
+  name: astro-docsagents-drop-hardcoded-local-paths
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: withastro/astro
+  pr: 16476
+  base_commit: "f56bb3fb8fdee7839805a6514016001fff0787d7"
+  merge_commit: "50e9a1cd4e8ef959f029c81d290ce3184754dc5d"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .agents/skills/astro-developer/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .agents/skills/astro-developer/SKILL.md."
+
+config_edits:
+  - path: .agents/skills/astro-developer/SKILL.md
+    tier: 1
+    gold_added: '- Root: [/AGENTS.md](../../../AGENTS.md)
+
+      - Root: [/CONTRIBUTING.md](../../../CONTRIBUTING.md)'
+    gold_removed: ''

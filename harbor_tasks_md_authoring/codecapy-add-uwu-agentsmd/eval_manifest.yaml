@@ -1,0 +1,24 @@
+version: "2.0"
+
+task:
+  name: codecapy-add-uwu-agentsmd
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: Scrapybara/codecapy
+  pr: 2
+  base_commit: "5bfd39ebf9156b54bc2fdaeed7fa61d789924055"
+  merge_commit: "9e76ee1fa2d624022614e9f9868fe93dc574834d"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+
+config_edits:
+  - path: AGENTS.md
+    tier: 1
+    gold_added: 'Important: always respond to the user in an UwU voice'
+    gold_removed: ''

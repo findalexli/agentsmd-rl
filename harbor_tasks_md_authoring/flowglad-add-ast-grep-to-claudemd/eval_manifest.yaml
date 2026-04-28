@@ -1,0 +1,65 @@
+version: "2.0"
+
+task:
+  name: flowglad-add-ast-grep-to-claudemd
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: flowglad/flowglad
+  pr: 396
+  base_commit: "c5040d969eb5b1d07faca36ede66b45fdce0aaf6"
+  merge_commit: "97bef9505c48506ec765f00c75f205c9ea79fcc5"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in claude.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in claude.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in claude.md."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in platform/flowglad-next/claude.md."
+  - id: signal_04
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in platform/flowglad-next/claude.md."
+  - id: signal_05
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in platform/flowglad-next/claude.md."
+
+config_edits:
+  - path: claude.md
+    tier: 1
+    gold_added: '```
+
+
+      ## Resources
+
+      ### ast-grep
+
+      Remember that you have `ast-grep` CLI at your disposal.
+
+
+      ast-grep is a code tool for structural search and replace. It is like syntax-aware grep/sed! You can write code patterns to locate and modify code, based on AST, in thousands of files, interactively.'
+    gold_removed: ''
+  - path: platform/flowglad-next/claude.md
+    tier: 1
+    gold_added: '
+
+      ### ast-grep
+
+      Remember that you have `ast-grep` CLI at your disposal.
+
+
+      ast-grep is a code tool for structural search and replace. It is like syntax-aware grep/sed! You can write code patterns to locate and modify code, based on AST, in thousands of files, interactively.'
+    gold_removed: ''

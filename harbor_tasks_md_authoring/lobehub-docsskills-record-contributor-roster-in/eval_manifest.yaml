@@ -1,0 +1,74 @@
+version: "2.0"
+
+task:
+  name: lobehub-docsskills-record-contributor-roster-in
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: lobehub/lobehub
+  pr: 14219
+  base_commit: "3e236ec36f7f376b685ef4999e83c245c5624024"
+  merge_commit: "f32fff19dd3176b64536668ec18ee9dc3eb6ada4"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .agents/skills/version-release/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .agents/skills/version-release/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .agents/skills/version-release/SKILL.md."
+
+config_edits:
+  - path: .agents/skills/version-release/SKILL.md
+    tier: 1
+    gold_added: '### Contributor Ordering
+
+
+      Render contributors as a **single flat list** (no separate "Community" / "Core Team" subsections). Order: **community contributors first, team members after**. Within each group, sort by PR count desc. Bots (`@lobehubbot`, `renovate[bot]`) go on a separate "maintenance" line.
+
+
+      **LobeHub team roster** — anyone in this list is a team member; anyone not in this list is a community contributor:
+
+
+      - @arvinxx
+
+      - @Innei
+
+      - @tjx666 (commit author name: YuTengjing)
+
+      - @LiJian
+
+      - @Neko
+
+      - @Rdmclin2
+
+      - @AmAzing129
+
+      - @sudongyuer
+
+      - @rivertwilight
+
+      - @CanisMinor
+
+
+      > **Resolving handles** — git author names (e.g. `YuTengjing`) are not always the GitHub handle. Verify via `gh pr view <PR> --json author` or `gh api search/users -f q=''<email>''` before listing.
+
+
+      If a new contributor appears who is not on this list, treat them as community by default and ask the user whether to add them to the roster.
+
+
+      **Since <Previous Version>:** <N merged PRs> · <N resolved issues> · <N contributors>
+
+      Huge thanks to **<N contributors>** who shipped **<N merged PRs>** this cycle.
+
+      @<community-handle> · @<community-handle> · @<team-handle> · @<team-handle>
+
+      Plus @lobehubbot and renovate[bot] for maintenance.'
+    gold_removed: ''

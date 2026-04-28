@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: dde-control-center-docs-add-github-copilot-instructions
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: linuxdeepin/dde-control-center
+  pr: 2914
+  base_commit: "ead7e91b9238ee71f03e332bde8a6cf2aa61ea09"
+  merge_commit: "07614377ad769365c62508491b3e79bd3b9c53c2"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/copilot-instructions.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/copilot-instructions.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/copilot-instructions.md."
+
+config_edits:
+  - path: .github/copilot-instructions.md
+    tier: 1
+    gold_added: "# DDE Control Center - AI Coding Agent Instructions\n\n## Project Overview\nDDE Control Center (深度控制中心) v6.0+ is a Qt6/QML-based desktop control panel for Deepin Desktop Environment. It uses a **plugin-based architecture** where the core framework provides infrastructure and all features are implemented as plugins.\n\n## Critical Architecture Concepts\n\n### Plugin System (V25 Architecture)\n- **Two-phase loading**: Plugins load in stages to optimize startup\n  1. `{plugin}.qml` - Metadata/menu entry (fast, synchronous)\n  2. `{plugin}.so` - C++ backend (threaded, async)\n  3. `{plugin}Main.qml` - Full UI (loaded on-demand)\n- **Plugin location**: `${CMAKE_INSTALL_LIBDIR}/dde-control-center/plugins_v1.0/{plugin-name}/`\n- **Factory pattern**: Use `DCC_FACTORY_CLASS(YourClass)` macro + `#include \"yourclass.moc\"` to register plugins\n- **Thread safety**: Plugin C++ objects created in worker threads are moved to main thread - all child objects MUST be in the same tree hierarchy or they won't be moved\n\n### Core Framework Classes\n- **DccObject**: Tree-node base class for all UI elements. Key properties:\n  - `name`: Unique ID (no `/` characters, used in URL paths)\n  - `parentName`: Parent's URL path (can be hierarchical like `\"aa/bb/cc\"`)\n  - `weight`: Display order (0-65535, use increments of 10)\n  - `pageType`: Determines rendering (Menu, Editor, Item)\n- **DccApp**: Global singleton accessible from QML, provides `root`, `addObject()`, `removeObject()`, `showPage()` \n- **DccFactory**: Interface for plugin registration (see [include/dccfactory.h](include/dccfactory.h))\n\n### QML-C++ Integration\n- C++ exports accessed via `dccData` in QML (automatically injected)\n- Use `Q_PROPERTY`, `Q_INVOKABLE`, or slots for QML exposure\n- Example: `dccData.calc(a, b)` calls C++ method from QML\n\n## Build & Development Workflows\n\n### Standard Build\n```bash\ncmake -B build\ncmake --build build\n# Debug single plugin without installing:\n./build/bin/dde-control-center --spec ./build/lib/plugins_v1.0/{plugin-name}\n```\n\n### Build Flags\n- `BUILD_TESTING=ON`: Enable unit tests (uses GTest)\n- `ENABLE_ASAN=OFF`: Address sanitizer (disabled by default due to plugin compat issues)\n- `DISABLE_*` options: Conditionally disable plugins (see [CMakeLists.txt](CMakeLists.txt#L40-L46))\n\n### Plugin Development Pattern\nSee complete example in [examples/plugin-example](examples/plugin-example) and [docs/v25-dcc-interface.zh_CN.md](docs/v25-dcc-interface.zh_CN.md)\n\n**CMakeLists.txt template**:\n```cmake\nfind_package(DdeControlCenter REQUIRED)\nadd_library(myplugin MODULE src/myplugin.cpp)\ntarget_link_libraries(myplugin PRIVATE Dde::Control-Center Qt6::Core)\ndcc_install_plugin(NAME myplugin TARGET myplugin)\ndcc_handle_plugin_translation(NAME myplugin) # auto-handles i18n\n```\n\n**Plugin registration** ([src/plugin-*/operation/*.cpp](src/plugin-deepinid/operation/deepinidinterface.cpp#L25-L26)):\n```cpp\n#include \"dccfactory.h\"\nDCC_FACTORY_CLASS(YourPluginClass)\n#include \"yourpluginclass.moc\"\n```\n\n## Project Conventions\n\n### File Naming\n- Plugins: `plugin-{name}/` directories under [src/](src/)\n- QML entry: `{name}.qml` (metadata only)\n- QML main: `{name}Main.qml` (full UI implementation) - **renamed from `main.qml` in v6.0.77 to avoid translation conflicts**\n- C++ sources: `operation/` or `src/` subdirectories\n\n### Configuration Management\n- **DConfig** for settings: `org.deepin.dde.control-center` ([misc/configs/](misc/configs/))\n- Check visibility: `dde-dconfig get org.deepin.dde.control-center -r org.deepin.dde.control-center hideModule`\n- **DccDBusInterface** QML type for DBus interaction (see [docs/v25-dcc-interface.zh_CN.md](docs/v25-dcc-interface.zh_CN.md#L168-L186))\n\n### Qt Version\n- **Qt6 only** - mixing Qt5 libraries will cause crashes\n- Uses `Qt6::`, `Dtk6::` namespaces\n- CMake: `set(QT_NS Qt6)` and `set(DTK_NS Dtk6)`\n\n## Testing\n- Framework: GTest for C++ unit tests\n- Location: [tests/](tests/) and [dde-grand-search/tests/](dde-grand-search/tests/)\n- Run: Enable `BUILD_TESTING=ON`, tests built to `build/bin/`\n\n## Common Pitfalls\n1. **ASAN incompatibility**: Don't use ASAN in plugins if control center wasn't built with it\n2. **Thread safety**: Plugin constructor objects must be children of the exported class to be moved to main thread\n3. **Name conflicts**: Plugin `name` property must be unique - used for URLs and configuration\n4. **QML translation**: Use `qsTr()` in QML, handled by `dcc_handle_plugin_translation()`\n\n## Key Files for Reference\n- [include/dccobject.h](include/dccobject.h) - Core object properties/signals\n- [include/dccapp.h](include/dccapp.h) - Global API\n- [include/dccfactory.h](include/dccfactory.h) - Plugin interface + registration macro\n- [misc/DdeControlCenterPluginMacros.cmake](misc/DdeControlCenterPluginMacros.cmake) - CMake helpers\n- [docs/v25-dcc-interface.zh_CN.md](docs/v25-dcc-interface.zh_CN.md) - Complete API reference (Chinese)"
+    gold_removed: ''

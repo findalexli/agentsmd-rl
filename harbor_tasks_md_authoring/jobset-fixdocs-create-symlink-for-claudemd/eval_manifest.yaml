@@ -1,0 +1,40 @@
+version: "2.0"
+
+task:
+  name: jobset-fixdocs-create-symlink-for-claudemd
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: kubernetes-sigs/jobset
+  pr: 1160
+  base_commit: "94876b5878c83fa3862283ba944044413fcf5fe5"
+  merge_commit: "de7c38272c276daa5888221595835df0781f5f42"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+
+config_edits:
+  - path: AGENTS.md
+    tier: 1
+    gold_added: "## Kubernetes JobSet\n\n- Prefer local analysis (`make test`, `make build`, `make test-integration`, `make verify`) before proposing commits.\n- NEVER modify CI/CD workflows or release automation unless explicitly requested.\n\n- Introduce dependencies without updating `go.mod`\n- Modify CRD schemas or API versions without explicit instruction\n- Match import patterns from neighboring files\n- Preserve existing logging and error-handling conventions\n- Review CRD schemas in `api/jobset/v1alpha2/` before changing API structures\n- Call out any breaking changes and follow the deprecation policy\n## Repository Map\n\n```\njobset/\n├── api/jobset/v1alpha2/        # API types (JobSet, ReplicatedJob); edit here for API changes\n├── charts/                     # Helm Charts to deploy JobSet\n├── client-go/                  # Generated typed clientsets, informers, listers\n├── cmd/                        # Controller manager entrypoint (main.go is at root)\n├── config/                     # Kustomize manifests to deploy JobSet\n├── hack/                       # Code generation, boilerplate, deploy scripts\n├── keps/                       # Enhancement proposals for JobSet\n├── pkg/\n│   ├── config/                 # JobSet configuration ConfigMap\n│   ├── constants/              # All annotation, label, and env var key constants\n│   ├── controllers/            # JobSet and Pod reconcilers, failure/success/TTL policies\n│   ├── features/               # Feature gate definitions\n│   ├── metrics/                # Prometheus metric definitions and registration\n│   ├── util/                   # Shared utilities (collections, placement)\n│   ├── version/                # Version info\n│   └── webhooks/               # Validating and mutating webhook handlers\n├── site/                       # Hugo + Docsy documentation site\n└── test/\n    ├── e2e/                    # End-to-end tests (Kind cluster)\n    └── integration/            # envtest based integration tests\n```\n\n## Commands\n\n<!-- BEGIN: AGENT_COMMANDS -->\n<!-- END: AGENT_COMMANDS -->\n\n**Requirements:**\n\n- Every new feature or bug fix must include tests\n- Unit tests go in the same package as the source file (`*_test.go`)\n- Integration tests go in `test/integration/`\n- Use table-driven tests (map or slice of structs) for multiple scenarios\n\n\n## Development Workflow for AI Agents\n\n**Before making changes:**\n\n1. Read existing code patterns, comments, and tests in neighboring files\n2. Check `pkg/constants/constants.go` for annotation/label keys before defining new ones\n3. Run `make verify` to establish a clean baseline before editing\n4. Check the Core Development Principles below\n\n**Commit and PR hygiene:**\n\n- Follow the [Kubernetes commit message convention](https://www.kubernetes.dev/docs/guide/pull-requests/#commit-message-guidelines):\n  short imperative subject, blank line, then body explaining the \"why\"\n- Include rationale (\"why\") in commit messages and PR descriptions, not just \"what\"\n- Only modify files relevant to the task; keep diffs minimal\n- Do not push secrets or modify git config\n- Always run `make generate` after modifying the source code\n\n## Core Development Principles\n\n### API Stability ⚠️ CRITICAL\n\nJobSet's API (`jobset.x-k8s.io/v1alpha2`) is in alpha. Always preserve backward compatibility within a version.\n\n**Rules for API changes** (`api/jobset/v1alpha2/jobset_types.go`):\n\n- **Adding fields**: Use `+optional` marker and provide a default where possible\n- **Removing or renaming fields**: Requires an API version bump and a migration plan — do not do this without explicit instruction\n- **Changing field types**: Breaking change; requires a deprecation period\n- **Validation**: Use [CEL validation](https://kubernetes.io/docs/reference/using-api/cel/) (`+kubebuilder:validation:XValidation`) wherever applicable instead of webhook-only validation\n- **Always call out breaking changes** in PR descriptions and commit messages\n\n❌ **Bad — silent breaking change:**\n\n```go\ntype JobSetSpec struct {\n    // Renamed without migration\n    Paused *bool `json:\"paused,omitempty\"`\n}\n```\n\n✅ **Good — backward compatible addition:**\n\n```go\ntype JobSetSpec struct {\n    // Suspend stops the JobSet without deleting resources.\n    // +optional\n    Suspend *bool `json:\"suspend,omitempty\"`\n\n    // NewFeature enables experimental capability X.\n    // +optional\n    NewFeature *bool `json:\"newFeature,omitempty\"`\n}\n```\n\n**After any API change:**\n\n1. Add `+kubebuilder` markers for validation, defaulting, or CRD generation\n2. Run `make generate` to update generated code\n3. Run `make verify` to confirm all generated artifacts are up to date\n\n"
+    gold_removed: ''
+  - path: CLAUDE.md
+    tier: 1
+    gold_added: ''
+    gold_removed: ''
+  - path: CLAUDE.md
+    tier: 1
+    gold_added: AGENTS.md
+    gold_removed: ''

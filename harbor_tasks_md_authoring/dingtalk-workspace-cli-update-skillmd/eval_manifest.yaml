@@ -1,0 +1,24 @@
+version: "2.0"
+
+task:
+  name: dingtalk-workspace-cli-update-skillmd
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: DingTalk-Real-AI/dingtalk-workspace-cli
+  pr: 95
+  base_commit: "31eb10985e93d9d9f1eece513799567584850be9"
+  merge_commit: "e59c4f30b88d2050512d30b41ea577bf70598a37"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/SKILL.md."
+
+config_edits:
+  - path: skills/SKILL.md
+    tier: 1
+    gold_added: 'cli_version: ">=1.0.6"'
+    gold_removed: ''

@@ -205,11 +205,27 @@ Output JSON only.
 """
 
 
-def classify_one(repo: str) -> dict:
-    meta = fetch_meta(repo)
-    tree = fetch_tree(repo)
-    commits = fetch_recent_commits(repo)
-    readme = fetch_readme(repo)
+def classify_one(repo: str, bundle: dict | None = None) -> dict:
+    """Classify a repo. If `bundle` is provided (from batch_repo_bundle), use
+    its meta/tree/commits/readme directly (skips per-repo REST). Otherwise
+    falls back to the legacy 4-REST-call path."""
+    if bundle:
+        meta = bundle.get("meta") or {}
+        tree = bundle.get("tree") or []
+        commits = bundle.get("commits") or []
+        readme = bundle.get("readme") or ""
+        # Normalize key names: GraphQL gives stars/primaryLanguage/createdAt,
+        # legacy build_prompt expects stars/language/created_at.
+        meta = {**meta,
+                "language": meta.get("primaryLanguage"),
+                "created_at": meta.get("createdAt", ""),
+                "archived": meta.get("isArchived", False),
+                "fork": meta.get("isFork", False)}
+    else:
+        meta = fetch_meta(repo)
+        tree = fetch_tree(repo)
+        commits = fetch_recent_commits(repo)
+        readme = fetch_readme(repo)
     prompt = build_prompt(repo, meta, tree, commits, readme)
     res = call_gemini(prompt, GEMINI_KEY,
                       schema=CLASSIFY_SCHEMA, temperature=0.1,
@@ -247,10 +263,20 @@ def main():
                     if r.strip() and "/" in r})
     print(f"Classifying {len(repos)} repos via Gemini Standard…", flush=True)
 
+    # Single batched GraphQL fetch for all repo bundles (meta+tree+commits+
+    # readme) — replaces 4×N REST calls with N/25 GraphQL calls.
+    sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+    from taskforge.gh_graphql import batch_repo_bundle
+    print(f"Batched GraphQL bundle fetch for {len(repos)} repos…", flush=True)
+    bundles = batch_repo_bundle(repos)
+    n_with_data = sum(1 for r in repos if bundles.get(r))
+    print(f"  bundle data resolved for {n_with_data}/{len(repos)} repos",
+          flush=True)
+
     out: list[dict] = []
     started = time.monotonic()
     with ThreadPoolExecutor(max_workers=args.concurrency) as ex:
-        futs = {ex.submit(classify_one, r): r for r in repos}
+        futs = {ex.submit(classify_one, r, bundles.get(r)): r for r in repos}
         for i, fut in enumerate(as_completed(futs)):
             r = fut.result()
             out.append(r)

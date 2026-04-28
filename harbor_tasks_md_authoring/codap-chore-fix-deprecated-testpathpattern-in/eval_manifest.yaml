@@ -1,0 +1,30 @@
+version: "2.0"
+
+task:
+  name: codap-chore-fix-deprecated-testpathpattern-in
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: concord-consortium/codap
+  pr: 2420
+  base_commit: "e851feb37f7da7b42f5a6ac9eaa9b9f644353450"
+  merge_commit: "43d65c777ee541084e7f4de1ddd980eefed43b23"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+
+config_edits:
+  - path: CLAUDE.md
+    tier: 1
+    gold_added: '# Run tests matching a pattern (pass the pattern directly, NOT via --testPathPattern which is deprecated)
+
+      npm test -- data-set'
+    gold_removed: ''

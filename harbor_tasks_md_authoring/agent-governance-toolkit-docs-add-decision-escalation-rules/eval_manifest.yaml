@@ -1,0 +1,52 @@
+version: "2.0"
+
+task:
+  name: agent-governance-toolkit-docs-add-decision-escalation-rules
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: microsoft/agent-governance-toolkit
+  pr: 838
+  base_commit: "313303c62d2e1bce52e6591519b4554aae745f8f"
+  merge_commit: "9469a47320f904ef35a34e18c808ea17bba31362"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/copilot-instructions.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/copilot-instructions.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/copilot-instructions.md."
+
+config_edits:
+  - path: .github/copilot-instructions.md
+    tier: 1
+    gold_added: '## Decision Escalation
+
+
+      For major design changes, always ask the maintainer (@imran-siddique) before proceeding:
+
+      - New packages or modules that change the repo structure
+
+      - Cross-cutting changes spanning 3+ packages
+
+      - Security model changes (identity, trust, policy engine)
+
+      - Breaking API changes to public interfaces
+
+      - New framework integrations or SDK additions
+
+      - Changes to CI/CD pipeline architecture
+
+
+      Do NOT auto-merge large feature PRs without maintainer review.
+
+      '
+    gold_removed: ''

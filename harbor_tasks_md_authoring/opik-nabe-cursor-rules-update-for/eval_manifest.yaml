@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: opik-nabe-cursor-rules-update-for
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: comet-ml/opik
+  pr: 4155
+  base_commit: "aa39d0bab2b03d85de99cebc96275c497efffe84"
+  merge_commit: "eb3ef145675ccee1477750fc4b05fc8fb93fa34e"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in apps/opik-backend/.cursor/rules/code_style.mdc."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in apps/opik-backend/.cursor/rules/code_style.mdc."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in apps/opik-backend/.cursor/rules/code_style.mdc."
+
+config_edits:
+  - path: apps/opik-backend/.cursor/rules/code_style.mdc
+    tier: 1
+    gold_added: "## Prefer Shared Helpers\n\n**Rule**: Always use existing utility classes and helper methods instead of re-implementing common patterns. This ensures consistency, reduces duplication, and leverages properly configured shared instances.\n\n### String Validation\n\nUse Apache Commons `StringUtils` for null-safe string checks:\n\n```java\n// ❌ BAD: Manual null checks and empty string validation\nif (value == null || value.isEmpty() || value.trim().isEmpty()) {\n    // handle blank\n}\n\n// ✅ GOOD: Use StringUtils for null-safe checks\nimport org.apache.commons.lang3.StringUtils;\n\nif (StringUtils.isBlank(value)) {\n    // handle blank\n}\n\nif (StringUtils.isNotBlank(provider)) {\n    // use provider\n}\n```\n\n**When to use**:\n- `StringUtils.isBlank()`: Checks for null, empty, or whitespace-only strings\n- `StringUtils.isNotBlank()`: Inverse of `isBlank()` - returns true for non-null, non-empty, non-whitespace strings\n- Use throughout the codebase for mode/provider parsing, field validation, and conditional logic\n\n### JSON Processing\n\nUse `JsonUtils` for all JSON operations instead of creating new `ObjectMapper` instances:\n\n```java\n// ❌ BAD: Creating new ObjectMapper instances\nObjectMapper mapper = new ObjectMapper();\nJsonNode node = mapper.readTree(jsonString);\n\n// ✅ GOOD: Use shared JsonUtils\nimport com.comet.opik.utils.JsonUtils;\n\nJsonNode node = JsonUtils.getJsonNodeFromString(jsonString);\nString json = JsonUtils.writeValueAsString(object);\nObjectNode objNode = JsonUtils.createObjectNode();\n```\n\n**Why**: `JsonUtils` provides a centrally configured `ObjectMapper` that:\n- Matches Dropwizard's configuration (snake_case naming, date handling, etc.)\n- Respects `config.yml` settings for stream read constraints\n- Includes custom deserializers (BigDecimal, Message, Duration)\n- Ensures consistent JSON processing across the application\n\n**Exceptions**:\n- **Tests**: Creating `new ObjectMapper()` in test classes is acceptable when testing serialization/deserialization behavior\n- **Infrastructure classes**: Classes like `JsonNodeArgumentFactory` that need isolated instances for specific use cases\n\n### Factory Methods for Default Values\n\nWhen classes need default or \"empty\" instances, provide static factory methods:\n\n```java\n// ✅ GOOD: Factory method for empty/default instance\n@Builder(toBuilder = true)\npublic record ModelPrice(\n    @NonNull BigDecimal inputPrice,\n    @NonNull BigDecimal outputPrice,\n    // ... other fields\n) {\n    public static ModelPrice empty() {\n        return new ModelPrice(\n            BigDecimal.ZERO,\n            BigDecimal.ZERO,\n            // ... zeroed values\n        );\n    }\n}\n\n// Usage\nModelPrice price = ModelPrice.empty();\n```\n\n- Single source of truth for default values\n- Clear intent when creating empty instances\n- Easier to maintain if default values change\n- Works well with `@Builder(toBuilder = true)` for immutable updates\n\n### Other Utility Classes\n\nThe codebase provides several utility classes for common operations:\n\n- **`ValidationUtils`**: Validation constants and patterns (e.g., `NULL_OR_NOT_BLANK`, `COMMIT_PATTERN`)\n- **`ErrorUtils`**: Standardized error creation (e.g., `failWithNotFound()`)\n- **`TruncationUtils`**: JSON node processing with truncation handling\n- **`PaginationUtils`**: Pagination-related utilities\n\nAlways check existing utilities before implementing similar functionality.\n\n## Benefits\n\n- **Consistency**: Shared helpers ensure uniform behavior across the codebase\n- **Maintainability**: Changes to common patterns only need to be made in one place\n- **Configuration**: Shared instances (like `JsonUtils.getMapper()`) respect application configuration\n- **Readability**: Utility methods have clear, descriptive names that improve code clarity\n- **Performance**: Reusing configured instances avoids unnecessary object creation"
+    gold_removed: ''

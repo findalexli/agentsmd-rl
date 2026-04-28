@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: lmnr-claudemd
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: lmnr-ai/lmnr
+  pr: 1239
+  base_commit: "08489e9422abe87f3faa547c434afedf35f8c795"
+  merge_commit: "b62f9d8397e0614284d6bacea142e22fa10aba2f"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+
+config_edits:
+  - path: CLAUDE.md
+    tier: 1
+    gold_added: "# CLAUDE.md\n\nThis file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.\n\n## Project Overview\n\nLaminar is an open-source observability platform for AI agents. It provides OpenTelemetry-native tracing, evaluations, AI monitoring, and SQL access to all data.\n\n## Repository Structure\n\nThis is a multi-service monorepo with three main components:\n\n- **app-server/** - Rust backend (Actix-web HTTP, Tonic gRPC)\n- **frontend/** - Next.js/TypeScript web UI\n- **query-engine/** - Python gRPC service for SQL query processing\n\n## Development Commands\n\n### Frontend (Next.js)\n\n```bash\ncd frontend\npnpm install                    # Install dependencies\npnpm run dev                    # Start dev server with Turbopack\npnpm lint                       # Check linting\npnpm lint:fix                   # Auto-fix linting issues\npnpm format:write               # Format code with Prettier\npnpm type-check                 # TypeScript type checking\npnpm test                       # Run tests (tsx --test tests/**/*.test.ts)\npnpm build                      # Production build\n```\n\n### Backend (Rust)\n\n```bash\ncd app-server\ncargo r                         # Run in development mode\ncargo build --release           # Production build\ncargo test -- --nocapture       # Run tests\n```\n\n### Query Engine (Python)\n\n```bash\ncd query-engine\nuv sync                         # Install dependencies\nuv run python server.py         # Run gRPC server\nuv run pytest                   # Run tests\n```\n\n## Local Development Setup\n\n### Environment setup:\n```bash\ncp .env.example .env\ncp frontend/.env.local.example frontend/.env.local\n```\n\n### Minimal Working Setup\n\n**PostgreSQL**, **ClickHouse**, and **Query Engine** are required. Other services have automatic fallbacks:\n\n| Service      | Required | Fallback when not configured |\n|--------------|----------|------------------------------|\n| PostgreSQL   | Yes      | None                         |\n| ClickHouse   | Yes      | None                         |\n| Query Engine | Yes      | None                         |\n| RabbitMQ     | No       | In-memory queue (TokioMpsc)  |\n| Redis        | No       | In-memory cache (Moka)       |\n| Quickwit     | No       | Search disabled gracefully   |\n| S3 Storage   | No       | MockStorage                  |\n\n### Docker-based development\n\n**Frontend-only** (uses pre-built app-server image):\n```bash\ndocker compose -f docker-compose-local-dev.yml up\ncd frontend && pnpm run dev\n```\n\n**Full-stack with all services:**\n```bash\ndocker compose -f docker-compose-local-dev-full.yml up  # All dependencies\ncd app-server && cargo r                                 # Terminal 1\ncd frontend && pnpm run dev                              # Terminal 2\ncd query-engine && uv run python server.py               # Terminal 3\n```\n\n## Architecture\n\n```\nFrontend (5667) ─────────────────────────┐\n                                         │\nApp Server                               │\n├─ REST API (8000)  ◄────────────────────┘\n├─ gRPC ingestion (8001) ◄─── SDK traces\n└─ Realtime SSE (8002)\n         │\n         ├──► PostgreSQL (5433) - main database [required]\n         ├──► ClickHouse (8123) - analytics/spans [required]\n         ├──► RabbitMQ (5672) - async processing [optional, has in-memory fallback]\n         ├──► Query Engine (8903) - SQL processing [required]\n         └──► Quickwit (7280/7281) - full-text search [optional]\n```\n\n## Database Migrations\n\nDatabase schema is managed with Drizzle ORM. The source of truth is the database itself - do NOT edit schema files directly.\n\n```bash\ncd frontend\nnpx drizzle-kit generate        # Generate migrations after manual DB changes\n# Migrations are applied automatically on frontend startup\n```\n\n## Key Technical Details\n\n- **Rust edition**: 2024 (requires Rust 1.90+)\n- **Node version**: 24+ (see Docker files)\n- **Python version**: 3.13+\n- **Package managers**: Cargo (Rust), pnpm (frontend), uv (Python)\n- **Git workflow**: Submit PRs to `dev` branch, which merges to `main` periodically\n\n## Pre-commit Hooks\n\nThe frontend uses Husky with lint-staged. Before commits:\n- Prettier formats staged files\n- ESLint fixes issues\n- TypeScript type-check runs"
+    gold_removed: ''

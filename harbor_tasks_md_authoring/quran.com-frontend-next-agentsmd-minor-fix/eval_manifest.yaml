@@ -1,0 +1,28 @@
+version: "2.0"
+
+task:
+  name: quran.com-frontend-next-agentsmd-minor-fix
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: quran/quran.com-frontend-next
+  pr: 2499
+  base_commit: "0b3e5dcf9fcabef6d651f4146351225a83aa4af5"
+  merge_commit: "80b5eb8f82f25c162534fd60f4d311ca421b319b"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+
+config_edits:
+  - path: AGENTS.md
+    tier: 1
+    gold_added: '- Run lint and typecheck after changes: `yarn lint && yarn build`'
+    gold_removed: ''
+  - path: CLAUDE.md
+    tier: 1
+    gold_added: ''
+    gold_removed: ''

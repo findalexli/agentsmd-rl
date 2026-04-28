@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: dotnet-skills-add-constraintenforcing-value-objects-beyond
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: Aaronontheweb/dotnet-skills
+  pr: 60
+  base_commit: "38cda561f2a80ef546ff2bdaafc48d06276be22b"
+  merge_commit: "7ede48b7deaeed094eb87803fd51e1d2562c5312"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/csharp-coding-standards/value-objects-and-patterns.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/csharp-coding-standards/value-objects-and-patterns.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/csharp-coding-standards/value-objects-and-patterns.md."
+
+config_edits:
+  - path: skills/csharp-coding-standards/value-objects-and-patterns.md
+    tier: 1
+    gold_added: "- [Constraint-Enforcing Value Objects](#constraint-enforcing-value-objects)\n// Value object with input normalization\n    public PhoneNumber(string input)\n            throw new ArgumentException(\"Phone number cannot be empty\", nameof(input));\n        if (digits.Length is < 10 or > 15)\n            throw new ArgumentException(\"Phone number must be 10-15 digits\", nameof(input));\n        Value = digits;\n## Constraint-Enforcing Value Objects\n\nValue objects aren't just for identifiers. They're equally valuable for **enforcing domain constraints** on strings, numbers, and URIs — making illegal states unrepresentable at the type level.\n\n**Key principle: validate at construction, trust everywhere else.** Once you have an `AbsoluteUrl`, every consumer knows it's valid without re-checking.\n\n```csharp\n// AbsoluteUrl - enforces HTTP/HTTPS scheme constraints\npublic readonly record struct AbsoluteUrl\n{\n    public Uri Value { get; }\n\n    public AbsoluteUrl(string uriString) : this(new Uri(uriString, UriKind.Absolute)) { }\n\n    public AbsoluteUrl(Uri value)\n    {\n        if (!value.IsAbsoluteUri)\n            throw new ArgumentException(\n                $\"Value must be an absolute URL. Instead found [{value}]\", nameof(value));\n        if (value.Scheme != Uri.UriSchemeHttp && value.Scheme != Uri.UriSchemeHttps)\n            throw new ArgumentException(\n                $\"Value must be an HTTP or HTTPS URL. Instead found [{value.Scheme}]\", nameof(value));\n        Value = value;\n    }\n\n    /// <summary>\n    /// Resolves a potentially relative URL against a base URL.\n    /// Handles Linux quirk where Uri.TryCreate(\"/path\", UriKind.Absolute)\n    /// succeeds as file:///path.\n    /// </summary>\n    public static AbsoluteUrl FromRelative(string? url, AbsoluteUrl baseUrl)\n    {\n        if (string.IsNullOrEmpty(url))\n            throw new ArgumentException(\"URL cannot be null or empty\", nameof(url));\n\n        if (Uri.TryCreate(url, UriKind.Absolute, out var absoluteUri) &&\n            (absoluteUri.Scheme == Uri.UriSchemeHttp || absoluteUri.Scheme == Uri.UriSchemeHttps))\n            return new AbsoluteUrl(absoluteUri);\n\n        return new AbsoluteUrl(new Uri(baseUrl.Value, url));\n    }\n\n    public override string ToString() => Value.ToString();\n}\n\n// NonEmptyString - prevents empty/whitespace strings from propagating\npublic readonly record struct NonEmptyString\n{\n    public string Value { get; }\n\n    public NonEmptyString(string value)\n    {\n        if (string.IsNullOrWhiteSpace(value))\n            throw new ArgumentException(\"Value cannot be null or whitespace\", nameof(value));\n        Value = value;\n    }\n\n    public override string ToString() => Value;\n}\n\n// EmailAddress - format validation at construction\npublic readonly record struct EmailAddress\n{\n    public string Value { get; }\n\n    public EmailAddress(string value)\n    {\n        if (string.IsNullOrWhiteSpace(value))\n            throw new ArgumentException(\"Email cannot be empty\", nameof(value));\n        if (!value.Contains('@') || !value.Contains('.'))\n            throw new ArgumentException($\"Invalid email format: {value}\", nameof(value));\n        Value = value.ToLowerInvariant();\n    }\n\n    public override string ToString() => Value;\n}\n\n// PositiveAmount - numeric range constraint\npublic readonly record struct PositiveAmount\n{\n    public decimal Value { get; }\n\n    public PositiveAmount(decimal value)\n    {\n        if (value <= 0)\n            throw new ArgumentOutOfRangeException(nameof(value), \"Amount must be positive\");\n        Value = value;\n    }\n\n    public override string ToString() => Value.ToString(\"N2\");\n}\n```\n\n**Why this matters:**\n- APIs like Slack Block Kit silently reject relative URLs with cryptic errors. Transactional email links break if they're relative. `AbsoluteUrl` makes the compiler prevent this.\n- Platform gotchas belong in the value object — e.g., Linux `Uri.TryCreate` treating `/path` as `file:///path` is handled once in `FromRelative`, not at every call site.\n\n### TypeConverter Support for Configuration Binding\n\nAdd a `TypeConverter` so your value objects work with `IOptions<T>` and configuration binding:\n\n```csharp\n[TypeConverter(typeof(AbsoluteUrlTypeConverter))]\npublic readonly record struct AbsoluteUrl\n{\n    // ... same as above\n}\n\npublic sealed class AbsoluteUrlTypeConverter : TypeConverter\n{\n    public override bool CanConvertFrom(ITypeDescriptorContext? context, Type sourceType)\n        => sourceType == typeof(string) || base.CanConvertFrom(context, sourceType);\n\n    public override object? ConvertFrom(\n        ITypeDescriptorContext? context, CultureInfo? culture, object value)\n        => value is string s ? new AbsoluteUrl(s) : base.ConvertFrom(context, culture, value);\n}\n\n// Now this works with appsettings.json binding:\npublic sealed class WebhookOptions\n{\n    public AbsoluteUrl CallbackUrl { get; set; }\n    public AbsoluteUrl HealthCheckUrl { get; set; }\n}\n\n// appsettings.json:\n// { \"Webhook\": { \"CallbackUrl\": \"https://example.com/callback\" } }\nservices.Configure<WebhookOptions>(configuration.GetSection(\"Webhook\"));\n```\n"
+    gold_removed: ''

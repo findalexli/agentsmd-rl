@@ -1,0 +1,24 @@
+version: "2.0"
+
+task:
+  name: ente-mobphotos-fix-copy-paste-mistake
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: ente-io/ente
+  pr: 7109
+  base_commit: "4f5af8dcfade138af6ee2275188e9265a3298c6b"
+  merge_commit: "901bfc945e798df09acf473d10c8f884bf00a4e8"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in mobile/apps/photos/CLAUDE.md."
+
+config_edits:
+  - path: mobile/apps/photos/CLAUDE.md
+    tier: 1
+    gold_added: '- @~/.claude/ente-photos-instructions.md'
+    gold_removed: ''

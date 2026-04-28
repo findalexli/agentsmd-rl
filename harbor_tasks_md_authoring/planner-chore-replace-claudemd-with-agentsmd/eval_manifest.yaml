@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: planner-chore-replace-claudemd-with-agentsmd
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: codebar/planner
+  pr: 2485
+  base_commit: "299c366ef9986f8a58bfba2cc0c6fc68cc8ad5dd"
+  merge_commit: "3a7b1f1f7d1f91cfe449fcd4bf171e651ab30739"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+
+config_edits:
+  - path: AGENTS.md
+    tier: 1
+    gold_added: '# AGENTS.md
+
+      This file provides guidance to AI agents when working with code in this repository.
+
+      Docker setup exists in this repository (`bin/d*` commands) but is **not used** for development work with Claude Code, OpenCode, etc.'
+    gold_removed: ''

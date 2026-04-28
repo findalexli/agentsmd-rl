@@ -1,0 +1,64 @@
+version: "2.0"
+
+task:
+  name: apps-introduce-agentsmd-and-symlink-claudemd
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: saleor/apps
+  pr: 2088
+  base_commit: "e1b0e3e72bebccfd81150c0cdf67fa8f73540f83"
+  merge_commit: "33c0315f2a38786675375a6546d3984821fa19e1"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in apps/smtp/AGENTS.md."
+  - id: signal_04
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in apps/smtp/AGENTS.md."
+  - id: signal_05
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in apps/smtp/AGENTS.md."
+
+config_edits:
+  - path: AGENTS.md
+    tier: 1
+    gold_added: "# Saleor Apps\n\n## Project Structure\n\n**Monorepo Architecture**: This is a Turborepo-managed monorepo containing Saleor Apps built with Next.js, TypeScript, and modern development tooling.\n\n- `/apps/` - Individual Saleor applications (AvaTax, CMS, Klaviyo, Products Feed, Search, Segment, SMTP, Stripe, NP Atobarai)\n- `/packages/` - Shared libraries and utilities (domain, errors, logger, otel, UI components, etc.)\n- `/templates/` - App templates for new development\n- Uses PNPM workspaces with workspace dependencies via `workspace:*`\n\n**Domain-Driven Design**: Each app follows modular architecture:\n\n- `src/modules/` - Domain-specific business logic modules\n- `src/app/api/` - Next.js App Router API routes (webhooks)\n- `src/pages/` - Legacy Pages Router for some apps\n- Business logic encapsulated in domain entities and use cases\n\n## Essential Commands\n\n**Development**:\n\n- `pnpm dev` - Start all apps in development mode\n- `pnpm --filter <app-name> dev` - Start specific app (e.g., `pnpm --filter saleor-app-avatax dev`)\n- `pnpm dev:debug` - Start with debug logging (app-level)\n\n**Building & Type Checking**:\n\n- `pnpm build` - Build all apps and packages\n- `pnpm check-types` - Type check all projects\n- `tsc --noEmit` - Type check specific app (run in app directory)\n\n**Testing**:\n\n- `pnpm test:ci` - Run unit tests for all projects\n- `vitest --project units` - Run unit tests for specific app\n- `vitest --project e2e` - Run E2E tests for specific app\n- `pnpm e2e` - Run E2E tests (app-level)\n\n**Linting & Formatting**:\n\n- `pnpm lint` - Lint all projects\n- `pnpm lint:fix` - Auto-fix linting issues\n- `pnpm format` - Format all code with Prettier\n- `eslint .` - Lint specific app (run in app directory)\n\n**Code Generation**:\n\n- `pnpm generate` - Generate GraphQL types for all projects\n- `pnpm run generate:app` - Generate app-specific GraphQL types\n- `pnpm run generate:e2e` - Generate E2E test GraphQL types\n\n## Architecture Patterns\n\n**Result-Based Error Handling**: Uses `neverthrow` library extensively. Functions return `Result<T, E>` instead of throwing exceptions:\n\n- Test success: `result._unsafeUnwrap()`\n- Test errors: `result._unsafeUnwrapErr()`\n\n**Branded Types with Zod**: Follow ADR 0002 for type safety on primitives:\n\n```typescript\nconst saleorApiUrlSchema = z.string().url().endsWith(\"/graphql/\").brand(\"SaleorApiUrl\");\nexport const createSaleorApiUrl = (raw: string) => saleorApiUrlSchema.parse(raw);\n```\n\n**Error Classes**: Use `BaseError.subclass()` pattern from `@saleor/apps-errors`:\n\n```typescript\nstatic ValidationError = BaseError.subclass(\"ValidationError\", {\n  props: { _brand: \"AppChannelConfig.ValidationError\" as const },\n});\n```\n\n**Repository Pattern**: Data access through repository interfaces, typically backed by DynamoDB via `@saleor/dynamo-config-repository`.\n\n**Use Cases**: Webhook handlers delegate to use case classes that contain business logic. Use cases extend `BaseUseCase` for shared config loading patterns.\n\n## Key Technologies\n\n**Frontend**: Next.js (App Router + Pages Router), React, TypeScript, Macaw UI, React Hook Form with Zod resolvers\n\n**Backend**: tRPC for type-safe API layer, GraphQL with code generation, Webhook handling\n\n**Database**: DynamoDB for configuration storage, repositories for data access\n\n**Testing**: Vitest with workspace configuration, React Testing Library, PactumJS for E2E tests\n\n**Observability**: OpenTelemetry instrumentation, Sentry error tracking, structured logging with contextual loggers\n\n**Tooling**: Turborepo, PNPM workspaces, ESLint with custom configs, Prettier\n\n## Testing Conventions\n\n**Unit Tests**: Located in `src/**/*.test.ts`, use Vitest with jsdom environment\n**E2E Tests**: Located in `e2e/**/*.spec.ts`, use PactumJS for API testing\n**Setup**: Apps use `src/setup-tests.ts` for unit test setup, `e2e/setup.ts` for E2E setup\n**Mocking**: Mock objects in `src/__tests__/mocks/`, use `vi.spyOn()` for method spying\n\n## Integration Points\n\n**Saleor Integration**: Apps receive webhooks at `/api/webhooks/saleor/`, use webhook definitions in `webhooks.ts` for registration\n\n**External APIs**: Payment providers (Stripe, NP Atobarai), tax services (AvaTax), CMS systems, etc. wrapped in domain-specific client classes\n\n**Configuration**: Apps store configuration in DynamoDB, access via repository pattern with app metadata management\n\n## Development Workflow\n\n1. **Environment Setup**: Each app has `.env.example` - copy to `.env.local` with required values\n2. **Schema Generation**: Run `pnpm generate` after GraphQL schema changes\n3. **Type Safety**: All apps use strict TypeScript - ensure no `any` types\n4. **Testing**: Write unit tests alongside features, E2E tests for critical workflows\n5. **Linting**: Code must pass ESLint rules including custom app-specific rules like `n/no-process-env`\n\n## App-Specific Notes\n\n- **AvaTax**: Tax calculation service with comprehensive E2E testing suite\n- **Stripe**: Payment processing with transaction handling use cases\n- **Search**: Algolia integration with webhook-driven product indexing\n- **SMTP**: Email service with template management\n- **CMS**: Content management system integration with bulk sync capabilities\n\nRun commands from the root directory for global operations, or from individual app directories for app-specific tasks."
+    gold_removed: ''
+  - path: CLAUDE.md
+    tier: 1
+    gold_added: ''
+    gold_removed: ''
+  - path: CLAUDE.md
+    tier: 1
+    gold_added: AGENTS.md
+    gold_removed: ''
+  - path: apps/smtp/AGENTS.md
+    tier: 1
+    gold_added: "# Saleor App SMTP\n\n## Project Overview\n\nThis is a Saleor SMTP Application that handles email notifications for e-commerce events. It integrates with Saleor API via webhooks and sends transactional emails using SMTP configuration.\n\n## Key Commands\n\n### Development\n\n- `pnpm install` - Install dependencies\n- `pnpm dev` - Start development server (available at http://localhost:3000)\n- `pnpm build` - Build the application\n- `pnpm start` - Start production server\n\n### Code Quality\n\n- `pnpm lint` - Run ESLint\n- `pnpm lint:fix` - Auto-fix linting issues\n- `pnpm check-types` - Type checking with TypeScript\n\n### Testing\n\n- `pnpm test` - Run tests with Vitest in watch mode\n- `pnpm test:ci` - Run tests once with coverage\n- To run a single test file: `pnpm test <filename>`\n\n### GraphQL\n\n- `pnpm fetch-schema` - Update GraphQL schema from Saleor\n- `pnpm generate` - Generate TypeScript for GraphQL, after changing queries, mutations, schema\n\n## Architecture\n\n### Tech Stack\n\n- **Framework**: Next.js with TypeScript\n- **API Layer**: tRPC for type-safe APIs\n- **GraphQL**: URQL client with code generation\n- **Database**: DynamoDB (with support for multiple APL storages - used when installing app)\n- **Email Processing**: MJML for responsive email templates, Handlebars and `handlebars-helpers` for templating\n- **Testing**: Vitest with React Testing Library\n- **Monitoring**: Sentry and OpenTelemetry\n\n### Directory Structure\n\n- `/src/pages` - Next.js pages and API routes\n- `/src/modules` - Feature modules with business logic\n  - `smtp/` - Email configuration and sending logic\n  - `trpc/` - tRPC setup and procedures\n  - `webhook-management/` - Webhook handling\n  - `dynamodb/` - Database client\n  - `event-handlers/` - Event processing logic\n- `/src/lib` - Shared utilities and helpers\n- `/graphql` - GraphQL schema and operations\n- `/generated` - Auto-generated GraphQL types\n\n### Key Architectural Patterns\n\n#### tRPC Router Pattern\n\nAll API endpoints use tRPC routers defined in `*.router.ts` files. Protected procedures require authentication via `protectedClientProcedure` (valid Saleor token).\n\n#### Event-Driven Architecture\n\nThe app responds to Saleor events through webhooks:\n\n- Order events (created, confirmed, cancelled, fulfilled, etc.)\n- Invoice events\n- Gift card events\n  Each event type has its own handler in `/src/pages/api/webhooks/`\n\n#### SMTP Configuration Service\n\nLocated in `/src/modules/smtp/configuration/`, manages email templates and SMTP settings per event type. Configurations are stored in DynamoDB/APL.\n\n#### Email Compilation Pipeline\n\n1. HandlebarsTemplateCompiler - Process Handlebars variables\n2. MjmlCompiler - Convert MJML to HTML\n3. HtmlToTextCompiler - Generate text version\n4. SmtpEmailSender - Send via Nodemailer\n\n### Environment Configuration\n\nThe app supports multiple APL (Auth Persistence Layer) options:\n\n- `file` - Local development (default)\n- `upstash` - Production with Redis\n- `dynamodb` - AWS DynamoDB\n- `saleor-cloud` - Saleor Cloud APL\n\nSet via `APL` environment variable in `.env` file.\n\n### Testing Approach\n\n- Unit tests use Vitest with mocked dependencies\n- Tests are colocated with source files (`.test.ts`)\n- Use `describe`, `it`, `expect` from Vitest\n- Mock external services and APIs\n- Tests run with shuffled order to prevent side effects\n\n### Important Notes\n\n- Always commit the `/generated` folder after GraphQL changes\n- The app requires Saleor version >=3.11.7 <4\n- Use ngrok for local webhook testing\n- MJML templates support Handlebars variables for dynamic content\n- All webhook handlers are in `/src/pages/api/webhooks/`"
+    gold_removed: ''
+  - path: apps/smtp/CLAUDE.md
+    tier: 1
+    gold_added: ''
+    gold_removed: ''
+  - path: apps/smtp/CLAUDE.md
+    tier: 1
+    gold_added: AGENTS.md
+    gold_removed: ''

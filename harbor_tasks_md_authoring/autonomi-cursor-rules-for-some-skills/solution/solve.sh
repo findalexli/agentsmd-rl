@@ -1,0 +1,155 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+cd /workspace/autonomi
+
+# Idempotency guard
+if grep -qF "Please do not use unwraps or panics. Please ensure all methods are fully tested " ".cursorrules"; then
+  echo "Gold patch already applied."
+  exit 0
+fi
+
+git apply --whitespace=nowarn <<'PATCH'
+diff --git a/.cursorrules b/.cursorrules
+@@ -1,9 +1,135 @@
+-You are an AI assistant specialized in Python and Rust  development. 
++You are an AI assistant specialized in Python and Rust development. 
+ 
+ For python
+ 
+ Your approach emphasizes:Clear project structure with separate directories for source code, tests, docs, and config.Modular design with distinct files for models, services, controllers, and utilities.Configuration management using environment variables.Robust error handling and logging, including context capture.Comprehensive testing with pytest.Detailed documentation using docstrings and README files.Dependency management via https://github.com/astral-sh/uv and virtual environments.Code style consistency using Ruff.CI/CD implementation with GitHub Actions or GitLab CI.AI-friendly coding practices:You provide code snippets and explanations tailored to these principles, optimizing for clarity and AI-assisted development.Follow the following rules:For any python file, be sure to ALWAYS add typing annotations to each function or class. Be sure to include return types when necessary. Add descriptive docstrings to all python functions and classes as well. Please use pep257 convention for python. Update existing docstrings if need be.Make sure you keep any comments that exist in a file.When writing tests, make sure that you ONLY use pytest or pytest plugins, do NOT use the unittest module. All tests should have typing annotations as well. All tests should be in ./tests. Be sure to create all necessary files and folders. If you are creating files inside of ./tests or ./src/goob_ai, be sure to make a init.py file if one does not exist.All tests should be fully annotated and should contain docstrings. Be sure to import  the following if TYPE_CHECKING:from _pytest.capture import CaptureFixturefrom _pytest.fixtures import FixtureRequestfrom _pytest.logging import LogCaptureFixturefrom _pytest.monkeypatch import MonkeyPatchfrom pytest_mock.plugin import MockerFixture
+ 
+ For Rust 
+ 
+-Please do not use unwraps or panics. Please ensure all methods are fully tested and annotated. 
+\ No newline at end of file
++Please do not use unwraps or panics. Please ensure all methods are fully tested and annotated. 
++
++# Automatic Skill Triggering Rules
++
++This rule set enables automatic detection of task patterns and applies appropriate workflows.
++
++## Deep Researcher Auto-Trigger
++When the user's prompt contains any of these patterns, apply the deep-researcher workflow:
++- "deep analyze" or "comprehensive analysis"
++- "compare API" or "API diff" or "generate documentation"
++- "scan crate" or "find differences"
++- "create report" or "public API"
++- "reference backup" or "autonomi_backup"
++- Mentions generating HTML/MD reports
++
++**Auto-apply:**
++- Create todo list file in `Claude_workflows/` folder
++- Use systematic file scanning approach
++- Track failures in CSV format
++- Generate collapsible HTML documentation
++
++## Conflict Resolver Auto-Trigger
++When the user's prompt contains:
++- "merge conflict" or "git conflict" or "resolve conflict"
++- "HEAD vs" or "<<<<<<" or "conflict markers"
++- "resolution strategy"
++
++**Auto-apply:**
++- Run `git status` to identify conflicts
++- Create conflict resolution todo list
++- Document resolution strategy
++- Verify with `cargo clippy --release --all-targets --all-features`
++
++## Test Debugger Auto-Trigger  
++When the user's prompt contains:
++- "test failed" or "test failing" or "FAILED"
++- "panicked at" or "assertion failed"
++- "debug test" or "fix test"
++- Error messages with "error[E" patterns
++
++**Auto-apply:**
++- Run test with `--nocapture` for full output
++- Create debug todo list
++- Reference backup implementations if available
++- Verify fix with full test suite
++
++## Compilation Fixer Auto-Trigger
++When the user's prompt contains:
++- "compilation error" or "compile error" or "doesn't compile"
++- "cargo clippy" errors or "fix errors"
++- "type mismatch" or "cannot find" or "use not found"
++- Error codes like "error[E0433]", "error[E0308]", etc.
++
++**Auto-apply:**
++- Run `cargo clippy --release --all-targets --all-features`
++- Create fix todo list
++- Maintain public API unchanged
++- Use iterative fix-verify cycle
++
++## Refactoring Auto-Trigger
++When the user's prompt contains:
++- "refactor" or "move code" or "extract to"
++- "split into" or "reorganize" or "modularize"
++- "wrapper pattern" or "delegate to"
++- "maintain API" or "re-expose"
++
++**Auto-apply:**
++- Create refactoring todo list
++- Document file structure changes
++- Verify API compatibility
++- Run full lint and test suite
++
++## Designer Flow Auto-Trigger
++When the user's prompt contains:
++- "design feature" or "feature planning" or "new feature"
++- "architecture design" or "design workflow"
++- "plan epic" or "create epic" or "proof points"
++- "design → plan → prove" or "design loop"
++
++**Auto-apply:**
++- Use Manus 3-file pattern: plan.md, notes.md, deliverable
++- Create plan in `Claude_workflows/plans/` folder
++- Run 5 design rounds: Requirements → Architecture → Edge Cases → Proof Points → Lock In
++- Generate epic with proof-point tasks
++- Follow TDD approach for proof
++- Define KPIs for measurement
++
++### Manus Attention Loop
++```
++1. Read plan file before major decisions
++2. Execute next phase
++3. Update plan with progress/errors
++4. Append research to notes.md
++5. Before next decision → Read plan again
++6. Repeat until complete
++```
++
++## Common Workflows
++
++### Todo List Creation Pattern
++For any significant task, automatically create:
++```
++Claude_workflows/Claude_task_{task_name}_todo_list.txt
++```
++
++With format:
++```
++Claude Task: {Task Name} Todo List
++==================================
++
++1. [ ] Step 1 description
++2. [ ] Step 2 description
++...
++
++Status: IN PROGRESS
++Started: {date}
++```
++
++### Verification Pattern
++After any code changes, always run:
++```bash
++cargo clippy --release --all-targets --all-features -- -Dwarnings
++```
++
++### Statistics Tracking
++On task completion, optionally flush to `Claude_workflows/statistic.csv`:
++- task_start_time, task_name, duration_taken, total_token_spend
+PATCH
+
+echo "Gold patch applied."

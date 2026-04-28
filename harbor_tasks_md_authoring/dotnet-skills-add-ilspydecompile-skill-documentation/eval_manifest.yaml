@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: dotnet-skills-add-ilspydecompile-skill-documentation
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: Aaronontheweb/dotnet-skills
+  pr: 45
+  base_commit: "e805cef8216e449afdeed0f9b970a6801b987173"
+  merge_commit: "4619bf5bfb8236c45129a1014fe8f5dfd1516920"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/ilspy-decompile/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/ilspy-decompile/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/ilspy-decompile/SKILL.md."
+
+config_edits:
+  - path: skills/ilspy-decompile/SKILL.md
+    tier: 1
+    gold_added: "---\nname: ilspy-decompile\ndescription: Understand implementation details of .NET code by decompiling assemblies. Use when you want to see how a .NET API works internally, inspect NuGet package source, view framework implementation, or understand compiled .NET binaries.\nallowed-tools: Bash(dnx:*)\n---\n\n# .NET Assembly Decompilation with ILSpy\n\nUse this skill to understand how .NET code works internally by decompiling compiled assemblies.\n\n## Prerequisites\n\n- .NET SDK installed\n- ILSpy command-line tool available via one of the following:\n  - `dnx ilspycmd` (if available in your SDK or runtime)\n  - `dotnet tool install --global ilspycmd`\n\nBoth forms are shown below. Use the one that works in your environment.\n\n> Note: ILSpyCmd options may vary slightly by version.  \n> Always verify supported flags with `ilspycmd -h`.\n\n## Quick start\n\n```bash\n# Decompile an assembly to stdout\nilspycmd MyLibrary.dll\n# or\ndnx ilspycmd MyLibrary.dll\n\n# Decompile to an output folder\nilspycmd -o output-folder MyLibrary.dll\n```\n\n## Common .NET Assembly Locations\n\n### NuGet packages\n\n```bash\n~/.nuget/packages/<package-name>/<version>/lib/<tfm>/\n```\n\n### .NET runtime libraries\n\n```bash\ndotnet --list-runtimes\n```\n\n### .NET SDK reference assemblies\n\n```bash\ndotnet --list-sdks\n```\n\n> Reference assemblies do not contain implementations.\n\n### Project build output\n\n```bash\n./bin/Debug/net8.0/<AssemblyName>.dll\n./bin/Release/net8.0/publish/<AssemblyName>.dll\n```\n\n## Core workflow\n\n1. Identify what you want to understand\n2. Locate the assembly\n3. List types\n4. Decompile the target\n\n## Commands\n\n### Basic decompilation\n\n```bash\nilspycmd MyLibrary.dll\nilspycmd -o ./decompiled MyLibrary.dll\nilspycmd -p -o ./project MyLibrary.dll\n```\n\n### Targeted decompilation\n\n```bash\nilspycmd -t Namespace.ClassName MyLibrary.dll\nilspycmd -lv CSharp12_0 MyLibrary.dll\n```\n\n### View IL code\n\n```bash\nilspycmd -il MyLibrary.dll\n```\n\n## Notes on modern .NET builds\n\n- ReadyToRun images may reduce readability\n- Trimmed or AOT builds may omit code\n- Prefer non-trimmed builds\n\n## Legal note\n\nDecompiling assemblies may be subject to license restrictions."
+    gold_removed: ''

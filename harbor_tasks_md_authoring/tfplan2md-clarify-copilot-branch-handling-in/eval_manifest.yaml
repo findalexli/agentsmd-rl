@@ -1,0 +1,43 @@
+version: "2.0"
+
+task:
+  name: tfplan2md-clarify-copilot-branch-handling-in
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: oocx/tfplan2md
+  pr: 601
+  base_commit: "dbb43f94f202017b97039640a6f3d10abb47331a"
+  merge_commit: "01dbf2b8964a4038a1dc8020e0608107edfd109e"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/copilot-instructions.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/copilot-instructions.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in docs/agents.md."
+
+config_edits:
+  - path: .github/copilot-instructions.md
+    tier: 1
+    gold_added: '- When you are creating or choosing a work branch yourself, use the documented `feature/`, `fix/`, `workflow/`, or `website/` naming convention. If GitHub has already placed you on a coding-agent PR branch named `copilot/*`, stay on that branch; it does not override the underlying work-item or workflow convention.
+
+      Treat `copilot/*` as a GitHub-managed branch name for the current PR, not as a repository workflow-naming violation. The underlying work still follows the documented feature/fix/workflow/website conventions and matching `docs/` work-item folders.
+
+
+      ```'
+    gold_removed: ''
+  - path: docs/agents.md
+    tier: 1
+    gold_added: '**GitHub Copilot PR branch exception:** When GitHub creates a coding-agent pull request, it may place the work on an auto-generated `copilot/*` branch. That branch name is an execution-context detail for the existing PR, not a replacement for the underlying `feature/`, `fix/`, `workflow/`, or `website/` work-item convention. Continue to use the matching work-item folder and workflow type, and do not treat `copilot/*` by itself as a workflow violation.
+
+      '
+    gold_removed: ''

@@ -1,0 +1,178 @@
+version: "2.0"
+
+task:
+  name: mailpoet-add-ai-skills-and-rename
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: mailpoet/mailpoet
+  pr: 6540
+  base_commit: "6d2c22cc1abe049faf4275496f64e06c39b914e6"
+  merge_commit: "c2fb4cef85d4fc8baf8d9ff65b91f1d31eac0ab0"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .ai/skills/creating-pull-requests/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .ai/skills/creating-pull-requests/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .ai/skills/creating-pull-requests/SKILL.md."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .ai/skills/writing-changelog/SKILL.md."
+  - id: signal_04
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .ai/skills/writing-changelog/SKILL.md."
+  - id: signal_05
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .ai/skills/writing-changelog/SKILL.md."
+  - id: signal_06
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_07
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_08
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+
+config_edits:
+  - path: .ai/skills/creating-pull-requests/SKILL.md
+    tier: 1
+    gold_added: '3. **Check for changelog** — if the branch has user-facing changes and no changelog entry exists yet, use the `writing-changelog` skill to create one before proceeding
+
+      4. **Create as draft**
+
+      5. **Follow template sections exactly** - Not all sections are mandatory, use `_N/A_` for non-applicable ones
+
+      6. There are some checkboxes on the bottom of the template, only check the ones that are applicable.
+
+      | Missing changelog entry            | Check for changelog before creating the PR. Use the `writing-changelog` skill       |'
+    gold_removed: ''
+  - path: .ai/skills/writing-changelog/SKILL.md
+    tier: 1
+    gold_added: '---
+
+      name: writing-changelog
+
+      description: ''Use when adding a changelog entry for a branch. Use after completing work on a feature, fix, or improvement that is user-facing.''
+
+      ---
+
+
+      # Writing Changelog Entries
+
+
+      ## Overview
+
+
+      User-facing changes MUST have a changelog entry. Each entry is a small Markdown file created by the `./do changelog:add` command. Follow the steps below in order.
+
+
+      ## Workflow
+
+
+      ### Step 1: Analyze Branch Changes
+
+
+      Compare the current branch against the base branch to understand what changed.
+
+
+      Read the relevant code changes to understand the user-facing impact.
+
+
+      ### Step 2: Categorize and Describe
+
+
+      Pick **one** valid type that best describes the change: `Added`, `Improved`, `Fixed`, `Changed`, `Updated`, `Removed`
+
+
+      Write a **short, user-facing description**:
+
+
+      - Write from the user''s perspective — what they see or experience
+
+      - Avoid technical jargon (no class names, method names, internal details)
+
+      - Start with a verb or noun, not "We" or "The plugin"
+
+      - No trailing punctuation — the build system adds it
+
+      - Keep it to one sentence
+
+
+      **Good examples:**
+
+
+      - `Fix email rendering issue in Outlook`
+
+      - `Add ability to filter subscribers by purchase date`
+
+      - `Improve performance of subscriber listing page`
+
+
+      **Bad examples:**
+
+
+      - `Refactor SubscriberRepository query method` (technical jargon)
+
+      - `Fix bug in NewsletterEntity::getStatus()` (class/method names)
+
+      - `Update dependencies.` (trailing punctuation)
+
+
+      ### Step 3: Create the Entry
+
+
+      Run the command from the correct plugin directory:
+
+
+      - **Free plugin changes** → run from `mailpoet/`
+
+      - **Premium plugin changes** → run from `mailpoet-premium/`
+
+
+      ```bash
+
+      cd mailpoet && ./do changelog:add --type=<type> --description="<description>"
+
+      ```
+
+
+      ### When to Skip
+
+
+      Most branches need a changelog. Skip only when changes are:
+
+
+      - Test-only changes
+
+      - CI/build configuration changes
+
+      - Documentation-only changes
+
+
+      When in doubt, add a changelog entry.'
+    gold_removed: ''
+  - path: AGENTS.md
+    tier: 1
+    gold_added: "# MailPoet - Agent Guidelines\n\n## Project Overview\n\nMailPoet is a WordPress email marketing plugin that lets users create, send, and manage newsletters and automated emails from the WordPress dashboard. It integrates deeply with WordPress and WooCommerce.\n\nThis is a **monorepo** containing:\n\n- `mailpoet/` -- The free plugin (main codebase)\n- `mailpoet-premium/` -- The premium plugin (extends the free version)\n\n**Tech Stack:** PHP 7.4+, WordPress, Doctrine ORM, React 18, TypeScript, SCSS, Webpack, Docker, Codeception, pnpm, Action Scheduler\n\n## Directory Structure\n\n```text\n/ (repo root)\n├── mailpoet/                    # Free plugin (primary development area)\n│   ├── lib/                     # PHP backend (PSR-4, namespace: MailPoet\\)\n│   ├── lib-3rd-party/           # Vendored third-party libraries (DO NOT EDIT)\n│   ├── assets/js/src/           # React/TypeScript frontend\n│   ├── assets/css/src/          # SCSS stylesheets\n│   ├── tests/                   # Unit, integration, acceptance tests\n│   ├── views/                   # Twig templates\n│   ├── generated/               # Auto-generated files (DO NOT EDIT)\n│   ├── vendor-prefixed/         # Prefixed third-party deps (DO NOT EDIT)\n│   ├── RoboFile.php             # Plugin-level task runner\n│   └── do                       # Plugin-level CLI script\n├── mailpoet-premium/            # Premium plugin\n├── packages/js/                 # Shared JS packages (pnpm workspaces)\n│   ├── components/              # @mailpoet/components\n│   └── eslint-config/           # @mailpoet/eslint-config\n├── doc/                         # API documentation and usage examples\n├── dev/                         # Docker dev configuration\n├── tools/                       # Build tooling (Webpack config)\n├── tests_env/                   # Test environment (Docker + Codeception)\n├── templates/                   # Email templates\n├── do                           # Root CLI script (Docker wrapper)\n└── docker-compose.yml           # Docker configuration\n```\n\n### Key PHP Namespaces (`mailpoet/lib/`)\n\n| Namespace      | Purpose                                                       |\n| -------------- | ------------------------------------------------------------- |\n| `API\\JSON\\`    | Internal JSON API endpoints (v1)                              |\n| `API\\REST\\`    | WordPress REST API endpoints                                  |\n| `API\\MP\\`      | Public developer API (v1)                                     |\n| `Automation\\`  | Marketing automation engine (triggers, actions, workflows)    |\n| `Config\\`      | Plugin lifecycle: `Initializer`, `Activator`, `Hooks`, `Menu` |\n| `Cron\\`        | Background workers, Action Scheduler integration              |\n| `DI\\`          | Dependency injection container configuration                  |\n| `Doctrine\\`    | ORM layer, WPDB connection, entity management                 |\n| `EmailEditor\\` | Block-based email editor integration                          |\n| `Entities\\`    | Doctrine ORM entities (database table mappings)               |\n| `Form\\`        | Subscription form handling and rendering                      |\n| `Mailer\\`      | Email sending (SMTP, Amazon SES, SendGrid, MailPoet service)  |\n| `Newsletter\\`  | Newsletter management, rendering, scheduling                  |\n| `Segments\\`    | Subscriber segmentation and dynamic segments                  |\n| `Subscribers\\` | Subscriber CRUD and management                                |\n| `WooCommerce\\` | WooCommerce integration                                       |\n| `WP\\`          | WordPress function wrappers for testability                   |\n\n### Key Frontend Modules (`mailpoet/assets/js/src/`)\n\n| Directory                            | Purpose                                                 |\n| ------------------------------------ | ------------------------------------------------------- |\n| `automation/`                        | Marketing automation UI (editor, listing, analytics)    |\n| `form-editor/`                       | Subscription form builder (Gutenberg-based)             |\n| `settings/`                          | Plugin settings pages                                   |\n| `newsletters/`                       | Newsletter management UI                                |\n| `common/`                            | Shared UI component library                             |\n| `newsletter-editor/`                 | Legacy newsletter editor (Backbone.js -- do not extend) |\n| `mailpoet-email-editor-integration/` | New block email editor integration                      |\n\n## Development Environment\n\n### Initial Setup\n\n```bash\n./do setup                       # Pull images, install dependencies\n# Add secrets to .env files in mailpoet/ and mailpoet-premium/\n./do start                       # Start Docker containers\n# Visit http://localhost:8002\n```\n\nAdditional local tools recommended: PHP (per `composer.json`), Node.js (per `.nvmrc`), pnpm (via Corepack).\n\n### Root-Level Commands\n\nThe root `./do` script wraps Docker operations. Run from the repo root:\n\n```bash\n./do setup                           # Initial environment setup\n./do start                           # Start Docker (docker compose up -d)\n./do stop                            # Stop Docker (docker compose stop)\n./do ssh [--test] [--premium]        # Shell into plugin directory in container\n./do run [--test] <command>          # Run command in wordpress container\n./do build [--premium]               # Build plugin .zip\n./do templates                       # Generate email template classes\n./do [--test] [--premium] <command>  # Run plugin-level ./do command in Docker\n```\n\nThe `--test` flag targets the `test_wordpress` service. The `--premium` flag targets `mailpoet-premium/`.\n\n### Plugin-Level Commands\n\nRun inside `mailpoet/` (or via root `./do <command>` which forwards to the plugin):\n\n**Build:**\n\n```bash\n./do compile:all                     # Compile JS + CSS\n./do compile:js                      # Compile JavaScript only\n./do compile:css                     # Compile SCSS only\n./do install                         # Install PHP + JS dependencies\n```\n\n**Quality Assurance:**\n\n```bash\n./do qa                              # Run all PHP + frontend QA checks\n./do qa:php                          # PHP lint + CodeSniffer\n./do qa:phpstan                      # PHPStan static analysis\n./do qa:lint-javascript              # ESLint + TypeScript check\n./do qa:lint-css                     # Stylelint for SCSS\n./do qa:prettier-check               # Check Prettier formatting\n./do qa:prettier-write               # Auto-fix Prettier formatting\n./do qa:fix-file <path>              # Auto-fix a single file (PHPCS or ESLint)\n```\n\n**Testing:**\n\n```bash\n./do test:unit --file=tests/unit/Path/To/SomeTest.php\n./do test:integration --skip-deps --file=tests/integration/Path/To/SomeTest.php\n./do test:acceptance --skip-deps --file=tests/acceptance/Path/To/SomeCest.php\n./do test:javascript                 # Mocha JS tests\n./do test:newsletter-editor          # Legacy newsletter editor JS tests\n```\n\n**Other:**\n\n```bash\n./do migrations:new <db|app>         # Create a new database migration\n./do changelog:add --type=<type> --description=\"<description>\"\n./do changelog:preview               # Preview compiled changelog\n```\n\n## Code Conventions\n\n### PHP\n\n- Two spaces indentation\n- `CamelCase` for classes, `camelCase` for methods and variables/properties\n- Composition over inheritance\n- Guard clauses over nested conditionals\n- Use as few comments as possible — convey your intent through clear coding instead.\n- Import classes with `use` statements at the top of the file\n- MUST be compatible with PHP 7.4 and newer\n- Cover code with tests\n\n### JavaScript / TypeScript\n\n- Follow the [Airbnb JavaScript style guide](https://github.com/airbnb/javascript)\n- Prefer named exports over default exports\n- MUST default to TypeScript for new files\n- Formatting is handled by Prettier (`./do qa:prettier-write`)\n\n### SCSS\n\n- `kebab-case` for file names\n- Component files prefixed with underscore (`_new-component.scss`)\n\n### Disabling Lint Rules\n\n- Avoid `eslint-disable`. When unavoidable, add a comment explaining why:\n  `/* eslint-disable no-new -- this class has a side-effect in the constructor and it's a library's. */`\n- For PHP, do the same with `phpcs:ignore`. Exception: `// phpcs:ignore Squiz.NamingConventions.ValidVariableName.MemberNotCamelCaps` does not require an explanation.\n- Avoid regular expressions when built-in string/array methods can achieve the same result. If regex is necessary, document the pattern extensively.\n\n## Testing\n\nTests use **Codeception** and run inside Docker.\n\n| Type        | File Pattern | Location             | Command                                           |\n| ----------- | ------------ | -------------------- | ------------------------------------------------- |\n| Unit        | `*Test.php`  | `tests/unit/`        | `./do test:unit --file=<path>`                    |\n| Integration | `*Test.php`  | `tests/integration/` | `./do test:integration --skip-deps --file=<path>` |\n| Acceptance  | `*Cest.php`  | `tests/acceptance/`  | `./do test:acceptance --skip-deps --file=<path>`  |\n| JavaScript  | `*.spec.ts`  | `tests/javascript/`  | `./do test:javascript`                            |\n\n**Running tests in Docker from the repo root:**\n\n```bash\n./do --test test:integration --skip-deps --file=tests/integration/WP/EmojiTest.php\n./do --test test:acceptance --skip-deps --file=tests/acceptance/Misc/MailpoetMenuCest.php\n```\n\n**Running premium tests** requires SSHing into the test container:\n\n```bash\n./do ssh --test\ncd ../mailpoet-premium\n./do test:unit --file=tests/unit/Config/EnvTest.php\n```\n\nWhen writing tests:\n\n- Unit tests\
+      \ should be fast and isolated with no database or WordPress dependency\n- Integration tests can use the WordPress database and APIs\n- Acceptance tests use browser automation (Selenium/Codeception)\n- Place test `DataFactories` in `tests/DataFactories/` for reusable test data builders\n\n## Architecture & Key Patterns\n\n### Doctrine ORM\n\nThe plugin uses Doctrine ORM for database management:\n\n- **Entities** in `lib/Entities/` map to database tables (e.g., `SubscriberEntity`, `NewsletterEntity`)\n- **Repositories** follow the `*Repository` naming convention (e.g., `SubscribersRepository`)\n- **Migrations** in `lib/Migrations/` handle schema changes. Create new ones with `./do migrations:new <db|app>`\n- Entity metadata and proxies are cached in `generated/`\n\n### Dependency Injection\n\nPSR-11 container configured in `lib/DI/`:\n\n- `ContainerConfigurator` defines service wiring\n- Services are auto-wired based on constructor type hints\n- Access services via the container, never instantiate directly\n\n### WordPress Functions Wrapper\n\n**CRITICAL:** `lib/WP/Functions.php` wraps WordPress functions for testability. MUST use `$this->wp->functionName()` (or the injected `WPFunctions` service) instead of calling WordPress functions like `get_option()`, `add_action()`, etc. directly. This enables mocking in tests.\n\n### Vendor Prefixing\n\nThird-party PHP dependencies are prefixed with `MailPoetVendor\\` namespace and stored in `vendor-prefixed/`. This prevents conflicts with other plugins that may include the same libraries. NEVER edit these files -- they are generated by the prefixer build process.\n\n### Action Scheduler\n\nBackground job processing uses WooCommerce's Action Scheduler library. Cron workers live in `lib/Cron/Workers/`. The `lib/Cron/Daemon` manages scheduling.\n\n### Feature Flags\n\nNew features can be gated behind feature flags:\n\n- Managed by `FeaturesController` class\n- Toggle flags at `/admin.php?page=mailpoet-experimental`\n- Add new flags in `FeaturesController`\n\n### Frontend Architecture\n\n- **Modern admin pages:** React 18 + TypeScript\n- **Subscription form builder:** Built on the Gutenberg block editor\n- **Legacy newsletter editor:** Backbone.js + Marionette (in `newsletter-editor/`). This is legacy code being replaced by the block-based email editor. Do not add new features here.\n- **Block email editor:** New editor integration using `@woocommerce/email-editor` (in `mailpoet-email-editor-integration/`)\n- **Webpack** bundles JS with multiple entry points. Run `./do compile:js` after changes.\n\n### Multi-API Layer\n\n- `lib/API/JSON/v1/` -- Internal JSON API used by the React admin UI\n- `lib/API/REST/` -- WordPress REST API endpoints\n- `lib/API/MP/v1/` -- Public API for third-party developers\n\n## Git Workflow & Commits\n\n- MUST NOT commit directly to `trunk`\n- Create short-lived feature branches\n- Include the Linear issue ID in commit messages\n- Run `./do qa` and `./do qa:prettier-write` before pushing\n\n### Commit Message Format\n\n- Subject line: imperative mood, start with a verb, no trailing period, max 50 characters\n- Blank line between subject and body\n- Body lines max 72 characters\n- Explain what caused the problem and consequences when relevant\n- Explain how the changes achieve the goal only if not obvious\n\n```\nAdd subscriber import validation for CSV files\n\nThe previous implementation silently skipped malformed rows,\ncausing confusion when subscriber counts didn't match.\n\nMAILPOET-1234\n```\n\n### Changelog\n\nUser-facing changes MUST have a changelog entry. Use:\n\n```bash\n./do changelog:add --type=Fixed --description=\"Describe what was fixed\"\n```\n\nValid types: `Added`, `Improved`, `Fixed`, `Changed`, `Updated`, `Removed`.\n\n### Pull Requests\n\n- Create PRs as **drafts** following `.github/pull_request_template.md`\n- Wait for review from another developer\n- See `.claude/skills/creating-pull-requests/SKILL.md` for the full PR workflow\n\n## Common Pitfalls\n\n- **NEVER** modify WordPress core files in `wordpress/`. This directory is for the local dev environment only.\n- **NEVER** edit files in `vendor/`, `vendor-prefixed/`, `lib-3rd-party/`, or `generated/`. These are managed by Composer, the prefixer, and build tools respectively.\n- **NEVER** edit compiled assets in `assets/dist/`. Run `./do compile:all` to regenerate them.\n- **MUST** run `./do compile:all` (or `compile:js` / `compile:css`) after making JS/CSS/SCSS changes before testing in the browser.\n- **MUST** use the `--skip-deps` flag for integration and acceptance tests during development to avoid slow dependency reinstallation.\n- The root `./do` runs commands inside Docker containers. The `mailpoet/do` script is the plugin-level Robo task runner. They are different scripts.\n- The `--test` flag on root `./do` targets the `test_wordpress` Docker service, which has a separate database and WordPress installation.\n- The legacy Backbone.js newsletter editor (`newsletter-editor/`) is being replaced. Do not extend it with new features -- build on the block email editor instead.\n- When adding PHP dependencies, be aware of vendor prefixing. New dependencies may need prefixer configuration.\n- Integration tests need a running Docker test environment. Use `./do ssh --test` to debug test failures interactively.\n\n## Boundaries\n\n### Always Do\n\n- Run QA checks (`./do qa`, `./do qa:prettier-write`) before committing\n- Cover code with unit or integration tests\n- Use the `WP\\Functions` wrapper instead of calling WordPress functions directly\n- Sanitize and validate inputs, escape outputs\n- Create changelog entries for user-facing changes\n- Ensure backwards compatibility\n- Use guard clauses\n\n### Never Do\n\n- Commit secrets, `.env` files, or API keys\n- Modify WordPress core files, `vendor/`, `vendor-prefixed/`, `lib-3rd-party/`, or `generated/` files\n- Use `extract()`, `eval()`, or `create_function()`\n- Hardcode URLs -- use `home_url()`, `plugin_dir_url()`, `plugin_dir_path()`\n- Commit directly to `trunk`\n\n### Ask First\n\n- Database schema changes or new migrations\n- Adding new Composer or npm dependencies\n- Changes to Docker or CI configuration\n- Modifying the DI container configuration\n- Changes to the public API (`lib/API/MP/`)\n\n## Available Skills\n\nSkills are progressively-revealed instructions loaded on demand.\n\n### `.claude/skills/`\n\n- **`creating-pull-requests`** -- MUST use when creating PRs. Enforces draft PR creation and template compliance. Never run `gh pr create` directly.\n\n### `.ai/skills/`\n\n- `mailpoet-dev-cycle` -- Linting and code quality workflows. Use when fixing code style or following the development workflow.\n- `code-quality.md` -- ESLint, Stylelint, Prettier commands and conventions\n- `php-coding-standards.md` -- PHP lint, PHPCS, PHPStan commands, ruleset details, naming conventions\n- `writing-changelog` -- Use when adding a changelog entry for user-facing changes. Guides through analyzing branch changes, picking the right type, and writing a user-friendly description.\n\n## Additional Resources\n\n- Main README: `README.md`\n- Free plugin README: `mailpoet/README.md`\n- Premium plugin README: `mailpoet-premium/README.md`\n- Contributing guide: `CONTRIBUTING.md`\n- Cursor rules: `.cursor/rules/` (review when working on the project)"
+    gold_removed: ''
+  - path: CLAUDE.md
+    tier: 1
+    gold_added: '@AGENTS.md'
+    gold_removed: ''

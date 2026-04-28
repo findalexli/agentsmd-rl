@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: openstax-cms-add-claudemd-development-guide
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: openstax/openstax-cms
+  pr: 1639
+  base_commit: "fb879b3f1d19e68e02f8e7e98b4cc4b4d1bfab94"
+  merge_commit: "032d90c658bf19a2093b6e5f189bc174cc3d2ea2"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+
+config_edits:
+  - path: CLAUDE.md
+    tier: 1
+    gold_added: "# OpenStax CMS - Claude Agent Guide\n\n## Overview\n\nOpenStax CMS is a content management system built with **Wagtail CMS** on top of **Django Framework**. It manages content for openstax.org including books, pages, news, and various marketing pages.\n\n## Technology Stack\n\n- **Framework**: Django (Python ≥ 3.11)\n- **CMS**: Wagtail CMS\n- **Database**: PostgreSQL (≥ 13) or SQLite\n- **Language**: Python ≥ 3.11\n\n## Project Structure\n\n```\nopenstax-cms/\n├── pages/              # Core page models (Assignable, Book pages, etc.)\n│   ├── models.py       # All Wagtail page type definitions\n│   ├── migrations/     # Django migrations\n│   └── custom_blocks.py # StreamField blocks\n├── books/              # Book-specific models and logic\n├── news/               # News/blog functionality\n├── errata/             # Errata submission and management\n├── accounts/           # Account-related functionality\n├── api/                # API endpoints\n├── openstax/           # Project settings\n│   └── settings/       # Environment-specific settings\n│       ├── base.py     # Base settings\n│       ├── local.py.example # Local dev settings template\n│       ├── test.py     # Test settings\n│       └── docker.py   # Docker settings\n├── requirements/       # Python dependencies\n│   ├── base.txt        # Core requirements\n│   ├── dev.txt         # Development requirements\n│   ├── test.txt        # Test requirements\n│   └── production.txt  # Production requirements\n└── manage.py           # Django management script\n```\n\n## Setup Instructions\n\n### Prerequisites\n\n- Python ≥ 3.11\n- PostgreSQL ≥ 13 (or use SQLite for development)\n- pip (Python package manager)\n\n### Installation Steps\n\n1. **Clone the repository**\n2. **Install Python dependencies from requirements/dev.txt**\n3. **Create local settings file** (REQUIRED before migrations) (cp openstax/settings/local.py.example openstax/settings.local.py)\n\n## Creating Django Migrations\n\nWhen you modify model fields in `pages/models.py` or other model files:\n\n1. **Ensure openstax/settings/local.py exists**\n2. **Install dev requirements**\n3. **Generate migration**:\n   ```bash\n   python3 manage.py makemigrations\n   ```\n\n   This creates a new migration file in the appropriate `migrations/` directory.\n\n4. **Review the migration**\n5. **Commit both model changes and migration**\n\n### Migration Best Practices\n\n- **Always create local.py first** - Without it, Django may use incorrect drivers\n- **Use makemigrations** - Don't write migrations manually\n- **One logical change per migration** - Keep migrations focused\n- **Include in PR** - Always commit migrations with model changes\n\n## Wagtail Concepts\n\n- **Page models**: Inherit from `wagtail.models.Page`\n- **content_panels**: Define fields shown in Wagtail admin\n- **api_fields**: Define fields exposed via API\n- **StreamFields**: Flexible content blocks (see `custom_blocks.py`)\n\n## API\n\nAPI endpoints documented at: https://github.com/openstax/openstax-cms/wiki/API-Endpoints\n\nPostman collection: https://www.postman.com/openstax/workspace/cms/overview\n\n## Additional Documentation\n\n- [CMS Editing Documentation](https://openstax.atlassian.net/wiki/spaces/BIT/pages/2193391617/CMS+Editing)\n- [CMS Branching and Releases](https://openstax.atlassian.net/wiki/spaces/BIT/pages/2207219713/CMS+Branching+and+Releases)\n- [CMS Pull Requests](https://openstax.atlassian.net/wiki/spaces/BIT/pages/2207252512/CMS+Pull+Requests)\n\n## Troubleshooting\n\n### Import errors with botocore.vendored\n\nIf you see: `ModuleNotFoundError: No module named 'botocore.vendored'`\n\n**Cause**: The `django_ses` package in `INSTALLED_APPS` requires botocore, which changed in newer versions.\n\n**Solution**: This is expected in local development. The error occurs because production uses SES for email, but local development doesn't need it. Your `local.py` file should already handle this, but if needed:\n\n```python\n# In openstax/settings/local.py\nfrom .base import INSTALLED_APPS\n\n# Remove django_ses from INSTALLED_APPS\nINSTALLED_APPS = tuple(app for app in INSTALLED_APPS if app != 'django_ses')\n```"
+    gold_removed: ''

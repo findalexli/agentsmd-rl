@@ -1,0 +1,153 @@
+version: "2.0"
+
+task:
+  name: appwrite-feat-create-agentsmd
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: appwrite/appwrite
+  pr: 10993
+  base_commit: "06e3a144a313885159257cfef9656ccbf953093c"
+  merge_commit: "a20392d13afa8d0c43f5a2fb74b1db1605a50902"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+
+config_edits:
+  - path: AGENTS.md
+    tier: 1
+    gold_added: '# AGENTS.md
+
+
+      Appwrite is an end-to-end backend server for web, mobile, native, and backend apps. This guide provides context and instructions for AI coding agents working on the Appwrite codebase.
+
+
+      ## Project Overview
+
+
+      Appwrite is a self-hosted Backend-as-a-Service (BaaS) platform that provides developers with a set of APIs and tools to build secure, scalable applications. The project uses a hybrid monolithic-microservice architecture built with PHP, running on Swoole for high performance.
+
+
+      **Key Technologies:**
+
+      - **Backend:** PHP 8.3+, Swoole
+
+      - **Libraries:** Utopia PHP
+
+      - **Database:** MariaDB, Redis
+
+      - **Cache:** Redis
+
+      - **Queue:** Redis
+
+      - **Containers:** Docker
+
+
+      ## Development Commands
+
+
+      ```bash
+
+      # Run Appwrite
+
+      docker compose up -d --force-recreate --build
+
+
+      # Run specific test
+
+      docker compose exec appwrite test /usr/src/code/tests/e2e/Services/[ServiceName] --filter=[FunctionName]
+
+
+      # Format code
+
+      composer format
+
+      ```
+
+
+      ## Code Style Guidelines
+
+
+      - Follow [PSR-12](https://www.php-fig.org/psr/psr-12/) coding standard
+
+      - Use PSR-4 autoloading
+
+      - Strict type declarations where applicable
+
+      - Comprehensive PHPDoc comments
+
+
+      ### Naming Conventions
+
+
+      #### `resourceType` Naming Rule
+
+
+      When a collection has a combination of `resourceType`, `resourceId`, and/or `resourceInternalId`, the value of `resourceType` MUST always be **plural** - for example: `functions`, `sites`, `deployments`.
+
+
+      Examples:
+
+      ```php
+
+      ''resourceType'' => ''functions''
+
+      ''resourceType'' => ''sites''
+
+      ''resourceType'' => ''deployments''
+
+      ```
+
+
+      ## Security Considerations
+
+
+      ### Critical Security Practices
+
+
+      - **Never hardcode credentials** - Use environment variables
+
+      - **Rate limiting** - Respect abuse prevention mechanisms
+
+
+      ## Dependencies
+
+
+      Avoid introducing new dependencies other than utopia-php.
+
+
+      ## Pull Request Guidelines
+
+      ### Before Submitting
+
+
+      -  Run `composer format`
+
+      - Update documentation if adding features
+
+      - Add/update tests for your changes
+
+      - Check that Docker build succeeds
+
+      `docs/specs/authentication.drawio.svg`
+
+
+      ## Known Issues and Gotchas
+
+
+      - **Hot Reload:** Code changes require container restart in some cases
+
+      - **Logging:** There is no central place for logs, so when debugging, ensure to check all possibly relevant containers'
+    gold_removed: ''

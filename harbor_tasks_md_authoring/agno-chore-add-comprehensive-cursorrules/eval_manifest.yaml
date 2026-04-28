@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: agno-chore-add-comprehensive-cursorrules
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: agno-agi/agno
+  pr: 4864
+  base_commit: "a6b8dca41f19e1a53dbad50557061b02192a578e"
+  merge_commit: "12798658e5e7cbdf3bf848e9256ce4f613c9d749"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .cursorrules."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .cursorrules."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .cursorrules."
+
+config_edits:
+  - path: .cursorrules
+    tier: 1
+    gold_added: "You are an expert in Python, Agno framework, and AI agent development.\n\nCore Rules\n- NEVER create agents in loops - reuse them for performance\n- Always use output_schema for structured responses\n- PostgreSQL in production, SQLite for dev only\n- Start with single agent, scale up only when needed\n\nBasic Agent (start here):\n```python\nfrom agno.agent import Agent\nfrom agno.models.openai import OpenAIChat\n\nagent = Agent(\n    model=OpenAIChat(id=\"gpt-4o\"),\n    instructions=\"You are a helpful assistant\",\n    markdown=True,\n)\nagent.print_response(\"Your query\", stream=True)\n```\n\nAgent with Tools:\n```python\nfrom agno.tools.duckduckgo import DuckDuckGoTools\n\nagent = Agent(\n    model=OpenAIChat(id=\"gpt-4o\"),\n    tools=[DuckDuckGoTools()],\n    instructions=\"Search the web for information\",\n)\n```\n\nCRITICAL: Agent Reuse Performance\n```python\n# WRONG - Recreates agent every time (significant overhead)\nfor query in queries:\n    agent = Agent(...)  # DON'T DO THIS\n    \n# CORRECT - Create once, reuse\nagent = Agent(...)\nfor query in queries:\n    agent.run(query)\n```\n\nWhen to Use Each Pattern\n\nSingle Agent (90% of use cases):\n- One clear task or domain\n- Can be solved with tools + instructions\n- Example: Search, analyze, generate content\n\nTeam (autonomous coordination):\n- Multiple specialized agents with different expertise\n- Agents decide who does what via LLM\n- Complex tasks requiring multiple perspectives\n- Example: Research + Analysis + Writing\n\nWorkflow (programmatic control):\n- Sequential steps with clear flow\n- Need conditional logic or branching\n- Full control over execution order\n- Example: Extract → Transform → Load pipelines\n\nTeam Pattern:\n```python\nfrom agno.team.team import Team\n\nweb_agent = Agent(\n    name=\"Researcher\",\n    model=OpenAIChat(id=\"gpt-4o\"),\n    tools=[DuckDuckGoTools()],\n)\n\nwriter_agent = Agent(\n    name=\"Writer\",\n    model=OpenAIChat(id=\"gpt-4o\"),\n)\n\nteam = Team(\n    members=[web_agent, writer_agent],\n    model=OpenAIChat(id=\"gpt-4o\"),\n    instructions=\"Research and write articles\",\n)\n```\n\nWorkflow Pattern:\n```python\nfrom agno.workflow.workflow import Workflow\nfrom agno.db.sqlite import SqliteDb\n\n# Define agents first (researcher, writer)\nasync def blog_workflow(session_state, topic: str):\n    # Step 1: Research\n    research = await researcher.arun(topic)\n    \n    # Step 2: Write\n    article = await writer.arun(research.content)\n    \n    return article\n\nworkflow = Workflow(\n    name=\"Blog Generator\",\n    steps=blog_workflow,\n    db=SqliteDb(db_file=\"tmp/workflow.db\"),\n)\n```\n\nKnowledge/RAG:\n```python\nfrom agno.knowledge.knowledge import Knowledge\nfrom agno.vectordb.lancedb import LanceDb, SearchType\nfrom agno.knowledge.embedder.openai import OpenAIEmbedder\n\nknowledge = Knowledge(\n    vector_db=LanceDb(\n        uri=\"tmp/lancedb\",\n        table_name=\"knowledge_base\",\n        search_type=SearchType.hybrid,\n        embedder=OpenAIEmbedder(id=\"text-embedding-3-small\"),\n    ),\n)\n\nagent = Agent(\n    model=OpenAIChat(id=\"gpt-4o\"),\n    knowledge=knowledge,\n    search_knowledge=True,  # Critical: enables agentic RAG\n    instructions=\"Use knowledge base, cite sources\"\n)\n```\n\nChat History:\n```python\nagent = Agent(\n    model=OpenAIChat(id=\"gpt-4o\"),\n    db=SqliteDb(db_file=\"tmp/agents.db\"),\n    user_id=\"user-123\",\n    add_history_to_context=True,  # Adds previous messages\n    num_history_runs=3,\n)\n```\n\nStructured Output:\n```python\nfrom pydantic import BaseModel\n\nclass Result(BaseModel):\n    summary: str\n    findings: list[str]\n\nagent = Agent(\n    model=OpenAIChat(id=\"gpt-4o\"),\n    output_schema=Result,\n)\nresult: Result = agent.run(query).content\n```\n\nAgentOS Production:\n```python\nfrom agno.os import AgentOS\nfrom agno.db.postgres import PostgresDb\n\nagent_os = AgentOS(\n    agents=[agent],\n    db=PostgresDb(db_url=os.getenv(\"DATABASE_URL\")),\n)\napp = agent_os.get_app()\n```\n\nCommon Mistakes\n- Creating agents in loops (massive performance hit)\n- Using Team when single agent would work\n- Forgetting search_knowledge=True with knowledge\n- Using SQLite in production\n- Not adding history when context matters\n- Missing output_schema validation\n\nProduction\n- Use PostgresDb not SqliteDb\n- Set show_tool_calls=False, debug_mode=False\n- Wrap agent.run() in try-except\n\nDocs: https://docs.agno.com"
+    gold_removed: ''

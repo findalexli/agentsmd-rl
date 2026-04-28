@@ -1,0 +1,118 @@
+version: "2.0"
+
+task:
+  name: bmad-method-refactorskills-convert-reviewpr-and-auditfileref
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: bmad-code-org/BMAD-METHOD
+  pr: 1732
+  base_commit: "276fcb1042e954044b445f4c488c70413d3e86c8"
+  merge_commit: "675e753e9b8df84375a0b37397a28148802a476f"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/bmad-os-audit-file-refs/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/bmad-os-audit-file-refs/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/bmad-os-audit-file-refs/SKILL.md."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/bmad-os-review-pr/README.md."
+  - id: signal_04
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/bmad-os-review-pr/README.md."
+  - id: signal_05
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/bmad-os-review-pr/README.md."
+  - id: signal_06
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/bmad-os-review-pr/SKILL.md."
+  - id: signal_07
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/bmad-os-review-pr/SKILL.md."
+  - id: signal_08
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/bmad-os-review-pr/SKILL.md."
+  - id: signal_09
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/bmad-os-review-pr/prompts/instructions.md."
+  - id: signal_10
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/bmad-os-review-pr/prompts/instructions.md."
+  - id: signal_11
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/bmad-os-review-pr/prompts/instructions.md."
+
+config_edits:
+  - path: .claude/skills/bmad-os-audit-file-refs/SKILL.md
+    tier: 1
+    gold_added: '---
+
+      name: bmad-os-audit-file-refs
+
+      description: Audit BMAD source files for file-reference convention violations using parallel Haiku subagents. Use when checking path references in workflow and task files.
+
+      disable-model-invocation: true
+
+      ---
+
+
+      Read `prompts/instructions.md` and execute.'
+    gold_removed: ''
+  - path: .claude/skills/bmad-os-audit-file-refs/prompts/instructions.md
+    tier: 1
+    gold_added: ''
+    gold_removed: ''
+  - path: .claude/skills/bmad-os-review-pr/README.md
+    tier: 1
+    gold_added: 'Use `/bmad-os-review-pr` to review a specific PR:
+
+      > "Use /bmad-os-review-pr to review PR #123"
+
+      See `prompts/instructions.md` for full prompt structure, severity ratings, and sandboxing rules.'
+    gold_removed: ''
+  - path: .claude/skills/bmad-os-review-pr/SKILL.md
+    tier: 1
+    gold_added: '---
+
+      name: bmad-os-review-pr
+
+      description: Adversarial PR review tool (Raven''s Verdict). Cynical deep review transformed into professional engineering findings. Use when asked to review a PR.
+
+      disable-model-invocation: true
+
+      ---
+
+
+      Read `prompts/instructions.md` and execute.'
+    gold_removed: ''
+  - path: .claude/skills/bmad-os-review-pr/prompts/instructions.md
+    tier: 1
+    gold_added: '## CRITICAL: Sandboxed Execution Rules
+
+      ## Adversarial Review
+
+      ## Tone Transformation
+
+      ## Post Review
+
+      ## Notes'
+    gold_removed: ''

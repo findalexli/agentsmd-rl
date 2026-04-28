@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: remill-add-claudemd
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: lifting-bits/remill
+  pr: 747
+  base_commit: "f55bf66f9b3671b983df02288fa448576041a76f"
+  merge_commit: "9908142dc7f3c0acf24a74e9c8f6551e809a9701"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+
+config_edits:
+  - path: CLAUDE.md
+    tier: 1
+    gold_added: "# CLAUDE.md\n\nThis file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.\n\n## What is Remill?\n\nRemill is a static binary translator that lifts machine code instructions into LLVM bitcode. It supports x86/amd64 (including AVX/AVX512), AArch64, AArch32, SPARC32/64, and PPC architectures. Remill is designed as a library for binary analysis tools like McSema.\n\n## Build Commands\n\n### Build Dependencies (First Time)\n```bash\n# Build dependencies including LLVM from source\ncmake -G Ninja -S dependencies -B dependencies/build\ncmake --build dependencies/build\n\n# Or with external LLVM (macOS with Homebrew)\nbrew install llvm@17\ncmake -G Ninja -S dependencies -B dependencies/build -DUSE_EXTERNAL_LLVM=ON \\\n  \"-DCMAKE_PREFIX_PATH:PATH=$(brew --prefix llvm@17)\"\ncmake --build dependencies/build\n```\n\n### Build Remill\n```bash\ncmake -G Ninja -B build \"-DCMAKE_PREFIX_PATH:PATH=$(pwd)/dependencies/install\" \\\n  -DCMAKE_BUILD_TYPE=Release\ncmake --build build\n```\n\n### Run Tests\n```bash\n# Build test dependencies\ncmake --build build --target test_dependencies\n\n# Run all tests\ncd build && ctest\n\n# Run architecture-specific tests\nctest -R amd64\nctest -R aarch64\n```\n\n## Architecture\n\n### Core Concepts\n\n**Intrinsics System**: Remill defers memory/control-flow semantics to downstream consumers via intrinsics (`__remill_read_memory_*`, `__remill_write_memory_*`, etc.). This allows tools to implement their own memory models.\n\n**SEM (Semantics)**: Generic C++ template functions implementing instruction behavior. Named after the instruction mnemonic (e.g., `AND`, `ADD`).\n\n**ISEL (Instruction Selection)**: Specific instantiations of semantics for particular encodings. Named with operand types (e.g., `AND_GPRv_MEMv_32`).\n\n**State Structure**: Per-architecture register/flag state (`State.h`). Uniform size across generations enables mixing translated bitcode.\n\n**Basic Block Lifting**: Core function `__remill_basic_block(State&, addr_t, Memory*)` - variables correspond to register names, decoder and lifter synchronize via this naming convention.\n\n### Key Directories\n- `lib/Arch/X86/Semantics/` - x86/amd64 instruction semantics by category (BINARY.cpp, LOGICAL.cpp, AVX.cpp, SSE.cpp, etc.)\n- `lib/BC/InstructionLifter.cpp` - Converts decoded instructions to LLVM IR\n- `include/remill/Arch/Runtime/` - State structures, intrinsics, operators, types\n- `tests/X86/`, `tests/AArch64/` - Architecture-specific test suites\n\n## Writing Instruction Semantics\n\n### Semantic Function Pattern\n```cpp\ntemplate <typename D, typename S1, typename S2>\nDEF_SEM(INSTR_NAME, D dst, S1 src1, S2 src2) {\n  auto lhs = Read(src1);\n  auto rhs = Read(src2);\n  auto res = UAdd(lhs, rhs);  // or UAnd, UMul, etc.\n  WriteZExt(dst, res);\n  // Update flags last\n  return memory;\n}\n```\n\n### Operator Naming Convention\n- **Signed**: `SAdd`, `SSub`, `SMul`, `SDiv`\n- **Unsigned**: `UAdd`, `USub`, `UMul`, `UDiv`, `UAnd`, `UOr`, `UXor`\n- **Floating-point**: `FAdd`, `FSub`, `FMul`, `FDiv`\n- **Vector ops**: `UAddV32`, `FMulV64`, `UReadV32`, `FWriteV64`\n\n### ISEL Definition\n```cpp\n// For SCALABLE instructions, suffix with operand size\nDEF_ISEL(AND_GPRv_MEMv_8) = AND<R8W, R8, M8>;\nDEF_ISEL(AND_GPRv_MEMv_16) = AND<R16W, R16, M16>;\nDEF_ISEL(AND_GPRv_MEMv_32) = AND<R32W, R32, M32>;\nIF_64BIT(DEF_ISEL(AND_GPRv_MEMv_64) = AND<R64W, R64, M64>;)\n\n// Or use shorthand macro\nDEF_ISEL_RnW_Rn_Mn(AND_GPRv_MEMv, AND);\n```\n\n### Operand Types\n- `R8`, `R16`, `R32`, `R64` - Register reads\n- `R8W`, `R16W`, `R32W`, `R64W` - Register writes\n- `M8`, `M16`, `M32`, `M64` - Memory operands\n- `V128W` - SIMD destination (always 128-bit for writes)\n\n### Order of Operations in Semantics\n1. `Read()` all source operands first\n2. Perform computations\n3. `Write()`/`WriteZExt()` to destinations\n4. Update suppressed operands (flags) last\n\nThis ordering limits state mutations if memory access violations occur.\n\n## Writing Tests\n\nTest files go in `tests/{ARCH}/{CATEGORY}/` and must be included in `Tests.S`.\n\n```asm\nTEST_BEGIN(ANDr32r32, 2)\nTEST_IGNORE_FLAGS(AF)\nTEST_INPUTS(\n    0, 0,\n    1, 0,\n    0xFFFFFFFF, 1,\n    0x7FFFFFFF, 1)\n\n    and ARG1_32, ARG2_32\nTEST_END\n```\n\n- `TEST_BEGIN(name, num_args)` - Start test with N input arguments\n- `TEST_IGNORE_FLAGS(...)` - Flags left in undefined state\n- `TEST_INPUTS(...)` - Comma-separated input values (grouped by num_args)\n- `ARG1_32`, `ARG2_64`, etc. - Input argument registers by size\n\n## Code Style\n\n- **Format**: Google style via `.clang-format` (80-char line limit, 2-space indent)\n- **Standard**: C++17\n- Run `clang-format -i <file>` before committing\n\n## XED Tables Reference\n\nFor x86 instruction details, consult `docs/XED/xed.txt`. Key fields:\n- Instruction category (LOGICAL, BINARY, etc.) → determines which `.cpp` file\n- `SCALABLE` attribute → needs size-suffixed ISELs\n- `EXPLICIT`/`IMPLICIT`/`SUPPRESSED` → determines semantic function parameters\n- `R`/`W`/`RW` → operand mutability (RW generates two parameters: write first, read second)"
+    gold_removed: ''

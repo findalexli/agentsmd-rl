@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: olmo-core-updates-to-claudemd-file
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: allenai/OLMo-core
+  pr: 612
+  base_commit: "d69433d41bbdec1ae687fb0e5d298f2ee268fcad"
+  merge_commit: "c2729c183150c6b08362f107f5006bea3fda07a2"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+
+config_edits:
+  - path: CLAUDE.md
+    tier: 1
+    gold_added: "pytest -v src/test/path/to/test_file.py\n\n# Filter to specific tests by keywords\npytest -v src/test/path/to/test_file.py -k 'keyword'\n## Docstrings\n\n- Docstrings should be included on all public classes, methods, and functions.\n- We use Sphinx to automatically build API docs by pulling from those docstrings.\n- The syntax of the docstrings is a superset of reStructuredText with additional Sphinx-specific syntax for things like:\n  - Cross-document links, e.g.:\n    ```\n    :class:`foo.Foo`  <- links to the class named 'Foo' in the module 'foo'\n    :mod:`foo`        <- links to the module named 'foo'\n    :func:`foo.bar`   <- links to the function named 'bar' in the module named 'foo'\n    ```\n  - Documenting parameters (`:param ...:`), return values (`:returns:`), or expected exceptions (`:raises ...:`).\n\nHere's a toy example for a function:\n\n```python\ndef read_file(path: str) -> str:\n    \"\"\"\n    Read a file from disk.\n\n    :param path: The path to the file.\n\n    :returns: The contents of the file.\n\n    :raises FileNotFoundError: If the file doesn't exist.\n    \"\"\"\n    pass\n```\n\n### Examples (src/examples)\n\nRunnable, self-contained examples and reference scripts.\n\n- Name individual test functions `test_*` and prefer `pytest.mark.parametrize` to cover multiple inputs or configurations without duplicating code."
+    gold_removed: ''

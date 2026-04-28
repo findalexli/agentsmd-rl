@@ -1,0 +1,30 @@
+version: "2.0"
+
+task:
+  name: zylos-core-fix-add-nextsteps-and-skillmd
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: zylos-ai/zylos-core
+  pr: 95
+  base_commit: "6378c19ca8eb56e19c3b7166b9f556becdc5d186"
+  merge_commit: "392044206cbdb7b55f1fca6bf1b1a8c83778b889"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/component-management/references/install.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/component-management/references/install.md."
+
+config_edits:
+  - path: skills/component-management/references/install.md
+    tier: 1
+    gold_added: '5. **Next Steps**: If `skill.nextSteps` exists, follow the instructions — this typically includes post-service-start guidance (e.g., configuring webhook URLs, optional security settings). Always show these to the user.
+
+      6. **SKILL.md**: If the component''s SKILL.md has additional setup documentation beyond the frontmatter, read and follow it for any remaining configuration steps.'
+    gold_removed: ''

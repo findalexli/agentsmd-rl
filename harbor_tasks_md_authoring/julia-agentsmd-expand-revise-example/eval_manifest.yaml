@@ -1,0 +1,36 @@
+version: "2.0"
+
+task:
+  name: julia-agentsmd-expand-revise-example
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: JuliaLang/julia
+  pr: 59746
+  base_commit: "3b1fa7c764b79cfe0850ae4e977effdf7f27248d"
+  merge_commit: "eb4006be44fd6bfb0f01d59672a54ac48a24407f"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+
+config_edits:
+  - path: AGENTS.md
+    tier: 1
+    gold_added: 'For instance testing Base changes without rebuilding, using failfast, you can run:
+
+      ```
+
+      JULIA_TEST_FAILFAST=1 ./julia -e ''using Revise; Revise.track(Base); include("test.jl")''
+
+      ```
+
+      '
+    gold_removed: ''

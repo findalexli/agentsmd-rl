@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: jobset-featdocs-add-copilot-instructions
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: kubernetes-sigs/jobset
+  pr: 1161
+  base_commit: "e365e9b42022393d23721b37a2a5832f1b59d577"
+  merge_commit: "22412d2ef1e63238da092111d01120714e4e66a7"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/copilot-instructions.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/copilot-instructions.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/copilot-instructions.md."
+
+config_edits:
+  - path: .github/copilot-instructions.md
+    tier: 1
+    gold_added: "# GitHub Copilot Code Review Instructions\n\n## Review Philosophy\n\n- Only comment when you have HIGH CONFIDENCE (>80%) that an issue exists\n- Be concise: one sentence per comment when possible\n- Focus on actionable feedback, not observations\n- When reviewing text, only comment on clarity issues if the text is genuinely confusing or could lead to errors.\n  \"Could be clearer\" is not the same as \"is confusing\" - stay silent unless HIGH confidence it will cause problems\n\n## Priority Areas (Review These)\n\n### Security & Safety\n\n- Unsafe code blocks without justification\n- Command injection risks (shell commands, user input)\n- Path traversal vulnerabilities\n- Credential exposure or hardcoded secrets\n- Missing input validation on external data\n- Improper error handling that could leak sensitive info\n\n### Correctness Issues\n\n- Logic errors that could cause panics or incorrect behavior\n- Resource leaks (files, connections, memory)\n- Off-by-one errors or boundary conditions\n- Optional types that don't need to be optional\n- Booleans that should default to false but are set as optional\n- Overly defensive code that adds unnecessary checks\n- Unnecessary comments that just restate what the code already shows (remove them)\n\n### Architecture & Patterns\n\n- Code that violates existing patterns in the codebase\n- Missing error handling\n- Code that is not following [Effective Go](https://go.dev/doc/effective_go)\n- Violating [Kubernetes API guidelines](https://github.com/kubernetes/community/blob/master/contributors/devel/sig-architecture/api_changes.md)\n\n## Project-Specific Context\n\n- See [AGENTS.md](../AGENTS.md) in the root directory for project guidelines and architecture decisions.\n\n## CI Pipeline Context\n\n**Important**: You review PRs immediately, before CI completes. For the categories listed under\n**Skip These** below, assume CI will catch them and do not comment on them.\n\nJobSet presubmit tests are defined here: https://github.com/kubernetes/test-infra/blob/master/config/jobs/kubernetes-sigs/jobset/jobset-presubmit-main.yaml\n\n### What Our CI Checks\n\n- `pull-jobset-verify-main` - Code Quality Checks\n- `pull-jobset-test-unit-main` - Code generation and Go unit tests\n- `pull-jobset-test-integration-main` - Integration tests\n- `pull-jobset-test-e2e-main-1-**` - E2E tests for the supported Kubernetes versions\n\n## Skip These (IMPORTANT)\n\nDo not comment on:\n\n- **Auto generated code** - CI handles this (`make generate`)\n- **Python Code** - Python API is auto-generated\n- **Style/formatting** - CI handles this (gofmt)\n- **Test failures** - CI handles this (full test suite)\n- **Missing dependencies** - CI handles this\n\n## Response Format\n\nWhen you identify an issue:\n\n1. **State the problem** (1 sentence)\n2. **Why it matters** (1 sentence, only if not obvious)\n3. **Suggested fix** (code snippet or specific action)\n\n## When to Stay Silent\n\nIf you're uncertain whether something is an issue, don't comment. False positives create noise and reduce trust in the review process."
+    gold_removed: ''

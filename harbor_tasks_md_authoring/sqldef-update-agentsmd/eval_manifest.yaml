@@ -1,0 +1,38 @@
+version: "2.0"
+
+task:
+  name: sqldef-update-agentsmd
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: sqldef/sqldef
+  pr: 852
+  base_commit: "70107e9ef017f01efeaac615ed490d610d94ddee"
+  merge_commit: "33107c822ca97bdd4cd9b1a27157f6b3a4c83b4f"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+
+config_edits:
+  - path: AGENTS.md
+    tier: 1
+    gold_added: '* [ ] `make build`  # Ensure all commands are compiled
+
+      * [ ] `make test`   # Ensure all tests pass
+
+      * [ ] `make lint`   # Ensure the code is linted
+
+      * [ ] `make format` # Ensure the code is formatted'
+    gold_removed: ''

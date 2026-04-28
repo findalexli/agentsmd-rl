@@ -1,0 +1,47 @@
+version: "2.0"
+
+task:
+  name: rustledger-docs-add-copilot-code-review
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: rustledger/rustledger
+  pr: 661
+  base_commit: "5e4420bd0f707235730603a5c018b41d18215f19"
+  merge_commit: "535095a76d78578d000d22e7bc6794894310268d"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+
+config_edits:
+  - path: CLAUDE.md
+    tier: 1
+    gold_added: '### Requesting Copilot Code Review
+
+
+      Request or re-request a Copilot review on any PR:
+
+
+      ```bash
+
+      gh pr edit <PR_NUMBER> --add-reviewer @copilot
+
+      ```
+
+
+      This triggers a fresh review against the current diff. Copilot leaves "Comment" reviews (never approves or blocks merging).
+
+      '
+    gold_removed: ''

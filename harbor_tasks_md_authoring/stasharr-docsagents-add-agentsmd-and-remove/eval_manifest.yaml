@@ -1,0 +1,36 @@
+version: "2.0"
+
+task:
+  name: stasharr-docsagents-add-agentsmd-and-remove
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: enymawse/stasharr
+  pr: 100
+  base_commit: "3c029c64308073a3f47748d110301870fc0d639d"
+  merge_commit: "a9f28d5bf39f92d46cc3e4b2b5f1ae4d66e47aa7"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+
+config_edits:
+  - path: AGENTS.md
+    tier: 1
+    gold_added: "# AGENTS.md\n\nThis document is a quick, practical guide for agentic coding assistants working in this repository. It summarizes how the project is structured, where to make changes, how to validate them, and how to ship them safely with the repo’s conventions and tooling.\n\n## Project Snapshot\n\n- Type: Browser userscript that augments StashDB and integrates with Whisparr v3+\n- Framework: SolidJS + TypeScript\n- Build: Webpack (webpack-userscript)\n- Styles: SCSS + Bootstrap\n- Quality: ESLint + Prettier + Husky + commitlint (Conventional Commits)\n- Package manager: npm\n\nKey value props:\n\n- One‑click scene actions and bulk actions\n- Progress modal for bulk feedback (noisy toasts avoided in bulk flows)\n- Service layer separation for StashDB/Whisparr calls\n\n## Common Commands\n\n- Install deps: `npm ci`\n- Dev server (proxy userscript): `npm run dev`\n- Build production userscript: `npm run build`\n- Lint + autofix: `npm run lint`\n- Conventional commit helper: `npm run cm`\n\nHusky + commitlint enforce Conventional Commits and body line length in commit messages.\n\n## Codebase Map (where to change what)\n\n- UI entry (bulk actions): `src/components/BulkActionDropdown.tsx`\n\n  - Owns the Stasharr Actions dropdown and confirmation modals\n  - Starts/updates bulk progress via FeedbackService\n  - Uses StashDBService for titles and SceneService for work\n\n- Progress UI: `src/components/ProgressModal.tsx`\n\n  - Renders overall progress, item statuses, skipped info, and empty-state infoMessage\n\n- Feedback + operations state: `src/service/FeedbackService.ts`\n\n  - Global state source for ProgressModal\n  - Methods returned by `startBulkOperation`: `updateItem`, `addItems`, `removeItem`, `updateItemName(s)`, `setSkippedInfo`, `setInfo`, `complete`\n  - Button state helpers: `startButtonOperation`, `completeButtonOperation`\n\n- Scene domain logic: `src/service/SceneService.ts`\n\n  - Lookup/add/search flows\n  - Bulk orchestration helpers (`lookupAndAddAll`, `triggerWhisparrSearchAll`, `addAllMissingScenes`)\n  - Accepts `{ suppressToasts?: boolean }` where appropriate to keep bulk UX clean\n\n- Comparison logic: `src/service/SceneComparisonService.ts`\n\n  - Cross-checks StashDB vs. Whisparr and computes missing scenes\n  - Supports `suppressToasts` in bulk flows\n\n- StashDB GraphQL: `src/service/StashDBService.ts`\n\n  - `getSceneById(id)` via GraphQL `findScene`\n  - `getSceneTitlesByIds(ids)` resolves titles by ID (no text “OR” search)\n  - All queries support `suppressToasts`\n\n- Whisparr REST: `src/service/WhisparrService.ts`\n  - `getAllScenes`, `command`, profiles, etc. (`suppressToasts` supported in bulk)\n\n## Patterns and Conventions\n\nCoding\n\n- Keep changes minimal and targeted; prefer surgical edits over large refactors\n- Follow existing style and component organization\n- Avoid introducing new global state—extend FeedbackService if you need bulk UI changes\n- Prefer in-place updates (e.g., update item names by ID) instead of remove+add cycles\n\nUX rules of thumb\n\n- Bulk operations use the Progress Modal for all detailed feedback\n- Use `setSkippedInfo(count, \"already in Whisparr\")` to summarize skips\n- For “nothing to do” cases, start a bulk op with no items and set `setInfo(\"No scenes available …\")` then `complete()`; do not add dummy “success” items\n- Titles shown in progress should be Scene Titles (via StashDB by ID), not hashes\n\nToasts\n\n- Bulk flows: avoid toasts; rely on the modal and per‑item messages\n- Non-bulk flows: toasts are fine for quick feedback\n\nCommits & PRs\n\n- Conventional commits required; keep body lines ≤ 100 chars\n- Group commits by logical change:\n  - `feat(stashdb): add getSceneById …`\n  - `feat(actions,ui): … modal feedback …`\n  - `fix(ui): … empty-state …`\n  - `chore(lint): … ts-expect-error …`\n- Use GitHub CLI for PRs: `gh pr create --base main --head <branch> --title \"feat(...): ...\"`\n\n## Typical Agent Flows\n\nAdd/improve a bulk action\n\n1. Update `BulkActionDropdown.tsx` to collect scene IDs and open a bulk operation\n2. If you need more progress data, add methods/fields in `FeedbackService`\n3. Use `StashDBService.getSceneById` or `getSceneTitlesByIds` to show titles\n4. Call into `SceneService` for the behavior (lookup/add/search)\n5. Ensure skipped info and empty-state are handled; keep toasts suppressed\n\nDisplay/UX change for bulk progress\n\n1. Adjust `ProgressModal.tsx` (e.g., sections guarded by item count)\n2. Pass any new props from `SceneList.tsx` reading FeedbackService state\n3. Extend `FeedbackService` to expose new state/methods\n\nService/API work\n\n1. Implement in `StashDBService` or `WhisparrService`\n2. Return typed data; catch and log errors; use `suppressToasts` where caller is bulk\n3. Thread options through upstream services that call you\n\n## Validation Checklist\n\n- `npm run lint` passes (eslint + prettier)\n- No stray `@ts-ignore` (use `@ts-expect-error` with rationale when needed)\n- Commit messages follow Conventional Commits and commitlint constraints\n- Bulk UI:\n  - Progress shows titles, per-item statuses\n  - Skipped info says “already in Whisparr”\n  - Empty-state shows info, not “1/1 succeeded”\n\n## Dev Setup (for local manual testing)\n\n1. `npm run dev` (webpack dev server)\n2. Install `http://localhost:8080/stasharr.dev.proxy.user.js` in Tampermonkey/Violentmonkey\n3. Reload StashDB; iteratively test bulk actions and UI\n\n## Notes for Sandboxed Agents\n\n- Use fast file/text search: `rg`\n- Read files in ≤ 250‑line chunks to avoid truncation\n- Edit files via `apply_patch` only\n- Prefer not to install new tools unless necessary\n- Pushing branches / making PRs is supported via `gh` CLI when credentials exist"
+    gold_removed: ''
+  - path: CLAUDE.md
+    tier: 1
+    gold_added: ''
+    gold_removed: ''

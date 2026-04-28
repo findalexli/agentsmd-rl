@@ -1,0 +1,28 @@
+version: "2.0"
+
+task:
+  name: vscode-copilot-chat-symlink-claudemd-instead-of-pointing
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: microsoft/vscode-copilot-chat
+  pr: 3321
+  base_commit: "39cb0f995edc74a683f1f8252039565d5223d2cd"
+  merge_commit: "162e5ff3ae898e8471bc8f5510c4fcb7db4b0abf"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/CLAUDE.md."
+
+config_edits:
+  - path: .claude/CLAUDE.md
+    tier: 1
+    gold_added: ''
+    gold_removed: ''
+  - path: .claude/CLAUDE.md
+    tier: 1
+    gold_added: ../.github/copilot-instructions.md
+    gold_removed: ''

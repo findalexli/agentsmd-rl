@@ -1,0 +1,40 @@
+version: "2.0"
+
+task:
+  name: better-auth-docs-add-clauderulesreleasemd
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: better-auth/better-auth
+  pr: 7403
+  base_commit: "178f7ac2d74503c33a77853dfe8baf7aa14b7449"
+  merge_commit: "af982ec3116b8f8cdab6c704a4d4b0f78ef8a4e0"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/rules/release.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/rules/release.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/rules/release.md."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+
+config_edits:
+  - path: .claude/rules/release.md
+    tier: 1
+    gold_added: "# Release Process\n\n## Stable Release (to `main` branch)\n\n1. **Create a staging branch** from the `main` branch:\n   ```bash\n   git checkout main\n   git pull origin main\n   git checkout -b v1.x.x-staging  # e.g., v1.4.14-staging\n   ```\n\n2. **Cherry-pick commits** from `canary` branch:\n   ```bash\n   git cherry-pick <commit-hash>\n   # Repeat for each commit you want to include\n   ```\n\n3. **Open a Pull Request** targeting the `main` branch\n\n4. **Wait for CI** to pass (all checks must be green)\n\n5. **Rebase and merge** the PR to `main` branch\n\n6. **Bump version and create tag**:\n   ```bash\n   git checkout main\n   git pull origin main\n   pnpm bump  # Interactive prompt to select version, creates commit & tag, automatically pushes\n   ```\n\n7. The release workflow (`.github/workflows/release.yml`) will automatically:\n   * Generate changelog using `changelogithub`\n   * Build all packages\n   * Publish to npm with the `latest` tag\n\n## Beta Release (on `canary` branch)\n\nBeta versions are released from the `canary` branch:\n\n```bash\ngit checkout canary\npnpm bump  # Select a beta version (e.g., v1.4.15-beta.0)\ngit push origin canary --follow-tags\n```\n\nThe release workflow will publish to npm with the `beta` tag.\n\n## Version Branch Releases\n\nFor maintaining older versions (e.g., v1.3.x while v1.4.x is latest):\n\n1. Create a version branch named `v1.3.x-latest`\n2. Tags pushed from this branch will also receive the `latest` npm tag\n\n## Notes\n\n* **Do not merge breaking changes to `main` branch** unless upgrading\n  minor versions (e.g., 1.4 to 1.5)\n* **Merge conflicts**: Resolve them carefully.\n  Review each conflict to ensure no code is accidentally removed or\n  duplicated\n* **Keep the release branch clean**: Do not create extra commits on\n  the releasing branch.\n  If you need to fix CI issues, squash the fix into the appropriate\n  existing commit\n* All releases are triggered by pushing tags matching `v*`\n* The CI determines the npm tag based on:\n  * Pre-release suffix in tag name (canary, beta, rc, next)\n  * Whether the commit is on `main` or a version branch (`v*.*.x-latest`)\n* Always ensure CI is green before creating release tags"
+    gold_removed: ''
+  - path: CLAUDE.md
+    tier: 1
+    gold_added: '* Make sure `pnpm format:check`, `pnpm lint` and `pnpm typecheck` pass'
+    gold_removed: ''

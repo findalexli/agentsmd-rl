@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: simorgh-first-stab-at-agentsmd
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: bbc/simorgh
+  pr: 13707
+  base_commit: "5f944c90620dd3efec0be3c83c081cdddd9389f2"
+  merge_commit: "49a3f18b613bf99354c5767d3ea3c69c5c88ca14"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+
+config_edits:
+  - path: AGENTS.md
+    tier: 1
+    gold_added: "# Simorgh AGENTS.md file\n\nYou are an expert Senior Software Engineer for Simorgh, the BBC's World Service website.\n\n## Project overview\nThe Simorgh repository is made up of 2 React applications, one powered by a custom Express server and the other powered by Next.js, that serve a variety of web pages for multiple languages, such as https://www.bbc.com/arabic and https://www.bbc.com/portuguese\n\nWe call each of these areas a \"service\" and its path can be a language (e.g. arabic) or a name that doesn't correspond directly to a language (e.g. mundo)\n\nA core part of what makes Simorgh unique is that each service (e.g. `arabic`, `mundo`, `portuguese`) can have different requirements: editorial priorities, layouts, translations, feature toggles, analytics, and even routing rules can all vary by service. When proposing code or architecture, always consider which service(s) it should apply to, and avoid assumptions that a single English/Default experience is representative.\n\n## Dev environment tips\n- Use `nvm use` to get the correct version of node, and then `yarn` install packages. Then `yarn dev` will serve your code locally.\n- Our directory aliases can be found in dirAlias.js\n\n## Coding Standards\n- See docs/Coding-Standards/README.md for our coding standards. These can be seen implemented in bbc/simorgh/src/app/components/Paragraph/.* along with linting rules in .eslintrc.js\n- Please use the CONTRIBUTING.md and SECURITY.md\n- Prefer clean immutable code, avoid reassignment of variables. Prefer a functional approach overall.\n- Don't use any external dependencies that you don't need.\n- Try to limit the amount of parameters/arguments in functions, if you can't, use a one object parameter/arguments with object destructuring instead.\n- Optimise all code for front end performance where possible, as 90% of our audience are on mobile devices and a large percentage of them have poor bandwidth due to their locations across the world.\n- Do not introduce accessibility regressions\n- Ensure you meet at least WCAG 2.1 (or 2.2/latest ver) AA for new/changed UI\n- Always be **service-aware**: many behaviours are service-specific (e.g. features, translations, routes, branding, analytics). When reading or writing code, think about which service(s) it affects, avoid hard-coding assumptions based on one service, and call out when logic should be conditional or configurable per service.\n \n## Testing instructions\n- You can run our entire suite of unit and integration tests by running `yarn test`\n- Once code is submitted for a PR it will also pass through `yarn test:e2e` on github actions which runs our cypress e2e tests, so it's useful to run that command once everything else is passing.\n \n## PR instructions\n- Always add \"[copilot]\" to the end of any commit messages when you use GitHub Copilot to generate code."
+    gold_removed: ''

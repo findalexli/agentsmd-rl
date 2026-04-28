@@ -1,0 +1,463 @@
+version: "2.0"
+
+task:
+  name: azure-openai-rag-workshop-docs-add-agentsmd-closes-45
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: Azure-Samples/azure-openai-rag-workshop
+  pr: 47
+  base_commit: "21b539c1d96b45b96f6fa6662e44952fa2bf6d46"
+  merge_commit: "0946408d228f03db09f4eb60457a929e8520b95b"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/prompts/create-agents.md.prompt.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/prompts/create-agents.md.prompt.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/prompts/create-agents.md.prompt.md."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_04
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_05
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_06
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in src/backend/AGENTS.md."
+  - id: signal_07
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in src/backend/AGENTS.md."
+  - id: signal_08
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in src/backend/AGENTS.md."
+  - id: signal_09
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in src/frontend/AGENTS.md."
+  - id: signal_10
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in src/frontend/AGENTS.md."
+  - id: signal_11
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in src/frontend/AGENTS.md."
+  - id: signal_12
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in src/ingestion/AGENTS.md."
+  - id: signal_13
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in src/ingestion/AGENTS.md."
+  - id: signal_14
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in src/ingestion/AGENTS.md."
+  - id: signal_15
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in trainer/AGENTS.md."
+  - id: signal_16
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in trainer/AGENTS.md."
+  - id: signal_17
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in trainer/AGENTS.md."
+
+config_edits:
+  - path: .github/prompts/create-agents.md.prompt.md
+    tier: 1
+    gold_added: "---\ndescription: Generates an AGENTS.md file for a project repository\n---\n\n# Create high‑quality AGENTS.md file\n\n- **Input**: Any files that may provide context about the project, including but not limited to README files, documentation, configuration files (e.g., package.json, pyproject.toml, etc.), CI/CD workflows and any other relevant files.\n\n## Role\n\nYou are an expert software architect and code agent. Your task is to create a complete, accurate `AGENTS.md` at the root of this repository that follows the public guidance at https://agents.md/.\n\nAGENTS.md is an open format designed to provide coding agents with the context and instructions they need to work effectively on a project.\n\n## Goal\n\nBased on your analysis of the project, your goal is to generate these:\n\n- Create or update `AGENTS.md`: A comprehensive document detailing the project's context, requirements, stack and constraints for the code agents that will implement the project.\n- There must at least one `AGENTS.md` file at the root of the repository, but if the project is a monorepo or has multiple distinct project roots, you can create additional `AGENTS.md` files in each relevant subdirectories.\n\nWhen creating the `AGENTS.md` file, prioritize clarity, completeness, and actionability. The goal is to give any coding agent enough context to effectively contribute to the project without requiring additional human guidance.\n\n## Instructions\n\n1. Examine the current project to understand its context, requirements, constraints, architecture, tech stack and specificities, and any existing files that may provide insights.\n  - For example, look for files that may contain the project name, idea, vision, requirements, technology stack and constraints. This may include README files, project documentation, configuration files (e.g., package.json, pyproject.toml, etc.), CI/CD workflows and any other relevant files.\n  - If the project is a monorepo or has multiple distinct project roots, identify the relevant subdirectories that may require their own `AGENTS.md` files.\n\n2. Once you have all the necessary information, create or update the `AGENTS.md` file with all relevant project context, requirements, stack and constraints for the code agents that will implement the project.\n  - When doing so, use this the template for structuring the document:\n    ```md\n    # [project_name]\n    [Project summary]\n\n    ## Overview\n    - [Brief description of what the project does, its purpose and audience]\n    - [Architecture overview if complex]\n    - [Project structure if relevant]\n\n    ## Key Technologies and Frameworks\n    - [List of main technologies, frameworks, and libraries used in the project]\n\n    ## Constraints and Requirements [if any]\n    - [Any specific constraints, requirements, or considerations for the project]\n\n    ## Challenges and Mitigation Strategies [if any]\n    - [Potential challenges and how they will be addressed]\n\n    ## Development Workflow [if applicable]\n    - [Most important scripts, commands, and tools for development, testing, and deployment. How to start dev server, run tests, build for production, etc.]\n\n    ## Coding Guidelines [if any]\n    - [Any specific coding standards, style guides, or best practices to follow]\n\n    ## Security Considerations [if any]\n    - [Any security practices or considerations relevant to the project]\n\n    ## Pull Request Guidelines [if any]\n    - [Any specific guidelines for creating pull requests, such as, title format, required checks, review process, commit message conventions, etc.]\n\n    ## Debugging and Troubleshooting [if applicable]\n    - [Common issues and solutions, logging patterns, debug configuration, performance considerations]\n    ```\n  - If a section is not relevant, you can omit it.\n  - **Be specific and concise**: include exact commands, and information from the provided context, do not make any assumptions or add unnecessary details.\n  - Only use information you found to fill the sections.\n  - Use standard Markdown formatting.\n  - If needed, you can add specific sections relevant to the project that are not covered by the template if they provide important context for the code agents.\n  - If the file already contains enough relevant information, you can skip this step.\n\n## Best Practices\n\n- **Be specific**: Include exact commands, not vague descriptions\n- **Use code blocks**: Wrap commands in backticks for clarity\n- **Include context**: Explain why certain steps are needed\n- **Stay current**: Update as the project evolves\n- **Test commands**: Ensure all listed commands actually work\n- **Keep it focused** on what agents need to know, not general project information\n\n## Monorepo Considerations\n\nFor large monorepos:\n- Place a main `AGENTS.md` at the repository root\n- Create additional `AGENTS.md` files in subproject directories if they have distinct contexts, requirements or constraints\n- The closest `AGENTS.md` file takes precedence for any given location\n- Include navigation tips between packages/projects"
+    gold_removed: ''
+  - path: AGENTS.md
+    tier: 1
+    gold_added: "# Azure OpenAI RAG Workshop (Node.js)\nA monorepo sample + workshop showing how to build a Retrieval‑Augmented Generation (RAG) chat experience using LangChain.js with Azure OpenAI (optionally Qdrant) and expose it through a Fastify backend, an ingestion Fastify service, and a Lit + Vite frontend. Infrastructure is provisioned and deployed to Azure using `azd` (Azure Developer CLI) with Azure Container Apps, Azure Static Web Apps, Azure AI Search (or Qdrant), and optional OpenAI proxy for training scenarios.\n\n## Overview\n- Purpose: Educational reference and workshop material for building a production‑minded RAG chat application on Azure.\n- Audience: Developers learning Azure OpenAI + vector search patterns (Azure AI Search or Qdrant), workshop trainers, contributors.\n- Architecture (core runtime):\n  - Frontend (Static Web App): Lit web components served via Vite build; proxies `/chat` to backend during local dev.\n  - Backend API (Container App): Fastify service orchestrating chat + retrieval via LangChain, Azure OpenAI (or provided OpenAI endpoint), Azure AI Search or Qdrant for vector retrieval.\n  - Ingestion API (Container App): Fastify service handling PDF uploads and embedding ingestion into chosen vector store.\n  - (Optional) Qdrant (Container App) or Azure AI Search (managed) selected via `useQdrant` parameter.\n  - Trainer Proxy (separate project in `trainer/`): Fastify reverse proxy to share a single Azure OpenAI instance with attendees.\n  - Observability: Azure Monitor / Application Insights via Bicep modules.\n- Project layout (selected):\n  - `src/frontend`: Web UI (Lit, Vite).\n  - `src/backend`: Chat + RAG API (Fastify + LangChain + OpenAI + Search/Qdrant).\n  - `src/ingestion`: Document ingestion API (Fastify) + PDF parsing.\n  - `infra`: Bicep templates (`main.bicep`, parameters, core modules) for full environment.\n  - `scripts`: Helper scripts (PDF ingestion upload).\n  - `trainer`: Workshop trainer proxy & material references.\n  - `docs`: Workshop and slide assets.\n  - Root `package.json`: Defines npm workspaces and shared tooling.\n\n## Key Technologies and Frameworks\n- Language: TypeScript (Node.js 20+, npm 10+).\n- Backend / Ingestion / Proxy: Fastify, Fastify CLI, Fastify plugins (cors, sensible, autoload, multipart, http-proxy).\n- RAG / AI: LangChain.js (`@langchain/*`, `langchain`), Azure OpenAI (or custom endpoint), token counting (`@dqbd/tiktoken`).\n- Vector Stores: Azure AI Search (`@azure/search-documents`) or Qdrant (`@qdrant/qdrant-js`, `@langchain/qdrant`).\n- Frontend: Vite, Lit, custom elements.\n- Infra / Deployment: Azure Developer CLI (`azd`), Bicep, Azure Container Apps, Azure Static Web Apps, Managed Identities, Application Insights, Log Analytics.\n- Tooling: ESLint (plugins: import, n, unicorn, @typescript-eslint), Prettier, concurrently, rimraf, TypeScript compiler.\n- Containerization: Dockerfiles per service (backend, ingestion, trainer), multi-stage builds.\n\n## Constraints and Requirements\n- Node.js >= 20, npm >= 10 (enforced via `engines`).\n- Monorepo with npm workspaces: `src/ingestion`, `src/backend`, `src/frontend`.\n- Azure subscription with Azure OpenAI access (or external OpenAI endpoint via `openAiUrl`).\n- Environment provisioning and deployment handled by `azd up` referencing `azure.yaml` + Bicep templates.\n- Vector DB choice controlled by parameter `useQdrant` (Bicep). If false => Azure AI Search; if true => Qdrant Container App + identity.\n- Model + deployment parameters externalized in `main.parameters.json` (e.g., `chatModelName`, `embeddingsModelName`, versions, capacities, free tier flags).\n- Managed Identity required (free search SKU unsupported) — roles assigned in Bicep (`role.bicep` modules) for OpenAI and Search.\n- Local dev uses environment variables loaded via `azd env get-values` (scripts reference). In docker-compose local mode, Qdrant may run at `http://qdrant:6333`.\n\n## Challenges and Mitigation Strategies\n- Multi-service coordination: Use npm workspaces and root scripts invoking scoped scripts via `concurrently`.\n- Environment variable drift: Regenerate `.env` after `azd provision` via postprovision hook (`azd env get-values > .env`).\n- Vector store abstraction: Both Azure AI Search and Qdrant dependencies included — ensure conditional logic in code respects `useQdrant` flag (code agents should not assume only one path).\n- Limited quotas (trainer scenario): Trainer proxy in `trainer/` allows shared OpenAI usage; capacity parameters can be tuned (`chatDeploymentCapacity`, `embeddingsDeploymentCapacity`).\n\n## Development Workflow\nRoot scripts (`package.json`):\n- Start backend + frontend concurrently:\n  - `npm start` (invokes `concurrently \"npm:start:*\" --kill-others`).\n  - `start:frontend` => `npm run dev --workspace=frontend` (Vite dev server, default port 8000).\n  - `start:backend` => `npm run dev --workspace=backend` (Fastify dev, port 3000).\n- Ingestion service (not auto-started by root): `npm run dev --workspace=ingestion` (Fastify dev, port 3001).\n- Build all workspaces: `npm run build`.\n- Clean all: `npm run clean`.\n- Lint: `npm run lint`; Fix: `npm run lint:fix`.\n- Format: `npm run format`.\n- Docker build (all that implement `docker:build`): `npm run docker:build`.\n\nPer service notable scripts:\n- Backend (`src/backend/package.json`): `dev`, `build`, `start`, `docker:build`, `docker:run`, `clean`.\n- Ingestion (`src/ingestion/package.json`): same pattern (port 3001), plus multipart upload handling.\n- Frontend (`src/frontend/package.json`): `dev`, `build`, `watch`, `lint`, `clean`.\n- Trainer proxy (`trainer/package.json`): similar Fastify script set.\n\nLocal ingestion helper script (after services running):\n```\n./scripts/ingest-data.sh\n```\nUploads PDFs (`data/*.pdf`) to ingestion API (defaults to `http://localhost:3001`).\n\nDeployment (Azure):\n```\nazd auth login\nazd up\n```\nOutputs URIs and environment variables (captured into `.env` via postprovision hook). Clean up with:\n```\nazd down --purge\n```\n\n## Infrastructure Notes\n- Defined in `infra/main.bicep` + supporting modules under `infra/core/**`.\n- Subscription-scope deployment creates resource group, container apps env, registry, static web app, optional search service, optional Qdrant, OpenAI resource (unless `openAiUrl` provided), identities, role assignments, and monitoring stack.\n- Key outputs surfaced (e.g., `BACKEND_API_URI`, `INGESTION_API_URI`, `FRONTEND_URI`, `QDRANT_URL`, `AZURE_OPENAI_API_ENDPOINT`).\n- Parameterization via `main.parameters.json` referencing AZD environment variables.\n- `azure.yaml` ties logical services (frontend static web app build hook sets `BACKEND_API_URI`).\n- Post-up hook auto-runs ingestion script (PowerShell or Bash variant).\n\n## Coding Guidelines\n- TypeScript strictness implied (check `tsconfig` in each service; agents should preserve module resolution and ES module usage).\n- Use ES modules (`\"type\": \"module\"`).\n- Maintain Prettier formatting (config embedded in root `package.json`).\n- Lint with existing ESLint plugins; do not introduce new global dependencies without necessity.\n- Keep service Dockerfiles multi-stage minimal and aligned with Node 20 Alpine base.\n- Avoid duplicating logic between backend and ingestion — factor shared utilities if patterns recur (currently none specified; create new shared workspace only if needed).\n\n## Security Considerations\n- Managed Identities used for Azure resources; local auth disabled for certain services (`disableLocalAuth: true` in Bicep for OpenAI/Search when created).\n- Environment variables contain service endpoints and model names — do not commit secrets (no API keys are stored when using managed identity).\n- PDF upload endpoint (`/documents`) handles multipart; enforce size/content checks if extending (currently not detailed here, so preserve existing behavior).\n- CORS: Backend/ingestion use `@fastify/cors`; ensure allowed origins include deployed frontend (Bicep sets `allowedOrigins`).\n- Trainer proxy: Shares OpenAI capacity; treat as controlled-access (future task in TODO mentions adding event key restriction).\n\n## Debugging and Troubleshooting\n- If local services fail to start concurrently, run each individually to isolate (`npm run dev --workspace=backend`).\n- Vector backend selection issues: Verify `useQdrant` parameter in azd environment and ensure Qdrant Container App deployed (or Azure AI Search endpoint present in outputs).\n- Ingestion not populating data: Confirm `INGESTION_API_URI` and that PDF curl uploads return 2xx. Re-run ingestion script after redeploy.\n- Frontend API base: Logged at Vite startup (`Using chat API base URL:`) sourced from `BACKEND_API_URI` passed via build hook.\n\n---\nClosest project‑root `AGENTS.md` governs unless a subdirectory defines its own. See per‑service agent guides:\n- `src/backend/AGENTS.md`\n- `src/ingestion/AGENTS.md`\n- `src/frontend/AGENTS.md`\n- `trainer/AGENTS.md`"
+    gold_removed: ''
+  - path: src/backend/AGENTS.md
+    tier: 1
+    gold_added: '# Backend Service (Chat RAG API)
+
+      Fastify + LangChain service providing chat responses augmented with document retrieval via Azure AI Search or Qdrant.
+
+
+      ## Overview
+
+      - Entry: `src/app.ts` (exported via `package.json` exports).
+
+      - Port: 3000 (Docker & dev).
+
+      - Responsibilities: Accept chat requests, perform embedding + vector similarity, construct prompts with retrieved context, call Azure OpenAI (or provided OpenAI endpoint).
+
+      - Vector Source: Conditional (Azure AI Search or Qdrant) depending on deployment parameters (`useQdrant`).
+
+
+      ## Key Dependencies
+
+      - Fastify ecosystem (`fastify`, `@fastify/*`).
+
+      - LangChain: `langchain`, `@langchain/core`, `@langchain/openai`, `@langchain/community`, `@langchain/qdrant`.
+
+      - Azure SDK: `@azure/search-documents`, `@azure/identity`.
+
+      - Token utilities: `@dqbd/tiktoken`.
+
+      - Env mgmt: `dotenv` (ensure it loads early if used in code extensions).
+
+
+      ## Scripts
+
+      ```
+
+      npm run dev        # Build + watch + start with pretty logs (debug level)
+
+      npm run build      # tsc -> dist
+
+      npm start          # Production (fastify start -l info dist/app.js)
+
+      npm run docker:build  # docker build --tag backend --file ./Dockerfile ../..
+
+      npm run docker:run    # Runs container exposing 3000
+
+      npm run clean      # Remove dist
+
+      ```
+
+
+      ## Environment Variables (Injected via Bicep/azd)
+
+      Expect (subset):
+
+      - AZURE_OPENAI_API_ENDPOINT / *_MODEL / *_DEPLOYMENT_NAME / *_VERSION
+
+      - AZURE_AISEARCH_ENDPOINT (empty when using Qdrant)
+
+      - QDRANT_URL (empty when using Azure AI Search)
+
+      - AZURE_CLIENT_ID (managed identity)
+
+
+      Code should:
+
+      - Branch feature logic based on presence/absence of `QDRANT_URL`.
+
+      - Avoid hardcoding model names; use env.
+
+
+      ## Coding Guidelines
+
+      - Use existing TypeScript config & ES modules.
+
+      - Keep Fastify plugins modular (autoload pattern is present). Add new routes/plugins under standard directories (match existing layout when extending).
+
+      - Prefer async/await, minimal side effects in global scope.
+
+
+      ## Testing / Verification (Manual)
+
+      1. Start dependency (ingestion) and ensure documents ingested.
+
+      2. `curl http://localhost:3000/chat` (exact routes depend on existing implementation—inspect routes before extending).
+
+
+      ## Performance Considerations
+
+      - Minimize unnecessary embedding calls (reuse embeddings where possible if caching layer is introduced—none exists yet; do not add without request).
+
+      - Token counting helps with prompt size control.
+
+
+      ## Security
+
+      - CORS restricted to frontend origin (set at deploy). Preserve origin checks when modifying.
+
+      - Managed identity for Azure OpenAI / Search; do not introduce API key storage unless explicitly required.
+
+
+      ## Extension Points
+
+      - Middleware: Add via Fastify plugin under plugins folder.
+
+      - Retrieval strategies: Introduce new retriever module wrapping Azure AI Search or Qdrant queries; select via env gating.
+
+
+      ## Troubleshooting
+
+      - Missing search results: Confirm `AZURE_AISEARCH_ENDPOINT` or `QDRANT_URL` not both empty.
+
+      - Auth errors: Validate managed identity role assignments completed (Bicep handles; during early provisioning there may be propagation delay).
+
+
+      This file overrides root `AGENTS.md` for context within `src/backend`.'
+    gold_removed: ''
+  - path: src/frontend/AGENTS.md
+    tier: 1
+    gold_added: '# Frontend (Chat UI)
+
+      Lit + Vite web client providing the chat interface to the backend RAG API.
+
+
+      ## Overview
+
+      - Dev server: Vite (port 8000).
+
+      - Build: Outputs to `dist` (consumed by Azure Static Web Apps on deploy).
+
+      - API Proxy (dev): `/chat` proxied to `http://127.0.0.1:3000` via `vite.config.ts`.
+
+      - Runtime backend base URL injected at build through env var `BACKEND_API_URI` -> `VITE_BACKEND_API_URI`.
+
+
+      ## Key Dependencies
+
+      - `lit` (web components).
+
+      - `@microsoft/ai-chat-protocol` for standardized chat payloads.
+
+
+      ## Scripts
+
+      ```
+
+      npm run dev     # Start Vite dev server on :8000
+
+      npm run build   # Production build (with code splitting and vendor chunk)
+
+      npm run watch   # Rebuild on changes (non-minified)
+
+      npm run lint    # lit-analyzer
+
+      npm run clean   # Remove dist
+
+      ```
+
+
+      ## Coding Guidelines
+
+      - Use Lit reactive properties & templates; keep components small and cohesive.
+
+      - Avoid introducing global state libraries unless necessary; prefer context via custom elements.
+
+      - Keep environment-specific values behind `import.meta.env` (already handled for backend URL).
+
+
+      ## Performance
+
+      - Vite config manually chunks vendor modules. When adding new large deps, confirm chunking still optimal.
+
+      - Source maps enabled; remove only if size constraints arise.
+
+
+      ## Security
+
+      - Do not expose secrets; only pass public endpoints through `VITE_*` env variables.
+
+      - Sanitize any dynamic content rendered from AI responses if adding rich rendering beyond plain text.
+
+
+      ## Troubleshooting
+
+      - Wrong API URL: Confirm build hook in root `azure.yaml` sets `BACKEND_API_URI` before `npm run build` for deployment.
+
+      - CORS errors: Ensure backend allowed origins include deployed Static Web App URI.
+
+
+      This file overrides root `AGENTS.md` for context within `src/frontend`.'
+    gold_removed: ''
+  - path: src/ingestion/AGENTS.md
+    tier: 1
+    gold_added: '# Ingestion Service
+
+      Fastify service for document ingestion (PDF upload) and embedding generation into Azure AI Search or Qdrant.
+
+
+      ## Overview
+
+      - Port: 3001.
+
+      - Upload Endpoint: `/documents` (multipart form field `file`).
+
+      - Responsibilities: Accept PDF files, parse (pdf-parse), produce embeddings via Azure OpenAI, upsert vectors into selected store.
+
+
+      ## Key Dependencies
+
+      - Fastify + plugins (`@fastify/multipart`, `@fastify/cors`, `@fastify/autoload`, `@fastify/sensible`).
+
+      - PDF parsing: `pdf-parse`.
+
+      - LangChain / Vector: `@langchain/community`, `@langchain/qdrant`, `@azure/search-documents`, `@azure/identity`.
+
+      - Env mgmt: `dotenv`.
+
+
+      ## Scripts
+
+      ```
+
+      npm run dev         # Build + watch + start (debug)
+
+      npm run build       # Compile TypeScript
+
+      npm start           # Production start
+
+      npm run docker:build  # docker build --tag ingestion --file ./Dockerfile ../..
+
+      npm run docker:run    # Run container exposing 3001
+
+      npm run clean       # Remove dist
+
+      ```
+
+
+      ## Environment Variables
+
+      - AZURE_OPENAI_API_* (endpoint, version, deployment names, model names)
+
+      - AZURE_AISEARCH_ENDPOINT or QDRANT_URL (mutually exclusive usage)
+
+      - AZURE_CLIENT_ID (managed identity for auth)
+
+
+      ## Data Flow
+
+      1. Receive PDF via multipart.
+
+      2. Extract text (pdf-parse).
+
+      3. Chunk + embed (LangChain embeddings with specified model).
+
+      4. Upsert to chosen vector DB.
+
+
+      ## Coding Guidelines
+
+      - Keep parsing & chunking modular (add new file format handlers as separate utilities rather than modifying core handler heavily).
+
+      - Validate file type (if adding more formats) before processing.
+
+
+      ## Security
+
+      - Limit accepted content types to PDFs (enforce if extending) to reduce attack surface.
+
+      - Managed identity for Azure resources.
+
+
+      ## Troubleshooting
+
+      - 415 / parsing errors: Ensure uploaded file is a valid PDF.
+
+      - Empty vector store: Check logs for embedding errors (model deployment names env mismatch).
+
+
+      This file overrides root `AGENTS.md` for context within `src/ingestion`.'
+    gold_removed: ''
+  - path: trainer/AGENTS.md
+    tier: 1
+    gold_added: '# Trainer Proxy & Materials
+
+      Support assets and proxy service enabling workshop trainers to share a single Azure OpenAI instance with attendees.
+
+
+      ## Overview
+
+      - Proxy service exposes Azure OpenAI-compatible endpoints; attendees point their environment to proxy URL before provisioning (`AZURE_OPENAI_URL`).
+
+      - Slides + workshop content referenced (hosted externally) but source for slides/workshop lives under `docs/` at repo root.
+
+
+      ## Key Files
+
+      - `azure.yaml`: Defines single `openai-proxy` Container App service.
+
+      - `Dockerfile`: Multi-stage build for Fastify proxy.
+
+      - `package.json`: Fastify + http proxy dependencies.
+
+      - `README.md`: Deployment & usage instructions for proxy and capacity guidance.
+
+
+      ## Scripts
+
+      ```
+
+      npm run dev     # Build + watch + start (debug)
+
+      npm run build   # Compile TypeScript
+
+      npm start       # Production fastify start
+
+      npm run docker:build  # docker build --tag proxy .
+
+      npm run docker:run    # Run on :3000
+
+      ```
+
+
+      ## Deployment (Proxy)
+
+      ```
+
+      azd auth login
+
+      azd env new openai-trainer
+
+      azd env set AZURE_OPENAI_LOCATION <location?>   # default swedencentral
+
+      azd env set AZURE_OPENAI_CAPACITY <tokens_per_minutes?>  # default 5 (increase for class size)
+
+      azd up
+
+      ```
+
+      Share resulting Container App URL; attendees set:
+
+      ```
+
+      azd env set AZURE_OPENAI_URL <proxy_url>
+
+      ```
+
+
+      ## Constraints / Considerations
+
+      - Low default capacity to avoid quota deployment failures; adjust after deployment for > minimal class sizes (e.g., 200 TPM for ~50 attendees suggested in README).
+
+      - Future TODO (root `TODO`): event key restriction — do not implement unless requested.
+
+
+      ## Security
+
+      - Treat proxy endpoint as semi-public once shared; consider adding auth or key gating if extending.
+
+
+      ## Troubleshooting
+
+      - Throughput errors: Increase model capacity in Azure OpenAI portal and redeploy or update deployment.
+
+      - Attendee failures: Verify they set `AZURE_OPENAI_URL` before `azd up`.
+
+
+      This file overrides root `AGENTS.md` within `trainer/`.'
+    gold_removed: ''

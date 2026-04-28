@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: azerothcore-wotlk-docs-init-claudemd
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: azerothcore/azerothcore-wotlk
+  pr: 24630
+  base_commit: "4f5a63f1d174fd868eacbe558f8d71cd440a5c3d"
+  merge_commit: "d4124b1470bdb1a3c58942aab6e5be9a659df898"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+
+config_edits:
+  - path: CLAUDE.md
+    tier: 1
+    gold_added: "# CLAUDE.md\n\nThis file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.\n\n## Project Overview\n\nAzerothCore is an open-source MMORPG server emulator for World of Warcraft patch 3.3.5a (Wrath of the Lich King). It's a C++ project built with CMake, using MySQL for data storage. Licensed under GNU GPL v2.\n\n## Build Commands\n\n### Configure and build (out-of-source build required)\n\n```bash\n# Create build directory and configure\nmkdir -p build && cd build\ncmake .. -DCMAKE_INSTALL_PREFIX=$HOME/azeroth-server -DCMAKE_BUILD_TYPE=RelWithDebInfo \\\n  -DSCRIPTS=static -DMODULES=static\n\n# Build (use appropriate core count)\nmake -j$(nproc)\nmake install\n```\n\n### Key CMake options\n\n- `SCRIPTS`: none, static, dynamic, minimal-static, minimal-dynamic (default: static)\n- `MODULES`: none, static, dynamic (default: static)\n- `APPS_BUILD`: none, all, auth-only, world-only (default: all)\n- `TOOLS_BUILD`: none, all, db-only, maps-only (default: none)\n- `BUILD_TESTING`: Enable unit tests (default: OFF)\n- `USE_COREPCH` / `USE_SCRIPTPCH`: Precompiled headers (default: ON)\n\n### Unit tests\n\n```bash\n# Configure with testing enabled\ncmake .. -DBUILD_TESTING=ON\nmake -j$(nproc)\n\n# Run tests\n./src/test/unit_tests\n# or\nctest\n```\n\nTests use Google Test and live in `src/test/`. The test binary links against the `game` library.\n\n## Architecture\n\n### Two server executables\n- **authserver** (`src/server/apps/authserver/`): Handles authentication and realm selection (port 3724)\n- **worldserver** (`src/server/apps/worldserver/`): Main game server handling all gameplay (port 8085)\n\n### Source layout (`src/`)\n\n- **`src/common/`** - Shared libraries: networking (Asio), cryptography, configuration, logging, threading, collision detection, utilities\n- **`src/server/game/`** - Core game logic (~52 subsystems), the heart of the worldserver\n- **`src/server/scripts/`** - Content scripts (bosses, spells, commands, instances)\n- **`src/server/database/`** - Database abstraction layer and schema updater\n- **`src/server/shared/`** - Code shared between auth and world servers (packets, network, realm definitions)\n- **`src/test/`** - Unit tests (Google Test)\n\n### Key game subsystems (`src/server/game/`)\n\n- **Entities/** - Core game objects: `Player`, `Creature`, `Unit`, `Item`, `GameObject`\n- **Spells/** - Spell mechanics, aura system, spell effects\n- **Maps/** - Map management, grid system, instancing\n- **Handlers/** - Client packet handlers (one file per system: `MovementHandler.cpp`, `SpellHandler.cpp`, etc.). These are methods on `WorldSession`\n- **AI/** - Creature AI framework\n- **Scripting/** - Script system with typed base classes (`ScriptObject` subclasses: `CreatureScript`, `SpellScript`, `InstanceMapScript`, `GameObjectScript`, `CommandScript`, etc.)\n- **Server/** - `WorldSession` (per-player connection), `World` (global state), opcode definitions\n\n### Scripting system\n\nScripts follow a registration pattern:\n1. Define a class inheriting from `SpellScript`, `CreatureScript`, etc.\n2. Implement an `AddSC_*()` function that calls `RegisterSpellScript(ClassName)` (or similar)\n3. The `AddSC_*()` is declared and called from the regional `*_script_loader.cpp`\n4. Script loaders per region: `spells_script_loader.cpp`, `eastern_kingdoms_script_loader.cpp`, `northrend_script_loader.cpp`, etc.\n5. Spell script files are organized by class: `spell_dk.cpp`, `spell_mage.cpp`, `spell_generic.cpp`, etc.\n\n### Three databases\n- **acore_auth** - Accounts, realm list, bans (`data/sql/base/db_auth/`)\n- **acore_characters** - Character data, inventories, progress (`data/sql/base/db_characters/`)\n- **acore_world** - Game content: creatures, items, quests, spells, loot (`data/sql/base/db_world/`)\n\nSQL updates go in `data/sql/updates/` with separate subdirectories per database.\n\n### Module system\n\nExternal modules are loaded from the `modules/` directory. Each module is a subdirectory with its own `CMakeLists.txt`. Disable specific modules with `-DDISABLED_AC_MODULES=\"mod1;mod2\"`. Module skeleton: https://github.com/azerothcore/skeleton-module/\n\n### Dependencies\n\nBundled in `deps/`: boost, MySQL client, OpenSSL, zlib, recastnavigation (pathfinding), g3dlite (geometry), fmt, argon2, jemalloc, and others.\n\n## Commit Message Format\n\nUses Conventional Commits:\n```\nType(Scope/Subscope): Short description (max 50 chars)\n```\n\n- **Types**: feat, fix, refactor, style, docs, test, chore\n- **Scopes**: Core (C++ changes), DB (SQL changes)\n- **Examples**: `fix(Core/Spells): Fix damage calculation for Fireball`, `fix(DB/SAI): Missing spell to NPC Hogger`\n\n## Code Style\n\n- 4-space indentation for C++ (no tabs)\n- 2-space indentation for JSON, YAML, shell scripts\n- UTF-8 encoding, LF line endings\n- Max 80 character line length\n- CI enforces code style checks and compiles with `-Werror`\n\n## PR Requirements\n\n- AI tool usage must be disclosed in PRs\n- In-game testing expected\n- Changes to generic code require regression testing of related systems"
+    gold_removed: ''

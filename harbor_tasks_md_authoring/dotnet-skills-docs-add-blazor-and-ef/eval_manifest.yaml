@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: dotnet-skills-docs-add-blazor-and-ef
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: Aaronontheweb/dotnet-skills
+  pr: 38
+  base_commit: "843855a82123cdc89b14c81e6b384d0392e184f6"
+  merge_commit: "7246c5c3b424a967393f7ca34d1d3f739dfbae0a"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/crap-analysis/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/crap-analysis/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/crap-analysis/SKILL.md."
+
+config_edits:
+  - path: skills/crap-analysis/SKILL.md
+    tier: 1
+    gold_added: "          <!-- Exclude generated code, obsolete members, and explicit exclusions -->\n          <ExcludeByAttribute>Obsolete,GeneratedCodeAttribute,CompilerGeneratedAttribute,ExcludeFromCodeCoverageAttribute</ExcludeByAttribute>\n          <!-- Exclude source-generated files, Blazor generated code, and migrations -->\n          <ExcludeByFile>**/obj/**/*,**/*.g.cs,**/*.designer.cs,**/*.razor.g.cs,**/*.razor.css.g.cs,**/Migrations/**/*</ExcludeByFile>\n| `ExcludeByAttribute` | Skip generated, obsolete, and explicitly excluded code (includes `ExcludeFromCodeCoverageAttribute`) |\n| `ExcludeByFile` | Skip source-generated files, Blazor components, and migrations |\n| `ExcludeFromCodeCoverageAttribute` | Explicit developer opt-out |\n| `*.razor.g.cs` | Blazor component generated code |\n| `*.razor.css.g.cs` | Blazor CSS isolation generated code |\n| `**/Migrations/**/*` | EF Core migrations (auto-generated) |"
+    gold_removed: ''

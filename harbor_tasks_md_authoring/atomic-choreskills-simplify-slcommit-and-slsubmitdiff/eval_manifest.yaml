@@ -1,0 +1,112 @@
+version: "2.0"
+
+task:
+  name: atomic-choreskills-simplify-slcommit-and-slsubmitdiff
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: flora131/atomic
+  pr: 264
+  base_commit: "5644cd90e498b38fc4937633e84ff10f36d8716c"
+  merge_commit: "0f75e234c858ef7ca72a78d2d641798a39c9a795"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/sl-commit/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/sl-submit-diff/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/sl-submit-diff/SKILL.md."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/sl-submit-diff/SKILL.md."
+  - id: signal_04
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/skills/sl-commit/SKILL.md."
+  - id: signal_05
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/skills/sl-submit-diff/SKILL.md."
+  - id: signal_06
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/skills/sl-submit-diff/SKILL.md."
+  - id: signal_07
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/skills/sl-submit-diff/SKILL.md."
+  - id: signal_08
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .opencode/skills/sl-commit/SKILL.md."
+  - id: signal_09
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .opencode/skills/sl-submit-diff/SKILL.md."
+  - id: signal_10
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .opencode/skills/sl-submit-diff/SKILL.md."
+  - id: signal_11
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .opencode/skills/sl-submit-diff/SKILL.md."
+
+config_edits:
+  - path: .claude/skills/sl-commit/SKILL.md
+    tier: 1
+    gold_added: '- `sl diff` - View pending changes'
+    gold_removed: ''
+  - path: .claude/skills/sl-submit-diff/SKILL.md
+    tier: 1
+    gold_added: 'Submit commits to Phabricator for code review using `jf submit` (Meta).
+
+      2. Submit commits to Phabricator using `jf submit --draft`. Submit for review using DRAFT mode
+
+      - `jf submit --draft` - Submit commits to Phabricator in DRAFT mode
+
+      | Submit current commit   | `jf submit --draft`               |
+
+      | Update diff after amend | `sl amend && jf submit --draft`   |'
+    gold_removed: ''
+  - path: .github/skills/sl-commit/SKILL.md
+    tier: 1
+    gold_added: '- `sl diff` - View pending changes'
+    gold_removed: ''
+  - path: .github/skills/sl-submit-diff/SKILL.md
+    tier: 1
+    gold_added: 'Submit commits to Phabricator for code review using `jf submit` (Meta).
+
+      2. Submit commits to Phabricator using `jf submit --draft`. Submit for review using DRAFT mode
+
+      - `jf submit --draft` - Submit commits to Phabricator in DRAFT mode
+
+      | Submit current commit   | `jf submit --draft`               |
+
+      | Update diff after amend | `sl amend && jf submit --draft`   |'
+    gold_removed: ''
+  - path: .opencode/skills/sl-commit/SKILL.md
+    tier: 1
+    gold_added: '- `sl diff` - View pending changes'
+    gold_removed: ''
+  - path: .opencode/skills/sl-submit-diff/SKILL.md
+    tier: 1
+    gold_added: 'Submit commits to Phabricator for code review using `jf submit` (Meta).
+
+      2. Submit commits to Phabricator using `jf submit --draft`. Submit for review using DRAFT mode
+
+      - `jf submit --draft` - Submit commits to Phabricator in DRAFT mode
+
+      | Submit current commit   | `jf submit --draft`               |
+
+      | Update diff after amend | `sl amend && jf submit --draft`   |'
+    gold_removed: ''

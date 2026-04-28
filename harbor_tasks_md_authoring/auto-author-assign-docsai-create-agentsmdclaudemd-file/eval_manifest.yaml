@@ -1,0 +1,36 @@
+version: "2.0"
+
+task:
+  name: auto-author-assign-docsai-create-agentsmdclaudemd-file
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: toshimaru/auto-author-assign
+  pr: 125
+  base_commit: "5cd66f093de6691e0812ef186b7492589b0b7866"
+  merge_commit: "e1f5499be4c5328a8ccbd4cad73be7680a0de892"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+
+config_edits:
+  - path: AGENTS.md
+    tier: 1
+    gold_added: "# AI Agent Guide\n\nGuidance for any AI assistant working with this repository.\n\n## Project Overview\n\n**auto-author-assign** is a GitHub Action that automatically assigns pull request (and optionally issue) authors as assignees. When a PR or issue is opened/reopened, this action assigns the author to it.\n\n## Tech Stack\n\n- **Runtime**: Node.js 20+\n- **Build Tool**: @vercel/ncc (bundles source into single dist/index.js)\n- **Dependencies**: @actions/core, @actions/github\n- **Release**: standard-version for versioning\n\n## Common Commands\n\n```bash\n# Install dependencies\nnpm ci\n\n# Build the action (bundles src/index.js → dist/index.js)\nnpm run build\n\n# Create a new release version\nnpm run release\n```\n\n## Project Structure\n\n```\n├── src/index.js      # Main action source code\n├── dist/index.js     # Bundled output (committed, auto-generated)\n├── action.yml        # GitHub Action metadata and inputs\n└── .github/\n    └── workflows/\n        ├── build.yml # CI: builds and checks dist is up-to-date\n        └── ci.yml    # Tests the action on PRs\n```\n\n## Key Development Notes\n\n- **Always rebuild before committing**: After modifying `src/index.js`, run `npm run build` and commit the updated `dist/index.js`. The CI will fail if dist is out of sync.\n- **Single source file**: All action logic is in `src/index.js` (~40 lines)\n- **No tests**: This project currently has no automated tests (`npm test` exits with error)\n- **GitHub access**: Use the `gh` CLI for any required GitHub interactions.\n\n## Action Behavior\n\nThe action skips assignment when:\n1. Someone is already assigned as an assignee\n2. The author is a bot (type === \"Bot\")\n\n## Input Configuration\n\n| Input | Description | Default |\n|-------|-------------|---------|\n| `repo-token` | GitHub token for API calls | `${{ github.token }}` |"
+    gold_removed: ''
+  - path: CLAUDE.md
+    tier: 1
+    gold_added: AGENTS.md
+    gold_removed: ''

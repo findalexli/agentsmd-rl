@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: agent-skills-fix-optimistic-value-assignment-in
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: remix-run/agent-skills
+  pr: 2
+  base_commit: "007b88dc5c4308d06c2c24001c84c1401863822b"
+  merge_commit: "1015eb4a27d92d3eb06181e4d37e3881e08a77b2"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/react-router-data-mode/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/react-router-data-mode/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/react-router-data-mode/SKILL.md."
+
+config_edits:
+  - path: skills/react-router-data-mode/SKILL.md
+    tier: 1
+    gold_added: "const optimistic = fetcher.formData\n  ? fetcher.formData.get(\"favorite\") === \"true\"\n  : isFavorite;"
+    gold_removed: ''

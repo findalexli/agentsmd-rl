@@ -1,0 +1,24 @@
+version: "2.0"
+
+task:
+  name: backstage-add-claudemd-configuration
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: backstage/backstage
+  pr: 32853
+  base_commit: "08b0dc995ae020746c2e2acd33b80d621b76ad4a"
+  merge_commit: "76142c9cb0089733343f2e4540457c8f6bb2f2e8"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/CLAUDE.md."
+
+config_edits:
+  - path: .claude/CLAUDE.md
+    tier: 1
+    gold_added: Follow the instructions at /.github/copilot-instructions.md
+    gold_removed: ''

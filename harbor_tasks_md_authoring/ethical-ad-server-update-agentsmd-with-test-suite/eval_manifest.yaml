@@ -1,0 +1,24 @@
+version: "2.0"
+
+task:
+  name: ethical-ad-server-update-agentsmd-with-test-suite
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: readthedocs/ethical-ad-server
+  pr: 1146
+  base_commit: "bc43ee7a426cd777166d4700035a5b0c57cb0856"
+  merge_commit: "a817667f551be250e2df07743c419f80e510f56d"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+
+config_edits:
+  - path: AGENTS.md
+    tier: 1
+    gold_added: The full test suite takes a couple of minutes to run.
+    gold_removed: ''

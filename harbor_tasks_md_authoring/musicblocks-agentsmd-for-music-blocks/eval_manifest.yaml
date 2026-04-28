@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: musicblocks-agentsmd-for-music-blocks
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: sugarlabs/musicblocks
+  pr: 6575
+  base_commit: "1faff2f1fc1404678cbec20670a2ade870e12afb"
+  merge_commit: "6c860f1f6545c89860634015175ab10b8f6b733b"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+
+config_edits:
+  - path: AGENTS.md
+    tier: 1
+    gold_added: "# AGENTS.md\n\nUse this when working on a bug fix, addition/improving a feature.\n\n## 1. Understand Before Editing\n\n**Do not guess. Read the code path that actually owns the problem.**\n\nBefore changing code:\n- Check whether the reported bug is already fixed on the current branch.\n- Read the exact files involved before proposing or writing a fix.\n- Inspect 2-3 nearby examples in the same subsystem and copy existing patterns.\n- If the issue is unclear, say what is unclear instead of making up behavior.\n\nQuick repo map:\n- `js/activity.js` - app entry point, load order, runtime wiring\n- `js/block.js` - behavior of a single block in the UI\n- `js/blocks.js` - workspace block management, connections, drag/drop, stack behavior\n- `js/basicblocks.js` - registration of the main block sets\n- `js/blocks/*.js` - block definitions by palette\n- `js/turtleactions/*.js` - runtime behavior triggered by blocks\n- `js/logo.js` - project execution engine\n- `js/artwork.js` - block artwork and palette visuals\n- `js/widgets/*.js` - larger UI widgets\n- `js/utils/*.js` - shared helpers, often high impact\n\nUse the smallest path that matches the issue. Example:\n- wrong block UI or menu -> `js/block.js`, `js/artwork.js`, relevant file in `js/blocks/`\n- wrong block behavior -> relevant file in `js/blocks/` and matching file in `js/turtleactions/`\n- execution bug -> `js/logo.js`\n- drag/drop or stack behavior -> `js/blocks.js`\n- startup or load-order bug -> `js/activity.js`\n\n## 2. Fix The Real Problem\n\n**Do not be a lazy AI. Do not hide the symptom and call it fixed.**\n\n- Trace the issue through the real execution path.\n- Identify the source of truth and fix the bug there.\n- Do not stop at the first patch that makes the current reproduction steps disappear.\n- Avoid one-off guards, scattered conditionals, duplicated special cases, and UI-only masking.\n- If a temporary workaround is the only safe option, say so explicitly.\n- If the bug is not fixed after 2-3 iterations write console logs to see what going wrong.\n\nIf the issue is already fixed or cannot be reproduced from the current code, tell the user that\nclearly instead of forcing a hypothetical patch.\n\n## 3. Keep Changes Surgical\n\n**Minimum code that solves the requested problem. Nothing speculative.**\n\n- Do not add features that were not requested.\n- Do not refactor unrelated code.\n- Do not \"clean up\" nearby files just because you are already there.\n- Match the existing style and structure of the file you are editing.\n- Every changed line should trace back to the issue being solved.\n\n## 4. Follow Music Blocks Patterns\n\n**This repo has sharp edges. Respect them.**\n\n- Main browser code in `js/` uses `sourceType: \"script\"`, RequireJS, and globals.\n- Do not use ES `import` or `export` in main browser source files.\n- Keep accurate `/* global */` and `/* exported */` headers in browser scripts.\n- If a file already uses guarded `module.exports` for Jest, preserve that pattern.\n- New files need the AGPL license header.\n- Never modify `lib/`.\n- Do not casually reorder load-sensitive code in `js/activity.js`.\n- Do not rename internal block names. Saved projects depend on them.\n\nBlock/runtime rules:\n- `ValueBlock` implementations must return a value from `arg()`.\n- `FlowBlock` implementations must return the expected flow result, not implicit `undefined`.\n- `Singer.XxxActions` behavior belongs in static action methods.\n- New block work may require coordinated updates across definitions, registration, artwork, help\n  text, macros, and related mappings.\n\nStyle:\n- 4 spaces\n- double quotes\n- semicolons\n- no trailing commas\n- LF line endings\n- comments only when they add real value\n\n## 5. Verify Intelligently\n\n**Prove the fix. Do not just hope.**\n\n- For logic bugs, add or update focused Jest coverage when possible.\n- Verify the intended fix and the nearest related behavior so the change is not correct only for one narrow case.\n- Start with the smallest relevant checks, then broaden if the change is risky.\n\nStandard validation:\n- `npm run lint`\n- `npx prettier --check .`\n- `npm test`\n\nAsk the user for a browser check when the change affects UI, widgets, drag/drop, rendering, audio, persistence, startup behavior, or another interaction that tests do not fully cover.\n\nWhen asking for browser testing, give exact steps:\n1. Run `npm run dev` or `npm run serve:dev`\n2. Open `http://127.0.0.1:3000`\n3. Reproduce the issue with the smallest possible project\n4. State the expected result\n5. Report any browser console errors if they appear\n\nFor pure logic bugs with strong focused tests, do not block on manual browser testing.\n\n## 6. Report Clearly\n\n**Leave the contributor and reviewer with a clear picture.**\n\n- Say what changed.\n- Say how it was verified.\n- Say what remains unverified.\n- If the current branch already contains the fix, say that plainly.\n"
+    gold_removed: ''

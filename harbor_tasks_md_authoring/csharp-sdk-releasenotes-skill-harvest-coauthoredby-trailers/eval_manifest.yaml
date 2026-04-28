@@ -1,0 +1,64 @@
+version: "2.0"
+
+task:
+  name: csharp-sdk-releasenotes-skill-harvest-coauthoredby-trailers
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: modelcontextprotocol/csharp-sdk
+  pr: 1429
+  base_commit: "aae77b1f50a142c2d752a87c228b9c869c2231fc"
+  merge_commit: "8970b0a9e5306dca6f71710f366fc3f1e5031b5f"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/skills/prepare-release/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/skills/prepare-release/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/skills/prepare-release/SKILL.md."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/skills/prepare-release/references/categorization.md."
+  - id: signal_04
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/skills/prepare-release/references/categorization.md."
+  - id: signal_05
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/skills/publish-release/SKILL.md."
+  - id: signal_06
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/skills/publish-release/SKILL.md."
+
+config_edits:
+  - path: .github/skills/prepare-release/SKILL.md
+    tier: 1
+    gold_added: '- Harvest `Co-authored-by` trailers from **all commits** in each PR (not just the merge commit) to identify co-authors. Do this for every PR regardless of primary author.
+
+      - For Copilot-authored PRs, additionally check the `copilot_work_started` timeline event to identify the triggering user. That person becomes the primary author; `@Copilot` becomes a co-author.
+
+      - **Copilot timeline missing**: fall back to `Co-authored-by` trailers to determine whether `@Copilot` should be a co-author; if still unclear, use `@Copilot` as primary author'
+    gold_removed: ''
+  - path: .github/skills/prepare-release/references/categorization.md
+    tier: 1
+    gold_added: 'For PRs with co-authors (harvested from `Co-authored-by` trailers across **all commits** in the PR, not just the merge commit):
+
+      For Copilot-authored PRs, additionally identify who triggered Copilot using the `copilot_work_started` timeline event on the PR. That person becomes the primary author, and @Copilot becomes a co-author:'
+    gold_removed: ''
+  - path: .github/skills/publish-release/SKILL.md
+    tier: 1
+    gold_added: '3. **Re-attribute** co-authors for any new PRs by harvesting `Co-authored-by` trailers from all commits in each PR.
+
+      - **Copilot timeline missing**: fall back to `Co-authored-by` trailers to determine whether `@Copilot` should be a co-author; if still unclear, use `@Copilot` as primary author'
+    gold_removed: ''

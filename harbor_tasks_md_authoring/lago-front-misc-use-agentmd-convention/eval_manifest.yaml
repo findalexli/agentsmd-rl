@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: lago-front-misc-use-agentmd-convention
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: getlago/lago-front
+  pr: 2677
+  base_commit: "f9bf7c4edb108e006ab9e974e86fc39f10924c3a"
+  merge_commit: "b65bd630b19bb775e2527424e24e783f13b9ecf8"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+
+config_edits:
+  - path: AGENTS.md
+    tier: 1
+    gold_added: "## TypeScript Conventions\n\n### Discriminated Unions Rather Than Conditional Props\n\nWe prefer to have our props described with \"discrimination\" and prevent optional props overuse. Do it as much as possible as it helps understanding the logic of how props are used.\n\n```tsx\n// ❌ Bad - Optional props create ambiguity\ntype Props = {\n  authenticated: boolean\n  level?: 'basic' | 'admin'\n}\n\n// ✅ Good - Discriminated union makes the relationship clear\ntype Props =\n  | { authenticated: true; level: 'basic' | 'admin' }\n  | { authenticated: false };\n```\n\n### Explicit Function Return Types\n\nAlways write the return type of a function explicitly. This improves code readability, helps catch errors early, and makes the codebase more maintainable.\n\n```tsx\n// ❌ Bad - Implicit return type\nconst calculateTotal = (items: Item[]) => {\n  return items.reduce((sum, item) => sum + item.price, 0)\n}\n\n// ✅ Good - Explicit return type\nconst calculateTotal = (items: Item[]): number => {\n  return items.reduce((sum, item) => sum + item.price, 0)\n}\n```\n\n## Documentation & Library References\n\n### Using Context7 MCP (If Installed)\n\nIf the user has Context7 MCP configured, **ALWAYS use it** to fetch up-to-date documentation for third-party libraries before making assumptions or using outdated knowledge:\n\n1. **When to Use Context7**:\n   - When working with React, TypeScript, Vite, Apollo Client, Formik, Yup, Material UI, or any npm package\n   - Before implementing features using external libraries\n   - When debugging library-specific issues\n   - When the user asks questions about library APIs or best practices\n\n2. **How to Use Context7**:\n   - First, resolve the library ID: Use `resolve-library-id` with the library name (e.g., \"react\", \"apollo-client\", \"@mui/material\")\n   - Then, fetch docs: Use `get-library-docs` with the resolved Context7-compatible library ID\n   - Optionally specify a `topic` to focus on specific features (e.g., \"hooks\", \"routing\", \"forms\")\n\n3. **Example Workflow**:\n\n   ```\n   User asks: \"How do I use Apollo Client mutations?\"\n\n   Step 1: resolve-library-id(\"apollo-client\") → /apollographql/apollo-client\n   Step 2: get-library-docs(\"/apollographql/apollo-client\", topic: \"mutations\")\n   Step 3: Use the fetched documentation to provide accurate, up-to-date guidance\n   ```\n\n4. **Key Libraries in This Project**:\n   - React 18: `/facebook/react` or `/facebook/react/v18.x.x`\n   - Apollo Client: `/apollographql/apollo-client`\n   - Material UI: `/mui/material-ui`\n   - Formik: `/jaredpalmer/formik`\n   - Vite: `/vitejs/vite`\n   - TypeScript: `/microsoft/TypeScript`\n\n**Note**: If Context7 is not installed or not configured, fall back to your training data knowledge, but always prefer Context7 when available for the most accurate and current information.\n"
+    gold_removed: ''

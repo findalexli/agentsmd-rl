@@ -1,0 +1,36 @@
+version: "2.0"
+
+task:
+  name: mitmproxy-add-agentsmd
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: mitmproxy/mitmproxy
+  pr: 7907
+  base_commit: "5cabab0fdead7b590c9d865b35e7d39f0f8def3b"
+  merge_commit: "4b4a8e21c0cbe993b2efa8df262711e9458f62ab"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+
+config_edits:
+  - path: AGENTS.md
+    tier: 1
+    gold_added: '- This project uses uv. Always use `uv run pytest` and don''t run pytest directly.
+
+      - To run all tests: `uv run tox`.
+
+      - When adding new source files, additionally run: `uv run tox -e individual_coverage -- FILENAME`.'
+    gold_removed: ''

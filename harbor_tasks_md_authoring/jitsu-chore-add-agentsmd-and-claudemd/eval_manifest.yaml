@@ -1,0 +1,36 @@
+version: "2.0"
+
+task:
+  name: jitsu-chore-add-agentsmd-and-claudemd
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: jitsucom/jitsu
+  pr: 1271
+  base_commit: "5744de8f911004ef44855dd8711646cbf28fb797"
+  merge_commit: "fe4cea1c489ce764ae4f621abbce093172b7c472"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+
+config_edits:
+  - path: AGENTS.md
+    tier: 1
+    gold_added: "# Jitsu — Agent Guidelines\n\n## Project Overview\n\nJitsu is an open-source data pipeline platform (self-hosted Segment alternative). It\ncollects events from websites/apps and routes them to data warehouses and other\ndestinations.\n\n## Repository Structure\n\nThis is a monorepo with two main technology stacks:\n\n### Go (`/bulker`)\n\nData ingestion engine for streaming events to warehouses.\n\n- `bulkerapp/` — main Bulker service\n- `ingest/` — HTTP ingest endpoint\n- `sync-controller/` — connector sync orchestration\n- `bulkerlib/` — core ingestion library\n- `connectors/` — warehouse connectors (ClickHouse, BigQuery, Redshift, Snowflake, S3,\n  GCS, etc.)\n\n### Node.js / TypeScript\n\n**Services (`/services`)**\n- `rotor/` — event routing, transformation, and function execution\n\n**Web apps (`/webapps`)**\n- `console/` — admin UI (Next.js)\n- `ee-api/` — enterprise edition API (Next.js)\n\n**Libraries (`/libs`)**\n- `jitsu-js/` — browser JS SDK (`@jitsu/js`)\n- `jitsu-react/` — React bindings (`@jitsu/jitsu-react`)\n- `functions/` — functions runtime (`@jitsu/functions-lib`)\n- `juava/` — shared utilities\n\n**CLI (`/cli`)**\n- `jitsu-cli/` — developer CLI (`jitsu-cli` on npm)\n\n**Types (`/types`)**\n- `protocols/` — shared TypeScript protocols (`@jitsu/protocols`)\n\n## Tooling\n\n- **Node.js:** pnpm ≥10 (workspace manager), Turbo (build orchestration), Node.js ≥22\n- **Go:** Go 1.26 with Go workspaces (`go.work` at repo root)\n- **Frontend:** Next.js, React 18, TypeScript, Tailwind CSS\n- **Testing:** Jest (unit), Playwright (E2E), Go's built-in `testing`\n- **CI:** GitHub Actions (`.github/workflows/`)\n\n## Common Commands\n\n```bash\n# Install JS dependencies\npnpm install\n\n# Build all JS packages\npnpm build:turbo\n\n# Type-check\npnpm typecheck:turbo\n\n# Run unit tests\npnpm test\n\n# Lint / format\npnpm lint\npnpm format\n\n# Start all dev services (hot-reload)\npnpm dev\n\n# Start only the console\npnpm console:dev\n```\n\nFor Go (run inside `/bulker`):\n\n```bash\ngo build ./...\ngo test ./...\n```\n\n## Git Workflow\n\nWhen you need to create branches, make commits, or open pull requests, read\n[CONTRIBUTING.md](CONTRIBUTING.md) first. No need to read it for code exploration —\nonly when interacting with git."
+    gold_removed: ''
+  - path: CLAUDE.md
+    tier: 1
+    gold_added: AGENTS.md
+    gold_removed: ''

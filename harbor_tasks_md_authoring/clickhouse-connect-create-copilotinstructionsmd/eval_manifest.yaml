@@ -1,0 +1,24 @@
+version: "2.0"
+
+task:
+  name: clickhouse-connect-create-copilotinstructionsmd
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: ClickHouse/clickhouse-connect
+  pr: 721
+  base_commit: "904c9c76a4b3eddd2c79cb5091eeea2004f21756"
+  merge_commit: "483243cc995bb8f888589f88c044a1a1fac54109"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/copilot-instructions.md."
+
+config_edits:
+  - path: .github/copilot-instructions.md
+    tier: 1
+    gold_added: Use the review instructions in .agents/review.md
+    gold_removed: ''

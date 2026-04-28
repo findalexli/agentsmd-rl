@@ -1,0 +1,65 @@
+version: "2.0"
+
+task:
+  name: client-sdk-android-clean-up-pass-on-agentsmd
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: livekit/client-sdk-android
+  pr: 895
+  base_commit: "8e5897e74a2a314cb516d0a9e77db7972d9c440a"
+  merge_commit: "d7103c5d9098faf14b073038f6e03fbfd57c2474"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+
+config_edits:
+  - path: AGENTS.md
+    tier: 1
+    gold_added: 'The SDK is provided through the `livekit-android-sdk` Gradle module (package root `io.livekit.android`).
+
+      livekit-android-sdk/src/main/java/io/livekit/android
+
+      ├── memory/                # Resource lifecycle helpers
+
+      ├── renderer/              # Video render views
+
+      ├── room/                  # Room, SignalClient, RTCEngine, tracks
+
+      │   ├── metrics/           # RTC metrics
+
+      │   ├── network/           # Reconnect and network callbacks
+
+      │   ├── provisions/        # Internal provisioning helpers
+
+      │   ├── rpc/               # Room-scoped RPC
+
+      │   ├── track/             # Audio/video/screencast tracks and publications
+
+      │   ├── types/             # Shared room-related types
+
+      │   └── util/              # Room-internal utilities
+
+      ├── rpc/                   # RPC error types (package-level)
+
+      ├── stats/                 # Client/network stats helpers
+
+      └── webrtc/                # WebRTC helper classes and extensions
+
+      Entry types such as `LiveKit` and `ConnectOptions` live in the `io.livekit.android` package alongside these directories.
+
+
+      - `io.livekit.android.webrtc` package - convenience extensions on WebRTC types'
+    gold_removed: ''

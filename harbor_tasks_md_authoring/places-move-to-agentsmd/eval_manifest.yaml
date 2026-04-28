@@ -1,0 +1,36 @@
+version: "2.0"
+
+task:
+  name: places-move-to-agentsmd
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: custom-components/places
+  pr: 395
+  base_commit: "c1bb948a6702811a0703c73842222c3a7afff697"
+  merge_commit: "11b893bf592c23cc264bbc6b0e33b19f48686adb"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+
+config_edits:
+  - path: .github/copilot-instructions.md
+    tier: 1
+    gold_added: ''
+    gold_removed: ''
+  - path: AGENTS.md
+    tier: 1
+    gold_added: "# AGENTS\n\n## Purpose\n\n- Provide clear, repo-specific instructions for autonomous agents working in this repository.\n\n## General Guidelines\n\n- Follow Home Assistant developer docs: https://developers.home-assistant.io/docs/.\n- Be concise and explain coding steps briefly when making code changes; include code snippets and tests where relevant.\n- For non-trivial edits, provide a short plan. For small, low-risk edits, implement and include a one-line summary.\n- Focus on a single conceptual change at a time when public APIs or multiple modules are affected.\n- Maintain project style and Python 3.13+ compatibility. Target latest Home Assistant core.\n- If deviating from these guidelines, explicitly state which guideline is deviated from and why.\n\n## Agent permissions and venv policy\n\n- Agents may create and use a repository-local venv at `./.venv` and should reference `./.venv/bin/python` when running commands.\n- Installing packages from repo manifests (prefer `pyproject.toml`) into `./.venv` is allowed for running tests or local tooling; avoid unrelated network operations without explicit consent.\n\n## Home Assistant integration hygiene\n\n- When changing config/options text or UI-visible strings:\n  - Update `translations/*.json` as needed.\n- When changing install/config steps:\n  - Update `README.md` and `hacs.json` as needed.\n\n## Folder structure (repo-specific)\n\n- `custom_components/places`: integration code.\n- `tests`: pytest test suite and fixtures.\n- `README.md`: primary documentation.\n\n## Project structure expectations\n\n- Keep code modular: separate files for entity types, services, and utilities.\n- Store constants in `const.py` and use a `config_flow.py` for configuration flows.\n\n## Coding standards\n\n- Add typing annotations to all functions and classes (including return types).\n- Add or update docstrings for all files, classes and methods, including private methods. Method docstrings must be in NumPy format.\n- Preserve existing comments and keep imports at the top of files.\n- When editing code, prefer fixing root causes over surface patches.\n- Keep changes minimal and consistent with the codebase style.\n- Add tests for any changed behavior and update documentation if needed.\n\n## Error handling & logging\n\n- Use Home Assistant's logging framework.\n- Catch specific exceptions (do not catch Exception directly).\n- If a broad catch is unavoidable, document why in a comment and include contextual logging.\n- Add robust error handling and clear debug/info logs.\n\n## Local tooling (common commands)\n\n- Use `pre-commit`, `mypy`, and `pytest` configured in the repo. You must run these inside `./.venv`.\n- Prefer invoking tooling via `./.venv/bin/python -m ...` rather than relying on global/shell entry points (e.g., `pre-commit`).\n- `ruff` is used for linting and formatting but should be called using `pre-commit`.\n- Run tests:\n  - `./.venv/bin/python -m pytest`\n- Run pre-commit on all files (includes `ruff`):\n  - `./.venv/bin/python -m pre_commit run --all-files`\n- Run mypy (use repo configuration):\n  - `./.venv/bin/python -m mypy`\n\n## Testing\n\n- Use pytest (not unittest) and pytest plugins for all tests.\n- Use pytest-homeassistant-custom-component for Home Assistant–specific testing utilities (prefer `MockConfigEntry` for config entries).\n- Parameterize tests instead of creating multiple similar test functions when appropriate.\n- Aim for at least 80% code coverage.\n- Don't run pytest with `--disable-warnings` and address all warnings.\n- By default, the agent should run the full pytest suite when tests are requested (the repo is small and full pytest runs are acceptable). If the user specifically asks for a focused test run, the agent may run targeted tests instead.\n- Use fixtures and mocks to isolate tests.\n- Use `conftest.py` for shared test utilities and fixtures.\n- Add typed, well-documented tests in `tests/` and use fixtures in `conftest.py`. Test documentation must use NumPy format.\n- One test file per integration file: every integration source file should have a single corresponding test module; add new unit tests for that integration to that existing test module. Only split into additional test modules if the existing test module would exceed ~1000 lines, except for explicit end-to-end/integration tests in `test_integration.py`.\n- If tests fail due to missing dev dependencies, install them into `./.venv` and add them into the `pyproject.toml` dependencies when appropriate.\n- When parameterizing tests, delete any legacy placeholder tests and related comments.\n- When making changes to code, include tests for the new/changed behavior; the agent should add tests alongside code edits even when changes are not minimally invasive.\n\n## PR and branch behavior\n\n- The agent will only create branches or open PRs when the user explicitly requests it or includes the hashtag `#github-pull-request_copilot-coding-agent` to hand off to the asynchronous coding agent.\n\n## Network / install consent\n\n- Obtain explicit consent before any network operations outside the repository not strictly needed to run local tests.\n- Package installs required for running tests are allowed when user approves.\n\n## CI/CD\n\n- Use GitHub Actions for CI/CD where applicable."
+    gold_removed: ''

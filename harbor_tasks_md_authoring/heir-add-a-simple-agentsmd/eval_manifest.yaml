@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: heir-add-a-simple-agentsmd
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: google/heir
+  pr: 2618
+  base_commit: "334f52b1634665ec3f650173372544ad8f1f0756"
+  merge_commit: "121a587e391f61c4114929a8d31f0acd8122e8d7"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+
+config_edits:
+  - path: AGENTS.md
+    tier: 1
+    gold_added: "# AGENTS.md\n\n## Bazel conventions\n\n- Our build files are `BUILD` in almost all cases, not `BUILD.bazel`.\n\n## MLIR conventions\n\n- When creating operations, always use the format\n  `OpType::create(rewriter, ...)` and never use the (deprecated) format\n  `rewriter.create<OpType>(...)`.\n- When writing unit tests with filecheck, never use `CHECK-LABEL`; just use\n  `CHECK` instead.\n\n## Helper tooling\n\n### template scripts\n\n- `scripts/templates/templates.py` (which requires `python-fire` and `jinja2`)\n  provides boilerplate for generating new transforms and passes. After running\n  the script to create a new pass, one still must register the pass in\n  `heir-opt.cpp` and add the necessary build dependencies.\n\n### heir-opt flags\n\nCopied from https://mlir.llvm.org/docs/Tutorials/MlirOpt/ with minor tweaks.\n\n- `--mlir-timing` displays execution times of each pass.\n- `--debug` prints all debug information produced by `LLVM_DEBUG` or `LDBG`\n  calls.\n- `--debug-only=\"my-tag\"` prints only the debug information produced by\n  `LLVM_DEBUG` in files that have the macro `#define DEBUG_TYPE \"my-tag\"`. This\n  often allows you to print only debug information associated with a specific\n  pass.\n  - `\"greedy-rewriter\"` only prints debug information for patterns applied with\n    the greedy rewriter engine.\n  - `\"dialect-conversion\"` only prints debug information for the dialect\n    conversion framework.\n- `--dump-pass-pipeline` prints the full pipeline that will be run before\n  starting.\n- `--mlir-print-ir-after-all` prints the IR after each pass.\n  - See also `--mlir-print-ir-after-change`, `--mlir-print-ir-after-failure`,\n    and analogous versions of these flags with `before` instead of `after`.\n  - When using `print-ir` flags, adding `--mlir-print-ir-tree-dir` writes the\n    IRs to files in a directory tree, making them easier to inspect versus a\n    large dump to the terminal. A common practice when encountering a segfault\n    is to create a minimal reproducing test case by adding\n    `--dump-pass-pipeline --mlir-print-ir-before-all --mlir-print-ir-tree-dir=/tmp/mlir`,\n    copying the last IR file (filenames are prefixed by the number of the pass\n    in the pipeline) and running the single failing pass on it, using the output\n    of `--dump-pass-pipeline` to get the pass options.\n\n<!-- mdformat global-off -->"
+    gold_removed: ''

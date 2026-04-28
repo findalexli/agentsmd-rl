@@ -1,0 +1,303 @@
+version: "2.0"
+
+task:
+  name: kubelb-use-agentsmd-for-crosscompatibility
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: kubermatic/kubelb
+  pr: 405
+  base_commit: "7a6302fd950417f6a1ca6c57fc03660e0400eef4"
+  merge_commit: "b42de9874956bcc62ee3913a4b42d84ec1480b38"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in test/e2e/AGENTS.md."
+  - id: signal_04
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in test/e2e/AGENTS.md."
+  - id: signal_05
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in test/e2e/AGENTS.md."
+
+config_edits:
+  - path: AGENTS.md
+    tier: 1
+    gold_added: '# CLAUDE.md
+
+
+      This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+
+
+      ## Build Commands
+
+
+      ```bash
+
+      make build                    # Build all binaries (kubelb-manager, ccm)
+
+      make build-kubelb             # Build manager only
+
+      make build-ccm                # Build CCM only
+
+      make lint                     # Run golangci-lint
+
+      make fmt vet                  # Format and vet
+
+      make test                     # Unit tests with envtest
+
+      make manifests generate       # Generate CRDs, RBAC, DeepCopy
+
+      make update-codegen           # Full code generation pipeline
+
+      ```
+
+
+      ## E2E Testing
+
+
+      Uses Chainsaw framework (declarative YAML-based) with Kind clusters.
+
+
+      ```bash
+
+      make e2e-kind                 # Full setup: create clusters, deploy, run tests
+
+      make e2e-local                # Local setup: create clusters, deploy, run tests
+
+      make e2e-setup-kind           # Create Kind clusters only (kubelb, tenant1, tenant2)
+
+      make e2e-deploy               # Build images and deploy to clusters
+
+      make e2e                      # Run all e2e tests
+
+      make e2e-select select=layer=layer4        # L4 tests only
+
+      make e2e-select select=resource=service    # Service tests only
+
+      chainsaw test --test-file test/e2e/tests/layer4/service/basic/chainsaw-test.yaml  # Single test
+
+      ```
+
+
+      Test structure:
+
+
+      - `test/e2e/tests/` - Test cases organized by layer/resource type
+
+      - `test/e2e/step-templates/` - Reusable test step templates
+
+      - `test/e2e/manifests/` - Infrastructure manifests (MetalLB, tenants)
+
+
+      ### Chainsaw Documentation
+
+
+      If lookup for documentation fails, use the repository <https://github.com/kyverno/chainsaw/tree/main/website/docs> directly.
+
+
+      ### Debugging test failures
+
+
+      When debugging test failures, use the `make e2e-select select=<key>=<value>` command to run a single test or a group of tests that were failing. The labels can be found in the `chainsaw-test.yaml` files in the `test/e2e/tests/` directory.
+
+
+      ## Architecture
+
+
+      Three-component hub-and-spoke model:
+
+
+      1. **KubeLB Manager** (`cmd/kubelb/`) - Central management cluster, hosts Envoy xDS control plane, receives LB configs from CCMs
+
+      2. **KubeLB CCM** (`cmd/ccm/`) - Cloud Controller Manager in tenant clusters, watches Services/Ingresses/Gateway API, propagates as LoadBalancer CRDs
+
+
+      Key API resources (`api/ce/kubelb.k8c.io/v1alpha1/`):
+
+
+      - **LoadBalancer** - Layer 4 service config
+
+      - **Route** - Layer 7 routing (Ingress/Gateway API)
+
+      - **Tenant** - Multi-tenant isolation (cluster-scoped)
+
+      - **Config** - Global settings
+
+
+      Controllers:
+
+
+      - `internal/controllers/kubelb/` - Manager controllers (route, sync_secret)
+
+      - `internal/controllers/ccm/` - CCM controllers (service, ingress, gateway routes, nodes)
+
+
+      ### L7 Traffic Flow (Ingress/HTTPRoute)
+
+
+      ```
+
+      Client → Envoy Gateway LB or Ingress LB -> Envoy Gateway Service → KubeLB Envoy Proxy(talks to XDS server) → Tenant cluster node:NodePort → Backend Pod
+
+      ```
+
+
+      - **Envoy Gateway Service**: LoadBalancer service created by Envoy Gateway (not KubeLB manager)
+
+      - **KubeLB Envoy Proxy**: Configured via xDS server, routes traffic to tenant clusters
+
+      - **NodePort**: Traffic enters tenant cluster via NodePort service
+
+
+      ### L4 Traffic Flow (LoadBalancer Service)
+
+
+      ```
+
+      Client → LoadBalancer Service → KubeLB Envoy Proxy → Tenant cluster node:NodePort → Backend Pod
+
+      ```
+
+
+      Key API resources (`api/ee/kubelb.k8c.io/v1alpha1/`):
+
+
+      - **LoadBalancer** - Layer 4 service config
+
+      - **Route** - Layer 7 routing (Ingress/Gateway API)
+
+      - **Tenant** - Multi-tenant isolation (cluster-scoped)
+
+      - **Config** - Global settings
+
+
+      Controllers:
+
+
+      - `internal/controllers/kubelb/` - Manager controllers (route, tunnel, sync_secret, envoy_cp)
+
+      - `internal/controllers/ccm/` - CCM controllers (service, ingress, gateway routes, nodes)
+
+
+      ## Code Generation
+
+
+      Run `make update-codegen` after:
+
+
+      - Modifying CRD types in `api/`
+
+      - Adding new kubebuilder markers
+
+      - Changing RBAC requirements in controller comments
+
+
+      ## Import Order
+
+
+      Configured in `.gimps.yaml`:
+
+
+      1. Standard library
+
+      2. External (`github.com`)
+
+      3. Kubermatic (`k8c.io/**`, `github.com/kubermatic/**`)
+
+      4. Envoy (`github.com/envoyproxy/**`)
+
+      5. Kubernetes (`k8s.io/**`, `*.k8s.io/**`)
+
+
+      ## Copyright
+
+
+      New files must use the current year in the copyright header:
+
+
+      ```go
+
+      /*
+
+      Copyright <CURRENT_YEAR> The KubeLB Authors.
+
+      ...
+
+      */
+
+      ```
+
+
+      ## Patterns
+
+
+      - Controller-runtime reconciler pattern with finalizers (`kubelb.k8c.io/lb-finalizer`)
+
+      - Prometheus metrics: register in `internal/metrics/`, use subsystem prefixes `kubelb_manager_*`, `kubelb_ccm_*`
+
+      - Structured logging via logr/zap with `.V(level)` for verbosity
+
+      - Error wrapping with `github.com/pkg/errors`
+
+
+      ## Helm Charts
+
+
+      Three charts in `charts/`:
+
+
+      - `kubelb-manager` - Manager deployment
+
+      - `kubelb-ccm` - CCM deployment
+
+      - `kubelb-addons` - Supporting resources
+
+
+      Run `make generate-helm-docs` after chart changes.
+
+
+      ## GitHub Templates
+
+
+      PRs and issues must use the templates in `.github/`. For PRs, use `.github/PULL_REQUEST_TEMPLATE.md` — fill in all sections (description, kind, release note, documentation).
+
+
+      When I ask for PR description always use the template and fill in appropriate sections.
+
+
+      ## Documentation
+
+
+      Official documentation for KubeLB is available at <https://docs.kubermatic.com/kubelb>. Please refer to this documentation for the latest information about the project. If and when you find gaps in the documentation, please prompt the user to update the documentation.'
+    gold_removed: ''
+  - path: CLAUDE.md
+    tier: 1
+    gold_added: '@AGENTS.md'
+    gold_removed: ''
+  - path: test/e2e/AGENTS.md
+    tier: 1
+    gold_added: "# E2E Test Guide\n\n## Quick Reference\n\n```bash\nmake e2e                                    # Run all tests\nmake e2e-select select=resource=httproute   # By resource\nmake e2e-select select=layer=layer7         # By layer\nmake e2e-select select=suite=conversion     # Conversion only\nmake e2e-select select=test=basic           # Single test name\nchainsaw test --test-file test/e2e/tests/layer7/httproute/basic/chainsaw-test.yaml\n```\n\n## Clusters\n\n| Cluster | Role | Nodes | kubelb_namespace |\n|---------|------|-------|-----------------|\n| `kubelb` | Manager cluster | 1 | N/A |\n| `tenant1` | Default CCM tenant | 3 workers | `tenant-primary` |\n| `tenant2` | Single-node CCM tenant | 1 | `tenant-secondary` |\n| `standalone` | Conversion CCM | 1 | N/A |\n\n## Test Structure\n\nTests live in `test/e2e/tests/{layer4,layer7}/{resource}/{test-name}/chainsaw-test.yaml`.\nTemplates live in `test/e2e/step-templates/{common,gateway,layer4,layer7,ingress,conversion,isolated}/`.\n\nStandard L7 test pattern:\n\n1. Deploy backend(s) via `deploy-echo-backend` template\n2. Create Gateway via `create-http-gateway` template\n3. Create route (HTTPRoute/GRPCRoute/Ingress) — usually inline script (needs Gateway IP for nip.io hostnames)\n4. Verify Route CRD via `verify-route-crd` template\n5. Verify HTTP connectivity — inline script\n6. Cleanup in `finally` block — inline script (always inline, `catch` blocks don't support `use`)\n7. Verify cleanup via `verify-route-cleanup` template\n\n## Chainsaw Pitfalls\n\n### `$namespace` is reserved\n\nChainsaw sets `$namespace` to auto-generated test namespace. Never use `namespace` as a binding name. Hardcode `default` directly.\n\n### `use.with.bindings` must be hardcoded\n\nJMESPath refs (`($var)`) silently resolve to empty. Always pass literal strings:\n\n```yaml\n# WRONG — silently empty\n- name: gateway_name\n  value: ($gateway_name)\n\n# CORRECT\n- name: gateway_name\n  value: basic-gw\n```\n\n### StepTemplates use `try`, never `finally`\n\n`finally` is invalid in StepTemplate spec. Tests that call templates handle cleanup themselves.\n\n### StepTemplate `spec.bindings` — hardcoded defaults only\n\nCannot reference other bindings. Use bash defaults for optional params:\n\n```yaml\ncontent: |\n  SERVICE_NAME=\"${SERVICE_NAME:-$INGRESS_NAME}\"\n```\n\n### `catch` blocks don't support `use`\n\nOnly inline operations work in `catch`. Cleanup templates must be called as regular steps.\n\n### `assert` is strict\n\n- Ports must be int, not string\n- Don't assert partial arrays (must match full length)\n\n### JMESPath limitations\n\nNo `??` operator. Use bash defaults instead.\n\n## Writing a New L7 Test\n\n```yaml\napiVersion: chainsaw.kyverno.io/v1alpha1\nkind: Test\nmetadata:\n  name: my-test\n  labels:\n    all:\n    test: my-test\n    resource: httproute     # or: gateway, grpcroute, ingress\n    layer: layer7\nspec:\n  steps:\n    # 1. Deploy backend\n    - name: deploy-backend\n      use:\n        template: ../../../../step-templates/common/deploy-echo-backend.yaml\n        with:\n          bindings:\n            - name: backend_name\n              value: my-echo\n            - name: backend_message\n              value: hello-from-my-test\n\n    # 2. Create Gateway + wait for IP\n    - name: create-gateway\n      use:\n        template: ../../../../step-templates/gateway/create-http-gateway.yaml\n        with:\n          bindings:\n            - name: gateway_name\n              value: my-gw\n\n    # 3. Create HTTPRoute (needs Gateway IP for nip.io)\n    - name: create-httproute\n      cluster: tenant1\n      try:\n        - script:\n            timeout: 60s\n            content: |\n              set -e\n              IP=$(kubectl get gateway my-gw -n default \\\n                -o jsonpath='{.status.addresses[0].value}')\n              HOST=\"my-test.${IP}.nip.io\"\n              cat <<EOF | kubectl apply -f -\n              apiVersion: gateway.networking.k8s.io/v1\n              kind: HTTPRoute\n              metadata:\n                name: my-route\n                namespace: default\n              spec:\n                parentRefs:\n                  - name: my-gw\n                hostnames:\n                  - \"${HOST}\"\n                rules:\n                  - backendRefs:\n                      - name: my-echo\n                        port: 80\n              EOF\n            check:\n              ($error == null): true\n\n    # 4. Verify Route CRD\n    - name: verify-route-crd\n      use:\n        template: ../../../../step-templates/common/verify-route-crd.yaml\n        with:\n          bindings:\n            - name: resource_name\n              value: my-route\n            - name: expected_kind\n              value: HTTPRoute.gateway.networking.k8s.io\n            - name: kubelb_namespace\n              value: tenant-primary\n\n    # 5. Verify HTTP\n    - name: verify-http\n      cluster: tenant1\n      try:\n        - script:\n            timeout: 60s\n            content: |\n              set -e\n              IP=$(kubectl get gateway my-gw -n default \\\n                -o jsonpath='{.status.addresses[0].value}')\n              HOST=\"my-test.${IP}.nip.io\"\n              for i in $(seq 1 10); do\n                RESPONSE=$(curl -s --max-time 5 -H \"Host: ${HOST}\" \"http://${IP}/\" 2>/dev/null || true)\n                if echo \"$RESPONSE\" | grep -q \"hello-from-my-test\"; then\n                  echo \"OK\"\n                  exit 0\n                fi\n                sleep 2\n              done\n              exit 1\n            check:\n              ($error == null): true\n\n    # 6. Cleanup + verify\n    - name: cleanup\n      cluster: tenant1\n      try:\n        - script:\n            timeout: 60s\n            content: |\n              kubectl delete httproute my-route -n default --wait=false\n            check:\n              ($error == null): true\n      finally:\n        - script:\n            cluster: tenant1\n            timeout: 60s\n            content: |\n              kubectl delete httproute/my-route gateway/my-gw deployment/my-echo service/my-echo -n default --ignore-not-found\n\n    - name: verify-cleanup\n      use:\n        template: ../../../../step-templates/common/verify-route-cleanup.yaml\n        with:\n          bindings:\n            - name: resource_name\n              value: my-route\n            - name: kubelb_namespace\n              value: tenant-primary\n```\n\n## Available Step Templates\n\n### Common\n\n| Template | Purpose | Required Bindings |\n|----------|---------|-------------------|\n| `common/deploy-echo-backend.yaml` | Deploy echo server + ClusterIP + readiness | `backend_name`, `backend_message` |\n| `common/verify-route-crd.yaml` | Assert Route CRD exists with labels | `resource_name`, `expected_kind`, `kubelb_namespace` |\n| `common/verify-route-cleanup.yaml` | Assert Route CRD removed | `resource_name`, `kubelb_namespace` |\n| `common/verify-http-response.yaml` | Verify HTTP response via Host header | `host`, `expected_response` |\n| `common/verify-headers.yaml` | Verify response headers | `gateway_name`, `route_name`, `backend_name` |\n| `common/cleanup-service.yaml` | Delete service + verify LB CRD removed | `service_name`, `tenant`, `kubelb_namespace` |\n\n### Gateway API\n\n| Template | Purpose | Required Bindings |\n|----------|---------|-------------------|\n| `gateway/create-http-gateway.yaml` | Create Gateway + wait for IP | `gateway_name` |\n| `gateway/verify-route-crd.yaml` | Assert Route CRD for Gateway | `resource_name`, `kubelb_namespace` |\n\n### Layer4\n\n| Template | Purpose | Required Bindings |\n|----------|---------|-------------------|\n| `layer4/assert-lb-crd.yaml` | Assert LB CRD exists | `service_name`, `kubelb_namespace` |\n| `layer4/assert-no-lb-crd.yaml` | Assert NO LB CRD exists | `service_name`, `kubelb_namespace` |\n| `layer4/verify-lb-cleanup.yaml` | Assert LB CRD removed | `service_name`, `kubelb_namespace` |\n| `layer4/verify-status-propagation.yaml` | Verify LB IP matches tenant service IP | `service_name`, `tenant`, `kubelb_namespace` |\n| `layer4/verify-http-response.yaml` | Verify HTTP from LB service | `service_name`, `expected`, `port`, `tenant` |\n\n### Layer7 Cleanup\n\n| Template | Purpose | Required Bindings |\n|----------|---------|-------------------|\n| `layer7/cleanup-gateway.yaml` | Delete Gateway + verify Route CRD removed | `gateway_name`, `tenant`, `kubelb_namespace` |\n| `layer7/cleanup-route.yaml` | Delete Route + verify CRD removed | `route_name`, `route_kind`, `tenant`, `kubelb_namespace` |\n\n### Ingress\n\n| Template | Purpose | Required Bindings |\n|----------|---------|-------------------|\n| `ingress/cleanup-ingress.yaml` | Delete Ingress + verify Route CRD removed | `ingress_name` |\n| `ingress/verify-ingress-status.yaml` | Assert Ingress has LB IP | `ingress_name` |\n| `ingress/verify-route-crd.yaml` | Assert Route CRD for Ingress | `ingress_name`, `kubelb_namespace` |\n\n### Conversion\n\n| Template | Purpose | Required Bindings |\n|----------|---------|-------------------|\n| `conversion/cleanup-conversion.yaml` | Delete Ingress + service on standalone | `ingress_name` |\n| `conversion/verify-gateway.yaml` | Assert Gateway exists | `gateway_name` |\n| `conversion/verify-httproute.yaml` | Assert HTTPRoute with host | `ingress_name`, `expected_host` |\n| `conversion/verify-http-traffic.yaml` | Verify HTTP via Gateway | `host`, `expected_response` |\n| `conversion/verify-status-annotation.yaml` | Check conversion-status annotation | `ingress_name`, `expected_status` |\n| `conversion/verify-policy.yaml` | Check policy resource created | `policy_name`, `policy_kind` |\n| `conversion/verify-redirect.yaml` | Verify HTTP redirect behavior | `host`, `expected_code` |\n| `conversion/verify-warnings.yaml` | Check warning events | `ingress_name`, `expected_warning` |\n| `conversion/verify-skip-annotations.yaml` | Check skip-conversion annotation\
+      \ | `ingress_name` |\n\n### Isolated\n\n| Template | Purpose | Required Bindings |\n|----------|---------|-------------------|\n| `isolated/reset-configs.yaml` | Reset Config CRD to defaults | `manifestsPath` |\n| `isolated/reset-tenants.yaml` | Reset Tenant CRDs to defaults | `manifestsPath` |\n| `isolated/patch-config.yaml` | Patch Config CRD | `patch_json` |\n| `isolated/patch-tenant.yaml` | Patch Tenant CRD | `tenant_name`, `patch_json` |\n\n## Debugging Failures\n\nRun a failing test in isolation:\n\n```bash\nmake e2e-select select=test=basic\n```\n\nKubeconfigs in `.e2e-kubeconfigs/`:\n\n```bash\nexport KUBELB_KUBECONFIG=.e2e-kubeconfigs/kubelb.kubeconfig\nexport TENANT1_KUBECONFIG=.e2e-kubeconfigs/tenant1.kubeconfig\n```\n\nCheck logs:\n\n```bash\nkubectl --kubeconfig=$TENANT1_KUBECONFIG logs -n kubelb -l app.kubernetes.io/name=kubelb-ccm -f\nkubectl --kubeconfig=$KUBELB_KUBECONFIG logs -n kubelb -l app.kubernetes.io/name=kubelb-manager -f\n```\n\nCheck resources:\n\n```bash\nkubectl --kubeconfig=$KUBELB_KUBECONFIG get routes.kubelb.k8c.io -A\nkubectl --kubeconfig=$KUBELB_KUBECONFIG get gateway,httproute -A\nkubectl --kubeconfig=$TENANT1_KUBECONFIG get gateway,httproute -n default\n```"
+    gold_removed: ''
+  - path: test/e2e/CLAUDE.md
+    tier: 1
+    gold_added: '@AGENTS.md'
+    gold_removed: ''

@@ -1,0 +1,80 @@
+version: "2.0"
+
+task:
+  name: github-copilot-for-azure-fix-use-folded-scalar-for
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: microsoft/GitHub-Copilot-for-Azure
+  pr: 1015
+  base_commit: "1d5902d4bc32a308c69f958690b34d19dceec825"
+  merge_commit: "3f20b6b8c83d2a9b4d77de8bbc394bf1d67948fb"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/skills/sensei/references/SCORING.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/skills/sensei/references/SCORING.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/skills/sensei/references/SCORING.md."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in plugin/skills/azure-observability/SKILL.md."
+  - id: signal_04
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in plugin/skills/azure-observability/SKILL.md."
+  - id: signal_05
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in plugin/skills/azure-observability/SKILL.md."
+  - id: signal_06
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in plugin/skills/azure-postgres/SKILL.md."
+  - id: signal_07
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in plugin/skills/azure-postgres/SKILL.md."
+  - id: signal_08
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in plugin/skills/azure-postgres/SKILL.md."
+  - id: signal_09
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in plugin/skills/azure-storage/SKILL.md."
+  - id: signal_10
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in plugin/skills/azure-storage/SKILL.md."
+  - id: signal_11
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in plugin/skills/azure-storage/SKILL.md."
+
+config_edits:
+  - path: .github/skills/sensei/references/SCORING.md
+    tier: 1
+    gold_added: "### 8. YAML Description Safety\n\nDescriptions containing YAML special characters (especially `: ` colon-space) **must** use either:\n- Folded scalar (`>-`) — **preferred** for descriptions > 200 chars\n- Double-quoted string (`\"...\"`) — acceptable alternative\n\nPlain unquoted descriptions with `: ` patterns (e.g., `USE FOR:`, `Azure AI:`) cause YAML parse errors in many skill loaders:\n```\nNested mappings are not allowed in compact mappings\n```\n\n| Check | Pass | Fail |\n|-------|------|------|\n| Uses `>-` or `\"...\"` | `description: >-` | `description: Use for Azure AI: Search...` |\n| No `: ` in plain value | `description: Simple text here` | `description: USE FOR: something` |\n| Over 200 chars uses `>-` | `description: >-` (multi-line) | `description: Very long plain text...` |\n\n**Scoring impact:**\n- Plain description with `: ` → **Invalid** (will fail to parse)\n- Description > 200 chars without `>-` → **Warning** (maintainability concern)\n\n    # Check YAML description safety\n    if isPlainUnquoted(skill.rawDescription) AND contains(skill.description, \": \"):\n        report \"INVALID: plain description contains ': ' — use >- or quotes\"\n        return \"Invalid\"\n    \n    if isPlainUnquoted(skill.rawDescription) AND skill.description.length > 200:\n        suggestions.add(\"Use >- folded scalar for description (over 200 chars)\")"
+    gold_removed: ''
+  - path: plugin/skills/azure-observability/SKILL.md
+    tier: 1
+    gold_added: "description: >-\n  Azure Observability Services including Azure Monitor, Application Insights, Log Analytics, Alerts, and Workbooks. Provides metrics, APM, distributed tracing, KQL queries, and interactive reports.\n  USE FOR: Azure Monitor, Application Insights, Log Analytics, Alerts, Workbooks, metrics, APM, distributed tracing, KQL queries, interactive reports, observability, monitoring dashboards.\n  DO NOT USE FOR: instrumenting apps with App Insights SDK (use appinsights-instrumentation), querying Kusto/ADX clusters (use azure-kusto), cost analysis (use azure-cost-optimization)."
+    gold_removed: ''
+  - path: plugin/skills/azure-postgres/SKILL.md
+    tier: 1
+    gold_added: "description: >-\n  Create new Azure Database for PostgreSQL Flexible Server instances and configure passwordless authentication with Microsoft Entra ID. Set up developer access, managed identities for apps, group-based permissions, and migrate from password-based to Entra ID authentication.\n  USE FOR: passwordless for postgres, entra id postgres, azure ad postgres authentication, postgres managed identity, migrate postgres to passwordless, create postgres server, configure postgres auth.\n  DO NOT USE FOR: MySQL databases (use azure-prepare), Cosmos DB (use azure-prepare), general Azure resource creation (use azure-prepare)."
+    gold_removed: ''
+  - path: plugin/skills/azure-storage/SKILL.md
+    tier: 1
+    gold_added: "description: >-\n  Azure Storage Services including Blob Storage, File Shares, Queue Storage, Table Storage, and Data Lake. Provides object storage, SMB file shares, async messaging, NoSQL key-value, and big data analytics capabilities. Includes access tiers (hot, cool, archive) and lifecycle management.\n  USE FOR: blob storage, file shares, queue storage, table storage, data lake, upload files, download blobs, storage accounts, access tiers, lifecycle management.\n  DO NOT USE FOR: SQL databases (use azure-postgres), Cosmos DB (use azure-prepare), messaging with Event Hubs or Service Bus (use azure-messaging)."
+    gold_removed: ''

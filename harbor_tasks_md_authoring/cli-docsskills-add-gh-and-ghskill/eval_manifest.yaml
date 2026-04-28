@@ -1,0 +1,48 @@
+version: "2.0"
+
+task:
+  name: cli-docsskills-add-gh-and-ghskill
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: cli/cli
+  pr: 13244
+  base_commit: "49d4747a81425418dd2e7bee7e33541b7c644ca9"
+  merge_commit: "b5757eab2a1f26daac11e7800bd69878e692f517"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/gh-skill/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/gh-skill/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/gh-skill/SKILL.md."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/gh/SKILL.md."
+  - id: signal_04
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/gh/SKILL.md."
+  - id: signal_05
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/gh/SKILL.md."
+
+config_edits:
+  - path: skills/gh-skill/SKILL.md
+    tier: 1
+    gold_added: "---\nname: gh-skill\ndescription: Manage agent skills with gh skill. Use this skill to discover, preview, install, update, and publish Agent Skills so an agent can self-manage the skills available in its environment.\n---\n\n# Managing skills with `gh skill`\n\n`gh skill` installs, previews, searches, updates, and publishes\n[Agent Skills](https://agentskills.io). An agent can use it to keep its\nown skill set in sync with one or more GitHub repositories.\n\nThe command is also aliased as `gh skills`. Prefer the canonical singular\n`gh skill` in scripts and docs.\n\n## Search\n\n```bash\ngh skill search <query>                                  # free-text search\ngh skill search <query> --owner <org>                    # restrict to one owner\ngh skill search <query> --limit 20 --page 2\ngh skill search <query> --json skillName,repo,description\n```\n\n## Preview before installing\n\n```bash\ngh skill preview <owner>/<repo> <skill-name>\ngh skill preview <owner>/<repo> <skill-name>@v1.2.0   # pin a version\n```\n\n## Install\n\n```bash\ngh skill install <owner>/<repo> <skill-name>\ngh skill install <owner>/<repo> <skill-name>@v1.2.0\ngh skill install <owner>/<repo> skills/<scope>/<skill-name>   # exact path, fastest\ngh skill install ./local-skills-repo --from-local\n```\n\n`<owner>/<repo>` and `<skill-name>` are both required.\n\nUseful flags:\n\n- `--agent <id>` - target host (e.g. `github-copilot`, `claude-code`,\n  `cursor`, `codex`, `gemini-cli`). Repeat for multiple. Default is\n  `github-copilot` when non-interactive. You should know what agent you are,\n  so set this appropriately to install for yourself.\n- `--scope project|user` - `project` (default) writes inside the current\n  git repo; `user` writes to the home directory and applies everywhere.\n- `--pin <ref>` - pin to a tag, branch, or commit SHA. Mutually exclusive\n  with `--from-local` and with inline `@version` syntax.\n- `--allow-hidden-dirs` - also discover skills under dot-directories such\n  as `.claude/skills/`. Don't use this unless you need to, it comes with risks.\n- `--force` - overwrite an existing install.\n\n## Update\n\n```bash\ngh skill update --all          # update every installed skill\ngh skill update <skill>        # update one\ngh skill update <skill> --force\ngh skill update --unpin        # drop the pin and move to latest\n```\n\n## Publish\n\nPublishing turns a repo into a discoverable skill source. Skills are\ndiscovered with these conventions:\n\n- `skills/<name>/SKILL.md`\n- `skills/<scope>/<name>/SKILL.md`\n- `<name>/SKILL.md` (root-level)\n- `plugins/<scope>/skills/<name>/SKILL.md`\n\nEach `SKILL.md` needs YAML frontmatter:\n\n```yaml\n---\nname: my-skill                # must equal the directory name\ndescription: One sentence...  # required, recommended <= 1024 chars\nlicense: MIT                  # optional but recommended\n---\n```\n\n### Validate, then publish\n\n```bash\ngh skill publish --dry-run                 # validate only, no release\ngh skill publish --dry-run ./path/to/repo  # validate a specific dir\ngh skill publish --fix                     # auto-strip install metadata\ngh skill publish --tag v1.0.0              # non-interactive publish\ngh skill publish                           # interactive publish flow\n```\n\n`--fix` and `--dry-run` are mutually exclusive. `--fix` only rewrites\ninstall-injected `metadata.github-*` keys and does not publish; commit\nthe result and re-run `publish`.\n\nThe publish flow will:\n\n1. Add the `agent-skills` topic to the repo (so search can find it).\n2. Use `--tag` (or prompt for one in a TTY).\n3. Auto-push any unpushed commits.\n4. Create a GitHub release with auto-generated notes.\n\nAlways pass `--tag` so it doesn't fall through to the interactive flow.\n\n## Self-management pattern for agents\n\nA reasonable loop:\n\n1. `gh skill search <topic> --json skillName,repo,namespace`\n2. `gh skill preview <repo> <skill>` to inspect the `SKILL.md`.\n3. `gh skill install <repo> <skill> --agent <host> --pin <ref>` for a\n   reproducible install.\n4. Periodically `gh skill update --all` to refresh."
+    gold_removed: ''
+  - path: skills/gh/SKILL.md
+    tier: 1
+    gold_added: "---\nname: gh\ndescription: Patterns for invoking the GitHub CLI (gh) from agents. Covers structured output, pagination, repo targeting, search vs list, gh api fallback.\n---\n\n# Reference\n\n## Interactivity policy\n\n`gh` already does the right thing in non-TTY contexts: it skips the pager,\nstrips ANSI color, and errors out fast with a helpful message instead of\nprompting (e.g. `must provide --title and --body when not running interactively`).\nYou don't need to defensively set `GH_PAGER` or pass `--no-pager` (no such\nflag exists).\n\n## Parsing JSON\n\nHuman output from `gh` is column-formatted. If you want structured data:\n\n- Add `--json field1,field2,...` for structured output.\n- Run a command with `--json` and **no field list** to print the full set of\n  available fields, then pick what you need.\n- Use `--jq '<expr>'` for filtering without piping through a separate `jq`.\n- Use `--template '<go-template>'` (alongside `--json`) when you want shaped\n  text output. Note that `--template`/`-T` collides with a body-template flag\n  on a few commands (e.g. `gh pr create -T`, `gh issue create -T`); always\n  check `--help` before assuming which one you're hitting.\n\n## Pagination and silent truncation\n\nList commands cap results.\n\n- `gh issue list`, `gh pr list`, `gh search ...`: pass `-L N` (`--limit N`).\n  The default is usually 30.\n- `gh issue list` / `gh pr list` do not expose aggregate totals like\n  `totalCount` via `--json`. If you need a true total, use `gh api graphql`\n  to query `totalCount`; otherwise, treat `-L` as the cap for the current call.\n- For raw API calls use `gh api --paginate <path>`. Combine with\n  `--jq` and (optionally) `--slurp` to assemble one array.\n\n## Repo targeting\n\n`gh` infers the repo from the cwd's git remotes. \n\nPass `--repo OWNER/REPO` (`-R`) to override the resolved CWD repo.\n\n## Search vs list\n\n- `gh search issues|prs|code|repos|commits|users` uses GitHub's search\n  index and accepts the full search syntax (`is:open`, `author:`,\n  `label:`, `repo:owner/name`, `in:title`, ...). Pass the entire query as\n  one quoted string, the same way you would for `--search`:\n  `gh search issues \"is:open author:foo repo:cli/cli\"`. Prefer it for\n  anything cross-repo or filtered by author/label.\n- `gh issue list --search \"...\"` and `gh pr list --search \"...\"` accept\n  the same syntax but are scoped to one repo.\n\n## Fall back to `gh api` for anything `--json` doesn't expose\n\nSometimes useful data isn't on the typed commands. Examples:\n\n- Review-thread comments on a PR: `gh api repos/{owner}/{repo}/pulls/{n}/comments`\n  (the `--comments` flag on `gh pr view` shows issue-level comments only).\n- Arbitrary GraphQL: `gh api graphql -f query='...' -F var=value`.\n- REST shortcuts: `gh api repos/{owner}/{repo}/...` - note the\n  `{owner}/{repo}` placeholder is filled in for you when run from a repo\n  with detected remotes; pass them literally if you want determinism.\n\n## Authentication\n\n- `gh auth status` prints the active host(s), user, and which env var (if\n  any) is being honored.\n- `gh auth status --json` is supported.\n\n## Other notes\n\n- `gh pr checkout <n>` switches branches. Use `gh pr diff <n>` or\n  `gh pr view <n>` if you only need to read.\n- `NO_COLOR`, `CLICOLOR_FORCE`, and `GH_FORCE_TTY` are honored. Set\n  `GH_FORCE_TTY=1` if you want TTY-style output (colors, tables, the\n  pager, interactivity) inside an agent harness; leave it unset unless needed."
+    gold_removed: ''

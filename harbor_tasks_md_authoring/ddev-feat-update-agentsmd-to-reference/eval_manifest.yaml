@@ -1,0 +1,41 @@
+version: "2.0"
+
+task:
+  name: ddev-feat-update-agentsmd-to-reference
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: ddev/ddev
+  pr: 7659
+  base_commit: "b2b159e99f3ac8ebb0f85555d5649d3ff43c77f0"
+  merge_commit: "5aa12dcf70fdd0a802e0e22a4295d0e30d1a923f"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+
+config_edits:
+  - path: AGENTS.md
+    tier: 1
+    gold_added: 'This file provides guidance to AI agents when working with the DDEV core codebase.
+
+      ## DDEV Core Project Overview
+
+      ## General DDEV Development Patterns
+
+
+      For standard DDEV organization patterns including communication style, branch naming, PR creation, and common development practices, see the [organization-wide AGENTS.md](https://github.com/ddev/.github/blob/main/AGENTS.md).
+
+      '
+    gold_removed: ''

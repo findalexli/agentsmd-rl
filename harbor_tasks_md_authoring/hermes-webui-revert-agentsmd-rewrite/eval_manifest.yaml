@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: hermes-webui-revert-agentsmd-rewrite
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: nesquena/hermes-webui
+  pr: 114
+  base_commit: "f2be17a98d77daa0c623b7c1143b0f197f822953"
+  merge_commit: "9a78e8fde52801f7dfefba1009474b81b0d41493"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+
+config_edits:
+  - path: AGENTS.md
+    tier: 1
+    gold_added: "# Web UI MVP Instructions\nCanonical source: <repo>/\nSymlink (for imports): <agent-dir>/webui-mvp -> <repo>\nRuntime state: ~/.hermes/webui-mvp/sessions/\nPurpose:\n- Claude-style web UI for Hermes. Chat, workspace file browser, cron/skills/memory viewers.\nStart server:\n  cd <agent-dir>\n  nohup venv/bin/python <repo>/server.py > /tmp/webui-mvp.log 2>&1 &\n  # OR: <repo>/start.sh\nRun tests:\n  cd <agent-dir>\n  venv/bin/python -m pytest <repo>/tests/ -v\nHealth check: curl http://127.0.0.1:8787/health\nLogs: tail -f /tmp/webui-mvp.log\nSSH tunnel from Mac: ssh -N -L 8787:127.0.0.1:8787 <user>@<your-server>\nLiving documents (always update after a sprint):\n  <repo>/ROADMAP.md\n  <repo>/ARCHITECTURE.md\n  <repo>/TESTING.md\nSprint process skill: webui-sprint-loop\n# Workspace Convention (Web UI Sessions)\nWhen running as an agent invoked from the web UI, each user message is prefixed with:\n  [Workspace: /absolute/path/to/workspace]\nThis tag is the single authoritative source of the active workspace. It reflects\nwhichever workspace the user has selected in the UI at the moment they sent that message.\nIt updates on every message, so if the user switches workspaces mid-session, the very\nnext message will carry the new path. Always use the value from the most recent tag.\nThis tag overrides any prior workspace mentioned in the system prompt, memory, or\nconversation history. Never infer or fall back to a hardcoded path like\n~/workspace when this tag is present.\nApply it as the default working directory for ALL file operations:\n  - write_file: resolve relative paths against this workspace\n  - read_file / search_files: resolve paths relative to this workspace\n  - terminal workdir: set to this path unless the user explicitly says otherwise\n  - patch: resolve file paths relative to this workspace\nIf no [Workspace: ...] tag is present (e.g., CLI sessions), fall back to\n~/workspace as the default."
+    gold_removed: ''

@@ -1,0 +1,66 @@
+version: "2.0"
+
+task:
+  name: nushell-add-agentsmd-to-help-llms
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: nushell/nushell
+  pr: 17148
+  base_commit: "11d71fe3c78670a8922143dd7e8b8f20b71a97d0"
+  merge_commit: "67952a46ad3df4ec5bea6f1a26d8f40585f1c65f"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in agents.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in agents.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in agents.md."
+
+config_edits:
+  - path: agents.md
+    tier: 1
+    gold_added: '# AGENTS.md
+
+
+      ## Testing and code style
+
+
+      - Before every commit: `nu -c "use toolkit.nu; toolkit fmt"` and `nu -c "use toolkit.nu; toolkit clippy"`
+
+      - Before every PR: `nu -c "use toolkit.nu; toolkit check pr"` (runs fmt, clippy, test, test stdlib)
+
+      - Run tests: `nu -c "use toolkit.nu; toolkit test"` or `cargo test --workspace`
+
+      - **Never use `.unwrap()`** - always handle errors with `ShellError` or `ParseError`
+
+      - No panicking on user input, no nightly features, no GPL deps (MIT only)
+
+      - Commands in `crates/nu-command/src/` implement `Command` trait - add examples in `examples()` (they become tests)
+
+      - Check deps: `cargo tree --duplicates` - use workspace deps, exact semver `"1.2.3"`, no git deps in PRs
+
+      - See [rust_style.md](rust_style.md), [FAQ.md](FAQ.md), [HOWTOS.md](HOWTOS.md)
+
+
+      ## PR requirements
+
+
+      - Title format: `Fix URL parsing in `http get` (#1234)`
+
+      - Must pass: `nu -c "use toolkit.nu; toolkit check pr"` (fmt, clippy, test, stdlib)
+
+      - Include release notes summary (brief, user-focused)
+
+      - Link issues: "Fixes #1234" or "Closes #5678"
+
+      - See [CONTRIBUTING.md](../CONTRIBUTING.md)'
+    gold_removed: ''

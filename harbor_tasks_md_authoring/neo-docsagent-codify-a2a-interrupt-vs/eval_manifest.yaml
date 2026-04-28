@@ -1,0 +1,66 @@
+version: "2.0"
+
+task:
+  name: neo-docsagent-codify-a2a-interrupt-vs
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: neomjs/neo
+  pr: 10409
+  base_commit: "2a59a99915eee7bb433474cef2e6ac60e7a374ff"
+  merge_commit: "38a830778e8e85a5f02646bc8d803eb19a10ccf5"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .agent/skills/session-sunset/references/session-sunset-workflow.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .agent/skills/session-sunset/references/session-sunset-workflow.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .agent/skills/session-sunset/references/session-sunset-workflow.md."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_04
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_05
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+
+config_edits:
+  - path: .agent/skills/session-sunset/references/session-sunset-workflow.md
+    tier: 1
+    gold_added: "Before terminating your session, you MUST execute the following 8 steps to ensure a clean handover.\n\n### Step 6: Inbox Cleanup (`mark_read`)\nTo preserve \"hot\" thread visibility across sessions (Option B), agents do NOT `mark_read` messages immediately during active processing. Now that handovers are drafted (and have read your inbox state), you MUST explicitly use the `mark_read` MCP tool on all processed messages in your inbox. This ensures the inbox is clean for the next agent session.\n\n### Step 7: The A2A Continuity Ping & Reward Signal (Future-Self Routing)\nYou MUST use the `add_message` MCP tool to send an A2A message to your own agent identity (e.g., `to: '@me'` or your explicit handle). The body of this message MUST contain the **full Sunset Protocol markdown payload** (the output from Steps 1-6), alongside the `Origin Session ID`. \n### Step 8: Memory Persistence (The Sandman Memory)\nThis is the final and most critical step. You MUST invoke `add_memory` to persist a rich \"Sandman memory\" node. This memory should encapsulate the entire Sunset Protocol payload (Steps 1-8). The resulting `Origin Session ID` or `Memory ID` serves as the direct pointer for the next agent.\nAfter completing the 8 steps above, you must drop your final Sunset Protocol payload directly into the chat response for the Human Commander. "
+    gold_removed: ''
+  - path: AGENTS.md
+    tier: 1
+    gold_added: '### 22.1 Wake Injection as Interrupt (Interrupt vs Polling Protocol)
+
+      With the Phase 3 Wake Substrate operational, agents receive `[WAKE]` injected events directly into their context.
+
+      - **Wake as Interrupt, Not State:** You MUST treat `[WAKE]` text as a hardware interrupt (a signal that "something happened"), NOT as the canonical state of your inbox. The count in the wake text (e.g., "1 new message") is stale by design and informational only.
+
+      - **Poll as Truth:** You MUST poll `list_messages({status: ''unread''})` on each wake to read the canonical truth.
+
+      - **Deduplication:** Multiple queued `[WAKE]` events may arrive sequentially. By relying on `list_messages` and tracking internal history, you gracefully no-op on phantom wakes if the actual message has already been processed. Do not assume every `[WAKE]` implies a new, unprocessed task.
+
+      - **Option B (Sunset explicit mark_read):** Do NOT immediately call `mark_read` after reading. Preserving `readAt: null` during your active session is vital so future agents can find "hot" threads as a handoff substrate if they take over. During a mid-session-interrupt, keeping messages unread allows the handoff protocol to see them. Instead, `mark_read` must be executed explicitly at session sunset (see the `session-sunset` skill) once handovers are drafted.
+
+
+      ### Empirical anchors
+
+
+      - **Session `aaf22f06-cc5c-4dff-aa2f-7d5efb3a6343` (2026-04-26):** 6+ instances of inbound A2A messages requiring explicit human-prompted nudges before being read by the receiving agent. Pattern recurred across both Claude Code and Antigravity sessions. Post-codification, the Pre-Flight reasoning-statement transforms the discipline from "remember to check sometimes" to "explicit commitment before yielding."
+
+      - **Session `bf59d6c4-e250-44a2-b4b2-5bffae40ab5f` (2026-04-27):** 3 wake events fired in a single turn-arc due to queued harness inputs. By treating the wake as an interrupt and polling `list_messages`, the receiving agent avoided redundant processing loops. The absence of `mark_read` during processing kept the messages unread, cementing the need for Option B (Sunset explicit `mark_read`) to close the loop.'
+    gold_removed: ''

@@ -1,0 +1,68 @@
+version: "2.0"
+
+task:
+  name: console-agentsmd-changes-found-by-prlessons
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: oxidecomputer/console
+  pr: 3081
+  base_commit: "822b9c1991a23a22bd1f2b632918e57bd59ee023"
+  merge_commit: "3b995b5edce99b7a190d0053e6eb908f376fc476"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+
+config_edits:
+  - path: AGENTS.md
+    tier: 1
+    gold_added: '- Fix root causes of flaky timing rather than adding `sleep()` workarounds in tests.
+
+      - When modals need async data, fetch with `queryClient.ensureQueryData` before opening the modal so cached data is reused and there''s no content pop-in.
+
+      - Use `qErrorsAllowed` in loaders for endpoints where some users may lack permission, so the page degrades gracefully instead of the loader throwing (see `SiloScimTab.tsx`).
+
+      - Prefer disabling buttons with `disabledReason` over hiding them so users can discover the action exists. Compute `disabledReason` as a `string | undefined` ternary chain and derive `disabled` from `!!disabledReason`.
+
+      - When closing a modal that uses `useApiMutation`, call `mutation.reset()` in the dismiss handler to clear stale error state so it doesn''t persist on next open.
+
+      - Use react-hook-form''s `watch` and conditional rendering to keep fields in sync. Avoid `useEffect` to propagate form values between fields—it causes extra renders and subtle ordering bugs. Reset related fields in change handlers instead. Compute default values up front in `useForm({ defaultValues })` rather than using `useEffect` + `setValue`.
+
+      - Never access react-hook-form internals like `control._formValues`; use `useWatch` or restructure so you don''t need the value.
+
+      - In nested form contexts (sub-forms inside a page form), `preventDefault()` on Enter in text inputs to avoid accidental outer-form submission.
+
+      - In submit handlers, prefer early return over `invariant` for states that form validation should have prevented—crashing the app is worse than a silent noop for an edge case no user can reach.
+
+      - Hoist static column definitions to module scope; `useMemo` with an empty dependency array is a code smell indicating the value doesn''t belong inside the component. More generally, don''t reach for `useMemo` for simple ternary/conditional logic; reserve it for genuinely expensive computation or when referential identity matters for downstream deps.
+
+      - Prefer flexbox `gap` for spacing between inline elements over margin utilities like `ml-*`.
+
+      - Use proper casing in badge and label source text even when CSS `text-transform` changes display, since screen readers and clipboard copy use the source.
+
+      - Keep UI microcopy concise and imperative ("Manage resources" not "Can manage resources"); avoid semicolons.
+
+      - Don''t use default prop values that force callers to pass empty strings to opt out; make props truly optional.
+
+      - When using `!` (non-null assertion), add a comment justifying why the value is guaranteed to exist.
+
+      - When multiple boolean states control mutually exclusive UI, consolidate into a single discriminated union type (pairs with ts-pattern exhaustive matching).
+
+      - Use generated API types from `@oxide/api` rather than redeclaring their shape as inline object types.
+
+      - Add explicit type annotations on `.then`/`.catch` callbacks in generic API wrappers to prevent `any` from leaking.
+
+      - Use `satisfies` to catch type errors masked by `any`-typed callbacks (e.g., react-hook-form''s `onChange`). The assertion costs nothing at runtime but catches mismatches at build time.'
+    gold_removed: ''

@@ -1,0 +1,40 @@
+version: "2.0"
+
+task:
+  name: medusa-agent-skills-fix-add-missing-name-field
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: medusajs/medusa-agent-skills
+  pr: 1
+  base_commit: "88adfce35705ae761a8b1792f166a625f4509d9a"
+  merge_commit: "48385888e6fa424fd290f81bdf7a4e2d0b63649c"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in plugins/medusa-dev/skills/db-generate/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in plugins/medusa-dev/skills/db-migrate/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in plugins/medusa-dev/skills/new-user/SKILL.md."
+
+config_edits:
+  - path: plugins/medusa-dev/skills/db-generate/SKILL.md
+    tier: 1
+    gold_added: 'name: db-generate'
+    gold_removed: ''
+  - path: plugins/medusa-dev/skills/db-migrate/SKILL.md
+    tier: 1
+    gold_added: 'name: db-migrate'
+    gold_removed: ''
+  - path: plugins/medusa-dev/skills/new-user/SKILL.md
+    tier: 1
+    gold_added: 'name: new-user'
+    gold_removed: ''

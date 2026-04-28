@@ -1,0 +1,46 @@
+version: "2.0"
+
+task:
+  name: dotnet-skills-add-documentation-context-for-skiplocalsinit
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: Aaronontheweb/dotnet-skills
+  pr: 18
+  base_commit: "47c01a5e18d50f1dd6a249839a8a07bed98624ac"
+  merge_commit: "ba655593c16f04d5f0d1818f301383fb7ea2ebba"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/csharp/coding-standards/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/csharp/coding-standards/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/csharp/coding-standards/SKILL.md."
+
+config_edits:
+  - path: skills/csharp/coding-standards/SKILL.md
+    tier: 1
+    gold_added: '// SkipLocalsInit with stackalloc - skips zero-initialization for performance
+
+      // By default, .NET zero-initializes all locals (.locals init flag). This can have
+
+      // measurable overhead with stackalloc. Use [SkipLocalsInit] when:
+
+      //   - You write to the buffer before reading (like FormatInto below)
+
+      //   - Profiling shows zero-init as a bottleneck
+
+      // ⚠️ WARNING: Reading before writing returns garbage data (see docs example)
+
+      // Requires: <AllowUnsafeBlocks>true</AllowUnsafeBlocks> in .csproj
+
+      // See: https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/attributes/general#skiplocalsinit-attribute'
+    gold_removed: ''

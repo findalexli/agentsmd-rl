@@ -1,0 +1,253 @@
+version: "2.0"
+
+task:
+  name: cli-merge-claudemd-into-agentsmd
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: databricks/cli
+  pr: 3506
+  base_commit: "a3bebe155ff4938bcd00d96ea869e0407c97fd9c"
+  merge_commit: "ab338d4aff1a929ab7871aa6f75bfc75224d9c89"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+
+config_edits:
+  - path: AGENTS.md
+    tier: 1
+    gold_added: 'This file provides guidance to AI assistants when working with code in this repository.
+
+      # Project Overview
+
+      This is the Databricks CLI, a command-line interface for interacting with Databricks workspaces and managing Databricks Assets Bundles (DABs). The project is written in Go and follows a modular architecture.
+
+      # General Rules
+
+      When moving code from one place to another, please don''t unnecessarily change the code or omit parts.
+
+
+      # Development Commands
+
+
+      ### Building and Testing
+
+      - `make build` - Build the CLI binary
+
+      - `make test` - Run unit tests for all packages
+
+      - `go test ./acceptance -run TestAccept/bundle/<path>/<to>/<folder> -tail -test.v` - run a single acceptance test
+
+      - `make integration` - Run integration tests (requires environment variables)
+
+      - `make cover` - Generate test coverage reports
+
+
+      ### Code Quality
+
+      - `make lint` - Run linter on changed files only (uses lintdiff.py)
+
+      - `make lintfull` - Run full linter with fixes (golangci-lint)
+
+      - `make ws` - Run whitespace linter
+
+      - `make fmt` - Format code (Go, Python, YAML)
+
+      - `make checks` - Run quick checks (tidy, whitespace, links)
+
+
+      ### Specialized Commands
+
+      - `make schema` - Generate bundle JSON schema
+
+      - `make docs` - Generate bundle documentation
+
+      - `make generate` - Generate CLI code from OpenAPI spec (requires universe repo)
+
+
+      ### Git Commands
+
+      Use "git rm" to remove and "git mv" to rename files instead of directly modifying files on FS.
+
+
+      If asked to rebase, always prefix each git command with appropriate settings so that it never launches interactive editor.
+
+      GIT_EDITOR=true GIT_SEQUENCE_EDITOR=true VISUAL=true GIT_PAGER=cat git fetch origin main &&
+
+      GIT_EDITOR=true GIT_SEQUENCE_EDITOR=true VISUAL=true GIT_PAGER=cat git rebase origin/main
+
+
+      # Architecture
+
+
+      ### Core Components
+
+
+      **cmd/** - CLI command structure using Cobra framework
+
+      - `cmd/cmd.go` - Main command setup and subcommand registration
+
+      - `cmd/bundle/` - Bundle-related commands (deploy, validate, etc.)
+
+      - `cmd/workspace/` - Workspace API commands (auto-generated)
+
+      - `cmd/account/` - Account-level API commands (auto-generated)
+
+
+      **bundle/** - Core bundle functionality for Databricks Asset Bundles
+
+      - `bundle/bundle.go` - Main Bundle struct and lifecycle management
+
+      - `bundle/config/` - Configuration loading, validation, and schema
+
+      - `bundle/deploy/` - Deployment logic (Terraform and direct modes)
+
+      - `bundle/mutator/` - Configuration transformation pipeline
+
+      - `bundle/phases/` - High-level deployment phases
+
+
+      **libs/** - Shared libraries and utilities
+
+      - `libs/dyn/` - Dynamic configuration value manipulation
+
+      - `libs/filer/` - File system abstraction (local, DBFS, workspace)
+
+      - `libs/auth/` - Databricks authentication handling
+
+      - `libs/sync/` - File synchronization between local and remote
+
+
+      ### Key Concepts
+
+
+      **Bundles**: Configuration-driven deployments of Databricks resources (jobs, pipelines, etc.). The bundle system uses a mutator pattern where each transformation is a separate, testable component.
+
+
+      **Mutators**: Transform bundle configuration through a pipeline. Located in `bundle/config/mutator/` and `bundle/mutator/`. Each mutator implements the `Mutator` interface.
+
+
+      **Direct vs Terraform Deployment**: The CLI supports two deployment modes controlled by `DATABRICKS_CLI_DEPLOYMENT` environment variable:
+
+      - `terraform` (default) - Uses Terraform for resource management
+
+      - `direct` - Direct API calls without Terraform
+
+
+      # Code Style and Patterns
+
+
+      ## Go
+
+
+      Please make sure code that you author is consistent with the codebase and concise.
+
+      ### Configuration Patterns
+
+      - Bundle config uses `dyn.Value` for dynamic typing
+
+      - Config loading supports includes, variable interpolation, and target overrides
+
+      - Schema generation is automated from Go struct tags
+
+      ## Python
+
+      # Testing
+
+
+      ### Test Types
+
+      - **Unit tests**: Standard Go tests alongside source files
+
+      - **Integration tests**: `integration/` directory, requires live Databricks workspace
+
+      - **Acceptance tests**: `acceptance/` directory, uses mock HTTP server
+
+      ### Acceptance Tests
+
+      - Located in `acceptance/` with nested directory structure
+
+      - Each test directory contains `databricks.yml`, `script`, and `output.txt`
+
+      - Run with `go test ./acceptance -run TestAccept/bundle/<path>/<to>/<folder> -tail -test.v`
+
+      - Use `-update` flag to regenerate expected output files
+
+      - When you see the test fails because it has an old output, just run it one more time with an `-update` flag instead of changing the `output.txt` directly
+
+
+      # Logging
+
+
+      Use the following for logging:
+
+
+      ```
+
+      import "github.com/databricks/cli/libs/log"
+
+
+      log.Infof(ctx, "...")
+
+      log.Debugf(ctx, "...")
+
+      log.Warnf(ctx, "...")
+
+      log.Errorf(ctx, "...")
+
+      ```
+
+
+      Note that the ''ctx'' variable here is something that should be passed in as
+
+      an argument by the caller. We should not use context.Background() like we do in tests.
+
+
+      Use cmdio.LogString to print to stdout:
+
+
+      ```
+
+      import "github.com/databricks/cli/libs/cmdio"
+
+
+      cmdio.LogString(ctx, "...")
+
+      ```
+
+
+      # Specific File Guides
+
+
+      ## databricks_template_schema.json
+
+      # Development Tips
+
+      - Run `make checks fmt lint` before committing
+
+      - Use `make test-update` to regenerate acceptance test outputs after changes
+
+      - The CLI binary supports both `databricks` and `pipelines` command modes based on executable name
+
+      - Resource definitions in `bundle/config/resources/` are auto-generated from OpenAPI specs'
+    gold_removed: ''
+  - path: CLAUDE.md
+    tier: 1
+    gold_added: ''
+    gold_removed: ''
+  - path: CLAUDE.md
+    tier: 1
+    gold_added: AGENTS.md
+    gold_removed: ''

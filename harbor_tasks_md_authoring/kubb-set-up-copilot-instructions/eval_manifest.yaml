@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: kubb-set-up-copilot-instructions
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: kubb-labs/kubb
+  pr: 2055
+  base_commit: "c3b24e3aa2255e69b0d64e83b50ee4e4fd377370"
+  merge_commit: "d1741a10066a4f2acd231d8e615bdffaa1aa3aef"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/copilot-instructions.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/copilot-instructions.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/copilot-instructions.md."
+
+config_edits:
+  - path: .github/copilot-instructions.md
+    tier: 1
+    gold_added: "# Copilot Instructions\n\nThis document provides instructions for GitHub Copilot when working on the Kubb codebase.\n\n## Repository Overview\n\n- **Monorepo**: Managed by pnpm workspaces and Turborepo\n- **Module system**: ESM-only (`type: \"module\"` across repo)\n- **Node version**: 20\n- **Versioning**: Changesets for versioning and publishing\n- **CI/CD**: GitHub Actions\n\n## Setup Commands\n\n```bash\npnpm install                # Install dependencies\npnpm clean                  # Clean build artifacts\npnpm build                  # Build all packages\npnpm generate               # Generate code from OpenAPI specs\npnpm perf                   # Run performance tests\npnpm test                   # Run tests\npnpm typecheck              # Type check all packages\npnpm typecheck:examples     # Type check examples\npnpm format                 # Format code\npnpm lint                   # Lint code\npnpm lint:fix               # Lint and fix issues\npnpm changeset              # Create changelog entry\n```\n\n## Code Style\n\n- **Quotes**: Single quotes, no semicolons (see `biome.json`)\n- **Patterns**: Prefer functional patterns\n\n### TypeScript Conventions\n\n- Module resolution: `\"bundler\"`; ESM only\n- Prefer strict typing; avoid `any`\n- Files: `.ts` for libraries, `.tsx` for React components, `.vue` for Vue components\n- DTS output managed by `tsdown`\n\n### Naming Conventions\n\n- File/directory names: `camelCase`\n- Variables/functions: `camelCase`\n- Types/Interfaces: `PascalCase`\n- React components: `PascalCase`\n\n### Exports\n\nPackages use `\"exports\"` map and `typesVersions` as needed, keep public API stable.\n\n### Testing\n\nTest files named `*.test.ts` or `*.test.tsx` in `src` folders.\n\n## PR Guidelines\n\n- **Title format**: `[<plugin-name>] <Title>`\n- **Before committing**: Run `pnpm format && pnpm lint:fix`, `pnpm typecheck`, and `pnpm test`\n- **Before committing**: Run `pnpm generate` and `pnpm typecheck:examples` in a separate commit\n- Always use `pnpm changeset` to create changelog entries\n- Update docs in the same PR as code changes\n\n## Architecture\n\nKubb uses a plugin-based architecture where plugins generate code from OpenAPI specifications.\n\n### Key Concepts\n\n- **PluginManager**: Orchestrates plugin execution and manages file generation lifecycle\n- **Plugins**: Define generators, resolve paths/names, and hook into lifecycle events\n- **Generators**: Functions or React components that generate code files\n- **Components**: React components (using `@kubb/react-fabric`) that render code templates\n\n### Plugin Structure\n\nPlugins follow this structure:\n\n```typescript\nexport const pluginExample = definePlugin<PluginOptions>((options) => {\n  return {\n    name: pluginName,\n    options,\n    pre: [], // Plugins that must run before this one\n    post: [], // Plugins that run after this one\n    resolvePath(baseName, mode, options) { /* ... */ },\n    resolveName(name, type) { /* ... */ },\n    async install() { /* ... */ },\n  }\n})\n```\n\n### Components Location\n\nComponents are React components located in `packages/plugin-*/src/components/` that generate code templates using JSX syntax.\n\n### Generators Location\n\nGenerators are located in `packages/plugin-*/src/generators/`. Prefer React-based generators using `createReactGenerator`.\n\n## Additional Resources\n\nFor more detailed architecture information and examples, see the `AGENTS.md` file in the repository root."
+    gold_removed: ''

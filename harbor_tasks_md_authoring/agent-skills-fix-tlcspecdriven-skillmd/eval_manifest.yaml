@@ -1,0 +1,24 @@
+version: "2.0"
+
+task:
+  name: agent-skills-fix-tlcspecdriven-skillmd
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: tech-leads-club/agent-skills
+  pr: 37
+  base_commit: "f4b5c7d699b8934f279d4d0f04cdaa2b6fdd4e05"
+  merge_commit: "77374c205a99af8564b4e520530bfa59bec363e2"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in packages/skills-catalog/skills/(development)/tlc-spec-driven/SKILL.md."
+
+config_edits:
+  - path: packages/skills-catalog/skills/(development)/tlc-spec-driven/SKILL.md
+    tier: 1
+    gold_added: 'description: Project and feature planning with 4 phases - Specify, Design, Tasks, Implement+Validate. Creates atomic tasks with verification criteria and maintains persistent memory across sessions. Stack-agnostic. Use when (1) Starting new projects (initialize vision, goals, roadmap), (2) Working with existing codebases (map stack, architecture, conventions), (3) Planning features (requirements, design, task breakdown), (4) Implementing with verification, (5) Tracking decisions/blockers across sessions, (6) Pausing/resuming work. Triggers on "initialize project", "map codebase", "specify feature", "design", "tasks", "implement", "pause work", "resume work".'
+    gold_removed: ''

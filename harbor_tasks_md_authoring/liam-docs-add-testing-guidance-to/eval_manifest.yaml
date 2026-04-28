@@ -1,0 +1,29 @@
+version: "2.0"
+
+task:
+  name: liam-docs-add-testing-guidance-to
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: liam-hq/liam
+  pr: 3749
+  base_commit: "227ab97485fa81236296f4f161383d8499dc51a6"
+  merge_commit: "b58fe9f7c91e90f350be7b5e8a4988e6e77efbef"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+
+config_edits:
+  - path: CLAUDE.md
+    tier: 1
+    gold_added: '### Testing
+
+
+      - Follow principles in @docs/test-principles.md
+
+      '
+    gold_removed: ''

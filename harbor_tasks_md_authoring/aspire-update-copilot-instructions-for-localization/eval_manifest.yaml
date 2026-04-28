@@ -1,0 +1,30 @@
+version: "2.0"
+
+task:
+  name: aspire-update-copilot-instructions-for-localization
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: microsoft/aspire
+  pr: 12249
+  base_commit: "9166f17a294b42b56abfe3016f70467814dd6d13"
+  merge_commit: "36a414eade49f47e467bd0948d1048a2719f1f6f"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/copilot-instructions.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/copilot-instructions.md."
+
+config_edits:
+  - path: .github/copilot-instructions.md
+    tier: 1
+    gold_added: '## Localization files
+
+      * Files matching the pattern `*/localize/templatestrings.*.json` are localization files. Do not translate their content. It is done by a dedicated workflow.'
+    gold_removed: ''

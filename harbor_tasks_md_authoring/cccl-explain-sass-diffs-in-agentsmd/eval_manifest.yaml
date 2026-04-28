@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: cccl-explain-sass-diffs-in-agentsmd
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: NVIDIA/cccl
+  pr: 7733
+  base_commit: "94906625150f1ec5786ea7e1e5771d77404887fb"
+  merge_commit: "2802e71244304c44a4223e3705b59f8a0838f4e9"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+
+config_edits:
+  - path: AGENTS.md
+    tier: 1
+    gold_added: "## SASS Diffs\n\nUse this test when asked to check for SASS changes between commits, branches or a local changeset.\n\n### Goal\n\nDetect relevant changes in generated CUDA machine code (i.e. SASS) while filtering noise from addresses, symbols, metadata, etc.\nAny non-trivial change must be detected.\n\n### Inputs to establish\n\n* Compiled binary under test\n* The CUDA SM architectures to compile for. Try to detect this from the code and offer the user a list of suggestions.\n  The user must conform or provide this list.\n* Baseline disassembly (from the previous commit/branch or the current commit without the changes in the working copy).\n* Comparison disassembly (form the current commit/branch or the current commit with the changes in the working copy).\n* By default, prefer `cuobjdump -sass` to inspect SASS changes.\n  Use `cuobjdump -ptx` if the request is to check for PTX changes instead.\n\n### Normalization rules (strip known noise)\n\nApply these transforms to both baseline and candidate listings before diffing.\nWrite the normalized listings to separate files.\n\n* Remove addresses/offsets/hex location prefixes.\n* Remove build IDs, timestamps, absolute paths, temp directories, and compiler banners.\n* Normalize whitespace and alignment to single spaces.\n* Remove empty lines and purely comment lines.\n\n### Comparison rules (what matters)\n\nIgnore as trivial:\n\n* Register renaming with identical instruction sequence and operands.\n* Pure label renumbering or reordering of identical basic blocks.\n* Formatting-only differences or reordered symbol tables.\n\n### Reporting\n\n* If any non-trivial change was detected, the top 5 regions where a non-trivial change was detected,\n  including the name of the kernel they appeared in.\n* A short summary of the diff type (opcode change, memory access size change, size delta, control-flow, etc.).\n* Explicitly state if only noise was detected after normalization.\n* If you are not sure if the differences are impactful, show it and ask the user for guidance.\n* Keep the disassembly dumps available for reference and show the command to the user to generate a diff.\n\n---\n"
+    gold_removed: ''

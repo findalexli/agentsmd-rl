@@ -1,0 +1,48 @@
+version: "2.0"
+
+task:
+  name: console-claudemd-updates
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: oxidecomputer/console
+  pr: 3046
+  base_commit: "5c3c4074bbe577ef9fe5df74107fdf2444544578"
+  merge_commit: "43a2497068f861ca92064048a4eb8b8aae89bf38"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+
+config_edits:
+  - path: AGENTS.md
+    tier: 1
+    gold_added: '- Comment the _why_, not the _what_. If a line''s purpose isn''t obvious from context, give a short reason (e.g., `// clear API error state`)
+
+      - Run local checks before sending PRs: `npm run lint`, `npm run tsc`, `npm test run`, and `npm run e2ec`.
+
+      - You don''t usually need to run all the e2e tests, so try to filter by file and tes t name like `npm run e2ec -- instance -g ''boot disk''`. CI will run the full set.
+
+      - Data from `usePrefetchedQuery` is guaranteed to be defined (the loader ensures it and the hook throws if it''s not present). Do not add `if (!data) return` guards on these values.
+
+      - Let form state mirror the form''s UI structure, not the API request shape. Transform to the API shape in the `onSubmit` handler. This keeps fields, validation, and conditional logic straightforward.
+
+      - Use react-hook-form''s `watch` and conditional rendering to keep fields in sync. Avoid `useEffect` to propagate form values between fields—it causes extra renders and subtle ordering bugs. Reset related fields in change handlers instead.
+
+      - In general, use `useEffect` as a last resort! Try to figure out a non-useEffect version first. See https://react.dev/learn/you-might-not-need-an-effect.md when thinking about difficult cases.
+
+      - Use `remeda` (imported as `R`) for sorting and data transformations—e.g., `R.sortBy(items, (x) => x.key1, (x) => x.key2)` instead of manual `.sort()` comparators.
+
+      - Prefer small composable predicates (e.g., `poolHasIpVersion(versions)`) that chain with `.filter()` over monolithic filter functions with multiple optional parameters.'
+    gold_removed: ''

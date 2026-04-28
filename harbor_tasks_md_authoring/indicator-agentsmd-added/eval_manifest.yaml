@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: indicator-agentsmd-added
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: cinar/indicator
+  pr: 296
+  base_commit: "62ad62ec91ccf9b4267e21c8d2cde54aecb5a898"
+  merge_commit: "8ab1190c180e47c524dbfa4f444c3644fbb189c5"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+
+config_edits:
+  - path: AGENTS.md
+    tier: 1
+    gold_added: "# AGENTS.md - Agentic Coding Guidelines\n\nThis document provides guidelines for agents working on the Indicator Go project.\n\n## Project Overview\n\nIndicator is a Golang library providing technical analysis indicators, strategies, and a backtesting framework. It uses Go 1.22+ with generics and channels for streaming data processing.\n\n## Build/Lint/Test Commands\n\n### Running the Full CI Pipeline\n```bash\n# Using task (requires go-task)\ntask\n\n# Or manually:\ntask fmt\ntask lint\ntask test\ntask docs\n```\n\n### Individual Commands\n```bash\n# Format code\ntask fmt\n# Or: go fix ./...\n\n# Run linters (go vet, gosec, staticcheck, revive)\ntask lint\n# Specific linters:\ngo vet ./...\ngo run github.com/securego/gosec/v2/cmd/gosec@v2.20.0 ./...\ngo run honnef.co/go/tools/cmd/staticcheck@v0.5.1 ./...\ngo run github.com/mgechev/revive@v1.3.4 -config=revive.toml ./...\n\n# Run tests with coverage\ntask test\n# Or: go test -cover -coverprofile=coverage.out ./...\n\n# Build CLI tools\ntask build-tools\n# Or manually:\ngo build -o indicator-backtest cmd/indicator-backtest/main.go\ngo build -o indicator-sync cmd/indicator-sync/main.go\n```\n\n### Running a Single Test\n```bash\n# Run specific test\ngo test ./trend -run TestApo -v\n\n# Run test in specific file\ngo test -v ./trend/apo_test.go\n\n# Run with coverage for specific package\ngo test -cover ./trend\n```\n\n### MCP Server\n```bash\n# Run MCP server\ngo run ./mcp\n```\n\n## Code Style Guidelines\n\n### Project Structure\n- **Packages**: Organized by category (trend, momentum, volatility, volume, strategy, helper, etc.)\n- **Test files**: Named `*_test.go` in same package with `_test` suffix (e.g., `apo_test.go`)\n- **Test data**: CSV files in `testdata/` subdirectories\n\n### Naming Conventions\n- **Types**: PascalCase (e.g., `Apo`, `Ema`, `Rsi`)\n- **Constants**: PascalCase with descriptive prefix (e.g., `DefaultApoFastPeriod`)\n- **Functions**: PascalCase (e.g., `NewApo`, `Compute`)\n- **Variables**: camelCase (e.g., `fastPeriod`, `slowPeriod`)\n- **Packages**: Single lowercase word (e.g., `trend`, `volume`)\n\n### Generics\n- Use generic type parameter `T` constrained to `helper.Number`:\n  ```go\n  type Apo[T helper.Number] struct {\n      FastPeriod int\n      FastSmoothing T\n  }\n  func NewApo[T helper.Number]() *Apo[T] { ... }\n  ```\n\n### Channel-Based API\n- Functions take channels as input: `<-chan T`\n- Functions return channels as output: `<-chan T`\n- Use `helper.Buffered` for lookback periods\n- Use `helper.Duplicate` for branching data streams\n\n### Error Handling\n- Return errors as last return value\n- Use `errors.New()` for simple errors\n- Use `fmt.Errorf` with %w for wrapped errors\n- Handle errors at call site:\n  ```go\n  result, err := something()\n  if err != nil {\n      return nil, err\n  }\n  ```\n\n### Testing Patterns\n- Use `package_test` suffix for test packages\n- Create struct for test data with CSV header tags:\n  ```go\n  type ApoData struct {\n      Close float64 `header:\"Close\"`\n      Apo   float64 `header:\"APO\"`\n  }\n  ```\n- Use `helper.ReadFromCsvFile` for test data\n- Use `helper.CheckEquals` for assertion\n- Use `helper.RoundDigits` for floating-point comparison\n\n### Code Organization\n- Put related indicators in same file\n- Define default constants at top of file\n- Use functional options for optional configuration:\n  ```go\n  type Option[T any] func(*Config[T])\n  func WithOption[T any](value T) Option[T] {\n      return func(c *Config[T]) { c.Value = value }\n  }\n  ```\n\n### Required Copyright Header\nEvery source file must include:\n```go\n// Copyright (c) 2021-2024 Onur Cinar.\n// The source code is provided under GNU AGPLv3 License.\n// https://github.com/cinar/indicator\n```\n\n### Imports\n- Standard library first, then external packages\n- Use grouped imports:\n  ```go\n  import (\n      \"fmt\"\n      \"io\"\n      \n      \"github.com/cinar/indicator/v2/helper\"\n  )\n  ```\n\n### Code Quality Requirements\n- **100% code coverage** is required for all indicators\n- All public types and functions need documentation comments\n- Use revive.toml rules (see `revive.toml`)\n- Avoid unused parameters (use `_`)\n- No dot imports allowed\n- Error messages should be lowercase, no punctuation\n\n### Documentation\n- Use Go doc comments (starting with type/function name)\n- Include formula when applicable:\n  ```go\n  // Apo represents...\n  //\n  //\tFast = Ema(values, fastPeriod)\n  //\tSlow = Ema(values, slowPeriod)\n  //\tAPO = Fast - Slow\n  //\n  // Example:\n  //\n  //\tapo := trend.NewApo[float64]()\n  ```\n- Generate docs with: `task docs`\n\n## Key Dependencies\n\n- `github.com/cinar/indicator/v2/helper` - Utility functions for channel operations\n- Uses Go 1.22+ with generics\n- Testing uses standard `testing` package"
+    gold_removed: ''

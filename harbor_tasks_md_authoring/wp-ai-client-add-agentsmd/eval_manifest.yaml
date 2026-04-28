@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: wp-ai-client-add-agentsmd
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: WordPress/wp-ai-client
+  pr: 31
+  base_commit: "be3421a40e748096f9a59faccc37e46516eccc78"
+  merge_commit: "9561a45d0fe53b78b48f5194f0e1e20ca9991642"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+
+config_edits:
+  - path: AGENTS.md
+    tier: 1
+    gold_added: "# WordPress AI Client - Coding Agent Guide\n\n## Project Overview\n\nAn AI client and API for WordPress to communicate with any generative AI models of various capabilities using a uniform API. Built on top of the [PHP AI Client](https://github.com/WordPress/php-ai-client), it provides a WordPress-native Prompt Builder, an Admin Settings Screen for credentials, automatic credential wiring, a PSR-compliant HTTP client, and a client-side JavaScript API.\n\n## Commands & Scripts\n\n*   `composer lint`: Lints the PHP code (PHPCodeSniffer and PHPStan).\n*   `composer phpcs`: Runs PHPCodeSniffer on the PHP code.\n*   `composer phpstan`: Runs PHPStan on the PHP code.\n*   `npm run build`: Builds the JavaScript assets.\n*   `npm run format-js`: Formats the JavaScript code using Prettier.\n*   `npm run lint-js`: Lints the JavaScript code.\n*   `npm run lint-php`: Lints the PHP code using Composer inside the `wp-env` environment.\n*   `npm run test-php`: Runs PHPUnit tests with single site config inside the `wp-env` environment.\n*   `npm run test-php-multisite`: Runs PHPUnit tests with Multisite config inside the `wp-env` environment.\n\n**Note:** In order to follow the WordPress code style in JavaScript, the project uses a WordPress-specific fork of Prettier (`wp-prettier`) under the hood.\n\n## Coding Standards & Compatibility Constraints\n\nThis project adheres to the WordPress Coding Standards with specific exceptions for PSR-4 autoloading (file names match class names). More details about coding and documentation standards are outlined in the `CONTRIBUTING.md` file. Any agent working on this project MUST read and follow the guidelines in that file before starting any work.\n\n*   **PHP Version:** Code must be compatible with **PHP 7.4**.\n*   **Code Style:** All code (PHP and JavaScript) must be compliant with the WordPress Coding Standards.\n*   **Type Hints:** Use explicit type hints for parameters, return values, and properties where supported by PHP 7.4.\n\n## Core Principles\n\n*   **Uniform API:** Provide a consistent interface for interacting with various AI providers.\n*   **WordPress Native:** Integrate deeply with WordPress APIs (Abilities API, HTTP API, Settings API).\n*   **Security:** Restrict access to powerful features (like arbitrary prompt generation via REST API) using capabilities (`prompt_ai`).\n*   **Standards Compliance:** Adhere to PSR standards where applicable (e.g., HTTP Client) while maintaining WordPress compatibility.\n\n## Project Architecture Overview\n\nThe project consists of three main layers:\n\n1.  **PHP SDK (`includes/`)**: The core logic, built on `wordpress/php-ai-client`. It handles prompt building, request execution, and response parsing. It also manages API credentials and integrates with WordPress core.\n2.  **REST API (`includes/REST_API/`)**: Exposes the AI capabilities to the client-side. It handles authentication and validation.\n3.  **JavaScript SDK (`src/`)**: A client-side library that mirrors the PHP Prompt Builder interface, communicating with the backend via the REST API.\n\n## Directory Structure\n\n*   `build/`: Compiled JavaScript and CSS assets.\n*   `includes/`: Main PHP source files (PSR-4 autoloaded).\n    *   `API_Credentials/`: Manages API keys and settings.\n    *   `Builders/`: Prompt builder implementations.\n    *   `Capabilities/`: Capability management.\n    *   `HTTP/`: HTTP client integrations.\n    *   `REST_API/`: REST API controllers.\n*   `src/`: Source TypeScript/JavaScript files.\n*   `tests/`: PHPUnit tests.\n    *   `phpunit/`: Test suite configuration and test files.\n*   `vendor/`: Composer dependencies.\n\n## Git Repo\n\nThe main branch for this project is called \"trunk\".\n\n## Agent Guidelines\n\n*   **DO:** Read `CONTRIBUTING.md` before writing any code.\n*   **DO:** Ensure all PHP code is compatible with PHP 7.4.\n*   **DO:** Use `wp_enqueue_script( 'wp-ai-client' )` to load the JS SDK.\n*   **DO:** Add unit tests for new PHP functionality in `tests/phpunit/tests/`.\n*   **DO:** Run `npm run lint-php` and `npm run test-php` before submitting changes.\n*   **DON'T:** Use PHP 8.0+ features (e.g., constructor property promotion, union types, match expressions, enums).\n*   **DON'T:** Create new top-level directories without a strong reason.\n*   **DON'T:** Hardcode API credentials.\n\n## Common Pitfalls\n\n*   **Ignoring the Fluent API:** While the traditional API is available, the fluent API is the preferred way for implementers to use the client. Avoid writing complex, nested method calls when the fluent API provides a cleaner alternative.\n*   **Duplicating Interface Documentation:** Manually writing PHPDoc descriptions for methods that implement an interface is a common pitfall. The `{@inheritDoc}` tag should be used instead to inherit the documentation from the interface.\n*   **Missing Capability Checks in REST:** Exposing AI generation endpoints without proper capability checks. Always ensure `prompt_ai` capability is checked for privileged operations."
+    gold_removed: ''

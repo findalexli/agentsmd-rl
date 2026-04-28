@@ -1,0 +1,678 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+cd /workspace/swamp
+
+# Idempotency guard
+if grep -qF ".claude/skills/issue-lifecycle/SKILL.md" ".claude/skills/issue-lifecycle/SKILL.md" && grep -qF ".claude/skills/issue-lifecycle/references/adversarial-review.md" ".claude/skills/issue-lifecycle/references/adversarial-review.md" && grep -qF ".claude/skills/issue-lifecycle/references/implementation.md" ".claude/skills/issue-lifecycle/references/implementation.md" && grep -qF ".claude/skills/issue-lifecycle/references/planning.md" ".claude/skills/issue-lifecycle/references/planning.md" && grep -qF ".claude/skills/issue-lifecycle/references/triage.md" ".claude/skills/issue-lifecycle/references/triage.md"; then
+  echo "Gold patch already applied."
+  exit 0
+fi
+
+git apply --whitespace=nowarn <<'PATCH'
+diff --git a/.claude/skills/issue-lifecycle/SKILL.md b/.claude/skills/issue-lifecycle/SKILL.md
+@@ -1,181 +0,0 @@
+----
+-name: issue-lifecycle
+-description: >
+-  Drive the @swamp/issue-lifecycle model for interactive issue triage and
+-  plan iteration against swamp-club lab issues. Use when the user wants to
+-  triage a swamp-club issue, generate an implementation plan, or iterate on
+-  a plan with feedback. Triggers on "triage issue", "triage #", "issue plan",
+-  "review plan", "iterate plan", "approve plan", "issue lifecycle".
+----
+-
+-# Issue Lifecycle Skill
+-
+-Interactive triage and implementation planning for swamp-club lab issues using
+-the `@swamp/issue-lifecycle` extension model. This skill drives the model
+-conversationally — the human steers, you execute.
+-
+-The model operates on swamp-club lab issue numbers. Every step records a
+-structured lifecycle entry against the issue in swamp-club and transitions its
+-status as the work progresses. There is no GitHub integration — the issue must
+-already exist in swamp-club before you start.
+-
+-## Core Principle
+-
+-**Never auto-approve.** Always stop and show the plan to the human. Always ask
+-for feedback. Only call `approve` when the human explicitly says to proceed.
+-
+-## Repository Configuration
+-
+-This skill reads repo-specific conventions from `agent-constraints/` at the
+-repository root. If these files exist, they customize how each phase works:
+-
+-- `agent-constraints/adversarial-dimensions.md` — review criteria and dimensions
+-- `agent-constraints/planning-conventions.md` — analysis and documentation
+-  requirements
+-- `agent-constraints/triage-conventions.md` — codebase exploration and bug
+-  reproduction
+-- `agent-constraints/implementation-conventions.md` — build, verify, and PR
+-  conventions
+-
+-If these files do not exist, the skill uses generic defaults documented in each
+-reference file.
+-
+-## Lifecycle Phases
+-
+-Each phase has detailed instructions in a reference file. Read only the
+-reference you need for the current phase.
+-
+-### Phase 1: Triage (steps 1–5)
+-
+-Read [references/triage.md](references/triage.md) when starting a new triage or
+-resuming an issue in the `triaging` phase. Covers: creating the model instance,
+-fetching issue context from swamp-club, reading the codebase, classifying the
+-issue, and reproducing bugs.
+-
+-### Phase 2: Planning (steps 6–9)
+-
+-Read [references/planning.md](references/planning.md) after triage is complete.
+-Covers: generating the implementation plan, applying repo-specific planning
+-conventions, and presenting to the human.
+-
+-### Phase 3: Adversarial Review & Iteration
+-
+-Read [references/adversarial-review.md](references/adversarial-review.md)
+-**immediately after every `plan` or `iterate` call — no exceptions.** Planning
+-and adversarial review are always paired: you never present a plan without
+-running the review first. Covers: challenging the plan across repo-specific
+-dimensions, verifying against the codebase, recording findings, presenting to
+-the human, and the iteration loop until approval.
+-
+-### Phase 4: Implementation
+-
+-Read [references/implementation.md](references/implementation.md) after plan
+-approval. Covers: signalling implementation start, doing the work, verifying
+-fixes against the reproduction, creating the PR, and completing the issue.
+-
+-## Classification Types
+-
+-The `triage` method classifies issues into one of three types (matching
+-swamp-club):
+-
+-- `bug` — something is broken or behaving incorrectly
+-- `feature` — a request for new functionality or enhancement
+-- `security` — security vulnerability or hardening work
+-
+-Two additional classification details are captured in the classification record
+-but do NOT map to separate swamp-club types:
+-
+-- `isRegression` — set to `true` when the bug previously worked. Implies
+-  `type: bug`. Look for signals like "this used to work", "stopped working
+-  after", or git history showing recent changes to the affected code.
+-- Low-confidence classifications — if you cannot classify the issue confidently,
+-  use `confidence: low` and populate `clarifyingQuestions`. Do not guess the
+-  type — ask the human before calling `triage`.
+-
+-## Reviewing Plan History
+-
+-To review a specific plan version:
+-
+-```
+-swamp model method run issue-<N> review --input version=<V>
+-```
+-
+-To see all model data:
+-
+-```
+-swamp model output search issue-<N> --json
+-```
+-
+-## Resuming a Session
+-
+-If the human comes back to an in-progress issue, check the current phase:
+-
+-```
+-swamp data get issue-<N> state-main --json
+-```
+-
+-Read the `phase` field from the response. **Do NOT call `start` to resume** —
+-`start` unconditionally resets the phase to `triaging`, destroying progress.
+-
+-Use this table to determine what to do next:
+-
+-| Phase            | Action                                                                    |
+-| ---------------- | ------------------------------------------------------------------------- |
+-| `triaging`       | Read [references/triage.md](references/triage.md)                         |
+-| `classified`     | Read [references/planning.md](references/planning.md)                     |
+-| `plan_generated` | Read [references/adversarial-review.md](references/adversarial-review.md) |
+-| `approved`       | Read [references/implementation.md](references/implementation.md)         |
+-| `implementing`   | Link a PR with `link_pr` or call `complete`                               |
+-| `pr_open`        | Wait 3 min, then check PR: `pr_merged` if merged, `pr_failed` if failed   |
+-| `pr_failed`      | Fix the issue, then `link_pr` (new PR) or `implement` (major rework)      |
+-| `releasing`      | Check release build: `ship` when done, or `complete` as fallback          |
+-| `done`           | Nothing to do — lifecycle is complete                                     |
+-
+-The canonical phase list lives in the `TRANSITIONS` constant in
+-`extensions/models/_lib/schemas.ts`.
+-
+-## Closing Out a Shipped Issue
+-
+-When a PR has already merged and the lifecycle just needs to be marked done:
+-
+-1. Check the current phase:
+-   ```
+-   swamp data get issue-<N> state-main --json
+-   ```
+-2. If the phase is `implementing`, link the PR first:
+-   ```
+-   swamp model method run issue-<N> link_pr --input url=<PR URL>
+-   ```
+-3. If the phase is `pr_open`, record the merge:
+-   ```
+-   swamp model method run issue-<N> pr_merged
+-   ```
+-4. If the phase is `releasing`, ship it:
+-   ```
+-   swamp model method run issue-<N> ship
+-   ```
+-5. For quick close-out, `complete` still works from `implementing`, `pr_open`,
+-   or `releasing`:
+-   ```
+-   swamp model method run issue-<N> complete
+-   ```
+-
+-## Key Rules
+-
+-1. **Never skip the feedback loop.** Always show the plan. Always ask.
+-2. **Never call approve without explicit human approval.**
+-3. **Persist everything through the model.** Don't just have a conversation —
+-   call the model methods so state survives context compression and sessions.
+-4. **swamp-club is the source of truth.** Every state transition posts a
+-   lifecycle entry and transitions the issue status in swamp-club automatically.
+-   You don't need to manually update the issue.
+-5. **Read the codebase thoroughly** before generating the plan. The plan should
+-   reference specific files, functions, and test paths.
+-6. **Follow the planning conventions for this repository.** Read
+-   `agent-constraints/planning-conventions.md` if it exists.
+-7. **Never open a PR without asking first.** Present the changes summary and
+-   wait for the human to confirm before creating the pull request.
+-8. **File unrelated issues immediately.** If you discover a bug, code smell, or
+-   problem during investigation that is NOT related to the current issue, file
+-   it as a new swamp-club issue. Do not try to fix it in the current work span —
+-   keep the scope focused.
+diff --git a/.claude/skills/issue-lifecycle/references/adversarial-review.md b/.claude/skills/issue-lifecycle/references/adversarial-review.md
+@@ -1,164 +0,0 @@
+-# Adversarial Review & Plan Iteration
+-
+-Read this after generating or iterating on a plan. After **every** `plan` or
+-`iterate` call, you MUST run an adversarial review before the human can approve.
+-
+-## Step 1: Challenge the Plan
+-
+-Re-read the plan, then critically evaluate it.
+-
+-Read `agent-constraints/adversarial-dimensions.md` at the repo root for the
+-review criteria specific to this repository. If it does not exist, evaluate
+-across these default dimensions:
+-
+-- **Architecture**: Are domain boundaries correct? Is this the right abstraction
+-  level? Are there better patterns?
+-- **Scope**: Is this doing too much or too little? Does it match the issue? Is
+-  there scope creep? Are there unnecessary changes?
+-- **Risk**: Are all failure modes identified? What about edge cases, race
+-  conditions, backwards compatibility? What could go wrong that isn't listed?
+-- **Testing**: Is the testing strategy sufficient? Are edge cases covered? Are
+-  there integration test gaps?
+-- **Complexity**: Is this over-engineered? Could it be simpler? Are there
+-  unnecessary abstractions or indirections?
+-- **Correctness**: Will this actually solve the problem? Are there logical gaps?
+-  Does the approach match established patterns in the codebase?
+-- **Documentation**: Does this change affect project documentation? Flag any
+-  gaps as findings.
+-
+-## Step 2: Verify Against the Codebase
+-
+-For each plan step, **read the actual code**:
+-
+-- Read every file referenced in the plan steps — verify they exist
+-- Confirm functions, classes, and types exist where claimed
+-- Grep for related code the plan might have missed
+-- Check for conflicts with existing patterns or naming conventions
+-- Verify that proposed test paths and test patterns match the codebase
+-- Look for code that already does what a step proposes (duplication risk)
+-- **Trace existing execution paths**: When the plan adds a new entry point to an
+-  existing capability (e.g. a new way to run workflows, execute model methods,
+-  acquire locks), find how existing callers invoke that capability and verify
+-  the plan routes through the same shared code path. New entry points that
+-  reimplement existing logic are a high-severity finding.
+-- Check if project documentation describes behavior being changed — flag stale
+-  docs
+-
+-## Step 3: Record Findings
+-
+-Write findings to a YAML file as a YAML object with a `findings` key. **Use an
+-issue-scoped filename** like `/tmp/findings-issue-<N>.yaml` — a generic
+-`/tmp/findings.yaml` collides with stale content from previous lifecycle
+-sessions and can leak unrelated findings into the current review.
+-
+-```yaml
+-# /tmp/findings-issue-<N>.yaml
+-findings:
+-  - id: ADV-1
+-    severity: high
+-    category: architecture
+-    description: "The plan adds a new service but doesn't define its domain boundary"
+-  - id: ADV-2
+-    severity: medium
+-    category: testing
+-    description: "No integration tests planned for the new API endpoint"
+-```
+-
+-Then record them:
+-
+-```
+-swamp model method run issue-<N> adversarial_review \
+-  --input-file /tmp/findings-issue-<N>.yaml
+-```
+-
+-Each finding must have:
+-
+-- `id`: Sequential identifier (ADV-1, ADV-2, ...)
+-- `severity`: critical, high, medium, or low
+-- `category`: Use categories from `agent-constraints/adversarial-dimensions.md`,
+-  or the defaults above (architecture, scope, risk, testing, complexity,
+-  correctness, documentation)
+-- `description`: Clear explanation of the concern
+-
+-**Critical/high findings block approval.** Medium/low are shown as warnings.
+-
+-## Step 4: Present to the Human
+-
+-Show findings grouped by severity:
+-
+-1. Critical findings (blockers)
+-2. High findings (blockers)
+-3. Medium findings (warnings)
+-4. Low findings (warnings)
+-
+-If there are blocking findings, say:
+-
+-> "The adversarial review found N blocking issue(s) that need to be addressed
+-> before approval. Here's what needs to change: ..."
+-
+-If no blocking findings, say:
+-
+-> "Adversarial review passed — no blocking findings. N warning(s) noted. Ready
+-> for your approval when you are."
+-
+-## Plan Iteration Loop
+-
+-When the human gives feedback OR adversarial findings need addressing:
+-
+-1. **Call iterate** with both the feedback text and your revised plan. Write the
+-   revised `steps` and `potentialChallenges` to an issue-scoped YAML file (e.g.
+-   `/tmp/plan-issue-<N>-v2.yaml` — the `-v2` suffix keeps each revision distinct
+-   if you want to diff between iterations), then run:
+-
+-   ```
+-   swamp model method run issue-<N> iterate \
+-     --input feedback="<human's feedback or adversarial findings>" \
+-     --input summary="..." \
+-     --input dddAnalysis="..." \
+-     --input testingStrategy="..." \
+-     --input-file /tmp/plan-issue-<N>-v2.yaml
+-   ```
+-
+-2. **Resolve addressed findings**. Write resolutions to an issue-scoped YAML
+-   file:
+-
+-   ```yaml
+-   # /tmp/resolutions-issue-<N>.yaml
+-   resolutions:
+-     - findingId: ADV-1
+-       resolutionNote: "Added domain boundary definition in step 2"
+-     - findingId: ADV-2
+-       resolutionNote: "Added integration test step covering the new endpoint"
+-   ```
+-
+-   ```
+-   swamp model method run issue-<N> resolve_findings \
+-     --input-file /tmp/resolutions-issue-<N>.yaml
+-   ```
+-
+-3. **Re-run adversarial review** on the new plan version. The review must be
+-   current with the latest plan version — stale reviews block approval.
+-
+-4. **Show what changed** between the previous and new plan version. Be specific:
+-   - "Reordered steps 2 and 3 based on your feedback"
+-   - "Added regression analysis for module X"
+-   - "Removed step 4 — you're right, that's already handled by..."
+-
+-5. **Ask for feedback again.** Keep iterating until:
+-   - All critical/high adversarial findings are resolved, AND
+-   - The human says: "approve", "approved", "looks good", "ship it", "go",
+-     "LGTM"
+-
+-6. Only then call `approve`:
+-   ```
+-   swamp model method run issue-<N> approve
+-   ```
+-
+-**The `approve` method will fail** if critical/high findings are unresolved or
+-if the adversarial review is stale (wrong plan version). This is enforced by the
+-`adversarial-review-clear` pre-flight check.
+-
+-## Next Phase
+-
+-Plan is approved. Read [implementation.md](implementation.md) when the human
+-says to implement.
+diff --git a/.claude/skills/issue-lifecycle/references/implementation.md b/.claude/skills/issue-lifecycle/references/implementation.md
+@@ -1,128 +0,0 @@
+-# Implementation Flow
+-
+-Read this after the plan is approved and the human says to implement. The
+-`approve` method already transitioned the swamp-club issue to `in_progress`.
+-
+-## 1. Signal Implementation Started
+-
+-Before writing any code, signal that implementation has begun:
+-
+-```
+-swamp model method run issue-<N> implement
+-```
+-
+-This transitions the phase to `implementing` and posts an
+-`implementation_started` lifecycle entry on the swamp-club issue. Do this
+-**before** touching any code.
+-
+-## 2. Do the Implementation Work
+-
+-Follow the approved plan step by step.
+-
+-## 3. Verify the Fix Against the Reproduction
+-
+-**Bugs and regressions only — skip for features and security issues.**
+-
+-If a reproduction was created during triage, reuse it to confirm the fix works.
+-
+-Read `agent-constraints/implementation-conventions.md` at the repo root for
+-repo-specific verification steps (build commands, binary paths, test commands).
+-If it does not exist, use the project's standard build/test process from
+-CLAUDE.md.
+-
+-Report verification results to the human before creating the PR:
+-
+-- "Verified: reproduction scenario now passes" or
+-- "Verification failed: <what still breaks>"
+-
+-## 4. Create a PR
+-
+-**Always ask the human before opening a PR.** Do not create the PR automatically
+-— present a summary of the changes and ask if they are ready to open it. Only
+-proceed after explicit confirmation.
+-
+-Use the repository's normal PR tooling. Read
+-`agent-constraints/implementation-conventions.md` for repo-specific PR
+-conventions.
+-
+-## 4a. Link the PR
+-
+-After the PR is open, record its URL on the lifecycle so the swamp-club record
+-points to where the fix lives:
+-
+-```
+-swamp model method run issue-<N> link_pr --input url=<PR URL>
+-```
+-
+-This writes a `pullRequest-main` resource, transitions the phase to `pr_open`,
+-and posts a `pr_linked` lifecycle entry on the swamp-club issue. The swamp-club
+-status stays at `in_progress` — there is no new status for `pr_open`; the PR
+-link is additional evidence attached to the in-progress state.
+-
+-`link_pr` is **idempotent** — call it again with a new URL if:
+-
+-- CI fails and you force-push a different PR
+-- The first PR is closed and a replacement is opened
+-- You recorded the wrong URL the first time
+-
+-Each call overwrites `pullRequest-main` with the latest URL and refreshes
+-`linkedAt`. A new `pr_linked` entry is posted on every call.
+-
+-Calling `link_pr` is **encouraged but not enforced** — `complete` still accepts
+-`implementing` as a valid source phase for backwards compatibility with legacy
+-records. Prefer the `implementing → link_pr → complete` flow for all new work so
+-the lifecycle record carries the PR link.
+-
+-## 4b. Wait for CI and Check PR Status
+-
+-After linking the PR, wait at least 3 minutes for CI to run. The model enforces
+-a `pr-cooldown` check — calling `pr_merged` or `pr_failed` within 3 minutes of
+-`link_pr` will be rejected.
+-
+-Check the PR status externally (e.g.,
+-`gh pr view <url> --json state,statusCheckRollup`):
+-
+-- **PR merged**: call `pr_merged` to transition to `releasing`
+-  ```
+-  swamp model method run issue-<N> pr_merged
+-  ```
+-- **PR failed** (CI red, changes requested): call `pr_failed` with the reason
+-  ```
+-  swamp model method run issue-<N> pr_failed --input reason="CI failed: type check errors"
+-  ```
+-- **PR still open and passing**: wait and check again later.
+-
+-## 4c. Handle PR Failure
+-
+-When in `pr_failed`, diagnose and fix the issue. Then either:
+-
+-- Push fixes and call `link_pr` again (same or new PR URL) to return to
+-  `pr_open`:
+-  ```
+-  swamp model method run issue-<N> link_pr --input url=<PR URL>
+-  ```
+-- Call `implement` to go back to the implementing phase for major rework:
+-  ```
+-  swamp model method run issue-<N> implement
+-  ```
+-
+-## 5. Ship the Release
+-
+-After `pr_merged` transitions to `releasing`, wait for the release build to
+-complete. Once the release is out, call `ship`:
+-
+-```
+-swamp model method run issue-<N> ship
+-```
+-
+-Optionally pass release metadata:
+-
+-```
+-swamp model method run issue-<N> ship --input releaseUrl=<URL> --input releaseNotes="Bug fix release"
+-```
+-
+-This transitions the phase to `done`, transitions the swamp-club status to
+-`shipped`, and posts a `shipped` lifecycle entry.
+-
+-For quick close-out (e.g., the PR merged and you just want to wrap up),
+-`complete` still works from `implementing`, `pr_open`, or `releasing`.
+diff --git a/.claude/skills/issue-lifecycle/references/planning.md b/.claude/skills/issue-lifecycle/references/planning.md
+@@ -1,60 +0,0 @@
+-# Planning Phase
+-
+-Steps 6–9 of the issue lifecycle. Read this after triage is complete and you're
+-ready to generate an implementation plan.
+-
+-## 6. Generate an Implementation Plan
+-
+-Write a single YAML file containing both `steps` and `potentialChallenges` as
+-top-level keys. The CLI only supports one `--input-file` flag per invocation,
+-and the file must be a YAML object (not a bare array).
+-
+-**Use an issue-scoped filename** like `/tmp/plan-issue-<N>.yaml` rather than a
+-generic `/tmp/plan.yaml`. Generic filenames collide with stale content left
+-behind by previous lifecycle sessions — the old content usually fails to `Read`
+-for you to overwrite, and worse, content from an unrelated issue can silently
+-leak into the current plan if you forget to check. Issue-scoped filenames make
+-resuming sessions safe and auditable.
+-
+-```yaml
+-# /tmp/plan-issue-<N>.yaml
+-steps:
+-  - order: 1
+-    description: "Add the new schema types"
+-    files:
+-      - src/domain/schemas.ts
+-    risks: "May need migration"
+-  - order: 2
+-    description: "Update the service layer"
+-    files:
+-      - src/domain/service.ts
+-      - src/domain/service_test.ts
+-potentialChallenges:
+-  - "Backwards compatibility with existing data"
+-  - "Test coverage for edge cases"
+-```
+-
+-Then run the method. The `--input` flags handle scalar values, and
+-`--input-file` handles the structured data:
+-
+-```
+-swamp model method run issue-<N> plan \
+-  --input summary="..." \
+-  --input dddAnalysis="..." \
+-  --input testingStrategy="..." \
+-  --input-file /tmp/plan-issue-<N>.yaml
+-```
+-
+-## 7. Apply Repo-Specific Planning Conventions
+-
+-Read `agent-constraints/planning-conventions.md` at the repo root for
+-repo-specific planning requirements (documentation checks, test strategy,
+-analysis conventions, and any additional assessments the repo defines). If it
+-does not exist, generate the plan based on your codebase analysis and CLAUDE.md
+-conventions.
+-
+-## 8. Present the Plan
+-
+-Show the plan to the human, including any assessment findings required by the
+-repo's planning conventions. Then run adversarial review (see
+-[adversarial-review.md](adversarial-review.md)).
+diff --git a/.claude/skills/issue-lifecycle/references/triage.md b/.claude/skills/issue-lifecycle/references/triage.md
+@@ -1,120 +0,0 @@
+-# Triage Phase
+-
+-Steps 1–5 of the issue lifecycle. Read this when starting a new triage or
+-resuming an issue in the `triaging` phase.
+-
+-## Before You Start
+-
+-Check whether the model instance already exists and is past triage:
+-
+-```
+-swamp data get issue-<N> state-main --json
+-```
+-
+-- If this **returns data** and the `phase` is anything other than `created` or
+-  `triaging`, the issue is already in flight. **Do NOT call `start`** — go to
+-  the "Resuming a Session" section in SKILL.md and use the phase-to-action table
+-  to pick up where the issue left off.
+-- If the command **fails** (no data found), the model instance hasn't been
+-  created yet — proceed with step 1 below.
+-
+-## 1. Create the Model Instance
+-
+-The swamp-club issue must already exist — create it in the swamp-club UI first,
+-then note its sequential number (e.g. `42`).
+-
+-```
+-swamp model create @swamp/issue-lifecycle issue-<N> \
+-  --global-arg issueNumber=<N> --json
+-```
+-
+-**Worktree note:** If you are in a Claude Code worktree (`.claude/worktrees/`),
+-the worktree is not an initialized swamp repository. Add
+-`--repo-dir <path-to-main-repo>` to all `swamp` commands, where the main repo is
+-the parent of the `.claude/worktrees/` directory. All subsequent `swamp`
+-commands in this skill also need `--repo-dir`.
+-
+-## 2. Fetch the Issue Context
+-
+-```
+-swamp model method run issue-<N> start
+-```
+-
+-> **Warning:** `start` unconditionally resets the phase to `triaging`. Only call
+-> it once when beginning a new lifecycle. Never use it to resume an in-progress
+-> issue — it will destroy all progress (classification, plan, approvals).
+-
+-This fetches the issue from swamp-club via `GET /api/v1/lab/issues/<N>` and
+-writes the title, body, type, status, and comments to the `context` resource. If
+-the issue doesn't exist in swamp-club, `start` fails loudly — create the issue
+-there first.
+-
+-### Auto-assignment
+-
+-`start` automatically assigns the issue to you in swamp-club. It reads your
+-username from local auth (`~/.config/swamp/auth.json`, written by
+-`swamp auth login`), resolves it to a userId via the eligible-assignees
+-endpoint, and PATCHes the issue's assignees. Existing assignees are preserved
+-(additive). If assignment fails for any reason (missing credentials, lookup
+-error, API failure), `start` still succeeds — it logs a warning and continues
+-with triage.
+-
+-## 3. Read the Issue Context and Codebase
+-
+-Read the model output, then explore the codebase.
+-
+-Read `agent-constraints/triage-conventions.md` at the repo root for how to
+-explore this codebase. If it does not exist, start with `CLAUDE.md` and explore
+-source files related to the issue. Check for regression signals: use `git log`
+-on affected files to see if they were recently changed.
+-
+-## 4. Classify the Issue
+-
+-```
+-swamp model method run issue-<N> triage \
+-  --input type=<bug|feature|security> \
+-  --input confidence=<high|medium|low> \
+-  --input reasoning="<your analysis>"
+-```
+-
+-**Classification guidance:**
+-
+-- `bug` — something is broken or behaving incorrectly
+-- `feature` — a request for new functionality or enhancement
+-- `security` — security vulnerability, hardening, or compliance work
+-
+-Add `--input isRegression=true` when the bug previously worked. Look for signals
+-like: "this used to work", "stopped working after", "worked in version X",
+-references to recent changes that broke existing behavior, or git history
+-showing the affected code was recently modified. A regression is still
+-classified as `type: bug` — `isRegression` is a detail on the classification
+-record.
+-
+-**If you cannot classify confidently**, do NOT guess. Ask the human first, or
+-call `triage` with `confidence=low` and `clarifyingQuestions` populated, then
+-wait for the human's response before moving on.
+-
+-Running `triage` automatically:
+-
+-- Updates the swamp-club issue's `type` field via PATCH
+-- Transitions the swamp-club status to `triaged`
+-- Posts a `classified` lifecycle entry with the full classification payload
+-
+-## 5. Reproduce the Bug
+-
+-**Bugs and regressions only — skip for features and security issues.**
+-
+-Before planning a fix, reproduce the issue to confirm the failure mode.
+-
+-Read `agent-constraints/triage-conventions.md` for repo-specific reproduction
+-steps. If it does not exist, create a minimal reproduction in `/tmp/` using the
+-project's standard tooling.
+-
+-If the bug **cannot be reproduced**, note that in the plan. It may mean the
+-issue description is incomplete, the bug is environment-specific, or the
+-underlying code has already changed. Ask the human how to proceed.
+-
+-## Next Phase
+-
+-Triage is complete. Read [planning.md](planning.md) to generate the
+-implementation plan.
+PATCH
+
+echo "Gold patch applied."

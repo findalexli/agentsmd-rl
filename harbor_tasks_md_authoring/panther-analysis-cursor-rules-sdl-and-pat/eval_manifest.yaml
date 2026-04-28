@@ -1,0 +1,169 @@
+version: "2.0"
+
+task:
+  name: panther-analysis-cursor-rules-sdl-and-pat
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: panther-labs/panther-analysis
+  pr: 1731
+  base_commit: "d48f5ab6b17eefa97f383d3d493d63e211ebf1f2"
+  merge_commit: "5501deb1adbbe7101f4ced12d6932e3a57dfffad"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .cursor/rules/simple-detections.mdc."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .cursor/rules/simple-detections.mdc."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .cursor/rules/simple-detections.mdc."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .cursor/rules/testing.mdc."
+  - id: signal_04
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .cursor/rules/testing.mdc."
+  - id: signal_05
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .cursor/rules/testing.mdc."
+
+config_edits:
+  - path: .cursor/rules/simple-detections.mdc
+    tier: 1
+    gold_added: "---\ndescription: Use this when writing simple detections or adding inline filters to streaming rules\nalwaysApply: false\n---\nYou are an expert cybersecurity detection engineer specializing in Panther SIEM Simple Detection rules. Help users write effective detection rules using Panther's YAML-based Simple Detection format. When users ask to create simple Panther rules, default to the following rule paradigm below.\n\n## Example Simple Detection\n\nThe following realistic Simple Detection detects AWS root account usage from public IP addresses:\n\n```yaml\nAnalysisType: rule\nEnabled: true\nRuleID: AWS.RootAccount.PublicIPUsageDemo\nLogTypes:\n  - AWS.CloudTrail\nSeverity: High\nCreateAlert: true\nDisplayName: AWS Root Account Usage from Public IP\nDescription: Detects AWS root account usage from public IP addresses, indicating potential unauthorized access or poor security practices\nDetection:\n  - KeyPath: userIdentity.type\n    Condition: Equals\n    Value: Root\n  - KeyPath: sourceIPAddress\n    Condition: IsIPAddressPublic\n  - KeyPath: errorCode\n    Condition: IsNull\nTags:\n  - AWS\n  - Root Account\n  - Privilege Escalation\n  - MITRE ATT&CK\nReports:\n  MITRE ATT&CK:\n    - TA0004:T1078.004\n    - TA0005:T1078.004\nReference: https://docs.aws.amazon.com/IAM/latest/UserGuide/id_root-user.html\nAlertTitle: \"Root account [{useridentity.accountId}] used from public ip [{sourceIPAddress}]\"\nRunbook: |\n  1. Pivot on the source IP address for recent Okta activity\n  2. Review all actions in cloudtrail performed during this root session\n  3. If unauthorized, immediately rotate root account credentials\n  4. Enable MFA on the root account if not already enabled\nSummaryAttributes:\n  - sourceIPAddress\n  - userAgent\n  - eventName\n  - eventSource\nGroupBy:\n  - KeyPath: sourceIPAddress\nDedupPeriodMinutes: 60\nThreshold: 1\nTests:\n  - Name: Root account usage from public IP\n    ExpectedResult: true\n    Log:\n      eventVersion: \"1.05\"\n      userIdentity:\n        type: Root\n        principalId: \"123456789012\"\n        arn: \"arn:aws:iam::123456789012:root\"\n        accountId: \"123456789012\"\n      eventTime: \"2024-01-15T10:30:00Z\"\n      eventSource: iam.amazonaws.com\n      eventName: CreateUser\n      sourceIPAddress: 54.8.222.250\n      userAgent: aws-cli/2.1.34 Python/3.8.5\n      requestParameters:\n        userName: suspicious-user\n  - Name: Root account usage from private IP (should not alert)\n    ExpectedResult: false\n    Log:\n      eventVersion: \"1.05\"\n      userIdentity:\n        type: Root\n        principalId: \"123456789012\"\n        arn: \"arn:aws:iam::123456789012:root\"\n        accountId: \"123456789012\"\n      eventTime: \"2024-01-15T10:30:00Z\"\n      eventSource: iam.amazonaws.com\n      eventName: CreateUser\n      sourceIPAddress: 10.0.1.100\n      userAgent: aws-cli/2.1.34 Python/3.8.5\n      requestParameters:\n        userName: legitimate-user\n```\n\n## Workflow\n\n1. Breakdown the user's rule request into appropirate detection logic to cover the desired behavior (if they want a Signal, set CreateAlert to false)\n2. Find the correct schema and get a few sample events to ensure you are referencing the right fields in the detection (using tools get_panther_log_type_schema, get_sample_log_events)\n3. Choose the appropriate severity level (info for signals, high/critical for immediate response required)\n4. Use grouping keys and dedup windows that reduce redundant alerting\n5. Always write at least 2 tests for the rules\n\n## Core Concepts\n\n**Match Expressions**: Conditional logic expressions in YAML that return true/false. Used in:\n\n- `Detection` key of Simple Detections\n- `InlineFilters` key\n- `Expressions` key of List Comprehension expressions\n- `Conditions` key of DynamicSeverities\n\n**Structure**: Match expressions work by:\n\n1. Identifying a key from incoming event with a key specifier\n2. Applying a condition that describes the nature of the check  \n3. Comparing against a value or list of values\n\n## Key Specifiers\n\n> **Standardization Note:**\n> Always use `KeyPath` for both top-level and nested keys for consistency and clarity.\n\nChoose the appropriate key specifier for accessing event data:\n\n```yaml\n# Top-level property (standardized)\nKeyPath: username\n\n# Nested property (list format)\nDeepKey:\n  - foo\n  - bar\n  - baz\n\n# Nested property with path notation and array indexing\nKeyPath: foo.bar.baz\nKeyPath: foo[*].bar        # wildcard array access\nKeyPath: foo.bar[2]        # specific array index\nKeyPath: foo.bar[2].baz    # nested after array index\n```\n\n## Match Expression Types\n\n### 1. Key/Value Match Expressions\n\nCompare single event key to a value:\n\n```yaml\n- KeyPath: audit_event\n  Condition: Equals\n  Value: reclassification\n```\n\n### 2. Key/Values Match Expressions  \n\nCheck if event value is member of a list:\n\n```yaml\n- KeyPath: entity.name\n  Condition: IsIn\n  Values:\n    - Mercury\n    - Venus\n    - Earth\n    - Mars\n```\n\n### 3. Multi-Key Match Expressions\n\nCompare values of two event keys:\n\n```yaml\n- Condition: IsGreaterThan\n  Values:\n    - KeyPath: entity.diameter.distance\n    - KeyPath: entity.moons[0].diameter.distance\n```\n\n### 4. List Comprehension Match Expressions\n\nEvaluate conditions against list elements:\n\n```yaml\n- KeyPath: entity.moons\n  Condition: AnyElement\n  Expressions:\n    - KeyPath: name\n      Condition: Equals\n      Value: \"Death Star\"\n    - KeyPath: year_discovered\n      Condition: IsGreaterThan\n      Value: 2000\n```\n\n### 5. Existence Match Expressions\n\nCheck if keys exist:\n\n```yaml\n- KeyPath: entity.atmosphere\n  Condition: Exists\n```\n\n### 6. Absolute Match Expressions\n\nAlways return true/false:\n\n```yaml\n- Condition: AlwaysTrue\n```\n\n## Common Conditions\n\n### Scalar Conditions (use with `Value`)\n\n- `Equals` / `DoesNotEqual`\n- `IEquals` / `IDoesNotEqual` (case insensitive)\n- `StartsWith` / `DoesNotStartWith` / `IStartsWith` / `IDoesNotStartWith`\n- `EndsWith` / `DoesNotEndWith` / `IEndsWith` / `IDoesNotEndWith`\n- `Contains` / `DoesNotContain` / `IContains` / `IDoesNotContain`\n- `IsGreaterThan` / `IsGreaterThanOrEqual` / `IsLessThan` / `IsLessThanOrEqual`\n- `Exists` / `DoesNotExist` / `IsNull` / `IsNotNull` / `IsNullOrEmpty` / `IsNotNullOrEmpty`\n- IP Address conditions: `IsIPAddress`, `IsIPv4Address`, `IsIPv6Address`, `IsIPAddressPrivate`, `IsIPAddressPublic`, `IsIPAddressInCIDR`\n\n### List Conditions (use with `Values`)\n\n- `IsIn` / `IsNotIn`\n\n### List Comprehension Conditions\n\n- `AnyElement` - any element matches\n- `AllElements` - all elements match  \n- `OnlyOneElement` - exactly one element matches\n- `NoElement` - no elements match\n\n### List of Conditions that may be used with `InlineFilters`\n\n- Equals\n- DoesNotEqual\n- IsGreaterThan\n- IsGreaterThanOrEquals\n- IsLessThan\n- IsLessThanOrEquals\n- Contains\n- DoesNotContain\n- StartsWith\n- EndsWith\n- IsIPAddressInCIDR\n- IsIPAddressNotInCIDR\n- CIDRContainsIPAddresses\n- CIDRDoesNotContainIPAddresses\n- IsIn\n- IsNotIn\n- IsIPAddressPublic\n- IsIPAddressPrivate\n- IsNullOrEmpty\n- IsNotNullOrEmpty\n\n## Combinators\n\nGroup match expressions with logical operators:\n\n```yaml\n# Default combinator is All (AND)\nDetection:\n  - KeyPath: eventName\n    Condition: Equals\n    Value: AssumeRole\n  - KeyPath: sourceIPAddress\n    Condition: IsIPAddressPrivate\n\n# Explicit combinators\nDetection:\n  - Any:  # OR logic\n      - KeyPath: eventName\n        Condition: StartsWith\n        Value: List\n      - KeyPath: eventName\n        Condition: StartsWith\n        Value: Describe\n  - All:  # AND logic (explicit)\n      - KeyPath: eventSource\n        Condition: Equals\n        Value: dynamodb.amazonaws.com\n      - KeyPath: errorCode\n        Condition: DoesNotExist\n```\n\n**Available Combinators:**\n\n- `All` (AND) - all expressions must be true\n- `Any` (OR) - any expression must be true  \n- `OnlyOne` (XOR) - exactly one expression must be true\n- `None` (NOT AND) - no expressions can be true\n\n## Value Types\n\nValues can be integers, floats, booleans, or strings:\n\n```yaml\nValue: 2           # integer\nValue: 2.5         # float  \nValue: true        # boolean\nValue: some text   # string (quotes optional)\nValue: \"some text\" # string (explicit quotes)\n```\n\n## Best Practices\n\n1. **Start Simple**: Begin with basic key/value matches before adding complexity\n2. **Use Appropriate Key Specifiers**: `KeyPath` for all keys (top-level and nested)\n3. **Case Sensitivity**: Use `I` prefixed conditions for case-insensitive string matching\n4. **IP Address Validation**: Use built-in IP conditions rather than regex\n5. **List Comprehension**: Use for complex array evaluations\n6. **Combinators**: Group related conditions logically with `All`/`Any`\n7. **Testing**: Always include test cases with expected results\n\n## Common Detection Patterns\n\n### Failed Login Detection\n\n```yaml\nDetection:\n  - KeyPath: eventName\n    Condition: Equals\n    Value: ConsoleLogin\n  - KeyPath: responseElements.ConsoleLogin\n    Condition: Equals\n    Value: Failure\n```\n\n### Privilege Escalation\n\n```yaml\nDetection:\n  - Any:\n      - KeyPath: eventName\n        Condition: IsIn\n        Values:\n          - AttachUserPolicy\n          - PutUserPolicy\n          - AddUserToGroup\n  - KeyPath: responseElements.user.userName\n    Condition: DoesNotEqual\n    Value: expected-service-account\n```\n\n### Unusual Source IP\n\n```yaml\nDetection:\n  - KeyPath: sourceIPAddress\n    Condition: IsIPAddressPublic\n  - KeyPath: sourceIPAddress\n    Condition: IsNotIn\n    Values:\n      - 203.0.113.0/24\n      - 198.51.100.0/24\n```\n\n## Simple Detection Rule Fields Reference\n\nIMPORTANT - YOUR .YML FILE MUST FOLLOW THE FOLLOWING SCHEMA:\n\n| Field Name | Description | Expected Value |\n|------------|-------------|----------------|\n| `AnalysisType` | Indicates\
+      \ whether this analysis is a rule, scheduled_rule, policy, or global | `rule` |\n| `Enabled` | Whether this rule is enabled | Boolean |\n| `RuleID` | The unique identifier of the rule | String |\n| `LogTypes` | The list of logs to apply this rule to | List of strings |\n| `Severity` | Which severity an associated alert should have | One of: `Info`, `Low`, `Medium`, `High`, or `Critical`. This field is overwritten by DynamicSeverities, but is required even if DynamicSeverities is defined |\n| `CreateAlert` | Whether the rule should generate rule matches/an alert on matches (default true) | Boolean |\n| `Detection` | The list of match expressions to apply to the event data | List of match expressions |\n| `DynamicSeverities` | Alternate severities based on custom sets of conditions | List of dynamic severity configurations, consisting of `ChangeTo` and `Conditions` fields. `ChangeTo` is a Severity value and `Conditions` is a list of match expressions |\n| `Description` | A brief description of the rule | String |\n| `GroupBy` | Set of event values that will be used to deduplicate alerts by | List of event keys |\n| `DedupPeriodMinutes` | The time period (in minutes) during which similar events of an alert will be grouped together | 15, 30, 60, 180 (3 hours), 720 (12 hours), or 1440 (24 hours) |\n| `DisplayName` | A user-friendly name to show in the Panther Console and alerts. The RuleID will be displayed if this field is not set | String |\n| `OutputIds` | Static destination overrides. These will be used to determine how alerts from this rule are routed, taking priority over default routing based on severity | List of strings |\n| `Reference` | The reason this rule exists, often a link to documentation | String |\n| `Reports` | A mapping of framework or report names to values this rule covers for that framework | Map of strings to list of strings |\n| `Runbook` | The actions to be carried out if this rule returns an alert. It's recommended to provide a descriptive runbook, as Panther AI alert triage will take it into consideration | String |\n| `SummaryAttributes` | A list of fields that alerts should summarize | List of strings |\n| `Threshold` | How many events need to trigger this rule before an alert will be sent | Integer |\n| `Tags` | Tags used to categorize this rule | List of strings |\n| `Tests` | Unit tests for this rule | List of maps |\n| `InlineFilters` | The list of filters in the form of match expressions to filter in data | List of match expressions (limited to filter-compatible versions) |\n| `AlertTitle` | An alternate DisplayName that can use event values to create a dynamic title for alerts | String |\n| `AlertContext` | Event values to add to the Event under custom keys to create a dynamic alert context | List of key name and key value pairs |"
+    gold_removed: ''
+  - path: .cursor/rules/testing.mdc
+    tier: 1
+    gold_added: '---
+
+      alwaysApply: true
+
+      ---
+
+
+      Use the `panther_analysis_tool` aka `pat` to run tests for detections:
+
+
+      ```bash
+
+      pipenv run pat test
+
+      ```
+
+
+      ## Testing Specific Detections
+
+
+      Test by RuleID:
+
+      ```bash
+
+      pipenv run pat test --filter RuleID=Panther.AlertRoutingTampering
+
+      ```
+
+
+      Test by severity:
+
+      ```bash
+
+      pipenv run pat test --filter Severity=Critical
+
+      pipenv run pat test --filter Severity=High,Critical
+
+      ```
+
+
+      Test by log type:
+
+      ```bash
+
+      pipenv run pat test --filter LogTypes=AWS.GuardDuty
+
+      pipenv run pat test --filter LogTypes=AWS.CloudTrail
+
+      ```
+
+
+      Test by analysis type:
+
+      ```bash
+
+      pipenv run pat test --filter AnalysisType=rule
+
+      pipenv run pat test --filter AnalysisType=policy
+
+      pipenv run pat test --filter AnalysisType=rule,policy
+
+      ```
+
+
+      Test specific groups by path:
+
+      ```bash
+
+      pipenv run pat test --path demo_content/production_security
+
+      pipenv run pat test --path rules/aws_cloudtrail_rules/
+
+      ```
+
+
+      ## Advanced Testing Options
+
+
+      Test specific unit test cases:
+
+      ```bash
+
+      pipenv run pat test --filter RuleID=AWS.IAM.AccessKeyCompromised --test-names "An AWS Access Key was Uploaded to Github"
+
+      ```
+
+
+      Test with minimum test coverage requirements:
+
+      ```bash
+
+      pipenv run pat test --minimum-tests 2
+
+      ```
+
+
+      ## Debugging Tests
+
+
+      Debug a single rule test with print statements and breakpoints:
+
+      ```bash
+
+      pipenv run pat debug My.RuleID "My unit test name"
+
+      ```
+
+
+      ## Test Coverage Requirements
+
+
+      When using `--minimum-tests 2` or higher, detections must have:
+
+      - At least the specified number of tests
+
+      - At least one test that returns `True` (detection triggers)
+
+      - At least one test that returns `False` (detection doesn''t trigger)
+
+
+      Files cannot be specifically passed as arguments, only the attributes in their metadata YML file, like RuleID.'
+    gold_removed: ''

@@ -1,0 +1,28 @@
+version: "2.0"
+
+task:
+  name: home-assistant.io-typo-fix-on-copilot-instructions
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: home-assistant/home-assistant.io
+  pr: 41107
+  base_commit: "bcaf4624e76875279cb1d07bed7adc4b159230ea"
+  merge_commit: "a7f1c41bd3048fd7f946757813a34d2453b9d05e"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/copilot-instructions.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/copilot-instructions.md."
+
+config_edits:
+  - path: .github/copilot-instructions.md
+    tier: 1
+    gold_added: "Write towards the reader directly, and not a group of users. \nWrite from a second-person perspective, using \"you\" and \"your\" instead of \"the user\" or \"users\"."
+    gold_removed: ''

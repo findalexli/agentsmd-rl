@@ -1,0 +1,36 @@
+version: "2.0"
+
+task:
+  name: kubernetes-mcp-server-featai-add-claudemd-instructions-and
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: containers/kubernetes-mcp-server
+  pr: 397
+  base_commit: "aab94419e349cb20017a4a2c7ef03a93a3394a39"
+  merge_commit: "acf465b5ed75c792df534b4ed6dc1e0f5d169d6c"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+
+config_edits:
+  - path: AGENTS.md
+    tier: 1
+    gold_added: "    - `api/` - API-related functionality, tool definitions, and toolset interfaces.\n    - `toolsets/` - Toolset registration and management for MCP tools.\n    - `version/` - Version information management.\n### Adding new MCP tools\n\nThe project uses a toolset-based architecture for organizing MCP tools:\n\n- **Tool definitions** are created in `pkg/api/` using the `ServerTool` struct.\n- **Toolsets** group related tools together (e.g., config tools, core Kubernetes tools, Helm tools).\n- **Registration** happens in `pkg/toolsets/` where toolsets are registered at initialization.\n- Each toolset lives in its own subdirectory under `pkg/toolsets/` (e.g., `pkg/toolsets/config/`, `pkg/toolsets/core/`, `pkg/toolsets/helm/`).\n\nWhen adding a new tool:\n1. Define the tool handler function that implements the tool's logic.\n2. Create a `ServerTool` struct with the tool definition and handler.\n3. Add the tool to an appropriate toolset (or create a new toolset if needed).\n4. Register the toolset in `pkg/toolsets/` if it's a new toolset.\n\n## Additional Makefile targets\n\nBeyond the basic build, test, and lint targets, the Makefile provides additional utilities:\n\n**Local Development:**\n```bash\n# Setup a complete local development environment with Kind cluster\nmake local-env-setup\n\n# Tear down the local Kind cluster\nmake local-env-teardown\n\n# Show Keycloak status and connection info (for OIDC testing)\nmake keycloak-status\n\n# Tail Keycloak logs\nmake keycloak-logs\n\n# Install required development tools (like Kind) to ./_output/bin/\nmake tools\n```\n\n**Distribution and Publishing:**\n```bash\n# Copy compiled binaries to each npm package\nmake npm-copy-binaries\n\n# Publish the npm packages\nmake npm-publish\n\n# Publish the Python packages\nmake python-publish\n\n# Update README.md with the latest toolsets\nmake update-readme-tools\n```\n\nRun `make help` to see all available targets with descriptions.\n"
+    gold_removed: ''
+  - path: CLAUDE.md
+    tier: 1
+    gold_added: AGENTS.md
+    gold_removed: ''

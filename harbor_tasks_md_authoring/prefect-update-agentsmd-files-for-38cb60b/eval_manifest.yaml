@@ -1,0 +1,24 @@
+version: "2.0"
+
+task:
+  name: prefect-update-agentsmd-files-for-38cb60b
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: PrefectHQ/prefect
+  pr: 21589
+  base_commit: "38cb60b5fb05df6130e4a7a12132c5302e6fda3f"
+  merge_commit: "c6cb397fd2a1bfb0c1d9d92f7b83db9184a920c5"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in src/prefect/client/AGENTS.md."
+
+config_edits:
+  - path: src/prefect/client/AGENTS.md
+    tier: 1
+    gold_added: '- **Task-run submission schemas must be eagerly rebuilt.** Schemas instantiated on the concurrent submission path (`Task.create_local_run()`) are rebuilt at import time via `model_rebuild()` at the bottom of `schemas/objects.py`. Pydantic defers schema construction to first use; under threadpool contention, multiple workers race to build the same schema simultaneously. If you add a new schema used in this hot path, add a corresponding `model_rebuild()` call there.'
+    gold_removed: ''

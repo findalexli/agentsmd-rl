@@ -1,0 +1,24 @@
+version: "2.0"
+
+task:
+  name: skill-temporal-developer-bump-version-to-031-in
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: temporalio/skill-temporal-developer
+  pr: 90
+  base_commit: "b4fe783d421965a6368642428d17c0f52fe5f533"
+  merge_commit: "801a48d0665e10ac6a33634786e582ceda44e71a"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in SKILL.md."
+
+config_edits:
+  - path: SKILL.md
+    tier: 1
+    gold_added: 'version: 0.3.1'
+    gold_removed: ''

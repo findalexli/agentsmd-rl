@@ -1,0 +1,80 @@
+version: "2.0"
+
+task:
+  name: atopile-skills-update-atolanguage-skill
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: atopile/atopile
+  pr: 1679
+  base_commit: "c9c026b351bc407d1379590cd805a8f37cbd2fd5"
+  merge_commit: "7696077f5a8851f69427516dd7459679ee8bafbf"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/ato-language/EXTENSION.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/ato-language/EXTENSION.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/ato-language/SKILL.md."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/ato-language/SKILL.md."
+  - id: signal_04
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/ato-language/SKILL.md."
+
+config_edits:
+  - path: .claude/skills/ato-language/EXTENSION.md
+    tier: 1
+    gold_added: '# 0.14.x
+
+      This release will contain deep core changes.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+      `zig build test`
+
+
+
+
+      '
+    gold_removed: ''
+  - path: .claude/skills/ato-language/SKILL.md
+    tier: 1
+    gold_added: "description: \"Reference for the `.ato` declarative DSL: type system, connection semantics, constraint model, and standard library. Use when authoring or reviewing `.ato` code.\"\n# The ato language\nato is a **declarative, constraint-based DSL** for describing electronic circuits. There is no control flow, no mutation, and no execution order — you declare _what_ a circuit is, and the compiler + solver resolve it into a valid design.\nA minimal complete `.ato` file:\n\n```ato\n#pragma experiment(\"BRIDGE_CONNECT\")\n\nimport Resistor\nimport ElectricPower\nimport Capacitor\nmodule PowerFilter:\n    \"\"\"A simple decoupled power input with a pull-down resistor.\"\"\"\n    power = new ElectricPower\n    decoupling_capacitor = new Capacitor\n    pulldown_resistor = new Resistor\n\n    power.hv ~> decoupling_capacitor ~> power.lv\n    power.hv ~> pulldown_resistor ~> power.lv\n\n    decoupling_capacitor.capacitance = 100nF +/- 20%\n    pulldown_resistor.resistance = 100kohm +/- 5%\n    assert power.voltage within 3.0V to 3.6V\n```\nValidate with `ato build` from the package directory.\n## Core Concepts\n### 1. Everything is a Node in a Graph\nEvery entity (a resistor, a power rail, an I2C bus, a voltage parameter) is a **node** in a typed graph. Nodes relate to each other through **edges**: composition (parent–child), connection (same-net), and traits (behavioral metadata). The `.ato` language is a surface syntax for constructing this graph declaratively.\n\n### 2. Three Block Types\n\nato has exactly three ways to define a new type:\n\n| Keyword     | Semantics                                            | Typical Use                 |\n| ----------- | ---------------------------------------------------- | --------------------------- |\n| `module`    | A design unit that contains children and connections | Circuit blocks, subsystems  |\n| `interface` | A connectable boundary; can be wired with `~`        | Buses, power rails, signals |\n| `component` | A physical part with footprint/symbol                | Vendor ICs, connectors      |\n\nAll three compile to graph nodes. The distinction controls which **traits** the compiler attaches (`is_module`, `is_interface`) and what operations are legal (by convention, interfaces appear on both sides of `~`).\n\nInheritance uses `from`:\nmodule MyRegulator from Regulator:\n    pass\n### 3. Composition — Children and Instantiation\nTypes contain children. Inside a block body, `new` instantiates a child:\n```ato\nmodule Board:\n    power = new ElectricPower      # interface child\n    sensor = new BME280            # module child\n    caps = new Capacitor[4]        # array of 4 capacitors\nChildren are accessed via **dot-notation**: `sensor.power.voltage`, `caps[0].capacitance`.\n\n### 4. Connection — Declaring Electrical Identity\n\nThe **wire operator `~`** declares that two interfaces _are the same net/bus_. It is bidirectional and requires matching types:\n\npower_3v3 ~ sensor.power          # ElectricPower ~ ElectricPower\ni2c_bus ~ sensor.i2c              # I2C ~ I2C\nThe **bridge operator `~>`** (requires `#pragma experiment(\"BRIDGE_CONNECT\")`) inserts a component in series. The component must carry the `can_bridge` trait which defines its in/out mapping:\n\npower_5v ~> regulator ~> power_3v3\ni2c.scl.line ~> pullup ~> power.hv\n```\n### 5. Constraints — Physical Quantities and Assertions\nValues in ato carry **units** and **tolerances**. The solver uses these to select real parts.\n**Assignment** binds a value to a parameter:\npower.voltage = 3.3V +/- 5%\nresistor.resistance = 10kohm +/- 10%\ni2c.frequency = 400kHz\ni2c.address = 0x48\n**Assertions** declare constraints the solver must satisfy:\n\nassert power.voltage within 3.0V to 3.6V\nassert i2c.frequency <= 400kHz\nassert sensor.i2c.address is 0x50\nThree value forms exist:\n\n- **Exact**: `3.3V`\n- **Bilateral tolerance**: `10kohm +/- 5%`\n- **Bounded range**: `3.0V to 3.6V`\n\n### 6. Traits — Behavioral Metadata\n\nTraits attach capabilities or metadata to nodes. They are not children — they use trait edges in the graph.\n\n#pragma experiment(\"TRAITS\")\nimport has_part_removed\nimport is_atomic_part\n\nmodule Placeholder:\n    trait has_part_removed          # mark as non-physical placeholder\n    trait is_atomic_part            # user-defined part with footprint\nKey built-in traits:\n\n| Trait                   | Effect                                                           |\n| ----------------------- | ---------------------------------------------------------------- |\n| `can_bridge`            | Enables use with `~>` operator (defines in/out pin mapping)      |\n| `has_part_removed`      | No physical part placed (symbolic node)                          |\n| `is_atomic_part`        | User-defined part with `manufacturer`, `partnumber`, `footprint` |\n| `has_datasheet`         | Attaches a datasheet reference                                   |\n| `has_designator_prefix` | Sets PCB designator (R, C, U, etc.)                              |\n\n### 7. Import System\n\n**Bare imports** resolve to standard library types (1 line per import):\n\nimport ElectricPower\nimport I2C\nimport Resistor\n**Path imports** resolve to types defined in other `.ato` files (1 line per import):\n\n```ato\nfrom \"atopile/vendor-part/vendor-part.ato\" import Vendor_Part\n```\n\n### 8. Pragma Feature Flags\n\nExperimental syntax is gated behind pragmas (file top, before imports):\n\n#pragma experiment(\"BRIDGE_CONNECT\")     # ~> operator\n#pragma experiment(\"FOR_LOOP\")           # for loops\n#pragma experiment(\"TRAITS\")             # trait keyword\n#pragma experiment(\"MODULE_TEMPLATING\")  # new Foo<p=v>\n#pragma experiment(\"INSTANCE_TRAITS\")    # traits on instances\nUsing gated syntax without the pragma is a compile error.\n\n## Statement Reference\n\nEvery statement inside a block body is one of:\n\n| Statement | Syntax                              | Purpose                                |\n| --------- | ----------------------------------- | -------------------------------------- |\n| `assign`  | `name = value` or `name = new Type` | Bind a value or instantiate a child    |\n| `connect` | `a ~ b`                             | Wire two interfaces together           |\n| `bridge`  | `a ~> b ~> c`                       | Insert bridgeable components in series |\n| `assert`  | `assert expr <op> expr`             | Declare a constraint                   |\n| `retype`  | `name -> NewType`                   | Replace an inherited child's type      |\n| `pin`     | `pin VCC`                           | Declare a physical pin                 |\n| `signal`  | `signal reset`                      | Declare an electrical signal           |\n| `trait`   | `trait TraitName`                   | Attach a trait                         |\n| `import`  | `import Type`                       | Import a type                          |\n| `for`     | `for x in arr:`                     | Iterate over an array (pragma-gated)   |\n| `string`  | `\"\"\"...\"\"\"`                         | Documentation string                   |\n| `pass`    | `pass`                              | Empty placeholder                      |\n\nStatements within a block are **order-independent** — the compiler resolves the full graph, not a sequence of operations.\n\n## Type System\n\n### Interfaces (connectable with `~` or `~>`)\n\n| Type                                                          | Children / Parameters                                    | Purpose                              |\n| ------------------------------------------------------------- | -------------------------------------------------------- | ------------------------------------ |\n| `Electrical`                                                  | _(single node)_                                          | Raw electrical connection point      |\n| `ElectricPower`                                               | `.hv`, `.lv` (Electrical); `.voltage`, `.max_current`    | Power rails                          |\n| `ElectricLogic`                                               | `.line` (Electrical), `.reference` (ElectricPower)       | Digital signals with voltage context |\n| `ElectricSignal`                                              | `.line` (Electrical), `.reference` (ElectricPower)       | Analog signals                       |\n| `I2C`                                                         | `.scl`, `.sda` (ElectricLogic); `.frequency`, `.address` | I2C bus                              |\n| `SPI`                                                         | `.sclk`, `.mosi`, `.miso` (ElectricLogic); `.frequency`  | SPI bus                              |\n| `UART` / `UART_Base`                                          | `.tx`, `.rx` (ElectricLogic); flow control lines         | Serial                               |\n| `I2S`                                                         | audio data bus lines                                     | Digital audio                        |\n| `DifferentialPair`                                            | `.p`, `.n`                                               | Differential signals                 |\n| `USB2_0` / `USB3` / `USB2_0_IF`                               | USB data + power                                         | USB interfaces                       |\n| `CAN_TTL`                                                     | CAN bus lines                                            | CAN bus                              |\n| `SWD` / `JTAG`                                                | debug lines                                              | Debug interfaces                     |\n| `Ethernet` / `HDMI` / `RS232` / `PDM` / `XtalIF` / `MultiSPI` | protocol-specific                                        | Other protocols                      |\n\n### Modules (instantiable with `new`)\n\n| Type                                | Children\
+      \ / Parameters                                                                  | Designator |\n| ----------------------------------- | -------------------------------------------------------------------------------------- | ---------- |\n| `Resistor`                          | `.unnamed[0..1]`; `.resistance`, `.max_power`                                          | R          |\n| `Capacitor`                         | `.unnamed[0..1]`, `.power`; `.capacitance`, `.max_voltage`, `.temperature_coefficient` | C          |\n| `CapacitorPolarized`                | polarized variant of Capacitor                                                         | C          |\n| `Inductor`                          | `.unnamed[0..1]`; `.inductance`                                                        | L          |\n| `Fuse`                              | `.unnamed[0..1]`; `.trip_current`, `.fuse_type`                                        | F          |\n| `Diode`                             | `.anode`, `.cathode`; `.forward_voltage`, `.current`                                   | D          |\n| `LED`                               | `.diode`; `.brightness`, `.color`                                                      | D          |\n| `MOSFET`                            | `.source`, `.gate`, `.drain`; `.channel_type`, `.gate_source_threshold_voltage`        | Q          |\n| `BJT`                               | `.emitter`, `.base`, `.collector`; `.doping_type`                                      | Q          |\n| `Regulator` / `AdjustableRegulator` | `.power_in`, `.power_out`                                                              | —          |\n| `Crystal`                           | `.unnamed[0..1]`, `.gnd`; `.frequency`, `.load_capacitance`                            | XTAL       |\n| `Crystal_Oscillator`                | oscillator module                                                                      | —          |\n| `ResistorVoltageDivider`            | voltage divider circuit                                                                | —          |\n| `FilterElectricalRC`                | RC filter                                                                              | —          |\n| `Net`                               | `.part_of` (Electrical)                                                                | —          |\n| `TestPoint`                         | `.contact`; `.pad_size`, `.pad_type`                                                   | TP         |\n| `MountingHole` / `NetTie`           | mechanical                                                                             | —          |\n| `SPIFlash`                          | SPI flash memory                                                                       | —          |\n\n### Traits (attachable with `trait`)\n\n`has_part_removed`, `is_atomic_part`, `can_bridge`, `can_bridge_by_name`, `has_datasheet`, `has_designator_prefix`, `has_doc_string`, `has_net_name_affix`, `has_net_name_suggestion`, `has_package_requirements`, `has_single_electric_reference`, `is_auto_generated`, `requires_external_usage`\n\n## Units and Literals\n**SI-prefixed units**: `V`, `mV` | `A`, `mA` | `ohm`, `kohm`, `Mohm` | `F`, `uF`, `nF`, `pF` | `Hz`, `kHz`, `MHz`, `GHz` | `s`, `ms` | `W`, `mW`\n**Number formats**: decimal (`3.3`), scientific (`1e-6`), hex (`0x48`), binary (`0b1010`), underscore-separated (`1_000_000`)\n**Booleans**: `True`, `False`\n## Invariants\n1. **Type-safe connections**: `~` and `~>` should connect matching interface types. `ElectricPower ~ I2C` is a type mismatch (enforcement is being strengthened).\n2. **Pragma gates syntax**: using `~>`, `for`, `trait`, or `<>` without the matching pragma is a compile error.\n3. **Tolerances on passives**: `resistance = 10kohm` (zero tolerance) matches no real parts. Always use `+/- N%`.\n4. **ElectricLogic needs a reference**: logic signals require a power reference for voltage context. Set `signal.reference ~ power_rail`.\n5. **Order independence**: statements within a block are not sequentially executed. The solver resolves the full graph.\n6. **No procedural logic**: no `if`, `while`, `return`, functions, classes, or exceptions."
+    gold_removed: ''

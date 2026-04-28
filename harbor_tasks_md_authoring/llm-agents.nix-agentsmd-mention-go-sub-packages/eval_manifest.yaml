@@ -1,0 +1,26 @@
+version: "2.0"
+
+task:
+  name: llm-agents.nix-agentsmd-mention-go-sub-packages
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: numtide/llm-agents.nix
+  pr: 1514
+  base_commit: "72bdb17ea15f9c6ec184f5aa2ce282f29c3aff41"
+  merge_commit: "35ffbcb9a243fac98b4660927413d84218b5176e"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+
+config_edits:
+  - path: AGENTS.md
+    tier: 1
+    gold_added: '  subPackages = [ "." ];  # for go find the relevant packages containing the binary
+
+      '
+    gold_removed: ''

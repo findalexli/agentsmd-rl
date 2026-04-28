@@ -1,0 +1,258 @@
+version: "2.0"
+
+task:
+  name: quiche-docs-add-hierarchical-agentsmd-knowledge
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: cloudflare/quiche
+  pr: 2363
+  base_commit: "89d1850f66d479c5d08f22ca3300a6bcc74049f9"
+  merge_commit: "83f919f0dcf49f973f8f425a4dcd5754fc47fe33"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in h3i/AGENTS.md."
+  - id: signal_04
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in h3i/AGENTS.md."
+  - id: signal_05
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in h3i/AGENTS.md."
+  - id: signal_06
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in qlog-dancer/AGENTS.md."
+  - id: signal_07
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in qlog-dancer/AGENTS.md."
+  - id: signal_08
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in qlog-dancer/AGENTS.md."
+  - id: signal_09
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in qlog/AGENTS.md."
+  - id: signal_10
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in qlog/AGENTS.md."
+  - id: signal_11
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in qlog/AGENTS.md."
+  - id: signal_12
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in quiche/AGENTS.md."
+  - id: signal_13
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in quiche/AGENTS.md."
+  - id: signal_14
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in quiche/AGENTS.md."
+  - id: signal_15
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in quiche/src/h3/AGENTS.md."
+  - id: signal_16
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in quiche/src/h3/AGENTS.md."
+  - id: signal_17
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in quiche/src/h3/AGENTS.md."
+  - id: signal_18
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in quiche/src/recovery/AGENTS.md."
+  - id: signal_19
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in quiche/src/recovery/AGENTS.md."
+  - id: signal_20
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in quiche/src/recovery/AGENTS.md."
+  - id: signal_21
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in tokio-quiche/AGENTS.md."
+  - id: signal_22
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in tokio-quiche/AGENTS.md."
+  - id: signal_23
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in tokio-quiche/AGENTS.md."
+  - id: signal_24
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in tokio-quiche/src/http3/driver/AGENTS.md."
+  - id: signal_25
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in tokio-quiche/src/http3/driver/AGENTS.md."
+  - id: signal_26
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in tokio-quiche/src/http3/driver/AGENTS.md."
+  - id: signal_27
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in tokio-quiche/src/quic/AGENTS.md."
+  - id: signal_28
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in tokio-quiche/src/quic/AGENTS.md."
+  - id: signal_29
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in tokio-quiche/src/quic/AGENTS.md."
+
+config_edits:
+  - path: AGENTS.md
+    tier: 1
+    gold_added: "# PROJECT KNOWLEDGE BASE\n\n**Generated:** 2026-02-20\n**Commit:** 89d1850f\n**Branch:** master\n\n## OVERVIEW\n\nCloudflare's QUIC and HTTP/3 implementation in Rust. Workspace of 11 crates: core `quiche` protocol library, `tokio-quiche` async integration, CLI tools (`apps`, `h3i`), logging/analysis (`qlog`, `qlog-dancer`, `netlog`), and supporting primitives (`octets`, `buffer-pool`, `datagram-socket`, `task-killswitch`).\n\n## STRUCTURE\n\n```\nquiche/                     # Core QUIC+H3 library (C FFI, BoringSSL submodule)\ntokio-quiche/               # Async tokio wrapper (server/client drivers)\napps/                       # CLI binaries: quiche-client, quiche-server\nh3i/                        # HTTP/3 interactive testing/debugging tool\nqlog/                       # qlog event schema (RFC draft)\nqlog-dancer/                # qlog/netlog visualization (native + wasm)\nnetlog/                     # Chrome netlog parser\noctets/                     # Zero-copy byte buffer primitives\nbuffer-pool/                # Sharded lock-free buffer pool\ndatagram-socket/            # UDP socket abstraction (sendmmsg/recvmmsg)\ntask-killswitch/            # Async task cancellation primitive\nfuzz/                       # Fuzz targets (excluded from workspace)\ntools/                      # Android build tooling, http3_test harness\n```\n\n## DEPENDENCY GRAPH\n\n```\noctets  buffer-pool  task-killswitch  qlog  netlog    (Layer 0: no workspace deps)\n  |         |              |            |      |\n  v         v              |            v      v\nquiche  datagram-socket    |        qlog-dancer        (Layer 1)\n  |   \\     |              |\n  v    \\    v              v\n  tokio-quiche  <----------+                           (Layer 2: depends on most)\n  |     |\n  v     v\n h3i   apps                                           (Layer 3: end-user tools)\n```\n\n## WHERE TO LOOK\n\n| Task | Location | Notes |\n|------|----------|-------|\n| QUIC connection logic | `quiche/src/lib.rs` | 9k lines, core `Connection` struct |\n| HTTP/3 protocol | `quiche/src/h3/mod.rs` | Own `Error`/`Result` types |\n| Congestion control | `quiche/src/recovery/` | Two impls: `congestion/` (legacy) + `gcongestion/` (BBR2) |\n| TLS/crypto backends | `quiche/src/tls/`, `quiche/src/crypto/` | BoringSSL + OpenSSL, cfg-gated |\n| C FFI | `quiche/src/ffi.rs` + `quiche/include/quiche.h` | Behind `ffi` feature |\n| Async server/client | `tokio-quiche/src/` | `ApplicationOverQuic` trait is the extension point |\n| H3 async driver | `tokio-quiche/src/http3/driver/` | `DriverHooks` sealed trait, channels |\n| QUIC IO worker | `tokio-quiche/src/quic/io/worker.rs` | Connection FSM, GSO/GRO |\n| Packet routing | `tokio-quiche/src/quic/router/` | Demux by DCID |\n| Test infra | `quiche/src/test_utils.rs` | `Pipe` struct for in-memory QUIC pairs |\n| Config cascade | `tokio-quiche/src/settings/` → `quiche::Config` | `ConnectionParams` → `quiche::Config` → `h3::Config` |\n\n## CODE MAP\n\n| Symbol | Type | Location | Role |\n|--------|------|----------|------|\n| `Connection` | struct | `quiche/src/lib.rs` | Core QUIC connection |\n| `Config` | struct | `quiche/src/lib.rs` | Transport configuration |\n| `h3::Connection` | struct | `quiche/src/h3/mod.rs` | HTTP/3 over QUIC |\n| `ApplicationOverQuic` | trait | `tokio-quiche/src/quic/` | Async app lifecycle hook |\n| `H3Driver<H>` | struct | `tokio-quiche/src/http3/driver/` | Generic H3 driver |\n| `IoWorker<Tx,M,S>` | struct | `tokio-quiche/src/quic/io/worker.rs` | Per-connection IO loop |\n| `Pipe` | struct | `quiche/src/test_utils.rs` | In-memory test connection pair |\n| `BufFactory` | trait | `quiche/src/range_buf.rs` | Zero-copy buffer creation |\n| `Recovery` | enum | `quiche/src/recovery/mod.rs` | CC dispatch via enum_dispatch |\n| `RecoveryOps` | trait | `quiche/src/recovery/mod.rs` | 40+ method CC interface |\n\n## CONVENTIONS\n\n- **Line width 82** (`rustfmt.toml`), comments 80. Nightly rustfmt required.\n- **One `use` per item** (`imports_granularity = \"Item\"`, vertical layout).\n- **`pub(crate)`** for cross-module internals; `pub` only for true public API.\n- **BSD-2-Clause copyright header** on every `.rs` file.\n- **`#[macro_use] extern crate log`** (legacy style, no `use log::*`).\n- **Domain abbreviations**: `cid`, `scid`/`dcid`, `pkt`, `dgram`, `bidi`/`uni`, `rtt`.\n- **`mod.rs` pattern** for submodules (not inline `foo/` + `foo.rs`).\n- **Debug symbols in release** (`profile.release.debug = true`).\n- **`#![warn(missing_docs)]`** -- public items must be documented.\n\n## ANTI-PATTERNS (THIS PROJECT)\n\n- **Do not use `any` types or type assertions** -- this is Rust; no equivalent concern, but `unsafe` is restricted to FFI boundaries (`tls/`, `crypto/`, `ffi.rs`, `gso.rs`).\n- **Do not add clippy `#[allow]` without justification** -- 33 existing overrides all have documented reasons.\n- **Cognitive complexity lint disabled** (`clippy.toml: 100`) -- complex functions accepted for protocol code, but don't add new ones casually.\n- **Two `Acked` types exist** in `recovery/congestion` and `recovery/gcongestion` -- not unified, don't create a third.\n- **`connection_not_present()` returns `TlsFail`** in tokio-quiche driver -- misleading sentinel, don't propagate this pattern.\n- **`Error::Done` used as success signal** in H3 driver write path -- non-obvious, don't replicate.\n- **`transmute` of `Instant`** in `gso.rs` -- fragile, platform-dependent, don't extend.\n\n## FEATURE FLAGS\n\n```\nquiche:        default=boringssl-vendored | boringssl-boring-crate | openssl\n               qlog, gcongestion, internal, ffi, fuzzing, sfv, custom-client-dcid\ntokio-quiche:  fuzzing, quiche_internal, gcongestion, zero-copy, rpk\n               (hardcodes: quiche/boringssl-boring-crate + quiche/qlog)\nh3i:           async (enables tokio-quiche dependency)\n```\n\n## COMMANDS\n\n```bash\n# Dev\ncargo build                                           # build workspace (vendored BoringSSL)\ncargo test --all-targets --features=async,ffi,qlog --workspace  # full test suite\ncargo test --doc --features=async,ffi,qlog --workspace          # doc tests (separate!)\n\n# Lint\ncargo clippy --features=boringssl-vendored --workspace -- -D warnings\ncargo fmt -- --check                                  # nightly only\n\n# Fuzz\ncargo fuzz run packet_recv_client -- -runs=1\n\n# Docker\nmake docker-build                                     # quiche-base + quiche-qns images\n```\n\n## NOTES\n\n- **Git submodules required**: `git submodule update --init --recursive` for BoringSSL.\n- **MSRV 1.85**: `rust-version` field in Cargo.toml.\n- **Doc tests are separate**: `cargo test --all-targets` does NOT run doc tests (cargo#6669).\n- **`QUICHE_BSSL_PATH`**: env var to skip vendored BoringSSL build (use pre-built).\n- **`RUSTFLAGS=\"-D warnings\"`**: CI enforces; all warnings are errors.\n- **Cargo.lock is gitignored** (library project).\n- **Dual CI**: GitHub Actions (real) + GitLab CI (no-op stub).\n- **`cargo package` disabled**: commented out due to unpublished local crate version issues."
+    gold_removed: ''
+  - path: h3i/AGENTS.md
+    tier: 1
+    gold_added: "# h3i\n\n## OVERVIEW\n\nLow-level HTTP/3 testing client. Sends arbitrary/malformed H3 frames to probe server RFC compliance. Both library (`lib.rs`) and CLI binary (`main.rs`). Used programmatically as test driver in tokio-quiche integration tests.\n\n## STRUCTURE\n\n```\nsrc/\n  lib.rs              # Crate root: quiche re-export, QPACK encoding, stream type constants\n  main.rs             # CLI binary: clap arg parsing, qlog I/O, dispatches to sync/async client\n  config.rs           # Config struct (QUIC transport params, TLS, host/port) + builder\n  frame.rs            # H3iFrame enum (Headers/QuicheH3/ResetStream), EnrichedHeaders, CloseTriggerFrame\n  frame_parser.rs     # Per-stream incremental frame parser (FrameParser, FrameParseResult)\n  actions/\n    h3.rs             # Action enum: SendFrame, SendHeadersFrame, StreamBytes, SendDatagram,\n                      #   OpenUniStream, ResetStream, StopSending, ConnectionClose, Wait, FlushPackets\n  client/\n    mod.rs            # Client trait, execute_action(), parse_streams(), shared logic\n    sync_client.rs    # Blocking mio-based client: connect() -> ConnectionSummary\n    async_client.rs   # tokio-quiche-based client (behind `async` feature)\n    connection_summary.rs  # ConnectionSummary: StreamMap + Stats + PathStats + close details\n  prompts/\n    h3/               # Interactive CLI prompts (inquire crate) for building Actions\n  recordreplay/\n    qlog.rs           # Action <-> qlog event conversion; replay from qlog files\n```\n\n## WHERE TO LOOK\n\n| Task | File | Notes |\n|------|------|-------|\n| Define new action type | `actions/h3.rs` | Add variant to `Action` enum |\n| Modify frame parsing | `frame_parser.rs` | `FrameParser::try_parse_frame` |\n| Change connection output | `client/connection_summary.rs` | `ConnectionSummary`, `StreamMap` (640 lines) |\n| Add CLI flags | `main.rs` | `config_from_clap()` uses clap v3 |\n| Library config | `config.rs` | `Config` struct + builder pattern |\n| Custom frame types | `frame.rs` | `H3iFrame` enum wraps quiche frames |\n| qlog record/replay | `recordreplay/qlog.rs` | Bidirectional: Action->qlog and qlog->Action |\n| Use as library | `lib.rs` doc example | `sync_client::connect(config, actions, close_triggers)` |\n\n## NOTES\n\n- **Feature gate**: `async` feature swaps sync mio client for tokio-quiche async client. Also changes quiche re-export path (`quiche` vs `tokio_quiche::quiche`).\n- **quiche `internal` feature**: always enabled -- accesses `quiche::h3::frame::Frame` internals for raw frame construction.\n- **Stream type constants**: `HTTP3_CONTROL_STREAM_TYPE_ID` (0x0), `QPACK_ENCODER_STREAM_TYPE_ID` (0x2), `QPACK_DECODER_STREAM_TYPE_ID` (0x3) in `lib.rs`.\n- **Action execution**: `client/mod.rs::execute_action()` matches on `Action` variants, writes directly to `quiche::Connection` streams -- no H3 connection layer.\n- **ConnectionSummary**: returned from both sync/async `connect()`. Contains per-stream frame maps, QUIC stats, path stats, close reason. Custom `Serialize` impl truncates binary at 16KB.\n- **Literal header encoding**: `encode_header_block_literal()` bypasses Huffman + lowercase normalization for testing malformed headers.\n- **Close triggers**: optional `CloseTriggerFrame` list causes automatic connection close when matching frame received."
+    gold_removed: ''
+  - path: qlog-dancer/AGENTS.md
+    tier: 1
+    gold_added: "# qlog-dancer/\n\n## OVERVIEW\n\nVisualization/analysis tool for qlog and Chrome netlog files. Parses logs into a `Datastore`, extracts time-series into `SeriesStore`, renders PNG charts (native) or canvas plots (wasm). Outputs HTML/text reports with tabled summaries.\n\nDual-target: native CLI binary (`main.rs`) + wasm-bindgen web UI (`web.rs`, `#[cfg(target_arch = \"wasm32\")]`). `crate-type = [\"lib\", \"cdylib\"]` -- cdylib is for wasm.\n\n## STRUCTURE\n\n```\nsrc/\n  main.rs              CLI entry: parse args via AppConfig, render selected plots, emit report\n  lib.rs               Public API: parse_log_file(), PacketType, type aliases\n  web.rs               wasm-bindgen exports (851 lines), canvas rendering, JS interop\n  config.rs            AppConfig (clap CLI + wasm config), plot toggles, colors\n  datastore.rs         Datastore struct (~1985 lines) -- central parsed-log representation\n  seriesstore.rs       SeriesStore: extracts plot-ready time-series from Datastore\n  wirefilter.rs        Event filtering via cloudflare/wirefilter-engine DSL\n  request_stub.rs      Stub types for request-level data\n  plots/               Chart rendering (plotters crate)\n    mod.rs             PlotParameters, ChartSize, ClampParams, output type enums\n    conn_overview.rs   Multi-panel connection overview (cwnd, bytes, rtt, streams)\n    congestion_control.rs  CC-specific plot\n    conn_flow_control.rs   Connection-level flow control\n    packet_sent.rs     Packet-number vs time scatter\n    packet_received.rs Received packet scatter\n    stream_sparks.rs   Per-stream sparkline grids\n    stream_multiplex.rs  Stream multiplexing timeline\n    pending.rs         Pending data plot\n    rtt.rs             RTT plot\n    colors.rs          Color palettes\n    minmax.rs          Axis range utilities\n  reports/             Output reports\n    mod.rs             report() dispatcher\n    html.rs            HTML report generation (table_to_html)\n    text.rs            Plain-text summary\n    events.rs          Event-level report details\n  trackers/            Stateful metric accumulators\n    stream_buffer_tracker.rs  Per-stream buffer sizes\n    stream_max_tracker.rs     Stream high-water marks\nindex.html, *.js, *.css   Web UI assets (crate root, non-standard location)\n```\n\n## WHERE TO LOOK\n\n| Task | File |\n|------|------|\n| Add new plot type | `src/plots/` -- add module, wire into `main.rs` + `web.rs` |\n| Change parsed fields | `src/datastore.rs` -- all log-to-struct extraction |\n| Add series for plotting | `src/seriesstore.rs` |\n| Modify event filters | `src/wirefilter.rs` (wirefilter-engine DSL) |\n| CLI args / config | `src/config.rs` (AppConfig, clap) |\n| Wasm API surface | `src/web.rs` (`#[wasm_bindgen]` exports) |\n| Report formatting | `src/reports/` |\n\n## NOTES\n\n- Native build requires system libs: **libexpat, freetype, fontconfig** (plotters SVG/bitmap backends).\n- Wasm uses `plotters-canvas` backend -- canvas rendering, no system deps.\n- `wirefilter-engine` pinned to specific git rev, not on crates.io.\n- Log format auto-detection: tries qlog JSON, falls back to JSON-SEQ (sqlog), and vice versa.\n- `getrandom/wasm_js` feature + `.cargo/config.toml` needed for wasm randomness.\n- Web assets (`index.html`, `qlog-dancer-ui.js`, `qlog-dancer.css`) live in crate root, not `src/`."
+    gold_removed: ''
+  - path: qlog/AGENTS.md
+    tier: 1
+    gold_added: "# qlog/\n\nqlog data model for QUIC and HTTP/3 per IETF drafts (`draft-ietf-quic-qlog-main-schema`, `draft-ietf-quic-qlog-quic-events`, `draft-ietf-quic-qlog-h3-events`). Pure data types + serde serialization; no IO (deferred to consumers).\n\n## STRUCTURE\n\n```\nsrc/\n  lib.rs          # Core types: Qlog, QlogSeq, Trace, TraceSeq, VantagePoint, Configuration, Error\n  streamer.rs     # QlogStreamer -- streaming JSON-SEQ writer with state machine\n  reader.rs       # QlogSeqReader -- streaming JSON-SEQ reader/iterator\n  events/\n    mod.rs        # Event, EventData (giant enum), EventType, Eventable trait, EventImportance\n    quic.rs       # QUIC event types (packet_sent, packet_received, frames, etc.)\n    h3.rs         # HTTP/3 event types\n    qpack.rs      # QPACK event types\n    connectivity.rs  # Connection-level events (state changes, path updates)\n    security.rs   # TLS/crypto events\n  testing/\n    mod.rs        # Test helpers\n    event_tests.rs\n    trace_tests.rs\n```\n\n## WHERE TO LOOK\n\n| Task | File | Notes |\n|------|------|-------|\n| Add new event variant | `events/mod.rs` `EventData` enum | Add to relevant `events/*.rs`, wire into `EventData` |\n| Modify serialization | `lib.rs` | Heavy `serde_with` usage; `#[serde(rename)]` everywhere |\n| Streaming output | `streamer.rs` | `QlogStreamer` writes JSON-SEQ (RFC 7464) via `Write` trait |\n| Parse qlog files | `reader.rs` | `QlogSeqReader` iterates events from `BufRead` |\n| `Eventable` trait | `events/mod.rs:310` | Requires `importance()` and event name; impl on all event enums |\n| Two output modes | `lib.rs` | Buffered (`Qlog`/`Trace`) vs streaming (`QlogSeq`/`TraceSeq`) |\n\n## NOTES\n\n- Deps: `serde`, `serde_json` (preserve_order), `serde_with`, `smallvec`. No async, no IO beyond `Write`/`BufRead`.\n- `EventData` is a massive enum (~200 variants) spanning all protocol categories. Grep, don't scroll.\n- JSON field names follow IETF draft conventions (`snake_case`), mapped via `#[serde(rename)]`.\n- `serde_json::preserve_order` keeps field insertion order in output.\n- `HexSlice` helper for hex-encoding byte arrays in JSON.\n- No feature flags."
+    gold_removed: ''
+  - path: quiche/AGENTS.md
+    tier: 1
+    gold_added: "# quiche/ — Core QUIC + HTTP/3 Library\n\n## OVERVIEW\n\nLow-level QUIC transport and HTTP/3 in Rust. App provides IO/timers; this crate handles protocol state. Also exposes C FFI via `staticlib`/`cdylib`.\n\n## STRUCTURE\n\n```\nsrc/\n  lib.rs          (9k lines) Connection struct, Config, connect()/accept() entry points\n  h3/\n    mod.rs        (7.5k)     HTTP/3 connection — own Error/Result types, NOT quiche::Error\n    qpack/                   QPACK header compression\n  recovery/\n    mod.rs                   Recovery enum, RecoveryOps trait (enum_dispatch)\n    congestion/              Legacy CC (Cubic, Reno, Hystart++)\n    gcongestion/             Google-derived CC (BBR2) — behind `gcongestion` feature\n  stream/                    Stream state machine, flow control per-stream\n  tls/                       TLS backend abstraction (BoringSSL / OpenSSL)\n  crypto/                    Packet protection, key derivation\n  packet.rs       (2.3k)     Packet parsing, ConnectionId, Header\n  frame.rs                   QUIC frame encode/decode\n  path.rs                    Multi-path state, PathEvent, migration\n  pmtud.rs                   Path MTU discovery\n  cid.rs                     Connection ID management\n  ffi.rs          (2.3k)     C FFI — behind `ffi` feature\n  transport_params.rs        QUIC transport parameter encode/decode\n  flowcontrol.rs             Connection-level flow control\n  ranges.rs                  ACK range tracking\n  range_buf.rs               BufFactory/BufSplit traits for zero-copy buffer creation\n  dgram.rs                   DATAGRAM frame support\n  rand.rs                    Random number generation\n  minmax.rs                  Windowed min/max filter\n  test_utils.rs              Pipe struct for in-memory QUIC pairs (pub via `internal` feature)\n  tests.rs        (12k)      Integration tests\n  build.rs                   BoringSSL cmake build (NOTE: lives in src/, not crate root)\ninclude/\n  quiche.h        (1.2k)     C API header — mirrors ffi.rs\ndeps/\n  boringssl/                 Git submodule\n```\n\n## WHERE TO LOOK\n\n| Task | Start here |\n|------|-----------|\n| Connection lifecycle | `lib.rs` — `Connection` struct, `recv()`, `send()` |\n| HTTP/3 streams/headers | `h3/mod.rs` — `h3::Connection` |\n| Loss detection / CC | `recovery/mod.rs` → `congestion/` or `gcongestion/` |\n| Packet parse/serialize | `packet.rs`, `frame.rs` |\n| TLS handshake | `tls/mod.rs` — cfg-gated per backend |\n| C bindings | `ffi.rs` + `include/quiche.h` |\n| Test harness | `test_utils.rs` (`Pipe` struct) |\n| Build system | `src/build.rs` — BoringSSL cmake, cross-compile params |\n\n## ANTI-PATTERNS\n\n- **h3::Error != quiche::Error** — don't mix or convert carelessly; they have different variant sets.\n- **`Error::Done` is a success signal** in many read/write loops — not a failure.\n- **Don't add new CC impls** outside `recovery/` — two parallel impls (congestion + gcongestion) already exist.\n- **`unsafe` only at FFI boundaries** — `tls/`, `crypto/`, `ffi.rs`; don't add elsewhere.\n- **`#[cfg(feature = \"fuzzing\")]`** disables real crypto — never accidentally gate non-test code on it.\n\n## NOTES\n\n- `build.rs` is at `src/build.rs` (Cargo.toml: `build = \"src/build.rs\"`), not crate root.\n- Three TLS backends: `boringssl-vendored` (default), `boringssl-boring-crate`, `openssl` — mutually exclusive features.\n- `quiche::Error` is `Copy + Clone` — intentional for hot-path ergonomics.\n- `test_utils::Pipe` exposed via `internal` feature for downstream crate integration tests.\n- Tests use `rstest` with `#[values(\"cubic\", \"bbr2_gcongestion\")]` parameterization for CC coverage.\n- `QUICHE_BSSL_PATH` env var skips vendored BoringSSL build.\n- Crate-type: `lib` + `staticlib` + `cdylib` — the latter two for C consumers.\n- `BufFactory` trait (`range_buf.rs`) enables zero-copy buffer creation; `Connection<F>` is generic over it."
+    gold_removed: ''
+  - path: quiche/src/h3/AGENTS.md
+    tier: 1
+    gold_added: "# quiche/src/h3/ — HTTP/3 Module\n\n## OVERVIEW\n\nHTTP/3 wire protocol over QUIC. `Connection` manages H3 state (streams, QPACK, SETTINGS, GOAWAY) on top of `quiche::Connection<F>`. Event-driven: caller loops `poll()` → `Event`. Own `Error`/`Result` types, separate from `quiche::Error`.\n\n## STRUCTURE\n\n```\nmod.rs       (7549 lines)  H3 Connection, Config, Error, Event, Header, NameValue, Priority\nstream.rs    (1565)        H3 stream state machine (Type, State enums; frame parsing FSM)\nframe.rs     (1337)        H3 frame encode/decode (Frame enum, settings constants)\nffi.rs                     C FFI for H3 — behind `ffi` feature\nqpack/\n  mod.rs                   Re-exports\n  encoder.rs               QPACK encoder\n  decoder.rs               QPACK decoder\n  static_table.rs          Static header table (RFC 9204)\n```\n\n## WHERE TO LOOK\n\n| Task | Location |\n|------|----------|\n| Send/recv requests+responses | `mod.rs` — `send_request()`, `send_response()`, `poll()` |\n| Body data | `mod.rs` — `send_body()`, `recv_body()` |\n| Priority handling | `mod.rs` — `Priority` struct, `send_priority_update_for_request()` |\n| H3 stream lifecycle | `stream.rs` — `Stream` struct, `State` FSM |\n| Frame wire format | `frame.rs` — `Frame` enum, `encode()`/`decode()` |\n| QPACK header compression | `qpack/encoder.rs`, `qpack/decoder.rs` |\n| H3 C API | `ffi.rs` |\n\n## ANTI-PATTERNS\n\n- **h3::Error != quiche::Error.** 19 variants; `TransportError(quiche::Error)` wraps transport errors. Don't confuse.\n- **`Error::Done` is success** in poll/read loops. Not a failure — signals \"no more work\".\n- **`to_wire()` maps `BufferTooShort` → `0x999`** — non-standard wire code. Don't propagate this pattern.\n- **`to_c()` skips -12** — was previously `TransportError`. Gap is intentional for ABI stability.\n- **`to_c()` for `TransportError`:** offsets by `-1000` from underlying `quic_error.to_c()`.\n- **`send_request()` sends empty `b\"\"` to create QUIC stream** before writing headers. Required because QUIC stream doesn't exist until first write.\n- **stream.rs `Stream` ≠ quiche::stream::Stream.** H3 stream is a frame-parsing state machine layered on top.\n\n## NOTES\n\n- Methods are generic over `F: BufFactory` (zero-copy) and `T: NameValue` (header access).\n- `NameValue` trait: `name() -> &[u8]`, `value() -> &[u8]`. Blanket impl for `(N, V)` tuples.\n- `Header` is `(Vec<u8>, Vec<u8>)` newtype implementing `NameValue`.\n- `Event` variants: `Headers`, `Data`, `Finished`, `Reset(u64)`, `PriorityUpdate`, `GoAway`.\n- Priority: RFC 9218 Extensible Priorities. `sfv` feature enables `TryFrom` parsing.\n- `PRIORITY_URGENCY_OFFSET = 124` maps external urgency 0-7 to internal quiche priority.\n- `APPLICATION_PROTOCOL = &[b\"h3\"]` — ALPN constant.\n- `From<quiche::Error>` converts `Done→Done`, everything else → `TransportError(e)`.\n- `From<octets::BufferTooShortError>` → `Error::BufferTooShort`.\n- All `#[cfg(feature = \"qlog\")]` instrumentation inline in mod.rs — heavy conditional compilation."
+    gold_removed: ''
+  - path: quiche/src/recovery/AGENTS.md
+    tier: 1
+    gold_added: "# recovery/ -- Loss Detection & Congestion Control\n\n## OVERVIEW\n\nQUIC loss detection and congestion control per RFC 9002. Two parallel CC\nimplementations coexist: `congestion/` (legacy Reno/CUBIC) and `gcongestion/`\n(next-gen BBR2 ported from google/quiche). `Recovery` enum dispatches between\n`LegacyRecovery` and `GRecovery` via `enum_dispatch` over the `RecoveryOps`\ntrait (40+ methods).\n\n## STRUCTURE\n\n```\nmod.rs              Recovery enum, RecoveryOps trait, CongestionControlAlgorithm,\n                    Sent, ReleaseTime/ReleaseDecision, RecoveryConfig, constants\nbandwidth.rs        Bandwidth newtype\nbytes_in_flight.rs  Bytes-in-flight tracking\nrtt.rs              RTT estimation\n\ncongestion/         Legacy CC (Reno, CUBIC)\n  mod.rs            CongestionControlOps vtable struct, Congestion state\n  recovery.rs       LegacyRecovery impl of RecoveryOps, Acked struct\n  reno.rs           Static RENO: CongestionControlOps\n  cubic.rs          Static CUBIC: CongestionControlOps\n  delivery_rate.rs  Delivery rate sampling\n  hystart.rs        HyStart slow-start exit\n  prr.rs            Proportional Rate Reduction\n  test_sender.rs    Test-only CC sender\n\ngcongestion/        Next-gen CC (BBR2)\n  mod.rs            CongestionControl trait, Acked struct, BbrParams (#[doc(hidden)])\n  recovery.rs       GRecovery impl of RecoveryOps\n  pacer.rs          Token-bucket pacer\n  bbr2.rs           BBR2 top-level + Bbr2CongestionControl\n  bbr2/             BBR2 state machine substates\n    mode.rs         Mode enum (Startup, Drain, ProbeBw, ProbeRtt)\n    startup.rs      Startup mode\n    drain.rs        Drain mode\n    probe_bw.rs     ProbeBW mode (bandwidth probing cycles)\n    probe_rtt.rs    ProbeRTT mode (min RTT measurement)\n    network_model.rs  Bandwidth/RTT model, BbrParams application\n  bbr.rs            BBR (v1, not actively used)\n```\n\n## WHERE TO LOOK\n\n| Task | File | Notes |\n|------|------|-------|\n| Add/change CC algorithm | `congestion/mod.rs` or `gcongestion/mod.rs` | Different dispatch patterns |\n| Modify loss detection | `congestion/recovery.rs` or `gcongestion/recovery.rs` | Parallel impls |\n| Shared trait surface | `mod.rs:183-320` | `RecoveryOps` -- both impls must satisfy |\n| Algorithm selection | `mod.rs:365` | `CongestionControlAlgorithm` enum, `#[repr(C)]` for FFI |\n| BBR2 tuning | `gcongestion/bbr2/network_model.rs` | `BbrParams` applied here |\n| Pacing | `gcongestion/pacer.rs`, `mod.rs:691` | `ReleaseTime`, `ReleaseDecision` |\n| Per-packet metadata | `mod.rs:394` | `Sent` struct |\n| qlog integration | grep `#[cfg(feature = \"qlog\")]` | Gated throughout both impls |\n\n## ANTI-PATTERNS\n\n- **Two `Acked` structs** at `congestion/recovery.rs:1079` and `gcongestion/mod.rs:49`.\n  NOT unified. Do NOT create a third.\n- **FIXME stubs**: Some `RecoveryOps` methods only apply to one impl. Both sides\n  have `// FIXME only used by {congestion,gcongestion}` stubs that return\n  defaults. Do not proliferate; prefer narrowing the shared trait.\n- **`congestion/` uses C-like vtable** (`CongestionControlOps` with static fn\n  pointers: `RENO`, `CUBIC`). `gcongestion/` uses trait objects\n  (`CongestionControl` trait). Do not mix dispatch styles.\n- **`BbrParams` is `#[doc(hidden)]`** and experimental. Do not stabilize or\n  expose without explicit intent.\n- **Many `#[cfg(test)]` accessors** on `RecoveryOps` (lines 200-297). Test-only;\n  do not call from production code.\n\n## NOTES\n\n- Constants cite RFC 9002: `INITIAL_TIME_THRESHOLD = 9.0/8.0`, `GRANULARITY = 1ms`.\n- `CongestionControlAlgorithm` values: Reno=0, CUBIC=1, Bbr2Gcongestion=4. Gap is intentional (removed variants).\n- `Recovery::new_with_config` tries `GRecovery::new` first; falls back to `LegacyRecovery` if algo is Reno/CUBIC.\n- `bbr2/` is a deeply nested state machine -- changes require understanding all six substates.\n- `enable_relaxed_loss_threshold` experiment adjusts time thresholds dynamically on spurious loss.\n- `gcongestion/bbr.rs` is BBRv1 -- mostly vestigial alongside BBR2."
+    gold_removed: ''
+  - path: tokio-quiche/AGENTS.md
+    tier: 1
+    gold_added: "# tokio-quiche\n\n## OVERVIEW\n\nAsync tokio wrapper for `quiche`. Spawns per-connection IO worker tasks driven by an `ApplicationOverQuic` trait. Ships a ready-made `H3Driver` for HTTP/3. Uses `foundations` for structured logging (slog), telemetry, and settings.\n\n## STRUCTURE\n\n```\nsrc/\n  lib.rs              Re-exports, listen(), capture_quiche_logs()\n  buf_factory.rs      BufFactory: tiered static pools, QuicheBuf (zero-copy feature)\n  result.rs           BoxError = Box<dyn Error+Send+Sync>, QuicResult<T>\n  settings/           ConnectionParams → quiche::Config → h3::Config cascade\n  metrics/            Metrics trait (pluggable); DefaultMetrics (foundations Prometheus)\n  socket/             Socket<Tx,Rx>, QuicListener, SocketCapabilities (GSO/GRO)\n  quic/               connect(), start_listener(), ApplicationOverQuic, IoWorker, router\n  http3/              H3Driver<H>, DriverHooks (sealed), client/server controllers\n```\n\n## WHERE TO LOOK\n\n| Task | Location |\n|------|----------|\n| Server entrypoint | `lib.rs` — `listen()`, `listen_with_capabilities()` |\n| Client entrypoint | `quic/mod.rs` — `connect()`, `connect_with_config()` |\n| Custom app trait | `quic/connection/mod.rs:663` — `ApplicationOverQuic` |\n| H3 driver (main logic) | `http3/driver/mod.rs` — `H3Driver<H>` |\n| Per-connection IO loop | `quic/io/worker.rs` — `IoWorker` |\n| Packet routing/demux | `quic/router/mod.rs` — `InboundPacketRouter` |\n| Config cascade | `settings/config.rs` — `Config::new()` |\n| Buffer pools | `buf_factory.rs` — `BufFactory`, static pools |\n| Metrics interface | `metrics/mod.rs` — `Metrics` trait |\n\n## CODE MAP\n\n| Symbol | Type | Location | Role |\n|--------|------|----------|------|\n| `ApplicationOverQuic` | trait | `quic/connection/mod.rs` | Extension point: on_conn_established, process_reads/writes, wait_for_data |\n| `H3Driver<H>` | struct | `http3/driver/mod.rs` | Implements `ApplicationOverQuic` for HTTP/3 |\n| `DriverHooks` | sealed trait | `http3/driver/hooks.rs` | Client vs server H3 behavior |\n| `IoWorker<Tx,M,S>` | struct | `quic/io/worker.rs` | Per-connection state machine (recv -> app -> send) |\n| `InboundPacketRouter` | struct | `quic/router/mod.rs` | Sole owner of socket recv; routes by DCID |\n| `ConnectionAcceptor` | struct | `quic/router/acceptor.rs` | Server RETRY + yields InitialQuicConnection |\n| `InitialQuicConnection` | struct | `quic/connection/mod.rs` | Pre-handshake handle; `.start(app)` spawns worker |\n| `QuicConnection` | struct | `quic/connection/mod.rs` | Post-handshake metadata handle (not the qconn itself) |\n| `ConnectionParams` | struct | `settings/mod.rs` | QuicSettings + TLS + Hooks + session |\n| `Config` | struct(crate) | `settings/config.rs` | Builds quiche::Config from ConnectionParams |\n| `BufFactory` | struct | `buf_factory.rs` | Handle to static tiered buffer pools |\n| `QuicheBuf` | struct | `buf_factory.rs` | Zero-copy splittable buffer (zero-copy feature) |\n| `Metrics` | trait | `metrics/mod.rs` | Pluggable telemetry; `DefaultMetrics` uses foundations |\n| `QuicCommand` | enum | `quic/connection/mod.rs` | ConnectionClose / Custom / Stats commands |\n| `BoxError` | type alias | `result.rs` | `Box<dyn Error + Send + Sync>` — deliberate choice, see docstring |\n\n## CONVENTIONS (crate-specific)\n\n- Re-exports: `pub extern crate quiche`, `pub use buffer_pool`, `pub use datagram_socket`.\n- `foundations` for logging (slog), not `log` directly. `capture_quiche_logs()` bridges quiche's `log` into slog.\n- `DriverHooks` is **sealed** — prevents external `H3Driver` variants.\n- `QuicAuditStats` (from `datagram-socket`) threaded through all connections via `Arc`.\n- Task spawning via `metrics::tokio_task::spawn()` / `spawn_with_killswitch()` — wraps `tokio::spawn` with optional schedule/poll histograms.\n- `ConnectionStage` FSM: `Handshake` -> `RunningApplication` -> `Close`.\n\n## ANTI-PATTERNS\n\n- `connection_not_present()` returns `TlsFail` in driver — misleading sentinel. Don't propagate.\n- `Error::Done` used as success signal in H3 driver write path. Don't replicate.\n- Don't add new `ApplicationOverQuic` methods without considering the worker loop order (recv -> reads -> writes -> send).\n- Don't block in `wait_for_data` — it's polled concurrently with packet recv and timers.\n\n## NOTES\n\n- Hardcodes `quiche/boringssl-boring-crate` + `quiche/qlog` in Cargo.toml deps.\n- Features: `zero-copy` implies `gcongestion`. `rpk` enables raw public keys via `boring/rpk`.\n- `--cfg capture_keylogs` (build flag, not feature) enables SSLKEYLOGFILE support.\n- `perf-quic-listener-metrics` adds handshake timing instrumentation.\n- `tokio-task-metrics` adds schedule/poll duration histograms per spawned task.\n- Linux-only: `libc`/`nix` deps for signal handling and socket options.\n- One client connection per socket — no multiplexing on client side."
+    gold_removed: ''
+  - path: tokio-quiche/src/http3/driver/AGENTS.md
+    tier: 1
+    gold_added: '# HTTP/3 Driver (`tokio-quiche/src/http3/driver/`)
+
+
+      ## OVERVIEW
+
+
+      Async HTTP/3 driver bridging `quiche::h3::Connection` to Tokio tasks via channels. `H3Driver<H: DriverHooks>` is generic over sealed client/server hooks; users interact through `H3Controller` + typed event/command channels.
+
+
+      ## STRUCTURE
+
+
+      | File | Role |
+
+      |------|------|
+
+      | `mod.rs` | `H3Driver`, `H3Controller`, `H3Event`, `H3Command`, `OutboundFrame`/`InboundFrame`, channel types, `ApplicationOverQuic` impl |
+
+      | `hooks.rs` | `DriverHooks` trait (sealed). Defines `headers_received`, `conn_established`, `conn_command`, `wait_for_action` |
+
+      | `client.rs` | `ClientHooks` impl, `ClientH3Driver`/`ClientH3Controller` aliases, `ClientH3Event`/`ClientH3Command` |
+
+      | `server.rs` | `ServerHooks` impl, `ServerH3Driver`/`ServerH3Controller` aliases, `ServerH3Event`/`ServerH3Command` |
+
+      | `streams.rs` | `StreamCtx`, `FlowCtx`, `WaitForStream` future, capacity/readiness signals |
+
+      | `datagram.rs` | DATAGRAM/CONNECT-UDP flow handling |
+
+      | `connection.rs` | `H3Conn` wrapper exposing `h3::Connection` operations |
+
+      | `test_utils.rs` | `DriverTestHelper<H>` -- wraps `Pipe` + `H3Driver` for unit tests |
+
+      | `tests.rs` | ~1500 lines of driver tests |
+
+
+      ## WHERE TO LOOK
+
+
+      | Task | Start at |
+
+      |------|----------|
+
+      | Channel architecture | `mod.rs:332` (`H3Driver` struct fields: `h3_event_sender`, `cmd_recv`, `stream_map`, `waiting_streams`) |
+
+      | `select!` loop / priority ordering | `mod.rs` `wait_for_data` impl -- uses `biased` select! |
+
+      | Stream lifecycle | `cleanup_stream`, `shutdown_stream`, `process_h3_fin`, `process_h3_data` in `mod.rs` |
+
+      | Per-stream backpressure | `streams.rs` -- `FuturesUnordered<WaitForStream>`, `WaitForDownstreamData`, `WaitForUpstreamCapacity` |
+
+      | Adding endpoint-specific behavior | `hooks.rs` -- add method to `DriverHooks`, impl in `client.rs`/`server.rs` |
+
+      | Writing tests | `test_utils.rs` for `DriverTestHelper`, `tests.rs` for examples |
+
+
+      ## ANTI-PATTERNS
+
+
+      - **`connection_not_present()` returns `TlsFail`** -- misleading sentinel error. Do not propagate this pattern.
+
+      - **`process_write_frame` uses `Error::Done` as success** -- non-obvious control flow, don''t replicate elsewhere.
+
+      - **`DriverHooks` is sealed** -- `mod hooks` is `pub(crate)`, trait has `#[allow(private_interfaces)]`. Do not expose.
+
+      - **Stream cleanup is distributed** across 4+ functions (`cleanup_stream`, `shutdown_stream`, `process_h3_fin`, `process_h3_data`). Understand all paths before modifying.
+
+      - **`STREAM_CAPACITY`** is 1 in test/debug, 16 in release. Tests exercise backpressure differently from prod.
+
+
+      ## NOTES
+
+
+      - `H3Driver::new()` returns `(H3Driver<H>, H3Controller<H>)` -- paired at construction, connected by unbounded mpsc channels.
+
+      - Per-stream channels are bounded (`STREAM_CAPACITY`); per-connection event/cmd channels are unbounded.
+
+      - Datagram flows use a shared `FLOW_CAPACITY=2048` bounded channel, separate from stream channels.
+
+      - `H3Event` variants: `IncomingSettings`, `IncomingHeaders`, `NewFlow`, `ResetStream`, `ConnectionError`, `ConnectionShutdown`, `BodyBytesReceived`, `StreamClosed`.
+
+      - `H3Command` variants: `QuicCmd`, `GoAway`, `ShutdownStream`.
+
+      - Type aliases (`ClientH3Driver`, `ServerH3Driver`, etc.) are the public API; `H3Driver<H>` and `DriverHooks` are internal.'
+    gold_removed: ''
+  - path: tokio-quiche/src/quic/AGENTS.md
+    tier: 1
+    gold_added: "# tokio-quiche/src/quic/\n\n## OVERVIEW\n\nAsync QUIC connection management. Splits socket into recv-half (one `InboundPacketRouter` task) and send-half (shared by many `IoWorker` tasks). Entrypoints: `connect()`/`connect_with_config()` for clients, `start_listener()` for servers. `raw` submodule bypasses the router for manual packet injection.\n\n## STRUCTURE\n\n```\nmod.rs                        # Entrypoints: connect, connect_with_config, start_listener\nraw.rs                        # wrap_quiche_conn(): bypass router, manual packet feed\nhooks.rs                      # ConnectionHook trait (custom SslContextBuilder)\naddr_validation_token.rs      # RETRY token generation/validation for server\n\nconnection/\n  mod.rs                      # InitialQuicConnection, QuicConnection, ApplicationOverQuic trait\n  error.rs                    # HandshakeError enum, make_handshake_result()\n  id.rs                       # ConnectionIdGenerator trait, SimpleConnectionIdGenerator\n  map.rs                      # ConnectionMap: BTreeMap<CidOwned, mpsc::Sender<Incoming>>\n\nio/\n  connection_stage.rs         # ConnectionStage trait + stages: Handshake, RunningApplication, Close\n  worker.rs                   # IoWorker<Tx,M,S>: per-connection recv→process→send loop\n  gso.rs                      # GSO/GRO send_to(), UDP_MAX_GSO_PACKET_SIZE\n  utilization_estimator.rs    # BandwidthReporter for max bandwidth/loss tracking\n\nrouter/\n  mod.rs                      # InboundPacketRouter: Future, demux by DCID, ConnectionMapCommand\n  acceptor.rs                 # ConnectionAcceptor: server-side InitialPacketHandler (RETRY flow)\n  connector.rs                # ClientConnector: client-side InitialPacketHandler (handshake FSM)\n```\n\n## WHERE TO LOOK\n\n| Task | File | Symbol/Line |\n|------|------|-------------|\n| Add lifecycle callback | `connection/mod.rs` | `ApplicationOverQuic` trait (~:663) |\n| Connection state machine | `io/connection_stage.rs` | `ConnectionStage` trait, `Handshake`/`RunningApplication`/`Close` |\n| Worker main loop | `io/worker.rs` | `IoWorker::work_loop()` (~:216) |\n| Packet routing/demux | `router/mod.rs` | `InboundPacketRouter::on_incoming()` (~:229) |\n| CID management | `io/worker.rs` | `fill_available_scids()`, `refresh_connection_ids()` |\n| Server accept flow | `router/acceptor.rs` | `ConnectionAcceptor::handle_initials()` |\n| Client connect flow | `router/connector.rs` | `ClientConnector::on_incoming()` |\n| Connection spawn path | `connection/mod.rs` | `InitialQuicConnection::start()` / `handshake()` / `resume()` |\n| CID-to-connection map | `connection/map.rs` | `ConnectionMap` (optimized `CidOwned` for v1 CIDs) |\n| Raw/manual connections | `raw.rs` | `wrap_quiche_conn()`, `ConnCloseReceiver` |\n\n## ANTI-PATTERNS\n\n- **`InitialQuicConnection` is `#[must_use]`** -- dropping silently discards connection. Always call `.start()`, `.handshake()`, or `.handshake_fut()`.\n- **`handshake()` spawns with `AbortOnDropHandle`** -- dropping the future kills the handshake task. Hold the handle.\n- **`fill_available_scids` sends `ConnectionMapCommand::MapCid` to router** -- silently fails if router channel dropped. Don't assume CID registration succeeded.\n- **`transmute` of `Instant` in `gso.rs`** -- fragile platform-dependent hack. Do not extend or replicate.\n- **One client connection per socket** -- `connect()` docs explicitly warn. Sharing socket loses packets.\n- **`#[cfg(feature = \"zero-copy\")]` gates `QuicheConnection` type alias** -- `quiche::Connection<BufFactory>` vs `quiche::Connection`. Check both paths when modifying connection creation.\n- **`wait_for_quiche` returns `TlsFail` on gather error** -- misleading sentinel error, don't propagate this pattern.\n\n## NOTES\n\n- `IoWorker` is generic: `IoWorker<Tx, M, S: ConnectionStage>`. Stage transitions consume the worker via `From<IoWorker<..>> for IoWorkerParams<..>` and construct a new `IoWorker` with the next stage.\n- `select!` in `work_loop` is **biased** -- timeout arm must stay first to prevent starvation.\n- `ConnectionMap` uses `CidOwned::Optimized([u64; 3])` for v1 CIDs (<=20 bytes) to avoid heap allocation on lookup.\n- `InboundPacketRouter` implements `Future` directly (not async fn) -- polled as a spawned task.\n- `short_dcid()` fast-path extracts DCID from short header packets without full `Header::from_slice`.\n- Router tests are `#[cfg(all(test, unix))]` in `router/mod.rs` -- not Windows-compatible."
+    gold_removed: ''

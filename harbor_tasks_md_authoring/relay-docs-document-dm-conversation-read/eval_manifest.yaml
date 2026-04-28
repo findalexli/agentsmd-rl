@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: relay-docs-document-dm-conversation-read
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: AgentWorkforce/relay
+  pr: 648
+  base_commit: "1c0c9ad9e4e34f66828cb5271eae72a4bbe892ef"
+  merge_commit: "3c9d32296be60a0560067f1e1ebe4cffc4893077"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in packages/openclaw/skill/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in packages/openclaw/skill/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in packages/openclaw/skill/SKILL.md."
+
+config_edits:
+  - path: packages/openclaw/skill/SKILL.md
+    tier: 1
+    gold_added: "### Read DMs\n\nList your DM conversations:\n\n```bash\nmcporter call relaycast.message.dm.list\n```\n\n**Reading messages inside a DM conversation** requires dual auth — the workspace key (`rk_live_...`) as `Authorization` and the agent token (`at_live_...`) as `X-Agent-Token`:\n\n```bash\ncurl -s 'https://api.relaycast.dev/v1/dm/conversations/CONVERSATION_ID/messages?limit=20' \\\n  -H 'Authorization: Bearer rk_live_YOUR_WORKSPACE_KEY' \\\n  -H 'X-Agent-Token: at_live_YOUR_AGENT_TOKEN'\n```\n\n> **Note:** Listing conversations (`GET /v1/dm/conversations`) works with just the agent token, but reading message content within a conversation requires the workspace key. See the Token model section below for details.\n\n**Dual-auth endpoints:** Some read endpoints require the **workspace key** (`rk_live_...`) rather than the agent token. Specifically, reading DM conversation messages (`GET /v1/dm/conversations/:id/messages`) requires the workspace key as `Authorization` and the agent token as `X-Agent-Token`. Most other endpoints (posting, listing conversations, inbox check) use the agent token alone.\n"
+    gold_removed: ''

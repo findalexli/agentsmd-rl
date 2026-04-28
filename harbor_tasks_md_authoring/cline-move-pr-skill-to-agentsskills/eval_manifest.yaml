@@ -1,0 +1,24 @@
+version: "2.0"
+
+task:
+  name: cline-move-pr-skill-to-agentsskills
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: cline/cline
+  pr: 9505
+  base_commit: "a7a35c01382b391fc4f9bd062f9359e3b56ca256"
+  merge_commit: "091cf945e41966aaadef4b4435f41e15ec413d6d"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .agents/skills/create-pull-request/SKILL.md."
+
+config_edits:
+  - path: .agents/skills/create-pull-request/SKILL.md
+    tier: 1
+    gold_added: 'description: Create a GitHub pull request following project conventions. Use when the user asks to create a PR, submit changes for review, or open a pull request. Handles commit analysis, branch management, PR template usage, and PR creation using the gh CLI tool.'
+    gold_removed: ''

@@ -1,0 +1,46 @@
+version: "2.0"
+
+task:
+  name: cli-chorewhiteboard-manual-disable-edge-case
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: larksuite/cli
+  pr: 661
+  base_commit: "97f817d0886fafbb282a7c504d38049f7c2f4e45"
+  merge_commit: "20fba1e601fa4377c89c91d18f9ffe84ac4ce681"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/lark-whiteboard/references/lark-whiteboard-update.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/lark-whiteboard/routes/svg.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/lark-whiteboard/routes/svg.md."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/lark-whiteboard/routes/svg.md."
+
+config_edits:
+  - path: skills/lark-whiteboard/references/lark-whiteboard-update.md
+    tier: 1
+    gold_added: 思维导图，时序图，类图，饼图，流程图等图表推荐使用 Mermaid/PlantUML 语法绘制。
+    gold_removed: ''
+  - path: skills/lark-whiteboard/routes/svg.md
+    tier: 1
+    gold_added: '画板的 svg-parser 把可识别元素转成可编辑节点, 其余降级为内嵌图片(渲染没问题, 虽然不可编辑, 但是可以正常显示)；但 `<radialGradient>` / `<filter>` / `<clipPath>` 等装饰特性画板完全不支持，会导致渲染问题（见下方⚠️）
+
+      **不需要所有元素都可编辑, 但必须避免使用不支持的装饰特性, 且要兼顾可编辑和美观漂亮**
+
+      **⚠️ [!IMPORTANT] 不支持的装饰特性**
+
+      - `<radialGradient>` / `<filter>` / `<pattern>` / `<clipPath>` / `<mask>` → 画板都不支持，**请避免使用，否则会导致画板渲染问题**'
+    gold_removed: ''

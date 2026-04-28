@@ -1,0 +1,48 @@
+version: "2.0"
+
+task:
+  name: claude-skills-docs-add-skillmd-update-requirement
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: oaustegard/claude-skills
+  pr: 162
+  base_commit: "5a7ca317fddaa60e4c0a312db27c496d38a2c102"
+  merge_commit: "26fb20dfcecff7b632002ca4604670ad054d57ac"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in mapping-codebases/SKILL.md."
+  - id: signal_04
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in mapping-codebases/SKILL.md."
+  - id: signal_05
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in mapping-codebases/SKILL.md."
+
+config_edits:
+  - path: CLAUDE.md
+    tier: 1
+    gold_added: "### CRITICAL: Skills Have Multiple Documentation Files\n\n**SKILL.md is the source of truth** - it's what users see and what triggers releases.\n\nWhen updating a skill, you MUST update ALL relevant files:\n- `SKILL.md` - User-facing documentation, version in frontmatter, installation instructions\n- `README.md` - Auto-generated but may exist in development\n- Implementation files (scripts/*.py, etc.)\n- Any other documentation\n\n**Common FAILURE pattern:**\n```bash\n# Update implementation\nEdit codemap.py (✓)\n\n# Update README.md\nEdit README.md (✓)\n\n# Forget SKILL.md (✗ CRITICAL FAILURE)\n# - Users get outdated installation instructions\n# - Version not bumped → no release triggered\n# - Frontmatter description outdated\n```\n\n**CORRECT workflow:**\n```bash\n# 1. Update implementation files\nEdit scripts/codemap.py\n\n# 2. Update README.md (if exists)\nEdit README.md\n\n# 3. Update SKILL.md (REQUIRED)\nEdit SKILL.md:\n  - Bump version in frontmatter\n  - Update installation instructions\n  - Update examples to match new features\n  - Update limitations section\n\n# 4. Verify all files consistent\ngrep -n \"tree-sitter\" skill-name/*.md skill-name/scripts/*.py\n# All should show updated package names\n```\n\n**Version bumping triggers releases:**\n- Change `metadata.version` in SKILL.md frontmatter\n- Semantic versioning: major.minor.patch\n- New features = minor bump (0.2.0 → 0.3.0)\n- Bug fixes = patch bump (0.2.0 → 0.2.1)\n- Breaking changes = major bump (0.2.0 → 1.0.0)\n"
+    gold_removed: ''
+  - path: mapping-codebases/SKILL.md
+    tier: 1
+    gold_added: "  version: 0.3.0\nuv pip install tree-sitter-language-pack\n- **Symbol hierarchy** with kind markers: (C) class, (m) method, (f) function\n- **Function signatures** extracted from AST (Python, partial TypeScript)\n- Import previews\n\n### handlers.py\n> Imports: `flask, functools, jwt, .models`...\n- **login** (f) `(username: str, password: str)`\n- **logout** (f) `()`\n- **AuthHandler** (C)\n  - **__init__** (m) `(self, config: dict)`\n  - **validate_token** (m) `(self, token: str)`\n  - **refresh_session** (m) `(self, user_id: int)`\n**Symbol Hierarchy**: Shows classes with nested methods, not just flat lists. See the structure at a glance with kind markers (C/m/f).\n**Function Signatures**: Extracts parameter lists from Python and partial TypeScript, showing what functions expect without reading the source.\n\n**Directory Statistics**: Each map header shows file and subdirectory counts, helping you quickly assess scope.\n- Extracts structural info only (symbols/imports), not semantic descriptions\n- Method extraction: Full support for Python/TypeScript, partial for other languages\n- Signatures: Python (full), TypeScript (partial), others (not extracted)\n- Private symbols (Python `_prefix`) excluded from top-level exports (methods not filtered yet)"
+    gold_removed: ''

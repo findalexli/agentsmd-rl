@@ -1,0 +1,81 @@
+version: "2.0"
+
+task:
+  name: navigator-update-navloop-skillmd-with-v2
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: alekspetrov/navigator
+  pr: 4
+  base_commit: "b589dd1150062f3bb55c116efea0596888b88148"
+  merge_commit: "0471ec8db0a74565cfb353e1941e08f96a6c3b3c"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/nav-loop/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/nav-loop/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/nav-loop/SKILL.md."
+
+config_edits:
+  - path: skills/nav-loop/SKILL.md
+    tier: 1
+    gold_added: '**When exit conditions met**, emit the exit signal in JSON format and display completion:
+
+
+      ```pilot-signal
+
+      {"v":2,"type":"exit","success":true,"reason":"All criteria met"}
+
+      ```
+
+      **How to signal completion** (v2 JSON format):
+
+      ```pilot-signal
+
+      {"v":2,"type":"exit","success":true,"reason":"All requirements met"}
+
+      The JSON format in a `pilot-signal` code block ensures unambiguous detection by Pilot automation. The `reason` field should briefly describe why the task is complete.
+
+
+      **Signal fields**:
+
+      - `v`: Version (always `2`)
+
+      - `type`: Signal type (always `"exit"` for completion)
+
+      - `success`: Whether task completed successfully (`true`/`false`)
+
+      - `reason`: Brief explanation of completion state
+
+
+      ```
+
+      ```pilot-signal
+
+      {"v":2,"type":"exit","success":true,"reason":"isPrime function implemented and tests passing"}
+
+      ```
+
+
+      ```
+
+      ```
+
+      ```pilot-signal
+
+      {"v":2,"type":"exit","success":true,"reason":"Auth bug fixed with mock service"}
+
+      ```
+
+
+      ```'
+    gold_removed: ''

@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: opensandbox-docs-add-agentmd
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: alibaba/OpenSandbox
+  pr: 36
+  base_commit: "1f4b978e73868681f50092506d6d6fb8dc717661"
+  merge_commit: "9bc35d34c1b11f621fadbb7df82b25c937c3e8fd"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+
+config_edits:
+  - path: AGENTS.md
+    tier: 1
+    gold_added: "# Repository Guidelines\n\n## Project Structure & Module Organization\n- `server/`: Python FastAPI service, configs, and tests.\n- `components/execd/`: Go execution daemon and related tests.\n- `sdks/`: Multi-language SDKs (`sdks/sandbox/*`, `sdks/code-interpreter/*`).\n- `sandboxes/`: Runtime sandbox implementations (e.g., `sandboxes/code-interpreter/`).\n- `specs/`: OpenAPI specs (`specs/execd-api.yaml`, `specs/sandbox-lifecycle.yml`).\n- `examples/`: End-to-end usage examples and integrations.\n- `tests/`: Cross-component/E2E tests (`tests/python/`, `tests/java/`).\n- `docs/`, `oseps/`, `scripts/`: Docs, proposals, and automation scripts.\n\n## Build, Test, and Development Commands\n- Server (Python):\n  - `cd server && uv sync` installs deps.\n  - `cp server/example.config.toml ~/.sandbox.toml` sets local config.\n  - `cd server && uv run python -m src.main` runs the API server.\n- execd (Go):\n  - `cd components/execd && go build -o bin/execd .` builds the daemon.\n  - `cd components/execd && make fmt` formats Go sources.\n- SDKs:\n  - Python: `cd sdks/sandbox/python && uv sync && uv run pytest`.\n  - Kotlin: `cd sdks/sandbox/kotlin && ./gradlew build`.\n- Specs: `node scripts/spec-doc/generate-spec.js` regenerates spec docs.\n\n## Coding Style & Naming Conventions\n- Python: PEP 8, `ruff` for lint/format, type hints on public APIs.\n- Go: `gofmt`, explicit error handling, standard import grouping.\n- Kotlin: Kotlin Coding Conventions, `ktlint` where configured.\n- Naming: classes `PascalCase`, functions `snake_case` (Python) / `camelCase` (Go/Kotlin), constants `UPPER_SNAKE_CASE`.\n\n## Testing Guidelines\n- Python tests use `pytest` (async tests common).\n- Go tests use `go test` under `components/execd/pkg/...`.\n- Kotlin tests use Gradle (`./gradlew test`).\n- Coverage targets (from CONTRIBUTING): core packages >80%, API layer >70%.\n\n## Commit & Pull Request Guidelines\n- Commit messages follow Conventional Commits, e.g. `feat(server): add runtime`.\n- Use feature branches (e.g., `feature/...`, `fix/...`) and keep PRs focused.\n- PRs should include summary, testing status, and linked issues; follow the template in `CONTRIBUTING.md`.\n- For major API or architectural changes, submit an OSEP (`oseps/`).\n\n## Security & Configuration Tips\n- Local server config lives in `~/.sandbox.toml` (copied from `server/example.config.toml`).\n- Docker is required for local sandbox execution; keep images and keys out of commits."
+    gold_removed: ''

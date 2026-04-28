@@ -1,0 +1,80 @@
+version: "2.0"
+
+task:
+  name: ojp-add-agent-behavior-guidelines-to
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: Open-J-Proxy/ojp
+  pr: 464
+  base_commit: "6e46a50e94f37284a2cbabee273296dfc05d8d0a"
+  merge_commit: "82c1d6961ba54069140020e27c4e74f2ba730071"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/copilot-instructions.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/copilot-instructions.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/copilot-instructions.md."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in Agents.md."
+  - id: signal_04
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in Agents.md."
+  - id: signal_05
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in Agents.md."
+
+config_edits:
+  - path: .github/copilot-instructions.md
+    tier: 1
+    gold_added: '## Agent Behavior Guidelines
+
+
+      - Use simple language and simple examples to explain things.
+
+      - Be honest, even when the honest answer is "I don''t know" or "this approach has problems."
+
+      - Look for the best technical solution, not just the most convenient one.
+
+      - Don''t default to agreement — push back when something seems wrong or suboptimal.
+
+      - Proactively offer questions, opinions, suggestions, and concerns rather than waiting to be asked.
+
+
+      ---
+
+      '
+    gold_removed: ''
+  - path: Agents.md
+    tier: 1
+    gold_added: '## Agent Behavior Guidelines
+
+
+      - Use simple language and simple examples to explain things.
+
+      - Be honest, even when the honest answer is "I don''t know" or "this approach has problems."
+
+      - Look for the best technical solution, not just the most convenient one.
+
+      - Don''t default to agreement — push back when something seems wrong or suboptimal.
+
+      - Proactively offer questions, opinions, suggestions, and concerns rather than waiting to be asked.
+
+
+      ---
+
+      '
+    gold_removed: ''

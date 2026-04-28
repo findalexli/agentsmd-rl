@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: eparse-add-copilot-instructions-to-eparse
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: ChrisPappalardo/eparse
+  pr: 18
+  base_commit: "88340bac3891012742d332cc21353c6d931d43f7"
+  merge_commit: "fc15c536fc53dee6f4f0c016c73ebce029a7a8ba"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/copilot-instructions.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/copilot-instructions.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/copilot-instructions.md."
+
+config_edits:
+  - path: .github/copilot-instructions.md
+    tier: 1
+    gold_added: "# Copilot Coding Agent Instructions for eparse\n\n## Repository Overview\n- **Purpose:** eparse is a Python package and CLI tool for crawling, parsing, and extracting tabular data from Excel spreadsheets, with support for SQLite and PostgreSQL outputs.\n- **Language:** Python (>=3.8)\n- **Key dependencies:** click, openpyxl, lxml, pandas, peewee\n- **Dev/test tools:** pytest, black, flake8, pre-commit, tox\n- **CI:** GitHub Actions (`.github/workflows/ci.yml`)\n\n## Project Structure\n- Main code: `eparse/`\n- CLI: `eparse/cli.py`\n- Tests: `tests/`\n- Docs: `docs/`\n- Config: `pyproject.toml`, `setup.cfg`, `tox.ini`, `.pre-commit-config.yaml`, `Makefile`\n- CI: `.github/workflows/ci.yml`\n\n## Setup, Lint, and Test (Base Case)\n**Always follow these steps in order:**\n\n1. **Install all dependencies:**\n   - `pip install -e .[test]`\n2. **Lint:**\n   - `make lint`\n3. **Test:**\n   - `make test`\n4. **Pre-commit (optional, but enforced in CI):**\n   - `make pre-commit`\n\n**If using PostgreSQL output:**\n- Install: `pip install psycopg2-binary`\n\n## CI and Validation\n- **CI runs on every push and PR**: runs `make lint`, `make pre-commit`, and `make test`.\n- **All code must pass lint and tests locally before PR.**\n\n## Environment\n- Python >=3.8 required.\n- No Docker or Compose files—do not attempt Docker workflows.\n\n## Key Files in Root\n- AUTHORS.rst, CONTRIBUTING.rst, HISTORY.rst, LICENSE, MANIFEST.in, Makefile, README.rst, pyproject.toml, setup.cfg, tox.ini, .pre-commit-config.yaml, .github/, eparse/, tests/, docs/, contrib/\n\n## Agent Guidance\n- **Always use the above commands and Makefile targets.**\n- **Only search for alternatives if these fail or are incomplete.**\n- **Do not attempt Docker or Compose workflows—they are not present.**\n\n## References\n- See `README.rst` for usage and development details.\n- See `.github/workflows/ci.yml` for CI steps.\n- See `CONTRIBUTING.rst` for contribution process."
+    gold_removed: ''

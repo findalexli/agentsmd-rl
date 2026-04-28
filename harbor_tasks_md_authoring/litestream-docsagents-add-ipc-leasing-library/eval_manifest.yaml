@@ -1,0 +1,48 @@
+version: "2.0"
+
+task:
+  name: litestream-docsagents-add-ipc-leasing-library
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: benbjohnson/litestream
+  pr: 1107
+  base_commit: "7265b6b4ee9632346ebc18d8647015466302465d"
+  merge_commit: "84a5d3166ff783ce03fb6c9c5e1dc66a9627297b"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+
+config_edits:
+  - path: AGENTS.md
+    tier: 1
+    gold_added: '- **Retention enabled by default**: `Store.RetentionEnabled` is `true` by default. Disable only when cloud lifecycle policies handle cleanup. See `store.go`
+
+      - **IPC socket disabled by default**: Control socket is off by default. Enable with `socket.enabled: true` in config. See `server.go`
+
+      - **`$PID` config expansion**: Config files support `$PID` to expand to the current process ID, plus standard `$ENV_VAR` expansion. See `cmd/litestream/main.go`
+
+      - **`litestream ltx -level`**: Use `-level 0`–`9` or `-level all` to inspect specific compaction levels. See `cmd/litestream/ltx.go`
+
+      | DB | `db.go` | Database state, restoration, WAL monitoring, library API (`SyncStatus`, `SyncAndWait`, `EnsureExists`) |
+
+      | Storage | `**/replica_client.go` | Backend implementations (includes `ReplicaClientV3` for v0.3.x restore) |
+
+      | IPC | `server.go` | Unix socket control API (register/unregister, /txid, pprof) |
+
+      | Leasing | `leaser.go`, `s3/leaser.go` | Distributed lease acquisition via conditional writes |
+
+      | [docs/PROVIDER_COMPATIBILITY.md](docs/PROVIDER_COMPATIBILITY.md) | Provider-specific S3/cloud configs |'
+    gold_removed: ''

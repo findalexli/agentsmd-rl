@@ -1,0 +1,125 @@
+version: "2.0"
+
+task:
+  name: wp-calypso-add-agentsmd-files-for-billing
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: Automattic/wp-calypso
+  pr: 108838
+  base_commit: "40724494680cec63c85aaa0eecbc82821e4afa47"
+  merge_commit: "d325d68477750a7508aff47bcd9929713a5ff5f3"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in client/AGENTS.md."
+  - id: signal_04
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in client/AGENTS.md."
+  - id: signal_05
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in client/AGENTS.md."
+  - id: signal_06
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in client/dashboard/AGENTS.md."
+  - id: signal_07
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in client/dashboard/AGENTS.md."
+  - id: signal_08
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in client/dashboard/me/billing-purchases/AGENTS.md."
+  - id: signal_09
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in client/dashboard/me/billing-purchases/AGENTS.md."
+  - id: signal_10
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in client/dashboard/me/billing-purchases/AGENTS.md."
+  - id: signal_11
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in client/me/purchases/AGENTS.md."
+  - id: signal_12
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in client/me/purchases/AGENTS.md."
+  - id: signal_13
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in client/me/purchases/AGENTS.md."
+  - id: signal_14
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in client/my-sites/checkout/AGENTS.md."
+  - id: signal_15
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in client/my-sites/checkout/AGENTS.md."
+  - id: signal_16
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in client/my-sites/checkout/AGENTS.md."
+
+config_edits:
+  - path: AGENTS.md
+    tier: 1
+    gold_added: "  - client/my-sites/checkout — checkout flow\n  - client/me/purchases — purchase management\n  - client/dashboard/me/billing-purchases — billing & purchase management"
+    gold_removed: ''
+  - path: client/AGENTS.md
+    tier: 1
+    gold_added: "# Calypso Client\n\nReact + TypeScript application clients for WordPress.com. For repo-level context, see root `AGENTS.md`.\n\n## Project Knowledge\n\nTwo coexisting architectures: Classic (`client/me/`, `client/my-sites/`) uses Redux +\npage.js routing. Dashboard (`client/dashboard/`) uses TanStack Query + TanStack Router.\n\n## Commands\n\n```bash\nyarn eslint <file>                    # Lint JS/TS/TSX\nyarn eslint --fix <file>              # Lint + fix\nyarn stylelint <file>                 # Lint CSS/SCSS\nyarn prettier --write <file>          # Format\nyarn typecheck-client                 # Type-check (slow)\nyarn test-client <test-file>          # Run specific test\nyarn test-client --findRelatedTests <file>  # Find + run related tests\n```\n\n## Conventions\n\n- Use `import clsx from 'clsx'` — not `classnames`.\n- One empty line between `import './style.scss'` and other imports.\n- Avoid BEM shortcuts (`&--`, `&__`) in SCSS.\n- Use CSS logical properties (`margin-inline-start`, not `margin-left`).\n- Prefer `@wordpress/components` over custom UI primitives (Button, Modal, Card, etc.). Avoid `__experimental*` components unless existing usage in codebase.\n- No `any` unless justified — strict TypeScript throughout.\n- kebab-case for directories (e.g., `components/auth-wizard`).\n- `userEvent` over `fireEvent` in tests. `toBeVisible` over `toBeInTheDocument`.\n- Dialog buttons on mobile: `.dialog__action-buttons` flips to\n  `flex-direction: column-reverse` below `$break-mobile`. Flex labels inside\n  buttons need `width: 100%` for `justify-content: center` to work."
+    gold_removed: ''
+  - path: client/dashboard/AGENTS.md
+    tier: 1
+    gold_added: '## Sub-area Guides
+
+
+      - **me/billing-purchases/** — Billing & purchase management (cancel flows, payment methods, DataViews)
+
+      '
+    gold_removed: ''
+  - path: client/dashboard/me/billing-purchases/AGENTS.md
+    tier: 1
+    gold_added: "# Dashboard Billing — Purchase Management\n\nTanStack Query/Router-based billing and purchase management. The largest and most\ncomplex billing area in the Dashboard client. Related billing areas:\n`client/me/purchases/` (Classic), `client/my-sites/checkout/` (Checkout).\n\n## Project Knowledge\n\n### Directory Structure\n\n```\nbilling-purchases/\n├── index.tsx + dataviews.tsx     # Purchase list (DataViews table)\n├── purchase-settings/index.tsx   # Heavy component — see Arch Decision #2\n├── cancel-purchase/              # Multi-step cancellation flow (most complex area)\n│   ├── cancel-purchase-form/     # Survey steps, product-specific options\n│   └── domain-removal-flow       # Domain-specific removal steps\n├── payment-methods/              # use-create-* factory hooks (one per payment type)\n├── payment-method-selector/      # Payment method selection UI\n├── change-payment-method.tsx     # Per-purchase payment method change\n└── add-payment-method.tsx        # Standalone new card addition\n```\n\n### Sibling Billing Areas\n\nNon-obvious details about sibling directories under `client/dashboard/me/`:\n\n| Directory                  | Trap                                                                             |\n| -------------------------- | -------------------------------------------------------------------------------- |\n| `billing-payment-methods/` | Delete dialog queries `userPurchasesQuery()` to show affected subscriptions      |\n| `billing-tax-details/`     | Read-only when `can_user_edit === false` — no error, just silently disables form |\n\n### Data Layer\n\nHelpers in `client/dashboard/utils/purchase.ts` (~50 functions). Queries are loaded\nvia router loaders in `client/dashboard/app/router/me.tsx`.\n\n### Architecture Context\n\nDashboard uses `Purchase` from `@automattic/api-core` (snake_case fields, e.g.,\n`purchase.site_slug`). Expiry values: `'auto-renewing'`, `'manual-renew'`. Classic\n(`client/me/purchases/`) uses a different `Purchase` type from\n`calypso/lib/purchases/types` (camelCase, different string values) — never copy\nlogic between the two without converting field names and values.\n\nQuery key prefix for purchases is `'upgrades'` (NOT `'purchases'` — historical).\nReceipts use `'receipt'`, payment methods use `'me'`. Wrong prefix silently breaks\ncache invalidation.\n\nQueries live in `@automattic/api-queries` (`packages/api-queries/`), NOT in\n`client/dashboard/data/` or `client/dashboard/app/queries/`. Adding a new query\nrequires a fetcher in `@automattic/api-core` (`packages/api-core/src/`) first,\nthen a query wrapper in `api-queries`.\n\n## Architectural Decisions\n\n1. **Purchase list uses DataViews** — `dataviews.tsx` defines fields, filters, actions,\n   and responsive column visibility via `usePersistentView()`. Transferred purchases\n   are fetched separately and disable management actions.\n\n2. **Purchase settings is a heavy component** — Single `index.tsx` handles domain queries,\n   storage queries, auto-renew state, renewal dialogs, and product-specific key displays.\n   This is intentional consolidation, not a candidate for splitting.\n\n3. **Payment method factory pattern** — `use-create-*` hooks return `PaymentMethod` objects\n   with processors. `use-create-assignable-payment-methods.tsx` filters by\n   `allowedPaymentMethodsQuery()` and returns empty array while loading (intentional).\n\n### Cancel Purchase Flow\n\nThree flow types, derived by `getPurchaseCancellationFlowType()` in\n`utils/purchase.ts` from `is_refundable`, `hasAmountAvailableToRefund()`, and\n`is_auto_renew_enabled` (not passed as props):\n\n| Flow Type            | When                                                          | API Call                            |\n| -------------------- | ------------------------------------------------------------- | ----------------------------------- |\n| `REMOVE`             | Expired, grace-period, or (not refundable AND auto-renew off) | `removePurchaseMutation()` (DELETE) |\n| `CANCEL_WITH_REFUND` | Refundable, amount > 0, auto-renew on                         | `cancelAndRefundPurchaseMutation()` |\n| `CANCEL_AUTORENEW`   | Not refundable, auto-renew on                                 | Turns off auto-renew                |\n\nSurvey steps vary by product type (Jetpack, domains, plans, Akismet, marketplace).\nAgency partner purchases skip survey. Marketplace plan cancellation cascades to all\nmarketplace subscriptions on site.\n\n## Common Pitfalls\n\n1. **`isPartnerPurchase` type guard narrows to wrong field** — Checks\n   `purchase?.partner_name` but narrows the type to `{ partnerType: string }` (camelCase).\n   The actual field on the `Purchase` interface is `partner_type` (snake_case). Downstream\n   code using the narrowed type will reference a field that doesn't exist.\n\n2. **Payment method list is empty while loading** — `allowedPaymentMethods === undefined`\n   returns `[]` (no methods shown). Errors fail open (all methods shown). Don't add\n   conditional logic before the undefined guard in `use-create-assignable-payment-methods.tsx`.\n\n3. **`REMOVE` and `CANCEL` are different APIs** — `getPurchaseCancellationFlowType`\n   returns `REMOVE` for expired purchases, which maps to a DELETE call, not a cancel.\n   Don't assume all paths through \"cancel purchase\" call the same mutation.\n\n4. **CRITICAL: `flowType` gets silently overridden** — Inside `onSurveyComplete()`,\n   `state.cancelIntent === 'refund'` switches `CANCEL_AUTORENEW` → `CANCEL_WITH_REFUND`.\n   The `shouldShowRefundEligibilityNotice` feature flag also changes the default path.\n\n5. **Survey completion tracked per-purchase** — Stored in user preferences to avoid\n   re-surveying. A new survey won't appear for a purchase that was already surveyed.\n\n6. **Siteless purchases** — Some products (Akismet, Jetpack, Marketplace) use temporary sites (`siteless.{jetpack|akismet|marketplace.wp|a4a}.com`). Guard with `isTemporarySitePurchase()`. Never call `siteBySlugQuery()` for these — use `purchase.domain` or `purchase.blog_id` for display, skip site-dependent UI entirely.\n\n7. **Transferred purchases** — Always check ownership before allowing purchase actions.\n\n8. **Route params are strings** — `purchaseId` from URL params must be `parseInt()`'d before passing to query functions."
+    gold_removed: ''
+  - path: client/dashboard/me/billing-purchases/CLAUDE.md
+    tier: 1
+    gold_added: '@AGENTS.md'
+    gold_removed: ''
+  - path: client/me/purchases/AGENTS.md
+    tier: 1
+    gold_added: "# Classic Purchases — Billing & Purchase Management\n\nRedux/page.js-based billing and purchase management. Covers the full purchase\nlifecycle: listing, detail, payment methods, billing history, cancellation, and\ntax details. Related billing areas: `client/dashboard/me/billing-purchases/`\n(Dashboard), `client/my-sites/checkout/` (Checkout).\n\n## Project Knowledge\n\n### Directory Structure\n\n```\nclient/me/purchases/\n├── index.js + controller.jsx       # page.js route registration (not React Router)\n├── manage-purchase/\n│   └── index.tsx                   # Main detail page — class component (not functional)\n├── purchases-list-in-dataviews/    # Modern DataViews list (retrofitted into Redux architecture)\n├── cancel-purchase/                # Cancel flow — separate from remove-purchase/\n├── remove-purchase/                # Remove flow (expired items, DELETE API) — separate from cancel\n└── billing-history/main.tsx        # DataViews-based history list\n```\n\n### Redux Selectors\n\n`getSitePurchases(state, siteId)` returns `[]` when not loaded — indistinguishable\nfrom \"no purchases.\" `getUserPurchases(state)` returns `null` when not loaded.\nAlways check `hasLoadedUserPurchasesFromServer` / `hasLoadedSitePurchasesFromServer`\nbefore trusting results.\n\n`getByPurchaseId` searches ALL purchases (user + site) from a single flat array.\nWhat's in that array depends on which `Query*Purchases` components have mounted.\n\n### Architecture Context\n\nClassic uses `Purchase` from `calypso/lib/purchases/types` (camelCase fields, e.g.,\n`purchase.siteSlug`). Expiry values: `'autoRenewing'`, `'manualRenew'`. Dashboard\n(`client/dashboard/me/billing-purchases/`) uses a different `Purchase` type from\n`@automattic/api-core` (snake_case, different string values) — never copy logic\nbetween the two without converting field names and values.\n\n## Architectural Decisions\n\n1. **Two cancel paths (mutually exclusive)** — `manage-purchase/index.tsx` renders one\n   of two cancel entry points based on `canAutoRenewBeTurnedOff(purchase)`:\n\n   - **True** → `renderCancelPurchaseNavItem()` → navigates to cancel page (full flow)\n   - **False** → `renderRemovePurchaseNavItem()` → renders `<RemovePurchase>` inline (delete)\n\n   These map to different API calls (`cancelPurchase` for refund, `removePurchase`\n   DELETE for expired, `disableAutoRenew` for toggle). All say \"Cancel\" in the UI\n   but are NOT interchangeable.\n\n2. **Three payment method paths** — `changePaymentMethod` (per-purchase, has card),\n   `addPaymentMethod` (per-purchase, no card), `addNewPaymentMethod` (account-level).\n   Different routes, different components. `getChangePaymentMethodPath` in `utils.ts`\n   chooses between the first two.\n\n3. **Auto-renew toggle is asymmetric** — Enabling requires a valid payment method\n   (silently shows dialog instead). Disabling has no such gate.\n\n## Common Pitfalls\n\n1. **`canAutoRenewBeTurnedOff` name lies** — Despite the name, this function is the\n   **cancel eligibility gate**, not an auto-renew check. Returns `true` for refundable\n   purchases even when auto-renew is already off. See `client/lib/purchases/index.ts`.\n   Don't substitute `purchase.isAutoRenewEnabled`.\n\n2. **`isSiteLevel` prop changes data source silently** — In `manage-purchase`,\n   `isSiteLevel=true` checks `hasLoadedSitePurchasesFromServer` instead of\n   `hasLoadedUserPurchasesFromServer`. Without the matching `QuerySitePurchases`\n   component, you get a permanent loading state with no error.\n\n3. **Auto-renew toggle: deferred notice pattern** — Notices created while\n   `showAutoRenewDisablingDialog` is visible get swallowed. The component uses\n   `pendingNotice` state + `componentDidUpdate` to defer. Don't call `createNotice`\n   directly in dialog callbacks.\n\n4. **`page()` vs `page.redirect()` after actions** — Use `page.redirect()` after\n   cancel/remove so users can't navigate back to an invalid state. `page()` is\n   for normal navigation.\n\n5. **`purchase` is optional in PaymentMethodSelector** — The \"add payment method\"\n   flow passes `undefined`. Processors must handle this case. Success messages\n   branch on whether `purchase` exists.\n\n6. **`site.wpcom_url` lies for `.home.blog` sites** — Always returns\n   `.wordpress.com` even when the site's free domain is `.home.blog` (or 27\n   other `.blog` subdomains). Use `getWpComDomainBySiteId()` selector to get\n   the actual free domain. Affects `NonPrimaryDomainDialog` in both\n   `remove-purchase/` and `manage-purchase/`.\n\n7. **`isMonthly()` only checks plan slugs** — Returns `false` for Jetpack\n   product slugs like `jetpack_videopress_monthly` because it only checks\n   `JETPACK_MONTHLY_PLANS`. Use `getJetpackItemTermVariants()` for products.\n   Same issue with `getYearlyPlanByMonthly()` — only works for plans.\n\n8. **VAT API errors need field mapping** — `useMutation` error has\n   `{ error: string, message: string }` but no field indicator. Map error\n   codes to fields: `missing_country`/`invalid_country` → country field,\n   `invalid_vat`/`missing_id`/`validation_failed` → id field.\n\n9. **Siteless purchases** — Some products (Akismet, Jetpack, Marketplace) use temporary sites (`siteless.{jetpack|akismet|marketplace.wp|a4a}.com`). Guard with `isTemporarySitePurchase()`. Never query site data for these — use `purchase.domain` for display, skip site-dependent UI entirely.\n\n10. **Transferred purchases** — Always check ownership before allowing purchase actions."
+    gold_removed: ''
+  - path: client/me/purchases/CLAUDE.md
+    tier: 1
+    gold_added: '@AGENTS.md'
+    gold_removed: ''
+  - path: client/my-sites/checkout/AGENTS.md
+    tier: 1
+    gold_added: "# Checkout — WordPress.com Purchase Flow\n\nCustomer-facing checkout UI. Related billing areas:\n`client/me/purchases/` (Classic), `client/dashboard/me/billing-purchases/` (Dashboard).\n\n## Project Knowledge\n\n### Directory Structure\n\n```\nclient/my-sites/checkout/\n├── src/\n│   ├── components/\n│   │   ├── checkout-main.tsx           # Top-level orchestrator\n│   │   ├── item-variation-picker/     # Billing cycle selector (name misleads — not \"variants\")\n│   │   └── wp-contact-form/           # Contact form (varies by product type — see Checkout Steps)\n│   ├── payment-methods/               # One UI component per processor\n│   ├── hooks/use-create-payment-methods/  # Generates PaymentMethod[] from cart + server config\n│   └── lib/\n│       ├── wpcom-store.ts               # @wordpress/data store (not Redux — checkout-specific state)\n│       ├── leave-checkout.ts            # navigate() trap — see pitfall #6\n│       └── *-processor.ts              # One per payment method (13 files)\n├── get-thank-you-page-url/          # 800+ lines, exhaustive tests — see pitfall #5\n└── checkout-thank-you/              # Post-purchase pages (8+ variants)\n```\n\n### Checkout Steps\n\nThree hard-coded steps (not extensible without changes here):\n\n1. **Review Order**\n2. **Contact Details** — Form varies by cart contents:\n   - No domains → billing address only\n   - Domain registration → full ICANN contact details\n   - Google Workspace → company name + billing address\n   - Contact type determined by `getContactDetailsType(responseCart)` from `wpcom-checkout`\n3. **Payment Method**\n\nThe sidebar/summary view is NOT a step — visibility is manually managed via\n`isSummaryVisible` state to prevent it from blocking form submission.\n\n### Checkout State\n\n- **Redux** — global state (site, user, notices)\n- **`@wordpress/data` store** (`wpcom-store.ts`) — checkout-specific: contact details, VAT,\n  domain validation results, form touched fields\n- **`useFormStatus()`** from `composite-checkout` — LOADING, READY, SUBMITTING\n- **`useTransactionStatus()`** — NOT_STARTED, PENDING, COMPLETE, REDIRECTING, ERROR\n\n### Payment Processing\n\nProcessors must handle four response paths: immediate success, redirect (PayPal/WeChat),\n3DS challenge (Stripe), and polling (PIX). Not all paths apply to all processors.\n\n### Package Boundaries\n\n| Package              | Role                                                        | Key Rule                    |\n| -------------------- | ----------------------------------------------------------- | --------------------------- |\n| `composite-checkout` | Generic multi-step checkout framework                       | NO WP.com logic here        |\n| `wpcom-checkout`     | WP.com-specific checkout (line items, tax, payment methods) | WP.com logic goes here      |\n| `shopping-cart`      | Cart state via `useShoppingCart()`                          | Independent of checkout     |\n| `calypso-stripe`     | Stripe.js wrapper                                           | Stripe-specific integration |\n| `api-core`           | Fetchers, mutators, types for all API calls                 | Foundation layer            |\n| `api-queries`        | TanStack Query wrappers around api-core                     | Dashboard consumes these    |\n\n## Architectural Decisions\n\n1. **Thank-you URL generated before transaction** — For redirect payment methods\n   (PayPal, Bancontact), the thank-you URL is generated and passed to the processor\n   BEFORE the transaction starts. Uses `:receiptId` placeholder, replaced by\n   `/me/transactions` endpoint on return.\n\n2. **Contact validation is two-step** — Form validation (required fields, format)\n   then async domain registration validation (WPCOM backend). Both must pass.\n\n### Adding a Payment Method\n\nSeven touchpoints required (follow an existing implementation like PIX or Razorpay):\n\n1. **Payment method component** — `src/payment-methods/{name}.tsx`, export `create{Name}PaymentMethod()` returning a `PaymentMethod` object (`{ id, paymentProcessorId, label, activeContent, submitButton }`)\n2. **Processor function** — `src/lib/{name}-processor.ts`, signature: `async (submitData, options, translate) => PaymentProcessorResponse`\n3. **Register processor** — Add to processor map in `src/components/checkout-main.tsx`\n4. **Create hook** — `src/hooks/use-create-payment-methods/use-create-{name}.ts`, gate with `isEnabled('checkout/{name}')`\n5. **Register hook** — Call in `use-create-payment-methods/index.tsx`, add result to `paymentMethods` array\n6. **Slug mapping** — Add bidirectional mapping in `packages/wpcom-checkout/src/translate-payment-method-names.ts` (e.g., `'pix'` ↔ `'WPCOM_Billing_Ebanx_Redirect_Brazil_Pix'`)\n7. **Feature flag** — Add to `config/{environment}.json` (e.g., `checkout/ebanx-pix`)\n\nSteps 6-7 are the ones agents miss — without slug mapping the method never appears.\n\n## Common Pitfalls\n\n1. **Checkout links MUST include `redirect_to` and `cancel_to` params** — Missing\n   these causes broken back/cancel navigation.\n\n2. **Cart key matters** — Wrong cart key = wrong cart. `'no-site'` vs site ID vs\n   `undefined` have different behaviors. See `packages/shopping-cart/README.md`.\n\n3. **Checkout URL format** — Products use slugs, domain meta uses colon separator.\n   Example: `/checkout/example.com/personal,domain_reg:example.com`. Don't construct\n   URLs manually — use existing helpers.\n\n4. **Payment method filtering** — Not all methods are available everywhere.\n   `filterAppropriatePaymentMethods()` in `packages/wpcom-checkout/src/` handles\n   country/currency/product filtering. Don't bypass this or hardcode availability.\n\n5. **Thank-you page routing is 800+ lines with 20+ branches** — Routing logic is in\n   `get-thank-you-page-url/index.ts` with exhaustive unit tests. The code explicitly\n   warns: \"IF YOU CHANGE THIS FUNCTION ALSO CHANGE THE TESTS.\" Don't add new\n   thank-you routes without updating both.\n\n6. **`navigate()` silently fails for `/setup/` routes** — `navigate()` uses\n   `page.show()` which doesn't work for Stepper routes. Use `window.location.href`\n   for cross-origin or setup redirects. See `src/lib/leave-checkout.ts`.\n\n7. **3DS challenges not guaranteed** — Stripe 3D Secure may or may not trigger.\n   Processors must handle both paths (direct success and challenge flow).\n\n8. **Gift purchases bypass everything** — Check `cart.is_gift_purchase` first.\n   Gift purchases skip all upsell logic and route to a separate thank-you page.\n\n9. **Atomic sites use `.wpcomstaging.com`** — Thank-you URL logic replaces\n   `.wordpress.com` with `.wpcomstaging.com` for Atomic sites.\n\n10. **Siteless purchases** — Some products (Akismet, Jetpack, Marketplace) use temporary sites (`siteless.{jetpack|akismet|marketplace.wp|a4a}.com`). Guard with `isTemporarySitePurchase()`. Never query site data for these.\n\n11. **Transferred purchases** — Always check ownership before allowing purchase actions."
+    gold_removed: ''
+  - path: client/my-sites/checkout/CLAUDE.md
+    tier: 1
+    gold_added: '@AGENTS.md'
+    gold_removed: ''

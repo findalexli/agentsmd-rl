@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: unity-mcp-updatecopilot-instructions
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: IvanMurzak/Unity-MCP
+  pr: 460
+  base_commit: "9e0b9afde9489caf07657ecd4dc647cc5c979568"
+  merge_commit: "933087608f584b072da9e67c4cce8da8dbb7e78b"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/copilot-instructions.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/copilot-instructions.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/copilot-instructions.md."
+
+config_edits:
+  - path: .github/copilot-instructions.md
+    tier: 1
+    gold_added: "# Project Guidelines\n\n## Code Style\n- **C#**: Use 4 spaces indentation. PascalCase for classes/methods/properties, `_camelCase` for private readonly fields.\n    - Namespace: `com.IvanMurzak.Unity.MCP`.\n    - Example: [UnityMcpPlugin.cs](Unity-MCP-Plugin/Assets/root/Runtime/UnityMcpPlugin.cs).\n- **PowerShell**: Use K&R brace style.\n\n## Architecture\n- **Unity-MCP-Plugin**: Main Unity package.\n    - Core logic: [Assets/root/Runtime](Unity-MCP-Plugin/Assets/root/Runtime).\n    - Editor logic: `Assets/root/Editor`.\n    - Tests: `Assets/root/Tests`.\n- **Unity-MCP-Server**: ASP.NET Core bridging LLMs and Unity.\n    - Entry point: [Program.cs](Unity-MCP-Server/src/Program.cs) (or similar in project root/src).\n    - SignalR Hub: `RemoteApp` (referenced in CLAUDE.md).\n- **Installer**: [Installer/](Installer/) wraps the package installation.\n- **Unity-Tests**: [Unity-Tests/](Unity-Tests/) contains projects for different Unity versions (2022, 2023, 6000) linking locally to the Plugin.\n\n## Build and Test\n- **Plugin**:\n    - Auto-compiles in Unity.\n    - Run tests: [commands/run-unity-tests.ps1](commands/run-unity-tests.ps1).\n    - Editor Tests: `Assets/root/Tests/Editor`.\n- **Server**:\n    - Build: `.\\Unity-MCP-Server\\build-all.ps1`.\n    - Run: `dotnet run --project Unity-MCP-Server/com.IvanMurzak.Unity.MCP.Server.csproj`.\n- **Commands**: See [commands/](commands/) for utility scripts (release, tests).\n\n## Project Conventions\n- **MCP Tools**: Implemented using attributes in the Plugin. Reflection-based access via `ReflectorNet`.\n- **Documentation**:\n    - [Unity-MCP.wiki](Unity-MCP.wiki/) for user docs.\n    - [docs/](docs/) for translations and repo docs.\n    - See `CLAUDE.md` in subdirectories for specific agent notes.\n- **Versioning**: `package.json` in `Unity-MCP-Plugin/Assets/root/package.json`.\n\n## Integration Points\n- **Communication**: SignalR between Server and Plugin.\n- **Dependencies**: OpenUPM for external packages.\n\n## Security\n- **Server Transport**: Configurable via `--client-transport` (`stdio` or `streamableHttp`)."
+    gold_removed: ''

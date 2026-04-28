@@ -1,0 +1,404 @@
+version: "2.0"
+
+task:
+  name: curator-add-cursor-rules
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: NVIDIA-NeMo/Curator
+  pr: 1294
+  base_commit: "ac74c94d6c2d079d0fdb154708cb0c164815e3b0"
+  merge_commit: "a217590e3b0a34cbfe0125bc08f5e1a9e1642a31"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .cursor/rules/coding-standards.mdc."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .cursor/rules/coding-standards.mdc."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .cursor/rules/coding-standards.mdc."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .cursor/rules/composite-stage-patterns.mdc."
+  - id: signal_04
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .cursor/rules/composite-stage-patterns.mdc."
+  - id: signal_05
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .cursor/rules/composite-stage-patterns.mdc."
+  - id: signal_06
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .cursor/rules/executors.mdc."
+  - id: signal_07
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .cursor/rules/executors.mdc."
+  - id: signal_08
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .cursor/rules/executors.mdc."
+  - id: signal_09
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .cursor/rules/modality-structure.mdc."
+  - id: signal_10
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .cursor/rules/modality-structure.mdc."
+  - id: signal_11
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .cursor/rules/modality-structure.mdc."
+  - id: signal_12
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .cursor/rules/pipeline-structure.mdc."
+  - id: signal_13
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .cursor/rules/pipeline-structure.mdc."
+  - id: signal_14
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .cursor/rules/pipeline-structure.mdc."
+  - id: signal_15
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .cursor/rules/processing-stage-patterns.mdc."
+  - id: signal_16
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .cursor/rules/processing-stage-patterns.mdc."
+  - id: signal_17
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .cursor/rules/processing-stage-patterns.mdc."
+  - id: signal_18
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .cursor/rules/resources-configuration.mdc."
+  - id: signal_19
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .cursor/rules/resources-configuration.mdc."
+  - id: signal_20
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .cursor/rules/resources-configuration.mdc."
+  - id: signal_21
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .cursor/rules/task-patterns.mdc."
+  - id: signal_22
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .cursor/rules/task-patterns.mdc."
+  - id: signal_23
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .cursor/rules/task-patterns.mdc."
+
+config_edits:
+  - path: .cursor/rules/coding-standards.mdc
+    tier: 1
+    gold_added: '---
+
+      alwaysApply: true
+
+      ---
+
+
+      # NeMo Curator Coding Standards
+
+
+      ## Linting and Formatting
+
+
+      The project uses **Ruff** for linting and formatting with line length of 119 characters.
+
+
+      ## Key Style Rules
+
+
+      ### Allowed Patterns
+
+
+      - ✅ Print statements (T20 ignored)
+
+      - ✅ Boolean arguments in functions (FBT ignored)
+
+      - ✅ `df` as variable name for DataFrames (PD901 ignored)
+
+      - ✅ TODOs without author/link (TD002, TD003 ignored)
+
+      - ✅ Long exception messages (TRY003 ignored)
+
+      - ✅ Accessing private attributes (SLF001 ignored)
+
+      - ✅ Branching after return (RET505-508 ignored)
+
+
+      ### Required Patterns
+
+
+      - ❌ No docstrings required (D ignored)
+
+      - ❌ No pathlib enforcement (PTH ignored)
+
+      - ❌ No logging enforcement (G ignored)
+
+      - ✅ Type annotations for functions (except `*args`, `**kwargs`, special methods)
+
+
+      ## File-Specific Exceptions
+
+
+      ### `examples/` directory
+
+      - No `__init__.py` required (INP001)
+
+
+      ### `tests/` directory
+
+      - Allow assertions (S101)
+
+      - Allow magic values (PLR2004)
+
+      - No return type annotations required (ANN201)
+
+
+      ### `tutorials/` directory
+
+      - No `__init__.py` required (INP001)
+
+      - Ignore Unicode complaint (PLE2515)
+
+
+      ## Copyright Header
+
+
+      All non-empty Python files must include the NVIDIA copyright header:
+
+
+      ```python
+
+      # Copyright (c) 2025, NVIDIA CORPORATION.  All rights reserved.
+
+      #
+
+      # Licensed under the Apache License, Version 2.0 (the "License");
+
+      # you may not use this file except in compliance with the License.
+
+      # You may obtain a copy of the License at
+
+      #
+
+      #     http://www.apache.org/licenses/LICENSE-2.0
+
+      #
+
+      # Unless required by applicable law or agreed to in writing, software
+
+      # distributed under the License is distributed on an "AS IS" BASIS,
+
+      # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+
+      # See the License for the specific language governing permissions and
+
+      # limitations under the License.
+
+      ```
+
+
+      ## Python Version Support
+
+
+      Supports Python 3.10, 3.11, and 3.12 (requires >=3.10, <3.13)
+
+
+      ## Loguru
+
+
+      NeMo Curator uses loguru for logging:
+
+
+      ```python
+
+      from loguru import logger
+
+      ```
+
+
+      Common uses include `logger.info`, `logger.warning`, and `logger.error`.
+
+
+      ## PyTest Standards
+
+
+      All changes to NeMo Curator''s source code must be accompanied with relevant tests. Tests which require a GPU and cannot be run on a CPU-only machine must be marked with `@pytest.mark.gpu`.
+
+
+      NeMo Curator enforces 80% PyTest coverage within the `nemo_curator/` directory.
+
+
+      For straightforward navigation purposes, the `tests/` directory structure matches the `nemo_curator/` directory structure.'
+    gold_removed: ''
+  - path: .cursor/rules/composite-stage-patterns.mdc
+    tier: 1
+    gold_added: "---\nalwaysApply: true\n---\n\n# `CompositeStage` Patterns\n\n## When to Use `CompositeStage`\n\nUse `CompositeStage` for high-level, user-facing stages that decompose into multiple low-level execution stages:\n\n- Provide simplified API while maintaining fine-grained execution control\n- Bundle multiple related stages into a single logical operation\n- Especially useful when stages require different resources (e.g., a CPU-based stage followed by a GPU-based stage)\n- Decomposed during pipeline planning\n\n## Creating a `CompositeStage`\n\n```python\nfrom dataclasses import dataclass\n\nfrom nemo_curator.stages.base import CompositeStage, ProcessingStage\n\n\n@dataclass\nclass MyCompositeStage(CompositeStage[InputTaskType, OutputTaskType]):\n    param1: str\n    param2: int\n\n    def __post_init__(self) -> None:\n        super().__init__()\n\n        self.stages = [\n            StageA(param1=self.param1),\n            StageB(param2=self.param2),\n            StageC(),\n        ]\n\n    def inputs(self) -> tuple[list[str], list[str]]:\n        # StageA's inputs\n        return self.stages[0].inputs()\n\n    def outputs(self) -> tuple[list[str], list[str]]:\n        # StageC's outputs\n        return self.stages[2].outputs()\n\n    def decompose(self) -> list[ProcessingStage]:\n        return self.stages\n```\n\n## Configuration with `with_()`\n\n`CompositeStage` use a different `with_()` signature that takes a dictionary:\n\n```python\nfrom nemo_curator.stages.resources import Resources\n\n\ncomposite_stage = MyCompositeStage(param1, param2)\n\n# Add a with operation\nstage_config = {\"StageA\": {\"resources\": Resources(cpus=5.0)}}\nupdated_composite_stage = composite_stage.with_(stage_config)\n```\n\n## Important Rules\n\n- Decomposed stages cannot be `CompositeStage`s themselves\n- `inputs()` returns first stage's inputs\n- `outputs()` returns last stage's outputs\n- All stages in `decompose()` must have unique names for `with_()` to work"
+    gold_removed: ''
+  - path: .cursor/rules/executors.mdc
+    tier: 1
+    gold_added: "---\nalwaysApply: true\n---\n\n# Executors\n\nExecutors are the runtime engines that execute NeMo Curator pipelines. They handle distributed task orchestration, resource allocation, and worker management.\n\n## Role of Executors\n\nExecutors translate the high-level pipeline definition (a sequence of `ProcessingStage` instances) into actual distributed execution:\n\n- **Orchestrate stage execution**: Run stages in sequence, passing tasks between them\n- **Distribute work**: Parallelize task processing across workers/nodes\n- **Manage resources**: Allocate CPUs, GPUs, memory according to stage requirements\n- **Handle batching**: Group tasks into batches for efficient processing\n- **Track performance**: Collect timing and throughput metrics\n- **Manage lifecycle**: Setup and teardown workers/resources\n\n## Available Executors\n\n### `XennaExecutor` (Default)\n\nProduction executor using Cosmos-Xenna for distributed execution:\n\n```python\nfrom nemo_curator.backends.xenna import XennaExecutor\n\nexecutor = XennaExecutor(config={\n    \"logging_interval\": 60,\n    \"ignore_failures\": False,\n    \"execution_mode\": \"streaming\",  # or \"batch\"\n    \"cpu_allocation_percentage\": 0.95,\n    \"autoscale_interval_s\": 180,\n})\n```\n\n### Experimental Executors\n\nLocated in `nemo_curator.backends.experimental`:\n\n- **RayDataExecutor**: Ray Data backend (supports `ignore_head_node`)\n- **RayActorPoolExecutor**: Ray Actor Pool backend (supports `ignore_head_node`)\n\n## `BaseExecutor` Interface\n\nAll executors inherit from `BaseExecutor` and implement:\n\n```python\nclass BaseExecutor(ABC):\n    def __init__(self, config: dict[str, Any] | None = None, ignore_head_node: bool = False):\n        \"\"\"Initialize executor with configuration.\n        \n        Args:\n            config: Executor-specific configuration dictionary\n            ignore_head_node: Whether to exclude head node from execution (not supported by XennaExecutor)\n        \"\"\"\n        \n    @abstractmethod\n    def execute(self, stages: list[ProcessingStage], initial_tasks: list[Task] | None = None) -> list[Task]:\n        \"\"\"Execute the pipeline stages.\n        \n        Args:\n            stages: List of processing stages to execute\n            initial_tasks: Initial tasks to start pipeline (defaults to EmptyTask)\n            \n        Returns:\n            List of output tasks from final stage\n        \"\"\"\n```\n\n## Stage Adapters\n\nExecutors use `BaseStageAdapter` to wrap stages for execution:\n\n- Implements batching logic via `process_batch()`\n- Calls stage lifecycle methods (`setup_on_node()`, `setup()`, `teardown()`)\n- Tracks performance metrics with `StageTimer`\n- Attaches performance statistics to output tasks\n\n## Usage in Pipelines\n\nExecutors are passed to `pipeline.run()`:\n\n```python\nfrom nemo_curator.pipeline import Pipeline\nfrom nemo_curator.backends.xenna import XennaExecutor\n\n\npipeline = Pipeline(name=\"my_pipeline\", stages=[...])\n\n# Explicit executor\nexecutor = XennaExecutor(config={\"execution_mode\": \"streaming\"})\nresults = pipeline.run(executor=executor)\n\n# Default executor (XennaExecutor)\nresults = pipeline.run()\n```"
+    gold_removed: ''
+  - path: .cursor/rules/modality-structure.mdc
+    tier: 1
+    gold_added: '---
+
+      alwaysApply: true
+
+      ---
+
+
+      # Modality Structure
+
+
+      NeMo Curator supports four data modalities, each with its own stage directory and patterns.
+
+
+      ## Directory Structure
+
+
+      ```
+
+      nemo_curator/stages/
+
+      ├── text/ # Text/document processing
+
+      ├── image/ # Image processing
+
+      ├── audio/ # Audio/speech processing
+
+      └── video/ # Video processing
+
+      ```
+
+
+      Other subdirectories of `nemo_curator/stages/` are `deduplication` and `synthetic`, which contain stages that can be used by two or more modalities.
+
+
+      ## Text Processing (`stages/text/`)
+
+
+      Common subdirectories:
+
+      - `classifiers/`: Quality, domain, content safety classification
+
+      - `deduplication/`: Duplicate text removal
+
+      - `download/`: Data ingestion (Common Crawl, Wikipedia, ArXiv)
+
+      - `embedders/`: Text embedding generation
+
+      - `filters/`: Heuristic and model-based filtering
+
+      - `io/`: Readers (Parquet, JSONL) and writers
+
+      - `modifiers/`: Text transformations (cleaning, normalization)
+
+
+      Task type: `DocumentBatch`
+
+
+      ## Image Processing (`stages/image/`)
+
+
+      Common operations:
+
+      - CLIP embedding generation
+
+      - Aesthetic quality scoring
+
+      - NSFW detection
+
+      - Deduplication
+
+
+      Task type: `ImageBatch`
+
+
+      ## Audio Processing (`stages/audio/`)
+
+
+      Common operations:
+
+      - ASR transcription (NeMo Framework)
+
+      - Word Error Rate (WER) calculation
+
+      - Duration analysis
+
+      - Quality filtering
+
+
+      Task type: `AudioBatch`
+
+
+      ## Video Processing (`stages/video/`)
+
+
+      Common operations:
+
+      - Scene detection (TransNetV2)
+
+      - Clip extraction
+
+      - GPU H.264 encoding/decoding
+
+      - Motion and aesthetic filtering
+
+      - Embeddings (InternVideo2, Cosmos-Embed1)
+
+
+      Task type: `VideoTask`
+
+
+      ## Shared Components
+
+
+      All modalities share:
+
+      - `stages/base.py`: Base classes (`ProcessingStage`, `CompositeStage`)
+
+      - `stages/resources.py`: Resource configuration
+
+      - `stages/function_decorators.py`: Decorators for creating `ProcessingStage` instances from simple functions'
+    gold_removed: ''
+  - path: .cursor/rules/pipeline-structure.mdc
+    tier: 1
+    gold_added: "---\nalwaysApply: true\n---\n\n# Pipeline Structure\n\n## Creating Pipelines\n\nPipelines compose `ProcessingStage` instances into an executable workflow:\n\n```python\nfrom nemo_curator.pipeline import Pipeline\n\npipeline = Pipeline(\n    name=\"my_pipeline\",\n    description=\"My data processing pipeline\",\n    stages=[stage1, stage2, stage3],\n)\n```\n\n## Adding Stages\n\nStages can be added during initialization or via `add_stage()`:\n\n```python\n# Method 1: During initialization\npipeline = Pipeline(name=\"my_pipeline\", stages=[stage1, stage2])\n\n# Method 2: Add stages individually\npipeline = Pipeline(name=\"my_pipeline\")\npipeline.add_stage(stage1)\npipeline.add_stage(stage2)\n```\n\n## Running Pipelines\n\n```python\npipeline.run()\n```\n\nThe `run()` method accepts 2 optional parameters:\n\n- `executor`: Executor to use. If None, defaults to `XennaExecutor`\n- `initial_tasks` Initial `Task`s to start the pipeline with. Defaults to None.\n\nBefore executing, the `run()` method calls `self.build()` to build an execution plan from the pipeline (e.g., decomposes composite stages).\n\n## Composite Stage Decomposition\n\nWhen a pipeline is built, any `CompositeStage` instances are automatically decomposed into their constituent execution stages. The decomposition info is stored in `pipeline.decomposition_info`.\n\n## Pipeline Methods\n\n- `add_stage(stage)`: Add a stage to the pipeline (returns self for chaining)\n- `build()`: Decompose composite stages into execution stages\n- `describe()`: Get detailed description of pipeline stages and requirements\n- `run(executor, initial_tasks)`: Execute the pipeline"
+    gold_removed: ''
+  - path: .cursor/rules/processing-stage-patterns.mdc
+    tier: 1
+    gold_added: "---\nalwaysApply: true\n---\n\n# `ProcessingStage` Patterns\n\nThe `ProcessingStage` class is the base class for handling all data curation steps in NeMo Curator. Each subclass of `ProcessingStage` defines an individual step to apply to the data, such as reading, transformations, filtering, and writing.\n\n## Subclass Declaration\n\nProcessing stages operate on `Task` objects (or subclasses of `Task` such as `DocumentBatch` for text data). Each stage type can declare what type of `Task` it processes as input and what type it produces as output. When implementing a subclass of `ProcessingStage`, this looks like:\n\n```python\nclass ExampleStage(ProcessingStage[InputTaskType, OutputTaskType]):\n```\n\nStages can return either:\n\n- A single task (typical for transformations)\n- A list of tasks (for stages that split work, like readers)\n- None (for filtered out tasks)\n\n## Properties\n\nAny `ProcessingStage` has 3 internal properties:\n- `_name`: Name identifier for the stage (read-only, accessed via `stage._name`)\n- `_resources`: Computing resources allocated to the stage (read-only, accessed via `stage._resources`)\n- `_batch_size`: Number of tasks to process at a time (read-only, accessed via `stage._batch_size`)\n\nWhen implementing a subclass of `ProcessingStage`, you can customize these properties by setting these public class attributes:\n- `name`: String identifier (default: \"ProcessingStage\" - **strongly recommended to override**)\n- `resources`: Resources object (default: `Resources(cpus=1.0)`)\n- `batch_size`: Integer batch size (default: `1`)\n\n**Important**: These should be set as class attributes or dataclass fields, **not** as properties. The underscore versions are read-only properties managed by the base class.\n\n## `inputs()` and `outputs()` Functions\n\nThe `inputs()` and `outputs()` methods declare what data a stage requires and produces:\n\n```python\ndef inputs(self) -> tuple[list[str], list[str]]:\n    \"\"\"Define stage input requirements.\n\n    Returns (tuple[list[str], list[str]]):\n        Tuple of (required_task_attributes, required_data_attributes) where:\n        - required_task_attributes: List of task attributes that must be present\n        - required_data_attributes: List of attributes within the data that must be present\n    \"\"\"\n    return [\"data\"], [\"text\"]  # Requires \"text\" column in task.data\n\ndef outputs(self) -> tuple[list[str], list[str]]:\n    \"\"\"Define stage output requirements.\n\n    Returns (tuple[list[str], list[str]]):\n        Tuple of (output_task_attributes, output_data_attributes) where:\n        - output_task_attributes: List of task attributes this stage adds/modifies\n        - output_data_attributes: List of attributes within the data that this stage adds/modifies\n    \"\"\"\n    return [\"data\"], [\"processed_text\"]  # Adds \"processed_text\" column\n```\n\nThese functions verify that a task has the necessary top-level attributes and that `task.data` has the necessary data attributes. This enables automatic validation at runtime and logs errors for missing attributes.\n\n## `process()` Function\n\nThe main method that processes a single task. Must be implemented by all concrete stages:\n\n```python\ndef process(self, task: InputTaskType) -> OutputTaskType | list[OutputTaskType] | None:\n    # Transform the task...\n    return output_task\n```\n\nCan return:\n\n- **Single task**: For 1-to-1 transformations\n- **List of tasks**: For splitting/reading operations\n- **None**: To filter out the task\n\n## Optional Lifecycle Methods\n\nBeyond `process()`, stages can implement:\n\n- `setup_on_node(node_info, worker_metadata)`: Node-level initialization (e.g., download models)\n- `setup(worker_metadata)`: Worker-level initialization (e.g., load models)\n- `teardown()`: Cleanup after processing\n- `process_batch(tasks)`: Vectorized batch processing for better performance\n\nSee the `ProcessingStage` implementation for full details.\n\n## Example Implementation\n\n```python\nfrom dataclasses import dataclass\n\nfrom nemo_curator.stages.base import ProcessingStage\nfrom nemo_curator.stages.resources import Resources\nfrom nemo_curator.tasks import Task\n\n\n@dataclass\nclass ExampleStage(ProcessingStage[Task, Task]):\n    name: str = \"ExampleStage\"\n    resources: Resources = Resources(cpus=1.0)  # Default\n    batch_size: int = 1  # Default\n\n    def inputs(self) -> tuple[list[str], list[str]]:\n        return [\"data\"], []\n\n    def outputs(self) -> tuple[list[str], list[str]]:\n        return [\"data\"], []\n\n    def process(self, task: Task) -> Task | None:\n        # From our inputs() requirements, Task has the data attribute\n        task_data = task.data\n\n        # Transform the data in some way...\n\n        # Create output task\n        return Task(\n            task_id=f\"{task.task_id}_{self.name}\",  # Common naming pattern\n            dataset_name=task.dataset_name,\n            data=task_data,\n            _metadata=task._metadata,\n            _stage_perf=task._stage_perf,\n        )\n```"
+    gold_removed: ''
+  - path: .cursor/rules/resources-configuration.mdc
+    tier: 1
+    gold_added: "---\nalwaysApply: true\n---\n\n# Resources Configuration\n\n## Resources Class\n\nThe `Resources` dataclass defines compute requirements for stages:\n\n```python\nfrom nemo_curator.stages.resources import Resources\n\n# CPU-only stage\nresources = Resources(cpus=2.0)\n\n# GPU stage (single GPU)\nresources = Resources(\n    cpus=4.0,\n    gpu_memory_gb=16.0  # Automatically calculates GPU fraction\n)\n\n# Multi-GPU stage\nresources = Resources(\n    cpus=8.0,\n    gpus=2.0  # Explicit GPU count\n)\n```\n\n## Resource Attributes\n\n- `cpus`: Number of CPU cores (default: 1.0)\n- `gpu_memory_gb`: GPU memory in GB for single-GPU stages (default: 0.0)\n- `gpus`: Number of GPUs for single- or multi-GPU stages (default: 0.0)\n\n## Important Constraints\n\n- **Cannot specify both** `gpus` and `gpu_memory_gb`\n- Use `gpu_memory_gb` for single-GPU stages (< 1 GPU)\n- Use `gpus` for multi-GPU stages (>= 1 GPU)\n- `gpu_memory_gb` automatically calculates required GPU fraction based on available GPU memory\n\n## Properties\n\n- `requires_gpu`: Returns True if any GPU resources are requested"
+    gold_removed: ''
+  - path: .cursor/rules/task-patterns.mdc
+    tier: 1
+    gold_added: "---\nalwaysApply: true\n---\n\n# Task Patterns\n\n## Task Base Class\n\nTasks are the fundamental unit of data processed through stages and pipelines. All tasks must:\n\n- Inherit from `Task[T]` where `T` is the data type (e.g., `pd.DataFrame`)\n- Define the `task_id`, `dataset_name`, and `data` attributes\n- Implement the abstract `num_items` property\n- Implement the abstract `validate()` method\n\n## Common Task Types\n\n- **DocumentBatch**: For text document processing (`data: pa.Table | pd.DataFrame`)\n- **VideoTask**: For video processing (`data: nemo_curator.tasks.video.Video`)\n- **ImageBatch**: For image processing (`data: list[nemo_curator.tasks.image.ImageObject]`)\n- **AudioBatch**: For audio processing (`data: dict | list[dict]`)\n- **FileGroupTask**: Represents a list of file names (`data: list[str]`)\n- **_EmptyTask**: A singleton dummy task (`data: None`) used as input for stages that **generate** data rather than transform it. Commonly used for:\n  - **File discovery stages** (e.g., `FilePartitioningStage` that scans directories and produces `FileGroupTask`s)\n  - **Reader stages** at the start of a pipeline (e.g., stages that list files to read)\n  - **Data generation stages** that don't need input data\n\n## Task Attributes\n\nTasks automatically include:\n\n- `task_id`: Unique identifier for the task\n- `dataset_name`: Name of the dataset\n- `data`: The actual data payload (type `T`)\n- `_stage_perf`: List of performance statistics per stage\n- `_metadata`: Dictionary for arbitrary metadata\n- `_uuid`: Auto-generated UUID\n\n## Example Task Creation\n\n```python\nimport pandas as pd\n\nfrom nemo_curator.tasks import DocumentBatch\n\n\ntask = DocumentBatch(\n    task_id=\"batch_001\",\n    dataset_name=\"my_dataset\",\n    data=pd.DataFrame({\"text\": [\"doc1\", \"doc2\"]})\n)\n```"
+    gold_removed: ''

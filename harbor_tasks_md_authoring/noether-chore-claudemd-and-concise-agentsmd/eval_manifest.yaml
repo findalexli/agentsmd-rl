@@ -1,0 +1,40 @@
+version: "2.0"
+
+task:
+  name: noether-chore-claudemd-and-concise-agentsmd
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: Emmi-AI/noether
+  pr: 163
+  base_commit: "c1aba257af9b081dd1f9cc46bc946febbd040305"
+  merge_commit: "2801d1e082a0d1b70b9f972fa87efcedc6587245"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+
+config_edits:
+  - path: AGENTS.md
+    tier: 1
+    gold_added: "Noether is a ML research framework for Engineering AI.\n# Project setup\nDon't test trivial code or external libraries\nTests for erroneous logic must fail.\n## Formatting and Linting\n## Type Checking\n## Docstrings\nFollow Google-style or NumPy-style docstring conventions,\nwhen appropriate include Examples in Sphinx syntax with the testcode directive.\n    Example:\n    \n        .. testcode::\n\n        print(\"Hello World\")\n\n## Sphinx Documentation"
+    gold_removed: ''
+  - path: CLAUDE.md
+    tier: 1
+    gold_added: See @AGENTS.md for project setup, testing, formatting, and documentation standards.
+    gold_removed: ''

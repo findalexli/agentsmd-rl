@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: better-auth-chore-update-claudemd
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: better-auth/better-auth
+  pr: 7374
+  base_commit: "2b9cd6d696a515fc696155409f7a6959ce136384"
+  merge_commit: "3b120643822c15e5269a9668a9225edb9debe9df"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+
+config_edits:
+  - path: CLAUDE.md
+    tier: 1
+    gold_added: "This file provides guidance to AI assistants (Claude Code, Cursor, etc.)\nwhen working with code in this repository.\nBetter Auth is a comprehensive, framework-agnostic authentication\nframework for TypeScript.\n* Formatter: Biome (tabs for code, 2-space for JSON)\n* Avoid unsafe typecasts or types like `any`\n* Avoid classes, use functions and objects\n* Do not use runtime-specific feature like `Buffer` in codebase except\n  test, use `Uint8Array` instead\n* Consider using test helpers like `getTestInstance()` from\n  `better-auth/test` first\n  [Next.js](https://nextjs.org/docs/llms.txt) + [Fumadocs](https://www.fumadocs.dev/llms.txt)"
+    gold_removed: ''

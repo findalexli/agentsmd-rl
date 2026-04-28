@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: openapi-diff-add-githubcopilotinstructionsmd
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: Azure/openapi-diff
+  pr: 452
+  base_commit: "2d7d4da21eefc6de65548c5aa1d3261471e6658d"
+  merge_commit: "9a2a8a2f10d8101237339b50be8fa519578cf82b"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/copilot-instructions.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/copilot-instructions.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/copilot-instructions.md."
+
+config_edits:
+  - path: .github/copilot-instructions.md
+    tier: 1
+    gold_added: "# Copilot Instructions\n\n## Project Overview\n\nThis repository contains the source code for `openapi-diff` (aka `oad`, aka `@azure/oad`), a breaking-change\ndetector tool for OpenAPI specifications. It is published as an npm package and is used internally by the\n[azure-rest-api-specs](https://github.com/Azure/azure-rest-api-specs) and\n[azure-rest-api-specs-pr](https://github.com/Azure/azure-rest-api-specs-pr) repos to validate PRs.\n\nThe core diff logic is written in C#/.NET and the CLI/validation layer is written in TypeScript.\n\n## Tech Stack\n\n- **TypeScript** (ES2017 target, CommonJS modules) — CLI, validation, and test code in `src/`\n- **C#/.NET 6** — core diff engine in `openapi-diff/`\n- **Node.js 20+**\n- **Jest** with `ts-jest` for TypeScript tests\n- **ESLint** (`typescript-eslint`) for linting\n- **Prettier** for formatting\n- **markdownlint** for Markdown style\n\n## Setup\n\n```sh\nnpm ci                # Install Node.js dependencies\nnpm run dn.restore    # Restore .NET dependencies (if working on C# code)\n```\n\n## Build\n\n```sh\nnpm run tsc           # Build TypeScript code (outputs to dist/)\nnpm run dn.build      # Build C# code\n```\n\n## Lint and Format\n\n```sh\nnpm run lint          # Run ESLint (zero warnings allowed)\nnpm run lint:fix      # Auto-fix ESLint issues\nnpm run prettier      # Check formatting with Prettier\nnpm run prettier:write # Auto-fix formatting\n```\n\n## Test\n\n```sh\nnpm run ts.test       # Run TypeScript tests (Jest)\nnpm run dn.test       # Run C# tests (dotnet test)\nnpm test              # Run both C# and TypeScript tests\n```\n\nTypeScript tests live in `src/test/` and follow the naming pattern `*[tT]est.ts`.\n\n## Code Conventions\n\n- **No semicolons** — Prettier is configured with `\"semi\": false`\n- **Print width** is 140 characters\n- **Trailing commas** are not used (`\"trailingComma\": \"none\"`)\n- **Arrow function parentheses** are avoided when possible (`\"arrowParens\": \"avoid\"`)\n- **Strict TypeScript** — `tsconfig.json` has `\"strict\": true`\n- **ESLint config** is in `eslint.config.js` (CommonJS format, not ESM)\n- **Markdown line length** limit is 120 characters (tables and headings are exempt)\n- Prefer `const` over `let` where possible\n\n## Repository Structure\n\n```\nsrc/\n  cli.ts              # CLI entry point\n  index.ts            # Package entry point\n  lib/\n    commands/          # Command implementations\n    util/              # Utility modules\n    validate.ts        # Validation logic\n    validators/        # Validator implementations\n  test/                # TypeScript tests (Jest)\n    specs/             # Test fixture OpenAPI spec files\nopenapi-diff/          # C#/.NET solution (core diff engine)\ndocs/                  # Documentation\n```\n\n## CI\n\nCI runs on both Ubuntu and Windows via GitHub Actions (`.github/workflows/ci.yml`). It runs:\n`npm run lint`, `npm run prettier`, and `npm test` (which includes both C# and TypeScript tests).\n\n## Guidelines\n\n- Run `npm run lint` and `npm run prettier` before submitting changes.\n- Add or update tests in `src/test/` for any TypeScript code changes.\n- Do not modify CI/CD pipeline files (`.github/workflows/`, `azure-pipelines.yml`) unless specifically required.\n- When working only on TypeScript, use `npm run ts.test` to run just the TypeScript tests."
+    gold_removed: ''

@@ -1,0 +1,230 @@
+version: "2.0"
+
+task:
+  name: sciagent-skills-docs-add-checkbeforeinstall-guidance-to
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: jaechang-hits/SciAgent-Skills
+  pr: 13
+  base_commit: "10875a9f2997914750bc9a2b1b5da6f9ab2d09da"
+  merge_commit: "566e770ffd43d1ef44d29e99e7b257646b939e80"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/genomics-bioinformatics/bcftools-variant-manipulation/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/genomics-bioinformatics/bedtools-genomic-intervals/SKILL.md."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/genomics-bioinformatics/biopython-sequence-analysis/SKILL.md."
+  - id: signal_04
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/genomics-bioinformatics/bwa-mem2-dna-aligner/SKILL.md."
+  - id: signal_05
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/genomics-bioinformatics/cnvkit-copy-number/SKILL.md."
+  - id: signal_06
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/genomics-bioinformatics/etetoolkit/SKILL.md."
+  - id: signal_07
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/genomics-bioinformatics/fastp-fastq-preprocessing/SKILL.md."
+  - id: signal_08
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/genomics-bioinformatics/featurecounts-rna-counting/SKILL.md."
+  - id: signal_09
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/genomics-bioinformatics/gatk-variant-calling/SKILL.md."
+  - id: signal_10
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/genomics-bioinformatics/homer-motif-analysis/SKILL.md."
+  - id: signal_11
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/genomics-bioinformatics/macs3-peak-calling/SKILL.md."
+  - id: signal_12
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/genomics-bioinformatics/multiqc-qc-reports/SKILL.md."
+  - id: signal_13
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/genomics-bioinformatics/plink2-gwas-analysis/SKILL.md."
+  - id: signal_14
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/genomics-bioinformatics/plink2-gwas-analysis/SKILL.md."
+  - id: signal_15
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/genomics-bioinformatics/plink2-gwas-analysis/SKILL.md."
+  - id: signal_16
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/genomics-bioinformatics/prokka-genome-annotation/SKILL.md."
+  - id: signal_17
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/genomics-bioinformatics/salmon-rna-quantification/SKILL.md."
+  - id: signal_18
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/genomics-bioinformatics/samtools-bam-processing/SKILL.md."
+  - id: signal_19
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/genomics-bioinformatics/snpeff-variant-annotation/SKILL.md."
+  - id: signal_20
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/genomics-bioinformatics/star-rna-seq-aligner/SKILL.md."
+  - id: signal_21
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/scientific-computing/nextflow-workflow-engine/SKILL.md."
+  - id: signal_22
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/scientific-computing/snakemake-workflow-engine/SKILL.md."
+
+config_edits:
+  - path: CLAUDE.md
+    tier: 1
+    gold_added: '- [ ] **Check-before-install**: Prerequisites sections for CLI executables include a note telling the agent to run `command -v <tool>` first and skip the install commands if the tool is already present (e.g., inside a `pixi` / `conda` env), and to invoke tools via `pixi run <tool>` when inside a pixi project'
+    gold_removed: ''
+  - path: skills/genomics-bioinformatics/bcftools-variant-manipulation/SKILL.md
+    tier: 1
+    gold_added: '> **Check before installing**: The tool may already be available in the current environment (e.g., inside a `pixi` / `conda` env). Run `command -v bcftools` first and skip the install commands below if it returns a path. When running inside a pixi project, invoke the tool via `pixi run bcftools` rather than bare `bcftools`.
+
+      '
+    gold_removed: ''
+  - path: skills/genomics-bioinformatics/bedtools-genomic-intervals/SKILL.md
+    tier: 1
+    gold_added: '> **Check before installing**: The tool may already be available in the current environment (e.g., inside a `pixi` / `conda` env). Run `command -v bedtools` first and skip the install commands below if it returns a path. When running inside a pixi project, invoke the tool via `pixi run bedtools` rather than bare `bedtools`.
+
+      '
+    gold_removed: ''
+  - path: skills/genomics-bioinformatics/biopython-sequence-analysis/SKILL.md
+    tier: 1
+    gold_added: '> **Check before installing**: The tool may already be available in the current environment (e.g., inside a `pixi` / `conda` env). Run `command -v python` first and skip the install commands below if it returns a path. When running inside a pixi project, invoke the tool via `pixi run python` rather than bare `python`.
+
+      '
+    gold_removed: ''
+  - path: skills/genomics-bioinformatics/bwa-mem2-dna-aligner/SKILL.md
+    tier: 1
+    gold_added: '> **Check before installing**: The tool may already be available in the current environment (e.g., inside a `pixi` / `conda` env). Run `command -v bwa-mem2` first and skip the install commands below if it returns a path. When running inside a pixi project, invoke the tool via `pixi run bwa-mem2` rather than bare `bwa-mem2`.
+
+      '
+    gold_removed: ''
+  - path: skills/genomics-bioinformatics/cnvkit-copy-number/SKILL.md
+    tier: 1
+    gold_added: '> **Check before installing**: The tool may already be available in the current environment (e.g., inside a `pixi` / `conda` env). Run `command -v cnvkit.py` first and skip the install commands below if it returns a path. When running inside a pixi project, invoke the tool via `pixi run cnvkit.py` rather than bare `cnvkit.py`.
+
+      '
+    gold_removed: ''
+  - path: skills/genomics-bioinformatics/etetoolkit/SKILL.md
+    tier: 1
+    gold_added: '> **Check before installing**: The tool may already be available in the current environment (e.g., inside a `pixi` / `conda` env). Run `command -v python` first and skip the install commands below if it returns a path. When running inside a pixi project, invoke the tool via `pixi run python` rather than bare `python`.
+
+      '
+    gold_removed: ''
+  - path: skills/genomics-bioinformatics/fastp-fastq-preprocessing/SKILL.md
+    tier: 1
+    gold_added: '> **Check before installing**: The tool may already be available in the current environment (e.g., inside a `pixi` / `conda` env). Run `command -v fastp` first and skip the install commands below if it returns a path. When running inside a pixi project, invoke the tool via `pixi run fastp` rather than bare `fastp`.
+
+      '
+    gold_removed: ''
+  - path: skills/genomics-bioinformatics/featurecounts-rna-counting/SKILL.md
+    tier: 1
+    gold_added: '> **Check before installing**: The tool may already be available in the current environment (e.g., inside a `pixi` / `conda` env). Run `command -v featureCounts` first and skip the install commands below if it returns a path. When running inside a pixi project, invoke the tool via `pixi run featureCounts` rather than bare `featureCounts`.
+
+      '
+    gold_removed: ''
+  - path: skills/genomics-bioinformatics/gatk-variant-calling/SKILL.md
+    tier: 1
+    gold_added: '> **Check before installing**: The tool may already be available in the current environment (e.g., inside a `pixi` / `conda` env). Run `command -v gatk` first and skip the install commands below if it returns a path. When running inside a pixi project, invoke the tool via `pixi run gatk` rather than bare `gatk`.
+
+      '
+    gold_removed: ''
+  - path: skills/genomics-bioinformatics/homer-motif-analysis/SKILL.md
+    tier: 1
+    gold_added: '> **Check before installing**: The tool may already be available in the current environment (e.g., inside a `pixi` / `conda` env). Run `command -v findMotifsGenome.pl` first and skip the install commands below if it returns a path. When running inside a pixi project, invoke the tool via `pixi run findMotifsGenome.pl` rather than bare `findMotifsGenome.pl`.
+
+      '
+    gold_removed: ''
+  - path: skills/genomics-bioinformatics/macs3-peak-calling/SKILL.md
+    tier: 1
+    gold_added: '> **Check before installing**: The tool may already be available in the current environment (e.g., inside a `pixi` / `conda` env). Run `command -v macs3` first and skip the install commands below if it returns a path. When running inside a pixi project, invoke the tool via `pixi run macs3` rather than bare `macs3`.
+
+      '
+    gold_removed: ''
+  - path: skills/genomics-bioinformatics/multiqc-qc-reports/SKILL.md
+    tier: 1
+    gold_added: '> **Check before installing**: The tool may already be available in the current environment (e.g., inside a `pixi` / `conda` env). Run `command -v multiqc` first and skip the install commands below if it returns a path. When running inside a pixi project, invoke the tool via `pixi run multiqc` rather than bare `multiqc`.
+
+      '
+    gold_removed: ''
+  - path: skills/genomics-bioinformatics/plink2-gwas-analysis/SKILL.md
+    tier: 1
+    gold_added: "> **Check before installing**: The tool may already be available (e.g., inside a `pixi` / `conda` env). Always run `command -v plink2` first and skip the install block if it returns a path. When executing tools inside a pixi project, prefer `pixi run <tool>` over plain `<tool>`.\n\n# Skip install if already present\nif command -v plink2 >/dev/null 2>&1; then\n    echo \"plink2 already installed: $(plink2 --version)\"\nelse\n    # Download PLINK2 pre-compiled binary (Linux)\n    wget https://s3.amazonaws.com/plink2-assets/alpha6/plink2_linux_avx2_20241112.zip\n    unzip plink2_linux_avx2_20241112.zip\n    chmod +x plink2\n    export PATH=\"$PWD:$PATH\"\n\n    # macOS\n    # wget https://s3.amazonaws.com/plink2-assets/alpha6/plink2_mac_20241112.zip\n    # unzip plink2_mac_20241112.zip\n\n    plink2 --version\n    # PLINK v2.00a6LM\nfi"
+    gold_removed: ''
+  - path: skills/genomics-bioinformatics/prokka-genome-annotation/SKILL.md
+    tier: 1
+    gold_added: '> **Check before installing**: The tool may already be available in the current environment (e.g., inside a `pixi` / `conda` env). Run `command -v prokka` first and skip the install commands below if it returns a path. When running inside a pixi project, invoke the tool via `pixi run prokka` rather than bare `prokka`.
+
+      '
+    gold_removed: ''
+  - path: skills/genomics-bioinformatics/salmon-rna-quantification/SKILL.md
+    tier: 1
+    gold_added: '> **Check before installing**: The tool may already be available in the current environment (e.g., inside a `pixi` / `conda` env). Run `command -v salmon` first and skip the install commands below if it returns a path. When running inside a pixi project, invoke the tool via `pixi run salmon` rather than bare `salmon`.
+
+      '
+    gold_removed: ''
+  - path: skills/genomics-bioinformatics/samtools-bam-processing/SKILL.md
+    tier: 1
+    gold_added: '> **Check before installing**: The tool may already be available in the current environment (e.g., inside a `pixi` / `conda` env). Run `command -v samtools` first and skip the install commands below if it returns a path. When running inside a pixi project, invoke the tool via `pixi run samtools` rather than bare `samtools`.
+
+      '
+    gold_removed: ''
+  - path: skills/genomics-bioinformatics/snpeff-variant-annotation/SKILL.md
+    tier: 1
+    gold_added: '> **Check before installing**: The tool may already be available in the current environment (e.g., inside a `pixi` / `conda` env). Run `command -v snpEff` first and skip the install commands below if it returns a path. When running inside a pixi project, invoke the tool via `pixi run snpEff` rather than bare `snpEff`.
+
+      '
+    gold_removed: ''
+  - path: skills/genomics-bioinformatics/star-rna-seq-aligner/SKILL.md
+    tier: 1
+    gold_added: '> **Check before installing**: The tool may already be available in the current environment (e.g., inside a `pixi` / `conda` env). Run `command -v STAR` first and skip the install commands below if it returns a path. When running inside a pixi project, invoke the tool via `pixi run STAR` rather than bare `STAR`.
+
+      '
+    gold_removed: ''
+  - path: skills/scientific-computing/nextflow-workflow-engine/SKILL.md
+    tier: 1
+    gold_added: '> **Check before installing**: The tool may already be available in the current environment (e.g., inside a `pixi` / `conda` env). Run `command -v nextflow` first and skip the install commands below if it returns a path. When running inside a pixi project, invoke the tool via `pixi run nextflow` rather than bare `nextflow`.
+
+      '
+    gold_removed: ''
+  - path: skills/scientific-computing/snakemake-workflow-engine/SKILL.md
+    tier: 1
+    gold_added: '> **Check before installing**: The tool may already be available in the current environment (e.g., inside a `pixi` / `conda` env). Run `command -v snakemake` first and skip the install commands below if it returns a path. When running inside a pixi project, invoke the tool via `pixi run snakemake` rather than bare `snakemake`.
+
+      '
+    gold_removed: ''

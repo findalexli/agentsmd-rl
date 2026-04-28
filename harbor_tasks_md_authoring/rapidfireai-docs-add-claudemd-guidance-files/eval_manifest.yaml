@@ -1,0 +1,434 @@
+version: "2.0"
+
+task:
+  name: rapidfireai-docs-add-claudemd-guidance-files
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: RapidFireAI/rapidfireai
+  pr: 55
+  base_commit: "dfc814e268ae1134a81245f1cb7e4d97ca308db7"
+  merge_commit: "9bed41fe4d6434e7bba6ead20298abd95f981f2a"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in rapidfireai/automl/CLAUDE.md."
+  - id: signal_04
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in rapidfireai/automl/CLAUDE.md."
+  - id: signal_05
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in rapidfireai/automl/CLAUDE.md."
+  - id: signal_06
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in rapidfireai/backend/CLAUDE.md."
+  - id: signal_07
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in rapidfireai/backend/CLAUDE.md."
+  - id: signal_08
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in rapidfireai/backend/CLAUDE.md."
+  - id: signal_09
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in rapidfireai/db/CLAUDE.md."
+  - id: signal_10
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in rapidfireai/db/CLAUDE.md."
+  - id: signal_11
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in rapidfireai/db/CLAUDE.md."
+  - id: signal_12
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in rapidfireai/dispatcher/CLAUDE.md."
+  - id: signal_13
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in rapidfireai/dispatcher/CLAUDE.md."
+  - id: signal_14
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in rapidfireai/dispatcher/CLAUDE.md."
+  - id: signal_15
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in rapidfireai/ml/CLAUDE.md."
+  - id: signal_16
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in rapidfireai/ml/CLAUDE.md."
+  - id: signal_17
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in rapidfireai/ml/CLAUDE.md."
+  - id: signal_18
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in rapidfireai/utils/CLAUDE.md."
+  - id: signal_19
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in rapidfireai/utils/CLAUDE.md."
+  - id: signal_20
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in rapidfireai/utils/CLAUDE.md."
+
+config_edits:
+  - path: CLAUDE.md
+    tier: 1
+    gold_added: "# CLAUDE.md\n\nThis file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.\n\n## Project Overview\n\nRapidFire AI is an experiment execution framework for LLM fine-tuning and post-training that enables hyperparallelized training, dynamic real-time experiment control (IC Ops), and automatic multi-GPU orchestration. The system uses chunk-based scheduling to allow concurrent training of multiple configurations even on a single GPU.\n\n## Key Commands\n\n### Development Setup\n\n```bash\n# Create and activate virtual environment\npython3 -m venv .venv\nsource .venv/bin/activate\n\n# Install dependencies from source\npip install -r requirements.txt\n\n# Install Node.js 22.x and build frontend\ncd rapidfireai/frontend\nnode ./yarn/releases/yarn-4.9.1.cjs install\nnode ./yarn/releases/yarn-4.9.1.cjs build\ncd ../..\n\n# Start all services in development mode\nchmod +x ./rapidfireai/start_dev.sh\n./rapidfireai/start_dev.sh start\n\n# Stop services\n./rapidfireai/start_dev.sh stop\n```\n\n### Running from Installed Package\n\n```bash\n# Initialize RapidFire (installs dependencies, copies tutorials)\nrapidfireai init\n\n# Start RapidFire servers (dispatcher, mlflow, frontend)\nrapidfireai start\n\n# Stop all servers\nrapidfireai stop\n\n# System diagnostics (GPU, CUDA, Python env)\nrapidfireai doctor\n\n# Check version\nrapidfireai --version\n```\n\n### Testing\n\n```bash\n# Run all tests\npytest\n\n# Run specific test file\npytest tests/test_chunks.py\n\n# Run with verbose output\npytest -v\n```\n\n### Code Quality\n\n```bash\n# Format code with ruff (line-length: 120)\nruff format .\n\n# Run linter\nruff check .\n\n# Fix auto-fixable issues\nruff check --fix .\n```\n\n### Building and Releasing\n\n```bash\n# Build PyPI package (requires frontend build first)\nrm -rf dist/ *.egg-info/ .eggs/ && python -m build\n\n# Bump version (creates commit and tag)\n./bump_version.sh patch  # 0.10.1 → 0.10.2\n./bump_version.sh minor  # 0.10.1 → 0.11.0\n./bump_version.sh major  # 0.10.1 → 1.0.0\n\n# Push version tag to trigger TestPyPI deployment\ngit push origin test0.10.2\n```\n\n### Port Management\n\n```bash\n# Kill services on specific ports if conflicts occur\nlsof -t -i:8080 | xargs kill -9  # dispatcher\nlsof -t -i:5002 | xargs kill -9  # mlflow\nlsof -t -i:3000 | xargs kill -9  # frontend\n```\n\n## Architecture\n\nRapidFire AI uses a microservices-inspired distributed architecture:\n\n### Core Components\n\n1. **Experiment** (`experiment.py`): Top-level API for users. Manages experiment lifecycle, creates database tables, sets up logging and signal handlers. Entry point for `run_fit()` and `get_results()`.\n\n2. **Controller** (`backend/controller.py`): Orchestrates the entire training lifecycle. Runs in the user's process. Responsible for:\n   - Creating models from parameter configurations\n   - Initializing and managing Workers\n   - Running the Scheduler to assign chunks to workers\n   - Handling Interactive Control Operations (IC Ops)\n   - Monitoring training progress\n\n3. **Scheduler** (`backend/scheduler.py`): Pure scheduling logic that assigns runs to available workers for specific chunks. Uses round-robin and fairness algorithms to ensure optimal GPU utilization. Tracks which runs have completed which chunks.\n\n4. **Worker** (`backend/worker.py`): Separate GPU processes that execute actual training. Each worker:\n   - Polls database for assigned tasks\n   - Loads model checkpoints from shared memory or disk\n   - Trains on assigned data chunks\n   - Saves checkpoints back to shared memory/disk\n   - Reports progress to MLflow\n\n5. **Dispatcher** (`dispatcher/dispatcher.py`): Flask-based REST API for UI communication. Provides endpoints for:\n   - Viewing experiment status\n   - Interactive Control Operations (stop, resume, clone, delete runs)\n   - Real-time run metrics\n\n6. **Database** (`db/rf_db.py`): SQLite-based persistence layer with async operations. Stores:\n   - Experiment metadata\n   - Run configurations and status\n   - Task scheduling state\n   - Checkpoint locations\n\n7. **Frontend** (`frontend/`): React-based dashboard (MLflow fork) with IC Ops panel. Displays live experiment tracking and enables dynamic control.\n\n### Data Flow\n\n1. User creates `Experiment` and calls `run_fit()` with configs and datasets\n2. Controller creates runs in database and spawns Worker processes\n3. Controller runs Scheduler loop to assign (run_id, chunk_id) to available workers\n4. Workers poll database, load models, train on chunks, save checkpoints\n5. Workers report metrics to MLflow and update database task status\n6. Scheduler continues until all runs complete all chunks (epochs)\n7. User can invoke IC Ops through UI to stop/resume/clone runs mid-training\n\n### Shared Memory System\n\nRapidFire uses shared memory (`utils/shm_manager.py`) to avoid disk I/O bottlenecks:\n- Model checkpoints stored in shared memory between chunks (configurable via `USE_SHARED_MEMORY`)\n- Registry tracks which models are in memory\n- Process locks prevent concurrent access issues\n- Fallback to disk for larger models\n\n### Interactive Control (IC Ops)\n\nUnique feature enabling real-time experiment control:\n- **Stop**: Pause a run, saves checkpoint\n- **Resume**: Restart a stopped run from checkpoint\n- **Clone**: Create new run from existing, optionally warm-start from parent's weights\n- **Delete**: Remove unwanted runs\n\nImplemented via database state changes that Controller/Workers poll.\n\n## Directory Structure\n\n```\nrapidfireai/\n├── automl/           # Grid search, random search, AutoML algorithms\n├── backend/          # Controller, Scheduler, Worker, Chunks\n├── db/               # SQLite database interface\n├── dispatcher/       # Flask REST API for UI\n├── frontend/         # React dashboard (MLflow fork with IC Ops)\n├── ml/               # Trainer classes, checkpoint utils, callbacks\n├── utils/            # Logging, MLflow manager, shared memory, serialization\n├── experiment.py     # Main Experiment class (user-facing API)\n├── cli.py            # CLI commands (rapidfireai start/stop/init/doctor)\n├── start.sh          # Production server startup script\n├── start_dev.sh      # Development mode startup script\n└── version.py        # Version number\n```\n\n## Key Concepts\n\n### Chunk-Based Training\n\nInstead of training one model at a time for full epochs, RapidFire splits datasets into chunks and interleaves training:\n- Dataset divided into N chunks (user configurable)\n- Multiple runs train on different chunks concurrently\n- Scheduler ensures fair distribution across GPUs\n- Enables side-by-side comparison of hyperparameters with minimal latency\n\n### Run Configuration\n\nRuns are created from parameter configurations:\n- Single dict: creates one run\n- AutoML algorithms (GridSearch, RandomSearch): create multiple runs\n- Each run gets unique ID, tracked in database\n- Supports warm starting from parent runs (clone-modify)\n\n### Task System\n\nDatabase tracks tasks for coordination:\n- **ExperimentTask**: High-level experiment state\n- **ControllerTask**: Controller operations (create_models, schedule, etc.)\n- **WorkerTask**: Worker operations (fit, validate, etc.)\n- Status: PENDING → IN_PROGRESS → COMPLETED/FAILED\n\n## MLflow Integration\n\nRapidFire wraps MLflow for experiment tracking:\n- Each RapidFire Experiment maps to an MLflow experiment\n- Runs tracked with metrics, parameters, artifacts\n- Checkpoints saved as MLflow artifacts\n- UI extends MLflow with IC Ops panel\n- Access MLflow directly at `http://localhost:5002`\n\n## Development Notes\n\n### Python Version\n\nRequires Python 3.12.x (specified in pyproject.toml and README).\n\n### Frontend Development\n\nThe frontend is a fork of MLflow. For frontend-specific guidance, see `rapidfireai/frontend/CLAUDE.md`.\n\nTo run frontend in development mode with hot reload:\n```bash\ncd rapidfireai/frontend\nnode ./yarn/releases/yarn-4.9.1.cjs start  # Runs on localhost:3000\n```\n\n### Database Schema\n\nDefined in `db/*.sql` files. Tables include:\n- experiments: Experiment metadata and paths\n- runs: Run configurations, status, metrics\n- tasks: Task queue for controller-worker coordination\n- checkpoints: Checkpoint locations and metadata\n\n### Environment Variables\n\n- `RF_EXPERIMENT_PATH`: Base path for experiments (default: `./rapidfire_experiments`)\n- `RF_TUTORIAL_PATH`: Path for tutorial notebooks (default: `./tutorial_notebooks`)\n- `MLFLOW_URL`: MLflow tracking server URL (default: `http://localhost:5002`)\n- `USE_SHARED_MEMORY`: Enable shared memory for checkpoints (default: True)\n\n### Logging\n\nMulti-logger system using loguru:\n- `experiment`: Experiment-level logs\n- `controller`: Controller operations\n- `worker_{N}`: Per-worker training logs\n- `user`: User-facing messages\n- `interactive-control`: IC Ops operations\n\nLogs written to experiment directory.\n\n### Testing Notebooks\n\nTutorial notebooks in `tutorial_notebooks/` demonstrate usage:\n- Require HuggingFace token for model downloads\n- Run via `jupyter notebook` or IDE with proper kernel\n- Cannot run directly from CLI due to multiprocessing restrictions\n\n## Common Patterns\n\n### Creating an Experiment\n\n```python\nfrom rapidfireai import Experiment\n\nexp = Experiment(\"my_experiment\")\nexp.run_fit(\n    param_config=config_dict_or_automl,\n    create_model_fn=my_model_factory,\n    train_dataset=train_data,\n    eval_dataset=eval_data,\n    num_chunks=8,\n    seed=42\n)\nresults_df = exp.get_results()\n```\n\n### Defining Model Factory\n\n```python\ndef create_model_fn(config):\n    # config contains hyperparameters for this run\n    model = YourModel(**config)\n    return model, optimizer, loss_fn, trainer_config\n```\n\n### AutoML Usage\n\n```python\nfrom rapidfireai.automl import GridSearch\n\nparam_config = GridSearch({\n    'learning_rate': [1e-4, 1e-5, 1e-6],\n    'batch_size': [8, 16],\n   \
+      \ 'epochs': [3]\n})\n```\n\n## Git Workflow\n\nCurrent branch: `feat/enable-colab`\nMain branch: `main`\n\nUse standard PR workflow to merge features into main.\n\n## Dependencies\n\nCore dependencies (see pyproject.toml for full list):\n- torch >= 2.8.0\n- transformers >= 4.55.2\n- peft >= 0.17.0\n- trl == 0.21.0\n- mlflow >= 3.2.0\n- flask >= 3.1.1\n\nDev dependencies:\n- pytest >= 8.4.1\n- black >= 21.0\n- ruff (via ruff.toml)\n- mypy >= 0.800\n\n## Troubleshooting\n\n### GPU Issues\n\nRun `rapidfireai doctor` to diagnose:\n- CUDA installation\n- GPU availability\n- Driver version compatibility\n\n### Port Conflicts\n\nCommon ports:\n- 3000: Frontend dashboard\n- 5002: MLflow tracking server\n- 8080: Dispatcher API\n\nUse port killing commands above if conflicts occur.\n\n### Multiprocessing Issues\n\nRapidFire uses `spawn` method for multiprocessing. Notebooks must be run through IDE or Jupyter, not CLI."
+    gold_removed: ''
+  - path: rapidfireai/automl/CLAUDE.md
+    tier: 1
+    gold_added: "# CLAUDE.md - AutoML\n\nThis file provides guidance for working with the AutoML search algorithms in RapidFire AI.\n\n## Overview\n\nThe automl module provides search algorithms for hyperparameter tuning and configuration exploration. Instead of manually creating runs one-by-one, users can specify search spaces and let RapidFire generate multiple configurations automatically.\n\n## Files\n\n### base.py\n**Purpose**: Abstract base class for all AutoML algorithms\n\n**Key Responsibilities**:\n- Defines common interface for AutoML algorithms\n- Validates trainer types (SFT, DPO, GRPO)\n- Normalizes config inputs (list vs single config)\n- Enforces that all configs are `RFModelConfig` instances\n\n**Key Methods**:\n- `get_runs(seed)`: Abstract method that subclasses implement to generate run configurations\n- `_validate_configs()`: Ensures all configs are RFModelConfig instances\n- `_normalize_configs()`: Converts various input formats to list of configs\n\n**Usage Pattern**:\n```python\nclass MySearchAlgorithm(AutoMLAlgorithm):\n    def get_runs(self, seed):\n        # Generate list of config dicts\n        return [config_dict_1, config_dict_2, ...]\n```\n\n### grid_search.py\n**Purpose**: Exhaustive grid search over hyperparameter combinations\n\n**Key Responsibilities**:\n- Generates all possible combinations from parameter grid\n- Uses itertools.product for Cartesian product\n- Supports nested parameter spaces via `RFModelConfig`\n\n**Key Methods**:\n- `__init__(configs, trainer_type, num_runs)`: Takes list of `RFModelConfig` with parameter lists\n- `get_runs(seed)`: Generates all combinations (seed unused for deterministic search)\n\n**Usage Example**:\n```python\nfrom rapidfireai.automl import GridSearch, RFModelConfig\n\nconfig = RFModelConfig(\n    training_args={\n        'learning_rate': [1e-4, 1e-5, 1e-6],\n        'per_device_train_batch_size': [8, 16],\n        'num_train_epochs': [3],\n    },\n    peft_params={\n        'r': [8, 16],\n        'lora_alpha': [32],\n    }\n)\n\ngrid_search = GridSearch(configs=[config], trainer_type=\"SFT\")\n# Generates 3 * 2 * 1 * 2 * 1 = 12 runs\n```\n\n**Notes**:\n- Number of runs = product of all parameter list lengths\n- Can explode quickly with many parameters\n- Deterministic (same configs every time)\n\n### random_search.py\n**Purpose**: Random sampling from hyperparameter distributions\n\n**Key Responsibilities**:\n- Randomly samples from parameter distributions\n- Supports discrete (list) and continuous (distribution) parameters\n- Uses seed for reproducibility\n- Limits number of samples via `num_runs`\n\n**Key Methods**:\n- `__init__(configs, trainer_type, num_runs)`: Takes configs with distributions and sample count\n- `get_runs(seed)`: Generates `num_runs` random samples using seed\n- `_sample_from_config()`: Samples single config from distributions\n\n**Usage Example**:\n```python\nfrom rapidfireai.automl import RandomSearch, RFModelConfig, distributions\n\nconfig = RFModelConfig(\n    training_args={\n        'learning_rate': distributions.loguniform(1e-6, 1e-3),\n        'per_device_train_batch_size': [8, 16, 32],  # discrete\n        'num_train_epochs': [3],\n    }\n)\n\nrandom_search = RandomSearch(configs=[config], trainer_type=\"SFT\", num_runs=10)\n# Generates 10 randomly sampled runs\n```\n\n**Distribution Types** (from `datatypes.py`):\n- `uniform(low, high)`: Uniform distribution\n- `loguniform(low, high)`: Log-uniform (good for learning rates)\n- `randint(low, high)`: Random integer\n- Lists: Uniform random choice from list\n\n### model_config.py\n**Purpose**: Configuration container for model and training parameters\n\n**Key Responsibilities**:\n- Wraps all parameters needed to create a trainer\n- Supports trainer_type, training_args, peft_params, additional_kwargs\n- Used by AutoML algorithms to define search spaces\n- Validates parameter structure\n\n**Key Attributes**:\n- `trainer_type`: \"SFT\", \"DPO\", or \"GRPO\"\n- `training_args`: Dict of HuggingFace TrainingArguments\n- `peft_params`: Dict of PEFT/LoRA config (optional)\n- `additional_kwargs`: Extra kwargs for trainer (e.g., compute_metrics, formatting_func)\n\n**Usage**:\n```python\nconfig = RFModelConfig(\n    trainer_type=\"SFT\",\n    training_args={\n        'learning_rate': 1e-5,\n        'num_train_epochs': 3,\n    },\n    peft_params={\n        'r': 8,\n        'lora_alpha': 32,\n        'target_modules': ['q_proj', 'v_proj'],\n    },\n    additional_kwargs={\n        'compute_metrics': my_metrics_fn,\n    }\n)\n```\n\n### datatypes.py\n**Purpose**: Type definitions and distribution classes for parameter sampling\n\n**Key Classes**:\n- `List`: Wrapper for list of values (discrete choice)\n- `Distribution`: Base class for continuous distributions\n- `uniform`, `loguniform`, `randint`: Specific distribution implementations\n\n**Usage**:\n```python\nfrom rapidfireai.automl.datatypes import uniform, loguniform\n\nlr = loguniform(1e-6, 1e-3)  # Log-uniform between 1e-6 and 1e-3\nbatch_size = List([8, 16, 32])  # Discrete choice\n```\n\n## Key Concepts\n\n### Parameter Space Definition\nTwo ways to specify parameter ranges:\n\n1. **Grid Search**: Lists of discrete values\n```python\n'learning_rate': [1e-4, 1e-5, 1e-6]  # Try all three\n```\n\n2. **Random Search**: Distributions or lists\n```python\n'learning_rate': loguniform(1e-6, 1e-3)  # Sample from distribution\n'batch_size': [8, 16, 32]  # Random choice from list\n```\n\n### config_leaf Format\nThe output of `get_runs()` is a list of `config_leaf` dicts:\n```python\nconfig_leaf = {\n    'trainer_type': 'SFT',\n    'training_args': {\n        'learning_rate': 1e-5,\n        'per_device_train_batch_size': 8,\n        # ... other args\n    },\n    'peft_params': {\n        'r': 8,\n        'lora_alpha': 32,\n        # ... other peft args\n    },\n    'additional_kwargs': {\n        'compute_metrics': fn,\n    }\n}\n```\n\nThis dict is stored in the database as `config_leaf` column and passed to `create_trainer_instance()`.\n\n### Seed Handling\n- Seed passed to `get_runs(seed)` by Controller\n- Used for reproducibility in RandomSearch\n- GridSearch ignores seed (deterministic)\n- Same seed = same random samples\n\n## Common Patterns\n\n### Using with Experiment\n```python\nfrom rapidfireai import Experiment\nfrom rapidfireai.automl import GridSearch, RFModelConfig\n\nconfig = RFModelConfig(...)\ngrid_search = GridSearch(configs=[config], trainer_type=\"SFT\")\n\nexp = Experiment(\"my_experiment\")\nexp.run_fit(\n    param_config=grid_search,  # Pass AutoML algorithm\n    create_model_fn=my_model_fn,\n    train_dataset=train_data,\n    eval_dataset=eval_data,\n    num_chunks=8,\n    seed=42\n)\n```\n\n### Multiple Config Spaces\n```python\n# Search over two different model architectures\nconfig1 = RFModelConfig(...)  # Model A params\nconfig2 = RFModelConfig(...)  # Model B params\n\ngrid_search = GridSearch(configs=[config1, config2], trainer_type=\"SFT\")\n# Will search over both config spaces\n```\n\n### Hybrid Search\n```python\n# Some params grid, some random\nconfig = RFModelConfig(\n    training_args={\n        'learning_rate': loguniform(1e-6, 1e-3),  # Random\n        'num_train_epochs': [1, 3, 5],  # Grid (if using RandomSearch, random choice)\n    }\n)\n\nrandom_search = RandomSearch(configs=[config], num_runs=20)\n```\n\n## Adding New Search Algorithms\n\n1. **Create new file** (e.g., `bayesian_optimization.py`)\n\n2. **Subclass AutoMLAlgorithm**:\n```python\nfrom rapidfireai.automl.base import AutoMLAlgorithm\n\nclass BayesianOptimization(AutoMLAlgorithm):\n    def __init__(self, configs, trainer_type=\"SFT\", num_runs=10):\n        super().__init__(configs, trainer_type, num_runs)\n        # Additional initialization\n\n    def get_runs(self, seed):\n        # Implement search logic\n        configs = []\n        for i in range(self.num_runs):\n            # Sample config based on previous results\n            config = self._sample_config()\n            configs.append(config)\n        return configs\n```\n\n3. **Update `__init__.py`**:\n```python\nfrom .bayesian_optimization import BayesianOptimization\n\n__all__ = ['AutoMLAlgorithm', 'GridSearch', 'RandomSearch', 'BayesianOptimization', ...]\n```\n\n4. **Test**:\n```python\nbo = BayesianOptimization(configs=[config], num_runs=10)\nruns = bo.get_runs(seed=42)\nassert len(runs) == 10\n```\n\n## Integration with Controller\n\n1. User passes AutoML algorithm to `Experiment.run_fit(param_config=grid_search)`\n2. Controller detects it's an AutoML instance (not plain dict)\n3. Controller calls `get_runs(seed)` to generate configs\n4. Controller creates runs in DB for each config\n5. Workers train all configs concurrently (chunk-based)\n\nFlow:\n```\nUser → Experiment.run_fit(param_config=AutoMLAlgorithm)\n     → Controller._create_models(param_config, ...)\n     → get_runs(seed) → [config1, config2, ...]\n     → db.create_run() for each config\n     → Scheduler assigns to workers\n```\n\n## Testing\n\nManual testing:\n```python\nfrom rapidfireai.automl import GridSearch, RFModelConfig\n\nconfig = RFModelConfig(\n    training_args={'learning_rate': [1e-4, 1e-5]},\n)\ngrid = GridSearch(configs=[config])\nruns = grid.get_runs(seed=42)\nprint(len(runs))  # Should be 2\nprint(runs[0])    # First config\n```\n\nIntegration testing via tutorial notebooks with AutoML examples."
+    gold_removed: ''
+  - path: rapidfireai/backend/CLAUDE.md
+    tier: 1
+    gold_added: '# CLAUDE.md - Backend
+
+
+      This file provides guidance for working with the backend components of RapidFire AI.
+
+
+      ## Overview
+
+
+      The backend module contains the core orchestration logic for RapidFire''s chunk-based concurrent training system. It coordinates between the user''s process (Controller), scheduling logic (Scheduler), actual training execution (Worker), and dataset chunking (DatasetChunks).
+
+
+      ## Files
+
+
+      ### controller.py
+
+      **Purpose**: Central orchestrator running in the user''s process
+
+
+      **Key Responsibilities**:
+
+      - Creates runs from parameter configurations (single configs, AutoML algorithms, IC Ops clones)
+
+      - Spawns and manages Worker processes (one per GPU)
+
+      - Runs the main scheduling loop that assigns (run_id, chunk_id) pairs to available workers
+
+      - Handles Interactive Control Operations (stop, resume, clone-modify, delete)
+
+      - Monitors training progress and coordinates epoch transitions
+
+      - Manages shared memory for model checkpoints
+
+      - Logs to MLflow and database
+
+
+      **Key Methods**:
+
+      - `run_fit()`: Main entry point, coordinates entire training lifecycle
+
+      - `_create_models()`: Creates run entries in DB from param configs
+
+      - `_schedule_and_monitor()`: Main loop that calls Scheduler and dispatches tasks to workers
+
+      - `_handle_ic_ops()`: Polls DB for IC Ops requests and executes them
+
+      - `_handle_clone_modify()`, `_handle_stop()`, `_handle_resume()`, `_handle_delete()`: IC Ops handlers
+
+
+      **Patterns**:
+
+      - Uses multiprocessing with ''spawn'' method (set in `__init__`)
+
+      - Polls database for task status and IC Ops requests
+
+      - Coordinates with Workers via database task table
+
+      - Uses SharedMemoryManager for checkpoint storage
+
+
+      ### scheduler.py
+
+      **Purpose**: Pure scheduling algorithm that assigns runs to workers
+
+
+      **Key Responsibilities**:
+
+      - Maintains state of which workers are busy and which runs have completed which chunks
+
+      - Implements round-robin scheduling for fairness
+
+      - Ensures runs don''t execute on multiple workers simultaneously
+
+      - Tracks progress (chunks completed per run)
+
+      - Handles run addition/removal (for IC Ops)
+
+
+      **Key Methods**:
+
+      - `schedule()`: Returns next (run_id, worker_id, chunk_id) assignment or None if all done
+
+      - `add_run()`: Add new run to scheduler (for resume/clone IC Ops)
+
+      - `remove_run()`: Remove run from scheduler (for stop/delete IC Ops)
+
+      - `reset_run()`: Reset run progress at epoch boundaries
+
+      - `set_completed_task()`: Mark a worker''s task as completed
+
+
+      **Return Values from `schedule()`**:
+
+      - `{run_id: X, worker_id: Y, chunk_id: Z, is_last_chunk: bool}` - Valid assignment
+
+      - `{run_id: None, ...}` - All runs completed all chunks (termination)
+
+      - `{run_id: -1, ...}` - All workers busy or no available runs (wait)
+
+
+      **Design Notes**:
+
+      - Zero-indexed workers and chunks, one-indexed run_ids
+
+      - Stateless pure scheduling logic (state passed in constructor)
+
+      - No I/O or side effects, just assignment logic
+
+
+      ### worker.py
+
+      **Purpose**: Separate GPU process that executes actual training
+
+
+      **Key Responsibilities**:
+
+      - Polls database for assigned tasks (run_id, chunk_id pairs)
+
+      - Loads model from shared memory or disk checkpoint
+
+      - Trains on the assigned data chunk using appropriate Trainer (SFT/DPO/GRPO)
+
+      - Saves checkpoint back to shared memory/disk after chunk
+
+      - Reports metrics to MLflow and updates database task status
+
+      - Handles graceful shutdown on signals
+
+
+      **Key Methods**:
+
+      - `run()`: Main worker loop - polls for tasks, executes them, reports completion
+
+      - `run_fit()`: Executes training for one (run_id, chunk_id) pair
+
+      - `load_datasets()`: Loads train/eval datasets from disk (serialized by Controller)
+
+
+      **Lifecycle**:
+
+      1. Worker spawned by Controller with (worker_id, shared memory objects, shutdown_event)
+
+      2. Worker enters main loop in `run()` method
+
+      3. Polls database for tasks with status=SCHEDULED and worker_id=self.worker_id
+
+      4. On task found: loads model, trains chunk, saves checkpoint, marks task COMPLETED
+
+      5. Repeats until shutdown_event is set
+
+
+      **Patterns**:
+
+      - Each Worker has exclusive access to one GPU (via CUDA_VISIBLE_DEVICES)
+
+      - Uses SharedMemoryManager to load/save checkpoints
+
+      - Creates trainer instance per chunk (via `ml/trainer.py`)
+
+      - Redirects stdout/stderr during training to avoid pollution
+
+
+      ### chunks.py
+
+      **Purpose**: Utility class for splitting datasets into chunks
+
+
+      **Key Responsibilities**:
+
+      - Divides dataset into N chunks with even distribution
+
+      - Handles batch size alignment (chunks align with batch boundaries)
+
+      - Supports offset for resuming training mid-epoch
+
+      - Validates inputs (chunk count, batch size, offset)
+
+
+      **Key Methods**:
+
+      - `__init__()`: Creates chunk boundaries based on dataset size, num_chunks, batch_size
+
+      - `get_chunk_indices()`: Returns (start_idx, end_idx) for a given chunk_id
+
+      - `_create_base_chunk_indices()`: Distributes batches evenly across chunks
+
+      - `_apply_offset()`: Applies modulo offset for resume functionality
+
+
+      **Usage Pattern**:
+
+      ```python
+
+      chunker = DatasetChunks(dataset_size=1000, n_chunks=4, batch_size=8)
+
+      start, end = chunker.get_chunk_indices(chunk_id=0)
+
+      chunk_data = dataset[start:end]
+
+      ```
+
+
+      **Design Notes**:
+
+      - Chunks distribute batches, not individual examples
+
+      - Last chunk may be smaller if batches don''t divide evenly
+
+      - Offset wraps around with modulo for mid-epoch resume
+
+      - Raises ValueError for invalid inputs (too many chunks, bad offsets, etc.)
+
+
+      ## Key Interactions
+
+
+      1. **Controller → Scheduler**: Controller calls `scheduler.schedule()` to get next assignment
+
+      2. **Controller → Worker**: Controller creates WorkerTask in DB, Worker polls and executes
+
+      3. **Controller → SharedMemory**: Controller saves initial models to SHM
+
+      4. **Worker → SharedMemory**: Worker loads models from SHM, trains, saves back to SHM
+
+      5. **Worker → Database**: Worker updates task status (IN_PROGRESS → COMPLETED)
+
+      6. **Controller → Database**: Controller polls for IC Ops requests, updates run status
+
+
+      ## State Management
+
+
+      **Run Status Flow**:
+
+      - NEW → ONGOING → COMPLETED/FAILED
+
+      - ONGOING → STOPPED (IC Ops stop)
+
+      - STOPPED → ONGOING (IC Ops resume)
+
+      - Any → KILLED (IC Ops delete)
+
+
+      **Task Status Flow**:
+
+      - SCHEDULED → IN_PROGRESS → COMPLETED/FAILED
+
+
+      **Scheduler State**:
+
+      - `worker_running_current_run`: Maps worker_id to current run_id (-1 if idle)
+
+      - `run_visited_num_chunks`: Maps run_id to number of chunks completed
+
+
+      ## Testing
+
+
+      Run tests with:
+
+      ```bash
+
+      pytest tests/test_chunks.py
+
+      ```
+
+
+      ## Common Patterns
+
+
+      ### Adding IC Ops Support
+
+      1. Add handler method in Controller (e.g., `_handle_new_op()`)
+
+      2. Update `_handle_ic_ops()` to check for new op type in DB
+
+      3. Update Scheduler if state changes needed (e.g., add_run/remove_run)
+
+      4. Add dispatcher endpoint to trigger IC Op
+
+      5. Update database schema if needed (tables.sql)
+
+
+      ### Debugging Scheduling Issues
+
+      - Add logging in `scheduler.schedule()` to see assignment decisions
+
+      - Check `worker_running_current_run` and `run_visited_num_chunks` state
+
+      - Verify task status transitions in database
+
+      - Check Worker logs for task execution timing
+
+
+      ### Performance Tuning
+
+      - Adjust `num_chunks` to balance concurrency vs checkpoint overhead
+
+      - Monitor shared memory usage with `SharedMemoryManager` logging
+
+      - Check scheduling fairness with chunk completion timestamps
+
+      - Profile Worker task execution time vs scheduling loop latency'
+    gold_removed: ''
+  - path: rapidfireai/db/CLAUDE.md
+    tier: 1
+    gold_added: "# CLAUDE.md - Database\n\nThis file provides guidance for working with the database layer of RapidFire AI.\n\n## Overview\n\nThe db module provides the persistence layer for RapidFire using SQLite. It stores experiment metadata, run configurations, task scheduling state, and checkpoint locations. The design emphasizes async operations and clean separation between the database interface and domain logic.\n\n## Files\n\n### rf_db.py\n**Purpose**: High-level database API with domain-specific operations\n\n**Key Responsibilities**:\n- Implements all CRUD operations for experiments, runs, tasks, and IC Ops\n- Handles serialization/deserialization of complex objects (using `encode_payload`/`decode_db_payload`)\n- Manages experiment lifecycle (create, activate, reset, cleanup)\n- Provides query methods for Controller, Worker, and Dispatcher\n- Enforces business logic constraints (e.g., can't IC Ops on KILLED runs)\n\n**Key Methods - Experiments**:\n- `create_experiment()`: Create new experiment entry\n- `get_running_experiment()`: Get currently active experiment\n- `set_experiment_status()`: Update experiment status\n- `reset_all_tables()`: Truncate tables (cleanup)\n- `reset_experiment_states()`: Mark in-progress tasks as failed (crash recovery)\n\n**Key Methods - Runs**:\n- `create_run()`: Create run with config, status, source\n- `get_run()`: Get run by ID\n- `get_all_runs()`: Get all runs with metrics\n- `get_runs_by_status()`: Filter runs by status(es)\n- `set_run_status()`: Update run status\n- `set_run_ended_by()`: Mark how run ended (completed/failed/killed)\n- `update_run_metrics()`: Update training metrics\n\n**Key Methods - Tasks**:\n- `create_worker_task()`: Create task for worker to execute\n- `get_next_worker_task()`: Poll for next task (used by Worker)\n- `set_worker_task_status()`: Update task status\n- `get_controller_task()`: Get current controller task\n- `set_controller_task()`: Update controller task\n\n**Key Methods - Interactive Control**:\n- `request_clone_modify()`: Create IC Ops request for clone\n- `request_stop()`: Request run stop\n- `request_resume()`: Request run resume\n- `request_delete()`: Request run deletion\n- `get_ic_ops_request()`: Poll for IC Ops requests (used by Controller)\n- `mark_ic_ops_completed()`: Mark IC Op as processed\n\n**Serialization**:\n- Complex objects (configs, datasets, models) stored as BLOBs\n- Uses `encode_payload()` from utils/serialize.py before storing\n- Uses `decode_db_payload()` when reading back\n- Handles torch tensors, datasets, and arbitrary Python objects via dill\n\n**Patterns**:\n- All methods use `db.execute()` with parameterized queries (SQL injection safe)\n- Commit=True by default for most operations\n- Returns dicts or lists of dicts (not raw tuples)\n- Raises DBException on errors with context\n\n### db_interface.py\n**Purpose**: Low-level SQLite connection wrapper\n\n**Key Responsibilities**:\n- Manages SQLite connection lifecycle\n- Provides generic `execute()` method for queries\n- Handles connection pooling and thread safety\n- Converts query results to dicts\n\n**Key Methods**:\n- `execute()`: Execute parameterized query, return results as list of dicts\n- `close()`: Close database connection\n\n**Design Notes**:\n- Uses sqlite3 row_factory for dict results\n- Single connection per RfDb instance\n- Thread-safe via SQLite's default settings\n\n### tables.sql\n**Purpose**: Database schema definition\n\n**Tables**:\n\n**experiments**:\n- `experiment_id` (PK): Unique experiment identifier\n- `experiment_name`: User-provided name\n- `status`: ExperimentStatus enum (NEW, RUNNING, COMPLETED, FAILED)\n- `experiments_path`: Base path for experiment artifacts\n- `created_at`, `updated_at`: Timestamps\n\n**runs**:\n- `run_id` (PK): Unique run identifier\n- `experiment_id` (FK): Parent experiment\n- `run_name`: Generated name (e.g., \"run_1\")\n- `mlflow_run_id`: MLflow tracking ID\n- `status`: RunStatus enum (NEW, ONGOING, COMPLETED, FAILED, STOPPED, KILLED)\n- `source`: RunSource enum (USER, CLONE_MODIFY)\n- `ended_by`: RunEndedBy enum (COMPLETED, FAILED, KILLED, STOPPED)\n- `parent_run_id`: For cloned runs\n- `warm_start`: Boolean flag for clone-modify\n- `config_leaf`: Serialized run configuration (BLOB)\n- `seed`: Random seed for reproducibility\n- `num_chunks`: Number of data chunks\n- `current_chunk`, `current_epoch`: Progress tracking\n- `metrics`: JSON string of training metrics\n- `created_at`, `updated_at`: Timestamps\n\n**worker_task**:\n- `task_id` (PK): Unique task identifier\n- `run_id` (FK): Run to execute\n- `worker_id`: GPU worker assignment\n- `chunk_id`: Data chunk to train on\n- `epoch`: Current epoch number\n- `status`: TaskStatus enum (SCHEDULED, IN_PROGRESS, COMPLETED, FAILED)\n- `created_at`, `updated_at`: Timestamps\n\n**controller_progress**:\n- Tracks controller state (single row table)\n- `task`: ControllerTask enum\n- `status`: TaskStatus enum\n\n**worker_progress**:\n- Tracks per-worker state\n- `worker_id` (PK): Worker identifier\n- `task`: WorkerTask enum\n- `status`: TaskStatus enum\n\n**interactive_control**:\n- `ic_id` (PK): IC Ops request identifier\n- `run_id` (FK): Target run\n- `operation`: IC Ops type (CLONE_MODIFY, STOP, RESUME, DELETE)\n- `status`: TaskStatus enum\n- `config_leaf`: New config for clone-modify (BLOB)\n- `warm_start`: Boolean for clone-modify\n- `created_at`, `updated_at`: Timestamps\n\n## Key Concepts\n\n### Status Enums\nDefined in `utils/constants.py`:\n- **ExperimentStatus**: NEW, RUNNING, COMPLETED, FAILED\n- **RunStatus**: NEW, ONGOING, COMPLETED, FAILED, STOPPED, KILLED\n- **RunSource**: USER, CLONE_MODIFY\n- **RunEndedBy**: COMPLETED, FAILED, KILLED, STOPPED\n- **TaskStatus**: PENDING, SCHEDULED, IN_PROGRESS, COMPLETED, FAILED\n\n### Transaction Model\n- Most operations are auto-commit (commit=True)\n- No explicit transaction management (SQLite handles implicitly)\n- Crash recovery via `reset_experiment_states()` on startup\n\n### Query Patterns\n```python\n# Parameterized query (safe)\nquery = \"SELECT * FROM runs WHERE run_id = ?\"\nresult = self.db.execute(query, (run_id,))\n\n# With commit\nquery = \"UPDATE runs SET status = ? WHERE run_id = ?\"\nself.db.execute(query, (new_status, run_id), commit=True)\n```\n\n## Common Operations\n\n### Creating a Run\n```python\nrun_id = db.create_run(\n    experiment_id=1,\n    run_name=\"run_1\",\n    mlflow_run_id=\"abc123\",\n    config_leaf=encode_payload(config_dict),\n    source=RunSource.USER,\n    seed=42,\n    num_chunks=8\n)\n```\n\n### Polling for Tasks (Worker)\n```python\ntask = db.get_next_worker_task(worker_id=0)\nif task:\n    db.set_worker_task_status(task['task_id'], TaskStatus.IN_PROGRESS)\n    # ... do work ...\n    db.set_worker_task_status(task['task_id'], TaskStatus.COMPLETED)\n```\n\n### IC Ops Flow (Controller)\n```python\n# User triggers stop via UI → Dispatcher → Database\ndb.request_stop(run_id=5)\n\n# Controller polls and processes\nic_ops = db.get_ic_ops_request()\nfor op in ic_ops:\n    if op['operation'] == 'STOP':\n        # ... handle stop ...\n        db.mark_ic_ops_completed(op['ic_id'])\n```\n\n### Cleanup Between Experiments\n```python\ndb.reset_all_tables(experiments_table=False)  # Keep experiments table\ndb.set_experiment_status(exp_id, ExperimentStatus.COMPLETED)\n```\n\n## Testing Database Changes\n\n1. Modify `tables.sql` if adding/changing tables\n2. Delete existing `rapidfire.db` file to force recreation\n3. Run `db.create_tables()` to apply schema\n4. Test with `pytest` or manual verification\n5. Ensure backward compatibility with existing experiments\n\n## Performance Considerations\n\n- SQLite write contention: Workers only write task status updates\n- Most writes are from Controller (runs, IC Ops, metrics)\n- No indexes beyond PRIMARY KEYs (small data volume)\n- BLOB storage for configs is fine (not queried, only retrieved by PK)\n\n## Common Patterns\n\n### Adding New Table\n1. Add CREATE TABLE to `tables.sql`\n2. Add CRUD methods to `rf_db.py`\n3. Add any enums to `utils/constants.py`\n4. Update `reset_all_tables()` if needed for cleanup\n5. Test with fresh database\n\n### Debugging Database Issues\n```python\n# Check database file location\nimport os\nprint(os.path.abspath(\"rapidfire.db\"))\n\n# Inspect directly with sqlite3 CLI\n# sqlite3 rapidfire.db\n# .schema\n# SELECT * FROM runs;\n# SELECT * FROM worker_task WHERE status = 'IN_PROGRESS';\n```\n\n### Migration Strategy\n- Currently no migrations (schema assumed stable)\n- Breaking changes require users to reset experiments\n- Future: Add migration system (e.g., Alembic) if needed"
+    gold_removed: ''
+  - path: rapidfireai/dispatcher/CLAUDE.md
+    tier: 1
+    gold_added: "# CLAUDE.md - Dispatcher\n\nThis file provides guidance for working with the dispatcher module of RapidFire AI.\n\n## Overview\n\nThe dispatcher is a Flask-based REST API that provides the communication layer between the web UI (frontend) and the RapidFire backend. It exposes endpoints for viewing experiment status, retrieving run information, and triggering Interactive Control Operations (IC Ops).\n\n## Files\n\n### dispatcher.py\n**Purpose**: Flask application with REST endpoints for UI communication\n\n**Key Responsibilities**:\n- Serves REST API for frontend dashboard\n- Provides endpoints for run queries and experiment status\n- Handles IC Ops requests (stop, resume, clone-modify, delete)\n- Returns logs for debugging\n- Manages CORS for local development\n\n**Architecture**:\n- Flask app with CORS enabled for localhost:3000 (frontend dev server)\n- Stateless request handling (reads from database on each request)\n- Returns JSON responses\n- Error handling with try/catch and HTTP status codes\n\n**Route Categories**:\n\n**Health Check**:\n- `GET /dispatcher/health-check`: Server health status\n\n**UI Data Routes**:\n- `GET /dispatcher/get-all-runs`: Retrieve all runs for current experiment\n- `POST /dispatcher/get-run`: Get single run by ID\n- `GET /dispatcher/get-all-experiment-names`: List all experiment names\n- `GET /dispatcher/get-running-experiment`: Get currently active experiment\n\n**Interactive Control Routes**:\n- `POST /dispatcher/clone-modify-run`: Clone run with optional modifications\n- `POST /dispatcher/stop-run`: Stop active run\n- `POST /dispatcher/resume-run`: Resume stopped run\n- `POST /dispatcher/delete-run`: Delete run (mark as KILLED)\n\n**Log Routes**:\n- `POST /dispatcher/get-ic-logs`: Get IC Ops logs\n- `POST /dispatcher/get-experiment-logs`: Get experiment logs\n\n**Key Methods**:\n\n`get_all_runs()`:\n- Returns list of all runs with status, metrics, config\n- Used by dashboard to display run table\n- Includes calculated fields (progress, current_chunk, etc.)\n\n`clone_modify_run(run_id, config_leaf, warm_start)`:\n- Creates IC Ops request in database for clone\n- Controller polls and processes request\n- Returns new run_id or error\n\n`stop_run(run_id)`:\n- Validates run is in stoppable state (ONGOING)\n- Creates IC Ops request in database\n- Controller processes asynchronously\n- Returns success/error status\n\n`resume_run(run_id)`:\n- Validates run is STOPPED\n- Creates IC Ops request in database\n- Controller adds run back to scheduler\n- Returns success/error status\n\n`delete_run(run_id)`:\n- Marks run as KILLED\n- Creates IC Ops request in database\n- Controller removes from scheduler\n- Returns success/error status\n\n**Error Handling**:\n```python\ntry:\n    # ... operation ...\n    return jsonify(result), 200\nexcept Exception as e:\n    logger.error(f\"Error: {e}\")\n    return jsonify({\"error\": str(e)}), 500\n```\n\n**CORS Configuration**:\n- Allows origins: localhost:3000, localhost\n- Required for frontend dev server (separate port from backend)\n- Production: frontend built and served from same origin\n\n### gunicorn.conf.py\n**Purpose**: Gunicorn server configuration for production deployment\n\n**Key Settings**:\n- `workers`: Number of worker processes (default: 4)\n- `bind`: Host and port (default: 0.0.0.0:8080)\n- `timeout`: Request timeout (default: 120s)\n- `loglevel`: Log verbosity (default: info)\n\n**Usage**:\n```bash\ngunicorn -c rapidfireai/dispatcher/gunicorn.conf.py rapidfireai.dispatcher.dispatcher:app\n```\n\n**Production Notes**:\n- Multiple workers for load balancing\n- Timeout prevents hanging requests\n- Access logs for monitoring\n\n## API Endpoints Reference\n\n### GET /dispatcher/health-check\n**Response**:\n```json\n\"Dispatcher is up and running\"\n```\n\n### GET /dispatcher/get-all-runs\n**Response**:\n```json\n[\n  {\n    \"run_id\": 1,\n    \"run_name\": \"run_1\",\n    \"status\": \"ONGOING\",\n    \"current_chunk\": 5,\n    \"current_epoch\": 0,\n    \"metrics\": \"{\\\"loss\\\": 0.5, \\\"accuracy\\\": 0.9}\",\n    \"config_leaf\": {...},\n    \"source\": \"USER\",\n    \"parent_run_id\": null,\n    \"warm_start\": false\n  },\n  ...\n]\n```\n\n### POST /dispatcher/clone-modify-run\n**Request**:\n```json\n{\n  \"run_id\": 1,\n  \"config_leaf\": {\"learning_rate\": 1e-4},\n  \"warm_start\": true\n}\n```\n**Response**:\n```json\n{\n  \"message\": \"Clone-modify request created\",\n  \"new_run_id\": 5\n}\n```\n\n### POST /dispatcher/stop-run\n**Request**:\n```json\n{\n  \"run_id\": 1\n}\n```\n**Response**:\n```json\n{\n  \"message\": \"Stop request created successfully\"\n}\n```\n\n### POST /dispatcher/resume-run\n**Request**:\n```json\n{\n  \"run_id\": 1\n}\n```\n**Response**:\n```json\n{\n  \"message\": \"Resume request created successfully\"\n}\n```\n\n### POST /dispatcher/delete-run\n**Request**:\n```json\n{\n  \"run_id\": 1\n}\n```\n**Response**:\n```json\n{\n  \"message\": \"Delete request created successfully\"\n}\n```\n\n## Integration with Frontend\n\nFrontend makes HTTP requests to dispatcher:\n```typescript\n// Example: Get all runs\nconst response = await fetch('http://localhost:8080/dispatcher/get-all-runs');\nconst runs = await response.json();\n\n// Example: Stop run\nawait fetch('http://localhost:8080/dispatcher/stop-run', {\n  method: 'POST',\n  headers: {'Content-Type': 'application/json'},\n  body: JSON.stringify({run_id: 5})\n});\n```\n\nFrontend polls `get-all-runs` periodically to update dashboard.\n\n## Integration with Controller\n\nDispatcher writes IC Ops requests to database:\n```python\n# Dispatcher\ndb.request_stop(run_id)\n\n# Controller (polling loop)\nic_ops = db.get_ic_ops_request()\nfor op in ic_ops:\n    if op['operation'] == 'STOP':\n        self._handle_stop(op['run_id'])\n        db.mark_ic_ops_completed(op['ic_id'])\n```\n\nAsynchronous communication via database (no direct RPC).\n\n## Running Dispatcher\n\n**Development**:\n```bash\n# Via start_dev.sh (starts all services)\n./rapidfireai/start_dev.sh start\n\n# Or manually\npython -m flask --app rapidfireai.dispatcher.dispatcher:app run --port 8080\n```\n\n**Production** (via start.sh):\n```bash\ngunicorn -c rapidfireai/dispatcher/gunicorn.conf.py rapidfireai.dispatcher.dispatcher:app\n```\n\n**Testing**:\n```bash\n# Health check\ncurl http://localhost:8080/dispatcher/health-check\n\n# Get all runs\ncurl http://localhost:8080/dispatcher/get-all-runs\n\n# Stop run\ncurl -X POST http://localhost:8080/dispatcher/stop-run \\\n  -H \"Content-Type: application/json\" \\\n  -d '{\"run_id\": 1}'\n```\n\n## Common Patterns\n\n### Adding New Endpoint\n\n1. **Add route in `register_routes()`**:\n```python\nself.app.add_url_rule(\n    f\"{route_prefix}/my-endpoint\",\n    \"my_endpoint\",\n    self.my_endpoint,\n    methods=[\"POST\"]\n)\n```\n\n2. **Implement handler method**:\n```python\ndef my_endpoint(self) -> tuple[Response, int]:\n    try:\n        data = request.json\n        result = self.db.some_operation(data)\n        return jsonify(result), 200\n    except Exception as e:\n        self._get_logger().error(f\"Error: {e}\")\n        return jsonify({\"error\": str(e)}), 500\n```\n\n3. **Update frontend to call endpoint**:\n```typescript\nawait fetch('http://localhost:8080/dispatcher/my-endpoint', {\n  method: 'POST',\n  body: JSON.stringify(data)\n});\n```\n\n### Debugging Dispatcher Issues\n\n**Check logs**:\n```bash\n# Dispatcher logs\ncat {experiment_path}/logs/dispatcher.log\n\n# Or watch in real-time\ntail -f {experiment_path}/logs/dispatcher.log\n```\n\n**Test endpoint directly**:\n```bash\ncurl -X POST http://localhost:8080/dispatcher/stop-run \\\n  -H \"Content-Type: application/json\" \\\n  -d '{\"run_id\": 1}' \\\n  -v\n```\n\n**Check database state**:\n```bash\nsqlite3 rapidfire.db \"SELECT * FROM interactive_control ORDER BY created_at DESC LIMIT 5;\"\n```\n\n**CORS issues**:\n- Ensure frontend origin in `CORS_ALLOWED_ORIGINS`\n- Check browser console for CORS errors\n- Verify preflight OPTIONS requests succeed\n\n### Error Handling Best Practices\n\n```python\ndef endpoint(self) -> tuple[Response, int]:\n    try:\n        # Validate input\n        data = request.json\n        if not data or 'run_id' not in data:\n            return jsonify({\"error\": \"run_id required\"}), 400\n\n        # Perform operation\n        result = self.db.some_operation(data['run_id'])\n\n        # Check result\n        if not result:\n            return jsonify({\"error\": \"Operation failed\"}), 500\n\n        return jsonify(result), 200\n    except DBException as e:\n        self._get_logger().error(f\"DB error: {e}\")\n        return jsonify({\"error\": \"Database error\"}), 500\n    except Exception as e:\n        self._get_logger().error(f\"Unexpected error: {e}\")\n        return jsonify({\"error\": str(e)}), 500\n```\n\n## Performance Considerations\n\n- Dispatcher is stateless (scales horizontally with Gunicorn workers)\n- Database is bottleneck for high request volume (SQLite)\n- Frontend should throttle polling (e.g., 1-2 second intervals)\n- Large run counts may slow `get-all-runs` (consider pagination)\n\n## Security Notes\n\n- No authentication (assumes local/trusted network)\n- No rate limiting (relies on frontend behavior)\n- CORS restricted to localhost (production should tighten)\n- Input validation minimal (assumes trusted clients)\n\nFor production deployment, consider adding:\n- API authentication (tokens, JWT)\n- Rate limiting (Flask-Limiter)\n- Input validation (marshmallow, pydantic)\n- HTTPS (reverse proxy like nginx)"
+    gold_removed: ''
+  - path: rapidfireai/ml/CLAUDE.md
+    tier: 1
+    gold_added: "# CLAUDE.md - ML\n\nThis file provides guidance for working with the ML training components of RapidFire AI.\n\n## Overview\n\nThe ml module contains the training execution logic that wraps HuggingFace Transformers and TRL trainers. It handles trainer instantiation, checkpoint management, callbacks, and integration with RapidFire's chunk-based training system.\n\n## Files\n\n### trainer.py\n**Purpose**: Creates and configures TRL trainer instances (SFT, DPO, GRPO)\n\n**Key Responsibilities**:\n- Instantiates appropriate trainer type based on config (SFTTrainer, DPOTrainer, GRPOTrainer)\n- Loads model from checkpoint (shared memory or disk)\n- Configures training arguments (batch size, learning rate, gradient accumulation, etc.)\n- Sets up callbacks (MLflow logging, generation metrics, log level control)\n- Handles PEFT (LoRA) configuration if specified\n- Manages reference model for DPO training\n- Restores trainer state (optimizer, scheduler) for resumed runs\n\n**Key Functions**:\n- `create_trainer_instance()`: Main entry point, returns configured trainer\n- `_configure_training_args()`: Merges user args with RapidFire overrides\n- `_create_trainer_config_object()`: Creates SFTConfig/DPOConfig/GRPOConfig\n- `_setup_reference_model()`: Loads reference model for DPO\n- `_prepare_trainer_kwargs()`: Builds kwargs dict for trainer constructor\n- `_setup_callbacks()`: Initializes callbacks (MLflow, generation metrics, log level)\n- `_create_trainer()`: Actually instantiates the trainer object\n- `_restore_trainer_state()`: Restores optimizer/scheduler state for resumed runs\n\n**Trainer Types**:\n- **SFT** (Supervised Fine-Tuning): Standard next-token prediction\n- **DPO** (Direct Preference Optimization): Preference-based training with reference model\n- **GRPO** (Group Relative Policy Optimization): Advanced RL-based training\n\n**Training Args Overrides**:\nRapidFire overrides certain args to ensure chunk-based training works:\n- `output_dir`: Set to experiment-specific path\n- `logging_dir`: Set to experiment-specific tensorboard path\n- `save_strategy`: \"no\" (checkpoints managed by RapidFire)\n- `evaluation_strategy`: \"no\" or \"epoch\" (custom eval via callbacks)\n- `max_steps`: Calculated based on chunk size\n- `logging_steps`: Set to chunk-sized batches\n\n**PEFT Integration**:\nIf `config_leaf['peft_params']` is provided:\n- Wraps model with PEFT adapter (LoRA)\n- Loads/saves adapter weights separately from base model\n- Uses `get_peft_model_state_dict()` and `set_peft_model_state_dict()`\n\n**Patterns**:\n- Expects `TrainerConfig` object with all necessary info (run_id, worker_id, config_leaf, etc.)\n- Returns tuple of (trainer, status_string)\n- Handles both fresh runs and resumed runs (chunk_id > 0)\n- Uses `USE_SHARED_MEMORY` flag to decide checkpoint loading strategy\n\n### checkpoint_utils.py\n**Purpose**: Checkpoint loading, saving, and restoration\n\n**Key Responsibilities**:\n- Save/load model checkpoints to/from shared memory\n- Save/load model checkpoints to/from disk\n- Restore trainer state (optimizer, scheduler, RNG) for resumed runs\n- Handle PEFT adapter checkpoints separately from base models\n- Move tensors between CPU and GPU for memory efficiency\n\n**Key Functions - Shared Memory**:\n- `save_model_to_shared_memory()`: Store model weights in SHM\n- `save_checkpoint_to_shared_memory()`: Store model + optimizer state in SHM\n- `load_checkpoint_from_shared_memory()`: Load model from SHM registry\n- `restore_trainer_from_shared_memory()`: Restore trainer state from SHM\n\n**Key Functions - Disk**:\n- `save_checkpoint_to_disk()`: Save checkpoint to experiment directory\n- `load_checkpoint_from_disk()`: Load checkpoint from disk\n- `restore_trainer_from_disk()`: Restore trainer state from disk checkpoint\n- `load_or_create_ref_model()`: Load reference model for DPO (always from disk)\n\n**Key Functions - Utilities**:\n- `move_tensors_to_cpu()`: Move all tensors in dict to CPU (for SHM storage)\n- `move_tensors_to_device()`: Move all tensors to specified device\n- `ensure_gradient_compatibility()`: Fix gradient dtype mismatches\n- `_get_checkpoint_path()`: Generate checkpoint filename path\n\n**Checkpoint Structure**:\n```python\ncheckpoint = {\n    'model_state_dict': model.state_dict(),\n    'optimizer_state_dict': trainer.optimizer.state_dict(),\n    'scheduler_state_dict': trainer.lr_scheduler.state_dict(),\n    'rng_state': torch.get_rng_state(),\n    'cuda_rng_state': torch.cuda.get_rng_state(),\n    'epoch': current_epoch,\n    'global_step': trainer.state.global_step,\n}\n```\n\n**Shared Memory Registry**:\n- Key format: `f\"{run_id}_model\"`, `f\"{run_id}_checkpoint\"`\n- Stores model on CPU to avoid GPU memory issues\n- Uses `SharedMemoryManager` for access coordination\n\n**Disk Checkpoint Paths**:\n- Pattern: `{experiment_path}/runs/run_{run_id}/checkpoints/checkpoint_chunk_{chunk_id}.pt`\n- Saved after each chunk completion\n- Used when SHM disabled or checkpoint too large\n\n**PEFT Handling**:\n- PEFT adapters saved separately: `checkpoint['adapter_state_dict']`\n- Base model not saved (only adapters)\n- Load base model fresh, then apply saved adapter\n\n### callbacks.py\n**Purpose**: Custom Transformers callbacks for RapidFire integration\n\n**Key Responsibilities**:\n- Log training metrics to MLflow\n- Compute generation-based metrics during evaluation\n- Control log verbosity during training\n\n**Callbacks**:\n\n**GenerationMetricsCallback**:\n- Generates text during evaluation to compute quality metrics\n- Uses user-provided `compute_metrics` function\n- Logs generation metrics to MLflow (e.g., BLEU, ROUGE, custom metrics)\n- Batches generation for efficiency\n- Supports custom generation configs (temperature, top_p, max_tokens)\n\n**MLflowLoggingCallback**:\n- Logs training metrics (loss, learning rate, grad norm) to MLflow\n- Handles step offset for resumed runs (continued step numbering)\n- Filters out None values and non-numeric metrics\n- Logs at appropriate intervals based on `logging_steps`\n\n**LogLevelCallback**:\n- Temporarily reduces log verbosity during training\n- Prevents console spam from Transformers\n- Restores original log level after training\n- Uses `transformers.logging.set_verbosity()`\n\n**Usage Pattern**:\n```python\ncallbacks = [\n    MLflowLoggingCallback(mlflow_manager, mlflow_run_id, completed_steps),\n    GenerationMetricsCallback(tokenizer, eval_dataset, generation_config, compute_metrics),\n    LogLevelCallback(),\n]\ntrainer = SFTTrainer(..., callbacks=callbacks)\n```\n\n## Key Concepts\n\n### Chunk-Based Training\n- Each chunk is a separate training session with max_steps calculated for that chunk\n- Trainer created fresh for each chunk (avoids state leakage)\n- Checkpoint saved after chunk completion\n- Next chunk loads checkpoint and continues\n\n### Trainer State Restoration\nWhen resuming from checkpoint:\n1. Load model state dict\n2. Restore optimizer state dict\n3. Restore scheduler state dict\n4. Restore RNG states (CPU and CUDA)\n5. Set trainer.state.global_step to continue step numbering\n6. Metrics continue from previous chunk\n\n### PEFT (LoRA) Support\n- User specifies `peft_params` in config with LoRA config (r, alpha, dropout, target_modules)\n- Model wrapped with `get_peft_model(model, lora_config)`\n- Only adapter weights saved/loaded (base model stays frozen)\n- Reduces checkpoint size and training memory\n\n### DPO Reference Model\n- DPO requires reference model for KL divergence penalty\n- Reference model loaded from disk (never updated during training)\n- Moved to same device as main model\n- Shared across all chunks (not checkpointed)\n\n## Common Patterns\n\n### Adding New Trainer Type\n1. Import trainer class from TRL (e.g., `from trl import NewTrainer`)\n2. Add config class import (e.g., `from trl import NewConfig`)\n3. Add trainer type to `_create_trainer_config_object()`\n4. Add trainer type to `_create_trainer()` instantiation logic\n5. Handle any special args in `_prepare_trainer_kwargs()`\n6. Update AutoML base class `VALID_TRAINER_TYPES` in `automl/base.py`\n\n### Adding Custom Metrics\nUser provides `compute_metrics` function in config:\n```python\ndef compute_metrics(predictions, references):\n    # Custom metric computation\n    return {'custom_metric': score}\n\nconfig = {\n    'additional_kwargs': {\n        'compute_metrics': compute_metrics\n    }\n}\n```\n\nIntegrated via `GenerationMetricsCallback`.\n\n### Debugging Training Issues\n- Check `trainer.state.log_history` for metrics\n- Inspect checkpoint files on disk (torch.load)\n- Add logging in `_restore_trainer_state()` to verify state restoration\n- Check MLflow UI for metric continuity across chunks\n- Verify `global_step` increments correctly across chunks\n\n### Memory Optimization\n- Use PEFT to reduce memory footprint\n- Enable gradient checkpointing: `training_args['gradient_checkpointing'] = True`\n- Reduce batch size or increase gradient accumulation\n- Use bfloat16 or float16: `training_args['bf16'] = True`\n- Disable shared memory if checkpoints too large: `USE_SHARED_MEMORY = False`\n\n## Integration with Backend\n\n1. **Worker calls `create_trainer_instance()`**:\n   - Passes `TrainerConfig` with run details\n   - Gets back configured trainer\n\n2. **Worker calls `trainer.train()`**:\n   - Trains for `max_steps` (one chunk worth)\n   - Callbacks log to MLflow\n\n3. **Worker saves checkpoint**:\n   - Calls `save_checkpoint_to_shared_memory()` or `save_checkpoint_to_disk()`\n   - Stores optimizer/scheduler state for next chunk\n\n4. **Next chunk loads checkpoint**:\n   - Worker calls `create_trainer_instance()` with chunk_id > 0\n   - `trainer.py` detects resumed run and calls restoration functions\n   - Training continues from exact state\n\n## Testing\n\nManual testing:\n```python\n# Test checkpoint save/load\nfrom rapidfireai.ml.checkpoint_utils import save_checkpoint_to_disk, load_checkpoint_from_disk\n\nsave_checkpoint_to_disk(trainer,\
+      \ run_id=1, chunk_id=0, epoch=0)\nmodel, tokenizer = load_checkpoint_from_disk(trainer_config, is_peft=False)\n```\n\nIntegration testing via tutorial notebooks."
+    gold_removed: ''
+  - path: rapidfireai/utils/CLAUDE.md
+    tier: 1
+    gold_added: "# CLAUDE.md - Utils\n\nThis file provides guidance for working with the utility modules in RapidFire AI.\n\n## Overview\n\nThe utils module contains shared utilities used across RapidFire components, including logging, MLflow integration, shared memory management, serialization, exception handling, and constants.\n\n## Google Colab Support\n\n### Colab Helper (colab_helper.py)\n\n**Purpose**: Utilities for running RapidFire in Google Colab and restricted notebook environments\n\n**Key Functions**:\n- `is_colab()`: Detect if running in Google Colab\n- `get_notebook_environment()`: Returns 'colab', 'kaggle', 'jupyter', or 'unknown'\n- `setup_cloudflare_tunnel(port, description)`: Create free Cloudflare tunnel for port forwarding\n- `setup_ngrok_tunnel(port, auth_token, description)`: Create ngrok tunnel (requires auth token)\n- `expose_rapidfire_services(method, ...)`: Expose all services using specified tunneling method\n\n**Tunneling Methods**:\n1. **'native'**: Colab's built-in port forwarding (only works when called from notebook cell)\n2. **'cloudflare'**: Free Cloudflare tunnels via cloudflared binary (no registration required)\n3. **'ngrok'**: ngrok tunnels (requires free account and auth token)\n\n**Important Architectural Note - Tunnel Routing Loop**:\n\nWhen using tunnels in Colab, **inter-service communication must use localhost**, not tunnel URLs. Tunnel URLs are only for external browser access.\n\n❌ **Wrong Architecture (creates routing loop)**:\n```\nBrowser → Frontend Tunnel → Frontend:3000 → MLflow Tunnel → MLflow:5002\n                                                   ↑\n                                                   Fails with 502: Colab → Cloudflare → Colab loop\n```\n\n✅ **Correct Architecture**:\n```\nBrowser → Frontend Tunnel → Frontend:3000 → localhost:5002 (direct)\nBrowser → MLflow Tunnel → MLflow:5002 (direct access if needed)\n```\n\n**Why this matters**:\n- Cloudflare/ngrok tunnels expose local services to the internet\n- They route: External Request → Tunnel Provider → Local Machine\n- From within the same machine, tunnel URLs create a loop that fails\n- Always use `http://127.0.0.1:<port>` for services on the same host\n\n**Example in start_colab.py**:\n```python\n# Create tunnels for external access\nmlflow_url = setup_cloudflare_tunnel(RF_MLFLOW_PORT, \"MLflow Tracking UI\")\n\n# DON'T set RF_MLFLOW_URL env var - let frontend use localhost\n# os.environ['RF_MLFLOW_URL'] = mlflow_url  # ❌ Creates routing loop\n\n# Frontend subprocess will use default: http://127.0.0.1:5002/ ✅\n```\n\n**Colab Process Restrictions**:\n\nGoogle Colab restricts certain OS-level process operations:\n1. `os.setpgrp()` - Cannot create process groups (wrapped in try-except with fallback)\n2. `os.getpgid()` - Cannot query process group IDs (uses psutil fallback)\n3. `os.killpg()` - Only used when process_group_id exists (safe)\n\nSee `worker_manager.py` for implementation of these workarounds.\n\n## Files\n\n### constants.py\n**Purpose**: Centralized definitions for enums, config values, and system constants\n\n**Key Constants**:\n- `MLFLOW_URL`: Default MLflow tracking server URL (http://localhost:5002)\n- `USE_SHARED_MEMORY`: Flag to enable shared memory for checkpoints (default: True)\n- `LOG_FILENAME`: Log file naming pattern\n- `DB_PATH`: SQLite database file path\n\n**Key Enums**:\n- `ExperimentStatus`: NEW, RUNNING, COMPLETED, FAILED\n- `RunStatus`: NEW, ONGOING, COMPLETED, FAILED, STOPPED, KILLED\n- `RunSource`: USER, CLONE_MODIFY\n- `RunEndedBy`: COMPLETED, FAILED, KILLED, STOPPED\n- `TaskStatus`: PENDING, SCHEDULED, IN_PROGRESS, COMPLETED, FAILED\n- `ExperimentTask`, `ControllerTask`, `WorkerTask`: Task type enums\n- `SHMObjectType`: MODEL, CHECKPOINT (for shared memory registry)\n\n**Config Classes**:\n- `DispatcherConfig`: Dispatcher server configuration\n\n**Usage**:\n```python\nfrom rapidfireai.utils.constants import RunStatus, MLFLOW_URL\n\nif run['status'] == RunStatus.ONGOING.value:\n    # ...\n```\n\n### logging.py\n**Purpose**: Structured logging setup using loguru\n\n**Key Classes**:\n- `RFLogger`: Main logger factory for RapidFire components\n- `TrainingLogger`: Specialized logger for training output\n\n**Key Features**:\n- Creates per-component loggers (experiment, controller, worker_N, dispatcher, etc.)\n- Logs to both console and file\n- Experiment-specific log directories\n- Color-coded log levels\n- Structured format with timestamps\n\n**Usage**:\n```python\nfrom rapidfireai.utils.logging import RFLogger\n\nlogger = RFLogger().create_logger(\"controller\")\nlogger.info(\"Starting controller\")\nlogger.error(\"Failed to schedule\", run_id=5)\n```\n\n**Log Locations**:\n- `{experiment_path}/logs/controller.log`\n- `{experiment_path}/logs/worker_0.log`\n- `{experiment_path}/logs/dispatcher.log`\n\n### mlflow_manager.py\n**Purpose**: Wrapper around MLflow tracking API\n\n**Key Responsibilities**:\n- Creates and retrieves MLflow experiments\n- Logs metrics, parameters, and artifacts\n- Creates MLflow runs\n- Handles MLflow server communication\n\n**Key Methods**:\n- `get_experiment(name)`: Get or create MLflow experiment\n- `create_run(experiment_id)`: Create MLflow run, return run_id\n- `log_metric(run_id, key, value, step)`: Log metric\n- `log_param(run_id, key, value)`: Log parameter\n- `log_artifact(run_id, artifact_path)`: Log artifact file\n- `end_run(run_id)`: Mark run as completed\n\n**Usage**:\n```python\nfrom rapidfireai.utils.mlflow_manager import MLflowManager\n\nmlflow = MLflowManager(\"http://localhost:5002\")\nexperiment = mlflow.get_experiment(\"my_experiment\")\nrun_id = mlflow.create_run(experiment.experiment_id)\nmlflow.log_metric(run_id, \"loss\", 0.5, step=100)\n```\n\n**Integration**:\n- Each RapidFire run maps to one MLflow run\n- Parameters logged at run creation\n- Metrics logged during training via callbacks\n- Checkpoints logged as artifacts\n\n### shm_manager.py\n**Purpose**: Shared memory management for model checkpoints\n\n**Key Responsibilities**:\n- Creates shared memory registry (dict proxy) accessible across processes\n- Stores model checkpoints in shared memory to avoid disk I/O\n- Provides lock for thread-safe access\n- Manages memory lifecycle (allocation, deallocation)\n\n**Key Classes**:\n- `SharedMemoryManager`: Main interface for shared memory operations\n\n**Key Methods**:\n- `get_shm_objects()`: Returns (registry, lock) tuple\n- `store(key, value)`: Store object in shared memory\n- `load(key)`: Load object from shared memory\n- `delete(key)`: Remove object from shared memory\n- `exists(key)`: Check if key exists\n\n**Usage**:\n```python\nfrom rapidfireai.utils.shm_manager import SharedMemoryManager\n\nshm = SharedMemoryManager(name=\"controller-shm\")\nregistry, lock = shm.get_shm_objects()\n\n# Store model\nwith lock:\n    registry[f\"{run_id}_model\"] = model_state_dict\n\n# Load model\nwith lock:\n    state_dict = registry.get(f\"{run_id}_model\")\n```\n\n**Key Concepts**:\n- Uses multiprocessing.Manager() for shared dict\n- Objects stored on CPU (tensors moved from GPU)\n- Lock prevents concurrent access issues\n- Fallback to disk if object too large or memory full\n\n### experiment_utils.py\n**Purpose**: Experiment lifecycle management utilities\n\n**Key Responsibilities**:\n- Creates experiment directories and metadata\n- Generates unique experiment names\n- Sets up signal handlers for graceful shutdown\n- Manages experiment cleanup\n\n**Key Methods**:\n- `create_experiment(given_name, experiments_path)`: Create experiment directory and DB entry\n- `setup_signal_handlers(worker_processes)`: Setup SIGINT/SIGTERM handlers\n- `cleanup_experiment()`: Kill workers, reset DB state\n\n**Usage**:\n```python\nfrom rapidfireai.utils.experiment_utils import ExperimentUtils\n\nutils = ExperimentUtils()\nexp_id, exp_name, logs = utils.create_experiment(\"my_exp\", \"./experiments\")\nutils.setup_signal_handlers(worker_processes)\n```\n\n**Naming**:\n- If \"my_exp\" exists, creates \"my_exp_1\", \"my_exp_2\", etc.\n- Ensures unique experiment names across runs\n\n### worker_manager.py\n**Purpose**: Worker process lifecycle management\n\n**Key Responsibilities**:\n- Spawns Worker processes (one per GPU)\n- Manages process pool\n- Handles worker shutdown and cleanup\n- Provides shutdown signals to workers\n\n**Key Methods**:\n- `spawn_workers(experiment_id, experiment_name)`: Create worker processes\n- `shutdown_workers()`: Gracefully stop all workers\n- `terminate_workers()`: Force kill workers\n\n**Usage**:\n```python\nfrom rapidfireai.utils.worker_manager import WorkerManager\n\nmanager = WorkerManager(num_workers=4, registry, lock)\nmanager.spawn_workers(experiment_id, experiment_name)\n# ... training happens ...\nmanager.shutdown_workers()\n```\n\n**Shutdown Flow**:\n1. Set shutdown_event flag\n2. Wait for workers to finish current tasks (grace period)\n3. Terminate if still running after timeout\n\n### serialize.py\n**Purpose**: Object serialization for database storage\n\n**Key Responsibilities**:\n- Serialize complex Python objects (models, datasets, configs) to bytes\n- Deserialize bytes back to Python objects\n- Handle torch tensors and other non-pickleable objects\n\n**Key Functions**:\n- `encode_payload(obj)`: Serialize object to bytes using dill\n- `decode_db_payload(data)`: Deserialize bytes to object\n\n**Usage**:\n```python\nfrom rapidfireai.utils.serialize import encode_payload, decode_db_payload\n\nconfig = {'learning_rate': 1e-5, 'batch_size': 8}\nblob = encode_payload(config)\ndb.execute(\"INSERT INTO runs (config_leaf) VALUES (?)\", (blob,))\n\nrow = db.execute(\"SELECT config_leaf FROM runs WHERE run_id = 1\")[0]\nconfig = decode_db_payload(row['config_leaf'])\n```\n\n**Notes**:\n- Uses dill (more powerful than pickle)\n- Handles torch.Tensors, datasets, lambdas, etc.\n- BLOB storage in SQLite\n\n### datapaths.py\n**Purpose**: Centralized path management for experiment artifacts\n\n**Key Responsibilities**:\n- Generates\
+      \ consistent paths for checkpoints, datasets, logs\n- Ensures directories exist\n- Handles path construction for different artifact types\n\n**Key Methods**:\n- `initialize(experiment_name, base_path)`: Set up paths for experiment\n- `checkpoint_path(run_id, chunk_id)`: Get checkpoint file path\n- `dataset_path()`: Get dataset file path\n- `log_path(logger_name)`: Get log file path\n\n**Usage**:\n```python\nfrom rapidfireai.utils.datapaths import DataPath\n\nDataPath.initialize(\"my_experiment\", \"/path/to/experiments\")\ncheckpoint_file = DataPath.checkpoint_path(run_id=5, chunk_id=2)\n# Returns: /path/to/experiments/my_experiment/runs/run_5/checkpoints/checkpoint_chunk_2.pt\n```\n\n### exceptions.py\n**Purpose**: Custom exception classes for RapidFire\n\n**Exception Classes**:\n- `ExperimentException`: Experiment-level errors\n- `ControllerException`: Controller errors\n- `WorkerException`: Worker errors\n- `DispatcherException`: Dispatcher errors\n- `DBException`: Database errors\n- `AutoMLException`: AutoML errors\n- `NoGPUsFoundException`: No GPUs available\n\n**Usage**:\n```python\nfrom rapidfireai.utils.exceptions import ControllerException\n\nif num_gpus == 0:\n    raise NoGPUsFoundException(\"No GPUs found while initializing controller.\")\n```\n\n### automl_utils.py\n**Purpose**: Utilities for AutoML algorithms\n\n**Key Functions**:\n- `get_runs(param_config, seed)`: Extract runs from AutoML algorithm or plain dict\n- `get_flattened_config_leaf(config)`: Flatten RFModelConfig to dict\n\n**Usage**:\n```python\nfrom rapidfireai.utils.automl_utils import get_runs\n\n# Handles both AutoML instances and plain dicts\nif isinstance(param_config, AutoMLAlgorithm):\n    runs = get_runs(param_config, seed)\nelse:\n    runs = [param_config]  # Single config\n```\n\n### trainer_config.py\n**Purpose**: Configuration container for trainer initialization\n\n**Key Class**:\n- `TrainerConfig`: Dataclass holding all info needed by `create_trainer_instance()`\n\n**Attributes**:\n- `run_id`: Run identifier\n- `worker_id`: GPU worker assignment\n- `config_leaf`: Run configuration dict\n- `experiment_name`: Experiment name\n- `chunk_id`: Current chunk being trained\n- `epoch`: Current epoch\n- `mlflow_run_id`: MLflow run ID\n\n**Usage**:\n```python\nfrom rapidfireai.utils.trainer_config import TrainerConfig\n\nconfig = TrainerConfig(\n    run_id=5,\n    worker_id=0,\n    config_leaf=config_dict,\n    experiment_name=\"my_exp\",\n    chunk_id=2,\n    epoch=0,\n    mlflow_run_id=\"abc123\"\n)\n\ntrainer = create_trainer_instance(config, shm_manager)\n```\n\n### ping.py\n**Purpose**: Server health check utility\n\n**Usage**:\n```python\npython -m rapidfireai.utils.ping\n# Checks if dispatcher, mlflow, and frontend servers are running\n```\n\n## Common Patterns\n\n### Logging Setup\n```python\nfrom rapidfireai.utils.logging import RFLogger\n\n# In each component:\nlogger = RFLogger().create_logger(\"component_name\")\nlogger.info(\"Message\")\n```\n\n### Shared Memory Access\n```python\nfrom rapidfireai.utils.shm_manager import SharedMemoryManager\n\nshm = SharedMemoryManager(name=\"controller-shm\")\nregistry, lock = shm.get_shm_objects()\n\nwith lock:\n    registry[key] = value  # Thread-safe\n```\n\n### Exception Handling\n```python\nfrom rapidfireai.utils.exceptions import ControllerException\n\ntry:\n    # ... operation ...\nexcept Exception as e:\n    raise ControllerException(f\"Error: {e}\") from e\n```\n\n### Path Management\n```python\nfrom rapidfireai.utils.datapaths import DataPath\n\nDataPath.initialize(experiment_name, base_path)\ncheckpoint = DataPath.checkpoint_path(run_id, chunk_id)\n```\n\n## Testing\n\nUnit tests for utils:\n```bash\npytest tests/  # Currently minimal, could expand\n```\n\nMost utils tested indirectly through integration tests."
+    gold_removed: ''

@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: gemini-skills-enhance-skillmd-with-java-sdk
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: google-gemini/gemini-skills
+  pr: 13
+  base_commit: "e838c6e8f406b0f06e940bd05367e57b166e24f7"
+  merge_commit: "b20decc7367d0ce1a06f4fc0d8fa03d7ea12725d"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/gemini-api-dev/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/gemini-api-dev/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/gemini-api-dev/SKILL.md."
+
+config_edits:
+  - path: skills/gemini-api-dev/SKILL.md
+    tier: 1
+    gold_added: "description: Use this skill when building applications with Gemini models, Gemini API, working with multimodal content (text, images, audio, video), implementing function calling, using structured outputs, or needing current model specifications. Covers SDK usage (google-genai for Python, @google/genai for JavaScript/TypeScript, com.google.genai:google-genai for Java, google.golang.org/genai for Go), model selection, and API capabilities.\n- **Java**:\n  - groupId: `com.google.genai`, artifactId: `google-genai`\n  - Latest version can be found here: https://central.sonatype.com/artifact/com.google.genai/google-genai/versions (let's call it `LAST_VERSION`) \n  - Install in `build.gradle`:\n    ```\n    implementation(\"com.google.genai:google-genai:${LAST_VERSION}\")\n    ```\n  - Install Maven dependency in `pom.xml`:\n    ```\n    <dependency>\n\t    <groupId>com.google.genai</groupId>\n\t    <artifactId>google-genai</artifactId>\n\t    <version>${LAST_VERSION}</version>\n\t</dependency>\n    ```\n### Java\n\n```java\nimport com.google.genai.Client;\nimport com.google.genai.types.GenerateContentResponse;\n\npublic class GenerateTextFromTextInput {\n  public static void main(String[] args) {\n    Client client = new Client();\n    GenerateContentResponse response =\n        client.models.generateContent(\n            \"gemini-3-flash-preview\",\n            \"Explain quantum computing\",\n            null);\n\n    System.out.println(response.text());\n  }\n}\n```\n"
+    gold_removed: ''

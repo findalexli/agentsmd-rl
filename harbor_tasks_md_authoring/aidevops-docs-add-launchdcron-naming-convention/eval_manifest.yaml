@@ -1,0 +1,43 @@
+version: "2.0"
+
+task:
+  name: aidevops-docs-add-launchdcron-naming-convention
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: marcusquinn/aidevops
+  pr: 2319
+  base_commit: "3d30c1bc402876fc77044ddf90ab48b9f466c64f"
+  merge_commit: "e15e01d64bb5f63c08182ee9d0aeb3d15277952c"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .agents/AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .agents/AGENTS.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .agents/AGENTS.md."
+
+config_edits:
+  - path: .agents/AGENTS.md
+    tier: 1
+    gold_added: '## Scheduled Tasks (launchd/cron)
+
+
+      When creating launchd plists or cron jobs, use the `aidevops` prefix so they''re easy to find in System Settings > General > Login Items & Extensions:
+
+      - **launchd label**: `sh.aidevops.<name>` (reverse domain, e.g., `sh.aidevops.session-miner-pulse`)
+
+      - **plist filename**: `sh.aidevops.<name>.plist`
+
+      - **cron comment**: `# aidevops: <description>`
+
+      '
+    gold_removed: ''

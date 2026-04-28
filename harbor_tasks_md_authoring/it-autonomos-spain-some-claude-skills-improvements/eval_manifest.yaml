@@ -1,0 +1,52 @@
+version: "2.0"
+
+task:
+  name: it-autonomos-spain-some-claude-skills-improvements
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: v112263/it-autonomos-spain
+  pr: 259
+  base_commit: "49356bf1a1ea2c848a4c1c130927f3edd7be3324"
+  merge_commit: "43228eecc09c9cb6ae6fb55eb20349c4e67554fd"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/tests-local-test-and-update-internal-links/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/tests-local-test-and-update-internal-links/SKILL.md."
+
+config_edits:
+  - path: .claude/skills/tests-local-run-local-tests/SKILL.md
+    tier: 1
+    gold_added: ''
+    gold_removed: ''
+  - path: .claude/skills/tests-local-test-and-update-internal-links/SKILL.md
+    tier: 1
+    gold_added: "| `*-contact-form*` | Contact form element IDs (including language-suffixed variants like `-contact-form-en`) |\n     grep -oE 'id=\"[^\"]+\"' HTML_FILE | sed 's/id=\"//;s/\"$//' | grep -v -E '(-contact-form|^hs-script-loader$|^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$)' | sort -u"
+    gold_removed: ''
+  - path: .claude/skills/tests-local-test-local-site-links/SKILL.md
+    tier: 1
+    gold_added: ''
+    gold_removed: ''
+  - path: .claude/skills/tests-prod-run-prod-tests/SKILL.md
+    tier: 1
+    gold_added: ''
+    gold_removed: ''
+  - path: .claude/skills/tests-prod-test-bitly-links/SKILL.md
+    tier: 1
+    gold_added: ''
+    gold_removed: ''
+  - path: .claude/skills/tests-prod-test-prod-site-links/SKILL.md
+    tier: 1
+    gold_added: ''
+    gold_removed: ''
+  - path: .claude/skills/tests-run-all-tests/SKILL.md
+    tier: 1
+    gold_added: ''
+    gold_removed: ''

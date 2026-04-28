@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: stream-chat-swiftui-added-agentsmd-file
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: GetStream/stream-chat-swiftui
+  pr: 938
+  base_commit: "83885f1cbe0e0c80511903834b4cdd0d412ba89f"
+  merge_commit: "5104f3ace1258447ab3ec44a08ee0745d1672371"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+
+config_edits:
+  - path: AGENTS.md
+    tier: 1
+    gold_added: "Guidance for AI coding agents (Copilot, Cursor, Aider, Claude, etc.) working in this repository. Human readers are welcome, but this file is written for tools.\n\n### Repository purpose\n\nThis repo hosts Stream’s SwiftUI Chat SDK for iOS. It builds on the core client and provides SwiftUI-first chat components (views, view models, modifiers) for messaging apps.\n\nAgents should optimize for API stability, backwards compatibility, accessibility, and high test coverage when changing code.\n\n### Tech & toolchain\n  • Language: Swift (SwiftUI)\n  • Primary distribution: Swift Package Manager (SPM), secondary CocoaPods and XCFrameworks\n  • Xcode: 15.x or newer (Apple Silicon supported)\n  • Platforms / deployment targets: Use the values set in Package.swift/podspecs; do not lower targets without approval\n  • CI: GitHub Actions (assume PR validation for build + tests + lint)\n  • Linters & docs: SwiftLint via Mint\n\n### Project layout (high level)\n\nSources/\n  StreamChatSwiftUI/       # SwiftUI views, view models, theming, utils\nTests/\n  StreamChatSwiftUITests/  # Unit/UI tests for SwiftUI layer\n\nWhen editing near other packages (e.g., StreamChat or StreamChatUI), prefer extending the SwiftUI layer rather than duplicating logic from dependencies.\n\n### Local setup (SPM)\n  1.  Open the repository in Xcode (root contains Package.swift).\n  2.  Resolve packages.\n  3.  Choose an iOS Simulator (e.g., iPhone 15) and Build.\n\nOptional: sample/demo app\n\nIf a sample app target exists in this repo, prefer running that to validate UI changes. Keep demo configs free of credentials and use placeholders like YOUR_STREAM_KEY.\n\n### Schemes\n\nTypical scheme names include:\n  • StreamChatSwiftUI\n  • StreamChatSwiftUITests\n\nAgents must query existing schemes before invoking xcodebuild.\n\n### Build & test commands (CLI)\n\nPrefer Xcode for day-to-day work; use CLI for CI parity & automation.\n\nBuild (Debug):\n\n```\nxcodebuild \\\n  -scheme StreamChatSwiftUI \\\n  -destination 'platform=iOS Simulator,name=iPhone 15' \\\n  -configuration Debug build\n```\n\nRun tests:\n\n```\nxcodebuild \\\n  -scheme StreamChatSwiftUI \\\n  -destination 'platform=iOS Simulator,name=iPhone 15' \\\n  -configuration Debug test\n```\n\nIf a Makefile or scripts exist (e.g., make build, make test, ./scripts/lint.sh), prefer those to keep parity with CI. Discover with make help and ls scripts/.\n\nLinting & formatting\n  • SwiftLint (strict):\n\nswiftlint --strict\n\n  • Respect .swiftlint.yml and any repo-specific rules. Do not broadly disable rules; scope exceptions and justify in PRs.\n\nPublic API & SemVer\n  • Follow semantic versioning for the SwiftUI package.\n  • Any public API change must include updated docs and migration notes.\n  • Avoid source-breaking changes. If unavoidable, add deprecations first with a transition path.\n\nAccessibility & UI quality\n  • Ensure components have accessibility labels, traits, and dynamic type support.\n  • Support both light/dark mode.\n  • When altering UI, attach before/after screenshots (or screen recordings) in PRs.\n\nTesting policy\n  • Add/extend tests in StreamChatSwiftUITests/ for:\n  • View models and state handling"
+    gold_removed: ''

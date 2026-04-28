@@ -1,0 +1,36 @@
+version: "2.0"
+
+task:
+  name: devtools-docs-update-agentsmd-with-new
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: vitejs/devtools
+  pr: 198
+  base_commit: "cfdce12d462f19cb8f2de91666462091fe10ea9a"
+  merge_commit: "036aff05e9b57d4f186a0cc2f08d550ba5d1b8ef"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+
+config_edits:
+  - path: AGENTS.md
+    tier: 1
+    gold_added: "\nMonorepo (`pnpm` workspaces + `turbo`). ESM TypeScript; bundled with `tsdown`. Path aliases in `alias.ts` (propagated to `tsconfig.base.json` — do not edit manually).\n\n### Packages\n\n| Package | npm | Description |\n|---------|-----|-------------|\n| `packages/core` | `@vitejs/devtools` | Vite plugin, CLI, runtime hosts (docks, views, terminals), WS RPC server, standalone/webcomponents client |\n| `packages/kit` | `@vitejs/devtools-kit` | Public types/utilities for integration authors (`defineRpcFunction`, shared state, events, client helpers) |\n| `packages/rpc` | `@vitejs/devtools-rpc` | Typed RPC wrapper over `birpc` with WS presets |\n| `packages/ui` | `@vitejs/devtools-ui` | Shared UI components, composables, and UnoCSS preset (`presetDevToolsUI`). Private, not published |\n| `packages/rolldown` | `@vitejs/devtools-rolldown` | Nuxt UI for Rolldown build data. Serves at `/.devtools-rolldown/` |\n| `packages/vite` | `@vitejs/devtools-vite` | Nuxt UI for Vite DevTools (WIP). Serves at `/.devtools-vite/` |\n| `packages/self-inspect` | `@vitejs/devtools-self-inspect` | Meta-introspection — DevTools for the DevTools. Serves at `/.devtools-self-inspect/` |\n| `packages/webext` | — | Browser extension scaffolding (ancillary) |\n\nOther top-level directories:\n- `docs/` — VitePress docs; guides in `docs/guide/`\n- `skills/` — Agent skill files generated from docs via [Agent Skills](https://agentskills.io/home). Structured references (RPC patterns, dock types, shared state, project structure) for AI agent context.\n  core[\"core\"] --> kit & rpc\n  core --> rolldown & vite & self-inspect\n  rolldown --> kit & rpc & ui\n  vite --> kit & rpc & ui\n  self-inspect --> kit & rpc\n  webext --> core\n## Architecture\n- **Entry**: `createDevToolsContext` (`packages/core/src/node/context.ts`) builds `DevToolsNodeContext` with hosts for RPC, docks, views, terminals. Invokes `plugin.devtools.setup` hooks.\n- **Node context**: server-side (cwd, vite config, mode, hosts, auth storage at `node_modules/.vite/devtools/auth.json`).\n- **Client context**: webcomponents/Nuxt UI state (`packages/core/src/client/webcomponents/state/*`) — dock entries, panels, RPC client. Two modes: `embedded` (overlay in host app) and `standalone` (independent page).\n- **WS server** (`packages/core/src/node/ws.ts`): RPC via `@vitejs/devtools-rpc/presets/ws`. Auth skipped in build mode or when `devtools.clientAuth` is `false`.\n- **Nuxt UI plugins** (rolldown, vite, self-inspect): each registers RPC functions and hosts static Nuxt SPA at its own base path.\n## Development\n```sh\npnpm install                          # requires pnpm@10.x\npnpm build                            # turbo run build\npnpm test                             # Vitest\npnpm typecheck                        # vue-tsc -b\npnpm lint --fix                       # ESLint\npnpm -C packages/core run play        # core playground\npnpm -C packages/rolldown run dev     # rolldown UI dev\npnpm -C packages/core run dev:standalone  # standalone client\npnpm -C docs run docs                 # docs dev server\n```\n\n## Conventions\n\n- Use workspace aliases from `alias.ts`.\n- RPC functions must use `defineRpcFunction` from kit; always namespace IDs (`my-plugin:fn-name`).\n- Shared state via `@vitejs/devtools-kit/utils/shared-state`; keep values serializable.\n- Nuxt UI base paths: `/.devtools-rolldown/`, `/.devtools-vite/`, `/.devtools-self-inspect/`.\n- Shared UI components/preset in `packages/ui`; use `presetDevToolsUI` from `@vitejs/devtools-ui/unocss`.\n- Currently focused on Rolldown build-mode analysis; dev-mode support is deferred.\n## Before PRs\n\n```sh\npnpm lint && pnpm test && pnpm typecheck && pnpm build\n```\nFollow conventional commits (`feat:`, `fix:`, etc.)."
+    gold_removed: ''
+  - path: CLAUDE.md
+    tier: 1
+    gold_added: AGENTS.md
+    gold_removed: ''

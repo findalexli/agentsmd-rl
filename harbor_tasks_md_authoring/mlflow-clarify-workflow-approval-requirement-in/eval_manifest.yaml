@@ -1,0 +1,24 @@
+version: "2.0"
+
+task:
+  name: mlflow-clarify-workflow-approval-requirement-in
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: mlflow/mlflow
+  pr: 22339
+  base_commit: "048e100edeef249b2634591ceaa9dae6b253e666"
+  merge_commit: "33200f3a6208bee42c5c1c10a4687bc78302b9a8"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/copilot/SKILL.md."
+
+config_edits:
+  - path: .claude/skills/copilot/SKILL.md
+    tier: 1
+    gold_added: 'Copilot commits require approval to trigger workflows for security reasons, while maintainer commits do not. Once the PR is finalized, run the approve script:'
+    gold_removed: ''

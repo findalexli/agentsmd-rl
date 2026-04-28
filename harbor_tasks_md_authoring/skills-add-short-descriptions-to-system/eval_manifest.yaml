@@ -1,0 +1,36 @@
+version: "2.0"
+
+task:
+  name: skills-add-short-descriptions-to-system
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: openai/skills
+  pr: 7
+  base_commit: "48f42090fe294f97f435890212d17705705aa6d9"
+  merge_commit: "59c17eca47845c415f7567aaed19cb17a021ccd6"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/.system/plan/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/.system/skill-creator/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/.system/skill-creator/SKILL.md."
+
+config_edits:
+  - path: skills/.system/plan/SKILL.md
+    tier: 1
+    gold_added: "metadata:\n  short-description: Generate a plan for a complex task"
+    gold_removed: ''
+  - path: skills/.system/skill-creator/SKILL.md
+    tier: 1
+    gold_added: "metadata:\n  short-description: Create or update a skill\nThe skill should only contain the information needed for an AI agent to do the job at hand. It should not contain auxiliary context about the process that went into creating it, setup and testing procedures, user-facing documentation, etc. Creating additional documentation files just adds clutter and confusion."
+    gold_removed: ''

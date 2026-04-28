@@ -1,0 +1,40 @@
+version: "2.0"
+
+task:
+  name: shinkaevolve-update-skillmd-to-wrap-subsection
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: SakanaAI/ShinkaEvolve
+  pr: 81
+  base_commit: "5e38483870d8e261e850ab4494213bebfa563934"
+  merge_commit: "2774613cb452d9258d655018e362dd082fcced9e"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/shinka-setup/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/shinka-setup/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/shinka-setup/SKILL.md."
+
+config_edits:
+  - path: skills/shinka-setup/SKILL.md
+    tier: 1
+    gold_added: '## Template: `initial.<ext>` (Python example)
+
+      ## Template: `evaluate.py` (Python `run_shinka_eval` path)
+
+      ## Template: `evaluate.py` (non-Python `initial.<ext>` path)
+
+      ## (Optional) Template: `run_evo.py` (async)
+
+      ## (Optional) Template: `shinka.yaml`'
+    gold_removed: ''

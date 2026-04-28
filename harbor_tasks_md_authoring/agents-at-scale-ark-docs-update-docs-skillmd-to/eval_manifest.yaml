@@ -1,0 +1,126 @@
+version: "2.0"
+
+task:
+  name: agents-at-scale-ark-docs-update-docs-skillmd-to
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: mckinsey/agents-at-scale-ark
+  pr: 647
+  base_commit: "1c91b2a05068ecd4a5124a12aeecc7cec7c1e6a5"
+  merge_commit: "5732db63a77cd8c3c07c8375282b2a60f37cf55c"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/documentation/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/documentation/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/documentation/SKILL.md."
+
+config_edits:
+  - path: .claude/skills/documentation/SKILL.md
+    tier: 1
+    gold_added: '## ARK''s Diataxis structure
+
+      ## The four quadrants
+
+      ### 1. Tutorials (learning-oriented)
+
+      ### 2. How-to guides (task-oriented)
+
+      #### Build with ARK (application developers)
+
+      - Configure models, create agents, coordinate teams, run queries, add tools.
+
+      #### Extend ARK (contributors)
+
+      - Build services locally, implement APIs, build A2A servers, add tests.
+
+      #### Operate ARK (operators / SRE / security)
+
+      ### 3. Core concepts (understanding-oriented)
+
+      **Purpose**: Explain what ARK is, how it''s designed, and why.
+
+      - What ARK is and how it works.
+
+      - Design effective agentic systems.
+
+      - Platform architecture concepts.
+
+      - Extensibility concepts.
+
+      - Security and identity concepts.
+
+      ### 4. Reference (information-oriented)
+
+      - **Interfaces**: ARK APIs.
+
+      - **Kubernetes API**: CRDs, resources.
+
+      - **Evaluations**: Guides, event-based evaluations.
+
+      - **System behavior**: Query execution, relationships.
+
+      - **Operations**: Upgrading, troubleshooting.
+
+      - **Project**: Contributors.
+
+      ## Decision guide
+
+      ## Hub pages
+
+      - `tutorials.mdx` - Lists tutorials in order.
+
+      - `how-to-guides.mdx` - Groups by persona.
+
+      - `core-concepts.mdx` - Groups by topic.
+
+      - `reference/index.mdx` - Groups by type.
+
+      - Explain purpose in one sentence.
+
+      - Group links logically.
+
+      - Not duplicate content.
+
+      ## Writing guidelines
+
+      ### Lexicon
+
+      - The product is known as ARK rather than Ark.
+
+
+
+      ### General style
+
+      - Write "ARK" not "Ark".
+
+      - Avoid gerunds: "Get started" not "Getting started," "Customize a layout" not "Customizing a layout".
+
+      - Use imperatives: "Complete the configuration steps".
+
+      - Don''t use passive tense: "Complete the steps" not "The steps should be completed".
+
+      - Make hyperlinks descriptive: `Learn how to [contribute to ARK](url)`.
+
+      - Don''t write: `To contribute, see [here](url)`.
+
+      ### What not to mix
+
+      | Tutorials | Explanations, choices. |
+
+      | How-to guides | Teaching, complete reference. |
+
+      | Core concepts | Instructions, reference. |
+
+      | Reference | Instructions, explanations. |'
+    gold_removed: ''

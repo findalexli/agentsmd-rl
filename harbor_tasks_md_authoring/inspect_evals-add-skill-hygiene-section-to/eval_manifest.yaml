@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: inspect_evals-add-skill-hygiene-section-to
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: UKGovernmentBEIS/inspect_evals
+  pr: 1233
+  base_commit: "10acfda956d1d4234fe7e8eb1600d348e9a2e5d7"
+  merge_commit: "28f5118b2c53a0f0d84877e07fcbb809057ff148"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+
+config_edits:
+  - path: AGENTS.md
+    tier: 1
+    gold_added: "      \"Bash(uv run python tools/:*)\",\n### Skill Hygiene\n\n- At a natural stopping point in a session, briefly consider whether any of the work just completed would make a good reusable skill.\n- Also consider whether any skill used during the session is now missing steps, has outdated guidance, or could be made more robust based on what was learned.\n- Do **not** create or update a skill automatically. Ask the user first whether they want you to do that.\n- When asking, give a short recommendation that includes:\n  - what should be created or updated\n  - why it would be useful again\n  - who or what it would apply to\n  - whether this is better handled as a new skill or an update to an existing one\n- Prefer improving an existing skill over creating a new one when there is substantial overlap.\n- Do not suggest a new skill for one-off work, highly personal preferences, or tasks that are too small to justify maintenance overhead.\n- If the session surfaced a durable repo convention, reviewer expectation, or repeated failure mode, consider whether it should also be captured in REPO_CONTEXT.md or AGENTS.md, but ask the user before making that change.\n"
+    gold_removed: ''

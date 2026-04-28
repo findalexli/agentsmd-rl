@@ -1,0 +1,184 @@
+version: "2.0"
+
+task:
+  name: skills-claudeapi-add-managed-agents-memory
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: anthropics/skills
+  pr: 1014
+  base_commit: "b9e19e6f44773509fbdd7001d77ff41a49a486c1"
+  merge_commit: "5128e1865d670f5d6c9cef000e6dfc4e951fb5b9"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/claude-api/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/claude-api/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/claude-api/shared/managed-agents-api-reference.md."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/claude-api/shared/managed-agents-api-reference.md."
+  - id: signal_04
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/claude-api/shared/managed-agents-api-reference.md."
+  - id: signal_05
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/claude-api/shared/managed-agents-core.md."
+  - id: signal_06
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/claude-api/shared/managed-agents-core.md."
+  - id: signal_07
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/claude-api/shared/managed-agents-core.md."
+  - id: signal_08
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/claude-api/shared/managed-agents-environments.md."
+  - id: signal_09
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/claude-api/shared/managed-agents-memory.md."
+  - id: signal_10
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/claude-api/shared/managed-agents-memory.md."
+  - id: signal_11
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/claude-api/shared/managed-agents-memory.md."
+  - id: signal_12
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/claude-api/shared/managed-agents-overview.md."
+  - id: signal_13
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/claude-api/shared/managed-agents-overview.md."
+  - id: signal_14
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/claude-api/shared/managed-agents-overview.md."
+
+config_edits:
+  - path: skills/claude-api/SKILL.md
+    tier: 1
+    gold_added: '**Beta headers:** `managed-agents-2026-04-01` — the SDK sets this automatically for all `client.beta.{agents,environments,sessions,vaults,memory_stores}.*` calls. Skills API uses `skills-2025-10-02` and Files API uses `files-api-2025-04-14`, but you don''t need to explicitly pass those in for endpoints other than `/v1/skills` and `/v1/files`.
+
+      **Reading guide:** Start with `shared/managed-agents-overview.md`, then the topical `shared/managed-agents-*.md` files (core, environments, tools, events, memory, client-patterns, onboarding, api-reference). For Python, TypeScript, Go, Ruby, PHP, and Java, read `{lang}/managed-agents/README.md` for code examples. For cURL, read `curl/managed-agents.md`. **Agents are persistent — create once, reference by ID.** Store the agent ID returned by `agents.create` and pass it to every subsequent `sessions.create`; do not call `agents.create` in the request path. The Anthropic CLI is one convenient way to create agents and environments from version-controlled YAML (URL in `shared/live-sources.md`). If a binding you need isn''t shown in the language README, WebFetch the relevant entry from `shared/live-sources.md` rather than guess. C# does not currently have Managed Agents support; use raw HTTP from `curl/managed-agents.md` as a reference.'
+    gold_removed: ''
+  - path: skills/claude-api/shared/managed-agents-api-reference.md
+    tier: 1
+    gold_added: 'The SDK adds this header automatically for all `client.beta.{agents,environments,sessions,vaults,memory_stores}.*` calls. Skills endpoints use `skills-2025-10-02`; Files endpoints use `files-api-2025-04-14`.
+
+      | Memory Stores | `memory_stores.create` / `retrieve` / `update` / `list` / `delete` / `archive` | `MemoryStores.New` / `Get` / `Update` / `List` / `Delete` / `Archive` |
+
+      | Memories | `memory_stores.memories.create` / `retrieve` / `update` / `list` / `delete` | `MemoryStores.Memories.New` / `Get` / `Update` / `List` / `Delete` |
+
+      | Memory Versions | `memory_stores.memory_versions.list` / `retrieve` / `redact` | `MemoryStores.MemoryVersions.List` / `Get` / `Redact` |
+
+      - Agents have **no delete** — only `archive`. Archive is **permanent**: the agent becomes read-only, new sessions cannot reference it, and there is no unarchive. Confirm with the user before archiving a production agent. Environments, Sessions, Vaults, Credentials, and Memory Stores have both `delete` and `archive`; Session Resources, Files, Skills, and Memories are `delete`-only; Memory Versions have neither — only `redact`.
+
+      | `POST` | `/v1/sessions/{session_id}/resources` | AddResource | Attach `file` or `github_repository` resource (SDK method: `add`, not `create`). `memory_store` resources attach at session-create time only. |
+
+      ## Memory Stores
+
+
+      Workspace-scoped persistent memory that survives across sessions. Attach to a session via a `{"type": "memory_store", "memory_store_id": ...}` entry in `resources[]` (session-create time only). See `shared/managed-agents-memory.md` for the conceptual guide, the FUSE-mount agent interface, preconditions, and versioning.
+
+
+      | Method   | Path                                             | Operation          | Description                              |
+
+      | -------- | ------------------------------------------------ | ------------------ | ---------------------------------------- |
+
+      | `POST`   | `/v1/memory_stores`                              | CreateMemoryStore  | Create a store (`name`, `description`, `metadata`) |
+
+      | `GET`    | `/v1/memory_stores`                              | ListMemoryStores   | List stores (`include_archived`, `created_at_{gte,lte}`) |
+
+      | `GET`    | `/v1/memory_stores/{memory_store_id}`            | GetMemoryStore     | Get store details                        |
+
+      | `POST`   | `/v1/memory_stores/{memory_store_id}`            | UpdateMemoryStore  | Update store                             |
+
+      | `DELETE` | `/v1/memory_stores/{memory_store_id}`            | DeleteMemoryStore  | Delete store                             |
+
+      | `POST`   | `/v1/memory_stores/{memory_store_id}/archive`    | ArchiveMemoryStore | Archive store. Makes it **read-only**; existing sessions continue, new sessions cannot reference it. No unarchive. |
+
+
+      ## Memories
+
+
+      Individual text documents inside a store (≤ 100KB each). `create` creates at a `path` and returns `409` (`memory_path_conflict_error`, with `conflicting_memory_id`) if the path is occupied; `update` mutates by `mem_...` ID (rename and/or content). Only `update` accepts a `precondition` (`{"type": "content_sha256", "content_sha256": ...}`) — on mismatch returns `409` (`memory_precondition_failed_error`). List endpoints accept `view: "basic"|"full"` (controls whether `content` is populated; `retrieve` defaults to `full`).
+
+
+      | Method   | Path                                                              | Operation      | Description                              |
+
+      | -------- | ----------------------------------------------------------------- | -------------- | ---------------------------------------- |
+
+      | `GET`    | `/v1/memory_stores/{memory_store_id}/memories`                    | ListMemories   | Returns `Memory \| MemoryPrefix`; filter by `path_prefix`, `depth`, `order_by`/`order` |
+
+      | `POST`   | `/v1/memory_stores/{memory_store_id}/memories`                    | CreateMemory   | Create at `path` (SDK: `memories.create`); `409 memory_path_conflict_error` if occupied |
+
+      | `GET`    | `/v1/memory_stores/{memory_store_id}/memories/{memory_id}`        | GetMemory      | Read one memory (defaults to `view="full"`) |
+
+      | `PATCH`  | `/v1/memory_stores/{memory_store_id}/memories/{memory_id}`        | UpdateMemory   | Change `content`, `path`, or both by ID; optional `precondition` |
+
+      | `DELETE` | `/v1/memory_stores/{memory_store_id}/memories/{memory_id}`        | DeleteMemory   | Delete (optional `expected_content_sha256`) |
+
+
+      ## Memory Versions
+
+
+      Immutable per-mutation snapshots (`memver_...`) — the audit and rollback surface. `operation` ∈ `created` / `modified` / `deleted`.
+
+
+      | Method   | Path                                                                          | Operation             | Description                              |
+
+      | -------- | ----------------------------------------------------------------------------- | --------------------- | ---------------------------------------- |
+
+      | `GET`    | `/v1/memory_stores/{memory_store_id}/memory_versions`                         | ListMemoryVersions    | Newest-first; filter by `memory_id`, `operation`, `session_id`, `api_key_id`, `created_at_{gte,lte}` |
+
+      | `GET`    | `/v1/memory_stores/{memory_store_id}/memory_versions/{version_id}`            | GetMemoryVersion      | List fields + full `content`             |
+
+      | `POST`   | `/v1/memory_stores/{memory_store_id}/memory_versions/{version_id}/redact`     | RedactMemoryVersion   | Clear `content`/`content_sha256`/`content_size_bytes`/`path`; preserve actor + timestamps |
+
+      '
+    gold_removed: ''
+  - path: skills/claude-api/shared/managed-agents-core.md
+    tier: 1
+    gold_added: '                                 ├── Resources (files, repos, memory stores — attached at startup)
+
+      | `resources` | array | Attached files, repos, and memory stores |
+
+      | `resources`     | array    | No       | Files, GitHub repos, or memory stores, attached to the container at startup. Memory stores are session-create-only (not addable via `resources.add()`). |'
+    gold_removed: ''
+  - path: skills/claude-api/shared/managed-agents-environments.md
+    tier: 1
+    gold_added: 'Attach files, GitHub repositories, and memory stores to a session. **Session creation blocks until all resources are mounted** — the container won''t go `running` until every file and repo is in place. Max **999 file resources** per session. Multiple GitHub repositories per session are supported. For `type: "memory_store"` resources (persistent cross-session memory — max 8 per session), see `shared/managed-agents-memory.md`.'
+    gold_removed: ''
+  - path: skills/claude-api/shared/managed-agents-memory.md
+    tier: 1
+    gold_added: "# Managed Agents — Memory Stores\n\n> **Public beta.** Memory stores ship under the `managed-agents-2026-04-01` beta header; the SDK sets it automatically on all `client.beta.memory_stores.*` calls. If `client.beta.memory_stores` is missing, upgrade to the latest SDK release.\n\nSessions are ephemeral by default — when one ends, anything the agent learned is gone. A **memory store** is a workspace-scoped collection of small text documents that persists across sessions. When a store is attached to a session (via `resources[]`), it is mounted into the container as a filesystem directory; the agent reads and writes it with the ordinary file tools, and a system-prompt note tells it the mount is there.\n\nEvery mutation to a memory produces an immutable **memory version** (`memver_...`), giving you an audit trail and point-in-time rollback/redact.\n\n## Object model\n\n| Object | ID prefix | Scope | Notes |\n| --- | --- | --- | --- |\n| Memory store | `memstore_...` | Workspace | Attach to sessions via `resources[]` |\n| Memory | `mem_...` | Store | One text file, addressed by `path` (≤ 100KB each — prefer many small files) |\n| Memory version | `memver_...` | Memory | Immutable snapshot per mutation; `operation` ∈ `created` / `modified` / `deleted` |\n\n## Create a store\n\n`description` is passed to the agent so it knows what the store contains — write it for the model, not for humans.\n\n```python\nstore = client.beta.memory_stores.create(\n    name=\"User Preferences\",\n    description=\"Per-user preferences and project context.\",\n)\nprint(store.id)  # memstore_01Hx...\n```\n\nOther SDKs: TypeScript `client.beta.memoryStores.create({...})`; Go `client.Beta.MemoryStores.New(ctx, ...)`. See `shared/managed-agents-api-reference.md` → SDK Method Reference for the full per-language table.\n\nStores support `retrieve` / `update` / `list` (with `include_archived`, `created_at_{gte,lte}` filters) / `delete` / **`archive`**. Archive makes the store read-only — existing session attachments continue, new sessions cannot reference it; no unarchive.\n\n### Seed with content (optional)\n\nPre-load reference material before any session runs. `memories.create` creates a memory at the given `path`; if a memory already exists there the call returns `409` (`memory_path_conflict_error`, with the `conflicting_memory_id`). The store ID is the first positional argument.\n\n```python\nclient.beta.memory_stores.memories.create(\n    store.id,\n    path=\"/formatting_standards.md\",\n    content=\"All reports use GAAP formatting. Dates are ISO-8601...\",\n)\n```\n\n## Attach to a session\n\nMemory stores go in the session's `resources[]` array alongside `file` and `github_repository` resources (see `shared/managed-agents-environments.md` → Resources). Memory stores attach at **session create time only** — `sessions.resources.add()` does not accept `memory_store`.\n\n```python\nsession = client.beta.sessions.create(\n    agent=agent.id,\n    environment_id=environment.id,\n    resources=[\n        {\n            \"type\": \"memory_store\",\n            \"memory_store_id\": store.id,\n            \"access\": \"read_write\",  # or \"read_only\"; default is \"read_write\"\n            \"instructions\": \"User preferences and project context. Check before starting any task.\",\n        }\n    ],\n)\n```\n\n| Field | Required | Notes |\n| --- | --- | --- |\n| `type` | ✅ | `\"memory_store\"` |\n| `memory_store_id` | ✅ | `memstore_...` |\n| `access` | — | `\"read_write\"` (default) or `\"read_only\"` — enforced at the filesystem level on the mount |\n| `instructions` | — | Session-specific guidance for this store, in addition to the store's `name`/`description`. ≤ 4,096 chars. |\n\n**Max 8 memory stores per session.** Attach multiple when different slices of memory have different owners or lifecycles — e.g. one read-only shared-reference store plus one read-write per-user store, or one store per end-user/team/project sharing a single agent config.\n\n### How the agent sees it (FUSE mount)\n\nEach attached store is mounted in the session container at `/mnt/memory/<store-name>/`. The agent interacts with it using the standard file tools (`bash`, `read`, `write`, `edit`, `glob`, `grep`) — there are no dedicated memory tools. `access: \"read_only\"` makes the mount read-only at the filesystem level; `\"read_write\"` allows the agent to create, edit, and delete files under it. A short description of each mount (name, path, `instructions`, access) is automatically injected into the system prompt so the agent knows the store exists without you having to mention it.\n\nWrites the agent makes under the mount are persisted back to the store and produce memory versions just like host-side `memories.update` calls.\n\n## Manage memories directly (host-side)\n\nUse these for review workflows, correcting bad memories, or seeding stores out-of-band.\n\n### List\n\nReturns `Memory | MemoryPrefix` entries — a `MemoryPrefix` (`type: \"memory_prefix\"`, just a `path`) is a directory-like node when listing hierarchically. Use `path_prefix` to scope (include a trailing slash: `\"/notes/\"` matches `/notes/a.md` but not `/notes_backup/old.md`) and `depth` to bound the tree walk. `order_by` / `order` sort the result. Pass `view=\"full\"` to include `content` in each item; the default `\"basic\"` returns metadata only.\n\n```python\nfor m in client.beta.memory_stores.memories.list(store.id, path_prefix=\"/\"):\n    if m.type == \"memory\":\n        print(f\"{m.path}  ({m.content_size_bytes} bytes, sha={m.content_sha256[:8]})\")\n    else:  # \"memory_prefix\"\n        print(f\"{m.path}/\")\n```\n\n### Read\n\n```python\nmem = client.beta.memory_stores.memories.retrieve(memory_id, memory_store_id=store.id)\nprint(mem.content)\n```\n\n`retrieve` defaults to `view=\"full\"` (content included); `view` matters mainly on list endpoints.\n\n### Create vs. update\n\n| Operation | Addressed by | Semantics |\n| --- | --- | --- |\n| `memories.create(store_id, path=..., content=...)` | **Path** | Create at `path`. `409` (`memory_path_conflict_error`, includes `conflicting_memory_id`) if the path is already occupied. |\n| `memories.update(mem_id, memory_store_id=..., path=..., content=...)` | **`mem_...` ID** | Mutate existing memory. Change `content`, `path` (rename), or both. Renaming onto an occupied path returns the same `409 memory_path_conflict_error`. |\n\n```python\nmem = client.beta.memory_stores.memories.create(\n    store.id,\n    path=\"/preferences/formatting.md\",\n    content=\"Always use tabs, not spaces.\",\n)\n\nclient.beta.memory_stores.memories.update(\n    mem.id,\n    memory_store_id=store.id,\n    path=\"/archive/2026_q1_formatting.md\",  # rename\n)\n```\n\n### Optimistic concurrency (precondition on `update`)\n\n`memories.update` accepts a `precondition` so you can read → modify → write back without clobbering a concurrent writer. The only supported type is `content_sha256`. On mismatch the API returns `409` (`memory_precondition_failed_error`) — re-read and retry against fresh state.\n\n```python\nclient.beta.memory_stores.memories.update(\n    mem.id,\n    memory_store_id=store.id,\n    content=\"CORRECTED: Always use 2-space indentation.\",\n    precondition={\"type\": \"content_sha256\", \"content_sha256\": mem.content_sha256},\n)\n```\n\n### Delete\n\n```python\nclient.beta.memory_stores.memories.delete(mem.id, memory_store_id=store.id)\n```\n\nPass `expected_content_sha256` for a conditional delete.\n\n## Audit and rollback — memory versions\n\nEvery mutation creates an immutable `memver_...` snapshot. Versions accumulate for the lifetime of the parent memory; `memories.retrieve` always returns the current head, the version endpoints give you history.\n\n| Operation that triggers it | `operation` field on the version |\n| --- | --- |\n| `memories.create` at a new path | `\"created\"` |\n| `memories.update` changing `content`, `path`, or both (or an agent-side write to the mount) | `\"modified\"` |\n| `memories.delete` | `\"deleted\"` |\n\nEach version also records `created_by` — an actor object with `type` ∈ `session_actor` / `api_actor` / `user_actor` — and, after redaction, `redacted_at` + `redacted_by`.\n\n### List versions\n\nNewest-first, paginated. Filter by `memory_id`, `operation`, `session_id`, `api_key_id`, or `created_at_gte` / `created_at_lte`. Pass `view=\"full\"` to include `content`; default is metadata-only.\n\n```python\nfor v in client.beta.memory_stores.memory_versions.list(store.id, memory_id=mem.id):\n    print(f\"{v.id}: {v.operation}\")\n```\n\n### Retrieve a version\n\n```python\nversion = client.beta.memory_stores.memory_versions.retrieve(\n    version_id, memory_store_id=store.id\n)\nprint(version.content)\n```\n\n### Redact a version\n\nScrubs content from a historical version while preserving the audit trail (actor + timestamps). Clears `content`, `content_sha256`, `content_size_bytes`, and `path`; everything else stays. Use for leaked secrets, PII, or user-deletion requests.\n\n```python\nclient.beta.memory_stores.memory_versions.redact(version_id, memory_store_id=store.id)\n```\n\n## Endpoint reference\n\nSee `shared/managed-agents-api-reference.md` → Memory Stores / Memories / Memory Versions for the full HTTP method/path tables. Raw HTTP base path:\n\n```\nPOST   /v1/memory_stores\nPOST   /v1/memory_stores/{memory_store_id}/archive\nGET    /v1/memory_stores/{memory_store_id}/memories\nPATCH  /v1/memory_stores/{memory_store_id}/memories/{memory_id}\nGET    /v1/memory_stores/{memory_store_id}/memory_versions\nPOST   /v1/memory_stores/{memory_store_id}/memory_versions/{version_id}/redact\n```\n\nFor cURL examples and the CLI (`ant beta:memory-stores ...`), WebFetch the Memory URL in `shared/live-sources.md` → Managed Agents."
+    gold_removed: ''
+  - path: skills/claude-api/shared/managed-agents-overview.md
+    tier: 1
+    gold_added: '| `managed-agents-2026-04-01`    | Agents, Environments, Sessions, Events, Session Resources, Vaults, Credentials, Memory Stores |
+
+      **Which beta header goes where:** The SDK sets `managed-agents-2026-04-01` automatically on `client.beta.{agents,environments,sessions,vaults,memory_stores}.*` calls, and `files-api-2025-04-14` / `skills-2025-10-02` automatically on `client.beta.files.*` / `client.beta.skills.*` calls. You do NOT need to add the Skills or Files beta header when calling Managed Agents endpoints. **Exception — session-scoped file listing:** `client.beta.files.list({scope_id: session.id})` is a Files endpoint that takes a Managed Agents parameter, so it needs **both** headers. Pass `betas: ["managed-agents-2026-04-01"]` explicitly on that call (the SDK adds the Files header; you add the Managed Agents one). See `shared/managed-agents-environments.md` → Session outputs.
+
+      | Give agents persistent memory across sessions | `shared/managed-agents-memory.md` — memory stores, `memory_store` session resource, preconditions, versions/redact |
+
+      - **Archive is permanent on every resource** — archiving an agent, environment, session, vault, credential, or memory store makes it read-only with no unarchive. For agents, environments, and memory stores specifically, archived resources cannot be referenced by new sessions (existing sessions continue). Do not call `.archive()` on a production agent, environment, or memory store as cleanup — **always confirm with the user before archiving**.'
+    gold_removed: ''

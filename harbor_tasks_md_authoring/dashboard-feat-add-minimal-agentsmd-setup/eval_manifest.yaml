@@ -1,0 +1,144 @@
+version: "2.0"
+
+task:
+  name: dashboard-feat-add-minimal-agentsmd-setup
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: gardener/dashboard
+  pr: 2622
+  base_commit: "05bdf8f907fc4bda5a392313d0d5c7fd9ed578ff"
+  merge_commit: "708123fd7d563a072c3130223dea91e3f77da042"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in backend/AGENTS.md."
+  - id: signal_04
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in backend/AGENTS.md."
+  - id: signal_05
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in backend/AGENTS.md."
+  - id: signal_06
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in frontend/AGENTS.md."
+  - id: signal_07
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in frontend/AGENTS.md."
+  - id: signal_08
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in frontend/AGENTS.md."
+
+config_edits:
+  - path: AGENTS.md
+    tier: 1
+    gold_added: '# AGENTS.md
+
+
+      Gardener Dashboard - Management UI for Gardener Kubernetes clusters. Yarn-managed monorepo with Vue.js frontend, Node.js backend, and shared packages.
+
+
+      ## Essential Commands
+
+
+      ```bash
+
+      # Install dependencies
+
+      yarn
+
+
+      # Run verification
+
+      make verify
+
+      ```'
+    gold_removed: ''
+  - path: backend/AGENTS.md
+    tier: 1
+    gold_added: '# AGENTS.md
+
+
+      Backend API service for the Gardener Dashboard. Express.js with ESM modules, part of yarn monorepo workspace.
+
+
+      ## Essential Commands
+
+
+      ```bash
+
+      # Start development server
+
+      yarn serve
+
+
+      # Lint code
+
+      yarn lint
+
+
+      # Testing
+
+      yarn build-test-target  # Required: Transpile ESM to CommonJS for tests
+
+      yarn test              # Run tests
+
+      # Or
+
+      yarn test-coverage     # Run tests with coverage report
+
+      ```'
+    gold_removed: ''
+  - path: frontend/AGENTS.md
+    tier: 1
+    gold_added: '# AGENTS.md
+
+
+      Frontend client for the Gardener Dashboard. Vue 3 SPA with Vuetify, part of yarn monorepo workspace.
+
+
+      ## Essential Commands
+
+
+      ```bash
+
+      # Start development server (HTTPS on port 8443)
+
+      yarn serve
+
+
+      # Run tests
+
+      yarn test
+
+      yarn test <PATH TO SPEC FILE>  # Run specific test
+
+
+      # Lint code
+
+      yarn lint
+
+      yarn lint --fix  # Auto-fix issues
+
+      ```'
+    gold_removed: ''

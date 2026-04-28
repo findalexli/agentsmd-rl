@@ -1,0 +1,24 @@
+version: "2.0"
+
+task:
+  name: typescript-redirect-claude-code-to-read
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: microsoft/TypeScript
+  pr: 63446
+  base_commit: "55423abe4d029017f19b6e4c32097591994836b4"
+  merge_commit: "f350b52331494b68c90ab02e2b6d0828d2a22a74"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+
+config_edits:
+  - path: CLAUDE.md
+    tier: 1
+    gold_added: Read AGENTS.md before proceeding.
+    gold_removed: ''

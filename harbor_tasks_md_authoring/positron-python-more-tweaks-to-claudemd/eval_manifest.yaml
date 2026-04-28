@@ -1,0 +1,24 @@
+version: "2.0"
+
+task:
+  name: positron-python-more-tweaks-to-claudemd
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: posit-dev/positron
+  pr: 11976
+  base_commit: "9cbccfc659d6f1d087a7ff41eab7d61129c59e19"
+  merge_commit: "c88f8dbf7520f21da16da8a4c4ab8bd8cc09cc7e"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in extensions/positron-python/CLAUDE.md."
+
+config_edits:
+  - path: extensions/positron-python/CLAUDE.md
+    tier: 1
+    gold_added: '- Before running Python-related commands, if a virtual environment exists at `extensions/positron-python/.venv`, activate it'
+    gold_removed: ''

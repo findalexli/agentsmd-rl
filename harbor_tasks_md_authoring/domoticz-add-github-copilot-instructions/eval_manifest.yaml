@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: domoticz-add-github-copilot-instructions
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: domoticz/domoticz
+  pr: 6551
+  base_commit: "730ebac2c64fbe768cf426eb9476824f42d2c6ea"
+  merge_commit: "1797866352626c40eca3ecedad5ca998b35fa35b"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/copilot-instructions.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/copilot-instructions.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/copilot-instructions.md."
+
+config_edits:
+  - path: .github/copilot-instructions.md
+    tier: 1
+    gold_added: "# GitHub Copilot Instructions for Domoticz\n\n## Project Overview\n\nDomoticz is a Home Automation System designed to monitor and configure various devices like lights, switches, sensors, and meters. It's a multi-platform application (Linux/Windows/Embedded) with a scalable HTML5 web frontend.\n\n## Technology Stack\n\n- **Primary Language:** C++ (main application logic)\n- **Build System:** CMake (minimum version 3.16.0)\n- **Scripting:** Python (plugins and event scripts), Lua (dzVents)\n- **Frontend:** HTML5, JavaScript\n- **Testing:** pytest-3 (Gherkin/BDD), mocha (JavaScript), busted (Lua)\n- **Dependencies:** Boost (>=1.69.0), OpenSSL, libcurl, SQLite, Lua 5.3\n\n## Code Style and Formatting\n\n### C++ Code Style\n- Use the clang-format configuration defined in `clang-format.txt`\n- **Indentation:** Tabs (8-space width)\n- **Column Limit:** 200 characters\n- **Braces:** Custom style with braces on new lines after classes, functions, control statements\n- **Pointer Alignment:** Right (`int *ptr`)\n- **No short functions on single line**\n- **Include sorting:** Disabled (preserve existing order)\n\n### Key Formatting Rules\n```cpp\n// Control statements - braces on new line\nif (condition)\n{\n\t// code with tab indentation\n}\n\n// Functions - braces on new line\nvoid FunctionName()\n{\n\t// code\n}\n\n// Classes - braces on new line\nclass ClassName\n{\n\t// members\n};\n```\n\n## Project Structure\n\n- **`main/`** - Core application logic and main components\n- **`hardware/`** - Hardware plugin implementations for various devices\n- **`webserver/`** - Web server implementation\n- **`www/`** - Web frontend files (HTML, JavaScript, CSS)\n- **`dzVents/`** - Lua-based automation framework\n- **`plugins/`** - Python plugins for device integration\n- **`notifications/`** - Notification systems\n- **`test/`** - Test files (Gherkin BDD tests, www unit tests)\n\n## Development Workflow\n\n### Branching\n- Base all changes against the **`development`** branch\n- Bug fixes: create feature branch from `development`\n- New features: discuss on forum first, then branch from `development`\n\n### Building\n```bash\ncmake -DCMAKE_BUILD_TYPE=Release CMakeLists.txt\nmake\n```\n\n### Testing\n- **Functional Tests:** `pytest-3 -rA --tb=no test/gherkin/` (Gherkin/BDD style)\n- **dzVents Tests:** `busted --coverage` in `dzVents/runtime/tests/`\n- **WWW Tests:** JavaScript tests in `test/www-test/`\n\nAlways run relevant tests before submitting changes.\n\n## Security Considerations\n\n- **Authentication:** Default credentials are admin/domoticz - must be changed\n- **Security Issues:** Report to security@domoticz.com (not GitHub issues)\n- **Only latest Stable and Beta releases** receive security fixes\n- Follow guidelines in `SECURITY.md` and `SECURITY_SETUP.md`\n- Never commit secrets or credentials to source code\n\n## Hardware Development\n\nWhen adding new hardware support:\n- Consult https://wiki.domoticz.com/Developing_a_hardware_plugin\n- Place implementation in `hardware/` directory\n- Follow existing hardware plugin patterns\n\n## Contributing Guidelines\n\n- Use descriptive commit messages\n- Discuss new features on forum before implementation\n- Ensure changes align with project direction\n- Update documentation if relevant\n- Test thoroughly before submitting\n\n## Build Options (CMakeLists.txt)\n\nKey configuration options:\n- `USE_PYTHON` - Enable Python plugins (default: YES)\n- `USE_BUILTIN_JSONCPP` - Use bundled JsonCPP (default: YES)\n- `USE_STATIC_BOOST` - Static link Boost libraries (default: YES)\n- `INCLUDE_LINUX_I2C` - I2C support (default: YES)\n- `WITH_LIBUSB` - USB support (default: YES)\n\n## Common Dependencies\n\nWhen suggesting dependencies:\n- Prefer existing bundled libraries (JsonCPP, Minizip, JWT-CPP)\n- Use Boost libraries already in use (chrono, system, thread)\n- Consider multi-platform compatibility (Linux, Windows, embedded)\n\n## Code Comments\n\n- Add comments only when necessary to explain complex logic\n- Match existing comment style in the file\n- Avoid obvious or redundant comments\n\n## Important Notes\n\n- Default user: `admin`, default password: `domoticz` (should be changed)\n- Forum: https://forum.domoticz.com/ for support\n- Wiki: https://wiki.domoticz.com/ for documentation\n- GitHub issues are for bugs/features, not end-user support"
+    gold_removed: ''

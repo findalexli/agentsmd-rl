@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: fql-replace-claudemd-with-agentsmd
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: janderland/fql
+  pr: 253
+  base_commit: "f625e8c2ee1276c19fbaf897ccc862ba95541b1e"
+  merge_commit: "917ea65f938e4ce510d592842a6204b1ded9f044"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+
+config_edits:
+  - path: AGENTS.md
+    tier: 1
+    gold_added: '# AGENTS.md
+
+      This file provides guidance for AI coding agents working with code in this repository.
+
+      - FDB container automatically managed for tests'
+    gold_removed: ''

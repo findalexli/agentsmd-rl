@@ -1,0 +1,29 @@
+version: "2.0"
+
+task:
+  name: tensorzero-add-ui-instructions-to-agentsmd
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: tensorzero/tensorzero
+  pr: 3670
+  base_commit: "430acddeeaca6dc17ab13870d750c09807807d7f"
+  merge_commit: "5ec47c6643bf651bd89e4b98eaa9d04dc5ab63e6"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+
+config_edits:
+  - path: AGENTS.md
+    tier: 1
+    gold_added: '
+
+      # UI
+
+
+      - After modifying UI code, run from the `ui/` directory: `pnpm run format`, `pnpm run lint`, `pnpm run typecheck`. All commands must pass.'
+    gold_removed: ''

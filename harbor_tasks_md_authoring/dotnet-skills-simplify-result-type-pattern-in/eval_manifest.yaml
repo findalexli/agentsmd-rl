@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: dotnet-skills-simplify-result-type-pattern-in
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: Aaronontheweb/dotnet-skills
+  pr: 58
+  base_commit: "64def2a9101b505be1cf5314f467c4dfc1ea9999"
+  merge_commit: "38cda561f2a80ef546ff2bdaafc48d06276be22b"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/csharp-coding-standards/composition-and-error-handling.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/csharp-coding-standards/composition-and-error-handling.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/csharp-coding-standards/composition-and-error-handling.md."
+
+config_edits:
+  - path: skills/csharp-coding-standards/composition-and-error-handling.md
+    tier: 1
+    gold_added: "- [Result Type Pattern](#result-type-pattern)\n## Result Type Pattern\nFor expected errors, use a **domain-specific result type** instead of exceptions. Don't build a generic `Result<T>` — each operation knows what success and failure look like, so let the result type reflect that. Use sealed records with factory methods and enum error codes.\n// Enum for error classification - type-safe and switchable\npublic enum OrderErrorCode\n    ValidationError,\n    InsufficientInventory,\n    NotFound\n}\n// Domain-specific result type - sealed record with factory methods\npublic sealed record CreateOrderResult\n{\n    public bool IsSuccess { get; private init; }\n    public Order? Order { get; private init; }\n    public OrderErrorCode? ErrorCode { get; private init; }\n    public string? ErrorMessage { get; private init; }\n    public static CreateOrderResult Success(Order order) => new()\n        IsSuccess = true,\n        Order = order\n    };\n    public static CreateOrderResult Failed(OrderErrorCode code, string message) => new()\n    {\n        IsSuccess = false,\n        ErrorCode = code,\n        ErrorMessage = message\n    };\n    public async Task<CreateOrderResult> CreateOrderAsync(\n        if (!IsValid(request))\n            return CreateOrderResult.Failed(\n                OrderErrorCode.ValidationError, \"Invalid order request\");\n        if (!await HasInventoryAsync(request.Items, cancellationToken))\n            return CreateOrderResult.Failed(\n                OrderErrorCode.InsufficientInventory, \"Items out of stock\");\n        return CreateOrderResult.Success(order);\n    // Map result to HTTP response - switch on enum error codes\n    public IActionResult MapToActionResult(CreateOrderResult result)\n        if (result.IsSuccess)\n            return new OkObjectResult(result.Order);\n\n        return result.ErrorCode switch\n        {\n            OrderErrorCode.ValidationError =>\n                new BadRequestObjectResult(new { error = result.ErrorMessage }),\n            OrderErrorCode.InsufficientInventory =>\n                new ConflictObjectResult(new { error = result.ErrorMessage }),\n            OrderErrorCode.NotFound =>\n                new NotFoundObjectResult(new { error = result.ErrorMessage }),\n            _ => new ObjectResult(new { error = result.ErrorMessage }) { StatusCode = 500 }\n        };"
+    gold_removed: ''

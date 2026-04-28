@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: executorch-create-claudemd-with-contribution-guidelines
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: pytorch/executorch
+  pr: 17071
+  base_commit: "f2a72879706a75159520afb260fc8a9d342355bc"
+  merge_commit: "4b2a2b78d02bc76c0505db064f301b3d0fb1510f"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+
+config_edits:
+  - path: CLAUDE.md
+    tier: 1
+    gold_added: "# Repo and framework name\n\nRefer to the repo/framework/runtime \"executorch\" (in lower cases) or \"ExecuTorch\" (in \ncamel cases), not \"ExecutorTorch\". With limited code or comment length, maybe refer\nto the framework \"ET\" but consider it as very unofficial and not recommended.\n\n# Commit messages\n\nDon't commit unless the user explicitly asks you to.\n\nWhen writing a commit message, don't make a bullet list of the individual\nchanges. Instead, if the PR is large, explain the order to review changes\n(e.g., the logical progression), or if it's short just omit the bullet list\nentirely.\n\nDisclose that the PR was authored with Claude.\n\n# Coding Style Guidelines\n\nFollow these rules for all code changes in this repository:\n\n- Minimize comments; be concise; code should be self-explanatory and self-documenting.\n- Comments should be useful, for example, comments that remind the reader about\n  some global context that is non-obvious and can't be inferred locally.\n- Don't make trivial (1-2 LOC) helper functions that are only used once unless\n  it significantly improves code readability.\n- Prefer clear abstractions. State management should be explicit.\n  For example, if managing state in a Python class: there should be a clear\n  class definition that has all of the members: don't dynamically `setattr`\n  a field on an object and then dynamically `getattr` the field on the object.\n- Match existing code style and architectural patterns.\n- Assume the reader has familiarity with ExecuTorch and PyTorch. They may not be the expert\n  on the code that is being read, but they should have some experience in the\n  area.\n\nIf uncertain, choose the simpler, more concise implementation."
+    gold_removed: ''

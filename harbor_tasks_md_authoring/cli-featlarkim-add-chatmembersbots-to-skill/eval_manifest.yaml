@@ -1,0 +1,30 @@
+version: "2.0"
+
+task:
+  name: cli-featlarkim-add-chatmembersbots-to-skill
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: larksuite/cli
+  pr: 616
+  base_commit: "e6f3fa2575da43415424e2368c023133dae638ea"
+  merge_commit: "834a899e2b84e95e65fc04f818d135a82b0fe65e"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/lark-im/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/lark-im/SKILL.md."
+
+config_edits:
+  - path: skills/lark-im/SKILL.md
+    tier: 1
+    gold_added: '  - `bots` — 获取群内机器人列表。 Identity: supports `user` and `bot`; the caller must be in the target chat and must belong to the same tenant for internal chats.
+
+      | `chat.members.bots` | `im:chat.members:read` |'
+    gold_removed: ''

@@ -1,0 +1,41 @@
+version: "2.0"
+
+task:
+  name: effection-add-gitmoji-directive-to-agentsmd
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: thefrontside/effection
+  pr: 1124
+  base_commit: "299b5be5728000128b245ad0a57fb407d9692206"
+  merge_commit: "65e7bc1e37dda2860c746b088596de638f634486"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+
+config_edits:
+  - path: AGENTS.md
+    tier: 1
+    gold_added: '## Commit and PR conventions
+
+
+      Use [gitmoji](https://gitmoji.dev) for commit and pull request subjects. For
+
+      changes to files that direct the behavior of AI such as AGENTS.md or llms.txt
+
+      use a robot emoji instead of the standard gitmoji for documentation
+
+      '
+    gold_removed: ''

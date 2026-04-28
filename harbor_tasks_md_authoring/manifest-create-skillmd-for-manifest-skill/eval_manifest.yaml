@@ -1,0 +1,31 @@
+version: "2.0"
+
+task:
+  name: manifest-create-skillmd-for-manifest-skill
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: mnfst/manifest
+  pr: 736
+  base_commit: "a21dfb582821625ec6f1a85735baea6cbdd1ac72"
+  merge_commit: "d29ca924091db189c3d12029f59b07767b915f2b"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/manifest/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/manifest/SKILL.md."
+
+config_edits:
+  - path: skills/manifest/SKILL.md
+    tier: 1
+    gold_added: '# Manifest Skill
+
+
+      Placeholder for Manifest skill'
+    gold_removed: ''

@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: aismessages-add-agentsmd-with-ai-coding
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: tbsalling/aismessages
+  pr: 60
+  base_commit: "1c3338a3fa884afde4e3a6b0f84162fa67de4b51"
+  merge_commit: "5531d9018cbf985603468f6a8ccffa33168a2fa0"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+
+config_edits:
+  - path: AGENTS.md
+    tier: 1
+    gold_added: "# Working with AI Coding Agents\n\nThis repository is a Java project built with Maven. When collaborating with any AI coding agent, follow these guidelines for effective results:\n\n## Project Overview\n\n- **Language & build tool:** Java 8+ with Maven (`mvnw`, `pom.xml`)\n- **Source code:** `src/main/java`\n- **Tests:** `src/test/java`\n- **Key packages:** AIS message decoder in `dk.tbsalling.aismessages`; demos in `dk.tbsalling.aismessages.demo`\n\n## Using AI Agents Effectively\n\n1. **Share context:**  \n   - State your task clearly  \n   - Provide relevant files/snippets  \n   - Specify build/test commands\n\n2. **Structured prompts:**  \n   - Break tasks into steps  \n   - Review and agree on plans before code changes  \n   - Request unified diffs\n\n3. **Minimal diffs:**  \n   - Focus on single concerns per change  \n   - Ask for diffs that apply cleanly\n\n4. **Tight feedback loop:**  \n   - Run tests after changes  \n   - Report errors or failures\n\n5. **Document changes:**  \n   - Update docs or comments when behavior changes\n\n## Build & Test\n\n- Full build: `./mvnw clean verify`\n- Quick test: `./mvnw -DskipITs test` or `./mvnw -Dtest=ClassName test`\n- No external runtime dependencies\n\n## Code Style\n\n- Standard Java conventions (4-space indent, meaningful names, prefer immutability)\n- Avoid unnecessary dependencies\n- Keep public APIs backward compatible\n\n## Pull Request Checklist\n\n- [ ] All tests pass locally\n- [ ] Docs/changelog updated if needed\n- [ ] PR summary includes motivation, approach, results\n- [ ] Note any follow-up tasks"
+    gold_removed: ''

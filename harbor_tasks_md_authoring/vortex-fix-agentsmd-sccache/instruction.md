@@ -1,0 +1,29 @@
+# Fix `AGENTS.md` sccache
+
+Source: [vortex-data/vortex#7377](https://github.com/vortex-data/vortex/pull/7377)
+
+This task is a **markdown_authoring** task. The repository's agent-instruction file(s)
+need to be updated. Read the existing content and add or modify the rules so that
+the file matches the intent described below.
+
+## Files to update
+
+- `AGENTS.md`
+
+## What to add / change
+
+## Summary
+
+The agents keep running cargo commands with `RUSTC_WRAPPER=` even locally.
+
+Also, this capitalizes the list items because it was annoying me.
+
+## Testing
+
+N/A
+
+## Acceptance
+
+The grader runs `pytest /tests/test_outputs.py` which checks that distinctive
+literal strings from the intended update are present in the target file(s).
+You do not need to write any code outside of the markdown file(s).

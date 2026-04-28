@@ -1,0 +1,62 @@
+version: "2.0"
+
+task:
+  name: libxmtp-update-claudemd
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: xmtp/libxmtp
+  pr: 2827
+  base_commit: "533cc84df7a9720b56ea389709585e690a6277b6"
+  merge_commit: "ecc41cda6ae94a63246378efc9d1e64fa0bbfe77"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+
+config_edits:
+  - path: CLAUDE.md
+    tier: 1
+    gold_added: '
+
+
+
+
+
+
+
+
+
+      - Use the `tester!` macro for tests that require a wallet
+
+
+
+
+
+
+
+      Uses Diesel ORM with SQLite backend. Migrations are in `xmtp_db/migrations/`.
+
+
+      ### Code Change Requirements
+
+
+      When making code changes in Rust, always ensure that the code is linted and formatted by running the `./dev/lint` script.
+
+
+      For changes in the `bindings_node` crate, run the `./dev/lint` script, but also run `yarn` and `yarn format:check` in the `bindings_node` folder.
+
+
+      Add new test coverage when appropriate.'
+    gold_removed: ''

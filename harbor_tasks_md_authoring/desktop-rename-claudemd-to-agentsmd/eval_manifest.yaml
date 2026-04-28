@@ -1,0 +1,55 @@
+version: "2.0"
+
+task:
+  name: desktop-rename-claudemd-to-agentsmd
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: Comfy-Org/desktop
+  pr: 1490
+  base_commit: "93eb6d6ee8a45437c64f41907ee1bfd7de7d0494"
+  merge_commit: "070224f88f59c6dd60094912d696a0501a3d70b2"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in tests/integration/AGENTS.md."
+  - id: signal_04
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in tests/integration/CLAUDE.md."
+
+config_edits:
+  - path: AGENTS.md
+    tier: 1
+    gold_added: "# ComfyUI Desktop - Claude Code Instructions\n\n## Project Overview\n\n**ComfyUI Desktop** (@comfyorg/comfyui-electron) is an Electron-based desktop application that packages ComfyUI with a user-friendly interface. It's \"the best modular GUI to run AI diffusion models\" and automatically handles Python environment setup, dependency management, and provides a seamless desktop experience for running AI models.\n\n- **Homepage**: https://comfy.org\n\n## Key Technologies\n\n- **Electron**: Desktop app framework\n- **TypeScript**: Primary language\n- **Vite**: Build tool and bundler\n- **Node.js**: Runtime (use nvm)\n- **Yarn**: Package manager\n- **Vitest**: Unit testing\n- **Playwright**: E2E testing\n- **ESLint**: Linting\n- **Prettier**: Formatting\n\n## Development Commands\n\n### Code Quality (ALWAYS RUN AFTER CHANGES)\n\n```bash\nyarn lint              # Check & auto-fix ESLint issues\nyarn format            # Auto-format code\nyarn typescript        # TypeScript type checking\n```\n\n### Development\n\n```bash\nyarn start             # Build and launch app with file watching\nyarn make:assets       # Download ComfyUI dependencies\nyarn clean             # Remove build artifacts\n```\n\n### Testing\n\n```bash\nyarn test:unit         # Run unit tests (Vitest)\nyarn test:e2e          # Run E2E tests (Playwright)\nyarn test:e2e:update   # Update Playwright snapshots\n```\n\n### Building\n\n```bash\nyarn make              # Build platform package\nyarn make:nvidia       # Build with NVIDIA GPU support\nyarn vite:compile      # Compile with Vite\n```\n\n### Troubleshooting\n\n- If you encounter errors regarding `NODE_MODULE_VERSION`, try running `npx electron-rebuild` before other troubleshooting steps.\n  - If that still fails, try `yarn rebuild`\n\n## Custom testing\n\nWe have testing configured with Vitest. Use vitest to create any tests you need. Do not attempt to custom code your own testing infrastructure, as that is pointless and will do nothing but derail you.\n\n## Project Structure\n\n### Source Code (`/src/`)\n\n- **`main.ts`**: Main Electron process entry point\n- **`desktopApp.ts`**: Core application logic\n- **`preload.ts`**: Electron preload script\n- **`main-process/`**: Main process modules\n  - `comfyDesktopApp.ts` - ComfyUI server management\n  - `appWindow.ts` - Window management\n  - `comfyServer.ts` - Server lifecycle\n- **`install/`**: Installation & setup logic\n- **`handlers/`**: IPC message handlers\n- **`services/`**: Core services (telemetry, Sentry)\n- **`config/`**: Configuration management\n- **`store/`**: Persistent storage\n- **`utils.ts`**: Utility functions\n\n### Tests (`/tests/`)\n\n- **`unit/`**: Vitest-based component tests\n- **`integration/`**: Playwright E2E tests\n  - `install/` - Fresh installation testing\n  - `post-install/` - Tests after app setup\n  - `shared/` - Common test functionality\n\n## Development Setup\n\n- **Python 3.12+** with virtual environment support required\n- **Node.js v20.x** (use nvm for version management)\n- **Visual Studio 2019+** with C++ workload (Windows)\n- **Spectre-mitigated libraries** for node-gyp compilation\n\n## Important Files & Configuration\n\n- **`package.json`**: Defines ComfyUI versions and dependencies\n- **`assets/requirements/`**: Pre-compiled Python requirements by platform\n- **`todesktop.json`**: Cloud build and distribution config\n- **`builder-debug.config.ts`**: Local development build settings\n- **Multi-config Vite setup** with separate configs for main, preload, and types\n\n## Bundled Components\n\nThe app packages these components:\n\n- **ComfyUI**: AI diffusion model GUI\n- **ComfyUI_frontend**: Modern web frontend\n- **ComfyUI-Manager**: Plugin/extension manager\n- **uv**: Fast Python package manager\n\n## Development Environment Variables\n\n- **`--dev-mode`**: Flag for packaged apps in development\n- **`COMFY_HOST`/`COMFY_PORT`**: External server for development\n- **`VUE_DEVTOOLS_PATH`**: Frontend debugging support\n\n## Platform-Specific Paths\n\n- **Windows**: `%APPDATA%\\ComfyUI` (config), `%APPDATA%\\Local\\Programs\\comfyui-electron` (app)\n- **macOS**: `~/Library/Application Support/ComfyUI`\n- **Linux**: `~/.config/ComfyUI`\n\n## Code Style & Conventions\n\n- Follow existing TypeScript patterns in the codebase\n- Use ESLint and Prettier for code formatting\n- Maintain clean separation between main process, renderer, and preload scripts\n- Follow Electron security best practices\n- Use the existing store patterns for configuration management\n- Test changes with both unit tests (Vitest) and E2E tests (Playwright)\n- Use JSDoc format to write documentation for methods\n  - Common tags are `@param`, and `@return` (do not use for `void` return type)\n  - Use `{@link }` to reference symbols\n\n### Type constraints\n\nThis project must maintain exceptionally high type standards. The `any` type must not be used. `unknown` can be used when the type is unknown.\n\n- `unknown` means \"I do not know what the type is\".\n- `any` means \"I do not **care** what the type is\".\n\n## Before Committing\n\n1. Use `yarn format` to ensure consistent formatting\n1. Run `yarn lint` and `yarn typescript` to check code quality\n1. Run `yarn test:unit` to ensure unit tests pass\n1. Consider running `yarn test:e2e` for UI changes\n\nThis is a sophisticated Electron application with comprehensive testing, automated CI/CD, cross-platform support, and professional development practices."
+    gold_removed: ''
+  - path: CLAUDE.md
+    tier: 1
+    gold_added: '@AGENTS.md'
+    gold_removed: ''
+  - path: tests/integration/AGENTS.md
+    tier: 1
+    gold_added: '# Integration testing guide
+
+
+      @README.md'
+    gold_removed: ''
+  - path: tests/integration/CLAUDE.md
+    tier: 1
+    gold_added: '@tests/integration/AGENTS.md'
+    gold_removed: ''

@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: samui-wallet-chore-add-testing-convention-to
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: samui-build/samui-wallet
+  pr: 124
+  base_commit: "16ebdc535cff0807dbf006de5cc6fbb08b1ea96b"
+  merge_commit: "479359859cf4be85e0004cbdcb5609405e0328b0"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+
+config_edits:
+  - path: AGENTS.md
+    tier: 1
+    gold_added: "\n## Testing Guidelines\n\n### Test Structure\n\nAll tests must follow this strict structure:\n\n```typescript\ndescribe('function-name', () => {\n  beforeEach(async () => {\n    // Clear database or reset state\n  })\n\n  describe('expected behavior', () => {\n    it('should do something when condition is met', async () => {\n      // Test implementation\n    })\n  })\n\n  describe('unexpected behavior', () => {\n    beforeEach(() => {\n      vi.spyOn(console, 'log').mockImplementation(() => {})\n    })\n\n    afterEach(() => {\n      vi.restoreAllMocks()\n    })\n\n    it('should throw an error when something fails', async () => {\n      // Test implementation\n    })\n  })\n})\n```\n\n### Test Sections\n\n1. **Expected Behavior**: Tests for normal operation and valid inputs\n2. **Unexpected Behavior**: Tests for error handling, invalid inputs, and edge cases\n   - Must mock `console.log` in beforeEach\n   - Must restore mocks in afterEach\n\n### Test Pattern: ARRANGE/ACT/ASSERT\n\nEvery test must follow the ARRANGE/ACT/ASSERT pattern with explicit comments:\n\n```typescript\nit('should create a cluster', async () => {\n  // ARRANGE\n  expect.assertions(2) // REQUIRED: Explicit assertion count\n  const input = testClusterInputCreate()\n\n  // ACT\n  const result = await dbClusterCreate(db, input) // REQUIRED: Results must be called result, result1, etc...\n\n  // ASSERT\n  expect(result).toBeDefined()\n  expect(result?.name).toBe(input.name)\n})\n```\n\n### Combined ACT & ASSERT\n\nFor error testing, ACT & ASSERT can be combined:\n\n```typescript\nit('should throw an error with an invalid key', async () => {\n  // ARRANGE\n  expect.assertions(1) // REQUIRED: Explicit assertion count\n  const input = testClusterInputCreate({\n    // @ts-expect-error: Testing invalid input\n    type: 'invalid-type',\n  })\n\n  // ACT & ASSERT\n  await expect(dbClusterCreate(db, input)).rejects.toThrow()\n})\n```\n\n### Key Requirements\n\n1. **Explicit Assertions**: Every test MUST start with `expect.assertions(N)` where N is the exact number of assertions\n2. **Comments**: All ARRANGE/ACT/ASSERT sections must have explicit comments\n3. **Console Mocking**: Unexpected behavior tests must mock console.log to avoid noise\n4. **Type Errors**: Use `// @ts-expect-error: Testing invalid input` for intentional type violations\n5. **Clear Descriptions**: Test descriptions should clearly state what is being tested and under what conditions"
+    gold_removed: ''

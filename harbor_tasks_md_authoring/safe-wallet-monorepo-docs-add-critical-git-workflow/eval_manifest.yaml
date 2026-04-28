@@ -1,0 +1,78 @@
+version: "2.0"
+
+task:
+  name: safe-wallet-monorepo-docs-add-critical-git-workflow
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: safe-global/safe-wallet-monorepo
+  pr: 6909
+  base_commit: "b985e77625db7cd5cb462841cfbfd02eff6f88a7"
+  merge_commit: "0c3c686de0226f422b061302c9bc26905f2407b3"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+
+config_edits:
+  - path: CLAUDE.md
+    tier: 1
+    gold_added: '## 🚨 Critical Git Workflow Rules
+
+
+      **NEVER push directly to `dev` (default branch) or `main` (production branch).**
+
+
+      Always create a feature branch and submit a pull request:
+
+
+      ```bash
+
+      # Create a feature branch
+
+      git checkout -b feature/your-feature-name
+
+
+      # Make your changes and ALWAYS run tests before committing
+
+      yarn workspace @safe-global/web type-check
+
+      yarn workspace @safe-global/web lint
+
+      yarn workspace @safe-global/web test
+
+
+      # Commit only after tests pass
+
+      git add .
+
+      git commit -m "feat: your change description"
+
+
+      # Push to your branch
+
+      git push -u origin feature/your-feature-name
+
+
+      # Create a PR via GitHub UI or gh CLI
+
+      gh pr create
+
+      ```
+
+
+      **All tests must pass before committing. Never commit failing code.**
+
+      '
+    gold_removed: ''

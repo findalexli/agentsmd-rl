@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: chatgpt-in-slack-enhance-agentsmd-with-structure-configurati
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: seratch/ChatGPT-in-Slack
+  pr: 124
+  base_commit: "5b062896065ba6df5cada8de267ebb6ad6fe4784"
+  merge_commit: "3e86212e99cc664e0b051cd777e5bef677664c80"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+
+config_edits:
+  - path: AGENTS.md
+    tier: 1
+    gold_added: "- `app/openai_constants.py` — model IDs, fallbacks, and token/context tables.\n- `app/i18n.py` — translation helper for Slack locale.\n- Slack manifests: `manifest-dev.yml`, `manifest-prod.yml`.\n- CI: `.github/workflows/tests.yml`, `.github/workflows/flake8.yml`, `.github/workflows/pytype.yml`.\n- Quick syntax check (no deps): `python3 -m py_compile app/openai_ops.py`\n- Optional environment variables (commonly used): `OPENAI_MODEL`, `OPENAI_TEMPERATURE`,\n  `OPENAI_TIMEOUT_SECONDS`, `USE_SLACK_LANGUAGE`, `SLACK_APP_LOG_LEVEL`,\n  `TRANSLATE_MARKDOWN`, `REDACTION_ENABLED`, `IMAGE_FILE_ACCESS_ENABLED` (and Azure vars).\n- Pytest examples: `pytest tests/openai_ops_test.py::test_format_assistant_reply`\n- Reuse helpers in `app/` (e.g., `markdown_conversion.py`, `openai_ops.py`) instead of reimplementing.\n- Type hints encouraged in utility modules.\n- Imports: group standard library, third-party, then local; avoid large reorders.\n- Constants should be `UPPER_CASE` (see `openai_constants.py`).\n- Env/config: import from `app/env.py` and `app/openai_constants.py`; avoid re-reading `os.environ` in modules.\n- Keep diffs minimal; format only touched files when feasible.\n- Comments/docstrings should remain English (en-US).\n- Test function names start with `test_`; prefer file-scoped/targeted runs for changed utilities.\n- Avoid external calls; use `monkeypatch` or fakes for time/token accounting.\n- Run `./validate.sh` locally before committing; fix reported issues.\n- Keep changes small and reviewable; group related edits per commit.\n- When uncertain, propose a short plan or ask a brief clarification before large changes\n- Avoid breaking changes; open a GitHub Issue for discussion when necessary.\n- Allowed without asking: read/list files; run tests/lint/typing/format; small, focused patches\n- Ask first: adding dependencies; deleting/renaming files; changing CI, `serverless.yml`, `Dockerfile`, manifests, or environment variable semantics\n- Never perform production-impacting destructive operations\n- Use `.env` for local development; `.env*` is git-ignored.\n- Production note: `main_prod.py` stores OpenAI keys per team in S3; avoid logging secrets."
+    gold_removed: ''

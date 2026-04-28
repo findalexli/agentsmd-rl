@@ -1,0 +1,67 @@
+version: "2.0"
+
+task:
+  name: coder-docs-add-explicit-read-instructions
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: coder/coder
+  pr: 23403
+  base_commit: "ecc28a66508e24d6e4750a59a362567579753b3b"
+  merge_commit: "7eb0d08f898b31aa71d092e63d3636a633ae52f8"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+
+config_edits:
+  - path: AGENTS.md
+    tier: 1
+    gold_added: 'If your agent tool does not auto-load `@`-referenced files, read these
+
+      manually before starting work:
+
+
+      **Always read:**
+
+
+      - `.claude/docs/WORKFLOWS.md` — dev server, git workflow, hooks
+
+
+      **Read when relevant to your task:**
+
+
+      - `.claude/docs/GO.md` — Go patterns and modern Go usage (any Go changes)
+
+      - `.claude/docs/TESTING.md` — testing patterns, race conditions (any test changes)
+
+      - `.claude/docs/DATABASE.md` — migrations, SQLC, audit table (any DB changes)
+
+      - `.claude/docs/ARCHITECTURE.md` — system overview (orientation or architecture work)
+
+      - `.claude/docs/PR_STYLE_GUIDE.md` — PR description format (when writing PRs)
+
+      - `.claude/docs/OAUTH2.md` — OAuth2 and RFC compliance (when touching auth)
+
+      - `.claude/docs/TROUBLESHOOTING.md` — common failures and fixes (when stuck)
+
+      - `.claude/docs/DOCS_STYLE_GUIDE.md` — docs conventions (when writing `docs/`)
+
+
+      **For frontend work**, also read `site/AGENTS.md` before making any changes
+
+      in `site/`.
+
+      '
+    gold_removed: ''

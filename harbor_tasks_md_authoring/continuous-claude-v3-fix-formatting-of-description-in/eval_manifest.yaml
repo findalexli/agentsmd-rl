@@ -1,0 +1,24 @@
+version: "2.0"
+
+task:
+  name: continuous-claude-v3-fix-formatting-of-description-in
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: parcadei/Continuous-Claude-v3
+  pr: 48
+  base_commit: "395b7b2ae571b9cdf9e53a819bf282c9d4d33e58"
+  merge_commit: "98527a91df6dfc0245906c068aaee6361c6b0478"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/completion-check/SKILL.md."
+
+config_edits:
+  - path: .claude/skills/completion-check/SKILL.md
+    tier: 1
+    gold_added: 'description: "Completion Check: Verify Infrastructure Is Wired"'
+    gold_removed: ''

@@ -1,0 +1,92 @@
+version: "2.0"
+
+task:
+  name: wheels-update-the-use-of-orm
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: wheels-dev/wheels
+  pr: 1736
+  base_commit: "81f2b28113141b166ca7b21b1a7e6538f04cfd75"
+  merge_commit: "f7b61c501ff9ff65cf7138cd0521f46bc8eb0374"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in templates/base/src/app/CLAUDE.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in templates/base/src/app/controllers/CLAUDE.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in templates/base/src/app/controllers/CLAUDE.md."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in templates/base/src/app/controllers/CLAUDE.md."
+  - id: signal_04
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in templates/base/src/app/jobs/CLAUDE.md."
+  - id: signal_05
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in templates/base/src/app/jobs/CLAUDE.md."
+  - id: signal_06
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in templates/base/src/app/jobs/CLAUDE.md."
+  - id: signal_07
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in templates/base/src/app/lib/CLAUDE.md."
+  - id: signal_08
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in templates/base/src/app/mailers/CLAUDE.md."
+  - id: signal_09
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in templates/base/src/app/mailers/CLAUDE.md."
+  - id: signal_10
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in templates/base/src/app/models/CLAUDE.md."
+  - id: signal_11
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in templates/base/src/app/models/CLAUDE.md."
+  - id: signal_12
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in templates/base/src/app/models/CLAUDE.md."
+
+config_edits:
+  - path: templates/base/src/app/CLAUDE.md
+    tier: 1
+    gold_added: '        return findAll(where="createdat >= ''#local.startOfMonth#''");'
+    gold_removed: ''
+  - path: templates/base/src/app/controllers/CLAUDE.md
+    tier: 1
+    gold_added: "            where=\"name LIKE '%#params.q#%' OR description LIKE '%#params.q#%'\",\n    local.where = \"\";\n\n    // Build where clause\n    if (Len(params.q ?: \"\")) {\n        local.where = \"name LIKE '%#params.q#%' OR description LIKE '%#params.q#%'\";\n\n    if (IsNumeric(params.categoryId ?: \"\")) {\n        if (Len(local.where)) {\n            local.where &= \" AND \";\n        }\n        local.where &= \"categoryId = #params.categoryId#\";\n\n    products = model(\"Product\").findAll(where = local.where);"
+    gold_removed: ''
+  - path: templates/base/src/app/jobs/CLAUDE.md
+    tier: 1
+    gold_added: "                where=\"status = 'pending'\",\n            where=\"createdAt < '#arguments.cutoffDate#'\"\n            where=\"status = 'pending' AND runAt <= now()\",\n            where=\"enabled = true AND nextRun <= now()\""
+    gold_removed: ''
+  - path: templates/base/src/app/lib/CLAUDE.md
+    tier: 1
+    gold_added: '            while (model("Article").findOne(where = "slug = ''#this.slug#'' AND id != #this.id ?: 0#")) {'
+    gold_removed: ''
+  - path: templates/base/src/app/mailers/CLAUDE.md
+    tier: 1
+    gold_added: "        local.user = model(\"User\").findOne(where = \"email = '#params.email#'\");\n                where = \"active = true AND subscriptionType IN ('newsletter','all')\""
+    gold_removed: ''
+  - path: templates/base/src/app/models/CLAUDE.md
+    tier: 1
+    gold_added: "        return findAll(where=\"categoryid = '#arguments.categoryid#'\");\n        while (model(\"Product\").exists(where=\"slug = '#local.slug#' AND id != '#this.id ?: 0#'\")) {\n        return findAll(where=\"authorid = '#arguments.authorid#'\");\n        return findAll(where=\"publishedAt BETWEEN '#arguments.startDate#' AND '#arguments.endDate#'\");\n        while (model(\"Post\").exists(where=\"slug = '#local.slug#' AND id != '#this.id ?: 0#'\")) {\n            where=\"(email = '#arguments.identifier#' OR username = '#arguments.identifier#') AND deletedat IS NULL\"\n        return this.roles().exists(where=\"name = '#arguments.roleName#'\");\n        return this.roles().exists(where=\"name IN (#roleList#)\");\n                          .exists(where=\"p.name = '#arguments.permission#'\");\n        local.role = model(\"Role\").findOne(where=\"name = '#arguments.roleName#'\");\n        local.role = model(\"Role\").findOne(where=\"name = '#arguments.roleName#'\");\n            model(\"UserRole\").deleteAll(where=\"userid = '#this.id#' AND roleid = '#local.role.id#'\");\n        this.loginAttempts().deleteAll(where=\"createdat < '#dateAdd(\"d\", -7, now())#'\");\n            where=\"roles.name = '#arguments.roleName#'\"\nrecentComments = post.comments(where=\"createdat > '#dateAdd(\"d\", -7, now())#'\");\n        if (model(\"Order\").exists(where=\"customerId = '#this.id#'\")) {\n            where=\"createdat > '#dateAdd(\"d\", -arguments.days, now())#'\",\n            where=\"createdat > '#dateAdd(\"d\", -arguments.days, now())#'\"\n    where=\"name LIKE '%#params.q#%' OR description LIKE '%#params.q#%'\",\nhasOrders = model(\"Customer\").exists(where=\"id = '#customerId#'\");\nhasRecentActivity = model(\"User\").posts().exists(where=\"createdat > '#lastWeek#'\");\n    where=\"createdat > '#dateAdd(\"d\", -7, now())#'\","
+    gold_removed: ''

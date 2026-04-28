@@ -1,0 +1,26 @@
+version: "2.0"
+
+task:
+  name: llmgateway-docs-update-claudemd
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: theopenco/llmgateway
+  pr: 713
+  base_commit: "8c99902a8736a48729edaece1b3511dd809dfd96"
+  merge_commit: "fd3cd86546ff881af74a07a9964be5f676b126a1"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+
+config_edits:
+  - path: CLAUDE.md
+    tier: 1
+    gold_added: 'When running curl commands against the local API, you can use `test-token` as authentication.
+
+      '
+    gold_removed: ''

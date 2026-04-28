@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: actionbook-skillsactionbook-refactor-streamline-skillmd-with
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: actionbook/actionbook
+  pr: 56
+  base_commit: "5bb08db85674712f3248c0592c9275b909aa0cfa"
+  merge_commit: "038203a7dfc5ef2a3b81e502d1d4e17b155d0bc1"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/actionbook/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/actionbook/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/actionbook/SKILL.md."
+
+config_edits:
+  - path: skills/actionbook/SKILL.md
+    tier: 1
+    gold_added: "- Navigate to any new page during browser automation\n### Method 1: CLI (Recommended)\n**Phase 1: Get Action Manual**\n# Step 1: Search for action manuals\nactionbook search \"arxiv search papers\"\n# Returns: action IDs with scores\n# Step 2: Get the full manual\nactionbook get \"https://arxiv.org/search/advanced\"\n# Returns: Page structure, UI Elements with CSS/XPath selectors\n**Phase 2: Execute with Browser**\n# Step 3: Open browser\nactionbook browser open \"https://arxiv.org/search/advanced\"\nactionbook browser wait --load networkidle\n# Step 4: Use CSS selectors from Action Manual directly\nactionbook browser fill \"#terms-0-term\" \"Neural Network\"\nactionbook browser select \"#terms-0-field\" \"title\"\nactionbook browser click \"#date-filter_by-2\"\nactionbook browser fill \"#date-year\" \"2025\"\nactionbook browser click \"form[action='/search/advanced'] button.is-link\"\n# Step 5: Wait for results\nactionbook browser wait --load networkidle\n# Step 6: Extract data (snapshot only when needed for data extraction)\nactionbook browser snapshot\n# Step 7: Close browser\n### Method 2: MCP Server\n```typescript\n// Step 1: Search\nsearch_actions({ query: \"arxiv search papers\" })\n// Step 2: Get manual\nget_action_by_id({ actionId: \"https://arxiv.org/search/advanced\" })\n## Action Manual Format\nAction manuals return:\n- **Page URL** - Target page address\n- **Page Structure** - DOM hierarchy and key sections\n- **UI Elements** - CSS/XPath selectors with element metadata\n```yaml\nUI Elements:\n  input_terms_0_term:\n    CSS: #terms-0-term\n    XPath: //input[@id='terms-0-term']\n    Type: input\n    Methods: click, type, clear\n```\n## Essential Commands\n| Category | Commands |\n|----------|----------|\n| Navigation | `open <url>`, `back`, `forward`, `reload`, `close` |\n| Snapshot | `snapshot`, `snapshot -i` (interactive only) |\n| Interaction | `click`, `fill`, `type`, `select`, `check`, `press` |\n| Wait | `wait <ms>`, `wait --load networkidle`, `wait --text \"...\"` |\n| Info | `get text @ref`, `get url`, `get value @ref` |\n| Capture | `screenshot`, `screenshot --full`, `pdf` |\n- Search by task description, not element name (\"arxiv search papers\" not \"search button\")\n- **Use Action Manual selectors first** - they are pre-verified and don't require snapshot\n- Prefer CSS ID selectors (`#id`) over XPath when both are provided\n- **Fallback to snapshot only when selectors fail** - use `snapshot -i` then @refs\n- Re-snapshot after navigation - DOM changes invalidate @refs\n\n## Advanced Features\n\nFor complete command reference and advanced features, see:\n- [references/command-reference.md](references/command-reference.md) - All commands\n- [references/authentication.md](references/authentication.md) - Login flows, OAuth, 2FA\n- [references/session-management.md](references/session-management.md) - Parallel sessions\n- [references/snapshot-refs.md](references/snapshot-refs.md) - Ref lifecycle\n- [references/video-recording.md](references/video-recording.md) - Recording workflows\n- [references/proxy-support.md](references/proxy-support.md) - Proxy configuration"
+    gold_removed: ''

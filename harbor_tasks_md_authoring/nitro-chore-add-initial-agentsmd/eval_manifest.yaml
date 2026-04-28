@@ -1,0 +1,36 @@
+version: "2.0"
+
+task:
+  name: nitro-chore-add-initial-agentsmd
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: nitrojs/nitro
+  pr: 3896
+  base_commit: "0f3740dfe28f4e60f13cbd2be8bfa477669e3aa5"
+  merge_commit: "0daf29e0f59d74b98810ebfdfaa6a094a3f9d177"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+
+config_edits:
+  - path: AGENTS.md
+    tier: 1
+    gold_added: "## Project Identity\n\nNitro is a framework-agnostic and deployment-agnostic server framework powered by [H3](https://github.com/h3js/h3), [UnJS](https://github.com/unjs), and Vite | Rolldown | Rollup.\n\nYou are an expert JavaScript and TypeScript developer with strong focus on modern JS tooling and runtime systems.\n\n## Project Setup\n\n- **Language**: TypeScript / JavaScript\n- **Package Manager**: `pnpm`\n- **Node Version**: >= 22\n\n## First-time Setup for Development\n\n- Run `corepack enable` to ensure `pnpm` is available.\n- Run `pnpm install` to install dependencies.\n- Run `pnpm build --stub` to prepare development mode.\n\n## Key Scripts\n\n- `pnpm build --stub` — Fast stub build for development.\n- `pnpm lint` — Lint and format code.\n- `pnpm lint:fix` — Automatically fix lint and formatting issues.\n- `pnpm test` — Run all tests.\n- `pnpm test:types` — Run type tests.\n\n**Always run** `pnpm lint:fix` and `pnpm test:types` after making changes.\n\n## Repository Structure\n\n- `.github/` — GitHub Actions workflows.\n- `docs/` — Documentation site built with [UnDocs](https://github.com/unjs/undocs).\n- `examples/` — Example projects and integrations.\n- `src/` — Project source code.\n- `test/` — Unit, minimal, and end-to-end tests.\n\n### Code Structure\n\nProject source is centralized under `src/`:\n\n- `src/build` — Build logic (Vite | Rolldown | Rollup config, virtual templates, plugins).\n- `src/cli` — `nitro` CLI subcommands (each file in `src/cli/commands` is a command).\n- `src/config/` — Config defaults (`src/config/defaults.ts`) and resolvers/normalizers (`src/config/resolvers`).\n- `src/dev` and `src/runner` — Development server logic.\n- `src/prerender` — Prerender logic.\n- `src/presets` — Deployment presets and runtime entry.\n- `src/types` — Shared types.\n- `src/utils` — Internal utilities.\n- `src/runtime` — Runtime code that goes into the bundle (runtime and platform agnostic).\n\n### Why Changes in `src/` Are High-Impact\n\nCode in `src/` affects all Nitro users:\n\n- Changes in `src/runtime` are bundled and run across all deployment targets.\n- Changes in `src/build` affect build output and performance.\n- Changes in `src/presets` affect specific deployment platforms.\n- Changes in `src/config` affect default behavior.\n\nReview these changes carefully for backwards compatibility, bundle size, and cross-runtime support.\n\n## Code Patterns & Conventions\n\n- `pathe` — Cross-platform path operations (always prefer over `node:path`).\n- `defu` — Deep object merging and config defaults.\n- `consola` — Logging in build/dev code (use `nitro.logger` when available).\n- `unstorage` — Storage abstraction.\n\n### Runtime Constraints\n\nCode in `src/runtime/` must be runtime-agnostic:\n\n- **Don't use Node.js-specific APIs** (unless behind runtime checks).\n- Prefer **Web APIs** (fetch, Request, Response, URL, etc.).\n- Only use `console` for logging (no `consola` in runtime).\n- Keep bundle size minimal and side-effect free.\n\n## Testing Strategy\n\n### Test Structure\n\nMain tests are defined in `test/tests.ts` and setup per each deployment provider in `test/presets` and run against `test/fixture` nitro app. Add new regression tests to `test/fixture`.\n\nOther tests:\n\n- **Unit** (`test/unit/`) — Isolated unit tests.\n- **Minimal** (`test/minimal/`) — Smallest bundle output.\n\n### Testing Requirements\n\n- Run `pnpm run test` before submitting.\n- **Bug fixes MUST include a failing test first** — add regression tests to `test/fixture/` and make sure test script fails before attempting the fix and resolves after.\n- Keep tests deterministic and environment-independent.\n\n## Working with Presets\n\nEach preset in `src/presets/` defines deployment target behavior:\n\n- Runtime logic and entry is in `src/presets/<name>/runtime`\n- Preset config and utils (build time) are in `src/presets/<name>/*.ts`.\n\n## Development Workflow\n\n### Making Changes\n\n1. Make changes in `src/`.\n2. Run `pnpm build --stub` if you changed build logic.\n3. Test with `pnpm test`.\n4. Run `pnpm lint:fix`.\n5. Run `pnpm test:types`.\n6. Run `pnpm vitest run`.\n\n## Contribution Principles\n\n- Prefer **minimal, targeted changes** over large refactors.\n- Avoid introducing new dependencies unless strictly necessary.\n  Add them to `devDependencies` unless they are required in runtime logic.\n- Be mindful of **bundle size**, startup cost, and runtime overhead.\n- Maintain **backwards compatibility** unless explicitly instructed otherwise.\n- Batch multiple related edits together. Avoid sequential micro-changes.\n- Never modify files outside the scope of the requested change.\n\n## Common Gotchas\n\n- **Don't use Node.js-specific APIs in `src/runtime/`** — Code runs in multiple runtimes (Node, workers, edge).\n- **Virtual modules must be registered** in `src/build/virtual.ts`.\n- **CLI commands** are in `src/cli/commands/` — Each file exports a command definition.\n- **Runtime size matters** — Check bundle impact with `pnpm build`.\n- **Use `pathe` not `node:path`** — Ensures cross-platform compatibility.\n\n## Error & Logging Guidelines\n\n- Prefer explicit errors over silent failures.\n- Use `nitro.logger` in build/dev code, `consola` as fallback.\n- Use `console` only in `src/runtime/` code.\n- Use warnings for recoverable situations; throw for invalid states.\n- Include actionable context in error messages.\n\n## Documentation Requirements\n\n- Update `docs/` for user-facing changes.\n- Update types and JSDoc for API changes.\n- Examples in `examples/` should reflect best practices and be added for new integrations.\n- Add migration notes for breaking changes.\n\n## When to Ask\n\nReach out or flag for review when:\n\n- Uncertain about runtime compatibility.\n- Considering new dependencies.\n- Breaking changes are required.\n- Making architectural decisions in `src/build` or `src/runtime`.\n- Changing preset behavior.\n- Modifying virtual module system.\n\n## Best Practices\n\n- Use **ESM** and modern JavaScript.\n- Prefer **Web APIs** over Node.js APIs where possible.\n- Do not add comments explaining what the line does unless prompted.\n- Before adding new code, always study surrounding patterns, naming conventions, and architectural decisions.\n- Use existing UnJS utilities and dependencies before adding new packages.\n- Keep runtime code minimal and fast."
+    gold_removed: ''
+  - path: CLAUDE.md
+    tier: 1
+    gold_added: '@AGENTS.md'
+    gold_removed: ''

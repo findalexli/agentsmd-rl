@@ -1,0 +1,36 @@
+version: "2.0"
+
+task:
+  name: payload-chore-add-agentsmd
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: payloadcms/payload
+  pr: 13688
+  base_commit: "5146fc865f8f677e1baf18e2777582e64470a2d9"
+  merge_commit: "d109b448565531f0f2af8621f4e8801e4e2f4bed"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+
+config_edits:
+  - path: AGENTS.md
+    tier: 1
+    gold_added: "# Payload Monorepo Agent Instructions\n\n## Project Structure\n\n- Packages are located in the `packages/` directory.\n  - The main Payload package is `packages/payload`. This contains the core functionality.\n  - Database adapters are in `packages/db-*`.\n  - The UI package is `packages/ui`.\n  - The Next.js integration is in `packages/next`.\n  - Rich text editor packages are in `packages/richtext-*`.\n  - Storage adapters are in `packages/storage-*`.\n  - Email adapters are in `packages/email-*`.\n  - Plugins which add additional functionality are in `packages/plugin-*`.\n- Documentation is in the `docs/` directory.\n- Monorepo tooling is in the `tools/` directory.\n- Test suites and configs are in the `test/` directory.\n- LLMS.txt is at URL: https://payloadcms.com/llms.txt\n- LLMS-FULL.txt is at URL: https://payloadcms.com/llms-full.txt\n\n## Dev environment tips\n\n- Any package can be built using a `pnpm build:*` script defined in the root `package.json`. These typically follow the format `pnpm build:<directory_name>`. The options are all of the top-level directories inside the `packages/` directory. Ex `pnpm build:db-mongodb` which builds the `packages/db-mongodb` package.\n- ALL packages can be built with `pnpm build:all`.\n- Use `pnpm dev` to start the monorepo dev server. This loads the default config located at `test/_community/config.ts`.\n- Specific dev configs for each package can be run with `pnpm dev <directory_name>`. The options are all of the top-level directories inside the `test/` directory. Ex `pnpm dev fields` which loads the `test/fields/config.ts` config. The directory name can either encompass a single area of functionality or be the name of a specific package.\n\n## Testing instructions\n\n- There are unit, integration, and e2e tests in the monorepo.\n- Unit tests can be run with `pnpm test:unit`.\n- Integration tests can be run with `pnpm test:int`. Individual test suites can be run with `pnpm test:int <directory_name>`, which will point at `test/<directory_name>/int.spec.ts`.\n- E2E tests can be run with `pnpm test:e2e`.\n- All tests can be run with `pnpm test`.\n- Prefer running `pnpm test:int` for verifying local code changes.\n\n## PR Guidelines\n\n- This repository follows conventional commits for PR titles\n- PR Title format: <type>(<scope>): <title>. Title must start with a lowercase letter.\n- Valid types are build, chore, ci, docs, examples, feat, fix, perf, refactor, revert, style, templates, test\n- Prefer `feat` for new features and `fix` for bug fixes.\n- Valid scopes are the following regex patterns: cpa, db-\\*, db-mongodb, db-postgres, db-vercel-postgres, db-sqlite, drizzle, email-\\*, email-nodemailer, email-resend, eslint, graphql, live-preview, live-preview-react, next, payload-cloud, plugin-cloud, plugin-cloud-storage, plugin-form-builder, plugin-import-export, plugin-multi-tenant, plugin-nested-docs, plugin-redirects, plugin-search, plugin-sentry, plugin-seo, plugin-stripe, richtext-\\*, richtext-lexical, richtext-slate, storage-\\*, storage-azure, storage-gcs, storage-uploadthing, storage-vercel-blob, storage-s3, translations, ui, templates, examples(\\/(\\w|-)+)?, deps\n- Scopes should be chosen based upon the package(s) being modified. If multiple packages are being modified, choose the most relevant one or no scope at all.\n- Example PR titles:\n  - `feat(db-mongodb): add support for transactions`\n  - `feat(richtext-lexical): add options to hide block handles`\n  - `fix(ui): json field type ignoring editorOptions`\n\n## Commit Guidelines\n\n- This repository follows conventional commits for commit messages\n- The first commit of a branch should follow the PR title format: <type>(<scope>): <title>. Follow the same rules as PR titles.\n- Subsequent commits should prefer `chore` commits without a scope unless a specific package is being modified.\n- These will eventually be squashed into the first commit when merging the PR."
+    gold_removed: ''
+  - path: CLAUDE.md
+    tier: 1
+    gold_added: AGENTS.md
+    gold_removed: ''

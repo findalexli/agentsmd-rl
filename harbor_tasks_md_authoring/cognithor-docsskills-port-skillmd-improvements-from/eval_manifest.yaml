@@ -1,0 +1,96 @@
+version: "2.0"
+
+task:
+  name: cognithor-docsskills-port-skillmd-improvements-from
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: Alex8791-cyber/cognithor
+  pr: 124
+  base_commit: "1af17e0cc2175ee643d6027887f18e410c87da0b"
+  merge_commit: "d08fdde0f6b2b8a7f4ce1846161e42dd8828dfa8"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/backup/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/backup/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/backup/SKILL.md."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/gmail_sync/SKILL.md."
+  - id: signal_04
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/gmail_sync/SKILL.md."
+  - id: signal_05
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/gmail_sync/SKILL.md."
+  - id: signal_06
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/test/SKILL.md."
+  - id: signal_07
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/test/SKILL.md."
+  - id: signal_08
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/test/SKILL.md."
+  - id: signal_09
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/test_skill/SKILL.md."
+  - id: signal_10
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/test_skill/SKILL.md."
+  - id: signal_11
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/test_skill/SKILL.md."
+  - id: signal_12
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/wetter_abfrage/SKILL.md."
+  - id: signal_13
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/wetter_abfrage/SKILL.md."
+  - id: signal_14
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/wetter_abfrage/SKILL.md."
+
+config_edits:
+  - path: skills/backup/SKILL.md
+    tier: 1
+    gold_added: "---\nname: backup\ndescription: \"Automated hourly backup skill that creates timestamped archives of Cognithor config files, skill definitions, and data directories on a cron schedule. Use when setting up automated backups, restoring from snapshots, scheduling data protection, or configuring backup retention policies.\"\n---\n\nAutomated backup skill that creates timestamped archives of Cognithor configuration, skills, and data on a cron schedule (`0 * * * *` — hourly by default).\n\n## Steps\n\n1. **Check prerequisites** — verify backup target exists and has write access:\n   ```bash\n   BACKUP_DIR=\"${COGNITHOR_HOME:-$HOME/.cognithor}/backups\"\n   mkdir -p \"$BACKUP_DIR\" && test -w \"$BACKUP_DIR\"\n   ```\n2. **Create timestamped archive** of config, skills, and data:\n   ```bash\n   STAMP=$(date +%Y%m%d_%H%M%S)\n   tar czf \"$BACKUP_DIR/cognithor_$STAMP.tar.gz\" \\\n     -C \"${COGNITHOR_HOME:-$HOME/.cognithor}\" \\\n     config/ skills/ data/\n   ```\n3. **Validate integrity** — verify the archive is readable:\n   ```bash\n   tar tzf \"$BACKUP_DIR/cognithor_$STAMP.tar.gz\" > /dev/null\n   ```\n4. **Prune old backups** — keep the last 24 hourly snapshots:\n   ```bash\n   ls -1t \"$BACKUP_DIR\"/cognithor_*.tar.gz | tail -n +25 | xargs rm -f\n   ```\n5. **Return status** — the skill returns `{\"status\": \"ok\", \"automated\": true}` on success\n\n## Example\n\n```\nUser > Starte ein Backup meiner Cognithor-Daten\nCognithor > Backup erstellt: cognithor_20260420_140000.tar.gz (12 MB)\n         Nächstes automatisches Backup: 15:00 Uhr\n```\n\n## Error Handling\n\n- **Disk full**: Log warning, skip archive creation, alert user to free space\n- **Permission denied**: Verify `$BACKUP_DIR` ownership and retry with correct permissions\n- **Corrupt archive**: Re-run backup immediately; if persistent, check filesystem health"
+    gold_removed: ''
+  - path: skills/gmail_sync/SKILL.md
+    tier: 1
+    gold_added: "---\nname: gmail-sync\ndescription: \"API integration skill that fetches Gmail messages, syncs inbox labels, and processes attachments via the Gmail REST API. Use when fetching new emails, syncing inbox state, triaging unread messages, exporting mail data, or integrating Gmail into automated workflows.\"\n---\n\nFetches Gmail messages, syncs labels, and processes attachments via the Gmail REST API using `httpx`. Requires network access.\n\n## Steps\n\n1. **Authenticate** — obtain or refresh the OAuth2 token:\n   ```python\n   headers = {\"Authorization\": f\"Bearer {access_token}\"}\n   ```\n2. **Fetch new messages** since the last sync timestamp:\n   ```python\n   async with httpx.AsyncClient() as client:\n       resp = await client.get(\n           f\"{API_BASE}/messages\",\n           headers=headers,\n           params={\"q\": \"after:{last_sync_epoch}\"}\n       )\n       messages = resp.json().get(\"messages\", [])\n   ```\n3. **Parse each message** — extract sender, subject, body, labels, and attachment metadata\n4. **Store locally** — persist parsed data under `$COGNITHOR_HOME/data/gmail/` as JSON\n5. **Return summary** — the skill returns `{\"data\": <parsed_response>}` with message counts\n\n## Example\n\n```\nUser > Synchronisiere meine Gmail-Inbox\nCognithor > 14 neue Nachrichten synchronisiert (3 ungelesen, 2 mit Anhängen)\n         Letzte Synchronisation: 2026-04-20 14:00 UTC\n```\n\n## Error Handling\n\n- **401 Unauthorized**: Token expired — trigger OAuth refresh flow before retrying\n- **429 Rate Limited**: Back off exponentially (1s, 2s, 4s) up to 3 retries\n- **Network timeout**: Log the failure, preserve last-known state, report to user\n- **Empty response**: Confirm query parameters are correct; check `last_sync_epoch` is valid"
+    gold_removed: ''
+  - path: skills/test/SKILL.md
+    tier: 1
+    gold_added: "---\nname: test\ndescription: \"Diagnostic smoke-test skill that validates Cognithor's skill loading, SkillRegistry registration, and Planner-Gatekeeper-Executor pipeline. Use when running a framework health check, verifying skill setup works end-to-end, debugging skill registration, or smoke-testing after configuration changes.\"\n---\n\nDiagnostic smoke-test that sends a probe through the full Planner → Gatekeeper → Executor pipeline and returns a status response.\n\n## Steps\n\n1. **Invoke the skill** with any input:\n   ```\n   cognithor test <eingabe>\n   ```\n2. **Planner** receives the input and identifies this skill via SkillRegistry matching\n3. **Gatekeeper** validates the request against the skill's empty permission set (always passes)\n4. **Executor** runs `TestSkill.execute(params)` and returns:\n   ```json\n   {\"status\": \"ok\", \"result\": \"TODO\"}\n   ```\n5. **Verify success** — confirm the response contains `\"status\": \"ok\"`\n\n## Example\nUser > cognithor test Hallo Welt\nCognithor > {\"status\": \"ok\", \"result\": \"TODO\"}\n\n# Healthy pipeline — skill loaded, registered, and executed successfully\n\n## Troubleshooting\n\n| Symptom | Cause | Fix |\n|---------|-------|-----|\n| Skill not found | Not registered in SkillRegistry | Restart Cognithor to re-scan `skills/` |\n| Import error | `cognithor.skills.base` missing | Verify installation: `pip install -e \".[all]\"` |\n| No response | Executor timeout | Check logs at `$COGNITHOR_HOME/logs/` for stack traces |\n\n## Notes\n\nThis is a diagnostic-only skill — the `\"result\": \"TODO\"` placeholder confirms the pipeline works without performing real work."
+    gold_removed: ''
+  - path: skills/test_skill/SKILL.md
+    tier: 1
+    gold_added: "---\nname: test-skill\ndescription: \"Extended diagnostic skill that validates the full Cognithor skill lifecycle — SkillRegistry scanning, keyword matching (exact + fuzzy at 70% threshold), and async execution. Use when testing skill discovery, debugging keyword matching accuracy, validating the SkillRegistry scan cycle, or verifying async execute() behavior.\"\n---\n\nExtended diagnostic that validates the full skill lifecycle: directory scan → SkillRegistry registration → keyword matching → async `execute()`.\n\n## Steps\n\n1. **Trigger the skill** — Cognithor must match via keyword similarity:\n   ```\n   cognithor test_skill <eingabe>\n   ```\n2. **Verify registration** — confirm the skill appears in the registry:\n   ```\n   User > Zeige alle registrierten Skills\n   # Expected: test_skill listed with NAME=\"test_skill\", VERSION=\"0.1.0\"\n   ```\n3. **Check keyword matching** — the SkillRegistry uses exact match (case-insensitive) then fuzzy match (70% threshold). Verify the input routes to this skill, not the sibling `test` skill\n4. **Inspect the response** — `execute()` returns:\n   ```json\n   {\"status\": \"ok\", \"result\": \"TODO\"}\n   ```\n5. **Confirm async execution** — the skill runs via `async def execute(self, params)`, so verify no blocking calls appear in logs\n\n## Example\nUser > cognithor test_skill Prüfe den Lifecycle\nCognithor > {\"status\": \"ok\", \"result\": \"TODO\"}\n\n# Success: skill was discovered, matched, and executed asynchronously\n\n## Troubleshooting\n\n| Symptom | Cause | Fix |\n|---------|-------|-----|\n| Routes to `test` instead | Fuzzy match overlap | Use the full slug `test_skill` to force exact match |\n| `ModuleNotFoundError` | `__init__.py` missing | Verify `skills/test_skill/__init__.py` exists |\n| Timeout on execute | Event loop blocked | Check for synchronous calls in `skill.py` |\n\n## Notes\n\nDiagnostic-only skill — `\"result\": \"TODO\"` is intentional. Differs from `test` by validating keyword disambiguation and the full scan-to-execute lifecycle."
+    gold_removed: ''
+  - path: skills/wetter_abfrage/SKILL.md
+    tier: 1
+    gold_added: "---\nname: wetter-abfrage\ndescription: \"Weather query skill that retrieves current temperature, humidity, wind speed, and multi-day forecasts for a given city or coordinate. Use when checking the weather, getting a forecast, looking up temperature or wind conditions, or planning outdoor activities based on weather data.\"\n---\n\nRetrieves current weather conditions (temperature, humidity, wind speed, conditions) and multi-day forecasts for a user-specified location.\n\n## Steps\n\n1. **Parse location** — extract city name or coordinates from user input:\n   ```\n   cognithor wetter_abfrage München\n   ```\n2. **Query weather API** — fetch current conditions and forecast data:\n   ```python\n   async with httpx.AsyncClient() as client:\n       resp = await client.get(\n           f\"{API_BASE}/weather\",\n           params={\"q\": location, \"units\": \"metric\"}\n       )\n       data = resp.json()\n   ```\n3. **Format response** — present key metrics in a readable summary:\n   ```\n   München — 18°C, leicht bewölkt\n   Luftfeuchtigkeit: 62% | Wind: 12 km/h NW\n   Vorhersage: Mo 20°C ☀️ | Di 17°C \U0001F327️ | Mi 19°C ⛅\n   ```\n4. **Handle ambiguity** — if multiple locations match, present options:\n   ```\n   Meinten Sie: (1) München, DE  (2) München, AT?\n   ```\n5. **Return structured data** — `{\"status\": \"ok\", \"result\": <weather_data>}`\n\n## Example\nUser > Wie wird das Wetter morgen in Berlin?\nCognithor > Berlin — morgen: 22°C, sonnig\n         Luftfeuchtigkeit: 45% | Wind: 8 km/h SO\n         UV-Index: 6 (hoch) — Sonnenschutz empfohlen\n\n## Error Handling\n\n| Error | Cause | Recovery |\n|-------|-------|----------|\n| Location not found | Typo or unknown city | Ask user to re-enter or provide coordinates |\n| API timeout | Network issue or rate limit | Retry once after 2s; report failure if persistent |\n| Missing data fields | Partial API response | Return available fields, note missing ones |"
+    gold_removed: ''

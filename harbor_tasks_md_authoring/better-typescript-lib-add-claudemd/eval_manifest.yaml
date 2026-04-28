@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: better-typescript-lib-add-claudemd
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: uhyo/better-typescript-lib
+  pr: 75
+  base_commit: "6c01a89f73e0ee7d8116f676d073eac99052c3b1"
+  merge_commit: "b899fcae5ff248d14cdaec63d2361b71309101cf"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+
+config_edits:
+  - path: CLAUDE.md
+    tier: 1
+    gold_added: "# CLAUDE.md\n\nThis file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.\n\n## Architecture Overview\n\nThis project generates alternative TypeScript standard library definitions with improved type safety. The architecture consists of:\n\n- **`build/`** - TypeScript build system and generation logic\n  - `lib.ts` - Main script for generating improved lib definitions\n  - `package.ts` - Script for building npm packages\n  - `diff.ts` - Script for generating documentation diffs\n  - `logic/` - Core generation logic and AST manipulation\n\n- **`lib/`** - Source TypeScript lib definition improvements (what gets applied to TypeScript's built-in libs)\n\n- **`generated/`** - Output directory for processed TypeScript lib files\n\n- **`dist-package/`** - Individual npm packages for each TypeScript lib (e.g., es2015, dom, etc.)\n\n- **`TypeScript/`** - Git submodule containing the official TypeScript repository for source lib files\n\n- **`tests/`** - Type-level tests using `tsd` to verify the improved type definitions work correctly\n\n## Essential Commands\n\n### Build Commands\n```bash\n# Compile TypeScript build scripts\nnpm run build:tsc\n\n# Generate improved lib files from TypeScript source + better-typescript-lib improvements\nnpm run build:lib\n\n# Build npm packages for distribution\nnpm run build:package\n\n# Generate documentation diffs\nnpm run build:diff\n```\n\n### Testing\n```bash\n# Run type-level tests in tests/ directory\ncd tests && npm test\n\n# Or run tsd directly\ncd tests && npx tsd\n```\n\n### Development Workflow\n1. Modify type definitions in `lib/` directory\n2. Run `npm run build:tsc && npm run build:lib` to regenerate\n3. Test changes with `cd tests && npm test`\n4. Generate packages with `npm run build:package` if needed\n\n## Key Implementation Details\n\n- Uses AST manipulation to apply improvements to TypeScript's standard library definitions\n- Generates separate npm packages that TypeScript automatically detects and uses (via `@typescript/lib-*` naming)\n- The `ReplacementMap` system tracks which parts of the original TypeScript libs should be replaced with improved versions\n- Type improvements focus on replacing `any` with more specific types like `JSONData` for `JSON.parse()`\n- All changes prioritize type safety over convenience, potentially causing breaking changes in existing codebases\n\n## Important Files\n- `build/logic/generate.ts` - Core generation algorithm\n- `build/logic/ReplacementMap.ts` - Tracks lib modifications  \n- `lib/es5.d.ts` - Main improvements to core JavaScript APIs\n- `tests/src/` - Type-level tests for verifications"
+    gold_removed: ''

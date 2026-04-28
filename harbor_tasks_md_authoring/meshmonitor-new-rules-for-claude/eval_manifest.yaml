@@ -1,0 +1,40 @@
+version: "2.0"
+
+task:
+  name: meshmonitor-new-rules-for-claude
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: Yeraze/meshmonitor
+  pr: 2202
+  base_commit: "5b022f4df2f34b248f2a5152e2bd56a80d41f8ce"
+  merge_commit: "58753628917c0f55e954346295b25998aa1658be"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+
+config_edits:
+  - path: CLAUDE.md
+    tier: 1
+    gold_added: '- Always use context7 when I need code generation, setup or configuration steps, or library/API documentation. This means you should automatically use the Context7 MCP tools to resolve library id and get library docs without me having to explicitly ask.
+
+      - Default admin account is username ''admin'' and password ''changeme'' . Sometime the password is ''changeme1''
+
+      - use serena MCP for code search and analysis without me explicitly having to ask.
+
+      - use superpowers for planning and workflow management without me having to ask
+
+      '
+    gold_removed: ''

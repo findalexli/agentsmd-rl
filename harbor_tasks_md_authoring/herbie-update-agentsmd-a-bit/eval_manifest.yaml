@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: herbie-update-agentsmd-a-bit
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: herbie-fp/herbie
+  pr: 1452
+  base_commit: "a6de7e4a88267a654b34464f0606b8db213d7a0c"
+  merge_commit: "a9a9c5c9133417f1e0242e67fab5970cfa4ed5db"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+
+config_edits:
+  - path: AGENTS.md
+    tier: 1
+    gold_added: "# Formatting\n- Documentation lives in `www/doc/2.3/` and is HTML-formatted. Update\n  it if you change any user-visible options.\n\n# Testing\n\n- Arguments come after the word `report` before any other arguments.\n- Herbie prints a seed every time it runs; you can pass `--seed N`\n  after the \"report\" argument to fix the seed reproducibly.\n- You can pass `--timeout T` to time out a benchmark after T seconds.\n- You can enable the `egglog` backend with `--enable generate:egglog`.\n  Otherwise the `egg` backend is used. You'll need to add\n  `~/.cargo/bin` to the `PATH`.\n  arbitrary-precision code, and `--enable dump:egglog` outputs all\n  egglog commands. Dumps go in `dump-XXX` in the current directory,\n  and that folder grows with every run."
+    gold_removed: ''

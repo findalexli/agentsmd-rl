@@ -1,0 +1,24 @@
+version: "2.0"
+
+task:
+  name: fireworks-tech-graph-fix-formatting-of-description-in
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: yizhiyanhua-ai/fireworks-tech-graph
+  pr: 4
+  base_commit: "27f41d98883113affbb28a2ebfff4b566e3cc819"
+  merge_commit: "1942b7d2b5732c6c590c25e5ef25652c6e4497e6"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in SKILL.md."
+
+config_edits:
+  - path: SKILL.md
+    tier: 1
+    gold_added: 'description: ''Use when the user wants to create any technical diagram — architecture, data flow, flowchart, sequence, agent/memory, or concept map — and export as SVG+PNG. Trigger on: "画图" "帮我画" "生成图" "做个图" "架构图" "流程图" "可视化一下" "出图" "generate diagram" "draw diagram" "visualize" or any system/flow description the user wants illustrated.'''
+    gold_removed: ''

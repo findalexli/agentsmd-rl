@@ -1,0 +1,24 @@
+version: "2.0"
+
+task:
+  name: epicenter-update-agentsmd
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: EpicenterHQ/epicenter
+  pr: 831
+  base_commit: "599b54b08a8d33d7a8f58b83d479e0d20ce9df71"
+  merge_commit: "d5925c648f51b5dba7c880bc317a981e22412370"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+
+config_edits:
+  - path: AGENTS.md
+    tier: 1
+    gold_added: "\n``` \n```\n``` \n\n```\n```\n## The Solution\n``` \n```\n``` \n``` "
+    gold_removed: ''

@@ -1,0 +1,36 @@
+version: "2.0"
+
+task:
+  name: vpnhide-chore-publish-claudemd-agentsmd-repo
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: okhsunrog/vpnhide
+  pr: 115
+  base_commit: "d26f7096f3868a0749decc186b9c92eb3f608e84"
+  merge_commit: "70315fff21a37b79220a7c37be0076ee05f3fe4b"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+
+config_edits:
+  - path: AGENTS.md
+    tier: 1
+    gold_added: CLAUDE.md
+    gold_removed: ''
+  - path: CLAUDE.md
+    tier: 1
+    gold_added: "# vpnhide — repo conventions for AI agents and contributors\n\nQuick orientation file for anyone (or anything) working on this repo.\nRead in full before opening a PR; it's short on purpose.\n\nThis file is also exposed as `AGENTS.md` (symlink) so vendor-neutral\ntooling that follows the AGENTS-convention picks it up automatically.\n\n## Project layout\n\nMonorepo for hiding VPN interfaces from selected Android apps. Three runtime components plus tooling:\n\n- `kmod/` — kernel module, kretprobes-based, per-GKI-generation builds\n- `zygisk/` — Rust Zygisk module, inline `libc` hooks via shadowhook\n- `lsposed/` — LSPosed module + Compose target-picker app\n- `portshide/` — localhost port blocker (shell + iptables)\n\n## Read before touching code\n\nThese short files cover everything specific to this repo. Skipping them leads to broken commits and unnecessary review iterations.\n\n- [CONTRIBUTING.md](CONTRIBUTING.md) — PR process, commit conventions, changelog requirement\n- [docs/development.md](docs/development.md) — prereqs, per-module build quickstart, keystore setup, device install, CI lints\n- [docs/changelog.md](docs/changelog.md) — changelog storage (`changelog.d/` fragments + history JSON), `./scripts/changelog.py` usage\n- [docs/releasing.md](docs/releasing.md) — `./scripts/release.py` usage, version-bump flow\n- [kmod/BUILDING.md](kmod/BUILDING.md) — kernel-module build (one-command DDK via `./kmod/build.py`, GKI matrix, troubleshooting)\n\n## Workflow rules\n\n- **Add a changelog entry BEFORE committing user-visible changes:**\n  ```sh\n  ./scripts/changelog.py <type> \"<EN text>\" \"<RU text>\"\n  # types: added | changed | fixed | removed | deprecated | security\n  ```\n  This writes a Markdown fragment to `changelog.d/<type>-<slug>-<hex4>.md` — nothing else. `CHANGELOG.md` is regenerated only at release time (that's what keeps PRs from conflicting on it). Commit just the new fragment alongside the code change. To preview pending entries: `./scripts/preview-changelog.py`. Skip the entry for internal refactors / docs-only / CI-only / test-only changes.\n- **Do not bump `VERSION` or run `./scripts/release.py` unless the maintainer explicitly asks for a release.** Fragments under `changelog.d/` don't need a version number. `release.py` rotates every fragment into `history[0]` of `changelog.json`, deletes the fragment files, and is maintainer-only.\n- **Don't put `#NN` in commit messages or PR titles to refer to local review notes.** GitHub auto-links `#NN` to PR/issue numbers in this repo, and the cross-reference will almost certainly point at the wrong PR. Real GitHub references (`fixes #38` where #38 is an actual issue) are fine — verify the number first.\n\n## Build entry points\n\nSingle-command builds for both CI and local — the same scripts run in both places.\n\n- **kmod**: `./kmod/build.py --kmi <kmi>` (or `--all`). Auto-spawns the DDK podman/docker container if you're not already inside it; CI passes `--inside-container` to skip the spawn. The DDK image tag is `DDK_IMAGE_TAG` in `kmod/build.py` — `.github/workflows/ci.yml` mirrors it, bump both together.\n- **zygisk**: `cd zygisk && ./build.py` — host-side cargo-ndk build, same script in CI image.\n- **lsposed APK**: `cd lsposed && ./gradlew :app:assembleRelease`.\n\nBoth Rust cdylibs (`zygisk/build.rs`, `lsposed/native/build.rs`) pass `-Wl,-z,max-page-size=16384` so the resulting `.so` files load cleanly on 16 KiB-page Android devices (Pixel 8 Pro on Android 16, future hardware). Don't strip that flag.\n\n## Design notes\n\n- **KPatch-Next KPM:** `kmod/` currently uses kretprobes and requires per-GKI-generation builds (kernel headers + `Module.symvers`). Porting to a [KPatch-Next](https://github.com/KernelSU-Next/KPatch-Next) KPM would produce a single binary for kernels 3.18–6.12, eliminating the multi-GKI build problem. Tradeoff: adds KPatch-Next as a hard dependency (already bundled in KernelSU-Next)."
+    gold_removed: ''

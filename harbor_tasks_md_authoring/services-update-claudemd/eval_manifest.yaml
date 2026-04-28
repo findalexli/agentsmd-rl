@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: services-update-claudemd
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: cowprotocol/services
+  pr: 4128
+  base_commit: "04a3915f53c67e153dd7ce3b84465b4656674b28"
+  merge_commit: "b8548195cef5badfd49f71af1feb1f30b976d253"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+
+config_edits:
+  - path: CLAUDE.md
+    tier: 1
+    gold_added: "- **ethrpc** - Extended Ethereum RPC client with batching layer\n- **chain** - Blockchain interaction utilities\n- **number** - Numerical type extensions and conversions for 256-bit integers\n- **app-data** - Order metadata validation with 8KB default size limit\n- **alerter** - Monitors orderbook metrics for orders that should be solved but aren't\n- **testlib** - Shared helpers for writing unit and end-to-end tests\n- **observe** - Initialization and helper functions for logging and metrics\n- **Language**: Rust 2024 Edition\n- **Alloy (Web3 library)**: Fetch https://alloy.rs/introduction/prompting for an AI-optimized guide covering providers, transactions, contracts, and migration from ethers-rs\n\n## Development Commands\n\n### Testing\n- Use `cargo nextest run` instead of `cargo test` (CI uses nextest and handles global state differently)\n- Run specific test suites:\n  - Unit tests: `cargo nextest run`\n  - Database tests: `cargo nextest run postgres -p orderbook -p database -p autopilot --test-threads 1 --run-ignored ignored-only`\n  - E2E local tests: `cargo nextest run -p e2e local_node --test-threads 1 --failure-output final --run-ignored ignored-only`\n  - E2E forked tests: `cargo nextest run -p e2e forked_node --test-threads 1 --run-ignored ignored-only --failure-output final`\n  - Driver tests: `RUST_MIN_STACK=3145728 cargo nextest run -p driver --test-threads 1 --run-ignored ignored-only`\n\n### Testing Requirements\n- PostgreSQL tests require local database: Run `docker compose up -d` first\n- Forked network tests require `anvil` (from Foundry) and RPC URLs\n  - Anvil binary: configurable via `ANVIL_COMMAND` env var (defaults to `\"anvil\"`, must be in PATH)\n  - Required env vars: `FORK_URL_MAINNET` and `FORK_URL_GNOSIS` (RPC endpoints for forking)\n- Use `--test-threads 1` for database and E2E tests to avoid conflicts\n- CI runs doc-tests, unit tests, DB tests, E2E tests (local and forked), and driver tests\n\n### Linting and Formatting\n- Format: **always** run with the nightly toolchain: `cargo +nightly fmt --all`\n- Spot format: `cargo +nightly fmt -- <path>` (never call stable `cargo fmt`)\n- Lint: `cargo clippy --locked --workspace --all-features --all-targets -- -D warnings`\n- Check format: `cargo +nightly fmt --all -- --check`\n\n### Local Development Environment\n- Start local PostgreSQL: `docker compose up -d`\n- Full playground environment: `docker compose -f playground/docker-compose.fork.yml up -d`\n- For forked network tests, set environment variables: `FORK_URL_MAINNET` and `FORK_URL_GNOSIS`\n- Reset playground: `docker compose -f playground/docker-compose.fork.yml down --remove-orphans --volumes`\n## Workspace Configuration\n\n- Rust Edition 2024\n- Uses workspace dependencies for consistency\n- Tokio-console support: **Only available in playground environment** (set `TOKIO_CONSOLE=true` to activate when running in playground)\n- Production builds do **not** include tokio-console overhead\n- Runtime log filter changes via UNIX socket at `/tmp/log_filter_override_<program_name>_<pid>.sock`\n- Memory allocator: Uses jemalloc by default with built-in heap profiling support (enable at runtime via MALLOC_CONF environment variable). Can optionally use mimalloc via `--features mimalloc-allocator`\n\n## Playground Environment\n\n- Runs in **Fork** mode: anvil forks a real network via `ETH_RPC_URL` (set in `playground/.env`). A clean local network mode is planned but not yet implemented.\n- Access full local development stack with CoW Swap UI at http://localhost:8000\n- CoW Explorer available at http://localhost:8001\n- Orderbook API at http://localhost:8080\n- Database admin (Adminer) at http://localhost:8082\n- Uses test mnemonic: \"test test test test test test test test test test test junk\"\n- First 10 accounts have 10000 ETH balance by default, set by anvil\n\n## Development Notes\n\n- Binaries support `--help` for comprehensive command documentation\n- OpenAPI documentation available for orderbook, driver, and solver APIs\n- Performance profiling: Only available in playground (requires tokio-console feature + tokio_unstable cfg)\n"
+    gold_removed: ''

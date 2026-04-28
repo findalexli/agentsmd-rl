@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: jline3-docs-add-claudemd-with-project
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: jline/jline3
+  pr: 1641
+  base_commit: "e055b2372948a4f04278f12977e9ef61f9dcf177"
+  merge_commit: "b1256bd1502be5626d3bcda85de699e0d65da381"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+
+config_edits:
+  - path: CLAUDE.md
+    tier: 1
+    gold_added: "# CLAUDE.md — JLine3 Project Guide\n\n## What is JLine?\n\nJLine is a Java library for building interactive command-line applications. It provides terminal handling, line editing with history and completion, configurable key bindings, Unicode and mouse support, and higher-level features like syntax highlighting, prompts, and a shell framework. Think of it as Java's equivalent of GNU Readline, but significantly more capable.\n\n## Build Commands\n\nJLine uses the `mvx` wrapper (not `mvnw`). All commands are run from the project root.\n\n```bash\n./mvx rebuild                          # Full build\n./mvx mvn install -DskipTests          # Build without tests\n./mvx mvn install -DskipTests -pl terminal  # Build single module\n./mvx mvn test -pl terminal            # Test single module\n./mvx mvn test -pl terminal -Dtest=GraphemeClusterModeTest  # Single test class\n./mvx mvn verify                       # Full build + tests\n```\n\n## Code Formatting\n\nSpotless (Palantir Java Format) runs automatically during build. If it fails:\n\n```bash\n./mvx mvn spotless:apply -pl terminal  # Fix formatting in a module\n./mvx mvn spotless:apply               # Fix formatting everywhere\n```\n\n## Project Structure\n\nKey modules: `terminal`, `reader`, `native`, `style`, `builtins`, `console`, `console-ui`, `prompt`, `curses`, `remote-ssh`, `remote-telnet`, `groovy`, `demo`.\n\nTerminal providers: `terminal-jni` (JNI), `terminal-ffm` (Java 22+ Foreign Function & Memory).\n\n## Java Version\n\n- **Build requires**: Java 22\n- **Runtime target**: Java 11+\n\n## Conventions\n\n### Commit Messages\n\nFormat: `<type>: <description>` — optionally referencing issues with `(#1234)` or `(fixes #1234)`.\n\nTypes: `feat`, `fix`, `docs`, `chore`, `test`, `refactor`.\n\n### No AI Attribution\n\nDo NOT add `Co-Authored-By: Claude ...` lines to commits. Do NOT add \"Generated with Claude Code\" or similar attribution to PR descriptions. Commits and PRs should look like normal human contributions.\n\n### Copyright Headers\n\nAll Java source files must have:\n\n```java\n/*\n * Copyright (c) the original author(s).\n *\n * This software is distributable under the BSD license. See the terms of the\n * BSD license in the documentation provided with this software.\n *\n * https://opensource.org/licenses/BSD-3-Clause\n */\n```\n\nSpotless enforces this header automatically via `spotless:apply`.\n\n### Code Style\n\n- Compiler has `-Werror` enabled — warnings are errors\n- Spotless enforces Palantir Java Format with import order: `java|javax, org, <others>, static`\n- Follow existing patterns in the codebase (e.g., `hasFocusSupport()`/`trackFocus()` for terminal feature pairs)\n\n## Website / Documentation\n\n```bash\n./mvx website build    # Build docs site\n```\n\nDocs live in `website/docs/`. Advanced terminal feature docs go in `website/docs/advanced/`.\n\n## Testing Patterns\n\n- JUnit 5 (`@Test` from `org.junit.jupiter.api`)\n- Tests in same package as source (`org.jline.terminal.impl`) for access to package-private members\n- Use `LineDisciplineTerminal` with `ByteArrayOutputStream` for testing terminal I/O without a real terminal\n- See `MouseSupportTest` and `GraphemeClusterModeTest` for examples"
+    gold_removed: ''

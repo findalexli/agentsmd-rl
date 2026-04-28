@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: gsd-2-fixskills-quote-skillmd-description-values
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: gsd-build/gsd-2
+  pr: 4594
+  base_commit: "779bb249711bad8270b3a67676f42f170fc32202"
+  merge_commit: "4b616ce588fa07948d9b244072adf30e4bf5a00f"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in src/resources/skills/verify-before-complete/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in src/resources/skills/write-docs/SKILL.md."
+
+config_edits:
+  - path: src/resources/skills/verify-before-complete/SKILL.md
+    tier: 1
+    gold_added: 'description: "Block completion claims until verification evidence has been produced in the current message. Use before marking a task/slice/milestone complete, before creating a commit or PR, before saying \"it works\" or \"tests pass\", and any time you are about to claim work is done. The rule is: evidence before claims, always — running the verification must happen now, not \"earlier in the session\". Fresh output or no claim."'
+    gold_removed: ''
+  - path: src/resources/skills/write-docs/SKILL.md
+    tier: 1
+    gold_added: 'description: "Collaborative document authoring workflow for proposals, technical specs, decision docs, README sections, ADRs, and long-form prose that must work for fresh readers. Use when asked to \"write the docs\", \"draft a proposal\", \"write a spec\", \"write an RFC\", \"write the README\", or when a document needs to be understandable by someone without this session''s context. Three stages: gather context, iterate on structure, reader-test for a stranger."'
+    gold_removed: ''

@@ -1,0 +1,28 @@
+version: "2.0"
+
+task:
+  name: nearcore-doc-expand-clippy-instructions-in
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: near/nearcore
+  pr: 15138
+  base_commit: "1079667dfe53f959984093684ab3484aeba19c7c"
+  merge_commit: "14b75df9e896dbcd3f649e1f3d592b07f181ef71"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+
+config_edits:
+  - path: AGENTS.md
+    tier: 1
+    gold_added: "- Run with `RUSTFLAGS=\"-D warnings\"` env variable and `--all-features --all-targets` args.\n  ```\n  RUSTFLAGS=\"-D warnings\" cargo clippy --all-features --all-targets\n  ```"
+    gold_removed: ''

@@ -1,0 +1,98 @@
+version: "2.0"
+
+task:
+  name: debbie.codes-improve-addcontent-skill-better-triggers
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: debs-obrien/debbie.codes
+  pr: 545
+  base_commit: "91a9a1741772483cc2155f0f08fccd3f12a02327"
+  merge_commit: "bd03fd16fbd7614355d4fa52c20fafe6771e02b1"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .agents/skills/add-content/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .agents/skills/add-content/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .agents/skills/add-content/SKILL.md."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .agents/skills/add-content/references/blog.md."
+  - id: signal_04
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .agents/skills/add-content/references/environment.md."
+  - id: signal_05
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .agents/skills/add-content/references/environment.md."
+  - id: signal_06
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .agents/skills/add-content/references/environment.md."
+  - id: signal_07
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .agents/skills/add-content/references/video.md."
+  - id: signal_08
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .agents/skills/add-content/references/video.md."
+  - id: signal_09
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .agents/skills/add-content/references/video.md."
+
+config_edits:
+  - path: .agents/skills/add-content/SKILL.md
+    tier: 1
+    gold_added: "  Use this skill whenever the user says \"add video\", \"add blog post\", \"add podcast\",\n  or provides a URL to add to the site. Adds videos, podcasts, or blog posts to the\n  debbie.codes website. Triggered by phrases like: \"add video\", \"add blog\", \"add blog post\",\n  \"add podcast\", \"add this video\", \"add this to the site\", or any request with a YouTube,\n  podcast, or blog URL to be added as content. Handles browser-based metadata extraction\n  via playwright-cli, file creation with correct frontmatter, dev server verification,\n  and PR creation."
+    gold_removed: ''
+  - path: .agents/skills/add-content/references/blog.md
+    tier: 1
+    gold_added: playwright-cli open "<blog-url>"
+    gold_removed: ''
+  - path: .agents/skills/add-content/references/environment.md
+    tier: 1
+    gold_added: 'First, kill any existing dev server on port 3001:
+
+
+      ```bash
+
+      kill $(lsof -ti:3001) 2>/dev/null
+
+      ```
+
+
+      Then install and start:
+
+      '
+    gold_removed: ''
+  - path: .agents/skills/add-content/references/video.md
+    tier: 1
+    gold_added: '**File**: `content/videos/manual-testing-with-playwright-mcp-no-code-just-prompts.md`
+
+      title: Manual Testing with Playwright MCP – No Code, Just Prompts!
+
+      date: 2025-07-12
+
+      description: Discover how to perform manual testing using Playwright MCP without writing any code, using simple prompts instead. This revolutionary approach makes testing accessible to everyone, regardless of their coding experience.
+
+      video: 2vnttb-YZrA
+
+      tags: [playwright, mcp, testing, ai]
+
+      host: Debbie''s youtube channel
+
+      image: https://img.youtube.com/vi/2vnttb-YZrA/sddefault.jpg'
+    gold_removed: ''

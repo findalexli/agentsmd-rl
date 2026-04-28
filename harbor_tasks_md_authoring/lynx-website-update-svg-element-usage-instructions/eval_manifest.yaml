@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: lynx-website-update-svg-element-usage-instructions
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: lynx-family/lynx-website
+  pr: 658
+  base_commit: "8ea8e3e45bfd666f2a58567e2459bf8286ed3e9c"
+  merge_commit: "288de5c252dbe99ed23b75f590970c3c6dad6021"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in docs/public/AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in docs/public/AGENTS.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in docs/public/AGENTS.md."
+
+config_edits:
+  - path: docs/public/AGENTS.md
+    tier: 1
+    gold_added: "- The `svg` element differs significantly from its web counterpart. Pass the SVG markup through the `content` attribute or SVG url through the `src` attribute on `<svg />`:\n  \n  ```jsx\n  <svg content={`<svg ... />`} />;\n  // or\n  <svg src={urlOfYourSvgFile} />;\n  ```"
+    gold_removed: ''

@@ -1,0 +1,253 @@
+version: "2.0"
+
+task:
+  name: dascore-agentskills
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: DASDAE/dascore
+  pr: 613
+  base_commit: "379ce37a10b9a0e44bd9f933be7a1eb4012310af"
+  merge_commit: "a80f225345f12180c011fca3a91229dbf373ddf9"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .agents/agents.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .agents/agents.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .agents/agents.md."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .agents/skills/draft-release/SKILL.md."
+  - id: signal_04
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .agents/skills/draft-release/SKILL.md."
+  - id: signal_05
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .agents/skills/draft-release/SKILL.md."
+  - id: signal_06
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_07
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_08
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+
+config_edits:
+  - path: .agents/agents.md
+    tier: 1
+    gold_added: '# DASCore Agent Guide
+
+
+      This file gives AI/code agents a practical checklist for contributing safely to DASCore.
+
+
+      ## Scope and priorities
+
+
+      1. Keep changes minimal, targeted, and test-backed.
+
+      2. Preserve DASCore conventions over personal preferences.
+
+      3. Prefer consistency with existing code/tests/docs in this repo.
+
+
+      ## Development workflow
+
+
+      1. Work on a feature/fix branch, not `master`.
+
+      2. Keep commits focused (one logical change per commit where possible).
+
+      3. Use pull requests to merge to `master`.
+
+
+      ## Environment setup
+
+
+      Follow `docs/contributing/dev_install.qmd`.
+
+
+      Typical setup:
+
+
+      ```bash
+
+      git pull origin master --tags
+
+      pip install -e ".[dev]"
+
+      pre-commit install -f
+
+      ```
+
+
+      ## Linting and formatting
+
+
+      - Run pre-commit hooks before finalizing changes.
+
+      - Project lint/format is driven by pre-commit and Ruff config in `pyproject.toml`.
+
+
+      ```bash
+
+      pre-commit run --all
+
+      ```
+
+
+      Tip: running twice can apply auto-fixes on first pass.
+
+
+      ## Testing requirements
+
+
+      Follow `docs/contributing/testing.qmd`.
+
+
+      Run targeted tests for changed behavior, then broader tests as needed:
+
+
+      ```bash
+
+      pytest tests/path/to/affected_test.py
+
+      pytest tests
+
+      ```
+
+
+      For coverage checks:
+
+
+      ```bash
+
+      pytest tests --cov dascore --cov-report term-missing
+
+      ```
+
+
+      For doctests:
+
+
+      ```bash
+
+      pytest dascore --doctest-modules
+
+      ```
+
+
+      ## Test authoring conventions
+
+
+      - Put tests under `tests/` mirroring package structure.
+
+      - Group tests in classes.
+
+      - Place fixtures as close as practical to usage (class, module, then `conftest.py`).
+
+
+      ## Code conventions
+
+
+
+      - Prefer `pathlib.Path` over raw path strings (except performance-sensitive bulk file workflows).
+
+      - Use snake_case dataframe column names when possible.
+
+      - Use `df["col"]` (getitem), not `df.col` (getattr).
+
+      - Prefer non-inplace dataframe operations unless inplace is explicitly required.
+
+      - Add type hints for public functions/methods.
+
+      - Use NumPy-style docstrings for public APIs.
+
+      - Keep comments meaningful; do not restate obvious code.
+
+
+      ## Documentation changes
+
+
+      If behavior or API changes, update docs in the same PR.
+
+
+      - Documentation source lives in `docs/` (`.qmd` files).
+
+      - API docs are generated from docstrings.
+
+      - Build docs workflow (see `docs/contributing/documentation.qmd`):
+
+
+      ```bash
+
+      python scripts/build_api_docs.py
+
+      quarto render docs
+
+      ```
+
+
+      Important: if changing site structure, edit `scripts/_templates/_quarto.yml` (not `docs/_quarto.yml`, which is generated/overwritten).
+
+
+      ## Quality bar for agent changes
+
+
+      Before handing off:
+
+
+      1. Code compiles/runs for changed paths.
+
+      2. Relevant tests pass locally.
+
+      3. Lint/format checks pass.
+
+      4. Docs updated for user-visible behavior changes.
+
+      5. No unrelated refactors bundled with bug fixes.
+
+
+      ## When uncertain
+
+
+      - Prefer existing patterns in nearby DASCore modules/tests.
+
+      - Call out assumptions explicitly in PR notes.
+
+      - Choose the simpler behavior-preserving implementation first.'
+    gold_removed: ''
+  - path: .agents/skills/draft-release/SKILL.md
+    tier: 1
+    gold_added: "---\nname: draft-release\ndescription: Draft the next release version and changelog by fetching tags, computing the next semantic v* tag, collecting merged PRs into master since last release via gh, and printing the proposed version and categorized changelog.\n---\n\n# draft-release\n\nDraft the next release version and changelog from merged PRs.\n\n## Inputs\n\n- `release_type` (optional): `major`, `minor`, `patch`, or `bugfix`.\n- If omitted, default to `bugfix` (`patch` and `bugfix` are equivalent).\n\n## Workflow\n\n0. Ask for elevated permissions with network access to run `git fetch --all --tags` and the GitHub CLI PR commands used to collect merged PRs (for example `gh pr list`, `gh pr view`, or `gh api`).\n1. Fetch the latest refs and tags:\n\n```bash\ngit fetch --all --tags\n```\n\n2. Determine the next version number:\n- Consider only tags that start with `v` and match strict semver:\n  `^v[0-9]+\\.[0-9]+\\.[0-9]+$` (ignore pre-release/build suffixes).\n- Find the latest existing release tag from that set (e.g., `v1.2.3`).\n- If no matching tags exist, use `v0.0.0` as the base.\n- Bump according to `release_type`:\n  - `major`: `X+1.0.0`\n  - `minor`: `X.Y+1.0`\n  - `patch`/`bugfix` (default): `X.Y.Z+1`\n- Output the computed new tag as `vX.Y.Z`.\n\n3. Collect merged PRs since the last release:\n- Use the previous release tag identified in step 2 as the lower bound.\n- Define PR scope as changes reachable in `last_release_tag..origin/master`\n  (or `..origin/<default_branch>` if default branch is not `master`).\n- Use GitHub CLI (`gh`) to read merged PRs for that scope.\n- Include at minimum PR number, title, merge date, URL, labels, and body text.\n- Look at the git diffs to extract additional info if needed.\n\n4. Draft a changelog with these sections:\n- `New Features`\n- `Bug Fixes`\n- `Breaking Changes`\n\n5. Classify PRs deterministically:\n- `Breaking Changes` if any of:\n  - title contains `!` in conventional-commit style segment, or\n  - label indicates breaking change (e.g., `breaking`), or\n  - body contains `BREAKING CHANGE`.\n- Otherwise `New Features` if labels/titles indicate feature work\n  (e.g., `feature`, `enhancement`, `feat`).\n- Otherwise `Bug Fixes`.\n- Sort entries by PR number ascending.\n- Include a link to the PR in the changelog.\n\n6. Print to screen:\n- The new version tag.\n- The drafted changelog.\n\n## Output Format\n\n```text\nNext Version: vX.Y.Z\n\n## New Features\n- #123: Short summary (https://github.com/OWNER/REPO/pull/123)\n\n## Bug Fixes\n- #124: Short summary (https://github.com/OWNER/REPO/pull/124)\n\n## Breaking Changes\n- #125: Short summary (https://github.com/OWNER/REPO/pull/125)\n```\n\n## Notes\n\n- If there are no items for a section, include the section with `- None`.\n- Prefer explicit, user-facing PR summaries over internal implementation details.\n- If no merged PRs are found in scope, still print the next version and include\n  all sections with `- None`."
+    gold_removed: ''
+  - path: AGENTS.md
+    tier: 1
+    gold_added: '# Agent Instructions
+
+
+      The canonical agent instructions for this repository are in:
+
+
+      - `.agents/agents.md`
+
+
+      All coding agents should load and follow `.agents/agents.md` before making changes.'
+    gold_removed: ''

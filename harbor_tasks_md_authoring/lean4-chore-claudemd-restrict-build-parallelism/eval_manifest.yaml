@@ -1,0 +1,43 @@
+version: "2.0"
+
+task:
+  name: lean4-chore-claudemd-restrict-build-parallelism
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: leanprover/lean4
+  pr: 12624
+  base_commit: "527a07b3adbc0c087f75899a10278f4c19a83e31"
+  merge_commit: "5115229be20c18d5e9eb923dd10470b9633e8299"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/CLAUDE.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/CLAUDE.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/CLAUDE.md."
+
+config_edits:
+  - path: .claude/CLAUDE.md
+    tier: 1
+    gold_added: '(In the following, use `sysctl -n hw.logicalcpu` instead of `nproc` on macOS)
+
+
+      To build Lean you should use `make -j$(nproc) -C build/release`.
+
+      make -j$(nproc) -C build/release test ARGS="-j$(nproc)"
+
+      make -j$(nproc) -C build/release test ARGS=''-R grind_ematch --output-on-failure''
+
+      make -j$(nproc) -C build/release test ARGS=''--rerun-failed --output-on-failure''
+
+      - ONLY use the project''s documented build command: `make -j$(nproc) -C build/release`'
+    gold_removed: ''

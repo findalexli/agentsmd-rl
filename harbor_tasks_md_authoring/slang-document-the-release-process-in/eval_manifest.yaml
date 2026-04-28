@@ -1,0 +1,49 @@
+version: "2.0"
+
+task:
+  name: slang-document-the-release-process-in
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: shader-slang/slang
+  pr: 10903
+  base_commit: "7346ac55112e9b6445dfc3e3a2deea15917018d1"
+  merge_commit: "135610cf5a18290a120bccb8af90f4d1bb3cb1cb"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/slang-release-process/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/slang-release-process/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/slang-release-process/SKILL.md."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_04
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+
+config_edits:
+  - path: .claude/skills/slang-release-process/SKILL.md
+    tier: 1
+    gold_added: "---\nname: slang-release-process\ndescription: Push a new Slang release. Triggers CI, determines the version from the sprint board, generates release notes, creates an annotated tag, and pushes it to upstream.\nallowed-tools:\n  - Bash\n  - Read\n  - Grep\n  - Glob\n---\n\n# Slang Release Process\n\n## Prerequisites\n\n- **GitHub CLI (`gh`)**: Install from <https://cli.github.com>\n- **Token scopes**: The `gh` token must include `read:project` (for querying sprint info from the project board). Run `gh auth refresh --scopes read:project` to add it.\n\n## Step 1: Trigger Release CI\n\nManually trigger the Release workflow on the `master` branch from:\n<https://github.com/shader-slang/slang/actions/workflows/release.yml>\n\nUsing GitHub CLI:\n\n```bash\ngh workflow run release.yml --ref master\n```\n\nThe workflow takes approximately 30 minutes. Monitor it with:\n\n```bash\ngh run list --workflow=release.yml --limit 1 --json status,conclusion,databaseId\n```\n\nWait until the run completes successfully before proceeding.\n\n## Step 2: Determine the Version\n\nTag nomenclature: `vYYYY.N` where YYYY is the year and N is the sprint number within that year.\n\n- Find the current sprint number from the project board: <https://github.com/orgs/shader-slang/projects/10/views/23>\n- Or query it programmatically (requires `read:project` scope):\n\n```bash\ngh api graphql -f query='{\n  organization(login: \"shader-slang\") {\n    projectV2(number: 10) {\n      fields(first: 20) {\n        nodes {\n          ... on ProjectV2IterationField {\n            name\n            configuration {\n              iterations { title startDate duration }\n              completedIterations { title startDate duration }\n            }\n          }\n        }\n      }\n    }\n  }\n}'\n```\n\n- The first active iteration whose date range covers today is the current sprint.\n- Subtract the starting sprint of the year to get N. The first sprint of the year is the earliest one with a startDate in January of that year.\n- For 2026, sprint 45 was the first sprint (Jan 06), so `N = current_sprint - 45`.\n- Example: sprint 52 → `52 - 45 = 7` → version `v2026.7`\n\nHotfix nomenclature: `vYYYY.N.H` where H increments from 1. The next sprint release note continues from the latest hotfix, not the previous sprint release.\n\nRespin nomenclature (rare): `vYYYY.N.H.R` where R is the respin number, for re-spinning an old release with minimal changes.\n\n## Step 3: Generate Release Notes\n\n```bash\n# Auto-detects previous release tag and generates notes\n# Requires GitHub CLI (gh) for PR label lookup; takes ~1-2 minutes\nbash docs/scripts/release-note.sh\n```\n\nThe script prints breaking changes (PRs labeled \"pr: breaking change\") followed by all changes.\n\n## Step 4: Create and Push the Tag\n\nCreate an annotated tag on `upstream/master` with the release notes as the message:\n\n```bash\n# Make sure local master is up to date\ngit fetch upstream && git checkout master && git merge --ff-only upstream/master\n\n# Create the annotated tag (paste the release-note.sh output as the message body)\ngit tag -a vYYYY.N -m \"<tag message with release notes>\"\n\n# Push to upstream — this triggers the Release CI which creates the release packages\ngit push upstream vYYYY.N\n```\n\nThe tag message format:\n\n```\nvYYYY.N\n\n=== Breaking changes ===\n<one-line git log entries for breaking PRs>\n\n=== All changes for this release ===\n<one-line git log entries for all PRs, with [BREAKING] prefix on breaking ones>\n```\n\n## Interactive Workflow\n\n1. Check prerequisites: verify `gh` is installed and has `read:project` scope (`gh auth status`)\n2. Trigger the Release CI on master (`gh workflow run release.yml --ref master`)\n3. Monitor the CI run until it passes (~30 minutes)\n4. Query the project board to determine the current sprint and compute the version number\n5. Run `docs/scripts/release-note.sh` to generate release notes\n6. Create the annotated tag on `upstream/master` with the release notes\n7. Push the tag to `upstream` to trigger release packaging\n8. Verify the release CI was triggered for the new tag"
+    gold_removed: ''
+  - path: CLAUDE.md
+    tier: 1
+    gold_added: '### Release Process
+
+
+      Use the `/slang-release-process` skill to push a new release. See `.claude/skills/slang-release-process/SKILL.md` for the full workflow.
+
+      '
+    gold_removed: ''

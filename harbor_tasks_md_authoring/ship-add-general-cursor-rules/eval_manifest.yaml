@@ -1,0 +1,334 @@
+version: "2.0"
+
+task:
+  name: ship-add-general-cursor-rules
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: paralect/ship
+  pr: 397
+  base_commit: "60bc1f06f4218a599aca8e18569824bd04617e10"
+  merge_commit: "85982c229a8c2e4c13288c3035aef6e4591fb664"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in template/.cursor/rules/code-quality.mdc."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in template/.cursor/rules/code-quality.mdc."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in template/.cursor/rules/code-quality.mdc."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in template/.cursor/rules/package-management.mdc."
+  - id: signal_04
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in template/.cursor/rules/package-management.mdc."
+  - id: signal_05
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in template/.cursor/rules/package-management.mdc."
+  - id: signal_06
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in template/.cursor/rules/shared-packages.mdc."
+  - id: signal_07
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in template/.cursor/rules/shared-packages.mdc."
+  - id: signal_08
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in template/.cursor/rules/shared-packages.mdc."
+  - id: signal_09
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in template/.cursor/rules/validation-schemas.mdc."
+  - id: signal_10
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in template/.cursor/rules/validation-schemas.mdc."
+  - id: signal_11
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in template/.cursor/rules/validation-schemas.mdc."
+
+config_edits:
+  - path: template/.cursor/rules/code-quality.mdc
+    tier: 1
+    gold_added: '---
+
+      alwaysApply: true
+
+      ---
+
+
+      # Code Quality and Style Guidelines
+
+
+      ## Linting and Formatting
+
+
+      ### ESLint
+
+
+      Shared ESLint configuration in [packages/eslint-config/](mdc:packages/eslint-config/):
+
+      - `node.js` - For API and Node.js packages
+
+      - `next.js` - For Next.js web application
+
+
+      Run ESLint:
+
+      ```bash
+
+      # Per workspace, fix issues automatically
+
+      pnpm --filter api eslint
+
+      pnpm --filter web eslint
+
+      ```
+
+
+      ### Prettier
+
+
+      Shared Prettier config in [packages/prettier-config/index.js](mdc:packages/prettier-config/index.js)
+
+
+      Run Prettier:
+
+      ```bash
+
+      pnpm --filter api prettier
+
+      pnpm --filter web prettier
+
+      ```
+
+
+      ## Pre-commit Hooks
+
+
+      Husky + lint-staged configured at root:
+
+      - Run script: `pnpm prepare` (runs automatically after install)
+
+
+      Each workspace has lint-staged configuration in their package.json
+
+
+      Run precommit manually:
+
+      ```bash
+
+      pnpm --filter api precommit
+
+      pnpm --filter web precommit
+
+      ```
+
+
+      ## Code Organization
+
+
+      ### Import Sorting
+
+
+      After implementing a feature, run ESLint to automatically sort and organize imports:
+
+      ```bash
+
+      pnpm --filter api eslint
+
+      pnpm --filter web eslint
+
+      ```
+
+
+      ESLint is configured to automatically organize imports in the following order:
+
+      1. External dependencies (React, Next.js, third-party packages)
+
+      2. Internal packages (app-constants, app-types, schemas, etc.)
+
+      3. Local imports (relative paths)
+
+
+      The import sorting happens automatically during:
+
+      - Pre-commit hooks (via lint-staged)
+
+      - Running `eslint . --fix` manually
+
+      - IDE auto-fix on save (if configured)
+
+
+      ### File Naming
+
+
+      - **API**: Use kebab-case for files (e.g., `user.service.ts`, `auth.middleware.ts`)
+
+      - **Web**: Use kebab-case for files (e.g., `index.page.tsx`, `user.api.ts`)
+
+      - **Components**: PascalCase for directories and files (e.g., `Button/index.tsx`)
+
+      - **Types/Interfaces**: PascalCase with descriptive names
+
+      - **Constants**: SCREAMING_SNAKE_CASE
+
+
+      ### Export Patterns
+
+
+      Prefer named exports over default exports, except for:
+
+      - Next.js pages (require default export)
+
+      - React components (can use either, but be consistent)
+
+
+      Use barrel exports (index.ts) for cleaner imports:
+
+      ```typescript
+
+      // components/index.ts
+
+      export { Button } from ''./Button'';
+
+      export { Input } from ''./Input'';
+
+
+      // Usage
+
+      import { Button, Input } from ''components'';
+
+      ```
+
+
+      ## Error Handling
+
+
+      ### API
+
+
+      - Throw descriptive errors that will be caught by error middleware
+
+      - Use appropriate HTTP status codes
+
+      - Include error context
+
+
+      ### Web
+
+
+      - Use try-catch with the error handler utility
+
+      - Show user-friendly messages via notifications
+
+      - Log errors to analytics if needed
+
+
+      ## Comments and Documentation
+
+
+      - Write self-documenting code with clear variable and function names
+
+      - Add comments for complex business logic
+
+      - Document non-obvious behavior
+
+      - Use JSDoc for public APIs and complex functions
+
+
+      ## Performance Best Practices
+
+
+      ### API
+
+      - Use MongoDB indexes for frequently queried fields
+
+      - Cache expensive operations in Redis
+
+      - Use pagination for list endpoints
+
+      - Avoid N+1 queries
+
+
+      ### Web
+
+      - Use React.memo for expensive components
+
+      - Implement code splitting with dynamic imports
+
+      - Optimize images (use Next.js Image component)
+
+      - Use React Query''s caching effectively
+
+      - Memoize expensive calculations with useMemo/useCallback
+
+
+      ## Security Best Practices
+
+
+      ### API
+
+      - Validate all input with Zod schemas
+
+      - Use rate limiting middleware when applicable
+
+      - Sanitize user input
+
+      - Use secure password hashing (argon2)
+
+      - Implement CORS properly
+
+      - Don''t include sensitive data in response
+
+
+
+      ### Web
+
+      - Sanitize HTML with DOMPurify before rendering
+
+      - Don''t expose sensitive data in client code
+
+      - Implement CSRF protection for forms
+
+      - Don''t store sensitive data in localStorage
+
+
+      ## Typescript
+
+      - Always use TypeScript strict mode (enabled in all tsconfig.json files)
+
+      - Prefer explicit types over `any`
+
+      - Use type inference where appropriate to reduce verbosity
+
+      - Export types and interfaces from shared packages when used across apps
+
+      '
+    gold_removed: ''
+  - path: template/.cursor/rules/package-management.mdc
+    tier: 1
+    gold_added: "---\ndescription: Guidelines for pnpm workspace management, installing packages and workspace dependencies\nalwaysApply: false\n---\n# Package Management Rules\n\n## Package Manager: pnpm\n\nThis project uses **pnpm** as the package manager. Never use npm or yarn.\n\n### Installing Packages\n\n**Always use the workspace filter flag when adding packages to specific apps or packages.**\n\nExamples:\n```bash\n# Add a package to the api app\npnpm add stripe --filter api\n\n# Add a dev dependency to the web app\npnpm add -D @types/lodash --filter web\n\n# Add a package to a shared package\npnpm add lodash --filter app-constants\n\n# Add a package to all workspaces\npnpm add -w zod\n\n# Add a package to the root workspace\npnpm add -w -D husky\n```\n\n### Workspace Dependencies\n\nWhen referencing internal packages, use the `workspace:*` protocol in package.json:\n```json\n{\n  \"dependencies\": {\n    \"app-constants\": \"workspace:*\",\n    \"app-types\": \"workspace:*\",\n    \"schemas\": \"workspace:*\"\n  }\n}\n```"
+    gold_removed: ''
+  - path: template/.cursor/rules/shared-packages.mdc
+    tier: 1
+    gold_added: "---\ndescription: Guidelines for working with shared packages\nalwaysApply: false\n---\n# Shared Packages Guidelines\n\nThe `packages/` directory contains reusable code shared between `api` and `web` applications.\n\n## Available Packages\n\n### app-constants\n[packages/app-constants/src/](mdc:packages/app-constants/src/)\n\nShared constants used across applications.\n\nUsage:\n```typescript\nimport { API_ROUTES, COOKIES, FILE } from 'app-constants';\n```\n\n### app-types\n[packages/app-types/src/](mdc:packages/app-types/src/)\n\nShared TypeScript type definitions and enums (re-exported to prevent dependency cycles).\n\n**Important**: Always import from `types`, not `app-types`. The API application has a local `types.ts` file that stores API-specific types which cannot be used by the Web application. Using `types` as the import path prevents conflicts.\n\nUsage:\n```typescript\n// ✅ Correct - import from 'types'\nimport { User, Account, ListParams, TokenType } from 'types';\n\n// ❌ Incorrect - don't use 'app-types'\nimport { User } from 'app-types';\n```\n\n### enums\n[packages/enums/src/](mdc:packages/enums/src/)\n\nShared enumerations:\n- `token.enum.ts` - Token types enum\n\n**Important**: To prevent dependency cycle issues, import enums from the `types` package instead of `enums`. The `app-types` package re-exports all enums to break circular dependencies.\n\nUsage:\n```typescript\n// ✅ Correct - import from 'types'\nimport { TokenType } from 'types';\n\n// ❌ Incorrect - don't import directly from 'enums'\nimport { TokenType } from 'enums';\n```\n\n### schemas\n[packages/schemas/src/](mdc:packages/schemas/src/)\n\nZod validation schemas shared between API and web for type-safe validation:\n- `common.schema.ts` - Reusable schema components\n- `db.schema.ts` - Database-specific schemas (contains base database entity schema)\n\n**Important**: When creating a new database resource schema, always extend from `dbSchema` to include common database fields (`_id`, `createdOn`, `updatedOn`, etc.):\n\n```typescript\nimport { z } from 'zod';\n\nimport { dbSchema } from './db.schema';\n\nexport const userSchema = dbSchema.extends({\n  name: z.string().min(1),\n  email: z.string().email(),\n});\n```\n\nSee [validation-schemas.mdc](mdc:.cursor/rules/validation-schemas.mdc) for detailed usage.\n\n### mailer\n[packages/mailer/](mdc:packages/mailer/)\n\nEmail templates built with React Email:\n- `emails/` - React email components\n- `src/template.ts` - Template registry (enum, component mapping, props types)\n- `src/utils.tsx` - Email utilities\n\nEmail templates:\n- `sign-up-welcome.tsx` - Welcome email\n- `verify-email.tsx` - Email verification\n- `reset-password.tsx` - Password reset\n\n#### Adding a New Email Template\n\n**Step 1**: Create email template in [packages/mailer/emails/](mdc:packages/mailer/emails/) folder\n```tsx\n// packages/mailer/emails/my-template.tsx\nexport interface MyTemplateProps {\n  firstName: string;\n  actionUrl: string;\n}\n\nexport const MyTemplate = ({ firstName, actionUrl }: MyTemplateProps) => (\n  <Layout previewText=\"Greeting\">\n    <Text>Hello, {firstName}!</Text>\n    <Button href={actionUrl}>Take Action</Button>\n  </Layout>\n);\n```\n\n**Step 2**: Register template in [packages/mailer/src/template.ts](mdc:packages/mailer/src/template.ts)\n```typescript\n// Add to Template enum\nexport enum Template {\n  MY_TEMPLATE = 'MY_TEMPLATE',\n  // ... other templates\n}\n\n// Add to EmailComponent mapping\nexport const EmailComponent = {\n  [Template.MY_TEMPLATE]: MyTemplate,\n  // ... other templates\n};\n\n// Add to TemplateProps interface\nexport interface TemplateProps {\n  [Template.MY_TEMPLATE]: MyTemplateProps;\n  // ... other templates\n}\n```\n\n**Step 3**: Use in API with emailService\n```typescript\nimport { emailService } from 'services';\nimport { Template } from 'mailer';\n\nawait emailService.sendTemplate<Template.MY_TEMPLATE>({\n  to: user.email,\n  subject: 'Action Required',\n  template: Template.MY_TEMPLATE,\n  params: {\n    firstName: user.firstName,\n    actionUrl: resetUrl.toString(),\n  },\n});\n```\n\n### eslint-config\n[packages/eslint-config/](mdc:packages/eslint-config/)\n\nShared ESLint configurations:\n- `node.js` - For Node.js/API code\n- `next.js` - For Next.js/React code\n\nUsage in app's `eslint.config.js`:\n```javascript\nimport config from 'eslint-config/node.js';\n// or\nimport config from 'eslint-config/next.js';\n\nexport default config;\n```\n\n### prettier-config\n[packages/prettier-config/](mdc:packages/prettier-config/)\n\nShared Prettier configuration.\n\nUsage in app's `.prettierrc.json`:\n```json\n\"prettier-config\"\n```\n\n### tsconfig\n[packages/tsconfig/](mdc:packages/tsconfig/)\n\nShared TypeScript configurations:\n- `base.json` - Base config\n- `nodejs.json` - Node.js specific settings\n- `nextjs.json` - Next.js specific settings\n\nUsage in app's `tsconfig.json`:\n```json\n{\n  \"extends\": \"tsconfig/nodejs.json\"\n}\n```\n\n## Package Development Guidelines\n\n### Exports\n- Always export through an `index.ts` barrel file\n- Use named exports for better tree-shaking\n- Export types separately when possible\n\n### Dependencies\n- Minimize dependencies in shared packages\n- Use peer dependencies for framework-specific packages\n- Common dependencies should use the catalog version\n\n### TypeScript\n- Extend from `tsconfig/base.json`\n- Enable strict mode\n- Export types alongside runtime code\n\n### Versioning\n- Keep versions in sync (use same version across packages)\n- Update version when making breaking changes\n- Document changes if creating a changelog\n\n## Common Patterns\n\n### Constants Package\n```typescript\n// 1. Define in packages/app-constants/src/feature.constants.ts\nexport const FEATURE = {\n  MAX_ITEMS: 100,\n  DEFAULT_TIMEOUT: 5000,\n} as const;\n\n// 2. Export from packages/app-constants/src/index.ts\nexport * from './feature.constants';\n\n// 3. Consume\nimport { FEATURE } from 'app-constants';\n```\n\n### Types Package\n```typescript\n// 1. Define in packages/app-types/src/feature.types.ts\nexport interface Feature {\n  id: string;\n  name: string;\n}\n\nexport type FeatureList = Feature[];\n\n// 2. Export from packages/app-types/src/index.ts\nexport * from './feature.types';\n\n// 3. Consume - always use 'types' not 'app-types'\nimport { Feature } from 'types';\n```\n\n### Enums Pattern\n```typescript\n// 1. Define in packages/enums/src/feature.enum.ts\nexport enum FeatureType {\n  TypeA = 'type-a',\n  TypeB = 'type-b',\n}\n\n// 2. Export from packages/enums/src/index.ts\nexport * from './feature.enum';\n\n// 3. Consume from 'types' (already re-exported in app-types)\nimport { FeatureType } from 'types';\n```\n\n**Note**: All enums are automatically re-exported from the `app-types` package, so you don't need to manually add re-exports there.\n\n### Schemas Package\n```typescript\n// 1. Define in packages/schemas/src/feature.schema.ts\nimport { z } from 'zod';\n\nexport const featureSchema = {\n  create: z.object({\n    name: z.string().min(1),\n  }),\n};\n\n// 2. Export from packages/schemas/src/index.ts\nexport * from './feature.schema';\n\n// 3. Consume\nimport { featureSchema } from 'schemas';\n```"
+    gold_removed: ''
+  - path: template/.cursor/rules/validation-schemas.mdc
+    tier: 1
+    gold_added: "---\ndescription: \"Guidelines for using and creating Zod validation schemas\"\n---\n\n# Validation and Schema Guidelines\n\n## Zod Schemas Package\n\nAll validation schemas are centralized in the `schemas` package: [packages/schemas/src/](mdc:packages/schemas/src/)\n\nThis ensures type-safe validation shared between API and web applications.\n\n## Using Schemas\n\nImport schemas from the `schemas` package:\n```typescript\nimport { userSchema, accountSchema, commonSchema } from 'schemas';\n```\n## API Validation\n\nUse the validate middleware in the API:\n```typescript\nimport { validateMiddleware } from 'middlewares';\n\nimport { createUserSchema } from 'schemas';\n\nrouter.post('/users',\n  validateMiddleware(createUserSchema),\n  handler\n);\n```\n\nThe middleware validates:\n- `ctx.request.body` - Request body\n- `ctx.request.files` - Uploaded formidable files\n- `ctx.query` - Query parameters\n- `ctx.params` - URL parameters  \n\n## Web/Frontend Validation\n\n### With React Hook Form\n\n```typescript\nimport { useForm } from 'react-hook-form';\nimport { zodResolver } from '@hookform/resolvers/zod';\n\nimport { createUserSchema } from 'schemas';\nimport { CreateUserSchema } from 'types';\n\nconst form = useForm<CreateUserSchema>({\n  resolver: zodResolver(createUserSchema),\n});\n```\n\n### Manual Validation\n\n```typescript\nimport { createUserSchema } from 'schemas';\n\nconst result = createUserSchema.safeParse(data);\n\nif (!result.success) {\n  console.error(result.error.errors);\n}\n```\n\n## Creating New Schemas\n\nWhen adding new schemas:\n\n1. Add to the appropriate file in `packages/schemas/src/`\n2. Export from [packages/schemas/src/index.ts](mdc:packages/schemas/src/index.ts)\n3. Use Zod's built-in validators and composability\n\nExample structure:\n```typescript\nimport { z } from 'zod';\n\nimport { dbSchema } from './db.schema';\n\nexport const userSchema = dbSchema.extend({\n  firstName: z.string(),\n  lastName: z.string(),\n  email: z.string().email(),\n  passwordHash: z.string().optional(),\n});\n\n// Compose schemas (mostly based on entity schema)\nexport const createUserSchema = userSchema.pick({\n  firstName: true,\n  lastName: true,\n  email: true,\n});\n\nexport const updateUserSchema = userSchema\n  .pick({ firstName: true, lastName: true })\n  .extend({\n    password: userSchema.shape.passwordHash.optional(),\n  })\n  .partial();\n```\n\n## Enums in Schemas\n\nEnums are centralized in [packages/enums/src/](mdc:packages/enums/src/). Use `z.nativeEnum()` for validation:\n\n```typescript\nimport { TokenType } from 'enums';\n\nexport const tokenSchema = dbSchema.extend({\n  type: z.nativeEnum(TokenType),\n});\n```\n\nWhen creating new enums, add to `packages/enums/src/*.enum.ts` and export from index:\n```typescript\nexport enum TokenType {\n  ACCESS = 'access',\n  RESET_PASSWORD = 'reset-password',\n}\n```\n\n## Type Inference\n\nExtract TypeScript types from Zod schemas:\n```typescript\nimport { z } from 'zod';\n\nimport { createUserSchema, updateUserSchema } from 'schemas';\n\ntype CreateUser = z.infer<typeof createUserSchema>;\ntype UpdateUser = z.infer<typeof updateUserSchema>;\n```\n\nFor API types, consider adding to [packages/app-types/](mdc:packages/app-types/) if used across applications.\n\n## Constants\n\nValidation-related constants in [packages/app-constants/src/validation.constants.ts](mdc:packages/app-constants/src/validation.constants.ts)"
+    gold_removed: ''

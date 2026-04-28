@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: dotnet-skills-add-query-splitting-recommendations-to
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: Aaronontheweb/dotnet-skills
+  pr: 11
+  base_commit: "d911e5565ac2edc71fbf5a2178619d6ce8766395"
+  merge_commit: "58e81a594e187634ef4d8dc27addc6bae58f3e3d"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/data/efcore-patterns/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/data/efcore-patterns/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/data/efcore-patterns/SKILL.md."
+
+config_edits:
+  - path: skills/data/efcore-patterns/SKILL.md
+    tier: 1
+    gold_added: "description: Entity Framework Core best practices including NoTracking by default, query splitting for navigation collections, migration management, dedicated migration services, and common pitfalls to avoid.\n- Loading multiple navigation collections efficiently (query splitting)\n## Pattern 6: Query Splitting to Prevent Cartesian Explosion\n\nWhen you load multiple navigation collections via `Include()`, EF Core generates a single query that can cause cartesian explosion. If you have 10 orders with 10 items each, you get 100 rows instead of 10 + 10.\n\n### Global Configuration (Recommended for Most Cases)\n\nEnable query splitting globally in your DbContext configuration:\n\n```csharp\nservices.AddDbContext<ApplicationDbContext>(options =>\n    options.UseNpgsql(connectionString, npgsqlOptions =>\n        {\n            npgsqlOptions.UseQuerySplittingBehavior(QuerySplittingBehavior.SplitQuery);\n        }));\n```\n\n### Per-Query Override\n\nUse single query when you know it's more efficient:\n\n```csharp\n// Use single query when you know the structure is well-understood\nvar orders = await dbContext.Orders\n    .Include(o => o.Items)\n    .Include(o => o.Payments)\n    .AsSingleQuery()  // Override global split behavior\n    .ToListAsync();\n```\n\n### Trade-offs\n\n| Behavior | Pros | Cons |\n|-----------|-------|-------|\n| SplitQuery | No cartesian explosion, better for large collections | Multiple round-trips, potential consistency issues |\n| SingleQuery | Single round-trip, transactional consistency | Cartesian explosion with multiple collections |\n\n**Recommendation**: Default to `SplitQuery` globally, override with `AsSingleQuery()` for specific queries where single-query is known to be better.\n\n### When to Prefer SingleQuery\n\n- Small, well-understood navigation graphs (2-3 levels)\n- Queries where all related data is always needed\n- Performance-critical paths where round-trip cost is lower than cartesian explosion\n\n### When to Prefer SplitQuery\n\n- Large or unpredictable navigation graphs\n- Many-to-many relationships\n- Queries loading collections that may not all be needed\n\n---\n"
+    gold_removed: ''

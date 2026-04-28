@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: rustdesk-refactagentsmd-code-rules-tokio
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: rustdesk/rustdesk
+  pr: 14911
+  base_commit: "38f13007171f395e36a5730e70746a68620a97f7"
+  merge_commit: "3a1622e8b5664e5d76d0ca8b74646cce30c15e48"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+
+config_edits:
+  - path: AGENTS.md
+    tier: 1
+    gold_added: "# RustDesk Guide\n## Project Layout\n* `src/` Rust app\n* `src/server/` audio / clipboard / input / video / network\n* `src/platform/` platform-specific code\n* `src/ui/` legacy Sciter UI (deprecated)\n* `flutter/` current UI\n* `libs/hbb_common/` config / proto / shared utils\n* `libs/scrap/` screen capture\n* `libs/enigo/` input control\n* `libs/clipboard/` clipboard\n* `libs/hbb_common/src/config.rs` all options\n* Avoid `unwrap()` / `expect()` in production code.\n* Exceptions:\n\n  * tests;\n  * lock acquisition where failure means poisoning, not normal control flow.\n* Otherwise prefer `Result` + `?` or explicit handling.\n* Do not ignore errors silently.\n* Avoid unnecessary `.clone()`.\n* Prefer borrowing when practical.\n* Do not add dependencies unless needed.\n* Keep code simple and idiomatic.\n\n## Tokio Rules\n\n* Assume a Tokio runtime already exists.\n* Never create nested runtimes.\n* Never call `Runtime::block_on()` inside Tokio / async code.\n* Do not hide runtime creation inside helpers or libraries.\n* Do not hold locks across `.await`.\n* Prefer `.await`, `tokio::spawn`, channels.\n* Use `spawn_blocking` or dedicated threads for blocking work.\n* Do not use `std::thread::sleep()` in async code.\n* Change only what is required.\n* Prefer the smallest valid diff.\n* Do not refactor unrelated code.\n* Do not make formatting-only changes.\n* Keep naming/style consistent with nearby code."
+    gold_removed: ''

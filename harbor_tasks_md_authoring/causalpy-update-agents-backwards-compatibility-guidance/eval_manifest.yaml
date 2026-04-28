@@ -1,0 +1,24 @@
+version: "2.0"
+
+task:
+  name: causalpy-update-agents-backwards-compatibility-guidance
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: pymc-labs/CausalPy
+  pr: 686
+  base_commit: "bfb93d9972152011341a0991d69a579586085953"
+  merge_commit: "51b4072a836d3f758427b9b27e07a72aa843787e"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+
+config_edits:
+  - path: AGENTS.md
+    tier: 1
+    gold_added: '- **Backwards compatibility**: Avoid preserving backwards compatibility for API elements introduced within the same PR; only maintain compatibility for previously released APIs.'
+    gold_removed: ''

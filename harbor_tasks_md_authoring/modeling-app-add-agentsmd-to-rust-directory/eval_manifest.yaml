@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: modeling-app-add-agentsmd-to-rust-directory
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: KittyCAD/modeling-app
+  pr: 10007
+  base_commit: "2cf11bf2d69f438dd9ef81b6710cf4f578304293"
+  merge_commit: "fa6102fd554fea7810dca1b25c47efe31219e78c"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in rust/AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in rust/AGENTS.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in rust/AGENTS.md."
+
+config_edits:
+  - path: rust/AGENTS.md
+    tier: 1
+    gold_added: "# AGENTS.md (Rust workspace)\n\n## Scope\n\nThis file applies to Rust development under `rust/`. It complements the repo root README.\n\n## Project overview\n\n`rust/` contains the Rust crates that power KCL and related tooling, including:\n- `kcl-lib` (core language and stdlib)\n- `kcl-language-server` (LSP server + VSCode extension)\n- `kcl-python-bindings` (PyO3 bindings)\n\n## Dev environment tips\n\n- Generated stdlib docs live under `docs/kcl-std/` and are overwritten by tests; do not edit them directly.\n\n## Code style\n\n- Format code using the nightly toolchain: `cargo +nightly fmt`.\n- Follow clippy lints: `just lint`. If the git stage is clean (i.e. there aren't any unstaged changes), you can run `just lint-fix` to automatically apply most lints.\n\n## Build and test\n\n- Build the LSP (from `rust/kcl-language-server`): `npm install` then `cargo build`.\n- Run KCL snapshot tests (requires a Zoo dev token):\n  - `export ZOO_API_TOKEN=your-token-here`\n  - `TWENTY_TWENTY=update cargo nextest run --workspace --no-fail-fast`\n- Generate stdlib markdown docs (from `rust/`): `just redo-kcl-stdlib-docs`\n\n## Simulation tests\n\n- Create a new sim test: `just new-sim-test foo_bar` (this creates a directory for your sim test like `kcl-lib/tests/foo/`, with an empty `input.kcl` that you should put code in).\n- Run/update the sim test: `just overwrite-sim-test foo_bar`\n- Inspect generated outputs and check for `execution_error.snap` before committing.\n\n## Python bindings\n\n- Uses `maturin` (install via `pipx install maturin` or `pip install maturin`).\n- Common commands: Check the `kcl-python-bindings/justfile` \n\n## Standard library contributions (kcl-lib)\n\n- Add new KCL functions in `rust/kcl-lib/kcl/std` in the correct module using camel case naming.\n- Add Rust implementations of functions in `rust/kcl-lib/kcl/src/std` near similar items using snake case naming.\n- Add the function to the `std_fn` list in `rust/kcl-lib/src/std/mod.rs` to map between KCL and Rust.\n- Provide doc comments on the KCL function with at least one example. When adding new examples in the KCL docs, you must register them in `example_tests.rs` under `const TEST_NAMES`.\n- After changes, run snapshot tests and regenerate stdlib docs.\n\n## Release notes (Rust crates)\n\n- Bump crate versions from `rust/`: `just bump-kcl-crate-versions`.\n- Publish (after PR approval): `just publish-kcl {version}` (do not include `kcl-` prefix; the `just` task adds it).\n- Tags from publish trigger releases for `kcl-python-bindings` and `kcl-language-server`."
+    gold_removed: ''

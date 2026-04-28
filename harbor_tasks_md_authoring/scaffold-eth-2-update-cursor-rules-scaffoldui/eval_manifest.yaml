@@ -1,0 +1,47 @@
+version: "2.0"
+
+task:
+  name: scaffold-eth-2-update-cursor-rules-scaffoldui
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: scaffold-eth/scaffold-eth-2
+  pr: 1195
+  base_commit: "5acf3d23ca9752a3ee6a0fd80762e6bd16f2a03c"
+  merge_commit: "f94c6c368c5b83f331eb0e04f88650568fea67de"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .cursor/rules/scaffold-eth.mdc."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .cursor/rules/scaffold-eth.mdc."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .cursor/rules/scaffold-eth.mdc."
+
+config_edits:
+  - path: .cursor/rules/scaffold-eth.mdc
+    tier: 1
+    gold_added: 'description:
+
+      globs:
+
+
+
+
+
+      Example:
+
+
+
+      With the `@scaffold-ui/components` library, SE-2 provides a set of pre-built React components for common Ethereum use cases:
+
+
+      For fully customizable components, you can use the hooks from the `@scaffold-ui/hooks` library to get the data you need.'
+    gold_removed: ''

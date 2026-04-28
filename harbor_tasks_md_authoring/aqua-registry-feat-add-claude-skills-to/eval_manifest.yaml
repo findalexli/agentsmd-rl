@@ -1,0 +1,57 @@
+version: "2.0"
+
+task:
+  name: aqua-registry-feat-add-claude-skills-to
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: aquaproj/aqua-registry
+  pr: 52709
+  base_commit: "42895a1c741dc2a0b5b29a2cc63af43a1d7db30f"
+  merge_commit: "701e9a8edab7c9bd057cb00c0cccf2bd5321d25c"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .agents/skills/fetch-doc/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .agents/skills/fetch-doc/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .agents/skills/fetch-doc/SKILL.md."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .agents/skills/review-change/SKILL.md."
+  - id: signal_04
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .agents/skills/review-change/SKILL.md."
+  - id: signal_05
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .agents/skills/review-change/SKILL.md."
+
+config_edits:
+  - path: .agents/skills/fetch-doc/SKILL.md
+    tier: 1
+    gold_added: "---\nname: Fetch aqua Document\ndescription: Fetch the document of aqua from the other repository aquaproj/aqua. This skill is useful when you want to know the specification of aqua.\n---\n\nThe document of aqua is hosted at https://github.com/aquaproj/aqua.\nSo please checkout the repository and refer the document.\n\n```sh\nmkdir -p .ai\nif [ ! -d .ai/aqua ]; Then\n  git clone https://github.com/aquaproj/aqua .ai/aqua\nfi\ncd .ai/aqua\ngit pull origin main\n```\n\nThen please see .ai/aqua/website/docs.\nEspecially, about the registry settings, please see .ai/aqua/website/docs/reference/registry-config/\\*.md."
+    gold_removed: ''
+  - path: .agents/skills/review-change/SKILL.md
+    tier: 1
+    gold_added: '---
+
+      name: review-change
+
+      description: Review changes. Use this skill when adding or changing pkgs/**/*.yaml
+
+      ---
+
+
+      Please review pkgs/\*_/_.yaml according to AGENTS.md'
+    gold_removed: ''

@@ -1,0 +1,36 @@
+version: "2.0"
+
+task:
+  name: beads-update-references-to-workflowsmd-in
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: gastownhall/beads
+  pr: 772
+  base_commit: "30c5e0001af87c559bd531549893cce0bf7c1c5c"
+  merge_commit: "b4deb96924791868e4fb6128876c8f32c3dd176c"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/beads/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/beads/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/beads/SKILL.md."
+
+config_edits:
+  - path: skills/beads/SKILL.md
+    tier: 1
+    gold_added: '- **Compaction Strategies**: `{baseDir}/references/WORKFLOWS.md`
+
+      - **Epic Management**: `{baseDir}/references/WORKFLOWS.md`
+
+      - **Template System**: `{baseDir}/references/WORKFLOWS.md`'
+    gold_removed: ''

@@ -1,0 +1,104 @@
+version: "2.0"
+
+task:
+  name: sqlitecpp-add-ai-coding-guidelines-for
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: SRombauts/SQLiteCpp
+  pr: 529
+  base_commit: "9ec14deb24377cd24f381ff1ab1ef59228cd261b"
+  merge_commit: "b6fcb54bc9a6c28b2a8b4b8b0c7cf5f0495cb42b"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .cursor/rules/load-github-copilot-instructions.mdc."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .cursor/rules/load-github-copilot-instructions.mdc."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .cursor/rules/load-github-copilot-instructions.mdc."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/copilot-instructions.md."
+  - id: signal_04
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/copilot-instructions.md."
+  - id: signal_05
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/copilot-instructions.md."
+
+config_edits:
+  - path: .cursor/rules/load-github-copilot-instructions.mdc
+    tier: 1
+    gold_added: '---
+
+      description: MANDATORY - Read .github/copilot-instructions.md before ANY coding task in this SQLiteCpp project.
+
+      globs:
+
+      alwaysApply: true
+
+      ---
+
+
+      # MANDATORY: Read Custom Instructions Before Coding
+
+
+      **CRITICAL REQUIREMENT**: Before performing ANY coding task (writing code, reviewing code, suggesting changes, answering code questions, or modifying files), you MUST first read the file `.github/copilot-instructions.md` using the Read tool.
+
+
+      This is NON-NEGOTIABLE. Do not skip this step. Do not assume you know the contents. Always read the file fresh.
+
+
+      ## Why This Matters
+
+
+      The `copilot-instructions.md` file contains project-specific coding standards that MUST be followed:
+
+
+      - **RAII principles** - Acquire in constructors, release in destructors
+
+      - **Exception rules** - NEVER throw in destructors, use `SQLITECPP_ASSERT()` instead
+
+      - **C++ version constraints** - C++11 only in core library
+
+      - **Naming conventions** - `m` prefix for members, `a` prefix for arguments, etc.
+
+      - **Code style** - 4 spaces, Allman braces, 120 char max, `#pragma once`
+
+      - **Documentation** - Doxygen with `@brief`, `@param`, `@return`, `@throw`
+
+      - **Testing requirements** - Tests required for new functionality
+
+      - **Build commands** - CMake and Meson instructions
+
+
+      ## Required Action
+
+
+      ```
+
+      Read the file: .github/copilot-instructions.md
+
+      ```
+
+
+      Execute this read operation BEFORE responding to any coding request. This ensures you have the current, complete coding guidelines for this SQLiteCpp project.
+
+
+      If you cannot read the file for any reason, inform the user immediately.'
+    gold_removed: ''
+  - path: .github/copilot-instructions.md
+    tier: 1
+    gold_added: "# SQLiteCpp LLM Coding Guide\r\n\r\n## Non-Negotiables (MUST Follow)\r\n- RAII only. Acquire in constructors, release in destructors.\r\n- NEVER throw in destructors. Use `SQLITECPP_ASSERT()` instead.\r\n- Errors: use `SQLite::Exception` for throwing APIs; `tryExec()`, `tryExecuteStep()`, `tryReset()` return SQLite codes.\r\n- C++11 only in core library. C++14 only in `VariadicBind.h` and `ExecuteMany.h`.\r\n- Public API headers must NOT include `sqlite3.h`. Use `SQLite::OPEN_*` flags from `Database.h`.\r\n- Export public API with `SQLITECPP_API` from `SQLiteCppExport.h`.\r\n- Threading: one `Database`/`Statement`/`Column` per thread.\r\n- Public API must have Doxygen: `@brief`, `@param`, `@return`, `@throw`.\r\n- Tests required for new functionality in `tests/`.\r\n- Portability: Windows, Linux, macOS.\r\n- Style: ASCII only, 4 spaces, Allman braces, max 120 chars, LF line endings, final newline, `#pragma once`.\r\n\r\n## Workflow (Common Tasks)\r\n### Add a Method\r\n1. Declare in `include/SQLiteCpp/<Class>.h` with Doxygen.\r\n2. Implement in `src/<Class>.cpp`.\r\n3. Add tests in `tests/<Class>_test.cpp`.\r\n4. Update `CHANGELOG.md`.\r\n\r\n### Add a Class\r\n1. Create `include/SQLiteCpp/NewClass.h` and `src/NewClass.cpp`.\r\n2. Add to `CMakeLists.txt` (`SQLITECPP_SRC` and `SQLITECPP_INC`).\r\n3. Add to `meson.build`.\r\n4. Include in `SQLiteCpp.h` if public API.\r\n5. Create `tests/NewClass_test.cpp`.\r\n6. Add test to `CMakeLists.txt` and `meson.build`.\r\n\r\n### Git Workflow (GitHub Issues)\r\n**When to create a new branch:**\r\n- User explicitly mentions working on a task, issue, or feature (e.g., \"work on issue #123\", \"implement feature X\")\r\n- User references a GitHub issue number\r\n\r\n**Before starting work:**\r\n1. Run `git status` to check current branch.\r\n2. If on `master` or wrong branch, create a task-specific branch from `master`.\r\n\r\n**Branch naming:** `<issue>-<type>-<short-description>`\r\n- `123-fix-short-description` for bug fixes\r\n- `123-feature-short-description` for new features\r\n\r\n**Commits:**\r\n- Imperative mood, ~50 char first line, body wrapped at 72 chars.\r\n- Reference issue: `Closes #123` or `Fixes #123`.\r\n\r\n```bash\r\ngit fetch origin\r\ngit checkout -b 123-fix-short-description origin/master\r\n```\r\n\r\n## Common Pitfalls\r\n- `bind()` is 1-based; `getColumn()` is 0-based.\r\n- Reusing `Statement` requires `reset()` and `clearBindings()`.\r\n- `bindNoCopy()` only if data lifetime exceeds statement execution.\r\n- `execAndGet()` returns a temporary `Column`, copy immediately.\r\n- `exec()` returns changes for DML, 0 for DDL.\r\n\r\n## Build and Test\r\n### Quick Build Commands\r\n**Windows (Visual Studio 2022):**\r\n```batch\r\nmkdir build\r\ncd build\r\ncmake -G \"Visual Studio 17 2022\" -DSQLITECPP_BUILD_TESTS=ON -DSQLITECPP_BUILD_EXAMPLES=ON ..\r\ncmake --build . --config Release\r\n```\r\n\r\n**Windows (using build.bat):**\r\n```batch\r\nbuild.bat\r\n```\r\n\r\n**Unix/macOS:**\r\n```bash\r\nmkdir build && cd build\r\ncmake -DCMAKE_BUILD_TYPE=Debug -DSQLITECPP_BUILD_TESTS=ON -DSQLITECPP_BUILD_EXAMPLES=ON ..\r\ncmake --build .\r\n```\r\n\r\n**Meson:**\r\n```bash\r\nmeson setup builddir -DSQLITECPP_BUILD_TESTS=true -DSQLITECPP_BUILD_EXAMPLES=true\r\nmeson compile -C builddir\r\n```\r\n\r\n### Essential CMake Options\r\n| Option | Default | Description |\r\n|--------|---------|-------------|\r\n| `SQLITECPP_BUILD_TESTS` | OFF | Build unit tests |\r\n| `SQLITECPP_BUILD_EXAMPLES` | OFF | Build examples |\r\n| `SQLITECPP_INTERNAL_SQLITE` | ON | Use bundled sqlite3/ |\r\n| `BUILD_SHARED_LIBS` | OFF | Build as DLL/shared library |\r\n| `SQLITE_ENABLE_COLUMN_METADATA` | ON | Enable `getColumnOriginName()` |\r\n\r\n### Running Tests\r\n```bash\r\ncd build\r\nctest --output-on-failure\r\nctest --output-on-failure -V\r\nctest --output-on-failure -R \"Database\"\r\n```\r\n```bash\r\nmeson test -C builddir\r\nmeson test -C builddir -v\r\n```\r\n\r\n### Style Checking\r\n```bash\r\npython cpplint.py src/*.cpp include/SQLiteCpp/*.h\r\n```\r\n\r\n## Troubleshooting\r\n**MSVC:**\r\n```\r\nc:\\path\\to\\file.cpp(42): error C2065: 'undeclaredVar': undeclared identifier\r\nc:\\path\\to\\file.cpp(50,15): error C2039: 'foo': is not a member of 'SQLite::Database'\r\n```\r\n\r\n**GCC/Clang:**\r\n```\r\nsrc/Database.cpp:42:5: error: use of undeclared identifier 'undeclaredVar'\r\ninclude/SQLiteCpp/Database.h:100:10: error: no member named 'foo' in 'SQLite::Database'\r\n```\r\n\r\n**Linker:**\r\n```\r\nerror LNK2019: unresolved external symbol \"SQLite::Database::exec\"\r\n```\r\n\r\nUsually means missing SQLiteCpp library or missing source file in build.\r\n\r\n## Reference\r\n### Project Snapshot\r\n- SQLiteCpp is a lean C++11 RAII wrapper around SQLite3 C APIs.\r\n- Minimal dependencies (C++11 STL + SQLite3).\r\n- Cross-platform, thread-safe at SQLite multi-thread level.\r\n- Keep naming close to SQLite.\r\n- Public headers avoid `sqlite3.h`; use `SQLite::OPEN_*` flags from `Database.h`.\r\n\r\n### Repository Structure\r\n```\r\nSQLiteCpp/\r\n+-- include/SQLiteCpp/    # Public headers\r\n|   +-- SQLiteCpp.h       # Umbrella include + version macros\r\n|   +-- Database.h        # Connection + open flags\r\n|   +-- Statement.h       # Prepared statements\r\n|   +-- Column.h          # Result column access\r\n|   +-- Transaction.h     # RAII transaction\r\n|   +-- Savepoint.h       # RAII savepoint\r\n|   +-- Backup.h          # Online backup\r\n|   +-- Exception.h       # SQLite::Exception\r\n|   +-- Assertion.h       # SQLITECPP_ASSERT macro\r\n|   +-- VariadicBind.h    # Bind helper (C++11/14)\r\n|   +-- ExecuteMany.h     # Batch execute (C++14)\r\n|   +-- SQLiteCppExport.h # SQLITECPP_API macro\r\n+-- src/                  # Implementations\r\n+-- tests/                # Unit tests (*_test.cpp)\r\n+-- sqlite3/              # Bundled SQLite3 source\r\n+-- examples/             # Example applications\r\n+-- CMakeLists.txt / meson.build / build.bat / build.sh\r\n```\r\n\r\n### Naming Rules\r\n| Element | Convention | Example |\r\n|---------|------------|---------|\r\n| Types | PascalCase | `Database`, `Statement`, `TransactionBehavior` |\r\n| Files | Named like contained class | `Database.h`, `Statement.cpp` |\r\n| Functions and variables | camelCase | `executeStep()`, `getColumn()` |\r\n| Member variables | Prefix `m` | `mDatabase`, `mQuery` |\r\n| Function arguments | Prefix `a` | `aDatabase`, `aQuery` |\r\n| Boolean variables | Prefix `b`/`mb` | `bExists`, `mbDone` |\r\n| Pointer variables | Prefix `p`/`mp` | `pValue`, `mpSQLite` |\r\n| Constants | ALL_CAPS | `OPEN_READONLY`, `SQLITE_OK` |\r\n\r\n### File Header Template\r\n```cpp\r\n/**\r\n * @file    ClassName.h\r\n * @ingroup SQLiteCpp\r\n * @brief   Brief description of the file.\r\n *\r\n * Copyright (c) 2012-2025 Sebastien Rombauts (sebastien.rombauts@gmail.com)\r\n *\r\n * Distributed under the MIT License (MIT) (See accompanying file LICENSE.txt\r\n * or copy at http://opensource.org/licenses/MIT)\r\n */\r\n#pragma once\r\n\r\n#include <SQLiteCpp/SQLiteCppExport.h>\r\n// other includes...\r\n```\r\n\r\n### Doxygen Format\r\n```cpp\r\n/**\r\n * @brief Execute a step of the prepared query to fetch one row of results.\r\n *\r\n * @param[in] aIndex    Index of the column (0-based)\r\n *\r\n * @return - true  (SQLITE_ROW)  if there is another row ready\r\n *         - false (SQLITE_DONE) if the query has finished executing\r\n *\r\n * @throw SQLite::Exception in case of error\r\n */\r\n```\r\n\r\n### Error Handling\r\n- Use `SQLite::Exception` for errors (inherits `std::runtime_error`).\r\n- Use `check(ret)` after SQLite C API calls.\r\n- In destructors, use `SQLITECPP_ASSERT()` instead of throwing.\r\n\r\n### Minimal API Example\r\n```cpp\r\nSQLite::Database db(\"example.db3\", SQLite::OPEN_READWRITE | SQLite::OPEN_CREATE);\r\n\r\nSQLite::Statement query(db, \"SELECT * FROM test WHERE id > ? AND name = :name\");\r\nquery.bind(1, 5);\r\nquery.bind(\":name\", \"John\");\r\nwhile (query.executeStep())\r\n{\r\n    int id = query.getColumn(0);\r\n    std::string value = query.getColumn(1);\r\n}\r\n\r\nSQLite::Statement insert(db, \"INSERT INTO test VALUES (?, ?)\");\r\ninsert.bind(1, 42);\r\ninsert.bind(2, \"value\");\r\nint changes = insert.exec();\r\n```\r"
+    gold_removed: ''

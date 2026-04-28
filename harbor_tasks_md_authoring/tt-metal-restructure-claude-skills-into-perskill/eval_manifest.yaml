@@ -1,0 +1,62 @@
+version: "2.0"
+
+task:
+  name: tt-metal-restructure-claude-skills-into-perskill
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: tenstorrent/tt-metal
+  pr: 42546
+  base_commit: "622df7d8c26e78f70baa8bc6c159e477ab114d2a"
+  merge_commit: "47fc1f0c80775916dc54fadf2045748dc92d73f8"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in tt_metal/tt-llk/.claude/CLAUDE.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in tt_metal/tt-llk/.claude/CLAUDE.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in tt_metal/tt-llk/.claude/CLAUDE.md."
+
+config_edits:
+  - path: tt_metal/tt-llk/.claude/CLAUDE.md
+    tier: 1
+    gold_added: '**MANDATORY**: Before dispatching agents or taking action for the triggers below, you MUST first invoke the corresponding skill (or `Read` its `SKILL.md`) and follow the instructions inside it. Never manually dispatch sage agents without first loading the relevant skill — the skill defines the correct orchestration pattern, prompt structure, and quality checklist.
+
+      **Note:** Skills live in `.claude/skills/<name>/SKILL.md` relative to this file. Claude Code auto-discovers them when launched from inside `tt-llk/` (nested-subdirectory discovery). If the `Skill` tool doesn''t list them, fall back to `Read(".claude/skills/<name>/SKILL.md")`.
+
+      | Trigger | Skill | What it does |
+
+      |---------|-------|--------------|
+
+      | Architecture, instruction, or LLK questions | `arch-lookup` (`.claude/skills/arch-lookup/SKILL.md`) | Orchestrates sage agents in parallel, aggregates results |
+
+      | Running tests | `run-test` (`.claude/skills/run-test/SKILL.md`) | Dispatches llk-test-runner with correct scenario flags |
+
+      | Debugging kernel errors | `debug-kernel` (`.claude/skills/debug-kernel/SKILL.md`) | Dispatches llk-debugger with inferred arch/kernel type |
+
+      | Porting kernels between architectures | `port-kernel` (`.claude/skills/port-kernel/SKILL.md`) | Launches source + target sages, reads test harness |'
+    gold_removed: ''
+  - path: tt_metal/tt-llk/.claude/skills/arch-lookup/SKILL.md
+    tier: 1
+    gold_added: ''
+    gold_removed: ''
+  - path: tt_metal/tt-llk/.claude/skills/debug-kernel/SKILL.md
+    tier: 1
+    gold_added: ''
+    gold_removed: ''
+  - path: tt_metal/tt-llk/.claude/skills/port-kernel/SKILL.md
+    tier: 1
+    gold_added: ''
+    gold_removed: ''
+  - path: tt_metal/tt-llk/.claude/skills/run-test/SKILL.md
+    tier: 1
+    gold_added: ''
+    gold_removed: ''

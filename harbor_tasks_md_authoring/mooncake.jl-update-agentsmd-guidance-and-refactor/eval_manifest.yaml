@@ -1,0 +1,74 @@
+version: "2.0"
+
+task:
+  name: mooncake.jl-update-agentsmd-guidance-and-refactor
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: chalk-lab/Mooncake.jl
+  pr: 1134
+  base_commit: "d78eb8936b00ea0821ece33b6c5427eaa3b1b5f4"
+  merge_commit: "b5ef16f03f4d29e773fe571573a9f8f6cd2f1c1a"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/inspect/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/inspect/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/inspect/SKILL.md."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/minimise/SKILL.md."
+  - id: signal_04
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/minimise/SKILL.md."
+  - id: signal_05
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/minimise/SKILL.md."
+  - id: signal_06
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_07
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_08
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+
+config_edits:
+  - path: .claude/skills/inspect/SKILL.md
+    tier: 1
+    gold_added: "---\nname: inspect\ndescription: Inspect the AD pipeline IR for a Julia function at each Mooncake compilation stage.\n---\n\n# Inspect\n\nInspect IR transformations in Mooncake's AD pipeline for a given function.\n\n## Setup\n\n```julia\nusing Mooncake, Mooncake.SkillUtils\n```\n\n## Gathering user intent\n\nAsk the user:\n\n1. **Function and arguments** — e.g. `sin, 1.0` or a custom function\n2. **Mode** — reverse (default) or forward\n3. **What to view** — all stages, a specific stage, a diff between two stages, or world age info\n\nDo not assume — ask the user to pick.\n\n## Pipeline stages\n\n### Reverse mode (default)\n| Stage | Symbol | Description |\n|-------|--------|-------------|\n| Raw IR | `:raw` | optimised, type-inferred SSAIR from Julia's compiler |\n| Normalised | `:normalized` | after Mooncake's normalisation passes |\n| BBCode | `:bbcode` | BBCode representation with stable IDs |\n| Forward IR | `:fwd_ir` | generated forward-pass IR |\n| Reverse IR | `:rvs_ir` | generated pullback IR |\n| Optimised Forward | `:optimized_fwd` | forward pass after optimisation |\n| Optimised Reverse | `:optimized_rvs` | pullback after optimisation |\n\n### Forward mode\n| Stage | Symbol | Description |\n|-------|--------|-------------|\n| Raw IR | `:raw` | optimised, type-inferred SSAIR from Julia's compiler |\n| Normalised | `:normalized` | after Mooncake's normalisation passes |\n| BBCode | `:bbcode` | inspection-only — forward mode does not use BBCode internally |\n| Dual IR | `:dual_ir` | generated dual-number IR |\n| Optimised | `:optimized` | after optimisation passes |\n\n## Commands\n\n```julia\n# Full inspection\nins = inspect_ir(f, args...; mode=:reverse)  # or mode=:forward\n\n# View stages\nshow_ir(ins)                          # all stages\nshow_stage(ins, :raw)                 # one stage\n\n# Diffs between stages\nshow_diff(ins; from=:raw, to=:normalized)\nshow_all_diffs(ins)\n\n# World age debugging\nshow_world_info(ins)\n\n# Write everything to files\nwrite_ir(ins, \"/tmp/ir_output\")\n\n# Shorthand helpers\nins = inspect_fwd(f, args...)         # forward mode\nins = inspect_rvs(f, args...)         # reverse mode\nins = quick_inspect(f, args...)       # inspect + display immediately\n\n# Options\ninspect_ir(f, args...;\n    mode       = :reverse,\n    optimize   = true,\n    do_inline  = true,\n    debug_mode = false,\n)\n```\n\n## Presenting results\n\n- Run commands via Bash and present IR in fenced code blocks.\n- When showing diffs, explain what changed and why the transformation matters.\n- If errors occur, check that Mooncake is loaded and the function signature is valid.\n\n## Limitations\n\nInspects Mooncake's internal AD pipeline only. For allocation, world-age, or compiler-boundary debugging, see `docs/src/developer_documentation/advanced_debugging.md`."
+    gold_removed: ''
+  - path: .claude/skills/ir-inspect/SKILL.md
+    tier: 1
+    gold_added: ''
+    gold_removed: ''
+  - path: .claude/skills/minimise/SKILL.md
+    tier: 1
+    gold_added: "---\nname: minimise\ndescription: Prune a bug fix or new tests down to the smallest correct diff through multiple elimination passes. Use before committing any fix or test addition.\n---\n\n# Minimise\n\nThe goal is to remove every line that is not strictly required for correctness,\nthen verify the result still passes the relevant tests.\n\n## Process\n\nRepeat the following until no further reductions are possible:\n\n1. **Read the diff.** Run `git diff HEAD` (or `git diff --cached` if staged) and\n   read every changed file in full.\n\n2. **Challenge each change.** For every changed line ask:\n   - Would removing this line cause a test to fail or a bug to reappear?\n   - Is this a cleanup, rename, refactor, or comment that is not load-bearing?\n   - For new tests: does an existing test already cover this behaviour?\n     If so, drop the new test entirely.\n\n3. **Remove non-essential changes.** Delete anything that does not answer\n   \"yes\" to the first question above. Prefer shrinking an existing case over\n   adding a new one.\n\n4. **Run the minimal test group.** Use the smallest focused test group that\n   exercises the changed code (see `test/runtests.jl` for group names).\n   Confirm all tests pass before continuing.\n\n5. **Repeat** from step 1 until a full pass produces no further removals.\n\n## Heuristics\n\n- A one-line fix is better than a five-line fix.\n- A new test case added to an existing `@testset` is better than a new `@testset`.\n- A new value constructor in `src/test_resources.jl` should be the minimum needed\n  to instantiate the type under test; no extra fields or variants.\n- Comments and blank lines added alongside a fix are not load-bearing; remove them\n  unless they explain something non-obvious.\n- Helper functions introduced solely for the fix are a red flag; inline them.\n\n## When to stop\n\nStop when every remaining line answers \"yes\" to: *if I remove this, the targeted\nbug reappears or the targeted test fails*. At that point report the final diff and\nsuggest committing."
+    gold_removed: ''
+  - path: AGENTS.md
+    tier: 1
+    gold_added: '- When fixing bugs or performance issues (allocations, type instability), prefer minimal inline fixes over new helper functions; make multiple pruning passes before committing to arrive at the smallest correct diff. Use the `minimise` skill before committing.
+
+      - Before adding a new test or test helper, check whether the behaviour is already covered; prefer extending an existing case over introducing a new one, make multiple pruning passes, and keep additions minimal.
+
+      - Use the canonical test utilities: `Mooncake.TestUtils.test_rule` for new differentiation rules; `TestUtils.test_tangent_splitting` on a concrete value (add constructors to `src/test_resources.jl`) for tangent/fdata/rdata correctness rather than direct `@test tangent_type(...)` assertions; `TestUtils.test_data` for custom tangent type implementations.
+
+      - Bug fixes should land with a focused regression test; if the fix depends on compiler or world-age behaviour, isolate it and test directly.'
+    gold_removed: ''

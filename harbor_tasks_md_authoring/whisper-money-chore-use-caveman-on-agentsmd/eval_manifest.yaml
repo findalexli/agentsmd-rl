@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: whisper-money-chore-use-caveman-on-agentsmd
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: whisper-money/whisper-money
+  pr: 305
+  base_commit: "45e311e17baaa510a4309724937c5b18ded42631"
+  merge_commit: "827acb8c15b0ec1a0ce3e170efbb9c14362c683f"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+
+config_edits:
+  - path: AGENTS.md
+    tier: 1
+    gold_added: "Terse like caveman. Technical substance exact. Only fluff die.\nDrop: articles, filler (just/really/basically), pleasantries, hedging.\nFragments OK. Short synonyms. Code unchanged.\nPattern: [thing] [action] [reason]. [next step].\nACTIVE EVERY RESPONSE. No revert after many turns. No filler drift.\nCode/commits/PRs: normal. Off: \"stop caveman\" / \"normal mode\".\n\n  - `public function __construct(public GitHub $github) { }`\n"
+    gold_removed: ''

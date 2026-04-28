@@ -1,0 +1,60 @@
+version: "2.0"
+
+task:
+  name: openvino.genai-extend-copilot-instructionsmd
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: openvinotoolkit/openvino.genai
+  pr: 3654
+  base_commit: "b706e3031f66cdd4ac8b07f4d6fdd6ba43e441f0"
+  merge_commit: "637f8fc40f1d71164176fa05cba45b4954bb4bfd"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/copilot-instructions.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/copilot-instructions.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/copilot-instructions.md."
+
+config_edits:
+  - path: .github/copilot-instructions.md
+    tier: 1
+    gold_added: '6. Avoid redundant inline comments next to `OPENVINO_ASSERT()` and `OPENVINO_THROW()`; the error message argument must be clear and self-explanatory.
+
+      7. Formatting & Safety:
+
+      8. Follow constructors and member initializer lists style instead of direct assignments in the constructor body.
+
+      9. When initial container values are known upfront, prefer initializer-list / brace-initialization over constructing an empty container and immediately inserting values.
+
+      10. Make sure the function names are descriptive.
+
+      11. Check for variables with different names but similar meaning or aliasing.
+
+      12. Avoid duplicate code. Ensure that common functionality is extracted into reusable functions or utilities.
+
+      13. Avoid pronouns in comments and names to make the statements concise.
+
+      14. Unused functions and constructors aren''t allowed except for in `debug_utils.hpp`.
+
+      15. `debug_utils.hpp` must never be included.
+
+      16. Assumptions on the user''s behalf aren''t allowed. For example, the implementation shouldn''t adjust config values silently or with a warning; it should throw an exception instead.
+
+      17. Extend sample and functional tests with `tiny-random` model when a new model architecture is added.
+
+      18. When factoring out a function, ensure the implementation doesn''t change.
+
+      19. Samples:
+
+      9. Helper scripts shouldn''t be committed.'
+    gold_removed: ''

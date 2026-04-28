@@ -1,0 +1,42 @@
+version: "2.0"
+
+task:
+  name: images-add-instructions-for-copilot-code
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: devcontainers/images
+  pr: 1607
+  base_commit: "23003205fd7584851e406903b5ad550edfcf842c"
+  merge_commit: "84a5cfc254a7965a74907aaa269d4409fbb07f37"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/copilot-instructions.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/copilot-instructions.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/copilot-instructions.md."
+
+config_edits:
+  - path: .github/copilot-instructions.md
+    tier: 1
+    gold_added: '# For Copilot Code Review
+
+      - Every image change must bump the version in the image''s `manifest.json` using semantic versioning.
+
+      - Breaking changes (for example, swapping the base OS) require a major bump; new non-breaking features require a minor bump; security or bug fixes require a patch bump.
+
+      - Adding a variant means updating the architecture entry in `manifest.json`, listing the variant in `variantTags`, and setting it as `latest` unless it is a preview.
+
+      - Keep the README in sync: update variant tables, tags, and version references to match the manifest.
+
+      - Example: PR #1548 switched `src/typescript-node/.devcontainer/Dockerfile` to the `4-*` JavaScript base, so `src/typescript-node/manifest.json` moved from 3.0.3 to 4.0.0, added the `*-trixie` variants to both `variants` and `build.architectures`, updated `variantTags`, and set `build.latest` to `24-trixie`; `src/typescript-node/README.md` then reflected the new default tags.'
+    gold_removed: ''

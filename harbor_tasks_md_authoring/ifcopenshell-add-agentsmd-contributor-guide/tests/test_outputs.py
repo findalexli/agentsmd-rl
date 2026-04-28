@@ -1,0 +1,35 @@
+"""Behavioral checks for ifcopenshell-add-agentsmd-contributor-guide (markdown_authoring task).
+
+Each test asserts that a distinctive literal from the gold patch appears
+in the target tier-1 file after the agent runs.
+"""
+from __future__ import annotations
+
+from pathlib import Path
+
+REPO = Path("/workspace/ifcopenshell")
+
+
+def _read(path: str) -> str:
+    p = REPO / path
+    assert p.is_file(), f"{p} does not exist"
+    return p.read_text(encoding="utf-8", errors="replace")
+
+
+def test_signal_00():
+    """Distinctive line from gold patch must be present."""
+    text = _read('AGENTS.md')
+    assert 'you agree that your contribution is licensed under the applicable license above.' in text, "expected to find: " + 'you agree that your contribution is licensed under the applicable license above.'[:80]
+
+
+def test_signal_01():
+    """Distinctive line from gold patch must be present."""
+    text = _read('AGENTS.md')
+    assert '- Python tests use **pytest** and are located in `test/` or `tests/` directories' in text, "expected to find: " + '- Python tests use **pytest** and are located in `test/` or `tests/` directories'[:80]
+
+
+def test_signal_02():
+    """Distinctive line from gold patch must be present."""
+    text = _read('AGENTS.md')
+    assert '- **Unnecessary additions**: Do not add docstrings, comments, type annotations,' in text, "expected to find: " + '- **Unnecessary additions**: Do not add docstrings, comments, type annotations,'[:80]
+

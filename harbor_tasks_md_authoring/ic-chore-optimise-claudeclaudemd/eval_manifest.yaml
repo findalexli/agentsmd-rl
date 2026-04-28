@@ -1,0 +1,35 @@
+version: "2.0"
+
+task:
+  name: ic-chore-optimise-claudeclaudemd
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: dfinity/ic
+  pr: 8994
+  base_commit: "8ce3464705d52c0cce0173090f95e50874423932"
+  merge_commit: "1a43490cec7fef25e1f071476592f6bee824f880"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/CLAUDE.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/CLAUDE.md."
+
+config_edits:
+  - path: .claude/CLAUDE.md
+    tier: 1
+    gold_added: 'After changing Rust code (`*.rs`) first format the code using:
+
+
+      ```
+
+      cargo fmt -- <MODIFIED_RUST_FILES>
+
+      ````'
+    gold_removed: ''

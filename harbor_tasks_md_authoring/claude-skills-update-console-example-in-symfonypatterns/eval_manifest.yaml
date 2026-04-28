@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: claude-skills-update-console-example-in-symfonypatterns
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: Jeffallan/claude-skills
+  pr: 164
+  base_commit: "77037f2d384baea59d97fdd7b43d9a855babc444"
+  merge_commit: "6e042d24c38620e1ba8bc2fcf5fe7fe8f5f73d69"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/php-pro/references/symfony-patterns.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/php-pro/references/symfony-patterns.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/php-pro/references/symfony-patterns.md."
+
+config_edits:
+  - path: skills/php-pro/references/symfony-patterns.md
+    tier: 1
+    gold_added: "        $user = $this->userService->createUser($email, $password, $isAdmin);\n        $io->success(sprintf('User created with ID: %d', $user->getId()));\n        return Command::SUCCESS;"
+    gold_removed: ''

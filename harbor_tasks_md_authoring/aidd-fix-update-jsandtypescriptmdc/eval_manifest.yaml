@@ -1,0 +1,30 @@
+version: "2.0"
+
+task:
+  name: aidd-fix-update-jsandtypescriptmdc
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: paralleldrive/aidd
+  pr: 7
+  base_commit: "99e1e8fa9165de2e45fe95f3f8e0c0b64ff05e27"
+  merge_commit: "5aec7d1b775408957e906413456355401f02ae1d"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in ai/js-and-typescript.mdc."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in ai/js-and-typescript.mdc."
+
+config_edits:
+  - path: ai/js-and-typescript.mdc
+    tier: 1
+    gold_added: 'globs: **/*.js,**/*.jsx,**/*.ts,**/*.tsx
+
+      alwaysApply: false'
+    gold_removed: ''

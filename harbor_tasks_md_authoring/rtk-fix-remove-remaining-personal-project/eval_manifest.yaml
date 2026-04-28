@@ -1,0 +1,24 @@
+version: "2.0"
+
+task:
+  name: rtk-fix-remove-remaining-personal-project
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: rtk-ai/rtk
+  pr: 251
+  base_commit: "3a8044ef6991b2208d904b7401975fcfcb165cdb"
+  merge_commit: "5b597002dcd99029cb9c0da9b6d38b44021bdb3a"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+
+config_edits:
+  - path: CLAUDE.md
+    tier: 1
+    gold_added: '- **Testing**: Validated on a production T3 Stack project'
+    gold_removed: ''

@@ -1,0 +1,429 @@
+version: "2.0"
+
+task:
+  name: claude-code-toolkit-refactorsapccaudit-decompose-skillmd-int
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: notque/claude-code-toolkit
+  pr: 436
+  base_commit: "40a423fd425e916b439dbd08eea979c1605963c8"
+  merge_commit: "cd969815e5d7c6fa110545e28b3f37d88611071e"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/sapcc-audit/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/sapcc-audit/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/sapcc-audit/SKILL.md."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/sapcc-audit/references/output-templates.md."
+  - id: signal_04
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/sapcc-audit/references/output-templates.md."
+  - id: signal_05
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/sapcc-audit/references/output-templates.md."
+  - id: signal_06
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/sapcc-audit/references/phase-1-discover-commands.md."
+  - id: signal_07
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/sapcc-audit/references/phase-1-discover-commands.md."
+  - id: signal_08
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/sapcc-audit/references/phase-1-discover-commands.md."
+  - id: signal_09
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/sapcc-audit/references/phase-2-dispatch-agents.md."
+  - id: signal_10
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/sapcc-audit/references/phase-2-dispatch-agents.md."
+  - id: signal_11
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/sapcc-audit/references/phase-2-dispatch-agents.md."
+
+config_edits:
+  - path: skills/sapcc-audit/SKILL.md
+    tier: 1
+    gold_added: 'version: 2.1.0
+
+      ## Reference Loading Table
+
+      | Signal | Load This File | When |
+
+      |--------|---------------|------|
+
+      | Phase 1 begins | `references/phase-1-discover-commands.md` | Detection commands, package mapping, segmentation table |
+
+      | Phase 2 begins | `references/phase-2-dispatch-agents.md` | Full dispatch prompt and per-domain review checklist (11 areas) |
+
+      | Phase 3 begins | `references/output-templates.md` | Report scaffold, per-finding format, severity guide |
+
+      Load each reference file at the start of its phase. Do not load all three upfront.
+
+      ---
+
+      ## Instructions
+
+      ### Phase 1: DISCOVER
+
+      **Goal**: Map the repository and plan the package segmentation.
+
+      Read `references/phase-1-discover-commands.md` for the exact detection commands, segmentation table, and file-count queries.
+
+      Verify this is an sapcc project (sapcc imports in go.mod). If not, stop immediately.
+
+      Map all packages, count files per package, and produce a segmentation table (5–8 agents, 5–15 files each).
+
+      ---
+
+
+      Read `references/phase-2-dispatch-agents.md` for the full dispatch prompt (11 review areas: over-engineering, dead code, error messages, constructors, interface contracts, copy-paste, HTTP handlers, database patterns, type patterns, logging, mixed approaches).
+
+      Use the standard dispatch prompt verbatim, substituting the assigned package list.
+
+      **Dispatch all agents in a single message using the Task tool with `subagent_type=golang-general-engineer`.**
+
+      ---
+
+
+      Read `references/output-templates.md` for the report scaffold, per-finding format, and deduplication rules.
+
+      Deduplicate by `file:line`. Write `sapcc-audit-report.md`. Display verdict, must-fix count, and top 5 findings inline.
+
+      | Not an sapcc project | Stop immediately. Print: "This does not appear to be an SAP CC Go project (no sapcc imports in go.mod)." |
+
+      | Agents cannot read a file | Log and continue. Flag in the report under "Warnings." |
+
+      | gopls MCP tools unavailable | Fall back to manual grep-based analysis. Note in the report. |
+
+      | Too many packages (>30) | Split into >8 agents. Ensure each still gets 5-15 files. |
+
+      | Agent finds no violations | Report is valid. Output empty sections for unused severity levels. |
+
+      **Audit only**: READS and REPORTS. Does NOT modify code unless explicitly asked with `--fix`.
+
+      ## Integration
+
+
+      - **Router**: `/do` routes via "sapcc audit", "sapcc compliance", "sapcc lead review"
+
+      - **Pairs with**: `go-patterns` (the rules), `golang-general-engineer` (the executor)
+
+      Always available for calibration (load only when needed): `quality-issues.md`, `review-standards-lead.md`.'
+    gold_removed: ''
+  - path: skills/sapcc-audit/references/output-templates.md
+    tier: 1
+    gold_added: '# Output Templates
+
+
+      > **Load when**: Phase 3 (COMPILE REPORT) begins.
+
+      > **Purpose**: Report scaffold, per-agent finding format, and severity guide for the final audit output.
+
+
+      ---
+
+
+      ## Report File Template
+
+
+      Create `sapcc-audit-report.md` with this structure:
+
+
+      ```markdown
+
+      # SAPCC Code Review: [repo name]
+
+
+      **Reviewed by**: Lead & secondary reviewer standards (simulated)
+
+      **Date**: [date]
+
+      **Packages**: [N] packages, [M] Go files
+
+
+      ## Verdict
+
+
+      [One paragraph: Would this pass review? What''s the overall impression?]
+
+
+      ## Must-Fix (Would Block PR)
+
+
+      [Each finding with current/should-be code]
+
+
+      ## Should-Fix (Strong Review Comments)
+
+
+      [Each finding with current/should-be code]
+
+
+      ## Nits
+
+
+      [Each finding, brief]
+
+
+      ## What''s Done Well
+
+
+      [Genuine positives — things a reviewer would note approvingly]
+
+
+      ## Package-by-Package Summary
+
+
+      | Package | Files | Must-Fix | Should-Fix | Nit | Verdict |
+
+      |---------|-------|----------|-----------|-----|---------|
+
+      | internal/api | N | X | Y | Z | [emoji] |
+
+      | ... | | | | | |
+
+      ```
+
+
+      ---
+
+
+      ## Per-Finding Format
+
+
+      Each finding from dispatched agents uses this format:
+
+
+      ```
+
+      ### [MUST-FIX / SHOULD-FIX / NIT]: [One-line summary]
+
+      **File**: `path/to/file.go:LINE`
+
+      **Convention**: "[What a lead reviewer would actually write in a PR comment]"
+
+
+      **Current code**:
+
+      [actual code from the file, 3-10 lines]
+
+
+      **Should be**:
+
+      [what the code should look like after fixing]
+
+
+      **Why**: [One sentence explaining the principle]
+
+      ```
+
+
+      ---
+
+
+      ## Severity Guide
+
+
+      | Level | Meaning | Action |
+
+      |-------|---------|--------|
+
+      | MUST-FIX | Would block the PR: data loss, interface violation, wrong behavior | Always include; leads the report |
+
+      | SHOULD-FIX | Strong review comment: dead code, copy-paste, bad errors | Include with full before/after |
+
+      | NIT | Comment but not blocking: style, naming, minor simplification | Brief — no full code blocks needed |
+
+
+      ---
+
+
+      ## Deduplication Rule
+
+
+      Some findings may overlap (e.g., dead-code agent and architecture agent flag the same unused function). Deduplicate by `file:line`. When two agents flag the same location, keep the finding with the higher severity.
+
+
+      ---
+
+
+      ## Summary Display (Inline)
+
+
+      After writing the report file, display to the user:
+
+      1. Overall verdict (one sentence)
+
+      2. Must-fix count
+
+      3. Top 5 findings (file + one-line summary only)
+
+      4. Path to full report
+
+
+      Example:
+
+
+      ```
+
+      Verdict: Needs work before review — 3 must-fix issues found.
+
+      Must-Fix: 3 | Should-Fix: 11 | Nits: 7
+
+
+      Top findings:
+
+      1. [MUST-FIX] internal/api/handler.go:42 — interface with single implementation
+
+      2. [MUST-FIX] internal/storage/db.go:87 — "internal error" with no context
+
+      3. [MUST-FIX] internal/auth/auth.go:15 — constructor returns error (infallibility violation)
+
+      4. [SHOULD-FIX] internal/config/config.go:33 — viper config file instead of osext.MustGetenv
+
+      5. [SHOULD-FIX] internal/api/routes.go:61 — duplicate handler (90% identical to routes.go:89)
+
+
+      Full report: sapcc-audit-report.md
+
+      ```'
+    gold_removed: ''
+  - path: skills/sapcc-audit/references/phase-1-discover-commands.md
+    tier: 1
+    gold_added: '# Phase 1: DISCOVER — Detection Commands
+
+
+      > **Load when**: Phase 1 (DISCOVER) begins.
+
+      > **Purpose**: Go grep/vet detection commands for mapping the repository and validating it is an sapcc project.
+
+
+      ---
+
+
+      ## Step 1: Verify sapcc Project
+
+
+      ```bash
+
+      head -5 go.mod  # Check module path
+
+      grep "sapcc" go.mod  # Check for sapcc imports
+
+      ```
+
+
+      If neither command surfaces an sapcc module path or sapcc imports, stop immediately and report: "This does not appear to be an SAP CC Go project (no sapcc imports in go.mod)."
+
+
+      ---
+
+
+      ## Step 2: Map All Packages
+
+
+      ```bash
+
+      find . -name "*.go" -not -path "./vendor/*" | sed ''s|/[^/]*$||'' | sort -u
+
+      ```
+
+
+      Count files per package. This determines how to segment for parallel agents.
+
+
+      ---
+
+
+      ## Step 3: Plan Agent Segmentation
+
+
+      Group packages so each agent gets 5–15 files (sweet spot for thorough review). Target 5–8 agents.
+
+
+      Example segmentation for a typical sapcc repo:
+
+
+      | Agent | Packages | Focus |
+
+      |-------|----------|-------|
+
+      | 1 | `cmd/` + `main.go` files | Startup patterns, CLI structure |
+
+      | 2 | `internal/api/` | HTTP handlers, error responses, routing |
+
+      | 3 | `internal/config/` + `internal/auth/` | Configuration, auth patterns |
+
+      | 4 | `internal/storage/` + `internal/wal/` | Storage, persistence, error handling |
+
+      | 5 | `internal/router/` + `internal/source/` | Core logic, concurrency |
+
+      | 6 | `internal/integrity/` + `internal/limiter/` + remaining | Crypto, rate limiting |
+
+      | 7 | All `*_test.go` files | Testing patterns, assertions |
+
+
+      Adjust to actual package sizes.
+
+
+      ---
+
+
+      ## Additional Discovery Commands
+
+
+      ```bash
+
+      # Count .go files per package for sizing agents
+
+      find . -name "*.go" -not -path "./vendor/*" | sed ''s|/[^/]*$||'' | sort | uniq -c | sort -rn
+
+
+      # List all test files separately (often warrants a dedicated agent)
+
+      find . -name "*_test.go" -not -path "./vendor/*" | sort
+
+
+      # Quick project scale check
+
+      find . -name "*.go" -not -path "./vendor/*" | wc -l
+
+      ```
+
+
+      ---
+
+
+      ## Gate
+
+
+      Packages mapped, agents planned, segmentation table drafted. Proceed to Phase 2.
+
+
+      If more than 30 packages, plan >8 agents. Keep 5–15 files per agent for review depth.'
+    gold_removed: ''
+  - path: skills/sapcc-audit/references/phase-2-dispatch-agents.md
+    tier: 1
+    gold_added: "# Phase 2: DISPATCH — Agent Dispatch Prompts\n\n> **Load when**: Phase 2 (DISPATCH) begins, after Phase 1 segmentation is complete.\n> **Purpose**: Per-domain agent dispatch prompts for parallel package review.\n\n---\n\n## Dispatch Principles\n\n- **Read the actual code.** Agents MUST use the Read tool to read every .go file in their assigned packages. Read every file directly rather than guessing from names or grep output.\n- **Use gopls MCP tools when available**: `go_workspace` to detect workspace structure, `go_file_context` after reading each .go file for intra-package dependency understanding, `go_symbol_references` to verify type usage across packages (critical for export decisions), `go_package_api` to inspect package APIs, `go_diagnostics` to verify any fixes.\n- **Real review, not checklists.** The primary question for every function is: \"Would this pass review?\" not \"does it follow a checklist.\" A real reviewer reads code holistically and reacts to architectural issues, not just mechanical patterns.\n- **Segment by package, not by concern.** Dispatch agents by package groups, NOT by concern area. Each agent reviews its packages holistically (errors + architecture + patterns + tests together), exactly like a real PR review.\n- **Code-level findings only.** Every finding MUST include the actual code snippet and a concrete fix showing what it should become.\n\n---\n\n## Standard Dispatch Prompt\n\nUse this prompt verbatim for each dispatched agent, substituting `[list of packages with full paths]`:\n\n```\nYou are reviewing code in an SAP Converged Cloud Go project against established\nreview standards. Your job is to find things that would actually be commented on\nor rejected in a PR.\n\nPACKAGES TO REVIEW: [list of packages with full paths]\n\nRead EVERY .go file in these packages using the Read tool. For each file:\n\n1. **Over-engineering** (Lead Reviewer's #1 Concern)\n   - Interfaces with only one implementation? → \"Just use the concrete type.\" Project convention: only create interfaces when there are 2+ real implementations.\n   - Wrapper function that adds nothing? → \"Delete this, call the real function\"\n   - Struct for one-time JSON? → \"Use fmt.Sprintf + json.Marshal\" (per project convention)\n   - Option struct for constructor? → \"Just use positional params.\" Project convention uses 7-8 positional params, always positional params.\n   - Config file/viper? → \"Use osext.MustGetenv.\" Project convention uses environment variables exclusively. Pure env vars only.\n\n2. **Dead code**\n   - Exported functions with no callers outside the package? Use Grep to check: `grep -r \"FunctionName\" --include=\"*.go\"`. If no callers exist, flag it.\n   - Interface methods unused\n   - Fields set but unread\n   - Entire packages imported but barely used\n   - \"TODO: remove\" comments on code that should already be gone\n\n3. **Error messages** (Secondary Reviewer's #1 Concern)\n   - `http.Error(w, \"internal error\", 500)` — useless to the caller\n   - Error wrapping: uses %w when caller needs errors.Is/As, %s with .Error() to intentionally break chain\n   - Message format: \"cannot <operation>: %w\" or \"while <operation>: %w\" with relevant identifiers\n   - Would a user/operator reading this know what to do?\n   - \"internal error\" with no context = CRITICAL\n   - Return the primary error; log secondary/cleanup errors. Primary error returned, secondary/cleanup errors logged.\n\n4. **Constructor patterns**\n   - Constructor should be `NewX(deps...) *X` — returns infallibly (no error) (construction is infallible)\n   - Uses positional struct literal init: `&API{cfg, ad, fd, sd, ...}` (no field names)\n   - Injects default functions for test doubles: `time.Now`, etc.\n   - Override pattern for test doubles: fluent `OverrideTimeNow(fn) *T` methods\n\n5. **Interface contracts**\n   - If the package implements an interface from another package: Read the interface definition\n   - Check if the implementation actually satisfies the contract\n   - Does it return correct error types? Default values where errors are expected?\n   - Interfaces should be defined in the consumer package, not the implementation package\n\n6. **Copy-paste structs**\n   - Two structs with the same fields (one for internal, one for API response)?\n   - Handler functions that are 90% identical (extract the common pattern)\n   - Duplicated validation logic\n\n7. **HTTP handler patterns** (Must match keppel patterns)\n   - Handlers: methods on *API with `handleVerbResource(w, r)` signature\n   - Auth: called inline at top of handler, NOT middleware\n   - JSON decode: `json.NewDecoder` + `DisallowUnknownFields()`\n   - Responses: `respondwith.JSON(w, status, map[string]any{\"key\": val})`\n   - Internal errors: `respondwith.ObfuscatedErrorText(w, err)` — hides 500s from clients\n   - Route registration: one `AddTo(*mux.Router)` per API domain, composed via `httpapi.Compose`\n\n8. **Database patterns**\n   - SQL queries as package-level `var` with `sqlext.SimplifyWhitespace()`\n   - PostgreSQL `$1, $2` params (always `$1, $2` (PostgreSQL syntax))\n   - gorp for simple CRUD, raw SQL for complex queries\n   - Transactions: `db.Begin()` + `defer sqlext.RollbackUnlessCommitted(tx)`\n   - NULL: `Option[T]` (from majewsky/gg/option), not `*T` pointers\n\n9. **Type patterns**\n   - Named string types for domain concepts: `type AccountName string`\n   - String enums with typed constants (NOT iota): `const CleanSeverity VulnerabilityStatus = \"Clean\"`\n   - Model types use `db:\"column\"` tags; API types use `json:\"field\"` tags — separate types\n   - Pointer receivers for all struct methods (value receivers only for tiny data-only types)\n\n10. **Logging patterns**\n    - `logg.Fatal` ONLY in cmd/ packages for startup failures\n    - `logg.Error` for secondary/cleanup errors (only for secondary/cleanup errors)\n    - `logg.Info` for operational events\n    - Use logg package for all logging\n    - Panics only for impossible states, annotated with \"why was this not caught by Validate!?\"\n\n11. **Mixed approaches** (Pattern consistency)\n    - Some handlers return JSON errors, others return text/plain\n    - Some constructors panic on nil args, others return errors\n    - Some packages use logg, others use log\n\nFor EACH finding, output:\n\n### [MUST-FIX / SHOULD-FIX / NIT]: [One-line summary]\n**File**: `path/to/file.go:LINE`\n**Convention**: \"[What a lead reviewer would actually write in a PR comment]\"\n\n**Current code**:\n```go\n[actual code from the file, 3-10 lines]\n```\n\n**Should be**:\n```go\n[what the code should look like after fixing]\n```\n\n**Why**: [One sentence explaining the principle]\n\n---\n\nSEVERITY GUIDE:\n- MUST-FIX: Would block the PR (data loss, interface violation, wrong behavior)\n- SHOULD-FIX: Would get a strong review comment (dead code, copy-paste, bad errors)\n- NIT: Would get a comment but not block (style, naming, minor simplification)\n\nSkip:\n- Generic Go best practices (t.Parallel, DisallowUnknownFields, context.Context first)\n- Things that are actually fine but could theoretically be \"better\"\n- Suggestions that add complexity without clear benefit\n\nFocus on:\n- Real over-engineering (lead reviewer's #1 concern)\n- Actually useless error messages (secondary reviewer's #1 concern)\n- Dead code that should be deleted\n- Interface contract bugs\n- Constructor/config patterns that diverge from keppel patterns\n- Inconsistent patterns within the same repo\n```\n\n---\n\n## Dispatch Instruction\n\n**Dispatch all agents in a single message using the Task tool with `subagent_type=golang-general-engineer`.**\n\nGate: All agents dispatched. Proceed to Phase 3."
+    gold_removed: ''
