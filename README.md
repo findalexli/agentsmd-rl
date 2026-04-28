@@ -1,98 +1,92 @@
 # agentsmd-rl
 
-RL training on SWE tasks from repositories with agent instruction files (AGENTS.md, CLAUDE.md, .cursorrules).
+A benchmark and RL training pipeline for AI coding agents that work with **agent rule files** — `CLAUDE.md`, `AGENTS.md`, `SKILL.md`, `.cursor/rules/*`, `.claude/skills/*` and friends. These are the markdown files repos check in alongside their code to tell coding agents how to behave.
 
-## Research Question
+**The benchmark has two parts**, each testing a different skill:
 
-> Can we train coding agents to REASON about which repository instructions apply to a specific task, rather than blindly following all of them?
+| | What the agent does | What we measure | Corpus | Tasks |
+|---|---|---|---|---|
+| **Part 1 — agentmd-following** | Reads the repo's rule files, then writes code to fix a bug | Does the code follow the conventions the rule files document? (e.g. "use snake_case", "no wildcard imports", "always add a /api/v2 prefix") | `harbor_tasks/` | **610** |
+| **Part 2 — agentmd-create/edit** | Writes or edits a rule file (creating new conventions, fixing a typo, adding a section) | Does the agent's output contain the distinctive lines the human author wrote in the gold PR? | `harbor_tasks_md_authoring/` | **2,482** |
 
-Repos have hierarchical config files (AGENTS.md, CLAUDE.md, SKILL.md) with 20-200+ rules at multiple directory levels. Many rules are irrelevant or even harmful for a specific PR. An agent that blindly follows everything wastes time or introduces errors.
+Both parts come from real merged GitHub PRs (we don't synthesize anything). Both ship as Docker images on `ghcr.io/findalexli/agentsmd-rl/<task>:latest` and use the same scoring harness — a deterministic test plus optional LLM judges. Snapshot 2026-04-28: **3,092 active tasks total**.
 
-**Key insight**: The PR author's choices — which conventions they follow vs. ignore — are the ground truth signal for instruction discrimination. We extract this signal as positive rubrics (rules the gold solution follows) and negative rubrics / distractors (rules that SEEM relevant but following them would produce worse code).
+A small third corpus, `harbor_tasks_agentmd_edits/` (82 tasks), holds PRs that do *both* — fix code AND update the rule file in the same diff — and tests whether agents can keep code and config in sync.
 
-Grounded in: [NoisyBench](https://arxiv.org/abs/2601.07226) (80% drop from hard distractors), [RARE](https://arxiv.org/abs/2505.18761) (rationale-aware reward), [SkillsBench](https://arxiv.org/abs/2602.12670) (skill selection with distractors), [GSM-DC](https://arxiv.org/abs/2505.18761) (distractor training improves OOD robustness).
+## Why this matters
 
-See [research/negative_rubrics_plan.md](research/negative_rubrics_plan.md) for the full research plan.
+A repo's rule files often contain 20–200 rules across nested directory levels. Some apply to your specific bug, some don't. An agent that blindly follows everything wastes time or breaks code; an agent that ignores them all writes against project conventions.
 
-## Task taxonomy
+The research question:
 
-A merged PR is useful for the benchmark only when its gold fix is **causally shaped by the repo's agent-instruction files** (CLAUDE.md / AGENTS.md / SKILL.md / .cursor/rules / etc.). A Gemini 3.1 Pro judge sorts every candidate PR into four buckets (rates from the 2026-04-26 scout pass over 13,046 PRs):
+> Can we train coding agents to **reason about which repository instructions apply** to a specific task, rather than blindly following all of them or ignoring them all?
 
-| Class | Gold diff | What it tests | Share |
-|---|---|---|---|
-| **A — edits a tier-1 file** | Includes changes to CLAUDE.md / AGENTS.md / SKILL.md / `.cursor/rules`. | "Can the agent update agent-instruction files correctly?" | 1.6% (204) |
-| **B — code follows a rule** | Code-only, but the fix encodes a rule documented in a tier-1 file (e.g. "use 7-char commit hashes", "no wildcard imports"). | "Can the agent reason about which conventions apply to this fix?" | 4.2% (546) |
-| C — decorative *(discarded)* | Code-only fix determined purely by the bug; removing the markdown wouldn't change the fix. | (nothing instruction-specific) | 79.7% (10,398) |
-| D — unscaffoldable *(discarded)* | Platform-specific (iOS / Windows / GPU), >500-line refactor, no testable behavior. | (cannot become a Linux Docker benchmark) | 14.5% (1,896) |
+The signal we exploit: when a human writes a PR, they make choices about which conventions to follow. That choice — visible in the gold diff — is the ground truth. Conventions the gold solution follows become **positive rubrics**. Conventions that look relevant but would have produced a worse solution if applied become **negative rubrics / distractors**.
 
-**A + B are kept** — complementary. C and D are discarded.
+Grounded in: [NoisyBench](https://arxiv.org/abs/2601.07226) (80% accuracy drop from hard distractors), [RARE](https://arxiv.org/abs/2505.18761) (rationale-aware reward), [SkillsBench](https://arxiv.org/abs/2602.12670) (skill selection with distractors), [GSM-DC](https://arxiv.org/abs/2505.18761) (distractor training improves out-of-distribution robustness). See [research/negative_rubrics_plan.md](research/negative_rubrics_plan.md) for the full research plan.
 
-Type B is roughly 2.7× the size of A and is the more important bucket conceptually: **most agent-instruction-following happens without the agent ever editing the markdown** — it manifests in the choices the agent makes inside the code.
+## How the two parts split the universe of PRs
 
-All tasks get the same 4-track evaluation: programmatic fail-to-pass + pass-to-pass tests, plus a self-contained Gemini judge in `test.sh` that scores convention compliance (positive rubric) and distractor avoidance (negative rubric).
+Every merged PR we look at falls into one of four categories, depending on what its gold diff contains:
 
-### Where tasks live on disk (snapshot 2026-04-28)
-
-| Folder | Active | Quarantined | Notes |
-|---|---|---|---|
-| `harbor_tasks/` | 610 (Type A+B, code-fix) | — | Opus 4.7 scaffolded, ≈ 93 % Docker-oracle pass, 89 % rubric pass |
-| `harbor_tasks_md_authoring/` | **2,482** | 274 (266 quality, 5 secret-pattern, 3 unfetchable base SHA) | Deterministic scaffold + Gemini quality gate. **Comprehensive 2026-04-28 scout** covers essentially every ≥100-star public repo with rule files, last 8 months. CI builds GHCR images. |
-| `harbor_tasks_agentmd_edits/` | 82 (code + config edits, Track 2) | — | Smaller, harder corpus |
-
-The two flagship corpora hold **3,092 active tasks**. The 2026-04-28 overnight comprehensive scout grew the markdown-authoring corpus from 1,137 → 2,482 (+1,348 net) by enumerating *every* tier-1 rule file via Code Search + per-repo PR enumeration, then dual-discovering with the 28-query date-windowed title scout. See [research/data_mining_pipeline.md §3.1](research/data_mining_pipeline.md) for the full architecture.
-
-#### Coverage claim — 2026-04-28 comprehensive scout
-
-We believe the markdown-authoring corpus now reflects a near-exhaustive census of skill / agent-md authoring PRs from production-grade public repos:
-
-- **24 code-search queries** (subdivided by `path:` / `extension:` to break GitHub's 1000-result-per-query cap) → **15,608 unique repos** with at least one tier-1 rule file in default branch.
-- After ≥100-star + non-archived + non-fork filter (batched GraphQL): **846 healthy repos**.
-- Per-repo merged-PR enumeration (last 50 since 2025-09-01) + tier-1 path filter: **2,745 PRs**.
-- Plus a **28-query date-windowed title scout** (`SKILL.md`, `AGENTS.md`, `CLAUDE.md`, `.cursorrules`, `.mdc`, …) that recovered **4,301 PRs**, including the cap-truncated tails of 7 saturating queries (each split into 4 disjoint date sub-windows for an additional 4× recall).
-- Merged + deduped: **6,966 unique candidate PRs** in the active window.
-
-Remaining recall gaps are intentional: < 100-star repos (quality floor), PRs older than 2025-09-01, repos archived or made private after the index, and forks. The infrastructure (`taskforge/gh_graphql.py` + `scripts/code_search_phase2_batched.py`) makes a full re-run feasible in ~2 hours of wall clock and ~1,300 GraphQL calls.
-
-## How tasks are filtered
-
-We run two parallel pipelines, distinguished by what the gold diff modifies:
-
-- **Pipeline A — code-fix** (→ `harbor_tasks/`). PR's diff is code; the fix encodes a rule documented in a tier-1 file (or *is* the agent's update to such a file). Scaffolded with **Claude Opus 4.7** inside an isolated sandbox so it can read the repo and design a behavioral test.
-- **Pipeline B — markdown-authoring** (→ `harbor_tasks_md_authoring/`). PR's diff is *only* tier-1 instruction files. Scaffolded **deterministically** (no LLM): shallow-clone at base SHA, apply the gold patch, generate `test_outputs.py` that greps for the most distinctive `+` lines. The Gemini judge serves as the quality gate.
-
-Pipeline A starts from a hand-curated allowlist of rule-equipped repos and walks each one's recent merged PRs. Pipeline B's discovery is now **comprehensive** as of 2026-04-28: code search by filename + path enumerates the universe of repos with rule files, and a 28-query date-windowed title scout captures the rest.
-
-| | Pipeline A (code-fix) | Pipeline B (markdown-authoring) |
+| What's in the gold diff | Goes to | Tests what |
 |---|---|---|
-| Latest scout | 2026-04-26 (147 repos, 12-month window) | **2026-04-28 comprehensive** (15,608 repos enumerated; 846 ≥100-star healthy repos walked; 8-month window) |
-| Discovery | Repo allowlist + per-repo PR walk | Code search (24 filename/path queries) + 28 title queries (windowed×4 on cap-saturating ones) |
-| Raw merged PRs fetched | 19,417 | 23,812 (code-search Phase 2) + ~10,058 (title hits, deduped to 4,301) |
-| After scout-time filters | 14,549 unique | 6,966 unique candidates |
-| Pre-classifier filter | Tier-1 *repo* allowlist | Tier-1 *path* regex (every changed file must match) |
-| Classifier | Gemini per-PR causality judge → A / B / C / D / ERR | Two-stage Gemini judge: pre-judge by title, post-judge by full gold patch |
-| GraphQL infra | – | `taskforge/gh_graphql.py` — batched alias queries, ~50× fewer GitHub API calls than naive REST |
-| Survivors after classifier | A=204 + B=546 = 750 (5.7%) | 1,351 newly-built tasks (19 % per-PR yield in comprehensive scout) |
-| Scaffold | Opus 4.7 + Docker oracle (≈25-30% scaffold-fail) | Deterministic, ≈99% success |
-| Cumulative active corpus | **610** | **2,482** (post-judge re-run pending — see below) |
+| Edits a rule file (`CLAUDE.md`, `SKILL.md`, etc.) — possibly alongside code | **Part 2** (`harbor_tasks_md_authoring/`) | Can the agent author or update rule files? |
+| Code only, but the fix encodes a rule that's documented in a rule file | **Part 1** (`harbor_tasks/`) | Can the agent recognise which documented conventions apply? |
+| Code only, fully determined by the bug — rule files don't matter | Discarded | (nothing instruction-specific to test) |
+| Platform-specific (iOS/Windows/GPU), >500-line refactor, no testable behaviour | Discarded | (can't fit into a Linux Docker oracle) |
 
-**End-to-end yield**: ≈3 % for Pipeline A's per-pass scout. Pipeline B's comprehensive scout has a different shape: 6,966 unique candidate PRs → 1,351 newly-built tasks = **19 % per-PR yield**. The jump (vs the older 0.7 % yield in narrow scouts) is because the new pipeline closes two recall gaps the title-only scout had: (a) PRs whose title doesn't quote the rule file (~ 40 % of skill-authoring PRs), and (b) the truncated tail beyond GitHub's 1000-result-per-query cap.
+A Gemini 3.1 Pro judge does the sorting. From the 2026-04-26 sweep over 13,046 candidate PRs: 1.6 % were Part-2 candidates (rule-file edits), 4.2 % were Part-1 candidates (code following a rule), and 94 % were discarded. Part 1 is conceptually the more important corpus — most agent-instruction-following happens inside the code, not in markdown edits — but Part 2 is much larger because we have a comprehensive enumeration of skill/agent-md authoring PRs across GitHub (see [§the comprehensive scout](#coverage-claim--2026-04-28-comprehensive-scout) below).
 
-For the rigorous breakdown — exact regex, every drop count, per-row decision logs — see [`research/data_mining_pipeline.md`](research/data_mining_pipeline.md).
+All tasks get the same four-track evaluation:
+1. Programmatic fail-to-pass + pass-to-pass tests (the only one that contributes to the RL reward)
+2. Config-edit comparison (Part 2 only) — Gemini compares gold rule-file edit vs agent's edit
+3. Positive rubric — Gemini checks the agent followed the conventions documented in the rule files
+4. Negative rubric / distractors — Gemini checks the agent did *not* apply rules that look relevant but would have made the fix worse
 
-### What the post-judge drops in Pipeline B
+## How the corpus was built
 
-Of the 822-task corpus snapshot pre-comprehensive-scout (2026-04-27 batch):
+Each part has its own scout-and-build pipeline, but both end with the same Docker-image-per-task output. The pipelines differ in *what the gold diff contains* and therefore *how mechanically a task can be built from it*.
 
-| Verdict | Count | % | Outcome |
-|---|---|---|---|
-| **HIGH** | 706 | 85.9 % | Keep — concrete behavioral rule, specific commands/paths, low slop |
-| **MEDIUM** | 12 | 1.5 % | Keep — plausible but generic-leaning |
-| LOW | 2 | 0.2 % | Quarantine — marginal value, decorative |
-| DELETE | 102 | 12.4 % | Quarantine — bot-generated PRs, generic skill slop, broken-yaml manifests, dummy-test PRs |
+### Part 1 — agentmd-following (`harbor_tasks/`, 610 active)
 
-The post-judge is the strictest filter — it sees the complete gold patch and PR description. The pre-judge (title-only) catches a much smaller share of slop because it has no body or patch context.
+Source: PRs whose gold fix is code-only, where the fix encodes a rule documented in the repo's rule files. Scaffolded by **Claude Opus 4.7 in an isolated sandbox**, because each task needs a custom behavioural test that reproduces the bug — and writing that test requires reading the repo and understanding the change. Latest scout pass (2026-04-26) walked 147 repos and 19,417 merged PRs; a Gemini causality judge classified 750 of them as Part-1 candidates (5.7 %); Opus then built ~540 of those into running tasks (≈ 93 % Docker oracle pass, the rest fail to scaffold cleanly).
 
-> **Note** — the 2026-04-28 comprehensive-scout post-judge run was killed mid-pass because Gemini Flex was returning 58-second timeouts and ~21 % `transient_failures`. About 50 of the 1,351 new tasks have a partial `md_quality.json`; the rest carry default-active until the re-judge runs (raw scout JSONLs are preserved under `scout_data/` for that purpose).
+### Part 2 — agentmd-create/edit (`harbor_tasks_md_authoring/`, 2,482 active)
+
+Source: PRs whose gold diff is *only* rule files. Scaffolded **deterministically** (no LLM) — shallow-clone the repo at the base commit, apply the gold patch, then generate a `test_outputs.py` that greps for the most distinctive lines the patch added. If the agent's output contains those lines, the test passes. Quality is gated post-hoc by a Gemini judge that reads the full gold patch and rejects boilerplate / autobot / generic slop.
+
+The comprehensive 2026-04-28 scout grew this corpus from 1,137 → 2,482 (+1,348 net) by combining two complementary discovery methods, then deduping. It's worth describing both, because together they aim for a near-exhaustive census of skill / rule-file authoring on public GitHub:
+
+**Method A — code search.** Run `gh api search/code` with `filename:` / `path:` queries (24 of them, e.g. `filename:SKILL.md path:.claude/skills/`, `filename:.cursorrules`, `extension:mdc`) to list every repo on GitHub that has a rule file in its default branch. GitHub caps each query at 1,000 results, so we subdivide by path/extension to break the cap. Result: **15,608 unique repos**. We then filter to ≥ 100 stars, not archived, not a fork (filtering done in batched GraphQL — 312 calls to enumerate metadata for all 15,608 repos), leaving **846 healthy repos**. For each healthy repo, we enumerate its last 50 merged PRs since 2025-09-01 (batched GraphQL again, ~17 calls), then fetch each PR's file paths and keep the ones that touch a rule-file path: **2,745 PRs**.
+
+**Method B — date-windowed title search.** The traditional approach: search for `is:pr is:merged SKILL.md in:title`, `... AGENTS.md in:title`, etc. Each query also caps at 1,000 results. For the popular ones (SKILL.md, CLAUDE.md, .cursor/rules, …) we split the merge window into four disjoint date ranges (Sep–Oct, Nov–Dec, Jan–Feb, Mar–Apr) and run each as a separate query — that recovers another 3× the results past the cap. 28 base queries × variable windowing produced **4,301 PRs**.
+
+**Merging the two.** Keyed by `(repo, pr_number)`: **6,966 unique candidate PRs**. The deterministic scaffolder then built **1,351 new tasks** from the new ones (the rest were either already-scaffolded duplicates or didn't pass the rule-file-only path filter). After secret-pattern + unfetchable-SHA quarantine (3+5 dirs), the active corpus settled at **2,482**.
+
+#### Why this is a near-exhaustive census
+
+Recall gaps that remain are intentional:
+- < 100-star repos (we treat that as a production-quality floor)
+- PRs older than 2025-09-01 (deliberate 8-month window)
+- Repos archived or made private after the index ran
+- Forks (convention edits in forks rarely reflect upstream practice)
+
+Method A by itself covers any rule file present on default branch right now. Method B covers PRs whose title quotes the rule file. The two miss different subsets — Method A misses PRs in repos whose rule file was added then deleted; Method B misses PRs titled `feat: add new skill` that touch SKILL.md without naming it. Combined, the residual blind spots are repos that match neither — a small fraction of the universe.
+
+The infrastructure (`taskforge/gh_graphql.py` for batched GraphQL, `scripts/code_search_phase2_batched.py`) makes a full re-run feasible in ~2 hours wall clock and ~1,300 GraphQL calls, so we can refresh the corpus on demand.
+
+### Quarantines (Part 2)
+
+| Folder | Count | Reason |
+|---|---:|---|
+| `harbor_tasks_md_authoring_quarantine_quality/` | 266 | Gemini post-judge marked DELETE (bot-generated PRs, generic skill prose, broken-yaml manifests) |
+| `harbor_tasks_md_authoring_quarantine_secrets/` | 5 | The PR added a real-looking API key inside the rule-file content; pre-commit hook would block |
+| `harbor_tasks_md_authoring_quarantine_unfetchable/` | 3 | Base commit exists in GitHub API but `git fetch --depth=1 origin <sha>` fails (commit isn't reachable from a branch ref — typically PR-head-only) |
+
+> **Pending re-judge.** The 2026-04-28 comprehensive-scout post-judge pass was killed because Gemini Flex was returning 58-second timeouts and ~21 % transient_failures that night. ~50 of the 1,351 new tasks got their full `md_quality.json`; the rest are default-active. Re-judging is queued — raw scout JSONLs are preserved under `scout_data/` so we don't have to re-fetch from GitHub.
+
+For the full breakdown — exact regex, every drop count, per-row decision logs, the funnel diagrams — see [`research/data_mining_pipeline.md`](research/data_mining_pipeline.md).
 
 ## Repository Structure
 
@@ -107,8 +101,9 @@ taskforge/                   # Task construction toolkit
   backends.py                   # Multi-backend LLM pool with rate limit handling
   gemini_rubric_constructor.py  # Structured output rubric generation + Kimi validation
   hierarchy_context.py          # Config hierarchy extractor (root → leaf AGENTS.md)
-harbor_tasks/                # Class A: code-only bug fixes (226 active)
-harbor_tasks_quarantine/     # Quarantined tasks + Class B candidate pool
+harbor_tasks/                # Part 1 — agentmd-following: code-only bug fixes (610 active)
+harbor_tasks_md_authoring/   # Part 2 — agentmd-create/edit: rule-file edits (2,482 active)
+harbor_tasks_agentmd_edits/  # Hybrid: code + rule-file edits in same PR (82 active)
 scripts/
   run_agent_eval.py             # Agent eval runner (Track 1+3+4, pluggable backend)
   fix_task_toml.py              # Batch fix task.toml formatting issues
@@ -319,8 +314,8 @@ This matches every major SWE benchmark (SWE-bench, Terminal Bench, SWE-smith, R2
 
 | Track | What | Method | Role | Coverage |
 |-------|------|--------|------|----------|
-| 1. Code correctness | Did the agent fix the bug? | `test.sh` → nop=0, gold=1 | **Reward signal** | All Class A tasks |
-| 2. Config edits | Did the agent update config files correctly? | Gold diff vs agent diff (Gemini semantic comparison) | Monitoring | Class B only |
+| 1. Code correctness | Did the agent fix the bug? | `test.sh` → nop=0, gold=1 | **Reward signal** | All Part-1 tasks |
+| 2. Config edits | Did the agent update rule files correctly? | Gold diff vs agent diff (Gemini semantic comparison) | Monitoring | Part-2 + hybrid only |
 | 3. Positive rubric | Does the agent follow relevant conventions? | Gemini 3.1 Pro judges diff vs rubric rules | Monitoring | 914 tasks (3,489 rules) |
 | 4. Distractors | Does the agent IGNORE irrelevant conventions? | Gemini checks agent didn't apply collision rules | Monitoring | 646 tasks (1,710 rules) |
 
@@ -416,22 +411,13 @@ python -m taskforge.pipeline scaffold-from-prs --input scouted.jsonl --workers 8
 | **Hierarchical config context extraction** | **Nobody** | **Yes (novel)** |
 | **Self-contained LLM judge in test harness** | **Nobody** | **Yes (novel, Gemini structured output inside harbor)** |
 
-## Status (2026-04-26)
+## Status (2026-04-28)
 
-**Active scaffolded tasks (`harbor_tasks/`):** 442 total / **399 tier-A** quality-audited. 91 of these were freshly scaffolded overnight via the `oneshot_scaffold` pipeline (45% pass rate from a 204-PR queue). Tier-A images now being built and pushed to ghcr.io via the `push-images.yml` workflow.
+- **Part 1 (`harbor_tasks/`)**: 610 active. ≈ 93 % Docker oracle pass. Last scout pass 2026-04-26.
+- **Part 2 (`harbor_tasks_md_authoring/`)**: 2,482 active. Comprehensive scout completed overnight 2026-04-28; +1,348 net new tasks; 10/10 random Docker smoke builds passed; pushed to GHCR via `push-images.yml`.
+- **In flight**: post-judge re-run for the 1,300 newly-built Part-2 tasks (the original pass was killed mid-run because Gemini Flex was returning 58-second timeouts and ~21 % `transient_failures`).
 
-**Candidate PR pool ready for scaffolding:** **977 PRs** classified as A (direct tier-1 edit) or B (code follows a rule). Composed of:
-- 204 baseline (Class B / 4,809-stub audit, mostly mature)
-- 750 from today's deep scout (107 repos, 19,417 fetched → 13,046 judged → A=204, B=546)
-- 23 from prior recovery batches (ERR retries + C-unfetchable retries)
-
-**In flight:**
-- Scout against 40 newly-discovered repos (n8n, anthropics/skills, openai/codex, gemini-cli, etc.) — projected to add 100-300 more candidate PRs once Flex-judged.
-- Dockerfile shallow-clone migration: 198 of the 442 tasks updated to `git fetch --depth=1` (saves ~17× on initial fetch). Image rebuild in progress on GHCR.
-
-**Switched all classifier work from Gemini batch → Flex tier (sync, 9 req/s sustained).** A 9,171-prompt batch that ran 3+ hours stalled out; re-submitted on Flex finished in 17 min.
-
-See [research/scouting_report_2026_04_26.md](research/scouting_report_2026_04_26.md) for the full breakdown — yields per repo, classifier comparison, batch-vs-Flex experiment, etc.
+See [research/scouting_report_2026_04_26.md](research/scouting_report_2026_04_26.md) for Part 1's last scout report (per-repo yields, classifier comparison) and [research/data_mining_pipeline.md](research/data_mining_pipeline.md) for the full Part 2 comprehensive-scout architecture.
 
 ### Monitoring: Convention-Following Rubrics (Tracks 3 & 4)
 
