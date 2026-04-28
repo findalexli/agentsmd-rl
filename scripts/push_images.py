@@ -156,13 +156,19 @@ def build_and_push_one(
         log.error(f"[FAIL] {task_name} build: {result['error'][-200:]}")
         return result
 
-    # Push both tags
+    # Push both tags. Big images (ClickHouse ~5GB compressed) can exceed 10 min.
     for r in [ref, ref_latest]:
-        push = subprocess.run(
-            ["docker", "push", r],
-            capture_output=True,
-            timeout=600,
-        )
+        try:
+            push = subprocess.run(
+                ["docker", "push", r],
+                capture_output=True,
+                timeout=1800,
+            )
+        except subprocess.TimeoutExpired as e:
+            result["status"] = "push_failed"
+            result["error"] = f"docker push timed out after {e.timeout}s"
+            log.error(f"[FAIL] {task_name} push: {result['error']}")
+            return result
         if push.returncode != 0:
             result["status"] = "push_failed"
             result["error"] = push.stderr.decode()[-500:]
@@ -245,40 +251,45 @@ def main():
         log.error("No tasks found")
         sys.exit(1)
 
-    # Build and push sequentially (one at a time to save disk)
+    # Build and push sequentially (one at a time to save disk).
+    # Stream results to disk as we go so a crashing batch still leaves a partial JSONL.
     results = []
     pushed, failed, skipped = 0, 0, 0
-    for i, task in enumerate(tasks):
-        log.info(f"[{i+1}/{len(tasks)}] {task.name}")
-        r = build_and_push_one(task, args.owner, args.tag, args.skip_existing, args.update_toml)
-        results.append(r)
+    out_fp = open(args.out, "w") if args.out else None
+    try:
+        for i, task in enumerate(tasks):
+            log.info(f"[{i+1}/{len(tasks)}] {task.name}")
+            try:
+                r = build_and_push_one(task, args.owner, args.tag, args.skip_existing, args.update_toml)
+            except Exception as e:
+                # Never let a single task kill the whole batch.
+                r = {"task": task.name, "status": "build_failed",
+                     "error": f"unhandled exception: {type(e).__name__}: {str(e)[:300]}"}
+                log.error(f"[FAIL] {task.name} unhandled: {r['error']}")
+            results.append(r)
+            if out_fp:
+                out_fp.write(json.dumps(r) + "\n")
+                out_fp.flush()
 
-        if r["status"] == "pushed":
-            pushed += 1
-        elif r["status"] == "exists":
-            skipped += 1
-        else:
-            failed += 1
+            if r["status"] == "pushed":
+                pushed += 1
+            elif r["status"] == "exists":
+                skipped += 1
+            else:
+                failed += 1
 
-        # Prune after each build to save disk (GHA runners have ~14GB)
-        if r["status"] == "pushed":
-            subprocess.run(
-                ["docker", "image", "rm", "-f", r["image"]],
-                capture_output=True,
-            )
-            # Also remove dangling images from multi-stage builds
-            subprocess.run(
-                ["docker", "image", "prune", "-f"],
-                capture_output=True,
-            )
+            # Prune after each build to save disk (GHA runners have ~14GB)
+            if r.get("status") == "pushed":
+                subprocess.run(["docker", "image", "rm", "-f", r["image"]],
+                               capture_output=True)
+                subprocess.run(["docker", "image", "prune", "-f"],
+                               capture_output=True)
+    finally:
+        if out_fp:
+            out_fp.close()
+            log.info(f"Results → {args.out}")
 
     log.info(f"Done: {pushed} pushed, {skipped} skipped, {failed} failed")
-
-    if args.out:
-        with open(args.out, "w") as f:
-            for r in results:
-                f.write(json.dumps(r) + "\n")
-        log.info(f"Results → {args.out}")
 
     if failed > 0:
         sys.exit(1)
