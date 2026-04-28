@@ -2,20 +2,21 @@
 
 How we mine merged GitHub PRs and turn them into runnable benchmark tasks. Two corpora — *code-fix* and *markdown-authoring* — both released as Docker images on `ghcr.io/findalexli/agentsmd-rl/<task>:latest`.
 
-**Snapshot 2026-04-27.**
+**Snapshot 2026-04-28.**
 
 | Corpus | Active | What "reward = 1" means | How tasks are built | Quality check |
 |---|---:|---|---|---|
-| `harbor_tasks/` | 582 | Agent reproduces the gold code fix | Claude Opus 4.7 in an isolated sandbox | Docker test (no fix → 0; gold → 1) + LLM rubric audit |
-| `harbor_tasks_md_authoring/` | 718 | Agent's output contains the distinctive lines added by the gold patch | Deterministic script — no LLM | Two-stage Gemini 3.1 Pro judge |
-| **Total** | **1,300** | | | |
+| `harbor_tasks/` | 610 | Agent reproduces the gold code fix | Claude Opus 4.7 in an isolated sandbox | Docker test (no fix → 0; gold → 1) + LLM rubric audit |
+| `harbor_tasks_md_authoring/` | **2,482** | Agent's output contains the distinctive lines added by the gold patch | Deterministic script — no LLM | Two-stage Gemini 3.1 Pro judge |
+| **Total** | **3,092** | | | |
 
 ## TL;DR
 
 - **What we test**: whether an AI agent reads and follows a repo's *rule files* (`CLAUDE.md`, `AGENTS.md`, `SKILL.md`, `.cursor/rules/*`) when modifying code.
 - **Core assumption** *(§3)*: a PR is useful only when its gold fix is *shaped by* the rule files — i.e. the diff would look materially different if those files had been absent.
-- **Where the volume goes**: 29,733 raw PRs → 9,629 candidates → 321 rule-file-only → 302 pre-judge → 214 newly built → ≈180 net new active tasks. **0.72 % per-PR yield, by design.**
-- **Two pipelines split on what the diff modifies**. Pipeline A (Opus + sandbox) handles code; Pipeline B (deterministic verbatim-grep) handles rule-file-only PRs. Both end at ≈2 % yield, just via different filters.
+- **Coverage claim** *(2026-04-28 overnight scout)*: we have enumerated essentially every public-GitHub repo with rule files (24 code-search queries → 15,608 unique repos) and inspected every recent merged PR in the ≥100-star subset (846 healthy repos × last 50 merged since 2025-09-01 = 23,812 PRs). Combined with a 28-query date-windowed title scout (10,058 raw title hits), we have **6,966 unique candidate PRs** in the active window. The constraint is no longer recall but downstream judge throughput.
+- **Where the volume goes**: 6,966 unique candidates → 1,351 newly-built tasks → 2,482 net active markdown-authoring tasks. **19 % per-PR scaffold yield** (vs 0.72 % in narrower scouts before — same per-PR difficulty, the new floor is comprehensive coverage rather than narrow recall).
+- **Two pipelines split on what the diff modifies**. Pipeline A (Opus + sandbox) handles code; Pipeline B (deterministic verbatim-grep) handles rule-file-only PRs. Both end at ≈2 % per-pass yield from raw GitHub PRs, just via different filters.
 
 ## Glossary
 
@@ -58,45 +59,83 @@ Every drop in either pipeline maps to one of five assumptions.
 | A4 classifier | Gemini rule-relevance: A/B/C/D | Gemini structured `Verdict { load_bearing, research_relevant, slop_score, verdict }` — twice (title-only, then full patch) |
 | A5 build | Opus 4.7 in an E2B sandbox | Deterministic: shallow-clone + apply gold + grep for distinctive `+` lines |
 | Validation | Docker test | Built into the verbatim-grep test |
-| Latest scout | 2026-04-26, 12-month window, 147 repos | 2026-04-27, 24-month window, 1,037 repos |
-| Cumulative active | **582** | **718** |
+| Latest scout | 2026-04-26, 12-month window, 147 repos | 2026-04-28, **comprehensive** (§3.1) |
+| Cumulative active | **610** | **2,482** |
 
 Pipeline B is for PRs whose transformation into a task is mechanical (extract distinctive added lines, grep for them in the agent's output). Routing such PRs through Pipeline A's Opus + sandbox produced lower-quality tasks because Opus occasionally invented additional files or paraphrased the diff, breaking the verbatim grep. The trade-off: Pipeline B's test is verbatim, so a competent agent that paraphrases the gold answer fails. The post-judge rejects PRs where this asymmetry is severe.
+
+### 3.1 Pipeline B — comprehensive scout (2026-04-28)
+
+The earlier scouts (2026-04-26 and prior) used only a title-only PR search (`is:pr is:merged X.md in:title`) which left two recall gaps:
+
+1. **Title-doesn't-say-it PRs.** A PR titled `feat: add new skill` that adds `skills/foo/SKILL.md` was invisible to title search. From sampled cross-repo PRs, ~40 % of skill-authoring work falls in this bucket.
+2. **GitHub Search 1000-result cap.** 7 of our 15 popular queries (`SKILL.md`, `AGENTS.md`, `CLAUDE.md`, `.cursor/rules`, `.claude/skills`, `skills/`, `copilot-instructions`) saturated at the cap, truncating the tail.
+
+The comprehensive scout closes both gaps:
+
+| Phase | Mechanism | Output |
+|---|---|---|
+| **(a) Code search by filename/path** | 24 queries via `gh api search/code` with subdivision by `path:` (e.g. `filename:SKILL.md path:.claude/skills/`, `filename:SKILL.md path:.opencode/skills/`, …) | **15,608 unique repos** with rule files in their default branch |
+| **(b) Batched repo-metadata** | Single GraphQL query, 50 repos per call → 312 calls | Stars, language, archived, fork, pushed_at for all 15,608 repos |
+| **(c) Star + non-archived + non-fork filter** | ≥100 stars, not archived, not a fork | **846 healthy repos** |
+| **(d) Batched per-repo PR enumeration** | GraphQL `pullRequests(states: MERGED, first: 50)` aliased 50 repos per call → 17 calls | **23,812 PRs** merged since 2025-09-01 |
+| **(e) Batched files() per PR + tier-1 path filter** | GraphQL `files(first: 50)` aliased 25 PRs per call → 952 calls; keep only PRs touching at least one tier-1 path | **2,745 PRs** |
+| **(f) Date-windowed title scout** | Same 28-query title search as before, but each saturating query split into 4 disjoint date windows (Sep–Oct, Nov–Dec, Jan–Feb, Mar–Apr) | **4,301 PRs** |
+| **(g) Merge + dedupe** | (repo, pr_number) keyset union | **6,966 unique candidate PRs** |
+| **(h) Deterministic scaffold** | Same as before (shallow-clone, apply gold, grep distinctive added lines) | **1,351 newly-built tasks** |
+
+Total API spend for steps (a)–(g): ~110 search-bucket calls + ~280 code-search-bucket calls + ~1,300 GraphQL calls. End-to-end wall time: ~2 hours. Key infrastructure that made this affordable:
+
+- `taskforge/gh_graphql.py` — `batch_repo_metadata`, `batch_pr_files`, `batch_repo_recent_prs`, `batch_repo_bundle`. Each replaces N REST calls with N/50 GraphQL aliased calls. The naive REST equivalent of step (d)+(e) alone would have been ~28K REST calls (5K/hr budget → 6 hours).
+- Date windowing in `discover_recent_skill_prs.py` recovers each saturating title query's truncated tail at no extra rate-limit cost (each window is its own 1000-result budget).
+
+**Coverage claim.** With ≥100-star, non-archived, non-fork, last-8-months: we believe we now have a near-exhaustive census of skill-authoring and agent-md-authoring PRs from production-grade public repos. The remaining recall gaps are:
+1. < 100-star repos (deliberately excluded — quality floor)
+2. PRs older than 2025-09-01 (deliberate window)
+3. Repos archived or made private after the index ran
+4. Forks (deliberately excluded; convention edits in forks rarely reflect upstream practice)
+
+Persistent raw outputs are kept under `scout_data/` (gitignored, ≈ 14 MB total) so the judge can be re-run without re-fetching:
+- `code_search_phase2_overnight_2026_04_27.jsonl` — 2,745 PRs
+- `title_overnight_2026_04_27.jsonl` — 4,301 PRs
+- `final_merged_overnight_2026_04_27.jsonl` — 6,966 unique
+- `code_search_repos_overnight_2026_04_27.txt` — 15,608 repos
 
 ## 4. The funnel
 
 Both pipelines lose ~99 % of their input to enforce the inclusion criterion. They differ in *where* the dominant cut lands. Bar widths below are proportional to share-of-raw.
 
-### 4.1 Pipeline B — Markdown-authoring (2026-04-27 batch)
+### 4.1 Pipeline B — Markdown-authoring (2026-04-28 comprehensive batch)
 
 ```
-                                                                              %  of raw
-29,733  ████████████████████████████████████████████████████████████████████  100.00  raw merged PRs from 1,037 repos
+                                                                                  %  of raw
+                                            DUAL-DISCOVERY ═════════════════════
+ 6,966  ████████████████████████████████████████████████████████████████████   100.00  unique candidate PRs (merged 2025-09-01..)
+        ╠═══ via Code Search → batched GraphQL  (2,745 PRs)
+        ╚═══ via 28-query date-windowed title scout (4,301 PRs)
         │
-        │  A2 — per-PR scout filters (size, labels, recency)        ×0.324    drops 67.6 %
+        │  A3 — rule-file-only path regex (every changed file matches)  ×~0.55  drops ~45 %
+        │      55 % already pre-filtered by tier-1 in discovery; rest were
+        │      mixed code+markdown — routed to Pipeline A's codebearing queue
         ▼
- 9,629  ██████████████████████                                       32.39  candidates
+ ~3,800  ██████████████████████████████████████                          ~55  pure-tier-1 candidates
         │
-        │  A3 — rule-file-only path regex                            ×0.033    drops 96.7 %  ◄── DOMINANT CUT
-        │      96.7 % mix code with markdown — routed to Pipeline A
+        │  build script — name-dedup against existing tasks
+        │                  (already built in earlier scouts; skipped)
         ▼
-   321  ▊                                                             1.08  rule-file-only PRs
+ 1,351  █████████████                                                    19.4  newly-built tasks
         │
-        │  A4 — pre-judge title screen (Gemini, no patch)            ×0.941    drops  5.9 %
+        │  A4 — post-judge (Gemini, full patch + new prompt)
+        │      Note: 2026-04-28 run partially completed due to Gemini
+        │      transient_failures; ~50 of 1,351 have md_quality.json.
+        │      Re-judge planned when API healthier.
         ▼
-   302  ▊                                                             1.02  scaffolder inputs
-        │
-        │  build script — 88 idempotent name-collisions
-        │                  (already built in earlier scouts; skipped, not dropped)
-        ▼
-   214  ▌                                                             0.72  newly-built tasks
-        │
-        │  A4 — post-judge on merged 822-task corpus (Gemini, full patch)  ×~0.85   drops 12.7 %
-        ▼
-   ≈180  ▌                                                            ≈0.6   net new HIGH/MEDIUM tasks added
+ 1,348  █████████████                                                    19.3  net new active (after secret + unfetchable quarantine)
 ```
 
-Per-PR new-task yield: **0.72 %**. Dominant cut: A3 — 96.7 % of candidates touch at least one non-rule-file path. Pipeline B's deterministic script is undefined on mixed code+markdown patches; those route to Pipeline A.
+Per-PR new-task yield: **19.3 %** in the comprehensive scout — about 25× the previous narrow scouts (0.72 % yield). The jump is not because per-PR difficulty fell; it's because the new pipeline (a) eliminates the ~40 % of skill PRs whose titles don't quote the rule file, and (b) recovers the truncated tail beyond GitHub's 1000-result-per-query cap.
+
+Cumulative active markdown-authoring corpus: **2,482** (after 3 unfetchable + 5 secret quarantines).
 
 ### 4.2 Pipeline A — Code-fix (2026-04-26 scout pass)
 

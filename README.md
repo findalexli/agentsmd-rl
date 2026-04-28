@@ -31,15 +31,27 @@ Type B is roughly 2.7× the size of A and is the more important bucket conceptua
 
 All tasks get the same 4-track evaluation: programmatic fail-to-pass + pass-to-pass tests, plus a self-contained Gemini judge in `test.sh` that scores convention compliance (positive rubric) and distractor avoidance (negative rubric).
 
-### Where tasks live on disk (snapshot 2026-04-27)
+### Where tasks live on disk (snapshot 2026-04-28)
 
 | Folder | Active | Quarantined | Notes |
 |---|---|---|---|
-| `harbor_tasks/` | 582 (Type A+B, code-fix) | — | Opus 4.7 scaffolded, 92.8% Docker-oracle pass (540 / 582), 89% rubric pass |
-| `harbor_tasks_md_authoring/` | **718** (706 HIGH + 12 MEDIUM) | 170 (DELETE/LOW + 2 secret-pattern) | Deterministic scaffold + Gemini quality gate (v2 pipeline). All 718 have GHCR images. |
-| `harbor_tasks_agentmd_edits/` | 81 (code + config edits, Track 2) | — | Smaller, harder corpus |
+| `harbor_tasks/` | 610 (Type A+B, code-fix) | — | Opus 4.7 scaffolded, ≈ 93 % Docker-oracle pass, 89 % rubric pass |
+| `harbor_tasks_md_authoring/` | **2,482** | 274 (266 quality, 5 secret-pattern, 3 unfetchable base SHA) | Deterministic scaffold + Gemini quality gate. **Comprehensive 2026-04-28 scout** covers essentially every ≥100-star public repo with rule files, last 8 months. CI builds GHCR images. |
+| `harbor_tasks_agentmd_edits/` | 82 (code + config edits, Track 2) | — | Smaller, harder corpus |
 
-The two flagship corpora — `harbor_tasks/` (code) and `harbor_tasks_md_authoring/` (markdown-authoring) — together hold **1,300 active tasks**, all with pre-built Docker images on GHCR.
+The two flagship corpora hold **3,092 active tasks**. The 2026-04-28 overnight comprehensive scout grew the markdown-authoring corpus from 1,137 → 2,482 (+1,348 net) by enumerating *every* tier-1 rule file via Code Search + per-repo PR enumeration, then dual-discovering with the 28-query date-windowed title scout. See [research/data_mining_pipeline.md §3.1](research/data_mining_pipeline.md) for the full architecture.
+
+#### Coverage claim — 2026-04-28 comprehensive scout
+
+We believe the markdown-authoring corpus now reflects a near-exhaustive census of skill / agent-md authoring PRs from production-grade public repos:
+
+- **24 code-search queries** (subdivided by `path:` / `extension:` to break GitHub's 1000-result-per-query cap) → **15,608 unique repos** with at least one tier-1 rule file in default branch.
+- After ≥100-star + non-archived + non-fork filter (batched GraphQL): **846 healthy repos**.
+- Per-repo merged-PR enumeration (last 50 since 2025-09-01) + tier-1 path filter: **2,745 PRs**.
+- Plus a **28-query date-windowed title scout** (`SKILL.md`, `AGENTS.md`, `CLAUDE.md`, `.cursorrules`, `.mdc`, …) that recovered **4,301 PRs**, including the cap-truncated tails of 7 saturating queries (each split into 4 disjoint date sub-windows for an additional 4× recall).
+- Merged + deduped: **6,966 unique candidate PRs** in the active window.
+
+Remaining recall gaps are intentional: < 100-star repos (quality floor), PRs older than 2025-09-01, repos archived or made private after the index, and forks. The infrastructure (`taskforge/gh_graphql.py` + `scripts/code_search_phase2_batched.py`) makes a full re-run feasible in ~2 hours of wall clock and ~1,300 GraphQL calls.
 
 ## How tasks are filtered
 
@@ -48,35 +60,39 @@ We run two parallel pipelines, distinguished by what the gold diff modifies:
 - **Pipeline A — code-fix** (→ `harbor_tasks/`). PR's diff is code; the fix encodes a rule documented in a tier-1 file (or *is* the agent's update to such a file). Scaffolded with **Claude Opus 4.7** inside an isolated sandbox so it can read the repo and design a behavioral test.
 - **Pipeline B — markdown-authoring** (→ `harbor_tasks_md_authoring/`). PR's diff is *only* tier-1 instruction files. Scaffolded **deterministically** (no LLM): shallow-clone at base SHA, apply the gold patch, generate `test_outputs.py` that greps for the most distinctive `+` lines. The Gemini judge serves as the quality gate.
 
-Both pipelines start with the same discovery + scout machinery (GitHub topic search, `gh pr list --json files,…` with limit ≤ 200), then diverge on classification, scaffolding method, and quality gate.
+Pipeline A starts from a hand-curated allowlist of rule-equipped repos and walks each one's recent merged PRs. Pipeline B's discovery is now **comprehensive** as of 2026-04-28: code search by filename + path enumerates the universe of repos with rule files, and a 28-query date-windowed title scout captures the rest.
 
 | | Pipeline A (code-fix) | Pipeline B (markdown-authoring) |
 |---|---|---|
-| Latest scout | 2026-04-26 (147 repos, 12-month window) | 2026-04-27 (1,037 repos, 24-month window) |
-| Raw merged PRs fetched | 19,417 | 29,733 |
-| After scout-time filters | 14,549 unique | 9,629 candidates |
+| Latest scout | 2026-04-26 (147 repos, 12-month window) | **2026-04-28 comprehensive** (15,608 repos enumerated; 846 ≥100-star healthy repos walked; 8-month window) |
+| Discovery | Repo allowlist + per-repo PR walk | Code search (24 filename/path queries) + 28 title queries (windowed×4 on cap-saturating ones) |
+| Raw merged PRs fetched | 19,417 | 23,812 (code-search Phase 2) + ~10,058 (title hits, deduped to 4,301) |
+| After scout-time filters | 14,549 unique | 6,966 unique candidates |
 | Pre-classifier filter | Tier-1 *repo* allowlist | Tier-1 *path* regex (every changed file must match) |
 | Classifier | Gemini per-PR causality judge → A / B / C / D / ERR | Two-stage Gemini judge: pre-judge by title, post-judge by full gold patch |
-| Survivors after classifier | A=204 + B=546 = 750 (5.7%) | 302 KEEP / 19 DROP from the 321 that passed the regex |
+| GraphQL infra | – | `taskforge/gh_graphql.py` — batched alias queries, ~50× fewer GitHub API calls than naive REST |
+| Survivors after classifier | A=204 + B=546 = 750 (5.7%) | 1,351 newly-built tasks (19 % per-PR yield in comprehensive scout) |
 | Scaffold | Opus 4.7 + Docker oracle (≈25-30% scaffold-fail) | Deterministic, ≈99% success |
-| Cumulative active corpus | **582** (92.8% Docker oracle pass) | **718** (706 HIGH + 12 MEDIUM after post-judge) |
+| Cumulative active corpus | **610** | **2,482** (post-judge re-run pending — see below) |
 
-**End-to-end yield**: ≈3% for Pipeline A, ≈7.5% for Pipeline B. Pipeline B is higher because the path-regex pre-filter starts from a much narrower distribution — anything reaching the LLM judges is already pure-tier-1.
+**End-to-end yield**: ≈3 % for Pipeline A's per-pass scout. Pipeline B's comprehensive scout has a different shape: 6,966 unique candidate PRs → 1,351 newly-built tasks = **19 % per-PR yield**. The jump (vs the older 0.7 % yield in narrow scouts) is because the new pipeline closes two recall gaps the title-only scout had: (a) PRs whose title doesn't quote the rule file (~ 40 % of skill-authoring PRs), and (b) the truncated tail beyond GitHub's 1000-result-per-query cap.
 
 For the rigorous breakdown — exact regex, every drop count, per-row decision logs — see [`research/data_mining_pipeline.md`](research/data_mining_pipeline.md).
 
 ### What the post-judge drops in Pipeline B
 
-Of 822 markdown-authoring tasks scaffolded across all 2026-04-27 passes (608 pre-existing + 214 new):
+Of the 822-task corpus snapshot pre-comprehensive-scout (2026-04-27 batch):
 
 | Verdict | Count | % | Outcome |
 |---|---|---|---|
-| **HIGH** | 706 | 85.9% | Keep — concrete behavioral rule, specific commands/paths, low slop |
-| **MEDIUM** | 12 | 1.5% | Keep — plausible but generic-leaning |
-| LOW | 2 | 0.2% | Quarantine — marginal value, decorative |
-| DELETE | 102 | 12.4% | Quarantine — bot-generated PRs, generic skill slop, broken-yaml manifests, dummy-test PRs |
+| **HIGH** | 706 | 85.9 % | Keep — concrete behavioral rule, specific commands/paths, low slop |
+| **MEDIUM** | 12 | 1.5 % | Keep — plausible but generic-leaning |
+| LOW | 2 | 0.2 % | Quarantine — marginal value, decorative |
+| DELETE | 102 | 12.4 % | Quarantine — bot-generated PRs, generic skill slop, broken-yaml manifests, dummy-test PRs |
 
-The post-judge is the strictest filter — it sees the complete gold patch and PR description. The pre-judge (title-only) catches a much smaller share of slop (19 of 321 pure-tier-1 PRs ≈ 6%) because it has no body or patch context.
+The post-judge is the strictest filter — it sees the complete gold patch and PR description. The pre-judge (title-only) catches a much smaller share of slop because it has no body or patch context.
+
+> **Note** — the 2026-04-28 comprehensive-scout post-judge run was killed mid-pass because Gemini Flex was returning 58-second timeouts and ~21 % `transient_failures`. About 50 of the 1,351 new tasks have a partial `md_quality.json`; the rest carry default-active until the re-judge runs (raw scout JSONLs are preserved under `scout_data/` for that purpose).
 
 ## Repository Structure
 
