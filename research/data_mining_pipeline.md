@@ -7,7 +7,7 @@ The benchmark has two parts. They differ in what the gold PR diff contains, and 
 | | Folder | Active | What the agent does | What's in the gold diff | How tasks are built |
 |---|---|---:|---|---|---|
 | **Part 1 — agentmd-following** | `harbor_tasks/` | 610 | Reads the rule files, then writes code to fix a bug | Code-only fix that *follows a convention documented in a rule file* | Claude Opus 4.7 in an isolated sandbox (each task needs a custom behavioural test) |
-| **Part 2 — agentmd-create/edit** | `harbor_tasks_md_authoring/` | **2,482** | Writes or edits a rule file | Only rule files (no code change) | Deterministic script: clone, apply the gold patch, grep for the distinctive lines it added |
+| **Part 2 — agentmd-create/edit** | `harbor_tasks_md_authoring/` | **2,482** | Writes or edits a rule file | Only rule files (no code change) | Deterministic script: clone, apply the gold patch (`solution/solve.sh`), then derive `tests/test_outputs.py` by extracting the most distinctive added lines from the patch |
 
 ## What we keep, what we drop
 
@@ -156,9 +156,29 @@ Per-row decision logs are checked in:
 
 Gemini calls use temperature 0.1, structured output (`responseMimeType: application/json` + `responseSchema`), thinking budget 256 tokens. Discovery queries are in `scripts/discover_recent_skill_prs.py` (title scout) and `scripts/discover_via_code_search.py` (code search), with the windowing logic in `search_prs_windowed`. Batched GraphQL helpers in `taskforge/gh_graphql.py`.
 
+## What the test files in a Part 2 task actually mean
+
+A Part-2 task directory contains, in priority order:
+
+1. **`solution/solve.sh`** — the canonical source of truth. It's the verbatim git patch from the merged PR, applied with `git apply`. If you want to know what "the gold answer" is for this task, read this file.
+
+2. **`eval_manifest.yaml`** — declarative metadata. Its `config_edits.gold_added` mirrors what `solve.sh` adds, and the `checks` list names the per-line signals (`signal_00`, `signal_01`, …) that the test runner verifies.
+
+3. **`tests/test_outputs.py`** — a deterministic grep harness *derived* from `solve.sh` at scaffold time. The scaffolder picks the 1–10 most distinctive added lines from the patch and emits one assertion per line, of the form:
+
+   ```python
+   def test_signal_00():
+       text = (REPO / "AGENTS.md").read_text()
+       assert "<verbatim line from the gold patch>" in text
+   ```
+
+   These literal strings are *not* hand-written features. They're auto-extracted from `solve.sh`. If a test looks suspiciously specific — "this asserts a particular phrase about PR labels" — that's because the human author's PR contained exactly that phrase, and the agent is being asked to faithfully reproduce it given the same instruction (`instruction.md`).
+
+The tradeoff is explicit: the test rewards the agent for matching the human's prose. An agent that produces a semantically equivalent but textually different rendering — paraphrased bullets, different markdown style, renamed labels despite the instruction naming them — fails. We accept this because the alternative ("did the agent write *something* about PR labels?") fails to discriminate a working solution from a generic punt. The post-judge mitigates this by rejecting tasks where the gold is so generic that paraphrase is plausible (most "Add a skill that helps with X" boilerplate gets DELETE'd), but doesn't eliminate it.
+
 ## Limitations
 
-- **Verbatim-grep tests for Part 2** reward agents that produce exactly the gold prose. Semantically equivalent but textually different output fails. The post-judge mitigates this by rejecting tasks where the gold is so generic that paraphrase is plausible — but doesn't eliminate it.
+- **Verbatim-grep tests for Part 2** are literal-string assertions. The agent must reproduce the human's prose, not paraphrase. (Detail above.) Mitigated by the post-judge, not eliminated.
 - **Single-classifier post-judge** for Part 2 (no second-classifier cross-check, unlike Part 1's historical Kimi → Gemini → Kimi loop).
 - **Closed rule-file definition.** Any new agent-instruction format (e.g. a tool we don't know about today) needs to be added to the regex by hand. The current set covers all conventions we know of in 2026-Q1 but won't pick up novel ones.
 - **No batch-provenance tracking** in the post-judge — we cannot directly attribute LOW/DELETE verdicts in any given snapshot to new vs. pre-existing tasks; the failure-mode table above is by inferred origin.

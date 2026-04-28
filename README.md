@@ -56,6 +56,24 @@ Source: PRs whose gold fix is code-only, where the fix encodes a rule documented
 
 Source: PRs whose gold diff is *only* rule files. Scaffolded **deterministically** (no LLM) — shallow-clone the repo at the base commit, apply the gold patch, then generate a `test_outputs.py` that greps for the most distinctive lines the patch added. If the agent's output contains those lines, the test passes. Quality is gated post-hoc by a Gemini judge that reads the full gold patch and rejects boilerplate / autobot / generic slop.
 
+#### What "reward = 1" actually means in Part 2
+
+The canonical source of truth is **`solution/solve.sh`** — it contains the verbatim git patch from the merged PR. `eval_manifest.yaml`'s `config_edits.gold_added` mirrors it. `tests/test_outputs.py` is *derived from* `solve.sh` at scaffold time: we extract the 1–10 most distinctive added lines and emit `assert "<line>" in <file_text>` for each one.
+
+This means the tests look like literal-string assertions:
+
+```python
+def test_signal_00():
+    text = (REPO / "AGENTS.md").read_text()
+    assert "- When creating a PR with `gh pr create`, always apply exactly one of these labels..." in text
+```
+
+That's deliberate. The agent reads `instruction.md` (the human's PR description, which names the specific labels to add — `feature`, `bug`, `skip-changelog`). Its job is to faithfully implement what the description specifies. A test that loosened to "agent wrote SOMETHING about PR labels" would pass both for a working solution AND a generic punt — losing the entire discrimination signal. So the test asks for the specific lines named in the instruction.
+
+This has a known cost: an agent that produces a *semantically equivalent* but textually different rendering (different markdown bullet style, paraphrased prose, label names changed despite the instruction naming them) fails. The post-judge mitigates this by rejecting tasks where the gold patch is so generic that paraphrase would be plausible (most "Add a skill that helps with X" boilerplate gets DELETE'd). It doesn't eliminate it.
+
+If you're inspecting a Part-2 task and find the test surprisingly literal, that's by design — read `solve.sh` for the canonical PR diff and `instruction.md` for what the agent is being told to write. The literal strings in `test_outputs.py` are not a hardcoded artifact; they're the verbatim diff lines from the human's PR.
+
 The comprehensive 2026-04-28 scout grew this corpus from 1,137 → 2,482 (+1,348 net) by combining two complementary discovery methods, then deduping. It's worth describing both, because together they aim for a near-exhaustive census of skill / rule-file authoring on public GitHub:
 
 **Method A — code search.** Run `gh api search/code` with `filename:` / `path:` queries (24 of them, e.g. `filename:SKILL.md path:.claude/skills/`, `filename:.cursorrules`, `extension:mdc`) to list every repo on GitHub that has a rule file in its default branch. GitHub caps each query at 1,000 results, so we subdivide by path/extension to break the cap. Result: **15,608 unique repos**. We then filter to ≥ 100 stars, not archived, not a fork (filtering done in batched GraphQL — 312 calls to enumerate metadata for all 15,608 repos), leaving **846 healthy repos**. For each healthy repo, we enumerate its last 50 merged PRs since 2025-09-01 (batched GraphQL again, ~17 calls), then fetch each PR's file paths and keep the ones that touch a rule-file path: **2,745 PRs**.
