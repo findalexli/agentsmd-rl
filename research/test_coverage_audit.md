@@ -31,6 +31,20 @@ Static audit of each task's `tests/test_outputs.py` and `eval_manifest.yaml`. Re
 | `yarn test` | 2 |
 | `mocha` | 1 |
 
+
+## f2p coverage drill-down
+
+The `1,218 unmatched f2p checks` from the table above is misleading — most are naming variance, not genuinely missing tests. After a token-overlap re-audit:
+
+| Bucket | Count | % | What it is |
+|---|---:|---:|---|
+| `soft_match` (≥2 shared tokens) | 1,153 | 94.7 % | Test exists, name shares 2+ tokens with `check_id`. e.g. manifest `test_x_returns_y`, code `test_x_y_value` |
+| `partial_keyword_match` (long substring) | 26 | 2.1 % | Test name contains a 6+ char substring of the check_id |
+| `manifest_only` (genuinely missing) | **39** | **3.2 %** | Manifest declares a `fail_to_pass` check but no `def test_*` implements it |
+| `subprocess_only` | 0 | 0 % | n/a (would mean a test_outputs.py with no `def test_*` but yes-runner) |
+
+The actual manifest-test sync gap is **39 checks across the corpus** — tractable per-task fix-up. Full drill-down at `pipeline_logs/f2p_unmatched_breakdown.jsonl`.
+
 ## Weakest tasks (top 50 of 211)
 
 Quality flag legend:
