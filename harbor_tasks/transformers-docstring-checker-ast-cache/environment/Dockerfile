@@ -6,17 +6,15 @@ WORKDIR /workspace/calculator
 # Install git for cloning
 RUN apt-get update && apt-get install -y git && rm -rf /var/lib/apt/lists/*
 
-# Clone the calculator repo at the base commit (before fix)
-# For this example, we'll create the repo inline
+# Initialise the inline repo
 RUN mkdir -p /workspace/calculator && \
     cd /workspace/calculator && \
     git init && \
     git config user.email "test@test.com" && \
     git config user.name "Test"
 
-# Create initial calculator.py with the bug
-RUN cd /workspace/calculator && \
-    cat > calculator.py << 'EOF'
+# Create initial calculator.py with the bug (Dockerfile heredoc — needs syntax=1.4)
+COPY <<'EOF' /workspace/calculator/calculator.py
 def add(a, b):
     """Add two numbers."""
     return a + b
@@ -35,9 +33,7 @@ def divide(a, b):
     return a / b
 EOF
 
-# Create test file
-RUN cd /workspace/calculator && \
-    cat > test_calculator.py << 'EOF'
+COPY <<'EOF' /workspace/calculator/test_calculator.py
 import unittest
 from calculator import add, subtract, multiply, divide
 
@@ -62,18 +58,14 @@ if __name__ == "__main__":
     unittest.main()
 EOF
 
-# Create requirements.txt
-RUN cd /workspace/calculator && \
-    cat > requirements.txt << 'EOF'
+COPY <<'EOF' /workspace/calculator/requirements.txt
 pytest>=7.0.0
 black>=23.0.0
 flake8>=6.0.0
 mypy>=1.0.0
 EOF
 
-# Create pyproject.toml
-RUN cd /workspace/calculator && \
-    cat > pyproject.toml << 'EOF'
+COPY <<'EOF' /workspace/calculator/pyproject.toml
 [build-system]
 requires = ["setuptools>=45", "wheel"]
 build-backend = "setuptools.build_meta"
@@ -101,4 +93,4 @@ RUN cd /workspace/calculator && \
 # Install Python dependencies including linting tools
 RUN pip install --no-cache-dir pytest black flake8 mypy ruff
 
-# /tests is bind-mounted by the harbor verifier; no static COPY needed.
+RUN mkdir -p /logs/verifier
