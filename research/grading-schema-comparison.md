@@ -1,47 +1,32 @@
 # Agent Evaluation Framework Grading Schema Comparison
 
-Exhaustive comparison of task and grading schemas across 8 leading agent evaluation
-frameworks, with a recommended schema for agentsmd-rl.
+Comparison of task and grading schemas across 8 leading agent evaluation frameworks, with a recommended schema for agentsmd-rl.
 
 ## 1. Framework-by-Framework Analysis
 
----
-
 ### 1.1 Anthropic — "Demystifying Evals for AI Agents"
 
-**Source:** https://www.anthropic.com/engineering/demystifying-evals-for-ai-agents
-
-#### Core Vocabulary
+Source: https://www.anthropic.com/engineering/demystifying-evals-for-ai-agents
 
 | Term | Definition |
-|------|-----------|
+|---|---|
 | **Task** | A single test with defined inputs and success criteria |
-| **Trial** | One execution attempt of a task (multiple trials for consistency) |
-| **Grader** | Logic that scores some aspect of performance; a task can have multiple graders, each containing multiple **assertions** (aka checks) |
-| **Transcript** | Complete record of a trial (outputs, tool calls, reasoning, intermediate results) |
-| **Outcome** | Final state in the environment at trial end |
+| **Trial** | One execution attempt of a task |
+| **Grader** | Logic that scores some aspect of performance; one task may have multiple graders, each containing multiple **assertions** (checks) |
+| **Transcript** | Complete record of a trial (outputs, tool calls, reasoning) |
+| **Outcome** | Final environment state at trial end |
 
-#### Three Grader Types
+| Grader type | Sub-methods | Strengths | Weaknesses |
+|---|---|---|---|
+| **Code-based** | String match (exact/regex/fuzzy), binary tests (fail-to-pass / pass-to-pass), static analysis, outcome verification, tool-call verification, transcript analysis | Fast, cheap, reproducible, objective | Brittle to valid variations |
+| **Model-based** | Rubric-based scoring, NL assertions, pairwise comparison, reference-based, multi-judge consensus | Flexible, captures nuance, handles open-ended | Non-deterministic, expensive, needs calibration |
+| **Human** | SME review, crowdsourced, spot-check, A/B, inter-annotator agreement | Gold standard | Expensive, slow, doesn't scale |
 
-| Type | Sub-methods | Strengths | Weaknesses |
-|------|-------------|-----------|------------|
-| **Code-based** | String match (exact/regex/fuzzy), binary tests (fail-to-pass, pass-to-pass), static analysis (lint/type/security), outcome verification, tool call verification, transcript analysis (turns/tokens) | Fast, cheap, reproducible, objective | Brittle to valid variations, no nuance |
-| **Model-based** | Rubric-based scoring, natural language assertions, pairwise comparison, reference-based evaluation, multi-judge consensus | Flexible, captures nuance, handles open-ended tasks | Non-deterministic, expensive, needs calibration |
-| **Human** | SME review, crowdsourced judgment, spot-check sampling, A/B testing, inter-annotator agreement | Gold standard quality | Expensive, slow, doesn't scale |
+Composition modes: **weighted** (combined scores hit threshold), **binary** (all must pass), **hybrid** (some gated, rest weighted).
 
-#### Grader Composition
+Recommendations: grade outcome, not transcript; build in partial credit; deterministic first, LLM where necessary, human for calibration; isolate dimensions with separate LLM judges; calibrate against human experts; provide an "Unknown" escape hatch.
 
-Three modes: **weighted** (combined scores hit a threshold), **binary** (all graders must pass), or **hybrid** (some binary-required, others weighted).
-
-#### Key Recommendations
-
-- **Grade outcome, not transcript** — checking specific tool call sequences is too rigid
-- **Partial credit** — a multi-component task should reflect continuum of success
-- **Priority:** deterministic first, LLM where necessary, human for calibration
-- **Dimensional isolation** — grade each dimension with an isolated LLM judge, not one monolithic judge
-- **Calibrate LLM graders** against human experts; provide "Unknown" escape hatch
-
-#### Schema (informal, no formal spec published)
+Schema is informal — no formal spec published.
 
 ```
 task:
@@ -54,27 +39,18 @@ task:
   reference_solution: ...
 ```
 
----
-
 ### 1.2 Harbor Framework
 
-**Source:** https://harborframework.com/docs/tasks
-
-#### Task Schema
+Source: https://harborframework.com/docs/tasks
 
 ```
 task-directory/
   instruction.md          # Agent prompt
   task.toml               # Metadata + config
-  environment/
-    Dockerfile            # Or docker-compose.yaml
-  solution/
-    solve.sh              # Reference solution (for validation)
-  tests/
-    test.sh               # Writes reward to /logs/verifier/
+  environment/Dockerfile  # Or docker-compose.yaml
+  solution/solve.sh       # Reference solution (for validation)
+  tests/test.sh           # Writes reward to /logs/verifier/
 ```
-
-#### task.toml Schema
 
 ```toml
 version = "1.0"
@@ -115,57 +91,34 @@ transport = "streamable-http" | "sse" | "stdio"
 url = "string"
 ```
 
-#### Reward Output
+Reward output: `reward.txt` (single float, read first) or `reward.json` (dict of named float metrics, e.g. `{"behavioral": 0.6, "regression": 0.2}`).
 
-Two formats (Harbor reads `reward.txt` first, falls back to `reward.json`):
-
-- **reward.txt** — single float (e.g. `0.85`)
-- **reward.json** — dict of named float metrics: `{"behavioral": 0.6, "regression": 0.2}`
-
-#### Grader Composition
-
-Harbor itself is grader-agnostic — the test.sh script computes its own weighted score.
-There is no built-in multi-grader orchestration; that lives in the test script.
-
-#### Source Attribution
-
-None built-in. No standard mechanism for tracing test checks to source files.
-
----
+Harbor is grader-agnostic — `test.sh` computes its own weighted score. No built-in multi-grader orchestration. No source attribution.
 
 ### 1.3 SWE-bench / SWE-bench Verified
 
-**Source:** https://www.swebench.com/SWE-bench/guides/datasets/
-
-#### Instance Schema
+Source: https://www.swebench.com/SWE-bench/guides/datasets/
 
 | Field | Type | Description |
-|-------|------|-------------|
+|---|---|---|
 | `instance_id` | str | `owner__repo-PR_number` |
 | `repo` | str | `owner/repo` |
 | `issue_id` | int | GitHub issue number |
-| `base_commit` | str | Repository HEAD before solution PR |
+| `base_commit` | str | Repo HEAD before solution PR |
 | `problem_statement` | str | Issue title + body |
-| `hints_text` | str | Issue comments before PR creation |
+| `hints_text` | str | Issue comments before PR |
 | `created_at` | str | PR creation date |
-| `patch` | str | Gold patch (minus test code) |
+| `patch` | str | Gold patch (minus tests) |
 | `test_patch` | str | Test file patch from solution PR |
-| `version` | str | Repository package version |
-| `environment_setup_commit` | str | Commit for environment setup |
+| `version` | str | Repo package version |
+| `environment_setup_commit` | str | Commit for env setup |
 | `FAIL_TO_PASS` | str (JSON list) | Tests that must go from failing to passing |
 | `PASS_TO_PASS` | str (JSON list) | Tests that must remain passing |
-| `issue_url` | str | GitHub issue URL |
-| `pr_url` | str | GitHub PR URL |
+| `issue_url`, `pr_url` | str | GitHub URLs |
 
-SWE-bench Verified adds: `difficulty` (str).
+SWE-bench Verified adds `difficulty` (str).
 
-#### Grading
-
-Strictly binary: an instance is "resolved" iff ALL `FAIL_TO_PASS` tests now pass AND
-all `PASS_TO_PASS` tests still pass. No partial credit. No multi-signal composition.
-No LLM judge. No source attribution.
-
-#### Evaluation Output
+Grading is strictly binary: resolved iff all `FAIL_TO_PASS` pass AND all `PASS_TO_PASS` still pass. No partial credit, no multi-signal composition, no LLM judge, no source attribution.
 
 ```json
 {
@@ -177,30 +130,20 @@ No LLM judge. No source attribution.
 }
 ```
 
-Per-instance: `instance_results.jsonl` with pass/fail per test.
+Per-instance results in `instance_results.jsonl`.
 
-#### Limitations (per OpenAI's critique)
-
-- 35.5% of failed instances use narrow tests that reject valid solutions
-- 18.8% use wide tests checking things not in the problem statement
-- Binary scoring loses all signal about partial progress
-
----
+OpenAI critique: 35.5% of failed instances use narrow tests rejecting valid solutions; 18.8% use wide tests checking things outside the problem statement; binary scoring loses partial-progress signal.
 
 ### 1.4 METR Task Standard
 
-**Source:** https://github.com/METR/task-standard/blob/main/STANDARD.md
-
-#### Task Family Structure
+Source: https://github.com/METR/task-standard/blob/main/STANDARD.md
 
 ```
 task_family_name/
   task_family_name.py     # Defines TaskFamily class
   manifest.yaml           # Resource requirements
-  *.py, *.sh, assets      # Supporting files
+  *.py, *.sh, assets
 ```
-
-#### TaskFamily Class
 
 ```python
 class TaskFamily:
@@ -208,50 +151,29 @@ class TaskFamily:
     required_environment_variables: list[str] = []
 
     @staticmethod
-    def get_tasks() -> dict[str, Task]:
-        """Returns mapping of task_name -> task data dict."""
-
+    def get_tasks() -> dict[str, Task]: ...
     @staticmethod
-    def get_instructions(t: Task) -> str:
-        """Agent instructions for this task."""
-
+    def get_instructions(t: Task) -> str: ...
     @staticmethod
-    def get_permissions(t: Task) -> list[str]:
-        """e.g. ['full_internet']"""
-
+    def get_permissions(t: Task) -> list[str]: ...
     @staticmethod
-    def get_aux_vm_spec(t: Task) -> VMSpec | None:
-        """Auxiliary VM specification (declarative)."""
-
+    def get_aux_vm_spec(t: Task) -> VMSpec | None: ...
     @staticmethod
-    def install() -> None:
-        """Customize build of main container."""
-
+    def install() -> None: ...
     @staticmethod
-    def start(t: Task) -> None:
-        """Move assets, start processes, setup services."""
-
+    def start(t: Task) -> None: ...
     @staticmethod
     def score(t: Task, submission: str) -> float | None:
-        """Returns 0.0-1.0 or None (manual scoring needed)."""
         # MUST NOT coexist with intermediate_score
-
     @staticmethod
     def intermediate_score(t: Task, submission: str) -> float | None:
-        """For ongoing scoring during task execution."""
         # MUST NOT coexist with score
-
     @staticmethod
     def aggregate_scores(...) -> float | None:
-        """Combine intermediate scores."""
         # MUST NOT coexist with score
-
     @staticmethod
-    def teardown(t: Task) -> None:
-        """Cleanup."""
+    def teardown(t: Task) -> None: ...
 ```
-
-#### manifest.yaml Schema
 
 ```yaml
 $schema: 'http://json-schema.org/draft-07/schema#'
@@ -264,28 +186,17 @@ patternProperties:
         type: object
         properties:
           gpu:
-            count_range: [min, max]  # integer array
+            count_range: [min, max]
             model: string
           cpus: integer (min: 1)
           memory_gb: integer (min: 1)
 ```
 
-#### Scoring Model
-
-- `score()` returns `float | None` (0.0-1.0, None = manual)
-- Single score per task — no built-in multi-grader composition
-- No source attribution mechanism
-- Scoring quality guidance: "a very incompetent agent shouldn't get more than 0.1,
-  a very competent agent should be able to get at least 0.9"
-- Tasks should score on a continuum (not just binary)
-
----
+Single `score()` per task returning `float | None` in [0, 1] (None = manual). No built-in multi-grader composition; no source attribution. Quality guidance: "incompetent agent ≤ 0.1, competent agent ≥ 0.9". Continuous scoring preferred over binary.
 
 ### 1.5 Inspect AI (UK AISI)
 
-**Source:** https://inspect.aisi.org.uk/
-
-#### Task Constructor
+Source: https://inspect.aisi.org.uk/
 
 ```python
 Task(
@@ -293,7 +204,7 @@ Task(
     setup: Solver | list[Solver] | None = None,
     solver: Solver | Agent | list[Solver] = generate(),
     cleanup: Callable[[TaskState], Awaitable[None]] | None = None,
-    scorer: Scorers | None = None,  # Single scorer or list
+    scorer: Scorers | None = None,
     metrics: list[Metric | dict[str, list[Metric]]] | None = None,
     model: str | Model | None = None,
     config: GenerateConfig = GenerateConfig(),
@@ -311,174 +222,107 @@ Task(
 )
 ```
 
-#### Score Type
-
 ```python
 @dataclass
 class Score:
     value: Value      # str | int | float | bool | Sequence | Mapping
-    answer: str       # Extracted answer text
-    explanation: str   # Reasoning
+    answer: str
+    explanation: str
     metadata: dict[str, Any]
 ```
 
-#### Built-in Scorers
-
 | Scorer | Type | Description |
-|--------|------|-------------|
+|---|---|---|
 | `includes()` | Deterministic | Target substring in output |
 | `match()` | Deterministic | Target at beginning/end |
 | `exact()` | Deterministic | Normalized exact match |
 | `pattern()` | Deterministic | Regex extraction |
 | `answer()` | Deterministic | "ANSWER:" marker extraction |
-| `f1()` | Deterministic | Token-level F1 score |
+| `f1()` | Deterministic | Token-level F1 |
 | `choice()` | Deterministic | Multiple choice |
 | `math()` | Deterministic | SymPy expression equivalence |
-| `model_graded_qa()` | Model-based | LLM assesses correctness |
-| `model_graded_fact()` | Model-based | LLM assesses factual presence |
+| `model_graded_qa()` | Model-based | LLM correctness judge |
+| `model_graded_fact()` | Model-based | LLM fact-presence judge |
 
-#### Multi-Scorer Composition
+Three multi-scorer patterns:
 
-Three patterns:
-
-1. **List of scorers** (independent):
 ```python
+# 1. List of scorers (independent)
 Task(scorer=[scorer_a(), scorer_b()])
-```
 
-2. **Single scorer yielding dict** (shared computation):
-```python
+# 2. Single scorer yielding dict (shared computation)
 @scorer(metrics={"dim_a": [mean()], "dim_b": [mean()]})
 def multi_dim():
     async def score(state, target):
         return Score(value={"dim_a": 0.8, "dim_b": 0.6})
     return score
-```
 
-3. **multi_scorer with reducer** (voting/aggregation):
-```python
+# 3. multi_scorer with reducer (voting/aggregation)
 multi_scorer(
     scorers=[model_graded_qa(model=m) for m in models],
     reducer="mode"  # or "mean", "median", "max"
 )
 ```
 
-#### Epoch Reducers
+Epoch reducers: `mean`, `median`, `mode`, `max`, `pass_at_{k}`, `at_least_{k}`. Metrics: `accuracy()`, `mean()`, `var()`, `std()`, `stderr()`, `bootstrap_stderr()`, `grouped(metric, field)`.
 
-Built-in: `mean`, `median`, `mode`, `max`, `pass_at_{k}`, `at_least_{k}`
-
-#### Metrics
-
-Built-in: `accuracy()`, `mean()`, `var()`, `std()`, `stderr()`,
-`bootstrap_stderr()`, `grouped(metric, field)`
-
-#### UK AISI Evaluation Standard Requirements
-
-- **Primary scorer must be binary** (pass/fail)
-- **Auxiliary scorers** provide richer signals beyond binary
-- Model grading restricted to **content matching** (not numerical ratings)
-- Custom tools/scorers MUST have unit tests
-- Quality assurance via frontier model or human completion logs
-
----
+UK AISI Evaluation Standard: primary scorer must be binary (pass/fail); auxiliary scorers provide richer signals; model grading restricted to content matching (not numerical ratings); custom scorers must have unit tests; QA via frontier model or human completion logs.
 
 ### 1.6 Vivaria (METR)
 
-**Source:** https://vivaria.metr.org/
+Source: https://vivaria.metr.org/
 
-Vivaria is the runtime for METR Task Standard tasks. It adds:
+Runtime for METR Task Standard tasks. Server (TS + PostgreSQL) creates task environments and runs agents; CLI (Python) is the user interface; pyhooks (Python) is the agent-to-server interface for LLM API calls and trace entries.
 
-- **Server** (TypeScript + PostgreSQL): creates task environments, runs agents
-- **CLI** (Python): user interface to server
-- **pyhooks** (Python): agent-to-server interface for LLM API calls, trace entries
-
-Vivaria does not define its own task schema — it consumes METR Task Standard tasks.
-The scoring mechanism is whatever the TaskFamily class implements.
-
-No additional grader composition, source attribution, or multi-signal reward beyond
-what the TaskFamily.score() method returns.
-
----
+Vivaria does not define its own schema; it consumes METR tasks and uses whatever `TaskFamily.score()` returns. No additional grader composition, source attribution, or multi-signal reward.
 
 ### 1.7 SWE-RM (Execution-Free Reward Model)
 
-**Source:** https://arxiv.org/abs/2512.21919
+Source: https://arxiv.org/abs/2512.21919
 
-#### Architecture
+Mixture-of-experts, 30B total / 3B active (Qwen3-30B-A3B base), 256k context for full multi-turn trajectories.
 
-Mixture-of-experts, 30B total / 3B active parameters, based on Qwen3-30B-A3B.
-Supports 256k context windows for full multi-turn trajectories.
-
-#### Probability from Logprobs
-
-The verifier generates "Yes" or "No" tokens. Score is computed as:
+Verifier emits "Yes" / "No" and the score is computed from logits:
 
 ```
 r = exp(l_y) / (exp(l_y) + exp(l_n))
 ```
 
-where `l_y`, `l_n` are logits for YES/NO tokens. Produces continuous [0,1] score.
-
-#### Hybrid Reward Formula (Equation 1)
+Hybrid reward (Equation 1):
 
 ```
 r(q, tau_i) = ExecutionBucket(q, tau_i) + Score_EF(q, tau_i, patch_i)
 ```
 
-where ExecutionBucket maps to:
-
-| Outcome | ExecutionBucket Value |
-|---------|----------------------|
+| Outcome | ExecutionBucket |
+|---|---:|
 | Issue resolved (all tests pass) | +1.0 |
-| Unfinished (no patch produced) | -0.5 |
-| Otherwise (tests fail) | 0.0 |
+| Tests fail (otherwise) | 0.0 |
+| Unfinished (no patch) | -0.5 |
 
-Score_EF is the continuous [0,1] output from the reward model logprobs formula above.
+`Score_EF` is the continuous [0, 1] from the logprobs formula above. Combination is **additive**, not weighted-average — the bucket coarse-classifies; the RM differentiates within the bucket.
 
-This is an **additive** combination, not weighted-average. The execution signal provides
-coarse bucketing (+1, 0, -0.5) while the RM provides fine-grained differentiation
-within each bucket.
-
-#### Key Finding: TTS != RL Quality
-
-Two verifiers with nearly identical test-time scaling improvements produced
-strikingly different RL training behavior. The critical difference was
-**classification accuracy (AUC)** and **calibration (ECE)**, not just ranking quality.
+Key finding: **TTS ≠ RL quality**. Two verifiers with nearly identical test-time scaling produced strikingly different RL training behavior. The differentiator was classification accuracy (AUC) and calibration (ECE), not just ranking.
 
 ```
 AUC = Pr(r(tau_+) > r(tau_-))
 ECE = sum_m (|B_m|/n) * |acc(B_m) - conf(B_m)|
 ```
 
-A good RL reward model needs high AUC AND low ECE.
-
-#### Data Findings
-
-- Optimal positive:negative ratio is 2:1
-- 256k context improves RM@32 from 66.8% (at 16k) to 74.4%
-- Hybrid reward (SWE-RM + execution) achieves smoothest learning + highest pass@1
-
----
+Data findings: optimal positive:negative is 2:1; 256k context lifts RM@32 from 66.8% (16k) to 74.4%; hybrid reward (SWE-RM + execution) gives smoothest learning + highest pass@1.
 
 ### 1.8 AgentBench
 
-**Source:** https://github.com/THUDM/AgentBench (ICLR 2024)
+Source: https://github.com/THUDM/AgentBench (ICLR 2024)
 
-#### Architecture
-
-Client-server with three components:
-- **Task Server**: hosts environment, provides descriptions, gives feedback
-- **Agent Server**: inference interface
-- **Client**: coordinates via max-flow assignment optimization
-
-#### Task Configuration (YAML)
+Client-server with three components: Task Server (hosts environment, gives feedback), Agent Server (inference interface), Client (coordinates via max-flow assignment).
 
 ```yaml
 # configs/tasks/kg.yaml
-import: definition.yaml    # Extended YAML keyword
+import: definition.yaml
 
 task_name:
-  module: "src.tasks.kg"   # Python module
+  module: "src.tasks.kg"
   workers: 2
   config:
     dataset: "path/to/data"
@@ -487,111 +331,76 @@ task_name:
 
 Extended YAML keywords: `import`, `default`, `overwrite`.
 
-#### Scoring
+Per-environment scoring functions, not standardized across environments. 8 environments (OS, DB, KG, Card Game, Lateral Thinking, HouseHolding, WebShopping, WebBrowsing). Predominantly rule-based, no LLM judge, no source attribution.
 
-- Per-environment scoring functions (not standardized across environments)
-- 8 environments: OS, DB, KG, Digital Card Game, Lateral Thinking, HouseHolding, WebShopping, WebBrowsing
-- Results aggregated into leaderboard across all environments
-- Predominantly rule-based (compare agent output to expected output)
-
-#### Alternative AgentBench (github.com/agentbench — distinct project)
-
-Layered scoring:
-- Layer 0 (40%): Structural checks (files exist, content matches)
-- Layer 1 (40%): Metrics (tool call count vs expected, error rate)
-- Layer 2 (20%): Behavioral (tool appropriateness, efficiency, error recovery)
-- All pure rule-based, no LLM judges
-
-#### Source Attribution
-
-None.
-
----
+Distinct project at github.com/agentbench uses layered scoring: Layer 0 structural (40%), Layer 1 metrics (40%), Layer 2 behavioral (20%) — all rule-based.
 
 ## 2. Comparison Table
 
 | Feature | Anthropic Blog | Harbor | SWE-bench | METR | Inspect AI | Vivaria | SWE-RM | AgentBench |
-|---------|---------------|--------|-----------|------|-----------|---------|--------|-----------|
-| **Task definition format** | Informal | TOML+Markdown+Dockerfile | JSON/JSONL | Python class+YAML | Python @task decorator | (uses METR) | N/A (reward model) | YAML config |
-| **Grader types** | code/model/human | Script-defined | Pytest (binary) | Single score() | Scorer plugins | (uses METR) | Logprobs + exec | Per-environment |
-| **Multiple graders per task** | Yes (recommended) | By convention in script | No | No | Yes (list or dict) | No | Yes (hybrid) | No |
-| **Grader composition** | Weighted/binary/hybrid | Manual in test.sh | AND (all tests pass) | N/A (single float) | Reducers (mean/mode/max) | N/A | Additive (bucket + RM) | Layered weights |
-| **Partial credit** | Recommended | Possible (float reward) | No | Yes (0.0-1.0 float) | Yes (float Score) | Yes | Yes (continuous) | Yes (layered) |
-| **Source attribution** | Not formalized | None | test_patch field | None | None | None | None | None |
-| **LLM judge support** | Recommended | Not built-in | No | Via score() code | model_graded_qa/fact | Via score() | Core (logprobs) | No |
-| **Deterministic tests** | Recommended as primary | test.sh | Pytest exclusively | Via score() code | includes/match/exact/f1 | Via score() | ExecutionBucket | Rule-based |
-| **Multi-signal reward** | Described conceptually | reward.json dict | No | No | Dict-valued Score | No | Yes (formal) | Layered |
-| **Calibration guidance** | Yes (vs human experts) | No | No | Yes (0.1-0.9 range) | Yes (binary primary) | No | Yes (AUC+ECE) | No |
-| **Formal schema spec** | No | Partial (task.toml) | HF dataset card | Python template | Python types | N/A | Paper formulas | Partial (YAML) |
-
----
+|---|---|---|---|---|---|---|---|---|
+| **Task definition format** | Informal | TOML+MD+Dockerfile | JSON/JSONL | Python class+YAML | Python `@task` | (uses METR) | N/A (RM) | YAML config |
+| **Grader types** | code/model/human | Script-defined | Pytest (binary) | Single `score()` | Scorer plugins | (uses METR) | Logprobs + exec | Per-environment |
+| **Multiple graders per task** | Yes (recommended) | By convention | No | No | Yes (list or dict) | No | Yes (hybrid) | No |
+| **Grader composition** | weighted/binary/hybrid | Manual in `test.sh` | AND (all tests pass) | N/A (single float) | Reducers | N/A | Additive (bucket + RM) | Layered weights |
+| **Partial credit** | Recommended | Possible (float) | No | Yes (0–1 float) | Yes (float Score) | Yes | Yes (continuous) | Yes (layered) |
+| **Source attribution** | Not formalized | None | `test_patch` field | None | None | None | None | None |
+| **LLM judge support** | Recommended | Not built-in | No | Via `score()` | `model_graded_qa/fact` | Via `score()` | Core (logprobs) | No |
+| **Deterministic tests** | Recommended primary | `test.sh` | Pytest-only | Via `score()` | includes/match/exact/f1 | Via `score()` | ExecutionBucket | Rule-based |
+| **Multi-signal reward** | Conceptual | `reward.json` dict | No | No | Dict-valued Score | No | Yes (formal) | Layered |
+| **Calibration guidance** | Yes (vs human) | No | No | Yes (0.1–0.9) | Yes (binary primary) | No | Yes (AUC + ECE) | No |
+| **Formal schema spec** | No | Partial (`task.toml`) | HF dataset card | Python template | Python types | N/A | Paper formulas | Partial (YAML) |
 
 ## 3. Key Design Insights
 
-### 3.1 Grader Composition: Nobody Has a Clean Standard
+### 3.1 Nobody has a clean grader-composition standard
 
-The most striking finding is that **no framework has a formal, reusable schema for
-multi-grader composition**:
-
-- Anthropic describes it conceptually but publishes no schema
-- Harbor pushes it into ad-hoc bash scripts
-- SWE-bench uses binary AND (simplest possible)
-- METR returns a single float (pushes composition into the score() function)
-- Inspect AI comes closest with its multi-scorer + reducer pattern, but it's
-  oriented toward Q&A evals, not SWE tasks
-- SWE-RM has the most principled approach (additive bucket + continuous RM)
-  but it's a reward model paper, not a benchmark spec
+| Framework | Multi-grader composition |
+|---|---|
+| Anthropic | Conceptual; no schema published |
+| Harbor | Pushed into ad-hoc bash |
+| SWE-bench | Binary AND (simplest possible) |
+| METR | Single float; composition lives inside `score()` |
+| Inspect AI | Multi-scorer + reducer, but Q&A-oriented |
+| SWE-RM | Most principled (additive bucket + continuous RM); reward-model paper, not a benchmark spec |
 
 **Opportunity: a clean, declarative schema for grader composition would be novel.**
 
-### 3.2 Source Attribution: Only This Project Does It
+### 3.2 Source attribution: only this project does it
 
-None of the 8 frameworks trace test checks or rubric rules back to specific
-source files and line ranges. SWE-bench has `test_patch` (which file the tests
-came from) but no per-check attribution. The `SourceRef` model in this project's
-`rubric.py` is genuinely novel.
+None of the 8 frameworks trace test checks or rubric rules to specific source files and line ranges. SWE-bench's `test_patch` records which file the tests came from, but no per-check attribution. The `SourceRef` model in this project's `rubric.py` is genuinely novel.
 
-### 3.3 The SWE-RM Hybrid Insight
+### 3.3 SWE-RM's hybrid insight maps to our architecture
 
-The additive formula `ExecutionBucket + Score_EF` is elegant because:
-- Execution provides coarse but reliable bucketing
-- The RM provides fine-grained differentiation within buckets
-- They are additive, not weighted — the RM score shifts within a bucket, never
-  overrides the execution signal entirely
-- For RL: high AUC + low ECE matter more than raw accuracy
+| SWE-RM | This project |
+|---|---|
+| ExecutionBucket (reliable, coarse) | `test.sh` deterministic score |
+| Score_EF (nuanced, continuous) | LLM rubric ICR score |
+| Additive — RM shifts within bucket, never overrides | Same property |
+| For RL: high AUC + low ECE | Same target |
 
-This maps naturally to our architecture:
-- `test.sh` deterministic score = our "ExecutionBucket" (reliable, coarse)
-- LLM rubric ICR score = our "Score_EF" (nuanced, continuous)
+### 3.4 Anthropic's dimensional isolation
 
-### 3.4 Anthropic's Dimensional Isolation
+Each LLM dimension graded by a separate judge — not one monolithic judge. Aligns with our `rubric.yaml` design, where each `RubricRule` is evaluated independently.
 
-The recommendation to grade each dimension with an isolated LLM judge (not one
-monolithic evaluation) aligns with our rubric.yaml design where each RubricRule
-is evaluated independently.
+### 3.5 UK AISI's binary-primary + auxiliary pattern
 
-### 3.5 UK AISI's Binary Primary + Auxiliary Pattern
-
-The requirement for a binary primary scorer alongside richer auxiliary metrics
-is a clean pattern that avoids the "what does 0.73 mean?" problem while still
-capturing useful signal.
-
----
+Binary primary scorer + richer auxiliary metrics avoids the "what does 0.73 mean?" problem while preserving useful signal.
 
 ## 4. Recommended Schema
 
-Taking the best ideas from each framework:
+### 4.1 Provenance
 
-### 4.1 Design Principles
-
-1. **From Anthropic:** Three grader types (deterministic, model-based, human), grade outcome not transcript, partial credit, dimensional isolation for LLM judges
-2. **From Harbor:** File-based task structure, test.sh as grader entry point, reward.json for named metrics
-3. **From SWE-bench:** FAIL_TO_PASS / PASS_TO_PASS as first-class concepts, instance_id format
-4. **From METR:** Single float final score (0.0-1.0), Python-defined scoring
-5. **From Inspect AI:** Typed Score objects, multi-scorer with reducers, dict-valued scores, epoch reducers
-6. **From SWE-RM:** Additive composition (execution bucket + continuous RM), AUC/ECE for RM quality
-7. **From UK AISI:** Binary primary + auxiliary pattern, mandatory unit tests for scorers
-8. **Novel (this project):** SourceRef attribution, RubricRule with applicability filters
+| Source | Borrowed from |
+|---|---|
+| Anthropic | Three grader types, grade-outcome-not-transcript, partial credit, dimensional isolation |
+| Harbor | File-based task structure, `test.sh` entry point, `reward.json` named metrics |
+| SWE-bench | `FAIL_TO_PASS` / `PASS_TO_PASS`, `instance_id` format |
+| METR | Single float final score (0–1), Python-defined scoring |
+| Inspect AI | Typed `Score`, multi-scorer + reducers, dict-valued scores, epoch reducers |
+| SWE-RM | Additive composition (bucket + continuous RM), AUC/ECE for RM quality |
+| UK AISI | Binary primary + auxiliary, mandatory unit tests |
+| Novel | `SourceRef` attribution, `RubricRule` with applicability filters |
 
 ### 4.2 Data Model (Pydantic)
 
@@ -905,18 +714,17 @@ class RewardOutput(BaseModel):
     )
 ```
 
-### 4.3 How It Maps to Existing test.sh
+### 4.3 Mapping to existing test.sh
 
-The existing test.sh pattern in this project already follows this design implicitly:
+The current `test.sh` pattern already follows this design implicitly:
 
 ```bash
-# Current pattern in test.sh:
 WEIGHTS[behavioral_unbound]=0.35     # -> Grader{id="behavioral", type=DETERMINISTIC, method=FAIL_TO_PASS}
 WEIGHTS[behavioral_except]=0.30      #    with two Checks inside it
 WEIGHTS[passtopass]=0.10             # -> Grader{id="regression", type=DETERMINISTIC, method=PASS_TO_PASS}
-WEIGHTS[structural]=0.10            # -> Grader{id="structural", type=DETERMINISTIC, method=AST_CHECK}
-WEIGHTS[antistub]=0.05              # -> Check within "regression" grader
-WEIGHTS[config]=0.10                # -> Grader{id="style_rubric", type=MODEL_BASED, method=RUBRIC_SCORING}
+WEIGHTS[structural]=0.10             # -> Grader{id="structural", type=DETERMINISTIC, method=AST_CHECK}
+WEIGHTS[antistub]=0.05               # -> Check within "regression" grader
+WEIGHTS[config]=0.10                 # -> Grader{id="style_rubric", type=MODEL_BASED, method=RUBRIC_SCORING}
 ```
 
 The schema makes this structure explicit, auditable, and machine-readable.
@@ -937,8 +745,7 @@ The schema makes this structure explicit, auditable, and machine-readable.
 }
 ```
 
-Harbor reads `reward.txt` (containing `0.85`) as the primary signal.
-RL training pipelines read `reward.json` for the hybrid decomposition.
+Harbor reads `reward.txt` (containing `0.85`) as the primary signal. RL pipelines read `reward.json` for the hybrid decomposition.
 
 ### 4.5 Sidecar Manifest File
 
@@ -1022,42 +829,16 @@ graders:
           commit: "17f43d15"
 ```
 
----
-
 ## 5. Answers to Specific Research Questions
 
-### Q: What does the Anthropic blog say about grader composition?
+**Q: What does the Anthropic blog say about grader composition?**
+Three modes: weighted (combined scores hit threshold), binary (all must pass), hybrid (some gated, rest weighted). Recommendations: grade outcome over transcript, build in partial credit, deterministic first then LLM for nuance, isolate dimensions across separate LLM judges.
 
-Three modes: **weighted** (combined grader scores must hit threshold), **binary** (all
-must pass), or **hybrid** (some gated, some weighted). They recommend grading outcome
-over transcript, building in partial credit, and using deterministic graders first with
-LLM graders for nuance. Each LLM dimension should be graded by an isolated judge, not
-a monolithic one.
+**Q: How does SWE-RM combine `ExecutionBucket` with softmax(YES/NO logprobs)?**
+Additive, not weighted: `r(q, tau) = ExecutionBucket(q, tau) + Score_EF(q, tau, patch)`. ExecutionBucket: +1 (resolved), 0 (failed), -0.5 (unfinished). `Score_EF = exp(l_y) / (exp(l_y) + exp(l_n))` ∈ [0, 1]. Bucket coarse-classifies; RM differentiates within bucket. For RL, classification accuracy (AUC) and calibration (ECE) matter more than raw ranking.
 
-### Q: How does SWE-RM combine execution_bucket with softmax(YES/NO logprobs)?
-
-**Additive**, not weighted. The hybrid reward is:
-
-```
-r(q, tau) = ExecutionBucket(q, tau) + Score_EF(q, tau, patch)
-```
-
-ExecutionBucket: +1.0 (resolved), 0.0 (failed), -0.5 (unfinished).
-Score_EF: `exp(l_y) / (exp(l_y) + exp(l_n))` from logprobs, giving [0,1].
-
-The execution signal provides coarse bucketing while the RM provides fine-grained
-differentiation within each bucket. For RL training, the critical quality metrics
-for the RM are classification accuracy (AUC) and calibration (ECE), not just ranking.
-
-### Q: What is the METR Task Standard's recommended way to define success criteria?
-
-A single `score()` method returning `float | None` in [0.0, 1.0], where None means
-manual scoring needed. Quality guidance: incompetent agents should score below 0.1,
-competent agents should reach at least 0.9. Tasks should score on a continuum. The
-standard explicitly supports only a single score; multi-signal composition must happen
-inside the score() implementation. There is no built-in grader composition mechanism.
-
----
+**Q: METR's recommended success-criteria definition?**
+Single `score()` returning `float | None` ∈ [0.0, 1.0]; `None` means manual scoring. Quality guidance: incompetent agents below 0.1, competent above 0.9, scoring on a continuum. Multi-signal composition must happen inside `score()`; no built-in mechanism.
 
 ## 6. Sources
 

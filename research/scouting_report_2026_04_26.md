@@ -1,28 +1,27 @@
 # Scouting & Causality Classification — 2026-04-26
 
-A single-day pass that took our candidate PR pool from 204 baseline wins to **977 candidate PRs** ready for scaffolding. This document records what was scouted, what was thrown away, what it cost, and the lessons we'd carry into the next pass.
+A single-day pass that took the candidate pool from 204 baseline wins to **977 candidate PRs** ready for scaffolding.
 
 ## TL;DR
 
-- **Repos in pool:** 107 fully processed today + 40 newly discovered (in-flight scout). 147 total.
-- **PRs fetched today:** 19,417 (107 repos × 12-month window, capped at 800 per repo)
-- **Dedup against 4,809-stub baseline:** 14,549 unique new PRs
-- **Tier-1 repo allowlist filter:** 13,046 PRs went to the judge
-- **Causality verdicts:** A=204, B=546, C=10,398, D=1,896, ERR=2
-- **Today's wins:** 750 A+B
-- **Grand total candidate PRs (cumulative):** 977
-- **Total Gemini cost today:** ~$140 (Flex tier, 50% off Standard)
-- **Wall clock:** ~14 hours scout + 17 min judge
+| Stage | Count | Note |
+|---|---:|---|
+| Repos processed | 107 + 40 in-flight discovery | 147 total |
+| Raw PRs fetched | 19,417 | 107 repos × 12-month window, cap 800/repo |
+| Unique after dedup | 14,549 | vs. 4,809-stub baseline |
+| Into causality judge | 13,046 | tier-1 repo allowlist |
+| A + B wins today | **750** | A=204, B=546, C=10,398, D=1,896, ERR=2 |
+| Cumulative candidates | **977** | |
+| Gemini cost | ~$153 | Flex tier (50% off Standard) |
+| Wall clock | ~14 h scout + 17 min judge | |
 
 ## Funnel breakdown
 
 ### Stage 1 — Repo discovery
 
-107 starting repos came from earlier rounds (`gh search code` + curated lists). For this pass we left them static and scouted in depth.
+107 repos came from earlier rounds; left static for this pass. A late-day discovery effort surfaced **40 fresh repos** (zero overlap), ≥500 stars, with confirmed tier-1 files. Method: `gh search repos` on topics like `claude-code`, `claude-skills`, `mcp-server`, `vibe-coding`, plus WebFetch on awesome-claude-code / awesome-agents-md lists. Avoided `gh search code` — its abuse-detection bucket was already exhausted.
 
-A separate discovery effort late in the day surfaced **40 fresh repos** (zero overlap), ≥500 stars, with confirmed tier-1 files. Method that worked: `gh search repos` with topics like `claude-code`, `claude-skills`, `mcp-server`, `vibe-coding`, plus WebFetch on awesome-claude-code / awesome-agents-md curated lists. Avoided `gh search code` because its secondary abuse-detection bucket was already exhausted from prior runs and recovers in hours.
-
-Top discoveries by star count:
+Top discoveries:
 
 | Stars | Repo |
 |---|---|
@@ -37,171 +36,140 @@ Top discoveries by star count:
 | 37,279 | ChromeDevTools/chrome-devtools-mcp |
 | 26,856 | eyaltoledano/claude-task-master |
 
-Sixteen of the 40 have rich SKILL.md trees (15-20 tier-1 files each) — strong signal these are skill-authoring-active repos. The full list: `/tmp/new_skill_repos.jsonl`.
+Sixteen of the 40 have rich SKILL.md trees (15-20 tier-1 files each). Full list: `/tmp/new_skill_repos.jsonl`.
 
 ### Stage 2 — PR fetching
 
-`taskforge.scout` with `gh pr list --state merged --limit 800 --json …` against each of the 107 repos. Hard-capped at 12 months ago. Hit GitHub primary rate limit every hour (~5,000 calls); rate-limit-aware retry sleeps until reset. Total wall time: 10 hours for 107 repos = ~5.6 minutes per repo on average. Output JSONL: 19,417 rows.
-
-Per-repo PR yield wasn't logged but ranged ~50-200 useful candidates (after `too_few_changes` / `too_many_files` / `too_old` / `label_skip` filters baked into scout).
+`taskforge.scout` with `gh pr list --state merged --limit 800 --json …` against each of 107 repos, hard-capped at 12 months. Hit GitHub's primary rate limit (~5,000/h) every hour; retry sleeps until reset. 10 h wall = ~5.6 min/repo. Output: 19,417 rows.
 
 ### Stage 3 — Dedup
 
-Two-key dedup against existing 4,809-stub corpus:
-
-- `slugify(repo, title)` — semantic dedup
-- `(repo, pr_number)` — strict dedup
-
-Of 19,417 fetched: 4,868 dropped as duplicates (3,823 matched both keys, 1,045 matched slug only — likely PRs renamed but reused). **14,549 unique new PRs** survived.
+Two-key dedup against the 4,809-stub corpus: `slugify(repo, title)` (semantic) and `(repo, pr_number)` (strict). Of 19,417, dropped 4,868 (3,823 both keys, 1,045 slug-only — likely renamed PRs). **14,549 unique survivors.**
 
 ### Stage 4 — Tier-1 repo allowlist
 
-1,503 PRs dropped because their repos didn't appear in our `repo_tier1.json` (manually-curated mapping of repo → confirmed tier-1 file paths). A few rare repos in the scout output had recently added or removed their tier-1 files; this filter trusts the snapshot.
-
-**13,046 PRs into the causality judge.**
+1,503 PRs dropped because their repos weren't in `repo_tier1.json` (manually-curated repo → tier-1 path mapping). The filter trusts the snapshot — a few repos had recently added or removed tier-1 files. **13,046 PRs into the judge.**
 
 ### Stage 5 — Causality judge (Gemini 3.1 Pro Flex)
 
-Each PR gets a structured-output verdict on whether the gold diff is causally shaped by the repo's tier-1 instruction files. Three useful verdicts (A, B, D) plus one discard (C):
+Each PR gets a structured-output verdict on whether the gold diff is causally shaped by the repo's tier-1 instruction files.
 
 | Verdict | Count | % | Definition |
-|---|---|---|---|
-| **A** | 204 | 1.6% | PR's diff includes changes to a tier-1 markdown file. Determined by file paths alone — no LLM call needed. |
-| **B** | 546 | 4.2% | LLM-judged: code-only PR whose fix specifically applies a rule from a tier-1 file. |
-| C | 10,398 | 79.7% | LLM-judged decorative — fix is determined by the bug, not by any rule. |
-| D | 1,896 | 14.5% | LLM-judged unscaffoldable — platform-specific (Android/iOS/macOS/CUDA), >500-line refactor, no testable behavior, etc. |
-| ERR | 2 | 0.0% | Judge call failed end-to-end. |
+|---|---:|---:|---|
+| **A** | 204 | 1.6 | Diff includes a tier-1 markdown file. Path-only — no LLM call. |
+| **B** | 546 | 4.2 | Code-only PR whose fix specifically applies a tier-1 rule (LLM). |
+| C | 10,398 | 79.7 | Decorative — fix determined by the bug, not by any rule (LLM). |
+| D | 1,896 | 14.5 | Unscaffoldable — platform-specific, >500-line refactor, no testable behavior (LLM). |
+| ERR | 2 | 0.0 | Judge call failed end-to-end. |
 
-5.7% A+B yield. The "short-circuit" path (verdict by file-path matching, no LLM) handled 3,876 of the 13,046 PRs — all the As plus the 3,672 C-unfetchable cases (PR's tier-1 markdown didn't exist at base commit, default-classed as decorative). The remaining 9,171 PRs got a real LLM call.
+5.7 % A + B yield. The "short-circuit" path (file-path matching, no LLM) handled 3,876 of 13,046 PRs — all the As plus 3,672 C-unfetchable cases (PR's tier-1 markdown didn't exist at base commit, default-class decorative). The remaining 9,171 got real LLM calls.
 
 ## Top contributing repos
 
-### Class B (code-fix-follows-rule) by repo
+### Class B — code-fix-follows-rule (the canonical bucket)
 
-The interesting bucket. These tasks test "did the agent read the instructions and apply them when fixing code" — the canonical hypothesis.
+| Count | Repo | Count | Repo |
+|---:|---|---:|---|
+| 42 | openai/openai-agents-js | 22 | pulumi/pulumi |
+| 42 | remix-run/remix | 20 | weaviate/weaviate |
+| 41 | astral-sh/uv | 17 | dotnet/runtime |
+| 30 | huggingface/transformers | 15 | anomalyco/opencode |
+| 27 | prefecthq/prefect | 12 | SeleniumHQ/selenium |
+| 26 | apache/superset | 11 | effect-ts/effect |
+| 25 | vitessio/vitess | 10 | astral-sh/ruff |
+| 22 | cloudflare/workers-sdk | | |
 
-| Count | Repo |
-|---|---|
-| 42 | openai/openai-agents-js |
-| 42 | remix-run/remix |
-| 41 | astral-sh/uv |
-| 30 | huggingface/transformers |
-| 27 | prefecthq/prefect |
-| 26 | apache/superset |
-| 25 | vitessio/vitess |
-| 22 | cloudflare/workers-sdk |
-| 22 | pulumi/pulumi |
-| 20 | weaviate/weaviate |
-| 17 | dotnet/runtime |
-| 15 | anomalyco/opencode |
-| 12 | SeleniumHQ/selenium |
-| 11 | effect-ts/effect |
-| 10 | astral-sh/ruff |
+Top three (openai-agents-js, remix, uv) have very mature CLAUDE.md / AGENTS.md adoption with explicit handling rules for cookbook generation, lockfile regen, migration patterns.
 
-OpenAI agents-js, Remix, and Astral's uv are the top three — all repos with very mature CLAUDE.md / AGENTS.md adoption that explicitly tell the agent how to handle cookbook generation, lockfile regen, and migration patterns.
+### Class A — markdown-edit
 
-### Class A (markdown-edit) by repo
+| Count | Repo | Count | Repo |
+|---:|---|---:|---|
+| 22 | ant-design/ant-design | 7 | withastro/astro |
+| 9 | openai/openai-agents-js | 6 | apache/airflow |
+| 9 | vitessio/vitess | 6 | dotnet/runtime |
+| 8 | microsoft/playwright | 6 | mlflow/mlflow |
+| 7 | PRQL/prql | 5 | All-Hands-AI/OpenHands |
+| 7 | dotnet/maui | 5 | dotnet/efcore |
+| 7 | remix-run/remix | 5 | gradio-app/gradio |
 
-| Count | Repo |
-|---|---|
-| 22 | ant-design/ant-design |
-| 9 | openai/openai-agents-js |
-| 9 | vitessio/vitess |
-| 8 | microsoft/playwright |
-| 7 | PRQL/prql |
-| 7 | dotnet/maui |
-| 7 | remix-run/remix |
-| 7 | withastro/astro |
-| 6 | apache/airflow |
-| 6 | dotnet/runtime |
-| 6 | mlflow/mlflow |
-| 5 | All-Hands-AI/OpenHands |
-| 5 | dotnet/efcore |
-| 5 | gradio-app/gradio |
-| 4 | PostHog/posthog |
-
-ant-design dominates with 22 — they actively curate CLAUDE.md and ship one PR per agent-instruction tweak.
+ant-design dominates — they actively curate CLAUDE.md and ship one PR per agent-instruction tweak.
 
 ## Cost
 
 | Item | Cost |
-|---|---|
-| GitHub API | $0 (free tier, just rate-limited) |
-| Gemini scout-judge (today's 9,171-prompt Flex pass) | ~$140 |
-| Gemini ERR-recheck batch (287 prompts) | ~$3 |
-| Gemini C-unfetchable-recheck batch (890 prompts) | ~$10 |
-| Failed batch attempt (cancelled, no charge) | $0 |
-| Discovery subagent (web search + repo metadata) | $0 |
-| **Total Gemini** | **~$153** |
+|---|---:|
+| GitHub API | $0 (rate-limited only) |
+| Gemini scout-judge (9,171 Flex prompts) | ~$140 |
+| Gemini ERR-recheck (287) | ~$3 |
+| Gemini C-unfetchable-recheck (890) | ~$10 |
+| Failed batch attempt (cancelled) | $0 |
+| **Total** | **~$153** |
 
-For the projected scaffolding pass on the 977-PR pool: ~$8 per PR via the `oneshot_scaffold` pipeline (Opus 4.7 in E2B sandbox) → **~$7,800**. Of those 977, expect ~60% to pass the Docker oracle on the first scaffold attempt → ~580 new runnable tasks, against the existing 442 = 1,022-task target reached.
+Projected scaffolding pass on 977 PRs via `oneshot_scaffold` (Opus 4.7 + E2B): ~$8 × 977 = **~$7,800**. At 60 % Docker-oracle pass rate → ~580 new tasks against existing 442 = 1,022 reached.
 
-## Batch vs Flex experiment
+## Batch vs Flex
 
-Initially submitted the 9,171-prompt classification job as a **Gemini batch** with structured output (camelCase JSONL, `responseSchema`, `thinkingConfig.thinkingBudget=512`). Batch is advertised at 50% off Standard with up to 24h SLA but typically minutes-to-hours.
-
-**Outcome:** the batch ran 3+ hours in `JOB_STATE_RUNNING`, with `update_time` freshness degrading from sub-second to 8 min stale to 16 min stale. Google's API exposes no `completion_stats` mid-run, so we couldn't tell if it was 95% done or stuck. We cancelled at the 3-hour mark and switched to **Flex tier** (same 50% off pricing as batch, but synchronous endpoint).
+Initially submitted the 9,171-prompt job as a Gemini batch (camelCase JSONL, `responseSchema`, `thinkingConfig.thinkingBudget=512`). Advertised 50 % off with up to 24 h SLA, typically minutes-to-hours. Outcome: 3 + h in `JOB_STATE_RUNNING`, `update_time` freshness drifting from sub-second to 16 min stale; no `completion_stats` exposed mid-run. Cancelled and switched to **Flex tier**.
 
 | | Batch (cancelled) | Flex |
 |---|---|---|
-| Pricing | 50% off Standard | 50% off Standard (identical) |
+| Pricing | 50 % off Standard | 50 % off Standard (identical) |
 | Endpoint | Async, file-based | Sync `generateContent` |
-| Wall clock for 9,171 prompts | 3h+ and counting (cancelled) | **17 min** at concurrency 32 |
-| Per-call latency | (opaque) | ~2-3s typical |
-| Failure modes | Opaque queueing; no progress hint | 429 / 503 fail-fast, client retries |
+| Wall clock (9,171 prompts) | 3 h+ and counting | **17 min** at concurrency 32 |
+| Per-call latency | (opaque) | ~2-3 s typical |
+| Failure modes | Opaque queueing | 429 / 503 fail-fast, client retries |
 | Visibility | `state` only | Per-call results streaming |
 
-Flex is the right default for medium-sized classifier passes. Same per-token cost as batch but you get throughput visibility and incremental results. The integration was a one-line config: `service_tier=ServiceTier.FLEX` on `GenerateContentConfig`.
-
-The earlier "Flex tier rejected — `serviceTier` field doesn't exist" memory note was a stale-SDK / wrong-spelling artifact; the canonical Python SDK field is **`service_tier`** (snake_case).
+Flex is the right default for medium-sized classifier passes — same per-token cost, better visibility, incremental results. One-line config: `service_tier=ServiceTier.FLEX`. The earlier "Flex doesn't exist" memory was stale-SDK / wrong-spelling — canonical Python field is **`service_tier`** (snake_case).
 
 ## What was thrown away
 
-We didn't migrate or recover everything:
-
-- **3,672 PRs** classified as "C / tier-1 unfetchable" — their tier-1 markdown didn't exist at the PR's base commit (PR predated the repo adopting CLAUDE.md/AGENTS.md). We default-classified these as decorative without an LLM call. Recovery would require either (a) loosening the rule and re-fetching at HEAD, or (b) accepting that pre-adoption PRs aren't relevant. We chose (b).
-- **890 PRs** in the C-unfetchable rerun yielded only 5 A wins. Confirms the default-decorative is the right call.
-- **287 ERR-row reruns** yielded 18 wins (9 A + 9 B). Some of these were `lobe-chat` PRs hitting an httpx redirect bug (the repo had moved); we fixed by passing `follow_redirects=True` and recovered them.
+| What | Count | Reason | Recovery? |
+|---|---:|---|---|
+| C / tier-1 unfetchable | 3,672 | tier-1 markdown didn't exist at base commit (PR predates adoption) | No — accepted as pre-adoption noise |
+| C-unfetchable rerun | 890 | only 5 A wins | Confirms default-decorative is correct |
+| ERR-row reruns | 287 | 18 wins (9 A + 9 B); some were `lobe-chat` httpx-redirect bugs (fixed via `follow_redirects=True`) | Recovered |
 
 ## Lessons
 
-1. **Add `follow_redirects=True` to every httpx GitHub client.** Several repos have moved (e.g., `lobehub/lobe-chat` was a redirect destination). Without redirect-following, every PR from a moved repo silently becomes ERR.
-2. **JSONL camelCase, not snake_case.** Gemini batch JSONL uses raw REST format (`generationConfig`, `responseMimeType`), not the SDK's snake_case. Discovered after a `400 INVALID_ARGUMENT` storm on the first batch attempt.
-3. **Drop heavy GraphQL fields.** `gh pr list --json files,…` causes GraphQL 504 storms on busy repos (PostHog, OpenHands). The `files` field is what triggers it; we drop it and re-fetch per PR if needed.
-4. **Most "short-circuit" hits are misleadingly framed.** Our short-circuit count tracks "didn't need LLM call", but ~95% of those are actually tier-1-unfetchable C dropouts, not class-A wins. We initially projected ~2,800 A wins from 30% short-circuit rate; the real number was 204. Make sure progress logs separate the two paths.
-5. **The 4,809-stub baseline was already tight.** Re-judging the 4,265 C-classified rows wasn't worth it; only 890 of them (the unfetchable subset) had ever bypassed the LLM. The rest were correctly judged on the first pass.
-6. **Discovery is bursty-cheap, scouting is slow.** A discovery subagent finds 40 high-quality repos in 6 minutes via topic search + WebFetch. Scouting those 40 will take 4+ hours of GH-rate-limited PR enumeration. Run discovery hot, scouting cold.
+| # | Lesson |
+|---|---|
+| 1 | `follow_redirects=True` on every httpx GitHub client. Several repos (e.g., `lobehub/lobe-chat`) have moved; without it, every PR silently becomes ERR. |
+| 2 | Gemini batch JSONL uses raw REST format (`generationConfig`, `responseMimeType`), not SDK snake_case. Discovered after a `400 INVALID_ARGUMENT` storm. |
+| 3 | Drop `gh pr list --json files` — triggers GraphQL 504 storms on busy repos (PostHog, OpenHands). Re-fetch per PR if needed. |
+| 4 | Short-circuit count is misleading: ~95 % of "no LLM call" hits are tier-1-unfetchable C dropouts, not class-A wins. We initially projected ~2,800 A wins from the rate; actual was 204. Separate the two paths in progress logs. |
+| 5 | The 4,809-stub baseline was already tight — only 890 unfetchables had ever bypassed the LLM. Re-judging the rest wasn't worth it. |
+| 6 | Discovery is bursty-cheap (40 repos in 6 min via topic search + WebFetch); scouting is slow (4 + h GH-rate-limited per 40 repos). Run discovery hot, scouting cold. |
 
-## Class composition for the RL training corpus
+## Class composition for RL training
 
-The 977-PR pool breaks down into the three task shapes we now distinguish in `eval_manifest.yaml` via `task.kind`:
+The 977-PR pool maps to three task shapes via `task.kind` in `eval_manifest.yaml`:
 
-| Kind | Source class | Approx count | What it tests |
-|---|---|---|---|
-| `code_fix` | Class B (code follows rule) | ~600 | The canonical hypothesis. Agent reads a SKILL.md / AGENTS.md rule, applies it during a code change. |
-| `code_with_config` | Class A subset (PR has both code AND markdown changes — bundled) | ~140 | Agent updates a rule AND ships the code change that follows it. Tests cross-file consistency. |
-| `markdown_authoring` | Class A subset (PR is markdown-only) | ~70 | Agent writes a SKILL.md from scratch given a brief. Adjacent skill, not the core hypothesis. |
+| Kind | Source | ~Count | What it tests |
+|---|---|---:|---|
+| `code_fix` | Class B | ~600 | Canonical: agent reads a SKILL.md / AGENTS.md rule, applies during code change |
+| `code_with_config` | Class A bundled (code + markdown) | ~140 | Cross-file consistency: agent updates a rule AND the code following it |
+| `markdown_authoring` | Class A markdown-only | ~70 | Agent writes a SKILL.md from a brief — adjacent skill, not core hypothesis |
 
-The split inside Class A (bundled vs markdown-only) has to be done at scaffold time by counting how many of the PR's `changed_files` are tier-1 paths. Pure markdown-only is roughly 30% of A based on spot-checks; the rest is bundled.
-
-For RL training, we'd weight heavily toward `code_fix` (the canonical signal) and `code_with_config` (cross-file consistency), and use `markdown_authoring` as a small diversity subset (~5-10%).
+Bundled-vs-pure-markdown split inside Class A is done at scaffold time by counting tier-1 paths in `changed_files`. Pure markdown-only is ~30 % of A from spot-checks. RL weighting: heavy `code_fix` + `code_with_config`, ~5-10 % `markdown_authoring` for diversity.
 
 ## Next steps
 
-1. **Wait for scout-new-40 to finish** (~4-5 hours). Judge with Flex (~$30, 17 min). Expected yield ~100-300 more wins.
-2. **Run scaffolding pass** on the 977-PR pool through `oneshot_scaffold`. ~$8/PR × 977 = ~$7,800. Expect 60% pass rate → ~580 new runnable tasks.
-3. **Build + push GHCR images** for the 399 tier-A scaffolded tasks (workflow `push-images.yml` is triggered, in progress).
-4. **Distractor-generation pass** on the 91 tasks scaffolded last night that have rubric but missing distractor block.
-5. **Class-A triage script** to split bundled vs pure-markdown via `changed_files` analysis, set `task.kind`, and route into `harbor_tasks_agentmd_edits/` vs `harbor_tasks_md_authoring/`.
+1. Wait for scout-new-40 (~4-5 h). Judge with Flex (~$30, 17 min). Expected ~100-300 more wins.
+2. Scaffold the 977-PR pool through `oneshot_scaffold`: ~$7,800, 60 % expected pass → ~580 new tasks.
+3. Build + push GHCR images for the 399 tier-A scaffolded tasks (`push-images.yml` in flight).
+4. Distractor-generation pass on 91 tasks scaffolded last night with rubric but no distractor block.
+5. Class-A triage script: split bundled vs pure-markdown via `changed_files`, set `task.kind`, route into `harbor_tasks_agentmd_edits/` vs `harbor_tasks_md_authoring/`.
 
 ## Artifacts on disk
 
-- `pipeline_logs/batch_judge_2026_04_25/deep_scout_judges.csv` — 13,208 verdict rows from today's pass
-- `pipeline_logs/batch_judge_2026_04_25/err_rechecks.csv` — 287-row ERR-recheck output
-- `pipeline_logs/batch_judge_2026_04_25/c_unfetchable_rechecks.csv` — 890-row C-unfetchable-recheck output
+- `pipeline_logs/batch_judge_2026_04_25/deep_scout_judges.csv` — 13,208 verdict rows
+- `pipeline_logs/batch_judge_2026_04_25/err_rechecks.csv` — 287-row ERR-recheck
+- `pipeline_logs/batch_judge_2026_04_25/c_unfetchable_rechecks.csv` — 890-row C-unfetchable rerun
 - `scouted_deep_2026_04_25.jsonl` — 19,417 raw scout rows
 - `scouted_deep_2026_04_25_unique.jsonl` — 14,549 deduped
 - `/tmp/new_skill_repos.jsonl` — 40 newly-discovered repos
 - `scripts/audit_stub_batch.py` — batch judge with rate-limit-aware GH fetch
-- `scripts/judge_flex.py` — Flex sync judge (drop-in replacement for batch JSONL)
+- `scripts/judge_flex.py` — Flex sync judge (drop-in for batch JSONL)
 - `scripts/dockerfile_shallow_migrate.py` — Dockerfile full-clone → shallow migration
