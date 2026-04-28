@@ -6,12 +6,12 @@ A benchmark and RL training pipeline for AI coding agents that work with **agent
 
 | | What the agent does | What we measure | Corpus | Tasks |
 |---|---|---|---|---|
-| **Part 1 — agentmd-following** | Reads the repo's rule files, then writes code to fix a bug | Does the code follow the conventions the rule files document? (e.g. "use snake_case", "no wildcard imports", "always add a /api/v2 prefix") | `harbor_tasks/` | **610** |
+| **Part 1 — agentmd-following** | Reads the repo's rule files, then writes code to fix a bug | Does the code follow the conventions the rule files document? (e.g. "use snake_case", "no wildcard imports", "always add a /api/v2 prefix") | `harbor_tasks/` | **609** |
 | **Part 2 — agentmd-create/edit** | Writes or edits a rule file (creating new conventions, fixing a typo, adding a section) | Does the agent's output contain the distinctive lines the human author wrote in the gold PR? | `harbor_tasks_md_authoring/` | **2,482** |
 
-Both parts come from real merged GitHub PRs (we don't synthesize anything). Both ship as Docker images on `ghcr.io/findalexli/agentsmd-rl/<task>:latest` and use the same scoring harness — a deterministic test plus optional LLM judges. Snapshot 2026-04-28: **3,092 active tasks total**.
+Both parts come from real merged GitHub PRs (we don't synthesize anything). Both ship as Docker images on `ghcr.io/findalexli/agentsmd-rl/<task>:latest` and use the same scoring harness — a deterministic test plus optional LLM judges. Snapshot 2026-04-28: **3,172 active tasks total** — **2,482 for Part 2 (skill / markdown authoring)** and **609 for Part 1 (agentmd-following)**, plus a small hybrid corpus of 81.
 
-A small third corpus, `harbor_tasks_agentmd_edits/` (82 tasks), holds PRs that do *both* — fix code AND update the rule file in the same diff — and tests whether agents can keep code and config in sync.
+A small third corpus, `harbor_tasks_agentmd_edits/` (81 tasks), holds PRs that do *both* — fix code AND update the rule file in the same diff — and tests whether agents can keep code and config in sync.
 
 ## Why this matters
 
@@ -48,9 +48,9 @@ All tasks get the same four-track evaluation:
 
 Each part has its own scout-and-build pipeline, but both end with the same Docker-image-per-task output. The pipelines differ in *what the gold diff contains* and therefore *how mechanically a task can be built from it*.
 
-### Part 1 — agentmd-following (`harbor_tasks/`, 610 active)
+### Part 1 — agentmd-following (`harbor_tasks/`, 609 active)
 
-Source: PRs whose gold fix is code-only, where the fix encodes a rule documented in the repo's rule files. Scaffolded by **Claude Opus 4.7 in an isolated sandbox**, because each task needs a custom behavioural test that reproduces the bug — and writing that test requires reading the repo and understanding the change. Latest scout pass (2026-04-26) walked 147 repos and 19,417 merged PRs; a Gemini causality judge classified 750 of them as Part-1 candidates (5.7 %); Opus then built ~540 of those into running tasks (≈ 93 % Docker oracle pass, the rest fail to scaffold cleanly).
+Source: PRs whose gold fix is code-only, where the fix encodes a rule documented in the repo's rule files. Scaffolded by **Claude Opus 4.7 in an isolated sandbox**, because each task needs a custom behavioural test that reproduces the bug — and writing that test requires reading the repo and understanding the change. The latest scout pass (2026-04-26) walked 147 repos and 19,417 merged PRs; a Gemini causality judge classified 750 of them as Part-1 candidates (5.7 %); Opus then built ~540 of those into new tasks (≈ 93 % Docker oracle pass on the new ones). The cumulative active corpus (this pass plus all prior passes) sits at **609**.
 
 ### Part 2 — agentmd-create/edit (`harbor_tasks_md_authoring/`, 2,482 active)
 
@@ -74,13 +74,13 @@ This has a known cost: an agent that produces a *semantically equivalent* but te
 
 If you're inspecting a Part-2 task and find the test surprisingly literal, that's by design — read `solve.sh` for the canonical PR diff and `instruction.md` for what the agent is being told to write. The literal strings in `test_outputs.py` are not a hardcoded artifact; they're the verbatim diff lines from the human's PR.
 
-The comprehensive 2026-04-28 scout grew this corpus from 1,137 → 2,482 (+1,348 net) by combining two complementary discovery methods, then deduping. It's worth describing both, because together they aim for a near-exhaustive census of skill / rule-file authoring on public GitHub:
+The comprehensive 2026-04-28 scout grew this corpus from 1,137 → 2,482 (**+1,345 net**) by combining two complementary discovery methods, then deduping. It's worth describing both, because together they aim for a near-exhaustive census of skill / rule-file authoring on public GitHub:
 
 **Method A — code search.** Run `gh api search/code` with `filename:` / `path:` queries (24 of them, e.g. `filename:SKILL.md path:.claude/skills/`, `filename:.cursorrules`, `extension:mdc`) to list every repo on GitHub that has a rule file in its default branch. GitHub caps each query at 1,000 results, so we subdivide by path/extension to break the cap. Result: **15,608 unique repos**. We then filter to ≥ 100 stars, not archived, not a fork (filtering done in batched GraphQL — 312 calls to enumerate metadata for all 15,608 repos), leaving **846 healthy repos**. For each healthy repo, we enumerate its last 50 merged PRs since 2025-09-01 (batched GraphQL again, ~17 calls), then fetch each PR's file paths and keep the ones that touch a rule-file path: **2,745 PRs**.
 
 **Method B — date-windowed title search.** The traditional approach: search for `is:pr is:merged SKILL.md in:title`, `... AGENTS.md in:title`, etc. Each query also caps at 1,000 results. For the popular ones (SKILL.md, CLAUDE.md, .cursor/rules, …) we split the merge window into four disjoint date ranges (Sep–Oct, Nov–Dec, Jan–Feb, Mar–Apr) and run each as a separate query — that recovers another 3× the results past the cap. 28 base queries × variable windowing produced **4,301 PRs**.
 
-**Merging the two.** Keyed by `(repo, pr_number)`: **6,966 unique candidate PRs**. The deterministic scaffolder then built **1,351 new tasks** from the new ones (the rest were either already-scaffolded duplicates or didn't pass the rule-file-only path filter). After secret-pattern + unfetchable-SHA quarantine (3+5 dirs), the active corpus settled at **2,482**.
+**Merging the two.** Keyed by `(repo, pr_number)`: **6,966 unique candidate PRs**. The deterministic scaffolder built **1,351 new tasks** from the new ones (the rest were either already-scaffolded duplicates or didn't pass the rule-file-only path filter). 6 of the 1,351 were then quarantined (3 contained API-key-shaped strings in skill content, 3 had base commits unreachable from any branch ref). The active Part-2 corpus went from 1,137 → **2,482** for a net gain of **+1,345**.
 
 #### Why this is a near-exhaustive census
 
@@ -119,9 +119,9 @@ taskforge/                   # Task construction toolkit
   backends.py                   # Multi-backend LLM pool with rate limit handling
   gemini_rubric_constructor.py  # Structured output rubric generation + Kimi validation
   hierarchy_context.py          # Config hierarchy extractor (root → leaf AGENTS.md)
-harbor_tasks/                # Part 1 — agentmd-following: code-only bug fixes (610 active)
+harbor_tasks/                # Part 1 — agentmd-following: code-only bug fixes (609 active)
 harbor_tasks_md_authoring/   # Part 2 — agentmd-create/edit: rule-file edits (2,482 active)
-harbor_tasks_agentmd_edits/  # Hybrid: code + rule-file edits in same PR (82 active)
+harbor_tasks_agentmd_edits/  # Hybrid: code + rule-file edits in same PR (81 active)
 scripts/
   run_agent_eval.py             # Agent eval runner (Track 1+3+4, pluggable backend)
   fix_task_toml.py              # Batch fix task.toml formatting issues
@@ -199,7 +199,7 @@ Images are built via GitHub Actions (`gh workflow run push-images.yml`) — no l
 
 Both task corpora are kept on GHCR:
 - `harbor_tasks/` — code-fix tasks
-- `harbor_tasks_md_authoring/` — markdown-authoring tasks (all 718 active tasks have images as of 2026-04-27)
+- `harbor_tasks_md_authoring/` — markdown-authoring tasks (all 2,482 active tasks have images as of 2026-04-28; 99 % coverage at any given time, with a handful in flight after each scout)
 - `harbor_tasks_agentmd_edits/` — code + config edit tasks (Track 2)
 
 All Dockerfiles use shallow clone (`git fetch --depth=1 origin <SHA>`) for fast builds and small images.
@@ -431,9 +431,9 @@ python -m taskforge.pipeline scaffold-from-prs --input scouted.jsonl --workers 8
 
 ## Status (2026-04-28)
 
-- **Part 1 (`harbor_tasks/`)**: 610 active. ≈ 93 % Docker oracle pass. Last scout pass 2026-04-26.
-- **Part 2 (`harbor_tasks_md_authoring/`)**: 2,482 active. Comprehensive scout completed overnight 2026-04-28; +1,348 net new tasks; 10/10 random Docker smoke builds passed; pushed to GHCR via `push-images.yml`.
-- **In flight**: post-judge re-run for the 1,300 newly-built Part-2 tasks (the original pass was killed mid-run because Gemini Flex was returning 58-second timeouts and ~21 % `transient_failures`).
+- **Part 1 (`harbor_tasks/`)** — agentmd-following: **609 active**. ≈ 93 % Docker oracle pass. Last scout pass 2026-04-26.
+- **Part 2 (`harbor_tasks_md_authoring/`)** — agentmd-create/edit: **2,482 active**. Comprehensive scout completed overnight 2026-04-28; +1,345 net new tasks (1,351 newly built minus 6 quarantined); 10/10 random Docker smoke builds passed; pushed to GHCR via `push-images.yml`.
+- **In flight**: post-judge re-run for the 1,351 newly-built Part-2 tasks (the original pass was killed mid-run because Gemini Flex was returning 58-second timeouts and ~21 % `transient_failures`).
 
 See [research/scouting_report_2026_04_26.md](research/scouting_report_2026_04_26.md) for Part 1's last scout report (per-repo yields, classifier comparison) and [research/data_mining_pipeline.md](research/data_mining_pipeline.md) for the full Part 2 comprehensive-scout architecture.
 

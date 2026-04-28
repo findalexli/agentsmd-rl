@@ -1,13 +1,14 @@
 # Data Construction Methods
 
-How we turn merged GitHub PRs into runnable benchmark tasks. Snapshot 2026-04-28: **3,092 active tasks** across two corpora, both shipped as Docker images on `ghcr.io/findalexli/agentsmd-rl/<task>:latest`.
+How we turn merged GitHub PRs into runnable benchmark tasks. Snapshot 2026-04-28: **3,172 active tasks** across two main corpora plus a small hybrid one — **2,482 in Part 2 (skill / markdown authoring)** and **609 in Part 1 (agentmd-following)** — all shipped as Docker images on `ghcr.io/findalexli/agentsmd-rl/<task>:latest`.
 
 The benchmark has two parts. They differ in what the gold PR diff contains, and therefore in how mechanically a task can be built from it. A "rule file" throughout this doc means one of `CLAUDE.md`, `AGENTS.md`, `SKILL.md`, `.cursor/rules/*`, `.claude/{rules,skills,agents}/*.md`, `.github/copilot-instructions.md`, and a few similar paths — the markdown files repos check in to tell coding agents how to behave.
 
 | | Folder | Active | What the agent does | What's in the gold diff | How tasks are built |
 |---|---|---:|---|---|---|
-| **Part 1 — agentmd-following** | `harbor_tasks/` | 610 | Reads the rule files, then writes code to fix a bug | Code-only fix that *follows a convention documented in a rule file* | Claude Opus 4.7 in an isolated sandbox (each task needs a custom behavioural test) |
+| **Part 1 — agentmd-following** | `harbor_tasks/` | **609** | Reads the rule files, then writes code to fix a bug | Code-only fix that *follows a convention documented in a rule file* | Claude Opus 4.7 in an isolated sandbox (each task needs a custom behavioural test) |
 | **Part 2 — agentmd-create/edit** | `harbor_tasks_md_authoring/` | **2,482** | Writes or edits a rule file | Only rule files (no code change) | Deterministic script: clone, apply the gold patch (`solution/solve.sh`), then derive `tests/test_outputs.py` by extracting the most distinctive added lines from the patch |
+| Hybrid (smaller corpus) | `harbor_tasks_agentmd_edits/` | 81 | Both — fix code AND update the rule file in the same diff | Code + rule-file edits | Same Opus-in-sandbox pipeline as Part 1, plus an extra Track-2 check on the rule-file edit |
 
 ## What we keep, what we drop
 
@@ -72,7 +73,7 @@ The latest scout (2026-04-26) walked 147 hand-curated, rule-equipped repos and p
         │
         │  Opus 4.7 build + Docker oracle (nop=0, gold=1)            ×~0.72    drops ~28 %
         ▼
-  ≈540  ██                                                             ≈2.8  built tasks
+  ≈540  ██                                                             ≈2.8  built from this pass (cumulative active corpus across all passes: 609)
 ```
 
 Per-PR yield: **2.8 %**. The dominant cut (94 %) is the Gemini causality judge — almost all merged PRs are bug fixes any agent could write without consulting any rule file.
@@ -100,8 +101,11 @@ The 2026-04-28 comprehensive scout had a different shape, because it deliberatel
         │  Gemini post-judge — full gold patch
         │  (2026-04-28 run partially completed — Gemini Flex returned
         │   58-second timeouts and ~21 % transient_failures; re-judge queued)
+        │
+        │  6 of the 1,351 quarantined: 3 secret-pattern (API-key-shaped strings
+        │  in skill content) + 3 unfetchable (base SHAs not reachable from any branch ref)
         ▼
- 1,348  █████████████                                                    19.3  net new active (after 3 unfetchable + 5 secret quarantines)
+ +1,345  █████████████                                                   19.3  net new active (1,137 → 2,482)
 ```
 
 Per-PR yield: **19.3 %** — about 25× the older narrow scouts' 0.72 %. The jump isn't because per-PR difficulty fell; it's because (a) the rule-file-only path filter cuts mixed code+markdown PRs upstream of any LLM call, and (b) the comprehensive discovery captured the ~40 % of skill PRs whose titles don't quote the rule file (previously invisible).
