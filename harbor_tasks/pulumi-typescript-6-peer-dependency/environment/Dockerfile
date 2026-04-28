@@ -1,3 +1,4 @@
+# syntax=docker/dockerfile:1.4
 FROM node:20-bullseye-slim
 
 ENV DEBIAN_FRONTEND=noninteractive

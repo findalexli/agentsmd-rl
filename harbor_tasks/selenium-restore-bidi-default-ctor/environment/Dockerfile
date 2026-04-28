@@ -1,3 +1,4 @@
+# syntax=docker/dockerfile:1.4
 FROM eclipse-temurin:17.0.13_11-jdk-jammy
 
 ENV DEBIAN_FRONTEND=noninteractive
