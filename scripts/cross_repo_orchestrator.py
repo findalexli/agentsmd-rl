@@ -104,21 +104,15 @@ def main():
         c = json.loads(line)
         classifications[c["repo"]] = c
 
-    # 3. Filter
-    log("Phase 3: filter to real-software repos created before " + args.max_created)
+    # 3. Attach repo classification AS METADATA — do not use it to filter.
+    #    The post-judge with full gold-patch context (Phase 6) is the only
+    #    quality gate. We let the LLM judge see real PRs and decide.
+    #    Recency: also kept as metadata, NOT a filter.
+    log("Phase 3: attach repo classification metadata (no filtering)")
     kept = []
-    dropped_class = dropped_recency = 0
     for line in open(discover_out):
         d = json.loads(line)
         c = classifications.get(d["repo"], {})
-        if not c.get("is_useful_for_benchmark"):
-            dropped_class += 1
-            continue
-        created = c.get("repo_created_at", "")
-        if created and created >= args.max_created:
-            dropped_recency += 1
-            continue
-        # Attach the classification as metadata on the row
         d["repo_class"] = {
             "class": c.get("class"),
             "purpose_one_line": c.get("purpose_one_line"),
@@ -126,13 +120,13 @@ def main():
             "stars": c.get("stars"),
             "primary_language": c.get("primary_language"),
             "repo_created_at": c.get("repo_created_at"),
+            "is_useful_for_benchmark": c.get("is_useful_for_benchmark"),
         }
         kept.append(d)
-    log(f"  {len(kept)} kept (dropped {dropped_class} for class, "
-        f"{dropped_recency} for recency)")
+    log(f"  {len(kept)} candidates (every PR forwarded — Gemini decides at post-judge)")
 
     if not kept:
-        log("Nothing survived filter; aborting.")
+        log("Discovery returned 0 PRs; aborting.")
         return
 
     filtered = Path(f"/tmp/{args.label}_filtered.jsonl")
@@ -140,25 +134,14 @@ def main():
         for d in kept:
             f.write(json.dumps(d) + "\n")
 
-    # 4. Pre-judge (Pipeline B)
-    log("Phase 4: pre-judge")
-    prejudged = Path(f"/tmp/{args.label}_prejudged.jsonl")
-    rc = run([".venv/bin/python", "scripts/quality_judge.py",
-              "--mode", "markdown_authoring",
-              "--scout-jsonl", str(filtered),
-              "--filtered-output", str(prejudged),
-              "--service-tier", "standard",
-              "--concurrency", "16"],
-             LOGDIR / f"prejudge_{args.label}.log")
-    if rc != 0 or not prejudged.exists() or prejudged.stat().st_size == 0:
-        log("Pre-judge produced no output; aborting.")
-        return
-
-    # 5. Build queue and scaffold
-    log("Phase 5: deterministic scaffold")
+    # 4. Build queue directly from discover output — skip pre-judge.
+    #    Title-only screening drops <6% with high false-negative risk.
+    #    Sending everything that passes the path regex to post-judge has
+    #    higher recall and the post-judge is the strict gate anyway.
+    log("Phase 4: build scaffold queue (no pre-judge)")
     queue = Path(f"/tmp/scaffold_queue_{args.label}.jsonl")
     n_q = 0
-    with open(prejudged) as fin, open(queue, "w") as fout:
+    with open(filtered) as fin, open(queue, "w") as fout:
         for line in fin:
             d = json.loads(line)
             row = {"repo": d["repo"],
@@ -167,7 +150,10 @@ def main():
             fout.write(json.dumps(row) + "\n")
             n_q += 1
     log(f"  queue size: {n_q}")
+    prejudged = filtered  # alias used by sidecar code below
 
+    log("Phase 5: deterministic scaffold (path regex still applies — "
+        "scaffolder is undefined on mixed-content patches)")
     pre = count_corpus()
     rc = run([".venv/bin/python", "scripts/scaffold_markdown_only.py",
               "--queue", str(queue),
