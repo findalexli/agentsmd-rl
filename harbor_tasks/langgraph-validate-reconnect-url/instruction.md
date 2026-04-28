@@ -29,13 +29,14 @@ Add validation to ensure that `Location` headers in reconnect responses match th
 
 4. **Version Update** — Set `__version__` in `langgraph_sdk/__init__.py` to `"0.3.13"`.
 
-5. **Formatting Rule** — In docstrings and comments across all modified files, do not use four consecutive backticks on each side of a word (pattern: ````word````). Use single backticks only.
+## Code Style Requirements
+
+- In docstrings and comments across all modified files, do not use four consecutive backticks on each side of a word (pattern: ````word````). Use single backticks only.
+- Before submitting, run `make format` (code formatters) and `make lint` (linter) in `libs/sdk-py/`.
 
 ## Testing
 
-Before submitting, run the following commands in `libs/sdk-py/`:
-- `make format` — run code formatters
-- `make lint` — run the linter
+Before submitting, run the following command in `libs/sdk-py/`:
 - `make test` — execute the test suite
 
 ## Notes

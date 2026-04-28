@@ -10,14 +10,14 @@ Additionally, the CLI configuration file is looked up as `playwright-cli.json` i
 
 1. **Workspace-based scoping**: Daemon sessions should be scoped by workspace, not by installation directory. A workspace is identified by a `.playwright` directory marker (similar to `.git`). The system should walk up from `cwd` to find the nearest `.playwright` marker.
 
-2. **`install` command**: The old `install-skills` command should be replaced with an `install` command that initializes a workspace (creates `.playwright` directory) and optionally installs skills via a `--skills` flag.
+2. **`install` command**: The old `install-skills` command should be replaced with an `install` command that initializes a workspace (creates `.playwright` directory) and optionally installs skills via a `--skills` flag. The `install-browser` command should remain available for installing browser binaries.
 
 3. **`kill-all` renamed**: The `kill-all` command should be renamed to `session-kill-all` to be consistent with the `session-` prefix convention used by other session management commands.
 
 4. **Config path**: The default configuration file path should move from `playwright-cli.json` to `.playwright/cli.config.json`.
 
 5. **Documentation updates**: After making the code changes, update the documentation files:
-   - In `SKILL.md`: Replace `kill-all` with `session-kill-all` in the Sessions section. In the Configuration section, list `close` and `delete-data` commands on separate lines with descriptive comments above each (instead of inline `#` comments on the same line).
+   - In `SKILL.md`: Replace `kill-all` with `session-kill-all` in the Sessions section. In the Configuration section, list `close` and `delete-data` commands on separate lines with descriptive comments above each (instead of inline `#` comments on the same line). The comments should describe what each command does, e.g., "Close the browser" and "Delete user data for the default session".
    - In `session-management.md`: Replace all references to `kill-all` with `session-kill-all`, and update any config file paths from `playwright-cli.json` to `.playwright/` paths.
 
 ## Files to Look At

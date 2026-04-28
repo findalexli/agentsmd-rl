@@ -74,8 +74,8 @@ step.
 ## Code Style Requirements
 
 This task's checks include the repo's TypeScript typechecker (`pnpm check`,
-which runs `tsc -b tsconfig.json` inside `packages/effect/`). Your patch
-must type-check cleanly.
+which runs `tsc -b tsconfig.json` inside `packages/effect/`) and its linter
+(eslint, run via `pnpm lint`). Your patch must type-check and lint cleanly.
 
 Per `AGENTS.md`:
 

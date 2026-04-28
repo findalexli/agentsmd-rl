@@ -50,9 +50,9 @@ def test_deprecated_functions_removed():
     """Deprecated functions (extrasReadProperty, extrasFactoryProperty, extrasNullableLazyProperty) must be removed (fail_to_pass)."""
     source = read_file(EXTRAS_PROPERTY_KT)
     deprecated_patterns = [
-        "fun extrasReadProperty(",
-        "fun extrasFactoryProperty(",
-        "fun extrasNullableLazyProperty(",
+        "extrasReadProperty(",
+        "extrasFactoryProperty(",
+        "extrasNullableLazyProperty(",
     ]
     found = [p for p in deprecated_patterns if p in source]
     assert not found, f"ExtrasProperty.kt still contains deprecated functions: {found}"

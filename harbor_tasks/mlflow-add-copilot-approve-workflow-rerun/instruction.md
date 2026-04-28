@@ -33,4 +33,5 @@ After creating the script, update the copilot skill instructions (`.claude/skill
 
 Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
 
+- `ruff` (lint and format check)
 - `typos (spell-check)`

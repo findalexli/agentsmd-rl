@@ -56,7 +56,7 @@ Create the following test files:
 
 - **`apps/studio/tests/components/SQLEditor/Results.utils.test.ts`** — must contain `describe('formatClipboardValue'` and/or `describe('formatCellValue'` blocks testing the utility functions' behavior.
 
-- **`apps/studio/tests/components/SQLEditor/Results.test.tsx`** — must verify that only a single context menu is rendered regardless of how many rows are displayed. The test must track how many times `ContextMenu_Shadcn_` mounts and assert that exactly one instance exists.
+- **`apps/studio/tests/components/SQLEditor/Results.test.tsx`** — must contain test cases verifying that: (1) only a single context menu is rendered regardless of how many rows are displayed (tracking how many times `ContextMenu_Shadcn_` mounts, asserting exactly one instance exists), and (2) an empty state message is shown when no rows are provided (the empty state displays the text `Success. No rows returned`).
 
 ### 5. Code Formatting
 

@@ -28,8 +28,8 @@ Create or verify the following test files exist and contain test definitions (`t
 ### 4. Documentation Updates
 
 **CHANGELOG.md**:
-- Must mention "due date" changes
-- Must reference "completed" and/or "rejected" tasks in context of due date visibility changes
+- Must mention "Due Date Visibility Refinements" heading for the new version entry
+- Must document that due dates are hidden on task cards for completed/rejected tasks and shown with grayed-out styling in entry details
 
 **README.md**:
 - Replace "Coming Soon: Deep Dive Series" text with content referencing the live "Meet Lotti" blog series

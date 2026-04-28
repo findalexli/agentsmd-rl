@@ -242,9 +242,6 @@ console.log(JSON.stringify(result))
     assert result["encrypt"] is True, f"Expected encrypt=true, got {result['encrypt']}"
 
 
-# [static] pass_to_pass
-
-
 # ---------------------------------------------------------------------------
 # Pass-to-pass (repo_tests) — CI/CD checks from the repo itself
 # ---------------------------------------------------------------------------
@@ -673,3 +670,16 @@ console.log('EXTRACT_SCHEMA_OK');
     )
     assert r.returncode == 0, f"Extract schema test failed:\n{r.stderr[-500:]}"
     assert "EXTRACT_SCHEMA_OK" in r.stdout, f"Expected EXTRACT_SCHEMA_OK, got: {r.stdout}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_vitest_test_suite():
+    """Repo CI - All vitest tests in connection-string.test.ts pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["bash", "-lc", "npx vitest run src/connection-string.test.ts"],
+        capture_output=True, text=True, timeout=120, cwd=str(ADAPTER_DIR),
+    )
+    assert r.returncode == 0, f"Vitest test suite failed:\n{r.stdout[-1000:]}\n{r.stderr[-500:]}"
+    # Ensure all tests ran and passed
+    assert "Tests" in r.stdout and "passed" in r.stdout, \
+        f"Vitest output missing test summary:\n{r.stdout[-500:]}"

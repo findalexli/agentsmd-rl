@@ -106,13 +106,13 @@ def test_repo_lint_tests():
     assert r.returncode == 0, f"Lint tests failed:\n{r.stderr[-500:]}"
 
 
-# [repo_tests] pass_to_pass - Type tests
+# [repo_tests] pass_to_pass - Type tests (real test runner via bash -lc)
 def test_repo_test_types():
     """Repo's type tests pass (pass_to_pass)."""
     _npm_install()
     _npm_build()
     r = subprocess.run(
-        ["npm", "run", "test-types"],
+        ["bash", "-lc", "npm run test-types"],
         capture_output=True, text=True, timeout=120, cwd=REPO,
     )
     assert r.returncode == 0, f"Type tests failed:\n{r.stderr[-500:]}"
@@ -257,51 +257,34 @@ process.exit(ok ? 0 : 1);
 # [pr_diff] fail_to_pass
 def test_install_skills_executes():
     """install-skills command actually copies skill files to .claude/skills/playwright/."""
-    import tempfile
+    import shutil
 
-    with tempfile.TemporaryDirectory() as tmpdir:
-        skill_dest = Path(tmpdir) / ".claude" / "skills" / "playwright"
+    _npm_install()
 
-        _npm_install()
-        _npm_build()
+    # Force rebuild so the CLI binary picks up source changes
+    subprocess.run(
+        ["npm", "run", "build"],
+        cwd=REPO, capture_output=True, text=True, timeout=300,
+    )
 
-        r = _run_node(f"""
-const {{ spawn }} = require('child_process');
-const path = require('path');
-const fs = require('fs');
+    dest = Path(REPO) / ".claude" / "skills" / "playwright"
+    if dest.exists():
+        shutil.rmtree(dest)
 
-const destDir = path.join('{tmpdir}', '.claude', 'skills', 'playwright');
-const child = spawn('npm', ['run', 'playwright-cli', '--', 'install-skills'], {{
-    cwd: '{tmpdir}',
-    stdio: 'pipe'
-}});
+    r = subprocess.run(
+        ["npm", "run", "playwright-cli", "--", "install-skills"],
+        cwd=REPO, capture_output=True, text=True, timeout=60,
+    )
 
-let stdout = '';
-let stderr = '';
-child.stdout.on('data', d => stdout += d);
-child.stderr.on('data', d => stderr += d);
-
-child.on('close', code => {{
-    console.log(JSON.stringify({{ code, stdout, stderr }}));
-    process.exit(code);
-}});
-        """, timeout=60)
-
-        out = json.loads(r.stdout.strip())
-
-        # Verify destination was created with skill files
-        if out['code'] == 0 and skill_dest.exists():
-            files = list(skill_dest.rglob('*'))
-            assert len(files) > 0, f"install-skills created dir but no files copied"
-            print(f"SUCCESS: {len(files)} skill files copied")
-        else:
-            # Check if the installSkills function exists in program.ts as fallback
-            prog = (Path(REPO) / "packages/playwright/src/mcp/terminal/program.ts").read_text()
-            assert 'installSkills' in prog, "installSkills function missing from program.ts"
-            assert "'install-skills'" in prog or '"install-skills"' in prog, "install-skills handler missing"
-            # If we get here, command may need full build but implementation is present
-            # As long as the implementation is correct, we accept the test
-            print(f"install-skills implementation verified (command exited with code {out['code']}, build may be needed)")
+    assert r.returncode == 0, (
+        f"install-skills command failed (rc={r.returncode}):\n"
+        f"stdout: {r.stdout[-500:]}\nstderr: {r.stderr[-500:]}"
+    )
+    assert dest.exists(), ".claude/skills/playwright/ not created"
+    files = list(dest.rglob('*'))
+    assert len(files) > 0, "No skill files were copied"
+    assert (dest / "SKILL.md").exists(), "SKILL.md not copied"
+    assert (dest / "references").is_dir(), "references/ directory not copied"
 
 # ---------------------------------------------------------------------------
 

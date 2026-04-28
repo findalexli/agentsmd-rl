@@ -257,6 +257,26 @@ def test_no_settimeout_waiting():
             "Uses setTimeout for waiting instead of retry() (AGENTS.md:180-192)"
 
 
+# [agent_config] fail_to_pass — AGENTS.md:207-221 @ 9f181bd
+def test_uses_nexttestsetup():
+    """Must use nextTestSetup() API instead of createNext per AGENTS.md:207-221."""
+    code = TEST_FILE.read_text()
+    assert "nextTestSetup" in code, \
+        "Test file does not use nextTestSetup (AGENTS.md:207-221)"
+
+
+# [agent_config] fail_to_pass — AGENTS.md:207-221 @ 9f181bd
+def test_uses_fixture_directory():
+    """Must use fixture directory reference (__dirname), not inline files object per AGENTS.md:207-221."""
+    code = TEST_FILE.read_text()
+    # Must reference __dirname for fixture file discovery
+    assert "__dirname" in code, \
+        "Test file does not reference __dirname for fixture directory (AGENTS.md:207-221)"
+    # Must NOT have inline route code in a files: {} object (code with backtick strings)
+    assert not re.search(r"files:\s*\{\s*['\"]", code), \
+        "Test file uses inline files object with code strings instead of fixture directory (AGENTS.md:207-221)"
+
+
 # ---------------------------------------------------------------------------
 # Repo CI/CD pass_to_pass tests (p2p_enrichment)
 # ---------------------------------------------------------------------------
@@ -315,9 +335,9 @@ def test_fixture_files_valid_syntax():
         if fixture is None:
             continue  # May not exist on base commit
 
-        # Validate syntax with node --check
+        # Validate syntax with node --check via bash (CI-style invocation)
         r = subprocess.run(
-            ["node", "--check", fixture],
+            ["bash", "-lc", f"node --check {fixture}"],
             capture_output=True, text=True, timeout=30,
         )
         assert r.returncode == 0, f"Fixture {name} has syntax errors: {r.stderr}"
@@ -481,20 +501,4 @@ def _find_fixture(name: str) -> str | None:
     return None
 
 # === CI-mined tests (taskforge.ci_check_miner) ===
-def test_ci_thank_you__build_pnpm():
-    """pass_to_pass | CI job 'thank you, build' → step ''"""
-    r = subprocess.run(
-        ["bash", "-lc", 'pnpm install'], cwd=REPO,
-        capture_output=True, text=True, timeout=300)
-    assert r.returncode == 0, (
-        f"CI step '' failed (returncode={r.returncode}):\n"
-        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
-
-def test_ci_thank_you__build_pnpm_2():
-    """pass_to_pass | CI job 'thank you, build' → step ''"""
-    r = subprocess.run(
-        ["bash", "-lc", 'pnpm run build'], cwd=REPO,
-        capture_output=True, text=True, timeout=300)
-    assert r.returncode == 0, (
-        f"CI step '' failed (returncode={r.returncode}):\n"
-        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+# (Removed unscopped pnpm CI tests - Next.js monorepo is too heavy for task sandbox)

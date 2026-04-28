@@ -76,6 +76,70 @@ def test_exit_schema_custom_defect():
             os.remove(test_path)
 
 
+TEST_FILE_FORMAL_API = """\
+import { Rpc } from "@effect/rpc"
+import { Cause, Exit, Schema } from "effect"
+import { assert, describe, it } from "@effect/vitest"
+
+describe("defect schema formal api", () => {
+  it("exitSchema preserves full defect with Schema.Unknown via Rpc.make defect option", () => {
+    const rpc = Rpc.make("customDefect", {
+      success: Schema.String,
+      defect: Schema.Unknown
+    })
+
+    const schema = Rpc.exitSchema(rpc)
+    const encode = Schema.encodeSync(schema)
+    const decode = Schema.decodeSync(schema)
+
+    const error = {
+      message: "boom",
+      stack: "Error: boom\\n  at foo.ts:1",
+      code: 42
+    }
+    const exit = Exit.die(error)
+
+    const roundTripped = decode(encode(exit))
+
+    assert.isTrue(Exit.isFailure(roundTripped))
+    const defect = Cause.squash((roundTripped as Exit.Failure<any, any>).cause)
+
+    assert.deepStrictEqual(defect, error)
+  })
+})
+"""
+
+
+def test_exit_schema_custom_defect_formal_api():
+    """exitSchema uses the RPC's defectSchema via the formal defect option.
+
+    On the base commit, Rpc.make() has no `defect` option so the parameter is
+    silently ignored and Schema.Defect is hardcoded. After the fix,
+    Rpc.make() accepts `defect` which flows to exitSchema.
+    """
+    test_dir = os.path.join(REPO, "packages", "rpc", "test")
+    os.makedirs(test_dir, exist_ok=True)
+    test_path = os.path.join(test_dir, "defect_schema_formal.test.ts")
+
+    with open(test_path, "w") as f:
+        f.write(TEST_FILE_FORMAL_API)
+
+    try:
+        r = subprocess.run(
+            ["pnpm", "exec", "vitest", "run", "packages/rpc/test/defect_schema_formal.test.ts"],
+            cwd=REPO,
+            capture_output=True,
+            text=True,
+            timeout=120,
+        )
+        if r.returncode != 0:
+            print(f"VITEST FAILED:\n{r.stdout[-2000:]}\n{r.stderr[-2000:]}")
+        assert r.returncode == 0, f"exitSchema formal defect schema test failed with code {r.returncode}"
+    finally:
+        if os.path.exists(test_path):
+            os.remove(test_path)
+
+
 def test_rpc_existing_tests():
     """Existing RPC vitest tests pass (pass_to_pass)."""
     r = subprocess.run(

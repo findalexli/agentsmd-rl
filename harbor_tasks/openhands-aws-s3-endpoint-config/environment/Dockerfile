@@ -14,13 +14,20 @@ RUN git init /workspace/openhands && \
     git fetch --depth=1 origin c9b2ce2fb9c61313d80643a489f81728bb9f5b09 && \
     git checkout FETCH_HEAD
 
-# Install minimal testing dependencies
-RUN pip install --no-cache-dir pytest
+# Install core Python testing dependencies
+RUN pip install --no-cache-dir pytest pytest-asyncio
+
+# Install runtime dependencies needed for the target module to be importable
+RUN pip install --no-cache-dir boto3 botocore pydantic fastapi
+
+# Install the openhands package in editable mode (ignore errors for optional deps)
+RUN cd /workspace/openhands && pip install --no-cache-dir -e . 2>/dev/null || true
+
+# Install linting, type-checking, and their stubs
+RUN pip install --no-cache-dir mypy ruff validate-pyproject
+RUN pip install --no-cache-dir types-requests types-setuptools types-pyyaml types-toml types-docker types-Markdown lxml 2>/dev/null || true
 
 # Create log directory
 RUN mkdir -p /logs/verifier
 
 WORKDIR /workspace/openhands
-
-# auto-installed (scaffold Change 2A retrofit 2026-04-24)
-RUN pip install --no-cache-dir --break-system-packages mypy ruff validate-pyproject 2>/dev/null || pip install --no-cache-dir mypy ruff validate-pyproject

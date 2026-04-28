@@ -16,6 +16,16 @@ A streaming tool call chunk **without** `function.name` (e.g., `{ index: 0, id: 
 
 After the fix, a chunk that omits `function.name` should decode without error. The package should also pass TypeScript type checking (`tsc -b tsconfig.json` from the package directory).
 
+## Code Style Requirements
+
+This project enforces code quality through automated CI checks that must continue to pass:
+
+- `pnpm circular` — verifies no circular dependencies exist
+- `pnpm lint` — checks code formatting and style conventions
+- `pnpm codegen` — ensures generated code is up to date
+
+Your changes must not introduce violations in any of these checks.
+
 ## Constraints
 
 - Do not change the overall structure of the schema class or rename any fields.

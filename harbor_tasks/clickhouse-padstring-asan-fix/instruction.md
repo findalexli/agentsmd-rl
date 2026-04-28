@@ -28,56 +28,55 @@ small-pad-string cases) without regressing any existing behaviour, including
 UTF-8 padding.
 
 This file is also gated by ClickHouse's CI on a number of code-quality and
-style checks. The list below describes everything the project's reviewers and
-CI will look for in your modified `src/Functions/padString.cpp`. Treat it as
-the acceptance contract for the change — the implementation shape is up to
-you, but each item is independently verified.
+style checks. The list below describes what the project's reviewers and CI
+will verify in the modified `src/Functions/padString.cpp`. Treat it as the
+acceptance contract — each item is independently verified.
 
 ## Acceptance criteria for `src/Functions/padString.cpp`
 
 ### Memory-safety fix
 
-- The container that backs the pad string inside `class PaddingChars` must
-  expose at least 15 bytes of safe trailing read padding, as required by
-  `memcpySmallAllowReadWriteOverflow15`. In ClickHouse the canonical
-  container with that guarantee is `PaddedPODArray<UInt8>` (declared in
-  `<Common/PODArray.h>`). The `pad_string` member of `PaddingChars` is
-  expected to be of type `PaddedPODArray<UInt8>`.
-- The repeated-pad expansion loop (which doubles the pad sequence until it
-  reaches the SIMD-friendly threshold) must extend the buffer through the
-  container's own `insertFromItself` method rather than the previous
-  `pad_string += pad_string` `String` concatenation.
-- The container's `data()` already returns a `UInt8 *`, so the
-  `reinterpret_cast<const UInt8 *>(pad_string.data())` casts inside
-  `appendTo` must no longer appear; `pad_string.data()` is passed directly
-  to `writeSlice`.
-- The "empty pad string defaults to a single space" rule belongs in the
-  function's column-level entry point, `executeImpl`, not in the
-  `PaddingChars` initialisation. After your change, the literal check
-  `if (pad_string.empty())` must appear inside `executeImpl`.
+- The code must satisfy the safety contract of `memcpySmallAllowReadWriteOverflow15`:
+  the container that holds the pad bytes must guarantee at least 15 bytes of
+  readable padding beyond its logical size. ClickHouse provides
+  `PaddedPODArray<UInt8>` (from `<Common/PODArray.h>`) for this purpose.
+  The `PaddedPODArray<UInt8> pad_string` member inside `PaddingChars` meets
+  this contract.
+- The repeated-pad expansion (which grows the pad sequence for SIMD-friendly
+  copy sizes) must use the container's safe self-insertion path
+  (`insertFromItself`) so that buffer ownership and padding invariants are
+  preserved. The notation `pad_string += pad_string` is unsafe with the
+  required container.
+- `memcpySmallAllowReadWriteOverflow15` reads up to 15 bytes beyond the source
+  pointer. The data pointer passed to `writeSlice` must come from a container
+  whose `data()` method returns a `UInt8 *` directly. There must be no
+  `reinterpret_cast<const UInt8 *>(pad_string.data())` casts when invoking
+  `writeSlice` — `pad_string.data()` is passed directly.
+- The empty-pad-string default (a single space) must be applied at the
+  function's column-level entry point. When a query omits the pad string
+  argument, the condition `if (pad_string.empty())` must be evaluated inside
+  `executeImpl`.
 
 ### Argument validation refactor
 
-- The hand-rolled per-argument type/arity checks in `getReturnTypeImpl` are
-  replaced by a single call to the shared `validateFunctionArguments`
-  helper, driven by a `FunctionArgumentDescriptors` description of the
-  mandatory and optional arguments. Both `validateFunctionArguments` and
+- Per-argument type and arity checks must use the shared
+  `validateFunctionArguments` helper driven by a
+  `FunctionArgumentDescriptors` description of the mandatory and optional
+  arguments. Both `validateFunctionArguments` and
   `FunctionArgumentDescriptors` must appear in the file.
-- Once that refactor lands, `ILLEGAL_TYPE_OF_ARGUMENT` and
-  `NUMBER_OF_ARGUMENTS_DOESNT_MATCH` are no longer thrown from this
-  translation unit. Their `extern const int …;` declarations must be
-  removed from the file's `namespace ErrorCodes { … }` block (they may
-  still exist elsewhere in the project — but not in this file's
-  `ErrorCodes` block).
+- Once the validation is centralised through these helpers,
+  `ILLEGAL_TYPE_OF_ARGUMENT` and `NUMBER_OF_ARGUMENTS_DOESNT_MATCH` must no
+  longer be referenced from this file's `namespace ErrorCodes { … }` block
+  (they remain valid elsewhere in the project — they just must not appear in
+  this file's `ErrorCodes` block).
 
 ### Style / readability items the CI checks
 
-- The early-return guard in `PaddingChars::appendTo` that handles "no
-  characters to pad" must use an explicit comparison, written exactly as
-  `if (num_chars == 0)`.
-- The `MAX_NEW_LENGTH` constant must be written with the C++14 digit
-  separator: `1'000'000`.
-- `#include <memory>` must be present at the top of the file.
+- The early-return guard in `PaddingChars::appendTo` that handles no-op
+  padding must use an explicit zero-comparison: `if (num_chars == 0)`.
+- The `MAX_NEW_LENGTH` constant must use the C++14 digit separator for
+  readability: `1'000'000`.
+- `#include <memory>` must be present in the file.
 - The class/method names `FunctionPadString`, `PaddingChars`, `executePad`,
   and `executeForSourceAndLength` must continue to exist (do not rename or
   remove them).
@@ -85,15 +84,15 @@ you, but each item is independently verified.
   template parameter remain in place, and UTF-8 padding behaviour is
   unchanged.
 
-### Repo-wide hygiene
+## Code Style Requirements
 
-- The file passes `clang-format --dry-run --Werror` against the
+- The file must pass `clang-format --dry-run --Werror` against the
   repository's `.clang-format` (Allman braces — opening brace on its own
   line — and ClickHouse's existing rules).
 - No tab characters anywhere in the file; spaces only.
 - No trailing whitespace on any line.
-- Braces, parentheses, and brackets remain balanced (the file still parses
-  as valid C++).
+- Braces, parentheses, and brackets remain balanced (the file must parse as
+  valid C++).
 
 ## Out of scope
 

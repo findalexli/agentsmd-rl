@@ -143,11 +143,10 @@ select 1/*!2*/;     → "syntax error" (the parser's error message contains the 
 
 #### 10. Test data must reflect new error positions
 
-The repository tracks expected lexer behavior in
-`go/vt/sqlparser/testdata/select_cases.txt`. Two existing entries currently
-expect outputs from the *old* nested-tokenizer behavior; they must be
-updated to match the new contracts above. Specifically the cases for the
-inputs
+The sqlparser package includes a test-data file that drives expected-output
+assertions for parser inputs. Two existing entries currently expect outputs
+from the *old* nested-tokenizer behavior; they must be updated to match the
+new contracts above. Specifically the cases for the inputs
 
 ```
 select 1 + /*!00000 2 node_modules/ + 3 /*!99999 noise*/ + 4;

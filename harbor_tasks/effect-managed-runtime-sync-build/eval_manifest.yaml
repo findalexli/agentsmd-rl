@@ -14,7 +14,7 @@ checks:
 - id: test_managed_runtime_existing_suite_passes
   type: pass_to_pass
   origin: repo_tests
-  description: The full existing ManagedRuntime test file (packages/effect/test/ManagedRuntime.test.ts) must keep passing.
+  description: The full existing ManagedRuntime test file must keep passing.
 - id: test_changeset_added_for_effect_package
   type: fail_to_pass
   origin: agent_config
@@ -23,46 +23,26 @@ checks:
     path: AGENTS.md
     lines: 41-42
     commit: dd4cf4b119592e670ad9347091bdec8a9c6c3422
-- id: test_ci_test_test
-  type: pass_to_pass
-  origin: repo_tests
-  description: 'CI: Test / Test'
-- id: test_ci_test_test
-  type: pass_to_pass
-  origin: repo_tests
-  description: 'CI: Test / Test'
 - id: test_ci_lint_pnpm
   type: pass_to_pass
   origin: repo_tests
-  description: 'CI: Lint / '
-- id: test_ci_lint_pnpm
-  type: pass_to_pass
-  origin: repo_tests
-  description: 'CI: Lint / '
-- id: test_ci_lint_pnpm
-  type: pass_to_pass
-  origin: repo_tests
-  description: 'CI: Lint / '
-- id: test_ci_lint_check_for_codegen_changes
-  type: pass_to_pass
-  origin: repo_tests
-  description: 'CI: Lint / Check for codegen changes'
-- id: test_ci_build_pnpm
-  type: pass_to_pass
-  origin: repo_tests
-  description: 'CI: Build / '
+  description: 'CI: pnpm circular (circular dependency check)'
 - id: test_ci_lint_pnpm_2
   type: pass_to_pass
   origin: repo_tests
-  description: 'CI: Lint / '
+  description: 'CI: pnpm lint'
 - id: test_ci_lint_pnpm_3
   type: pass_to_pass
   origin: repo_tests
-  description: 'CI: Lint / '
+  description: 'CI: pnpm codegen (check for codegen changes)'
+- id: test_ci_build_pnpm
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: pnpm docgen (build docs)'
 - id: test_pr_added_is_built_synchronously_with_runFork
   type: fail_to_pass
   origin: pr_diff
-  description: PR added test 'is built synchronously with runFork' in packages/effect/test/ManagedRuntime.test.ts
+  description: PR added test 'is built synchronously with runFork' must exist in ManagedRuntime.test.ts and pass.
 rubric:
 - rule: 'Conciseness: Keep code and any wording concise and to the point. Sacrifice grammar for the sake of concision.'
   source:

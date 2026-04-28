@@ -179,8 +179,46 @@ def test_p2p_team_dropdown_unchanged():
     """The single-select TeamDropdown component should still be the
     component used elsewhere — i.e. team_dropdown.tsx still renders an
     antd Select with mode != 'multiple'."""
-    src = (
-        DASHBOARD / "src/components/common_components/team_dropdown.tsx"
-    ).read_text()
-    # Single-select TeamDropdown does not declare mode="multiple".
-    assert 'mode="multiple"' not in src
+    test_content = """\
+import { render } from "@testing-library/react";
+import { describe, expect, it, vi } from "vitest";
+import React from "react";
+
+vi.mock("@/app/(dashboard)/hooks/teams/useTeams", () => ({
+  useInfiniteTeams: () => ({
+    data: { pages: [] },
+    fetchNextPage: vi.fn(),
+    hasNextPage: false,
+    isFetchingNextPage: false,
+    isLoading: false,
+  }),
+}));
+
+import TeamDropdown from "@/components/common_components/team_dropdown";
+
+describe("TeamDropdown", () => {
+  it("should remain a single-select", () => {
+    render(React.createElement(TeamDropdown));
+    const multi = document.querySelector(".ant-select-multiple");
+    expect(multi).toBeNull();
+  });
+});
+"""
+    test_rel = "tests/_p2p_team_dropdown.test.tsx"
+    test_abs = DASHBOARD / test_rel
+    test_abs.write_text(test_content)
+    try:
+        proc = subprocess.run(
+            ["npx", "vitest", "run", test_rel],
+            cwd=str(DASHBOARD),
+            capture_output=True,
+            text=True,
+            timeout=600,
+            env={**os.environ, "CI": "1", "NO_COLOR": "1"},
+        )
+        assert proc.returncode == 0, (
+            "TeamDropdown single-select test failed:\n"
+            f"stdout: {proc.stdout[-2000:]}\nstderr: {proc.stderr[-2000:]}"
+        )
+    finally:
+        test_abs.unlink(missing_ok=True)

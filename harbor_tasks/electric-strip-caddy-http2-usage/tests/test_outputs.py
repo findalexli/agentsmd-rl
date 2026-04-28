@@ -370,31 +370,3 @@ def test_repo_lockfile_valid():
         capture_output=True, text=True, timeout=300, cwd=str(REPO),
     )
     assert r.returncode == 0, f"pnpm install failed:\n{r.stderr[-500:]}"
-
-# === CI-mined tests (taskforge.ci_check_miner) ===
-def test_ci_test_ts_packages_against_sync__pnpm():
-    """pass_to_pass | CI job 'Test TS packages against sync-service' → step ''"""
-    r = subprocess.run(
-        ["bash", "-lc", 'pnpm install --frozen-lockfile'], cwd=REPO,
-        capture_output=True, text=True, timeout=300)
-    assert r.returncode == 0, (
-        f"CI step '' failed (returncode={r.returncode}):\n"
-        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
-
-def test_ci_test_ts_packages_against_sync__pnpm_2():
-    """pass_to_pass | CI job 'Test TS packages against sync-service' → step ''"""
-    r = subprocess.run(
-        ["bash", "-lc", 'pnpm coverage'], cwd=REPO,
-        capture_output=True, text=True, timeout=300)
-    assert r.returncode == 0, (
-        f"CI step '' failed (returncode={r.returncode}):\n"
-        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
-
-def test_ci_run_lux_integration_tests_run_integration_tests():
-    """pass_to_pass | CI job 'Run Lux integration tests' → step 'Run integration tests'"""
-    r = subprocess.run(
-        ["bash", "-lc", './run.sh'], cwd=REPO,
-        capture_output=True, text=True, timeout=300)
-    assert r.returncode == 0, (
-        f"CI step 'Run integration tests' failed (returncode={r.returncode}):\n"
-        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")

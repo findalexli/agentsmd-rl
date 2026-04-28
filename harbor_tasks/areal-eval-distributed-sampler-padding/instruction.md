@@ -22,10 +22,17 @@ Training dataloaders should continue to use the standard `DistributedSampler` wi
 The solution must:
 - Create a sampler class named `EvalDistributedSampler` (subclass of `DistributedSampler`) that handles the no-padding behavior for validation
 - All parameters of `EvalDistributedSampler.__init__` must have explicit type annotations
-- `dataloader.py` must contain no `print()` statements (use `areal.utils.logging.getLogger()` for debugging)
 - `create_dataloader` must dispatch `EvalDistributedSampler` when given a `ValidDatasetConfig`
-- The file must pass `ruff check`, `ruff format --check`, `bandit`, and `python -m py_compile` with no errors
-- The file must have no trailing whitespace on any line, must end with a newline, and must not contain wildcard imports
+- `dataloader.py` must contain no `print()` statements (use `areal.utils.logging.getLogger()` for debugging)
+
+## Code Style Requirements
+
+The modified file must pass all code quality checks:
+- `ruff check` and `ruff format --check` must pass with no errors
+- `bandit` and `python -m py_compile` must pass with no errors
+- No trailing whitespace on any line
+- Must end with a newline
+- Must not contain wildcard imports (e.g., `from x import *`)
 
 ## Relevant Files
 

@@ -1,6 +1,7 @@
 import subprocess
 import tempfile
 import os
+import json
 
 REPO = "/workspace/openai-agents-js"
 SRC = "/workspace/openai-agents-js/packages/agents-core/src/errors.ts"
@@ -148,9 +149,9 @@ def test_ci_test_type_check_docs_scripts():
         f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
 
 def test_ci_test_compile_examples():
-    """pass_to_pass | CI job 'test' → step 'Compile examples'"""
+    """pass_to_pass | CI job 'test' → step 'Compile examples' (scoped to agents-core)"""
     r = subprocess.run(
-        ["bash", "-lc", 'pnpm -r build-check'], cwd=REPO,
+        ["bash", "-lc", 'pnpm -F agents-core build-check'], cwd=REPO,
         capture_output=True, text=True, timeout=300)
     assert r.returncode == 0, (
         f"CI step 'Compile examples' failed (returncode={r.returncode}):\n"
@@ -167,10 +168,32 @@ def test_ci_test_run_tests():
 
 # === PR-added f2p tests (taskforge.test_patch_miner) ===
 def test_pr_added_should_set_error_names():
-    """fail_to_pass | PR added test 'should set error names' in 'packages/agents-core/test/errors.test.ts' (vitest_or_jest)"""
+    """fail_to_pass | PR added new tests in 'packages/agents-core/test/errors.test.ts'"""
     r = subprocess.run(
-        ["bash", "-lc", '(pnpm vitest run "packages/agents-core/test/errors.test.ts" -t "should set error names" 2>&1 || npx vitest run "packages/agents-core/test/errors.test.ts" -t "should set error names" 2>&1 || pnpm jest "packages/agents-core/test/errors.test.ts" -t "should set error names" 2>&1 || npx jest "packages/agents-core/test/errors.test.ts" -t "should set error names" 2>&1) | tail -50'], cwd=REPO,
-        capture_output=True, text=True, timeout=300)
+        ["bash", "-lc",
+         'CI=1 NODE_ENV=test pnpm vitest run "packages/agents-core/test/errors.test.ts" --reporter=json 2>&1'],
+        cwd=REPO, capture_output=True, text=True, timeout=300)
     assert r.returncode == 0, (
-        f"PR-added test 'should set error names' failed (returncode={r.returncode}):\n"
+        f"vitest exited non-zero (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+    # Parse JSON output — the last line starting with { is the JSON blob
+    json_line = None
+    for line in reversed(r.stdout.strip().split('\n')):
+        stripped = line.strip()
+        if stripped.startswith('{'):
+            json_line = stripped
+            break
+    assert json_line is not None, f"No JSON output found in vitest stdout:\n{r.stdout[-2000:]}"
+
+    result = json.loads(json_line)
+    num_total = result.get("numTotalTests", 0)
+    num_passed = result.get("numPassedTests", 0)
+    num_failed = result.get("numFailedTests", 0)
+    assert num_failed == 0, (
+        f"{num_failed} test(s) failed in errors.test.ts, expected 0.\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+    assert num_passed >= 2, (
+        f"Only {num_passed} test(s) passed, expected at least 2. "
+        f"The PR should add a test for error subclass names.\n"
         f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")

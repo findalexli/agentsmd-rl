@@ -199,4 +199,68 @@ for (const c of cases) {
 process.stdout.write(JSON.stringify(result));
 EOF
 
+# node:test file that exercises buildQuery through tsx — provides a real
+# test-runner (node:test) signal run as: TMPDIR=/workspace tsx --test ...
+RUN cat > /harness/test_buildQuery.test.ts <<'EOF'
+import { test, describe } from "node:test";
+import { strict as assert } from "node:assert";
+import buildQuery from "/workspace/superset/superset-frontend/plugins/plugin-chart-word-cloud/src/plugin/buildQuery";
+
+type FormData = Record<string, any>;
+
+function getQuery(formData: FormData): any {
+  return buildQuery(formData).queries[0];
+}
+
+describe("WordCloud buildQuery", () => {
+  test("should not include orderby when neither sort option is enabled", () => {
+    const q = getQuery({
+      datasource: "5__table", granularity_sqla: "ds",
+      series: "foo", viz_type: "word_cloud",
+      metric: "count", sort_by_metric: false,
+      sort_by_series: false, row_limit: 100,
+    });
+    assert.strictEqual(q.orderby, undefined);
+  });
+
+  test("should order by metric DESC only when sort_by_metric is true", () => {
+    const q = getQuery({
+      datasource: "5__table", granularity_sqla: "ds",
+      series: "foo", viz_type: "word_cloud",
+      metric: "count", sort_by_metric: true,
+      sort_by_series: false, row_limit: 100,
+    });
+    assert.deepStrictEqual(q.orderby, [["count", false]]);
+  });
+
+  test("should order by series ASC only when sort_by_series is true", () => {
+    const q = getQuery({
+      datasource: "5__table", granularity_sqla: "ds",
+      series: "foo", viz_type: "word_cloud",
+      metric: "count", sort_by_metric: false,
+      sort_by_series: true, row_limit: 100,
+    });
+    assert.deepStrictEqual(q.orderby, [["foo", true]]);
+  });
+
+  test("should order by metric DESC then series ASC when both are true", () => {
+    const q = getQuery({
+      datasource: "5__table", granularity_sqla: "ds",
+      series: "foo", viz_type: "word_cloud",
+      metric: "count", sort_by_metric: true,
+      sort_by_series: true, row_limit: 100,
+    });
+    assert.deepStrictEqual(q.orderby, [["count", false], ["foo", true]]);
+  });
+
+  test("should build columns from series in form data", () => {
+    const q = getQuery({
+      datasource: "5__table", granularity_sqla: "ds",
+      series: "foo", viz_type: "word_cloud",
+    });
+    assert.deepStrictEqual(q.columns, ["foo"]);
+  });
+});
+EOF
+
 RUN mkdir -p /logs/verifier

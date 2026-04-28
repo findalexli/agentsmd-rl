@@ -8,6 +8,7 @@ Each test function maps 1:1 to a check in eval_manifest.yaml.
 """
 
 import json
+import os
 import subprocess
 from pathlib import Path
 import re
@@ -38,8 +39,8 @@ def test_blob_validation_rejects_string():
     """String-backed $B reference must throw 'Referenced Blob is not a Blob.'
 
     Runs the PR's Jest test via yarn test (React's proper test runner).
-    On base commit: test doesn't exist → Jest finds no match → 0 tests run.
-    On fix: test exists and the instanceof check throws → Jest PASS.
+    On base commit: test doesn't exist -> Jest finds no match -> 0 tests run.
+    On fix: test exists and the instanceof check throws -> Jest PASS.
     """
     r = subprocess.run(
         [
@@ -50,19 +51,24 @@ def test_blob_validation_rejects_string():
         cwd=REPO, capture_output=True, timeout=120,
     )
     output = r.stdout.decode() + r.stderr.decode()
-    # Parse Jest JSON output - the last line containing "numTotalTests" is the summary
-    # Jest exits 0 even when no tests match, so we need to check test counts
-    total_tests = 0
-    # Look for the summary JSON at the end of output
-    # Extract the last JSON object that has numTotalTests
-    json_pattern = r'"numTotalTests":\s*(\d+)'
-    matches = re.findall(json_pattern, r.stdout.decode())
-    if matches:
-        total_tests = max(int(m) for m in matches)
-    # If no tests ran, the test doesn't exist yet (base commit)
-    assert total_tests > 0, (
-        f"Jest found no matching tests - test 'cannot deserialize a Blob reference backed by a string' "
-        f"does not exist on base commit:\n{output[-2000:]}"
+    # Jest mixes text output with JSON; extract just the JSON object.
+    # Use raw_decode to handle trailing text (e.g. "Done in Xs.") after JSON.
+    try:
+        stdout_str = r.stdout.decode()
+        json_start = stdout_str.rfind('{"numFailedTestSuites"')
+        if json_start >= 0:
+            decoder = json.JSONDecoder()
+            result, _ = decoder.raw_decode(stdout_str[json_start:])
+            passed = result.get("numPassedTests", 0)
+        else:
+            passed = 0
+    except (json.JSONDecodeError, AttributeError, ValueError):
+        passed = 0
+
+    assert passed > 0, (
+        f"Jest test 'cannot deserialize a Blob reference backed by a string' "
+        f"not found or did not pass (numPassedTests={passed}). "
+        f"On base commit this test doesn't exist yet.\n{output[-2000:]}"
     )
     assert r.returncode == 0, (
         f"Jest test 'cannot deserialize a Blob reference backed by a string' did not pass:\n{output[-2000:]}"
@@ -248,24 +254,6 @@ def test_error_code_registered():
     )
 
 # === CI-mined tests (taskforge.ci_check_miner) ===
-def test_ci_test_playground_yarn():
-    """pass_to_pass | CI job 'Test playground' → step ''"""
-    r = subprocess.run(
-        ["bash", "-lc", 'yarn install --frozen-lockfile'], cwd=os.path.join(REPO, 'compiler'),
-        capture_output=True, text=True, timeout=300)
-    assert r.returncode == 0, (
-        f"CI step '' failed (returncode={r.returncode}):\n"
-        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
-
-def test_ci_test_playground_npx():
-    """pass_to_pass | CI job 'Test playground' → step ''"""
-    r = subprocess.run(
-        ["bash", "-lc", 'npx playwright install --with-deps chromium'], cwd=REPO,
-        capture_output=True, text=True, timeout=300)
-    assert r.returncode == 0, (
-        f"CI step '' failed (returncode={r.returncode}):\n"
-        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
-
 def test_ci_check_license_scripts_ci_check_license_sh():
     """pass_to_pass | CI job 'Check license' → step ''"""
     r = subprocess.run(
@@ -284,51 +272,6 @@ def test_ci_test_print_warnings_scripts_ci_test_print_warnings_sh():
         f"CI step '' failed (returncode={r.returncode}):\n"
         f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
 
-def test_ci_jest_babel_plugin_react_compil_yarn():
-    """pass_to_pass | CI job 'Jest babel-plugin-react-compiler' → step ''"""
-    r = subprocess.run(
-        ["bash", "-lc", 'yarn workspace babel-plugin-react-compiler jest'], cwd=REPO,
-        capture_output=True, text=True, timeout=300)
-    assert r.returncode == 0, (
-        f"CI step '' failed (returncode={r.returncode}):\n"
-        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
-
-def test_ci_lint_babel_plugin_react_compil_yarn():
-    """pass_to_pass | CI job 'Lint babel-plugin-react-compiler' → step ''"""
-    r = subprocess.run(
-        ["bash", "-lc", 'yarn workspace babel-plugin-react-compiler lint'], cwd=REPO,
-        capture_output=True, text=True, timeout=300)
-    assert r.returncode == 0, (
-        f"CI step '' failed (returncode={r.returncode}):\n"
-        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
-
-def test_ci_test_eslint_plugin_react_hooks_scripts_react_compiler_build_compiler_sh():
-    """pass_to_pass | CI job 'Test eslint-plugin-react-hooks' → step ''"""
-    r = subprocess.run(
-        ["bash", "-lc", './scripts/react-compiler/build-compiler.sh && ./scripts/react-compiler/link-compiler.sh'], cwd=REPO,
-        capture_output=True, text=True, timeout=300)
-    assert r.returncode == 0, (
-        f"CI step '' failed (returncode={r.returncode}):\n"
-        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
-
-def test_ci_test_eslint_plugin_react_hooks_yarn():
-    """pass_to_pass | CI job 'Test eslint-plugin-react-hooks' → step ''"""
-    r = subprocess.run(
-        ["bash", "-lc", 'yarn workspace eslint-plugin-react-hooks test'], cwd=REPO,
-        capture_output=True, text=True, timeout=300)
-    assert r.returncode == 0, (
-        f"CI step '' failed (returncode={r.returncode}):\n"
-        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
-
-def test_ci_yarn_build_and_lint_yarn():
-    """pass_to_pass | CI job 'yarn build and lint' → step ''"""
-    r = subprocess.run(
-        ["bash", "-lc", 'yarn --cwd compiler install --frozen-lockfile'], cwd=REPO,
-        capture_output=True, text=True, timeout=300)
-    assert r.returncode == 0, (
-        f"CI step '' failed (returncode={r.returncode}):\n"
-        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
-
 def test_ci_yarn_build_and_lint_lint_build():
     """pass_to_pass | CI job 'yarn build and lint' → step 'Lint build'"""
     r = subprocess.run(
@@ -338,12 +281,3 @@ def test_ci_yarn_build_and_lint_lint_build():
         f"CI step 'Lint build' failed (returncode={r.returncode}):\n"
         f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
 
-# === PR-added f2p tests (taskforge.test_patch_miner) ===
-def test_pr_added_cannot_deserialize_a_Blob_reference_backed_by_a_():
-    """fail_to_pass | PR added test 'cannot deserialize a Blob reference backed by a string' in 'packages/react-server-dom-webpack/src/__tests__/ReactFlightDOMReply-test.js' (vitest_or_jest)"""
-    r = subprocess.run(
-        ["bash", "-lc", '(pnpm vitest run "packages/react-server-dom-webpack/src/__tests__/ReactFlightDOMReply-test.js" -t "cannot deserialize a Blob reference backed by a string" 2>&1 || npx vitest run "packages/react-server-dom-webpack/src/__tests__/ReactFlightDOMReply-test.js" -t "cannot deserialize a Blob reference backed by a string" 2>&1 || pnpm jest "packages/react-server-dom-webpack/src/__tests__/ReactFlightDOMReply-test.js" -t "cannot deserialize a Blob reference backed by a string" 2>&1 || npx jest "packages/react-server-dom-webpack/src/__tests__/ReactFlightDOMReply-test.js" -t "cannot deserialize a Blob reference backed by a string" 2>&1) | tail -50'], cwd=REPO,
-        capture_output=True, text=True, timeout=300)
-    assert r.returncode == 0, (
-        f"PR-added test 'cannot deserialize a Blob reference backed by a string' failed (returncode={r.returncode}):\n"
-        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")

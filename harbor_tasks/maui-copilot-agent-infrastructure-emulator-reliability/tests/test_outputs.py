@@ -144,15 +144,6 @@ def test_repo_ps_module_functions():
     assert "FUNCTIONS_OK" in result.stdout, f"Function check failed: {result.stdout}"
 
 
-def test_repo_baseline_test_suite():
-    """Run EstablishBrokenBaseline test suite (pass_to_pass)."""
-    # Skip this test as it modifies working tree files and breaks subsequent f2p tests
-    # The EstablishBrokenBaseline.ps1 script reverts fix files to test baseline behavior,
-    # but we cannot reliably restore them since HEAD points to base commit (pre-fix state)
-    import pytest
-    pytest.skip("Baseline test modifies working tree - skipping to preserve fix state for f2p tests")
-
-
 def test_repo_cake_syntax_check():
     """Android cake script must have valid PowerShell-embedded syntax (pass_to_pass)."""
     ps_command = (
@@ -320,8 +311,12 @@ def test_post_gate_mandatory_cleanup():
 def test_skill_md_no_git_add_state():
     """try-fix SKILL.md must warn against git add of state files."""
     content = TRY_FIX_SKILL.read_text()
-    assert "git add" in content, \
-        "SKILL.md must mention git add in context of state files"
-    # Must explicitly warn against committing state files
+    # The old instruction to git-add-and-commit state files must be removed
+    assert 'git add "$STATE_FILE"' not in content, \
+        "SKILL.md must remove the old git-add-commit-state instruction"
+    # Must have an explicit warning against committing state files
+    assert "Do NOT" in content and "state file" in content, \
+        "SKILL.md must explicitly warn against committing state files"
+    # Must explain that the state directory is gitignored
     assert "CustomAgentLogsTmp" in content or "gitignored" in content, \
         "SKILL.md must explain why state files should not be committed"

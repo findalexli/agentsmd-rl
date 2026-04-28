@@ -29,6 +29,9 @@ RUN git config --global user.email "agent@test.com" && \
 
 WORKDIR /workspace/ruff
 
+# Reduce target/ size by disabling debug symbols.
+ENV CARGO_PROFILE_DEV_DEBUG=0
+
 # Pre-build ruff (debug) so the test environment has a binary ready.
 # The gold solve.sh applies a one-file patch and rebuilds incrementally (~1-2 min).
 RUN cargo build --bin ruff

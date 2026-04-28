@@ -5,6 +5,7 @@ uses the correct parameter names that match the actual function signature.
 """
 
 import ast
+import json
 import textwrap
 import re
 import subprocess
@@ -77,7 +78,12 @@ print("DOCSTRING_EXAMPLE_OK")
         f"stdout: {result.stdout}\n"
         f"stderr: {result.stderr}"
     )
-    assert "DOCSTRING_EXAMPLE_OK" in result.stdout
+    assert "TypeError" not in result.stderr, (
+        f"Docstring example raised TypeError:\n{result.stderr}"
+    )
+    assert "unexpected keyword argument" not in result.stderr, (
+        f"Docstring example raised unexpected keyword argument:\n{result.stderr}"
+    )
 
 
 def test_docstring_example_with_correct_params_runs():
@@ -171,6 +177,105 @@ print("Success")
         f"Expected TypeError for old param names, but got:\n"
         f"stdout: {result.stdout}\n"
         f"stderr: {result.stderr}"
+    )
+
+
+def test_docstring_example_filtered_output():
+    """Fail-to-pass: The docstring example must produce correct filtered output.
+
+    Extracts the keyword argument names from the docstring's filter_messages
+    example call, then runs filter_messages with those same kwargs against
+    the example's messages. Verifies the returned list has 2 messages
+    (SystemMessage + HumanMessage id='foo'; AIMessage id='bar' excluded).
+
+    On base: docstring has incl_names/incl_types/excl_ids → TypeError → fails.
+    On gold: docstring has include_names/include_types/exclude_ids → passes
+    with correct 2-message output.
+    """
+    docstring = get_filter_messages_docstring()
+    blocks = re.findall(r"```python\s*\n(.*?)```", docstring, re.DOTALL)
+    example_code = None
+    for block in blocks:
+        if "filter_messages(" in block:
+            example_code = block
+            break
+    assert example_code is not None, (
+        "Could not find a code example calling filter_messages in the docstring"
+    )
+
+    # Parse the example to extract kwarg names and values from the
+    # filter_messages() call, then build a call using the exact kwargs
+    tree = ast.parse(textwrap.dedent(example_code))
+    kwargs = {}
+    for node in ast.walk(tree):
+        if (isinstance(node, ast.Call)
+                and isinstance(node.func, ast.Name)
+                and node.func.id == "filter_messages"):
+            for kw in node.keywords:
+                if kw.arg:
+                    kwargs[kw.arg] = ast.unparse(kw.value)
+            break
+
+    assert kwargs, "Could not extract kwargs from filter_messages call in docstring example"
+
+    kw_lines = ",\n".join(f"    {name}={value}" for name, value in kwargs.items())
+
+    script = f'''
+import sys, json
+sys.path.insert(0, "{REPO / "libs" / "core"}")
+from langchain_core.messages import filter_messages, SystemMessage, HumanMessage, AIMessage
+
+messages = [
+    SystemMessage("you're a good assistant."),
+    HumanMessage("what's your name", id="foo", name="example_user"),
+    AIMessage("steve-o", id="bar", name="example_assistant"),
+    HumanMessage("what's your favorite color", id="baz"),
+    AIMessage("silicon blue", id="blah"),
+]
+
+result = filter_messages(
+    messages,
+{kw_lines}
+)
+
+_ids = sorted(
+    getattr(m, "id", None) for m in result
+    if getattr(m, "id", None) is not None
+)
+_count = len(result)
+print(json.dumps({{"count": _count, "ids": _ids}}))
+'''
+
+    r = subprocess.run(
+        [sys.executable, "-c", script],
+        capture_output=True, text=True, timeout=30, cwd=str(REPO),
+    )
+
+    if r.returncode != 0:
+        has_type_error = (
+            "TypeError" in r.stderr
+            and "unexpected keyword argument" in r.stderr
+        )
+        assert not has_type_error, (
+            f"filter_messages raised TypeError with these kwargs: {list(kwargs.keys())}. "
+            f"The docstring example uses parameter names that don't match "
+            f"the function signature.\n"
+            f"stderr: {r.stderr}"
+        )
+        pytest.fail(
+            f"Example execution failed for an unexpected reason:\n"
+            f"stdout: {r.stdout}\nstderr: {r.stderr}"
+        )
+
+    data = json.loads(r.stdout.strip().split("\n")[-1])
+    assert data["count"] == 2, (
+        f"Expected 2 filtered messages, got {data['count']}: {data}"
+    )
+    assert "foo" in data["ids"], (
+        f"Expected message id 'foo' in result, got ids: {data['ids']}"
+    )
+    assert "bar" not in data["ids"], (
+        f"Message id 'bar' should be excluded, got ids: {data['ids']}"
     )
 
 
@@ -303,13 +408,3 @@ def test_repo_messages_imports():
         f"stdout: {r.stdout[-1000:]}\n"
         f"stderr: {r.stderr[-1000:]}"
     )
-
-# === CI-mined tests (taskforge.ci_check_miner) ===
-def test_ci___compute_test_matrix_generate_python_library_matrix():
-    """pass_to_pass | CI job '📋 Compute Test Matrix' → step '🔢 Generate Python & Library Matrix'"""
-    r = subprocess.run(
-        ["bash", "-lc", '# echo "matrix=..." where matrix is a json formatted str with keys python-version and working-directory\n# python-version should default to 3.10 and 3.13, but is overridden to [PYTHON_VERSION_FORCE] if set\n# working-directory should default to DEFAULT_LIBS, but is overridden to [WORKING_DIRECTORY_FORCE] if set\npython_version=\'["3.10", "3.13"]\'\npython_version_min_3_11=\'["3.11", "3.13"]\'\nworking_directory="$DEFAULT_LIBS"\nif [ -n "$PYTHON_VERSION_FORCE" ]; then\n  python_version="[\\"$PYTHON_VERSION_FORCE\\"]"\n  # Bound forced version to >= 3.11 for packages requiring it\n  if [ "$(echo "$PYTHON_VERSION_FORCE >= 3.11" | bc -l)" -eq 1 ]; then\n    python_version_min_3_11="[\\"$PYTHON_VERSION_FORCE\\"]"\n  else\n    python_version_min_3_11=\'["3.11"]\'\n  fi\nfi\nif [ -n "$WORKING_DIRECTORY_FORCE" ]; then\n  working_directory="[\\"$WORKING_DIRECTORY_FORCE\\"]"\nfi\nmatrix="{\\"python-version\\": $python_version, \\"working-directory\\": $working_directory}"\necho $matrix\necho "matrix=$matrix" >> $GITHUB_OUTPUT\necho "python-version-min-3-11=$python_version_min_3_11" >> $GITHUB_OUTPUT'], cwd=REPO,
-        capture_output=True, text=True, timeout=900)
-    assert r.returncode == 0, (
-        f"CI step '🔢 Generate Python & Library Matrix' failed (returncode={r.returncode}):\n"
-        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")

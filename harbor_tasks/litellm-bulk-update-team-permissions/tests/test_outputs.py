@@ -467,39 +467,3 @@ def test_ruff_check_doesnt_regress_changed_files():
         f"stdout:\n{r.stdout}\nstderr:\n{r.stderr}"
     )
 
-# === CI-mined tests (taskforge.ci_check_miner) ===
-def test_ci_check_duplicate_auto_close_if_high_confidence_duplicate():
-    """pass_to_pass | CI job 'check-duplicate' → step 'Auto-close if high-confidence duplicate'"""
-    r = subprocess.run(
-        ["bash", "-lc", 'python3 .github/scripts/close_duplicate_issues.py \\\n  --issue-number ${{ github.event.issue.number }} \\\n  --repo ${{ github.repository }} \\\n  --threshold 0.85 \\\n  --close'], cwd=REPO,
-        capture_output=True, text=True, timeout=900)
-    assert r.returncode == 0, (
-        f"CI step 'Auto-close if high-confidence duplicate' failed (returncode={r.returncode}):\n"
-        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
-
-def test_ci_unit_test_install_helm_unit_test_plugin():
-    """pass_to_pass | CI job 'unit-test' → step 'Install Helm Unit Test Plugin'"""
-    r = subprocess.run(
-        ["bash", "-lc", 'helm plugin install https://github.com/helm-unittest/helm-unittest --version v0.4.4'], cwd=REPO,
-        capture_output=True, text=True, timeout=900)
-    assert r.returncode == 0, (
-        f"CI step 'Install Helm Unit Test Plugin' failed (returncode={r.returncode}):\n"
-        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
-
-def test_ci_unit_test_verify_helm_unit_test_plugin_integrity():
-    """pass_to_pass | CI job 'unit-test' → step 'Verify Helm Unit Test Plugin integrity'"""
-    r = subprocess.run(
-        ["bash", "-lc", 'EXPECTED_SHA="e251ba198448629678ff2168e1a469249d998155"\nPLUGIN_DIR="$(helm env HELM_PLUGINS)/helm-unittest"\nACTUAL_SHA="$(git -C "$PLUGIN_DIR" rev-parse HEAD)"\nif [ "$ACTUAL_SHA" != "$EXPECTED_SHA" ]; then\n  echo "::error::Helm unittest plugin checksum mismatch! Expected $EXPECTED_SHA but got $ACTUAL_SHA"\n  exit 1\nfi\necho "Helm unittest plugin integrity verified: $ACTUAL_SHA"'], cwd=REPO,
-        capture_output=True, text=True, timeout=900)
-    assert r.returncode == 0, (
-        f"CI step 'Verify Helm Unit Test Plugin integrity' failed (returncode={r.returncode}):\n"
-        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
-
-def test_ci_unit_test_run_unit_tests():
-    """pass_to_pass | CI job 'unit-test' → step 'Run unit tests'"""
-    r = subprocess.run(
-        ["bash", "-lc", "helm unittest -f 'tests/*.yaml' deploy/charts/litellm-helm"], cwd=REPO,
-        capture_output=True, text=True, timeout=900)
-    assert r.returncode == 0, (
-        f"CI step 'Run unit tests' failed (returncode={r.returncode}):\n"
-        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")

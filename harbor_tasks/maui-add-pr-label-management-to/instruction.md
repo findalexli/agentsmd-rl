@@ -10,7 +10,7 @@ Additionally, the PR number auto-detection only tries `gh pr view`, which fails 
 
 1. **Label Management Function**: Create a PowerShell function named `Update-VerificationLabels` that:
    - Takes a `-ReproductionConfirmed` boolean parameter
-   - Uses two label constants: `$LabelConfirmed` set to `"ai-reproduction-confirmed"` and `$LabelFailed` set to `"ai-reproduction-failed"`
+   - Uses two label constants: `$LabelConfirmed` set to `"s/ai-reproduction-confirmed"` and `$LabelFailed` set to `"s/ai-reproduction-failed"`
    - Uses variables `$labelToAdd` and `$labelToRemove` to implement toggle logic
    - Uses GitHub REST API with `DELETE` method to remove the opposite label
    - Uses GitHub REST API with `POST` method to add the appropriate label
@@ -18,8 +18,8 @@ Additionally, the PR number auto-detection only tries `gh pr view`, which fails 
    - Has a guard for when PR number is `"unknown"`
 
 2. **Label Constants**: Define `$LabelConfirmed` and `$LabelFailed` in the script with values:
-   - `$LabelConfirmed = "ai-reproduction-confirmed"`
-   - `$LabelFailed = "ai-reproduction-failed"`
+   - `$LabelConfirmed = "s/ai-reproduction-confirmed"`
+   - `$LabelFailed = "s/ai-reproduction-failed"`
 
 3. **Function Calls**: Call `Update-VerificationLabels` with `-ReproductionConfirmed` parameter:
    - Call with `$true` when tests correctly fail without the fix (reproduction confirmed)
@@ -33,7 +33,7 @@ Additionally, the PR number auto-detection only tries `gh pr view`, which fails 
 
 5. **Documentation Update**: Update `SKILL.md` to include:
    - A section titled exactly `## PR Labels`
-   - Both label names: `ai-reproduction-confirmed` and `ai-reproduction-failed`
+   - Both label names: `s/ai-reproduction-confirmed` and `s/ai-reproduction-failed`
    - Description of toggle behavior (adding one label removes the other)
    - A table describing the labels
    - Updated workflow steps mentioning "PR labels"

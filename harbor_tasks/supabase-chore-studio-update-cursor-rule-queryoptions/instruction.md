@@ -19,11 +19,14 @@ The current `useThirdPartyAuthIntegrationsQuery` hook wraps `useQuery` with cust
 3. **Mark the legacy `UseCustomMutationOptions` type as deprecated** in `apps/studio/types/react-query.ts` since the new pattern doesn't need custom wrapper types.
 
 4. **Update the Cursor rule** at `.cursor/rules/studio/queries/RULE.md` to recommend the `queryOptions` pattern. The rule should:
-   - Replace the "Write a query hook" section with guidance on writing query options
-   - Include a complete template showing the `queryOptions` factory pattern
+   - Replace the section heading `## Write a query hook` with `## Write query options` to reflect the new pattern
+   - Include a complete template showing the `queryOptions` factory pattern (the template export should use the `xQueryOptions` naming convention, following the existing `x` placeholder convention used by `useXQuery`, `xKeys`, `getX`, etc.)
    - Add documentation for using query options in components (with `useQuery`)
    - Add documentation for imperative fetching (with `queryClient.fetchQuery()`)
-   - Update example file references to point to a file that uses the new pattern
+   - Describe the internal `getX` fetch function as private/non-exported
+   - Preserve the existing `enabled` gating requirement so queries don't run until required variables exist
+
+5. **Update example file references** in the Cursor rule to point to files that use the new `queryOptions` pattern.
 
 ## Files to Look At
 
@@ -36,4 +39,5 @@ The current `useThirdPartyAuthIntegrationsQuery` hook wraps `useQuery` with cust
 
 Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
 
+- `ESLint (JS/TS linter)`
 - `prettier (JS/TS/JSON/Markdown formatter)`

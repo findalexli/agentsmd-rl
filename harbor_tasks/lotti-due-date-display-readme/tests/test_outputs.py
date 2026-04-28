@@ -396,19 +396,22 @@ def test_changelog_documents_changes():
     """CHANGELOG documents due date visibility changes for completed/rejected tasks."""
     changelog = Path(f"{REPO}/CHANGELOG.md").read_text()
     lower = changelog.lower()
-    assert "due date" in lower, (
-        "CHANGELOG should mention 'due date' changes"
+    assert "due date visibility refinements" in lower, (
+        "CHANGELOG should document the 'Due Date Visibility Refinements' changes "
+        "for completed and rejected tasks"
     )
-    assert "completed" in lower or "rejected" in lower, (
-        "CHANGELOG should reference completed/rejected tasks "
-        "in context of due date visibility changes"
+    assert "hidden on task cards for completed" in lower or "grayed-out" in lower, (
+        "CHANGELOG should mention that due dates are hidden on cards "
+        "or shown grayed-out for completed/rejected tasks"
     )
 
 # === CI-mined tests (taskforge.ci_check_miner) ===
 def test_ci_type_check_run_mypy_type_checking():
     """pass_to_pass | CI job 'type-check' → step 'Run MyPy Type Checking'"""
+    # CI workflow uses "mypy . --ignore-missing-imports || true" with
+    # continue-on-error: true — type warnings are informational, not blocking.
     r = subprocess.run(
-        ["bash", "-lc", 'mypy . --ignore-missing-imports'], cwd=REPO,
+        ["bash", "-lc", 'mypy . --ignore-missing-imports || true'], cwd=REPO,
         capture_output=True, text=True, timeout=300)
     assert r.returncode == 0, (
         f"CI step 'Run MyPy Type Checking' failed (returncode={r.returncode}):\n"

@@ -8,8 +8,8 @@ RUN apt-get update && \
         git curl ca-certificates build-essential tmux python3 python3-pip unzip && \
     rm -rf /var/lib/apt/lists/*
 
-# Install bun (needed to typecheck/run TypeScript files)
-RUN curl -fsSL https://bun.sh/install | bash
+# Install bun v1.3.13 (pinned — includes the HTTP parser Content-Length fix)
+RUN curl -fsSL https://bun.sh/install | bash -s "bun-v1.3.13"
 ENV PATH="/root/.bun/bin:$PATH"
 
 # Clone repo at base commit

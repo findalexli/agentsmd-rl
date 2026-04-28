@@ -25,7 +25,8 @@ checks:
 - id: test_build_prompt_step_uses_comment_body
   type: fail_to_pass
   origin: pr_diff
-  description: new step reads `github.event.comment.body` via the COMMENT_BODY env var
+  description: new step reads `github.event.comment.body` via the COMMENT_BODY env
+    var
 - id: test_build_prompt_step_writes_github_output
   type: fail_to_pass
   origin: pr_diff
@@ -62,32 +63,68 @@ checks:
   type: fail_to_pass
   origin: pr_diff
   description: a negative example covers the post-review fixup failure mode
-- id: test_ci_build_build
+- id: test_run_bonk_step_preserved_after_edit
   type: pass_to_pass
-  origin: repo_tests
-  description: 'CI: build / Build'
-- id: test_ci_build_upload_packages
+  origin: pr_diff
+  description: Run Bonk step still references the ask-bonk action after the edit
+- id: test_non_negotiable_rules_block_structure_intact
   type: pass_to_pass
-  origin: repo_tests
-  description: 'CI: build / Upload packages'
-- id: test_ci_cleanup_test_projects_cleanup_e2e_test_projects
-  type: pass_to_pass
-  origin: repo_tests
-  description: 'CI: Cleanup Test Projects / Cleanup E2E test projects'
+  origin: pr_diff
+  description: non-negotiable rules block preserves existing bold rule labels alongside
+    the two new ones
 config_edits:
 - path: .opencode/agents/bonk.md
   tier: 1
-  gold_added: "- **Triggering comment is the task:** The comment that invoked you (`/bonk` or `@ask-bonk`) is your primary instruction. Read it first, before reading the PR description or any other context. Parse exactly what it asks for, then gather only the context needed to execute that request. Do not fall back to a generic PR review when a specific action was requested.\n- **No re-reviewing on fixup requests:** If you previously reviewed the PR and the maintainer now asks you to fix something, do not review again. Act on the specific request in the triggering comment.\n1. **Start from the triggering comment.** Parse what it asks for. Identify the concrete action(s) requested — e.g., \"fix the formatting\", \"address the review comments\", \"add a changeset\". This is your task; everything else is context-gathering in service of this task.\n2. **Gather only the context you need** to execute the task identified in step 1:\n   - If the triggering comment references review feedback, read the existing review comments and inline comments (`gh api repos/cloudflare/workers-sdk/pulls/$PR_NUMBER/comments`).\n   - If the request is self-contained (e.g., \"run the formatter\"), you may not need to read the full PR at all.\n   - On issues: read the body and relevant comments for reproduction details.\n9. **Make the requested change directly.** Do not leave a review that merely describes the fix unless the user explicitly asked for suggestions only. Do not re-review the PR when the request is to fix something.\nNegative examples:\n- Trigger: \"/bonk fix the formatting in this PR and commit the result\" (after Bonk already reviewed the PR)\n  Incorrect behavior: ignoring the triggering comment, performing a second full review, approving the PR, and posting new review comments. The maintainer asked for a code change and a commit, not another review.\n  Correct behavior: read the triggering comment, run the formatter (`pnpm prettify` or `pnpm check`), commit the result, and push.\n- Trigger: \"/bonk address the review comments\" (on a PR Bonk previously reviewed)\n  Incorrect behavior: re-reviewing the PR and restating the same findings.\n  Correct behavior: read Bonk's own prior review comments, fix each one in code, commit, and push.\n"
-  gold_removed: '1. Read the full issue or PR first. On issues: read the body and all comments. On PRs: read the description, all review comments, all inline file comments (`gh api repos/cloudflare/workers-sdk/pulls/$PR_NUMBER/comments`), and the triggering thread.
+  gold_added: "- **Triggering comment is the task:** The comment that invoked you\
+    \ (`/bonk` or `@ask-bonk`) is your primary instruction. Read it first, before\
+    \ reading the PR description or any other context. Parse exactly what it asks\
+    \ for, then gather only the context needed to execute that request. Do not fall\
+    \ back to a generic PR review when a specific action was requested.\n- **No re-reviewing\
+    \ on fixup requests:** If you previously reviewed the PR and the maintainer now\
+    \ asks you to fix something, do not review again. Act on the specific request\
+    \ in the triggering comment.\n1. **Start from the triggering comment.** Parse\
+    \ what it asks for. Identify the concrete action(s) requested — e.g., \"fix the\
+    \ formatting\", \"address the review comments\", \"add a changeset\". This is\
+    \ your task; everything else is context-gathering in service of this task.\n2.\
+    \ **Gather only the context you need** to execute the task identified in step\
+    \ 1:\n   - If the triggering comment references review feedback, read the existing\
+    \ review comments and inline comments (`gh api repos/cloudflare/workers-sdk/pulls/$PR_NUMBER/comments`).\n\
+    \   - If the request is self-contained (e.g., \"run the formatter\"), you may\
+    \ not need to read the full PR at all.\n   - On issues: read the body and relevant\
+    \ comments for reproduction details.\n9. **Make the requested change directly.**\
+    \ Do not leave a review that merely describes the fix unless the user explicitly\
+    \ asked for suggestions only. Do not re-review the PR when the request is to fix\
+    \ something.\nNegative examples:\n- Trigger: \"/bonk fix the formatting in this\
+    \ PR and commit the result\" (after Bonk already reviewed the PR)\n  Incorrect\
+    \ behavior: ignoring the triggering comment, performing a second full review,\
+    \ approving the PR, and posting new review comments. The maintainer asked for\
+    \ a code change and a commit, not another review.\n  Correct behavior: read the\
+    \ triggering comment, run the formatter (`pnpm prettify` or `pnpm check`), commit\
+    \ the result, and push.\n- Trigger: \"/bonk address the review comments\" (on\
+    \ a PR Bonk previously reviewed)\n  Incorrect behavior: re-reviewing the PR and\
+    \ restating the same findings.\n  Correct behavior: read Bonk's own prior review\
+    \ comments, fix each one in code, commit, and push.\n"
+  gold_removed: '1. Read the full issue or PR first. On issues: read the body and
+    all comments. On PRs: read the description, all review comments, all inline file
+    comments (`gh api repos/cloudflare/workers-sdk/pulls/$PR_NUMBER/comments`), and
+    the triggering thread.
 
-    8. Make the requested change directly. Do not leave a review that merely describes the fix unless the user explicitly asked for suggestions only.
+    8. Make the requested change directly. Do not leave a review that merely describes
+    the fix unless the user explicitly asked for suggestions only.
 
     Negative example:
 
     '
 - path: .github/workflows/bonk.yml
   tier: 2
-  gold_added: "- name: Build prompt with triggering comment\n  id: prompt\n  run: |\n    {\n      DELIMITER=$(openssl rand -hex 16)\n      echo \"value<<$DELIMITER\"\n      echo \"You were invoked by @${{ github.event.comment.user.login }} on ${{ github.event.comment.html_url }}\"\n      echo \"\"\n      echo \"Their comment:\"\n      echo '```'\n      echo \"$COMMENT_BODY\"\n      echo '```'\n      echo \"\"\n      echo \"This is your task. Read it carefully and act on it.\"\n      echo \"$DELIMITER\"\n    } >> \"$GITHUB_OUTPUT\"\n  env:\n    COMMENT_BODY: ${{ github.event.comment.body }}\nprompt: ${{ steps.prompt.outputs.value }}\n"
+  gold_added: "- name: Build prompt with triggering comment\n  id: prompt\n  run:\
+    \ |\n    {\n      DELIMITER=$(openssl rand -hex 16)\n      echo \"value<<$DELIMITER\"\
+    \n      echo \"You were invoked by @${{ github.event.comment.user.login }} on\
+    \ ${{ github.event.comment.html_url }}\"\n      echo \"\"\n      echo \"Their\
+    \ comment:\"\n      echo '```'\n      echo \"$COMMENT_BODY\"\n      echo '```'\n\
+    \      echo \"\"\n      echo \"This is your task. Read it carefully and act on\
+    \ it.\"\n      echo \"$DELIMITER\"\n    } >> \"$GITHUB_OUTPUT\"\n  env:\n    COMMENT_BODY:\
+    \ ${{ github.event.comment.body }}\nprompt: ${{ steps.prompt.outputs.value }}\n"
   gold_removed: ''
 rubric:
 - rule: 'Use `pnpm` for any Node.js package operations; never use `npm` or
@@ -110,7 +147,8 @@ rubric:
     '
   category: tooling
   verification: programmatic
-  check_cmd: "grep -q \"pnpm\" /workspace/workers-sdk/.opencode/agents/bonk.md \\\n  && ! grep -E \"(npm install|yarn (install|add))\" /workspace/workers-sdk/.opencode/agents/bonk.md\n"
+  check_cmd: "grep -q \"pnpm\" /workspace/workers-sdk/.opencode/agents/bonk.md \\\n\
+    \  && ! grep -E \"(npm install|yarn (install|add))\" /workspace/workers-sdk/.opencode/agents/bonk.md\n"
 - rule: 'In GitHub Actions workflow steps, never interpolate
 
     `${{ github.event.* }}` user-controlled strings directly into a
@@ -141,7 +179,8 @@ rubric:
 
     doc = yaml.safe_load(open(''/workspace/workers-sdk/.github/workflows/bonk.yml'').read())
 
-    step = next((s for s in doc[''jobs''][''bonk''][''steps''] if s.get(''name'') == ''Build prompt with triggering comment''), None)
+    step = next((s for s in doc[''jobs''][''bonk''][''steps''] if s.get(''name'')
+    == ''Build prompt with triggering comment''), None)
 
     assert step is not None
 

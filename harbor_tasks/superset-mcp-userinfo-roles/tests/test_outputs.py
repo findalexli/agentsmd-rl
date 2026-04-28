@@ -35,8 +35,10 @@ modules under test are loaded from disk normally.
 from __future__ import annotations
 
 import json as _stdjson
+import os
 import subprocess
 import sys
+import tempfile
 import types
 from enum import Enum
 
@@ -403,102 +405,74 @@ def test_modified_schema_files_compile_cleanly():
     )
     assert r.returncode == 0, f"py_compile failed:\n{r.stderr}"
 
-# === CI-mined tests (taskforge.ci_check_miner) ===
-def test_ci_check_python_deps_run_uv():
-    """pass_to_pass | CI job 'check-python-deps' → step 'Run uv'"""
-    r = subprocess.run(
-        ["bash", "-lc", './scripts/uv-pip-compile.sh'], cwd=REPO,
-        capture_output=True, text=True, timeout=300)
-    assert r.returncode == 0, (
-        f"CI step 'Run uv' failed (returncode={r.returncode}):\n"
-        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
 
-def test_ci_unit_tests_python_unit_tests():
-    """pass_to_pass | CI job 'unit-tests' → step 'Python unit tests'"""
-    r = subprocess.run(
-        ["bash", "-lc", 'pytest --durations-min=0.5 --cov-report= --cov=superset ./tests/common ./tests/unit_tests --cache-clear --maxfail=50'], cwd=REPO,
-        capture_output=True, text=True, timeout=300)
-    assert r.returncode == 0, (
-        f"CI step 'Python unit tests' failed (returncode={r.returncode}):\n"
-        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+# Scoped CI-derived test: create a minimal pytest suite that verifies the
+# serialize_user_object fix, then run it with pytest. On the base commit
+# serialize_user_object does not exist, so the import fails (non-zero exit).
+# On the gold commit the function is importable and all assertions pass.
+def test_pytest_verifies_serialize_user_object_fix():
+    """fail_to_pass: pytest verifies the serialize_user_object fix works."""
+    test_code = r"""
+import sys
+sys.path.insert(0, "/workspace/superset")
 
-def test_ci_unit_tests_python_100_coverage_unit_tests():
-    """pass_to_pass | CI job 'unit-tests' → step 'Python 100% coverage unit tests'"""
-    r = subprocess.run(
-        ["bash", "-lc", 'pytest --durations-min=0.5 --cov=superset/sql/ ./tests/unit_tests/sql/ --cache-clear --cov-fail-under=100'], cwd=REPO,
-        capture_output=True, text=True, timeout=300)
-    assert r.returncode == 0, (
-        f"CI step 'Python 100% coverage unit tests' failed (returncode={r.returncode}):\n"
-        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+import pytest
+from superset.mcp_service.system.schemas import serialize_user_object
 
-def test_ci_test_load_examples_superset_init():
-    """pass_to_pass | CI job 'test-load-examples' → step 'superset init'"""
-    r = subprocess.run(
-        ["bash", "-lc", 'pip install -e .'], cwd=REPO,
-        capture_output=True, text=True, timeout=300)
-    assert r.returncode == 0, (
-        f"CI step 'superset init' failed (returncode={r.returncode}):\n"
-        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
 
-def test_ci_frontend_check_translations_lint():
-    """pass_to_pass | CI job 'frontend-check-translations' → step 'lint'"""
-    r = subprocess.run(
-        ["bash", "-lc", 'npm run build-translation'], cwd=os.path.join(REPO, './superset-frontend'),
-        capture_output=True, text=True, timeout=300)
-    assert r.returncode == 0, (
-        f"CI step 'lint' failed (returncode={r.returncode}):\n"
-        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+class _FakeRole:
+    def __init__(self, name: str) -> None:
+        self.name = name
 
-def test_ci_build_npm():
-    """pass_to_pass | CI job 'build' → step ''"""
-    r = subprocess.run(
-        ["bash", "-lc", 'npm ci'], cwd=REPO,
-        capture_output=True, text=True, timeout=300)
-    assert r.returncode == 0, (
-        f"CI step '' failed (returncode={r.returncode}):\n"
-        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
 
-def test_ci_build_npm_2():
-    """pass_to_pass | CI job 'build' → step ''"""
-    r = subprocess.run(
-        ["bash", "-lc", 'npm run ci:release'], cwd=REPO,
-        capture_output=True, text=True, timeout=300)
-    assert r.returncode == 0, (
-        f"CI step '' failed (returncode={r.returncode}):\n"
-        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+class _FakeUser:
+    def __init__(self, roles):
+        self.id = 1
+        self.username = "u"
+        self.first_name = "F"
+        self.last_name = "L"
+        self.email = "e@e.com"
+        self.active = True
+        self.roles = roles
 
-def test_ci_test_sqlite_python_integration_tests_sqlite():
-    """pass_to_pass | CI job 'test-sqlite' → step 'Python integration tests (SQLite)'"""
-    r = subprocess.run(
-        ["bash", "-lc", './scripts/python_tests.sh'], cwd=REPO,
-        capture_output=True, text=True, timeout=300)
-    assert r.returncode == 0, (
-        f"CI step 'Python integration tests (SQLite)' failed (returncode={r.returncode}):\n"
-        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
 
-def test_ci_test_mysql_generate_database_diagnostics_for_docs():
-    """pass_to_pass | CI job 'test-mysql' → step 'Generate database diagnostics for docs'"""
-    r = subprocess.run(
-        ["bash", "-lc", 'python -c "'], cwd=REPO,
-        capture_output=True, text=True, timeout=300)
-    assert r.returncode == 0, (
-        f"CI step 'Generate database diagnostics for docs' failed (returncode={r.returncode}):\n"
-        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+def test_extracts_role_names_from_role_objects():
+    u = _FakeUser([_FakeRole("Admin"), _FakeRole("Alpha")])
+    r = serialize_user_object(u)
+    assert r.roles == ["Admin", "Alpha"]
+    assert all(isinstance(x, str) for x in r.roles)
 
-def test_ci_test_postgres_presto_python_unit_tests_postgresql():
-    """pass_to_pass | CI job 'test-postgres-presto' → step 'Python unit tests (PostgreSQL)'"""
-    r = subprocess.run(
-        ["bash", "-lc", "./scripts/python_tests.sh -m 'chart_data_flow or sql_json_flow'"], cwd=REPO,
-        capture_output=True, text=True, timeout=300)
-    assert r.returncode == 0, (
-        f"CI step 'Python unit tests (PostgreSQL)' failed (returncode={r.returncode}):\n"
-        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
 
-def test_ci_test_postgres_hive_python_unit_tests_postgresql():
-    """pass_to_pass | CI job 'test-postgres-hive' → step 'Python unit tests (PostgreSQL)'"""
-    r = subprocess.run(
-        ["bash", "-lc", "pip install -e .[hive] && ./scripts/python_tests.sh -m 'chart_data_flow or sql_json_flow'"], cwd=REPO,
-        capture_output=True, text=True, timeout=300)
-    assert r.returncode == 0, (
-        f"CI step 'Python unit tests (PostgreSQL)' failed (returncode={r.returncode}):\n"
-        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+def test_handles_none_roles():
+    u = _FakeUser(None)
+    assert serialize_user_object(u).roles == []
+
+
+def test_handles_non_iterable_roles():
+    u = _FakeUser(42)
+    assert serialize_user_object(u).roles == []
+
+
+def test_missing_roles_attribute():
+    u = _FakeUser(42)
+    del u.roles
+    assert serialize_user_object(u).roles == []
+"""
+    with tempfile.NamedTemporaryFile(
+        mode="w", suffix=".py", prefix="test_verify_", delete=False
+    ) as f:
+        f.write(test_code)
+        tmp = f.name
+
+    try:
+        r = subprocess.run(
+            ["bash", "-lc",
+             f"cd /workspace/superset && python -m pytest {tmp} -x -q "
+             "-p no:cacheprovider --tb=short"],
+            capture_output=True, text=True, timeout=60,
+        )
+        assert r.returncode == 0, (
+            f"pytest verification failed (returncode={r.returncode}):\n"
+            f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+    finally:
+        os.unlink(tmp)

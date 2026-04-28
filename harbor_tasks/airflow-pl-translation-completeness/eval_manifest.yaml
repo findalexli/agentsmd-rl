@@ -19,122 +19,78 @@ task:
   - markdown_authoring
   - json
 checks:
-- id: test_pl_admin_json_valid
+- id: test_admin_slotsHelperText_present
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'The key pools.form.slotsHelperText is present in pl/admin.json with a non-empty Polish translation.'
+- id: test_common_errors_forbidden_present
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'The keys errors.forbidden.title and errors.forbidden.description are present in pl/common.json with non-empty translations.'
+- id: test_common_generateToken_present
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'The key generateToken is present in pl/common.json with a non-empty Polish translation.'
+- id: test_common_asset_materialization_present
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'The key runTypes.asset_materialization is present in pl/common.json with a non-empty translation.'
+- id: test_common_tokenGeneration_subtree_present
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'All 10 tokenGeneration.* sub-keys (apiToken, cliToken, errorDescription, errorTitle, generate, selectType, title, tokenExpiresIn, tokenGenerated, tokenShownOnce) are present in pl/common.json with translated values.'
+- id: test_common_tokenGeneration_preserves_placeholder
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'The tokenGeneration.tokenExpiresIn translation in pl/common.json preserves the {{duration}} placeholder verbatim.'
+- id: test_dag_runTypeLegend_present
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'The key grid.runTypeLegend is present in pl/dag.json with a non-empty Polish translation.'
+- id: test_dag_header_status_deactivated_present
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'The key header.status.deactivated is present in pl/dag.json with a non-empty Polish translation.'
+- id: test_components_dagWarnings_unused_keys_removed
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'The unused plural keys dagWarnings.error_few, error_many, error_other are removed from pl/components.json; error_one remains.'
+- id: test_bulkDelete_uses_grupowy_terminology
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'toaster.bulkDelete.error and toaster.bulkDelete.success.title in pl/common.json use "grupowego" (not "masowego") per the new terminology glossary.'
+- id: test_dag_deactivated_uses_deaktywowany
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'header.status.deactivated in pl/dag.json uses the Deaktywowany/Deaktywowana/Deaktywowane form (not Dezaktywowany).'
+- id: test_pl_md_has_terminology_glossary_heading
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'pl.md contains a "## Terminology Glossary" section heading.'
+- id: test_pl_md_glossary_lists_required_terms
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'The Terminology Glossary in pl.md mentions all three required term stems (Zabieraj, grupow, Deaktywowan) and their avoided counterparts (Konsumuj, masow, Dezaktywowan).'
+- id: test_all_pl_locale_files_valid_json
   type: pass_to_pass
   origin: static
-  description: pl/admin.json parses as valid JSON.
-- id: test_pl_common_json_valid
-  type: pass_to_pass
-  origin: static
-  description: pl/common.json parses as valid JSON.
-- id: test_pl_components_json_valid
-  type: pass_to_pass
-  origin: static
-  description: pl/components.json parses as valid JSON.
-- id: test_pl_dag_json_valid
-  type: pass_to_pass
-  origin: static
-  description: pl/dag.json parses as valid JSON.
-- id: test_pl_skill_file_exists
-  type: pass_to_pass
-  origin: static
-  description: The Polish skill file pl.md exists and is non-empty.
-- id: test_existing_pool_slots_translation_preserved
+  description: 'All four PL locale files (admin.json, common.json, components.json, dag.json) parse as valid JSON.'
+- id: test_existing_translations_preserved
   type: pass_to_pass
   origin: repo_tests
-  description: Pre-existing pl translation 'pools.form.slots' is unchanged.
-- id: test_existing_collapse_details_panel_preserved
+  description: 'Pre-existing translations (logout="Wyloguj", reset="Resetuj", logicalDate="Data logiczna", pools.form.slots="Miejsca") remain unchanged.'
+- id: test_polish_plural_suffixes_preserved
   type: pass_to_pass
   origin: repo_tests
-  description: Pre-existing pl translation 'collapseDetailsPanel' is unchanged.
-- id: test_repo_is_clean_checkout
+  description: 'Existing Polish plural forms (dagWarnings.warning_few, warning_many, warning_one) in pl/components.json are preserved.'
+- id: test_python_can_parse_all_pl_files
   type: pass_to_pass
   origin: static
-  description: The cloned airflow repo is a valid git working tree.
-- id: test_missing_key_now_present
+  description: 'python -m json.tool succeeds on each PL locale file via subprocess execution.'
+- id: test_git_diff_touches_expected_files
   type: fail_to_pass
   origin: pr_diff
-  description: 'Each of the 32 keys reported missing by the translation-completeness check at the base commit is now present in the corresponding pl JSON file with a non-empty Polish value (parametrised across all 32 keys).
-
-    '
-- id: test_consuming_asset_uses_zabierajacy
-  type: fail_to_pass
-  origin: agent_config
-  description: 'The ''consumingAsset'' translation uses the preferred ''Zabierający'' wording rather than ''Konsumujący'', per the new glossary entry.
-
-    '
-  source:
-    commit: 9483d1006e068430c936da92ae67ccbefa261299
-    lines: 150-160
-    path: .github/skills/airflow-translations/locales/pl.md
-- id: test_bulk_request_phrases_use_grupow
-  type: fail_to_pass
-  origin: agent_config
-  description: 'The toaster.bulk{Clear,Update,Delete}.{error,success.title} strings — which reference the bulk *request* — use the preferred ''grupow*'' wording, per the new glossary entry (parametrised across 6 sub-keys).
-
-    '
-  source:
-    commit: 9483d1006e068430c936da92ae67ccbefa261299
-    lines: 150-165
-    path: .github/skills/airflow-translations/locales/pl.md
-- id: test_bulk_strings_avoid_masow
-  type: fail_to_pass
-  origin: agent_config
-  description: 'No bulk-action string (error / success.title / success.description) uses the avoided ''masow*'' wording. Together with ''test_bulk_request_phrases_use_grupow'' this enforces the full glossary decision, including for bulkDelete strings that existed at base using ''masowego'' (parametrised across 9 sub-keys).
-
-    '
-  source:
-    commit: 9483d1006e068430c936da92ae67ccbefa261299
-    lines: 150-165
-    path: .github/skills/airflow-translations/locales/pl.md
-- id: test_deactivated_uses_deaktywow
-  type: fail_to_pass
-  origin: agent_config
-  description: 'The Dag-header ''Deactivated'' status uses ''Deaktywow*'' rather than ''Dezaktywow*'', per the new glossary entry.
-
-    '
-  source:
-    commit: 9483d1006e068430c936da92ae67ccbefa261299
-    lines: 150-165
-    path: .github/skills/airflow-translations/locales/pl.md
-- id: test_placeholders_preserved
-  type: fail_to_pass
-  origin: agent_config
-  description: 'Every {{var}} placeholder present in the English source is preserved verbatim in the Polish translation (parametrised across 9 keys with placeholders).
-
-    '
-  source:
-    commit: 9483d1006e068430c936da92ae67ccbefa261299
-    lines: Variables and Placeholders
-    path: .github/skills/airflow-translations/SKILL.md
-- id: test_pl_skill_has_terminology_glossary_heading
-  type: fail_to_pass
-  origin: pr_diff
-  description: pl.md contains a '## Terminology Glossary' heading.
-- id: test_pl_skill_glossary_documents_consuming_asset
-  type: fail_to_pass
-  origin: pr_diff
-  description: 'The Terminology Glossary in pl.md documents the ''Consuming Asset'' / ''Zabierający'' decision.
-
-    '
-- id: test_pl_skill_glossary_documents_bulk_grupow_over_masow
-  type: fail_to_pass
-  origin: pr_diff
-  description: 'The Terminology Glossary in pl.md documents that ''Bulk'' verbs use ''grupow*'' (preferred) and not ''masow*'' (avoided).
-
-    '
-- id: test_pl_skill_glossary_documents_deactivated
-  type: fail_to_pass
-  origin: pr_diff
-  description: 'The Terminology Glossary in pl.md documents the ''Deactivated'' / ''Deaktywowany'' decision.
-
-    '
-- id: test_no_english_keys_missing_in_polish
-  type: fail_to_pass
-  origin: pr_diff
-  description: 'For every (plural-stripped) key in en/{admin,common,components,dag}.json, the corresponding pl file has a matching key. This is exactly the parity that ''breeze ui check-translation-completeness --language pl'' enforces.
-
-    '
+  description: 'git diff --name-only HEAD shows exactly the five expected files modified (pl.md, admin.json, common.json, components.json, dag.json).'
 config_edits:
 - description: 'Gold patch adds a Terminology Glossary section that records three preferred-vs-avoided wording decisions (Consuming Asset → Zabierający zasób; Bulk → grupow*; Deactivated → Deaktywow*).
 

@@ -35,6 +35,13 @@ the other rules in `AGENTS.md` (compare for example the bullets under
 `## Running code`). The set of allowed prefixes itself does not change —
 `feat/`, `fix/`, and `chore/` are still the only ones.
 
+## Code Style Requirements
+
+This repository enforces Python code style with `ruff` (configured in
+`pyproject.toml`). Your edit to `AGENTS.md` does not affect any Python
+source files, so the `ruff check` CI job should continue to pass without
+any additional work on your part.
+
 ## Constraints
 
 - Only `AGENTS.md` should be modified.

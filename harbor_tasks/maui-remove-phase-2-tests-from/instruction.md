@@ -13,7 +13,7 @@ The workflow should be simplified to 4 phases by removing the standalone Tests p
 3. **Fix** — Multi-model fix exploration
 4. **Report** — Final recommendation
 
-All phase numbering, references, and documentation across the repository must be updated consistently. The PowerShell scripts that process phase data must also be updated to remove Tests phase handling.
+All phase numbering, references, and documentation across the repository must be updated consistently. The PowerShell scripts that process phase data must also be updated to remove Tests phase handling, including the validation warning "Tests phase missing test file paths" which should no longer appear in the summary comment script.
 
 ## Files to Look At
 

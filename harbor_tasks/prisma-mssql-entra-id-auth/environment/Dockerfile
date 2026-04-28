@@ -19,15 +19,19 @@ RUN git init /workspace/prisma && \
 
 WORKDIR /workspace/prisma
 
-# Install minimal deps for running connection-string.ts with tsx.
+# Install minimal deps for running connection-string.ts with tsx and vitest.
 # kleur must be at root (packages/debug imports it).
-# mssql + tsx go in adapter-mssql.
+# mssql + tsx + vitest go in adapter-mssql.
 RUN mkdir -p node_modules && cd node_modules && npm pack kleur@4.1.5 2>/dev/null && tar xzf kleur-*.tgz && mv package kleur && rm kleur-*.tgz && cd /workspace/prisma && \
     cd packages/adapter-mssql && \
-    echo '{"private":true,"dependencies":{"mssql":"^11.0.1","async-mutex":"0.5.0","tsx":"^4"}}' > /tmp/pkg.json && \
+    echo '{"private":true,"dependencies":{"mssql":"^11.0.1","async-mutex":"0.5.0","tsx":"^4"},"devDependencies":{"vitest":"1.6.1"}}' > /tmp/pkg.json && \
     cp /tmp/pkg.json package.json && \
     npm install && \
     git checkout package.json
+
+# Vitest config with resolve aliases for workspace packages
+RUN echo 'import { defineConfig } from "vitest/config";' > /workspace/prisma/packages/adapter-mssql/vitest.config.ts && \
+    echo 'export default defineConfig({resolve:{alias:{"@prisma/driver-adapter-utils":"/workspace/prisma/packages/driver-adapter-utils/src/index.ts","@prisma/debug":"/workspace/prisma/packages/debug/src/index.ts"}},});' >> /workspace/prisma/packages/adapter-mssql/vitest.config.ts
 
 # Verifier output directory (Harbor bind-mounts this)
 RUN mkdir -p /logs/verifier

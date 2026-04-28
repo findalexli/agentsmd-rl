@@ -1,358 +1,233 @@
 """
 Test suite for Hugo CSS external source maps fix.
 Tests validate that:
-1. External source maps properly resolve source file paths
-2. Source map sources are correctly filtered and processed
-3. Repo tests pass after the fix
+1. External source maps properly resolve source file paths (behavioral f2p)
+2. Source maps work with both minified and unminified CSS (behavioral f2p)
+3. Repo tests pass at both base and gold (pass-to-pass)
 """
 
 import json
 import os
 import subprocess
 import sys
+import tempfile
 
 REPO = "/workspace/hugo"
 
-# Path constants for the files modified in this PR
-SOURCEMAP_GO = os.path.join(REPO, "internal/js/esbuild/sourcemap.go")
-BUILD_GO = os.path.join(REPO, "internal/js/esbuild/build.go")
-CSS_TEST_GO = os.path.join(REPO, "tpl/css/build_integration_test.go")
-JS_TEST_GO = os.path.join(REPO, "resources/resource_transformers/js/js_integration_test.go")
+
+def _build_hugo():
+    """Build Hugo binary and return path, caching at /tmp/hugo."""
+    hugo_bin = "/tmp/hugo"
+    if not os.path.exists(hugo_bin):
+        result = subprocess.run(
+            ["go", "build", "-o", hugo_bin, "./"],
+            cwd=REPO, capture_output=True, text=True, timeout=600
+        )
+        assert result.returncode == 0, f"go build failed:\n{result.stderr[-1000:]}"
+    return hugo_bin
 
 
-def test_sourcemap_fix_behavior():
+def _create_hugo_project(tmpdir, minify="true", source_map="external"):
+    """Create a minimal Hugo project with CSS imports for testing source maps."""
+    os.makedirs(f"{tmpdir}/assets/css", exist_ok=True)
+    os.makedirs(f"{tmpdir}/layouts/_default", exist_ok=True)
+
+    with open(f"{tmpdir}/hugo.toml", "w") as f:
+        f.write('baseURL = "http://example.org/"\n')
+
+    with open(f"{tmpdir}/assets/css/main.css", "w") as f:
+        f.write('@import "./foo.css";\n@import "./bar.css";\n@import "./baz.css";\n.main { color: red; }\n')
+
+    with open(f"{tmpdir}/assets/css/foo.css", "w") as f:
+        f.write(".foo { color: blue; }\n")
+
+    with open(f"{tmpdir}/assets/css/bar.css", "w") as f:
+        f.write(".bar { color: green; }\n")
+
+    with open(f"{tmpdir}/assets/css/baz.css", "w") as f:
+        f.write(".baz { color: yellow; }\n")
+
+    with open(f"{tmpdir}/layouts/index.html", "w") as f:
+        f.write(
+            '{{ with resources.Get "css/main.css" }}\n'
+            '{{ $opts := (dict "minify" MINIFY "sourceMap" "SOURCE_MAP" "sourcesContent" true) }}\n'
+            '{{ with . | css.Build $opts }}\n'
+            '<link rel="stylesheet" href="{{ .RelPermalink }}">\n'
+            '{{ end }}\n'
+            '{{ end }}'
+            .replace("MINIFY", minify).replace("SOURCE_MAP", source_map)
+        )
+
+
+# === fail_to_pass tests ===
+
+def test_css_external_sourcemap_sources():
+    """f2p: CSS external source map has populated sources array after fix.
+
+    At base (unfixed), the resolve function returns "" for source files
+    not found by the assets resolver, leaving the source map sources
+    empty. At gold, source files get their absolute filenames preserved.
     """
-    Fail-to-pass test: Verify sourcemap.go properly handles source filtering.
+    hugo = _build_hugo()
 
-    The fix changes how sources are processed - instead of a separate function,
-    sources are now filtered inline with proper source content alignment.
+    with tempfile.TemporaryDirectory() as tmpdir:
+        _create_hugo_project(tmpdir, minify="true", source_map="external")
+
+        result = subprocess.run(
+            [hugo, "--source", tmpdir],
+            capture_output=True, text=True, timeout=120
+        )
+        assert result.returncode == 0, f"Hugo build failed: {result.stderr[-800:]}"
+
+        map_path = os.path.join(tmpdir, "public", "css", "main.css.map")
+        assert os.path.exists(map_path), "Source map file was not generated"
+
+        with open(map_path) as f:
+            sm = json.load(f)
+
+        sources = sm.get("sources", [])
+        assert len(sources) >= 2, (
+            f"Source map sources should have at least 2 entries, "
+            f"got {len(sources)}: {sources}"
+        )
+
+        source_basenames = [os.path.basename(s) for s in sources]
+        for expected in ["main.css", "foo.css"]:
+            assert expected in source_basenames, (
+                f"'{expected}' missing from source map sources: {sources}"
+            )
+
+
+def test_css_unminified_sourcemap_sources():
+    """f2p: Unminified CSS external source map also has populated sources.
+
+    Tests with minify=false to verify the fix works across minify
+    configurations (varying the input parameter).
     """
-    # The fix ensures that sources are properly filtered when resolve() returns empty
-    # We need to verify the code structure contains the fix
+    hugo = _build_hugo()
 
-    with open(SOURCEMAP_GO, 'r') as f:
-        content = f.read()
+    with tempfile.TemporaryDirectory() as tmpdir:
+        _create_hugo_project(tmpdir, minify="false", source_map="external")
 
-    # After fix: should have inline loop processing sources with sourcesContent alignment
-    # The fix adds a loop that processes sources and tracks sourcesContent together
-    assert "hasSourcesContent := len(sm.SourcesContent) == len(sm.Sources)" in content, \
-        "Missing hasSourcesContent check in sourcemap.go"
+        result = subprocess.run(
+            [hugo, "--source", tmpdir],
+            capture_output=True, text=True, timeout=120
+        )
+        assert result.returncode == 0, f"Hugo build failed: {result.stderr[-800:]}"
 
-    # Should have the inline loop that filters sources
-    assert "for i, src := range sm.Sources" in content, \
-        "Missing inline source processing loop in sourcemap.go"
+        map_path = os.path.join(tmpdir, "public", "css", "main.css.map")
+        assert os.path.exists(map_path), "Source map file was not generated"
 
-    # Should track sourcesContent alongside sources
-    assert "sourcesContent = append(sourcesContent, sm.SourcesContent[i])" in content, \
-        "Missing sourcesContent alignment in sourcemap.go"
+        with open(map_path) as f:
+            sm = json.load(f)
 
-    # The old fixSourceMapSources function should be removed
-    assert "func fixSourceMapSources" not in content, \
-        "Old fixSourceMapSources function should be removed from sourcemap.go"
+        sources = sm.get("sources", [])
+        assert len(sources) >= 2, (
+            f"Unminified source map sources should have at least 2 entries, "
+            f"got {len(sources)}: {sources}"
+        )
 
-
-def test_build_go_source_resolution():
-    """
-    Fail-to-pass test: Verify build.go returns absolute filenames for source files.
-
-    The fix adds logic to distinguish between output files (in OutDir) and source files.
-    """
-    with open(BUILD_GO, 'r') as f:
-        content = f.read()
-
-    # After fix: should check if path is an output file
-    assert 'strings.HasPrefix(s, opts.OutDir)' in content, \
-        "Missing OutDir prefix check in build.go"
-
-    # Should have comment explaining the fix
-    assert "s is already the absolute filename set by the Hugo resolve plugin" in content, \
-        "Missing explanatory comment in build.go"
-
-    # Should return s (the absolute filename) for source files
-    assert "// This is an output file, not a source file." in content, \
-        "Missing output file detection comment in build.go"
+        source_strings = " ".join(sources)
+        assert "main.css" in source_strings, (
+            f"'main.css' missing from unminified source map sources: {sources}"
+        )
 
 
-def test_css_integration_source_count():
-    """
-    Fail-to-pass test: Verify CSS integration test checks for correct source count.
-
-    The fix ensures that external source maps include all 4 CSS sources.
-    The test was updated from checking 4 sources to properly validating source count.
-    """
-    with open(CSS_TEST_GO, 'r') as f:
-        content = f.read()
-
-    # Should import esbuild package for source validation
-    assert '"github.com/gohugoio/hugo/internal/js/esbuild"' in content, \
-        "Missing esbuild import in CSS integration test"
-
-    # Should import quicktest for assertions
-    assert 'qt "github.com/frankban/quicktest"' in content, \
-        "Missing quicktest import in CSS integration test"
-
-    # Should validate source count equals 4 (main.css + foo.css + bar.css + baz.css)
-    assert 'b.Assert(len(sources), qt.Equals, 4)' in content, \
-        "Missing source count assertion (4 sources) in CSS integration test"
-
-    # Should call SourcesFromSourceMap
-    assert 'sources := esbuild.SourcesFromSourceMap(' in content, \
-        "Missing SourcesFromSourceMap call in CSS integration test"
-
-
-def test_js_integration_source_count():
-    """
-    Fail-to-pass test: Verify JS integration test expects correct source count.
-
-    The test was updated from 4 to 5 expected sources in the source map.
-    """
-    with open(JS_TEST_GO, 'r') as f:
-        content = f.read()
-
-    # Look for the checkMap call with 5 sources (was 4 before fix)
-    # This validates that the source map now includes all expected sources
-    assert 'checkMap("public/js/main.js.map", 5)' in content, \
-        "JS integration test should expect 5 sources in source map (was 4 before fix)"
-
-
-def test_css_test_loop_variations():
-    """
-    Fail-to-pass test: Verify CSS tests run with both minify=true and minify=false.
-
-    The fix adds a loop to test both minified and unminified CSS builds.
-    """
-    with open(CSS_TEST_GO, 'r') as f:
-        content = f.read()
-
-    # Should have loop over minify values
-    assert 'for _, minify := range []string{"true", "false"}' in content, \
-        "Missing minify loop in CSS integration test"
-
-    # Should have MINIFY placeholder replacement
-    assert '"MINIFY", minify,' in content, \
-        "Missing MINIFY placeholder replacement in CSS integration test"
-
+# === pass_to_pass tests ===
 
 def test_repo_css_integration_tests():
-    """
-    Pass-to-pass test: Hugo's CSS integration tests pass.
-
-    Run the CSS build integration tests to verify they work correctly.
-    """
+    """p2p: Hugo's CSS build integration tests pass."""
     result = subprocess.run(
         ["go", "test", "-v", "-run", "TestCSSBuild", "./tpl/css/"],
-        cwd=REPO,
-        capture_output=True,
-        text=True,
-        timeout=300
+        cwd=REPO, capture_output=True, text=True, timeout=300
     )
-
-    assert result.returncode == 0, \
+    assert result.returncode == 0, (
         f"CSS integration tests failed:\n{result.stderr[-1000:]}\n{result.stdout[-500:]}"
+    )
 
 
 def test_repo_sourcemap_package_tests():
-    """
-    Pass-to-pass test: Hugo's sourcemap package tests pass.
-
-    Run tests for the esbuild sourcemap package.
-    """
+    """p2p: Hugo's esbuild sourcemap package tests pass."""
     result = subprocess.run(
         ["go", "test", "-v", "./internal/js/esbuild/..."],
-        cwd=REPO,
-        capture_output=True,
-        text=True,
-        timeout=300
+        cwd=REPO, capture_output=True, text=True, timeout=300
     )
-
-    assert result.returncode == 0, \
+    assert result.returncode == 0, (
         f"Esbuild package tests failed:\n{result.stderr[-1000:]}\n{result.stdout[-500:]}"
+    )
 
 
 def test_repo_js_integration_tests():
-    """
-    Pass-to-pass test: Hugo's JS integration tests pass.
-
-    Run the JS build integration tests.
-    """
+    """p2p: Hugo's JS build integration tests pass."""
     result = subprocess.run(
-        ["go", "test", "-v", "-run", "TestBuildJS", "./resources/resource_transformers/js/..."],
-        cwd=REPO,
-        capture_output=True,
-        text=True,
-        timeout=300
+        ["go", "test", "-v", "-run", "TestBuildJS",
+         "./resources/resource_transformers/js/..."],
+        cwd=REPO, capture_output=True, text=True, timeout=300
     )
-
-    assert result.returncode == 0, \
+    assert result.returncode == 0, (
         f"JS integration tests failed:\n{result.stderr[-1000:]}\n{result.stdout[-500:]}"
+    )
 
 
 def test_go_build():
-    """
-    Pass-to-pass test: Hugo compiles successfully.
-
-    Verify the Go code compiles without errors.
-    """
+    """p2p: Hugo compiles successfully."""
     result = subprocess.run(
-        ["go", "build", "-o", "/tmp/hugo", "./"],
-        cwd=REPO,
-        capture_output=True,
-        text=True,
-        timeout=300
+        ["go", "build", "./..."],
+        cwd=REPO, capture_output=True, text=True, timeout=600
     )
-
-    assert result.returncode == 0, \
+    assert result.returncode == 0, (
         f"Hugo build failed:\n{result.stderr[-1000:]}"
+    )
 
 
 def test_go_vet():
-    """
-    Pass-to-pass test: Hugo passes go vet static analysis.
-    """
+    """p2p: Modified packages pass go vet static analysis."""
     result = subprocess.run(
         ["go", "vet", "./internal/js/esbuild/...", "./tpl/css/..."],
-        cwd=REPO,
-        capture_output=True,
-        text=True,
-        timeout=120
+        cwd=REPO, capture_output=True, text=True, timeout=120
     )
-
-    assert result.returncode == 0, \
+    assert result.returncode == 0, (
         f"go vet failed:\n{result.stderr[-500:]}"
+    )
 
 
 def test_gofmt():
-    """
-    Pass-to-pass test: Hugo code passes gofmt formatting check.
-
-    Repo CI runs gofmt to ensure code formatting is consistent.
-    """
+    """p2p: Modified packages pass gofmt formatting check."""
     result = subprocess.run(
         ["gofmt", "-l", "./internal/js/esbuild/", "./tpl/css/"],
-        cwd=REPO,
-        capture_output=True,
-        text=True,
-        timeout=60
+        cwd=REPO, capture_output=True, text=True, timeout=60
     )
-
-    assert result.returncode == 0, \
+    assert result.returncode == 0, (
         f"gofmt check failed:\n{result.stderr[-500:]}"
-    assert result.stdout.strip() == "", \
+    )
+    assert result.stdout.strip() == "", (
         f"gofmt found formatting issues in:\n{result.stdout}"
-
-
-def test_staticcheck():
-    """
-    Pass-to-pass test: Hugo passes staticcheck linter.
-
-    Repo CI runs staticcheck for static analysis.
-    """
-    # Install staticcheck if not already installed
-    install_result = subprocess.run(
-        ["go", "install", "honnef.co/go/tools/cmd/staticcheck@latest"],
-        cwd=REPO,
-        capture_output=True,
-        text=True,
-        timeout=180
     )
-
-    # Run staticcheck on the modified packages
-    result = subprocess.run(
-        ["staticcheck", "./internal/js/esbuild/...", "./tpl/css/..."],
-        cwd=REPO,
-        capture_output=True,
-        text=True,
-        timeout=180
-    )
-
-    assert result.returncode == 0, \
-        f"staticcheck failed:\n{result.stderr[-500:]}\n{result.stdout[-500:]}"
 
 
 def test_go_mod_verify():
-    """
-    Pass-to-pass test: Hugo go.mod is valid and dependencies are clean.
-    """
+    """p2p: Hugo go.mod is valid and dependencies are clean."""
     result = subprocess.run(
         ["go", "mod", "verify"],
-        cwd=REPO,
-        capture_output=True,
-        text=True,
-        timeout=60
+        cwd=REPO, capture_output=True, text=True, timeout=60
+    )
+    assert result.returncode == 0, (
+        f"go mod verify failed:\n{result.stderr[-500:]}"
     )
 
-    assert result.returncode == 0, \
-        f"go mod verify failed:\n{result.stderr[-500:]}"
 
-# === CI-mined tests (taskforge.ci_check_miner) ===
-def test_ci_test_brew():
-    """pass_to_pass | CI job 'test' → step ''"""
-    r = subprocess.run(
-        ["bash", "-lc", 'brew install pandoc'], cwd=REPO,
-        capture_output=True, text=True, timeout=900)
-    assert r.returncode == 0, (
-        f"CI step '' failed (returncode={r.returncode}):\n"
-        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+def test_staticcheck():
+    """p2p: Modified packages pass staticcheck linter."""
+    install_result = subprocess.run(
+        ["go", "install", "honnef.co/go/tools/cmd/staticcheck@latest"],
+        cwd=REPO, capture_output=True, text=True, timeout=180
+    )
 
-def test_ci_test_choco():
-    """pass_to_pass | CI job 'test' → step ''"""
-    r = subprocess.run(
-        ["bash", "-lc", 'choco install pandoc'], cwd=REPO,
-        capture_output=True, text=True, timeout=900)
-    assert r.returncode == 0, (
-        f"CI step '' failed (returncode={r.returncode}):\n"
-        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+    result = subprocess.run(
+        ["staticcheck", "./internal/js/esbuild/...", "./tpl/css/..."],
+        cwd=REPO, capture_output=True, text=True, timeout=180
+    )
 
-def test_ci_test_pandoc():
-    """pass_to_pass | CI job 'test' → step ''"""
-    r = subprocess.run(
-        ["bash", "-lc", 'pandoc -v'], cwd=REPO,
-        capture_output=True, text=True, timeout=900)
-    assert r.returncode == 0, (
-        f"CI step '' failed (returncode={r.returncode}):\n"
-        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
-
-def test_ci_test_choco():
-    """pass_to_pass | CI job 'test' → step ''"""
-    r = subprocess.run(
-        ["bash", "-lc", 'choco install mingw'], cwd=REPO,
-        capture_output=True, text=True, timeout=900)
-    assert r.returncode == 0, (
-        f"CI step '' failed (returncode={r.returncode}):\n"
-        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
-
-def test_ci_test_run_staticcheck():
-    """pass_to_pass | CI job 'test' → step 'Run staticcheck'"""
-    r = subprocess.run(
-        ["bash", "-lc", 'export STATICCHECK_CACHE="${{ runner.temp }}/staticcheck"\nstaticcheck ./...\nrm -rf ${{ runner.temp }}/staticcheck'], cwd=REPO,
-        capture_output=True, text=True, timeout=900)
-    assert r.returncode == 0, (
-        f"CI step 'Run staticcheck' failed (returncode={r.returncode}):\n"
-        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
-
-def test_ci_test_check():
-    """pass_to_pass | CI job 'test' → step 'Check'"""
-    r = subprocess.run(
-        ["bash", "-lc", 'sass --version;\nmage -v check;'], cwd=REPO,
-        capture_output=True, text=True, timeout=900)
-    assert r.returncode == 0, (
-        f"CI step 'Check' failed (returncode={r.returncode}):\n"
-        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
-
-def test_ci_test_test():
-    """pass_to_pass | CI job 'test' → step 'Test'"""
-    r = subprocess.run(
-        ["bash", "-lc", 'mage -v test'], cwd=REPO,
-        capture_output=True, text=True, timeout=900)
-    assert r.returncode == 0, (
-        f"CI step 'Test' failed (returncode={r.returncode}):\n"
-        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
-
-def test_ci_test_build_for_dragonfly():
-    """pass_to_pass | CI job 'test' → step 'Build for dragonfly'"""
-    r = subprocess.run(
-        ["bash", "-lc", 'go install\ngo clean -i -cache'], cwd=REPO,
-        capture_output=True, text=True, timeout=900)
-    assert r.returncode == 0, (
-        f"CI step 'Build for dragonfly' failed (returncode={r.returncode}):\n"
-        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+    assert result.returncode == 0, (
+        f"staticcheck failed:\n{result.stderr[-500:]}\n{result.stdout[-500:]}"
+    )

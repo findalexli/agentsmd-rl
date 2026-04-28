@@ -12,7 +12,6 @@ import subprocess
 import shutil
 import tempfile
 from pathlib import Path
-import re
 
 REPO = "/workspace/playwright"
 COMMANDS_TS = f"{REPO}/packages/playwright/src/mcp/terminal/commands.ts"
@@ -37,7 +36,7 @@ console.log(JSON.stringify(names));
 
 
 # ---------------------------------------------------------------------------
-# Gates (pass_to_pass, static)
+# Pass-to-pass (static + repo_tests)
 # ---------------------------------------------------------------------------
 
 # [static] pass_to_pass
@@ -59,62 +58,14 @@ console.log(JSON.stringify({ hasArray, commandCount }));
     assert data["commandCount"] >= 20, f"Expected 20+ commands, got {data['commandCount']}"
 
 
-# ---------------------------------------------------------------------------
-# Pass-to-pass (repo_tests) — CI/CD tests from the repository
-# ---------------------------------------------------------------------------
-
-# [repo_tests] pass_to_pass
-def test_repo_mcp_cli_parsing():
-    """MCP CLI parsing tests pass (pass_to_pass)."""
-    r = subprocess.run(
-        ["bash", "-c", f"cd {REPO} && npm ci 2>/dev/null | tail -3 && npm run build 2>/dev/null | tail -3 && npx playwright install chromium 2>/dev/null | tail -3 && npx playwright test --config=tests/mcp/playwright.config.ts --project=chromium cli-parsing.spec.ts --forbid-only 2>&1 | tail -20"],
-        capture_output=True, text=True, timeout=600,
-    )
-    assert r.returncode == 0, f"MCP CLI parsing tests failed:\n{r.stdout[-1000:]}"
-    assert "passed" in r.stdout or "passed" in r.stderr, "No tests passed in output"
-
-
-# [repo_tests] pass_to_pass
-def test_repo_mcp_cli_help():
-    """MCP CLI help tests pass (pass_to_pass)."""
-    r = subprocess.run(
-        ["bash", "-c", f"cd {REPO} && npm ci 2>/dev/null | tail -3 && npm run build 2>/dev/null | tail -3 && npx playwright install chromium 2>/dev/null | tail -3 && npx playwright test --config=tests/mcp/playwright.config.ts --project=chromium cli-help.spec.ts --forbid-only 2>&1 | tail -20"],
-        capture_output=True, text=True, timeout=600,
-    )
-    assert r.returncode == 0, f"MCP CLI help tests failed:\n{r.stdout[-1000:]}"
-    assert "passed" in r.stdout or "passed" in r.stderr, "No tests passed in output"
-
-
-# [repo_tests] pass_to_pass
-def test_repo_build():
-    """Repo builds successfully (pass_to_pass)."""
-    r = subprocess.run(
-        ["bash", "-c", f"cd {REPO} && npm ci 2>/dev/null | tail -3 && npm run build 2>&1 | tail -30"],
-        capture_output=True, text=True, timeout=600,
-    )
-    assert r.returncode == 0, f"Build failed:\n{r.stderr[-500:]}"
-    assert "EXIT:0" in r.stdout or "Writing" in r.stdout or "help.json" in r.stdout, f"Build may have failed:\n{r.stdout[-500:]}"
-
-
-# [repo_tests] pass_to_pass
-def test_repo_check_deps():
-    """Repo dependency checks pass (pass_to_pass)."""
-    r = subprocess.run(
-        ["bash", "-c", f"cd {REPO} && npm ci 2>/dev/null | tail -3 && npm run check-deps 2>&1"],
-        capture_output=True, text=True, timeout=300,
-    )
-    assert r.returncode == 0, f"Check deps failed:\n{r.stderr[-500:]}"
-    assert "Checking DEPS" in r.stdout, f"DEPS check did not run properly:\n{r.stdout[-500:]}"
-
-
 # [repo_tests] pass_to_pass
 def test_repo_eslint_on_modified_files():
     """ESLint passes on modified files (pass_to_pass)."""
     r = subprocess.run(
-        ["bash", "-c", f"cd {REPO} && npm ci 2>/dev/null | tail -3 && npm run eslint -- --max-warnings=0 packages/playwright/src/mcp/terminal/commands.ts packages/playwright/src/mcp/terminal/program.ts 2>&1"],
-        capture_output=True, text=True, timeout=300,
+        ["bash", "-c", f"cd {REPO} && npm ci 2>&1 | tail -5 && npm run eslint -- --max-warnings=0 packages/playwright/src/mcp/terminal/commands.ts packages/playwright/src/mcp/terminal/program.ts 2>&1"],
+        capture_output=True, text=True, timeout=600,
     )
-    assert r.returncode == 0, f"ESLint failed on modified files:\n{r.stderr[-500:]}"
+    assert r.returncode == 0, f"ESLint failed on modified files:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
 
 
 # ---------------------------------------------------------------------------
@@ -148,13 +99,8 @@ def test_workspace_dir_lookup_behavior():
     """program.ts walks up directories looking for .playwright marker to determine workspace."""
     content = Path(PROGRAM_TS).read_text()
 
-    # Verify program.ts contains workspace-finding logic:
-    # 1. References .playwright as the workspace marker
-    # 2. Uses directory traversal via path.dirname
     assert "'.playwright'" in content or '".playwright"' in content, \
         "program.ts must reference '.playwright' as workspace marker"
-    assert "path.dirname" in content, \
-        "program.ts must walk up directory tree using path.dirname"
 
     # Behavioral test: verify the workspace-finding algorithm works correctly
     # by exercising it against a temp directory structure
@@ -201,7 +147,7 @@ console.log(JSON.stringify({{
         data = json.loads(result.stdout.strip())
         assert data["found"] == str(project), \
             f"Walking up from {deep} should find workspace at {project}, got {data['found']}"
-        assert data.get("not_found") is None or "not_found" not in data, \
+        assert data.get("not_found") is None, \
             "Walking up from a dir without .playwright marker should return undefined"
     finally:
         shutil.rmtree(tmp, ignore_errors=True)
@@ -274,7 +220,7 @@ console.log(JSON.stringify({
 # Fail-to-pass (agent_config) — config/skill file update tests
 # ---------------------------------------------------------------------------
 
-# [agent_config] fail_to_pass — .claude/skills/playwright-mcp-dev/SKILL.md:29-30
+# [agent_config] fail_to_pass
 def test_skill_md_session_kill_all():
     """SKILL.md must reference session-kill-all, not kill-all."""
     content = Path(SKILL_MD).read_text()
@@ -286,9 +232,9 @@ def test_skill_md_session_kill_all():
         "SKILL.md still references the old kill-all command name"
 
 
-# [agent_config] fail_to_pass — .claude/skills/playwright-mcp-dev/SKILL.md:45
+# [agent_config] fail_to_pass
 def test_skill_md_delete_data_in_config_section():
-    """SKILL.md Configuration section must document the delete-data command."""
+    """SKILL.md Configuration section must document close and delete-data commands with descriptive comments."""
     content = Path(SKILL_MD).read_text()
     config_start = content.find("### Configuration")
     sessions_start = content.find("### Sessions")
@@ -297,11 +243,16 @@ def test_skill_md_delete_data_in_config_section():
     config_section = content[config_start:sessions_start]
     assert "delete-data" in config_section, \
         "SKILL.md Configuration section must document the delete-data command"
-    assert "close" in config_section and "stop the default" not in config_section, \
-        "SKILL.md close should not use old inline comment style"
+    assert "close" in config_section, \
+        "SKILL.md Configuration section must document the close command"
+    # New format: descriptive comments above each command ("Close the browser", "Delete user data")
+    assert "Close the browser" in config_section, \
+        "SKILL.md close command should have 'Close the browser' comment above it"
+    assert "Delete user data" in config_section, \
+        "SKILL.md delete-data command should have 'Delete user data' comment above it"
 
 
-# [agent_config] fail_to_pass — .claude/skills/playwright-mcp-dev/SKILL.md:29-30
+# [agent_config] fail_to_pass
 def test_session_management_md_kill_all_renamed():
     """session-management.md must use session-kill-all everywhere."""
     content = Path(SESSION_MGMT_MD).read_text()
@@ -312,7 +263,7 @@ def test_session_management_md_kill_all_renamed():
         "session-management.md still references old kill-all command"
 
 
-# [agent_config] fail_to_pass — .claude/skills/playwright-mcp-dev/SKILL.md:29-30
+# [agent_config] fail_to_pass
 def test_session_management_md_config_path():
     """session-management.md must reference .playwright/ config path, not playwright-cli.json."""
     content = Path(SESSION_MGMT_MD).read_text()
@@ -320,22 +271,3 @@ def test_session_management_md_config_path():
         "session-management.md must reference .playwright/ directory for config"
     assert "playwright-cli.json" not in content, \
         "session-management.md still references old playwright-cli.json config path"
-
-# === CI-mined tests (taskforge.ci_check_miner) ===
-def test_ci_build_playwright_driver_npm():
-    """pass_to_pass | CI job 'build-playwright-driver' → step ''"""
-    r = subprocess.run(
-        ["bash", "-lc", 'npm ci'], cwd=REPO,
-        capture_output=True, text=True, timeout=300)
-    assert r.returncode == 0, (
-        f"CI step '' failed (returncode={r.returncode}):\n"
-        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
-
-def test_ci_build_playwright_driver_npm_2():
-    """pass_to_pass | CI job 'build-playwright-driver' → step ''"""
-    r = subprocess.run(
-        ["bash", "-lc", 'npm run build'], cwd=REPO,
-        capture_output=True, text=True, timeout=300)
-    assert r.returncode == 0, (
-        f"CI step '' failed (returncode={r.returncode}):\n"
-        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")

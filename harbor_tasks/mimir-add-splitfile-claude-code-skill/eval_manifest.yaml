@@ -33,6 +33,10 @@ checks:
   type: fail_to_pass
   origin: pr_diff
   description: Tool combines declarations from multiple input files
+- id: verify_tool_no_args_shows_usage
+  type: fail_to_pass
+  origin: pr_diff
+  description: Running with no arguments prints usage and exits non-zero
 - id: test_repo_tools_build
   type: pass_to_pass
   origin: repo_tests
@@ -69,50 +73,30 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: 'CI: test / Warm Go build cache'
-- id: test_ci_test_print_go_build_cache_size
-  type: pass_to_pass
-  origin: repo_tests
-  description: 'CI: test / Print Go build cache size'
-- id: test_ci_lint_jsonnet_run_git_config
+- id: skill_md_exists
   type: fail_to_pass
-  origin: repo_tests
-  description: 'CI: lint-jsonnet / Run Git Config'
-- id: test_ci_lint_jsonnet_symlink_expected_path_to_workspace
+  origin: pr_diff
+  description: SKILL.md file exists at .claude/skills/split-file/SKILL.md
+- id: skill_md_frontmatter
   type: fail_to_pass
-  origin: repo_tests
-  description: 'CI: lint-jsonnet / Symlink Expected Path to Workspace'
-- id: test_ci_lint_jsonnet_lint
+  origin: pr_diff
+  description: SKILL.md has correct YAML frontmatter with name, description fields
+- id: skill_md_git_rename_technique
   type: fail_to_pass
-  origin: repo_tests
-  description: 'CI: lint-jsonnet / Lint'
-- id: test_ci_lint_jsonnet_check_vendor_directory
+  origin: pr_diff
+  description: SKILL.md documents the git rename/rename conflict technique
+- id: skill_md_verify_tool
   type: fail_to_pass
-  origin: repo_tests
-  description: 'CI: lint-jsonnet / Check Vendor Directory'
-- id: test_ci_lint_jsonnet_check_protos
+  origin: pr_diff
+  description: SKILL.md references the split-file-verify tool for verification
+- id: skill_md_workflow_phases
   type: fail_to_pass
-  origin: repo_tests
-  description: 'CI: lint-jsonnet / Check Protos'
-- id: test_ci_lint_jsonnet_check_generated_documentation
+  origin: pr_diff
+  description: SKILL.md describes a multi-phase workflow (analyze, split, verify)
+- id: skill_md_goimports_warning
   type: fail_to_pass
-  origin: repo_tests
-  description: 'CI: lint-jsonnet / Check Generated Documentation'
-- id: test_ci_lint_jsonnet_check_reference_help_documentation
-  type: fail_to_pass
-  origin: repo_tests
-  description: 'CI: lint-jsonnet / Check Reference Help Documentation'
-- id: test_ci_lint_jsonnet_check_white_noise
-  type: fail_to_pass
-  origin: repo_tests
-  description: 'CI: lint-jsonnet / Check White Noise'
-- id: test_ci_lint_jsonnet_check_license_header
-  type: fail_to_pass
-  origin: repo_tests
-  description: 'CI: lint-jsonnet / Check License Header'
-- id: test_ci_lint_jsonnet_check_docker_compose_yaml
-  type: fail_to_pass
-  origin: repo_tests
-  description: 'CI: lint-jsonnet / Check Docker-Compose YAML'
+  origin: pr_diff
+  description: SKILL.md warns about goimports alias resolution issues
 rubric:
 - rule: The SKILL.md should follow the same frontmatter format as other Claude skills (name, description, argument-hint fields)
   source:

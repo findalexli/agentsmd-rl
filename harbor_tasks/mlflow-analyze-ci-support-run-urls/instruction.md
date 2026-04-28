@@ -40,3 +40,7 @@ The skill documentation (`.claude/skills/analyze-ci/SKILL.md`) must include an e
 - `.claude/skills/src/skills/commands/analyze_ci.py` — URL patterns, `resolve_urls()` dispatch logic, and help text
 - `.claude/skills/src/skills/github/client.py` — `get_jobs()` method for fetching jobs by run ID
 - `.claude/skills/analyze-ci/SKILL.md` — skill documentation (must be updated to show run URL examples)
+
+## Code Style Requirements
+
+All Python code must pass `ruff` linting without errors. Use `ruff check` and `ruff format --check` to verify compliance before submitting.

@@ -4,6 +4,7 @@
 import subprocess
 import sys
 from pathlib import Path
+import pytest
 
 REPO = Path("/workspace/kotlin")
 RESOURCES = REPO / "native/swift/swift-export-standalone/resources/swift"
@@ -120,8 +121,8 @@ def test_kotlin_function_signature():
 def test_swift_format_syntax():
     """PASS-TO-PASS: Swift files have valid syntax (swift-format returns exit 0)."""
     r = subprocess.run(
-        ["swift-format", "lint", str(SWIFT_SUPPORT)],
-        capture_output=True, text=True, timeout=60, cwd=REPO
+        ["bash", "-lc", f"swift-format lint KotlinCoroutineSupport.swift"],
+        capture_output=True, text=True, timeout=60, cwd=str(RESOURCES)
     )
     assert r.returncode == 0, f"swift-format lint failed:\n{r.stderr[-500:]}"
 
@@ -147,6 +148,24 @@ def test_repo_structure():
     ]
     missing = [f for f in required_files if not f.exists()]
     assert not missing, f"Missing required files: {missing}"
+
+
+def test_kotlin_test_nullable_flow():
+    """FAIL-TO-PASS: Kotlin test data includes nullable flow emitting interleaved nulls."""
+    sequences_kt = REPO / "native/swift/swift-export-standalone-integration-tests/coroutines/testData/execution/sequences/sequences.kt"
+    content = read_file(sequences_kt)
+    assert "fun testNullable(): Flow<Elem?> = flowOf(Element1, null, Element2, null, Element3)" in content, \
+        "Must add nullable flow test returning Flow<Elem?> with interleaved null elements"
+
+
+def test_swift_test_nullable_flow():
+    """FAIL-TO-PASS: Swift test data collects nullable elements from async sequence."""
+    sequences_swift = REPO / "native/swift/swift-export-standalone-integration-tests/coroutines/testData/execution/sequences/sequences.swift"
+    content = read_file(sequences_swift)
+    assert "func testNullable()" in content, \
+        "Must add testNullable() Swift test function"
+    assert ".asAsyncSequence()" in content, \
+        "Must consume the flow via asAsyncSequence() to verify nullable element handling"
 
 
 if __name__ == "__main__":

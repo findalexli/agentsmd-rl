@@ -20,5 +20,18 @@ RUN git init /workspace/supabase && \
 
 WORKDIR /workspace/supabase
 
+# Normalize curly/smart quotes to ASCII in RULE.md so the gold patch applies
+# (the file uses U+2019 right single quotes but the patch expects ASCII apostrophes)
+# NOTE: arrows (U+2192) are left alone — the patch expects them unchanged
+RUN python3 << 'PYEOF'
+text = open('.cursor/rules/studio/queries/RULE.md', 'rb').read()
+text = text.replace(b'\xe2\x80\x99', b'\x27')   # U+2019 right single quote -> '
+text = text.replace(b'\xe2\x80\x98', b'\x27')   # U+2018 left single quote -> '
+text = text.replace(b'\xe2\x80\x9c', b'\x22')   # U+201C left double quote -> "
+text = text.replace(b'\xe2\x80\x9d', b'\x22')   # U+201D right double quote -> "
+open('.cursor/rules/studio/queries/RULE.md', 'wb').write(text)
+print('Curly quotes normalized.')
+PYEOF
+
 # Verifier output directory (Harbor bind-mounts this)
 RUN mkdir -p /logs/verifier

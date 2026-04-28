@@ -31,7 +31,7 @@ Task items currently display using a plain `Task {description}` format with no i
 
 ### 4. Dead code cleanup
 
-Remove any unreferenced function definitions from the modified code — functions that are defined but never called anywhere in the codebase.
+Remove any unreferenced function definitions from the modified code — functions that are defined but never called anywhere in the codebase. This includes the ToolTitle component which is defined but never used.
 
 ## Expected behavior
 

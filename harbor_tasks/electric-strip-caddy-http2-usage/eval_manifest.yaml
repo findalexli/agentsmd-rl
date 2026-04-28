@@ -32,7 +32,8 @@ checks:
 - id: agents_md_updated_gotcha
   type: fail_to_pass
   origin: agent_config
-  description: 'Root AGENTS.md gotcha #3 updated to reflect client fix instead of Caddy proxy'
+  description: 'Root AGENTS.md gotcha #3 updated to reflect client fix instead of
+    Caddy proxy'
   source:
     path: AGENTS.md
     lines: '199'
@@ -48,7 +49,8 @@ checks:
 - id: troubleshooting_docs_subdomain_sharding
   type: fail_to_pass
   origin: pr_diff
-  description: troubleshooting.md describes subdomain sharding as primary solution, not Caddy
+  description: troubleshooting.md describes subdomain sharding as primary solution,
+    not Caddy
 - id: vite_config_valid
   type: pass_to_pass
   origin: static
@@ -74,7 +76,7 @@ checks:
   origin: static
   description: Both package.json files are valid JSON with expected deps
 - id: tanstack_build
-  type: pass_to_pass
+  type: fail_to_pass
   origin: repo_tests
   description: Tanstack example builds successfully with pnpm and vite
 - id: typescript_client_typecheck
@@ -89,98 +91,32 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: pnpm-lock.yaml is valid and dependencies install successfully
-- id: test_ci_test_ts_packages_against_sync__pnpm
-  type: pass_to_pass
-  origin: repo_tests
-  description: 'CI: Test TS packages against sync-service / '
-- id: test_ci_test_ts_packages_against_sync__compile_sync_service
-  type: pass_to_pass
-  origin: repo_tests
-  description: 'CI: Test TS packages against sync-service / Compile sync-service'
-- id: test_ci_test_ts_packages_against_sync__build_dependencies_if_any
-  type: pass_to_pass
-  origin: repo_tests
-  description: 'CI: Test TS packages against sync-service / build dependencies, if any'
-- id: test_ci_test_ts_packages_against_sync__pnpm
-  type: pass_to_pass
-  origin: repo_tests
-  description: 'CI: Test TS packages against sync-service / '
-- id: test_ci_build_and_test_elixir_client_set_pg_settings
-  type: pass_to_pass
-  origin: repo_tests
-  description: 'CI: Build and test elixir-client / Set PG settings'
-- id: test_ci_build_and_test_elixir_client_compiles_without_warnings
-  type: pass_to_pass
-  origin: repo_tests
-  description: 'CI: Build and test elixir-client / Compiles without warnings'
-- id: test_ci_build_and_test_elixir_client_run_tests
-  type: pass_to_pass
-  origin: repo_tests
-  description: 'CI: Build and test elixir-client / Run tests'
-- id: test_ci_docker_image_smoke_test_set_pg_settings
-  type: pass_to_pass
-  origin: repo_tests
-  description: 'CI: Docker image smoke test / Set PG settings'
-- id: test_ci_docker_image_smoke_test_run_the_built_image
-  type: pass_to_pass
-  origin: repo_tests
-  description: 'CI: Docker image smoke test / Run the built image'
-- id: test_ci_docker_image_smoke_test_dump_container_logs
-  type: pass_to_pass
-  origin: repo_tests
-  description: 'CI: Docker image smoke test / Dump container logs'
-- id: test_ci_check_formatting_for_elixir_cl_mix
-  type: pass_to_pass
-  origin: repo_tests
-  description: 'CI: Check formatting for elixir-client / '
-- id: test_ci_check_formatting_for_elixir_cl_mix
-  type: pass_to_pass
-  origin: repo_tests
-  description: 'CI: Check formatting for elixir-client / '
-- id: test_ci_run_lux_integration_tests_compile
-  type: pass_to_pass
-  origin: repo_tests
-  description: 'CI: Run Lux integration tests / Compile'
-- id: test_ci_run_lux_integration_tests_run_integration_tests
-  type: pass_to_pass
-  origin: repo_tests
-  description: 'CI: Run Lux integration tests / Run integration tests'
-- id: test_ci_check_formatting_for_sync_serv_mix
-  type: pass_to_pass
-  origin: repo_tests
-  description: 'CI: Check formatting for sync-service / '
-- id: test_ci_check_formatting_for_sync_serv_check_formatting
-  type: pass_to_pass
-  origin: repo_tests
-  description: 'CI: Check formatting for sync-service / Check formatting'
-- id: test_ci_check_formatting_for_sync_serv_compiles_without_warnings
-  type: pass_to_pass
-  origin: repo_tests
-  description: 'CI: Check formatting for sync-service / Compiles without warnings'
-- id: test_ci_test_ts_packages_against_sync__pnpm_2
-  type: pass_to_pass
-  origin: repo_tests
-  description: 'CI: Test TS packages against sync-service / '
 rubric:
-- rule: Documentation updates are consistent with the style of existing docs in the repo
+- rule: Documentation updates are consistent with the style of existing docs in the
+    repo
   source:
     path: AGENTS.md
     lines: 195-205
     commit: 551cb0265c7d4b53b8cba6d9fc8181997c463940
-  reference: 3. **Local dev slow shapes** - Fixed by default in `@electric-sql/client` v1.0.13+ UPGRADE!
+  reference: 3. **Local dev slow shapes** - Fixed by default in `@electric-sql/client`
+    v1.0.13+ UPGRADE!
 config_edits:
 - path: AGENTS.md
   tier: 1
-  gold_added: 3. **Local dev slow shapes** - Fixed by default in `@electric-sql/client` v1.0.13+ UPGRADE!
-  gold_removed: '3. **Local dev slow shapes** - HTTP/1.1 6-connection limit. Fix: HTTP/2 proxy (Caddy/nginx) or Electric Cloud ([Electric][18])'
+  gold_added: 3. **Local dev slow shapes** - Fixed by default in `@electric-sql/client`
+    v1.0.13+ UPGRADE!
+  gold_removed: '3. **Local dev slow shapes** - HTTP/1.1 6-connection limit. Fix:
+    HTTP/2 proxy (Caddy/nginx) or Electric Cloud ([Electric][18])'
 - path: examples/burn/README.md
   tier: 2
   gold_added: Open [localhost:4000](http://localhost:4000) in your web browser.
-  gold_removed: '# `asdf plugin add <name> <git-url> if you don''t have the dependency plugin already, e.g.:
+  gold_removed: '# `asdf plugin add <name> <git-url> if you don''t have the dependency
+    plugin already, e.g.:
 
     # asdf plugin add caddy https://github.com/salasrod/asdf-caddy.git
 
-    In a different terminal start Caddy (this proxies port `4001` to Phoenix running on `4000`):
+    In a different terminal start Caddy (this proxies port `4001` to Phoenix running
+    on `4000`):
 
 
     ```sh
@@ -193,14 +129,46 @@ config_edits:
     Open [localhost:4001](http://localhost:4001) in your web browser.'
 - path: examples/tanstack-db-web-starter/README.md
   tier: 2
-  gold_added: "This starts the dev server and Docker Compose (Postgres + Electric) automatically.\n   Open [http://localhost:5173](http://localhost:5173)\nThis project uses [Docker](https://www.docker.com) and [Node](https://nodejs.org/en) with [pnpm](https://pnpm.io). You can see compatible versions in the `.tool-versions` file.\n| Issue                  | Symptoms                                   | Solution                                                           |\n| ---------------------- | ------------------------------------------ | ------------------------------------------------------------------ |\n| **Docker not running** | `docker compose ps` shows nothing          | Start Docker Desktop/daemon                                        |\n| **Port conflicts**     | Postgres (54321) or Electric (3000) in use | Stop conflicting services or change ports in `docker-compose.yaml` |\n| **Missing .env**       | Database connection errors                 | Copy `.env.example` to `.env`                                      |"
-  gold_removed: "This starts the dev server, Docker Compose (Postgres + Electric), and Caddy automatically.\n   Open [https://tanstack-start-db-electric-starter.localhost](https://tanstack-start-db-electric-starter.localhost)\nThis project uses [Docker](https://www.docker.com), [Node](https://nodejs.org/en) with [pnpm](https://pnpm.io) and [Caddy](https://caddyserver.com/). You can see compatible versions in the `.tool-versions` file.\n### Caddy\n\n#### Why Caddy?\n\nElectric SQL's shape delivery benefits significantly from **HTTP/2 multiplexing**. Without HTTP/2, each shape subscription creates a new HTTP/1.1 connection, which browsers limit to 6 concurrent connections per domain. This creates a bottleneck that makes shapes appear slow.\n\nCaddy provides HTTP/2 support with automatic HTTPS, giving you:\n\n- **Faster shape loading** - Multiple shapes load concurrently over a single connection\n- **Better development experience** - No connection limits or artificial delays\n- **Production-like performance** - Your l"
+  gold_added: "This starts the dev server and Docker Compose (Postgres + Electric)\
+    \ automatically.\n   Open [http://localhost:5173](http://localhost:5173)\nThis\
+    \ project uses [Docker](https://www.docker.com) and [Node](https://nodejs.org/en)\
+    \ with [pnpm](https://pnpm.io). You can see compatible versions in the `.tool-versions`\
+    \ file.\n| Issue                  | Symptoms                                 \
+    \  | Solution                                                           |\n| ----------------------\
+    \ | ------------------------------------------ | ------------------------------------------------------------------\
+    \ |\n| **Docker not running** | `docker compose ps` shows nothing          | Start\
+    \ Docker Desktop/daemon                                        |\n| **Port conflicts**\
+    \     | Postgres (54321) or Electric (3000) in use | Stop conflicting services\
+    \ or change ports in `docker-compose.yaml` |\n| **Missing .env**       | Database\
+    \ connection errors                 | Copy `.env.example` to `.env`          \
+    \                            |"
+  gold_removed: "This starts the dev server, Docker Compose (Postgres + Electric),\
+    \ and Caddy automatically.\n   Open [https://tanstack-start-db-electric-starter.localhost](https://tanstack-start-db-electric-starter.localhost)\n\
+    This project uses [Docker](https://www.docker.com), [Node](https://nodejs.org/en)\
+    \ with [pnpm](https://pnpm.io) and [Caddy](https://caddyserver.com/). You can\
+    \ see compatible versions in the `.tool-versions` file.\n### Caddy\n\n#### Why\
+    \ Caddy?\n\nElectric SQL's shape delivery benefits significantly from **HTTP/2\
+    \ multiplexing**. Without HTTP/2, each shape subscription creates a new HTTP/1.1\
+    \ connection, which browsers limit to 6 concurrent connections per domain. This\
+    \ creates a bottleneck that makes shapes appear slow.\n\nCaddy provides HTTP/2\
+    \ support with automatic HTTPS, giving you:\n\n- **Faster shape loading** - Multiple\
+    \ shapes load concurrently over a single connection\n- **Better development experience**\
+    \ - No connection limits or artificial delays\n- **Production-like performance**\
+    \ - Your l"
 distractors:
-- rule: Put Electric behind server/proxy – never call directly from production / enforce auth at proxy
+- rule: Put Electric behind server/proxy – never call directly from production / enforce
+    auth at proxy
   collision_type: scope_ambiguity
-  why_distracting: The instruction asks the agent to remove the Caddy HTTP/2 proxy used for local development. However, the security rules mandate putting Electric behind a server/proxy for production and enforcing auth at the proxy. An agent might either refuse to remove Caddy thinking it violates this rule, or mistakenly delete these production security rules thinking all proxies are now deprecated.
+  why_distracting: The instruction asks the agent to remove the Caddy HTTP/2 proxy
+    used for local development. However, the security rules mandate putting Electric
+    behind a server/proxy for production and enforcing auth at the proxy. An agent
+    might either refuse to remove Caddy thinking it violates this rule, or mistakenly
+    delete these production security rules thinking all proxies are now deprecated.
   severity: high
   source:
     path: AGENTS.md
     lines: 19-21
-hierarchy_analysis: The task involves editing the root `AGENTS.md` file, which acts as the agent's own instruction/config file. The agent must update its own guidelines to reflect the new architectural capability (subdomain sharding replacing the need for a local proxy) without destroying unrelated production proxy rules.
+hierarchy_analysis: The task involves editing the root `AGENTS.md` file, which acts
+  as the agent's own instruction/config file. The agent must update its own guidelines
+  to reflect the new architectural capability (subdomain sharding replacing the need
+  for a local proxy) without destroying unrelated production proxy rules.

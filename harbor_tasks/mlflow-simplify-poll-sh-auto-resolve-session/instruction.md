@@ -19,3 +19,8 @@ The skill definition file (`.claude/skills/copilot/SKILL.md`) also needs to be u
 - The `allowed-tools` list must permit `gh agent-task list` commands so the script can query sessions
 - The polling documentation section should be simplified to reflect the new 2-argument interface, removing any `session_url` extraction boilerplate
 - The documentation should describe the session resolution as automatic
+
+## Code Style Requirements
+
+- Bash scripts must pass `shellcheck` linting with no warnings
+- All files in `.claude/skills/copilot/` must pass `ruff` linting

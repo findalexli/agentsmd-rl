@@ -50,7 +50,7 @@ The rule should be extended to also flag non-tuple RHS values when the format st
 
 The implementation must:
 
-- Modify `crates/ruff_linter/src/rules/pyflakes/rules/strings.rs` — specifically the function `percent_format_positional_count_mismatch`
+- Modify the file containing the F507 rule logic — specifically the function that handles `percent_format_positional_count_mismatch`
 - Not use `panic!` or `.unwrap()` in the modified code
 - Not contain local `use` statements inside the modified function
 - Not use `unreachable!` macro in the modified function
@@ -59,9 +59,7 @@ The implementation must:
 - Pass `cargo clippy --package ruff_linter --all-targets`
 - Pass `cargo test -p ruff_linter -- rule_percentformat`
 
-## Files
+## Code Style Requirements
 
-- Test fixture: `crates/ruff_linter/resources/test/fixtures/pyflakes/F50x.py`
-- Snapshot: `crates/ruff_linter/src/rules/pyflakes/snapshots/ruff_linter__rules__pyflakes__tests__F507_F50x.py.snap`
-
-Note: Only the Rust implementation needs to be changed. The test fixture and snapshot will update automatically when the implementation is correct.
+- The code must pass `cargo fmt --all --check` (Rust formatting)
+- The code must pass `cargo clippy --package ruff_linter --all-targets` (Rust linting)

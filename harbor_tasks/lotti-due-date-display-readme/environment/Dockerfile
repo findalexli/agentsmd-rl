@@ -24,3 +24,6 @@ RUN mkdir -p /logs/verifier
 
 # auto-installed (scaffold Change 2A retrofit 2026-04-24)
 RUN pip install --no-cache-dir --break-system-packages flake8 2>/dev/null || pip install --no-cache-dir flake8
+
+# mypy for CI type-check parity
+RUN pip install --no-cache-dir --break-system-packages mypy 2>/dev/null || pip install --no-cache-dir mypy

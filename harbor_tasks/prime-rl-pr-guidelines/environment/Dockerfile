@@ -9,7 +9,7 @@ RUN apt-get update && \
     apt-get install -y --no-install-recommends git ca-certificates && \
     rm -rf /var/lib/apt/lists/*
 
-RUN pip install pytest==8.3.4
+RUN pip install pytest==8.3.4 ruff==0.13.0
 
 WORKDIR /workspace
 

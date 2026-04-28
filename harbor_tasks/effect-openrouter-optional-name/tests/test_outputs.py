@@ -46,10 +46,49 @@ console.log("OK")
     return test_path
 
 
+def _write_test_file_index_1():
+    """Write a second variant: chunk with index=1 and non-null id, also missing
+    function.name — simulates a later chunk in a multi-chunk stream."""
+    scratchpad = os.path.join(REPO, "scratchpad")
+    os.makedirs(scratchpad, exist_ok=True)
+    test_path = os.path.join(scratchpad, "test_schema_index_1.ts")
+    with open(test_path, "w") as f:
+        f.write("""\
+/**
+ * Test: Second chunk (index=1) without function.name MUST also decode.
+ * Uses Schema.decodeEither to exercise the Either-returning API path.
+ */
+import { OpenRouterClient } from "@effect/ai-openrouter"
+import * as Schema from "effect/Schema"
+import * as Either from "effect/Either"
+
+const { ChatStreamingMessageToolCall } = OpenRouterClient
+
+const chunk = {
+  index: 1,
+  id: "call_abc123",
+  type: "function" as const,
+  function: {
+    arguments: '{"result": 42}'
+  }
+}
+
+const result = Schema.decodeEither(ChatStreamingMessageToolCall)(chunk)
+
+if (Either.isRight(result)) {
+  console.log("OK")
+} else {
+  console.error("FAIL: decodeEither returned Left for valid chunk without function.name")
+  process.exit(1)
+}
+""")
+    return test_path
+
+
 # -- fail_to_pass tests -----------------------------------------------------
 
 def test_missing_name_decode():
-    """Chunks without function.name MUST decode successfully."""
+    """Chunks without function.name MUST decode (decodeUnknownSync path)."""
     test_path = _write_test_file()
     r = run(["tsx", test_path], cwd=REPO)
     assert r.returncode == 0, (
@@ -58,10 +97,20 @@ def test_missing_name_decode():
     )
 
 
+def test_missing_name_index_1():
+    """Chunk at index=1 without function.name MUST decode (decodeEither path)."""
+    test_path = _write_test_file_index_1()
+    r = run(["tsx", test_path], cwd=REPO)
+    assert r.returncode == 0, (
+        f"Decode failed (exit {r.returncode}). Chunk at index=1 without "
+        f"function.name should be accepted.\nSTDERR:\n{r.stderr[-800:]}"
+    )
+
+
 # -- pass_to_pass tests -----------------------------------------------------
 
 def test_repo_typecheck():
-    """pnpm check (TypeScript type-checking) passes on the openrouter package."""
+    """TypeScript type-checking passes on the openrouter package."""
     r = run(
         ["pnpm", "exec", "tsc", "-b", "tsconfig.json"],
         cwd=os.path.join(REPO, "packages/ai/openrouter"),
@@ -71,39 +120,32 @@ def test_repo_typecheck():
         f"Type check failed (exit {r.returncode}).\nSTDERR:\n{r.stderr[-800:]}"
     )
 
-# === CI-mined tests (taskforge.ci_check_miner) ===
-def test_ci_build_pnpm():
-    """pass_to_pass | CI job 'Build' → step ''"""
-    r = subprocess.run(
-        ["bash", "-lc", 'pnpm docgen'], cwd=REPO,
-        capture_output=True, text=True, timeout=300)
-    assert r.returncode == 0, (
-        f"CI step '' failed (returncode={r.returncode}):\n"
-        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
 
 def test_ci_lint_pnpm():
-    """pass_to_pass | CI job 'Lint' → step ''"""
+    """pass_to_pass | CI job 'Lint' — pnpm circular (dependency cycle check)."""
     r = subprocess.run(
         ["bash", "-lc", 'pnpm circular'], cwd=REPO,
         capture_output=True, text=True, timeout=300)
     assert r.returncode == 0, (
-        f"CI step '' failed (returncode={r.returncode}):\n"
+        f"pnpm circular failed (returncode={r.returncode}):\n"
         f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
 
+
 def test_ci_lint_pnpm_2():
-    """pass_to_pass | CI job 'Lint' → step ''"""
+    """pass_to_pass | CI job 'Lint' — pnpm lint (code style)."""
     r = subprocess.run(
         ["bash", "-lc", 'pnpm lint'], cwd=REPO,
         capture_output=True, text=True, timeout=300)
     assert r.returncode == 0, (
-        f"CI step '' failed (returncode={r.returncode}):\n"
+        f"pnpm lint failed (returncode={r.returncode}):\n"
         f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
 
+
 def test_ci_lint_pnpm_3():
-    """pass_to_pass | CI job 'Lint' → step ''"""
+    """pass_to_pass | CI job 'Lint' — pnpm codegen (code generation check)."""
     r = subprocess.run(
         ["bash", "-lc", 'pnpm codegen'], cwd=REPO,
         capture_output=True, text=True, timeout=300)
     assert r.returncode == 0, (
-        f"CI step '' failed (returncode={r.returncode}):\n"
+        f"pnpm codegen failed (returncode={r.returncode}):\n"
         f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")

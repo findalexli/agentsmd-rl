@@ -32,7 +32,6 @@ def test_repo_ruff_check():
         ['pip', 'install', 'ruff', '-q'],
         capture_output=True, text=True, timeout=60, cwd=REPO,
     )
-    # Use --fix like the pre-commit hook does
     r = subprocess.run(
         ['ruff', 'check', 'openhands/app_server/event/aws_event_service.py', '--config', 'dev_config/python/ruff.toml', '--fix'],
         capture_output=True, text=True, timeout=60, cwd=REPO,
@@ -82,17 +81,14 @@ def test_repo_file_is_git_tracked():
 
 def test_repo_unit_tests_aws_event_service():
     """Repo's unit tests for aws_event_service pass (pass_to_pass)."""
-    # Install dependencies
     r = subprocess.run(
         ['pip', 'install', 'boto3', 'botocore', 'pydantic', 'pytest-asyncio', '-q'],
         capture_output=True, text=True, timeout=120, cwd=REPO,
     )
-    # Install package in editable mode
     r = subprocess.run(
         ['pip', 'install', '-e', '.', '-q'],
         capture_output=True, text=True, timeout=120, cwd=REPO,
     )
-    # Run the unit tests
     r = subprocess.run(
         ['python', '-m', 'pytest', 'tests/unit/app_server/test_aws_event_service.py', '-v', '--tb=short'],
         capture_output=True, text=True, timeout=300, cwd=REPO,
@@ -102,17 +98,14 @@ def test_repo_unit_tests_aws_event_service():
 
 def test_repo_unit_tests_config_event_service_selection():
     """Repo's unit tests for event service config selection pass (pass_to_pass)."""
-    # Install dependencies
     r = subprocess.run(
         ['pip', 'install', 'boto3', 'botocore', 'pydantic', 'pytest-asyncio', '-q'],
         capture_output=True, text=True, timeout=120, cwd=REPO,
     )
-    # Install package in editable mode
     r = subprocess.run(
         ['pip', 'install', '-e', '.', '-q'],
         capture_output=True, text=True, timeout=120, cwd=REPO,
     )
-    # Run the unit tests
     r = subprocess.run(
         ['python', '-m', 'pytest', 'tests/unit/app_server/test_config_event_service_selection.py', '-v', '--tb=short'],
         capture_output=True, text=True, timeout=300, cwd=REPO,
@@ -122,12 +115,10 @@ def test_repo_unit_tests_config_event_service_selection():
 
 def test_repo_mypy_clean():
     """Repo's mypy type checking passes on target file (pass_to_pass)."""
-    # Install mypy and required dependencies
     r = subprocess.run(
         ['pip', 'install', 'mypy', 'boto3', 'botocore', 'pydantic', 'types-requests', 'types-setuptools', 'types-pyyaml', 'types-toml', 'types-docker', 'types-Markdown', 'lxml', '-q'],
         capture_output=True, text=True, timeout=120, cwd=REPO,
     )
-    # Run mypy on target file
     r = subprocess.run(
         ['mypy', '--config-file', 'dev_config/python/mypy.ini', 'openhands/app_server/event/aws_event_service.py'],
         capture_output=True, text=True, timeout=120, cwd=REPO,
@@ -166,22 +157,26 @@ def _run_endpoint_url_test(endpoint_value, secure_value, expected):
     Runs a Python script that:
     1. Sets environment variables
     2. Imports and calls _get_default_aws_endpoint_url
-    3. Prints the result
+    3. Validates the result against expected
     4. Exits with 0 if result matches expected, 1 otherwise
     """
     env = {
         'AWS_S3_ENDPOINT': endpoint_value if endpoint_value is not None else '',
         'AWS_S3_SECURE': secure_value,
     }
-    # Remove env vars that are None
     env = {k: v for k, v in env.items() if v is not None}
 
+    expected_repr = repr(expected)
     code = f'''
 import os
 import sys
 sys.path.insert(0, '/workspace/openhands')
 from openhands.app_server.event.aws_event_service import _get_default_aws_endpoint_url
 result = _get_default_aws_endpoint_url()
+expected = {expected_repr}
+if result != expected:
+    print(f"MISMATCH: got {{repr(result)}}, expected {{repr(expected)}}")
+    sys.exit(1)
 print(repr(result))
 '''
     r = subprocess.run(
@@ -229,13 +224,6 @@ def test_endpoint_url_none_when_env_not_set():
 
 def test_injector_passes_correct_endpoint_to_boto3():
     """F2P: AwsEventServiceInjector makes boto3 client receive correct endpoint URL."""
-    # This test verifies that the fix correctly wires self.endpoint_url to boto3.client
-    # by checking that AwsEventServiceInjector has an endpoint_url attribute that is used
-    # in the inject method's boto3.client call.
-    #
-    # We test behaviorally by checking that when the injector is instantiated,
-    # its endpoint_url is correctly computed from env vars.
-
     code = '''
 import os
 import sys
@@ -302,67 +290,3 @@ print(f"endpoint_url={injector.endpoint_url}")
     )
     assert r.returncode == 0, f"Expected success, got returncode={r.returncode}\nstdout={r.stdout}\nstderr={r.stderr}"
     assert 'None' in r.stdout, f"Expected None in injector.endpoint_url, got: {r.stdout}"
-
-# === CI-mined tests (taskforge.ci_check_miner) ===
-def test_ci_build_openhands_ui_build_package():
-    """pass_to_pass | CI job 'Build openhands-ui' → step 'Build package'"""
-    r = subprocess.run(
-        ["bash", "-lc", 'bun run build'], cwd=os.path.join(REPO, './openhands-ui'),
-        capture_output=True, text=True, timeout=300)
-    assert r.returncode == 0, (
-        f"CI step 'Build package' failed (returncode={r.returncode}):\n"
-        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
-
-def test_ci_check_package_versions_check_for_any_rev_fields_in_pyproject_to():
-    """pass_to_pass | CI job 'check-package-versions' → step "Check for any 'rev' fields in pyproject.toml""""
-    r = subprocess.run(
-        ["bash", "-lc", "python - <<'PY'"], cwd=REPO,
-        capture_output=True, text=True, timeout=300)
-    assert r.returncode == 0, (
-        f"CI step "Check for any 'rev' fields in pyproject.toml" failed (returncode={r.returncode}):\n"
-        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
-
-def test_ci_fe_e2e_tests_run_playwright_tests():
-    """pass_to_pass | CI job 'FE E2E Tests' → step 'Run Playwright tests'"""
-    r = subprocess.run(
-        ["bash", "-lc", 'npx playwright test --project=chromium'], cwd=os.path.join(REPO, './frontend'),
-        capture_output=True, text=True, timeout=300)
-    assert r.returncode == 0, (
-        f"CI step 'Run Playwright tests' failed (returncode={r.returncode}):\n"
-        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
-
-def test_ci_lint_frontend_lint_typescript_compilation_and_translat():
-    """pass_to_pass | CI job 'Lint frontend' → step 'Lint, TypeScript compilation, and translation checks'"""
-    r = subprocess.run(
-        ["bash", "-lc", 'npm run lint && npm run make-i18n && tsc && npm run check-translation-completeness'], cwd=REPO,
-        capture_output=True, text=True, timeout=300)
-    assert r.returncode == 0, (
-        f"CI step 'Lint, TypeScript compilation, and translation checks' failed (returncode={r.returncode}):\n"
-        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
-
-def test_ci_fe_unit_tests_run_typescript_compilation():
-    """pass_to_pass | CI job 'FE Unit Tests' → step 'Run TypeScript compilation'"""
-    r = subprocess.run(
-        ["bash", "-lc", 'npm run build'], cwd=os.path.join(REPO, './frontend'),
-        capture_output=True, text=True, timeout=300)
-    assert r.returncode == 0, (
-        f"CI step 'Run TypeScript compilation' failed (returncode={r.returncode}):\n"
-        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
-
-def test_ci_fe_unit_tests_run_tests_and_collect_coverage():
-    """pass_to_pass | CI job 'FE Unit Tests' → step 'Run tests and collect coverage'"""
-    r = subprocess.run(
-        ["bash", "-lc", 'npm run test:coverage'], cwd=os.path.join(REPO, './frontend'),
-        capture_output=True, text=True, timeout=300)
-    assert r.returncode == 0, (
-        f"CI step 'Run tests and collect coverage' failed (returncode={r.returncode}):\n"
-        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
-
-def test_ci_python_tests_on_linux_build_environment():
-    """pass_to_pass | CI job 'Python Tests on Linux' → step 'Build Environment'"""
-    r = subprocess.run(
-        ["bash", "-lc", 'make build'], cwd=REPO,
-        capture_output=True, text=True, timeout=300)
-    assert r.returncode == 0, (
-        f"CI step 'Build Environment' failed (returncode={r.returncode}):\n"
-        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")

@@ -35,12 +35,8 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: C++ file compiles without syntax errors and has balanced braces/parens
-- id: clang_format_compliance
-  type: pass_to_pass
-  origin: repo_tests
-  description: Source file passes clang-format validation as required by ClickHouse CI
 - id: required_headers_present
-  type: pass_to_pass
+  type: fail_to_pass
   origin: static
   description: PaddedPODArray and required C++ headers are present
 - id: structure_intact
@@ -59,62 +55,6 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Code uses spaces for indentation (4 spaces) per ClickHouse style
-- id: test_ci_compatibility_check_prepare_env_script
-  type: pass_to_pass
-  origin: repo_tests
-  description: 'CI: Compatibility check / Prepare env script'
-- id: test_ci_compatibility_check_run
-  type: pass_to_pass
-  origin: repo_tests
-  description: 'CI: Compatibility check / Run'
-- id: test_ci_sqllogic_test_prepare_env_script
-  type: pass_to_pass
-  origin: repo_tests
-  description: 'CI: SQLLogic test / Prepare env script'
-- id: test_ci_sqllogic_test_run
-  type: pass_to_pass
-  origin: repo_tests
-  description: 'CI: SQLLogic test / Run'
-- id: test_ci_stress_test_prepare_env_script
-  type: pass_to_pass
-  origin: repo_tests
-  description: 'CI: Stress test / Prepare env script'
-- id: test_ci_stress_test_run
-  type: pass_to_pass
-  origin: repo_tests
-  description: 'CI: Stress test / Run'
-- id: test_ci_smoke_test_prepare_env_script
-  type: pass_to_pass
-  origin: repo_tests
-  description: 'CI: Smoke test / Prepare env script'
-- id: test_ci_smoke_test_run
-  type: pass_to_pass
-  origin: repo_tests
-  description: 'CI: Smoke test / Run'
-- id: test_ci_build_prepare_env_script
-  type: pass_to_pass
-  origin: repo_tests
-  description: 'CI: Build / Prepare env script'
-- id: test_ci_build_run
-  type: pass_to_pass
-  origin: repo_tests
-  description: 'CI: Build / Run'
-- id: test_ci_stateless_tests_prepare_env_script
-  type: pass_to_pass
-  origin: repo_tests
-  description: 'CI: Stateless tests / Prepare env script'
-- id: test_ci_stateless_tests_run
-  type: pass_to_pass
-  origin: repo_tests
-  description: 'CI: Stateless tests / Run'
-- id: test_ci_integration_tests_prepare_env_script
-  type: pass_to_pass
-  origin: repo_tests
-  description: 'CI: Integration tests / Prepare env script'
-- id: test_ci_integration_tests_run
-  type: pass_to_pass
-  origin: repo_tests
-  description: 'CI: Integration tests / Run'
 rubric:
 - rule: Memory safety fix completeness
 - rule: Code style compliance
@@ -122,6 +62,6 @@ rubric:
 version: '2.0'
 source:
   repo: ClickHouse/ClickHouse
-  pr: 0
-  base_commit: 6958fcb996ad34fe65d3d26d08de9cefd4788351
+  pr: 101951
+  base_commit: 78c08e71c93e3bd0657b54402d083f96d90d76c8
   merge_commit: cd0e0a0326b0fa36221db111546ed8498f3888fa

@@ -31,6 +31,12 @@ Each skill should have a `SKILL.md` file with YAML frontmatter (`name` and `desc
 - `AGENTS.md` — the repo's agent development guide (needs updates)
 - `skills/` — directory for skill definitions (create new subdirectories here)
 
+## Code Style Requirements
+
+- **ESLint**: The repo uses ESLint (`pnpm lint`) and enforces specific rules (e.g., `import type` for type-only imports, no semicolons). All TypeScript files must pass lint.
+- **Prettier**: The repo formats code with Prettier (printWidth 100, single quotes, spaces not tabs). Run `pnpm format:check` to verify formatting.
+- **TypeScript**: Strict mode is enabled repo-wide. Use `let` for local variables (not `const`), `import type` for type-only imports, and include `.ts` extensions in import paths.
+
 ## Notes
 
 - The TypeScript script should follow the repo's code style: `let` for locals, no semicolons, single quotes, `import type` for type-only imports

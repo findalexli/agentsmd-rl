@@ -5,8 +5,17 @@ ENV LANG=C.UTF-8
 
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
-        git curl ca-certificates nodejs && \
+        git curl ca-certificates nodejs gnupg && \
     rm -rf /var/lib/apt/lists/*
+
+# Install Helm (for CI pass_to_pass helm unit tests)
+RUN curl -fsSL https://get.helm.sh/helm-v3.11.1-linux-amd64.tar.gz -o /tmp/helm.tgz && \
+    tar -xzf /tmp/helm.tgz -C /usr/local/bin linux-amd64/helm --strip-components=1 && \
+    rm /tmp/helm.tgz && \
+    helm version
+
+# Enable corepack for pnpm
+RUN corepack enable pnpm
 
 RUN pip install --no-cache-dir pytest pytest-json-ctrf
 
@@ -21,5 +30,3 @@ RUN git init /workspace/litellm && \
 WORKDIR /workspace/litellm
 
 RUN mkdir -p /logs/verifier
-
-

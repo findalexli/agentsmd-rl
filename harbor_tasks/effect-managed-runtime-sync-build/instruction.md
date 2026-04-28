@@ -50,6 +50,10 @@ This repo's `AGENTS.md` includes rules that apply to every PR. The most relevant
 - **Follow existing patterns.** Look at neighbouring code for style and naming before introducing new constructs.
 - **Don't hand-edit barrel files.** `index.ts` files in this repo are generated; if you find yourself editing one, you're going about it the wrong way.
 
+## Code Style Requirements
+
+The CI enforces linting via `pnpm lint` (eslint) and codegen consistency via `pnpm codegen`. Any changes must keep these checks green.
+
 ## Verifying your work
 
 Vitest is available via `pnpm`. The relevant suite for this change is:

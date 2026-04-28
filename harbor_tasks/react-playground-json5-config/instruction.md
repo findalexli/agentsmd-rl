@@ -28,7 +28,7 @@ Your fix must satisfy all of the following:
 
 4. **Editor language**: The Monaco editor instance used for config editing must use a JSON-compatible language mode, not TypeScript.
 
-5. **Dependency**: Any parsing library required for safe config handling must be added as a dependency in the playground's `package.json`.
+5. **Dependency**: Any parsing library required for safe config handling (such as the `json5` npm package, which provides JSON5 parsing with support for comments and trailing commas) must be added as a dependency in the playground's `package.json`.
 
 ## Verification
 

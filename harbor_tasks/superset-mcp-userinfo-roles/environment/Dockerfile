@@ -21,4 +21,6 @@ RUN git clone --filter=blob:none https://github.com/apache/superset.git /workspa
 
 WORKDIR /workspace/superset
 
+RUN pip install --no-cache-dir -e .
+
 RUN mkdir -p /logs/verifier

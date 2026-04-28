@@ -9,7 +9,7 @@ RUN apt-get update && \
     rm -rf /var/lib/apt/lists/*
 
 # Install bun (needed for workspace dependency installation)
-RUN npm install -g bun@latest
+RUN npm install -g bun@1.3.10
 
 # Clone repo at base commit
 RUN git init /workspace/opencode && \

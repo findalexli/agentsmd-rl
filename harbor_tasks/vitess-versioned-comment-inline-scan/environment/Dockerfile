@@ -4,6 +4,8 @@ ENV DEBIAN_FRONTEND=noninteractive \
     GOFLAGS="-mod=mod" \
     GOTOOLCHAIN=local
 
+RUN echo 'export PATH="/usr/local/go/bin:/go/bin:$PATH"' > /etc/profile.d/go.sh
+
 RUN apt-get update && apt-get install -y --no-install-recommends \
         python3 \
         python3-pip \
@@ -36,6 +38,9 @@ RUN cd go/vt/sqlparser \
     && go mod download \
     && go test -count=1 -run XXX_NoSuchTest_XXX ./... >/dev/null 2>&1 || true \
     && go vet ./... >/dev/null 2>&1 || true
+
+RUN go install mvdan.cc/gofumpt@v0.7.0 \
+    && go install golang.org/x/tools/cmd/goimports@v0.27.0
 
 RUN mkdir -p /logs/verifier
 

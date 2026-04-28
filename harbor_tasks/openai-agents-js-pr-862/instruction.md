@@ -32,3 +32,7 @@ This means:
 Each `AgentsError` subclass instance must have its `.name` property equal to the class name string (e.g., `"MaxTurnsExceededError"`, `"ModelBehaviorError"`, `"UserError"`, etc.). This ensures that `toString()` and error logging reflect the concrete error type.
 
 The `agents-core` package must build successfully (`pnpm -F agents-core build`) and pass type checking including test files (`pnpm -F agents-core build-check`).
+
+## Code Style Requirements
+
+The repository uses ESLint (`pnpm lint`) for code style enforcement. All code changes must pass the existing linter configuration without introducing new warnings or errors. The linter configuration is defined at the repository root and applies to all packages.

@@ -9,10 +9,9 @@ TEST_DIR = PKG / "test"
 TEST_FILE = TEST_DIR / "harbor-streaming-tool-call.test.ts"
 RESULTS_FILE = Path("/tmp/vitest-results.json")
 
-VITEST_TEST = r"""
+VITEST_TEST = r"""import * as OpenRouterClient from "@effect/ai-openrouter/OpenRouterClient"
 import { assert, describe, it } from "@effect/vitest"
 import { Effect, Schema } from "effect"
-import * as OpenRouterClient from "@effect/ai-openrouter/OpenRouterClient"
 
 describe("ChatStreamingMessageToolCall", () => {
   it.effect("decodes_chunk_without_function_name", () =>
@@ -27,9 +26,7 @@ describe("ChatStreamingMessageToolCall", () => {
       assert.strictEqual(result.index, 0)
       assert.strictEqual(result.type, "function")
       assert.strictEqual(result.function.arguments, "{\"a\":1}")
-    })
-  )
-
+    }))
   it.effect("decodes_continuation_chunk_with_only_arguments", () =>
     Effect.gen(function*() {
       const result = yield* Schema.decodeUnknown(
@@ -41,9 +38,7 @@ describe("ChatStreamingMessageToolCall", () => {
       })
       assert.strictEqual(result.index, 7)
       assert.strictEqual(result.function.arguments, "\"city\"")
-    })
-  )
-
+    }))
   it.effect("decodes_initial_chunk_with_id_and_name", () =>
     Effect.gen(function*() {
       const result = yield* Schema.decodeUnknown(
@@ -57,9 +52,7 @@ describe("ChatStreamingMessageToolCall", () => {
       assert.strictEqual(result.id, "call_abc123")
       assert.strictEqual(result.function.name, "get_weather")
       assert.strictEqual(result.function.arguments, "")
-    })
-  )
-
+    }))
   it.effect("decodes_chunk_with_null_name", () =>
     Effect.gen(function*() {
       const result = yield* Schema.decodeUnknown(
@@ -71,9 +64,7 @@ describe("ChatStreamingMessageToolCall", () => {
         function: { name: null, arguments: "abc" }
       })
       assert.strictEqual(result.function.arguments, "abc")
-    })
-  )
-
+    }))
   it.effect("rejects_chunk_missing_arguments", () =>
     Effect.gen(function*() {
       const exit = yield* Effect.exit(
@@ -84,8 +75,7 @@ describe("ChatStreamingMessageToolCall", () => {
         })
       )
       assert.isTrue(exit._tag === "Failure", "expected decode to fail")
-    })
-  )
+    }))
 })
 """
 
@@ -175,7 +165,7 @@ def test_rejects_chunk_missing_arguments():
 
 
 def test_pnpm_check_openrouter():
-    """p2p: openrouter package type-checks (`pnpm check`)."""
+    """p2p: openrouter package type-checks (pnpm check)."""
     proc = subprocess.run(
         ["pnpm", "check"],
         cwd=str(PKG),
@@ -203,39 +193,32 @@ def test_eslint_openrouter_src():
         f"stdout:\n{proc.stdout[-1500:]}\n\nstderr:\n{proc.stderr[-1500:]}"
     )
 
-# === CI-mined tests (taskforge.ci_check_miner) ===
-def test_ci_build_pnpm():
-    """pass_to_pass | CI job 'Build' → step ''"""
-    r = subprocess.run(
-        ["bash", "-lc", 'pnpm docgen'], cwd=REPO,
-        capture_output=True, text=True, timeout=300)
-    assert r.returncode == 0, (
-        f"CI step '' failed (returncode={r.returncode}):\n"
-        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
 
-def test_ci_lint_pnpm():
-    """pass_to_pass | CI job 'Lint' → step ''"""
+def test_ci_lint_circular():
+    """pass_to_pass | Lint / circular"""
     r = subprocess.run(
-        ["bash", "-lc", 'pnpm circular'], cwd=REPO,
-        capture_output=True, text=True, timeout=300)
+        ["bash", "-lc", "pnpm circular"],
+        cwd=str(REPO),
+        capture_output=True,
+        text=True,
+        timeout=300,
+    )
     assert r.returncode == 0, (
-        f"CI step '' failed (returncode={r.returncode}):\n"
-        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+        f"pnpm circular failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}"
+    )
 
-def test_ci_lint_pnpm_2():
-    """pass_to_pass | CI job 'Lint' → step ''"""
-    r = subprocess.run(
-        ["bash", "-lc", 'pnpm lint'], cwd=REPO,
-        capture_output=True, text=True, timeout=300)
-    assert r.returncode == 0, (
-        f"CI step '' failed (returncode={r.returncode}):\n"
-        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
 
-def test_ci_lint_pnpm_3():
-    """pass_to_pass | CI job 'Lint' → step ''"""
+def test_ci_lint_codegen():
+    """pass_to_pass | Lint / codegen"""
     r = subprocess.run(
-        ["bash", "-lc", 'pnpm codegen'], cwd=REPO,
-        capture_output=True, text=True, timeout=300)
+        ["bash", "-lc", "pnpm codegen"],
+        cwd=str(REPO),
+        capture_output=True,
+        text=True,
+        timeout=300,
+    )
     assert r.returncode == 0, (
-        f"CI step '' failed (returncode={r.returncode}):\n"
-        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+        f"pnpm codegen failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}"
+    )

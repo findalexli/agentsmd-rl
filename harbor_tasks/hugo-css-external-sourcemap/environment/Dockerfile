@@ -9,8 +9,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     patch \
     && rm -rf /var/lib/apt/lists/*
 
-# Install pytest
-RUN pip3 install pytest --break-system-packages
+# Install pytest and test dependencies
+RUN pip3 install pytest pytest-json-ctrf pyyaml --break-system-packages
 
 # Clone Hugo repo at base commit
 WORKDIR /workspace

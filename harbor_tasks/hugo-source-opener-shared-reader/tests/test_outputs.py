@@ -251,7 +251,6 @@ def test_pagemeta_existing_tests_pass():
 
     Excludes our probe directory which is created at test-time.
     """
-    # Make sure probe dir doesn't break anything by being unrelated.
     r = subprocess.run(
         ["go", "test", "-count=1", "-timeout", "120s", "./resources/page/pagemeta/"],
         cwd=REPO,
@@ -350,7 +349,6 @@ def test_no_new_exported_symbols_in_changed_file():
     with open(file_path) as f:
         src = f.read()
 
-    # Collect top-level exported declarations: func, type, var, const.
     exported = set()
     for m in re.finditer(r"^(?:func\s+(?:\([^)]*\)\s+)?|type\s+|var\s+|const\s+)([A-Z][\w]*)", src, re.MULTILINE):
         exported.add(m.group(1))
@@ -362,94 +360,33 @@ def test_no_new_exported_symbols_in_changed_file():
         f"are not needed outside the package."
     )
 
-# === CI-mined tests (taskforge.ci_check_miner) ===
-def test_ci_test_brew():
-    """pass_to_pass | CI job 'test' → step ''"""
-    r = subprocess.run(
-        ["bash", "-lc", 'brew install pandoc'], cwd=REPO,
-        capture_output=True, text=True, timeout=900)
-    assert r.returncode == 0, (
-        f"CI step '' failed (returncode={r.returncode}):\n"
-        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
-
-def test_ci_test_choco():
-    """pass_to_pass | CI job 'test' → step ''"""
-    r = subprocess.run(
-        ["bash", "-lc", 'choco install pandoc'], cwd=REPO,
-        capture_output=True, text=True, timeout=900)
-    assert r.returncode == 0, (
-        f"CI step '' failed (returncode={r.returncode}):\n"
-        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
-
-def test_ci_test_pandoc():
-    """pass_to_pass | CI job 'test' → step ''"""
-    r = subprocess.run(
-        ["bash", "-lc", 'pandoc -v'], cwd=REPO,
-        capture_output=True, text=True, timeout=900)
-    assert r.returncode == 0, (
-        f"CI step '' failed (returncode={r.returncode}):\n"
-        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
-
-def test_ci_test_choco():
-    """pass_to_pass | CI job 'test' → step ''"""
-    r = subprocess.run(
-        ["bash", "-lc", 'choco install mingw'], cwd=REPO,
-        capture_output=True, text=True, timeout=900)
-    assert r.returncode == 0, (
-        f"CI step '' failed (returncode={r.returncode}):\n"
-        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
-
-def test_ci_test_run_staticcheck():
-    """pass_to_pass | CI job 'test' → step 'Run staticcheck'"""
-    r = subprocess.run(
-        ["bash", "-lc", 'export STATICCHECK_CACHE="${{ runner.temp }}/staticcheck"\nstaticcheck ./...\nrm -rf ${{ runner.temp }}/staticcheck'], cwd=REPO,
-        capture_output=True, text=True, timeout=900)
-    assert r.returncode == 0, (
-        f"CI step 'Run staticcheck' failed (returncode={r.returncode}):\n"
-        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
-
-def test_ci_test_check():
-    """pass_to_pass | CI job 'test' → step 'Check'"""
-    r = subprocess.run(
-        ["bash", "-lc", 'sass --version;\nmage -v check;'], cwd=REPO,
-        capture_output=True, text=True, timeout=900)
-    assert r.returncode == 0, (
-        f"CI step 'Check' failed (returncode={r.returncode}):\n"
-        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
-
-def test_ci_test_test():
-    """pass_to_pass | CI job 'test' → step 'Test'"""
-    r = subprocess.run(
-        ["bash", "-lc", 'mage -v test'], cwd=REPO,
-        capture_output=True, text=True, timeout=900)
-    assert r.returncode == 0, (
-        f"CI step 'Test' failed (returncode={r.returncode}):\n"
-        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
-
-def test_ci_test_build_for_dragonfly():
-    """pass_to_pass | CI job 'test' → step 'Build for dragonfly'"""
-    r = subprocess.run(
-        ["bash", "-lc", 'go install\ngo clean -i -cache'], cwd=REPO,
-        capture_output=True, text=True, timeout=900)
-    assert r.returncode == 0, (
-        f"CI step 'Build for dragonfly' failed (returncode={r.returncode}):\n"
-        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
 
 # === PR-added f2p tests (taskforge.test_patch_miner) ===
 def test_pr_added_TestPagesFromGoTmplAddResourceFromStringContent():
     """fail_to_pass | PR added test 'TestPagesFromGoTmplAddResourceFromStringContent' in 'hugolib/pagesfromdata/pagesfromgotmpl_integration_test.go' (go_test)"""
     r = subprocess.run(
-        ["bash", "-lc", 'go test ./hugolib/pagesfromdata -run "^TestPagesFromGoTmplAddResourceFromStringContent$" -count=1 -v 2>&1 | tail -50'], cwd=REPO,
-        capture_output=True, text=True, timeout=300)
+        ["go", "test", "./hugolib/pagesfromdata",
+         "-run", "^TestPagesFromGoTmplAddResourceFromStringContent$",
+         "-count=1", "-v"],
+        cwd=REPO, capture_output=True, text=True, timeout=300)
     assert r.returncode == 0, (
         f"PR-added test 'TestPagesFromGoTmplAddResourceFromStringContent' failed (returncode={r.returncode}):\n"
         f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+    assert "no tests to run" not in r.stdout, (
+        "Test 'TestPagesFromGoTmplAddResourceFromStringContent' was not found "
+        "in the package. The PR's test diff must be applied.")
+
 
 def test_pr_added_TestSourceValueAsOpenReadSeekCloserIsIndependent():
     """fail_to_pass | PR added test 'TestSourceValueAsOpenReadSeekCloserIsIndependent' in 'resources/page/pagemeta/page_frontmatter_test.go' (go_test)"""
     r = subprocess.run(
-        ["bash", "-lc", 'go test ./resources/page/pagemeta -run "^TestSourceValueAsOpenReadSeekCloserIsIndependent$" -count=1 -v 2>&1 | tail -50'], cwd=REPO,
-        capture_output=True, text=True, timeout=300)
+        ["go", "test", "./resources/page/pagemeta",
+         "-run", "^TestSourceValueAsOpenReadSeekCloserIsIndependent$",
+         "-count=1", "-v"],
+        cwd=REPO, capture_output=True, text=True, timeout=300)
     assert r.returncode == 0, (
         f"PR-added test 'TestSourceValueAsOpenReadSeekCloserIsIndependent' failed (returncode={r.returncode}):\n"
         f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+    assert "no tests to run" not in r.stdout, (
+        "Test 'TestSourceValueAsOpenReadSeekCloserIsIndependent' was not found "
+        "in the package. The PR's test diff must be applied.")

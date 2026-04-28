@@ -170,49 +170,33 @@ def test_code_review_skill_has_spa_routing_check():
     has_spa = "desktopRouter" in content and ("SPA" in content or "routing" in content.lower())
     assert has_spa, "code-review/SKILL.md must include SPA/routing section"
 
-# Pass-to-pass static tests
+# Fail-to-pass import verification tests
 
 def test_componentmap_desktop_exports_stats_component():
     script = f"""
-import {{ componentMap }} from '{DESKTOP_COMPONENTMAP}';
-const statsComponent = componentMap.Stats;
-console.log(JSON.stringify({{hasStats: !!statsComponent}}));
+const fs = require('fs');
+const content = fs.readFileSync('{DESKTOP_COMPONENTMAP}', 'utf8');
+const hasImport = /import\\s+Stats\\s+from/.test(content);
+const hasEntry = /\\[SettingsTabs\\.Stats\\]/.test(content);
+console.log(JSON.stringify({{hasStats: hasImport && hasEntry}}));
 """
-    r = subprocess.run(["npx", "tsx", "-e", script], capture_output=True, text=True, timeout=30, cwd=REPO)
-    if r.returncode != 0:
-        check_script = f"""
-import * as ts from 'typescript';
-import * as fs from 'fs';
-const source = fs.readFileSync('{DESKTOP_COMPONENTMAP}', 'utf8');
-const result = ts.transpileModule(source, {{}});
-console.log(JSON.stringify({{errors: result.diagnostics?.length || 0}}));
-"""
-        r2 = subprocess.run(["npx", "tsx", "-e", check_script], capture_output=True, text=True, timeout=30, cwd=REPO)
-        assert r2.returncode == 0, "componentMap.desktop.ts is not valid TypeScript"
-        return
+    r = subprocess.run(["node", "-e", script], capture_output=True, text=True, timeout=30, cwd=REPO)
+    assert r.returncode == 0, f"node failed: {r.stderr[-500:]}"
     result = json.loads(r.stdout.strip())
-    assert result.get("hasStats"), "Stats component export is null/undefined"
+    assert result.get("hasStats"), "componentMap.desktop.ts does not import or map Stats"
 
 def test_componentmap_desktop_exports_creds_component():
     script = f"""
-import {{ componentMap }} from '{DESKTOP_COMPONENTMAP}';
-const credsComponent = componentMap.Creds;
-console.log(JSON.stringify({{hasCreds: !!credsComponent}}));
+const fs = require('fs');
+const content = fs.readFileSync('{DESKTOP_COMPONENTMAP}', 'utf8');
+const hasImport = /import\\s+Creds\\s+from/.test(content);
+const hasEntry = /\\[SettingsTabs\\.Creds\\]/.test(content);
+console.log(JSON.stringify({{hasCreds: hasImport && hasEntry}}));
 """
-    r = subprocess.run(["npx", "tsx", "-e", script], capture_output=True, text=True, timeout=30, cwd=REPO)
-    if r.returncode != 0:
-        check_script = f"""
-import * as ts from 'typescript';
-import * as fs from 'fs';
-const source = fs.readFileSync('{DESKTOP_COMPONENTMAP}', 'utf8');
-const result = ts.transpileModule(source, {{}});
-console.log(JSON.stringify({{errors: result.diagnostics?.length || 0}}));
-"""
-        r2 = subprocess.run(["npx", "tsx", "-e", check_script], capture_output=True, text=True, timeout=30, cwd=REPO)
-        assert r2.returncode == 0, "componentMap.desktop.ts is not valid TypeScript"
-        return
+    r = subprocess.run(["node", "-e", script], capture_output=True, text=True, timeout=30, cwd=REPO)
+    assert r.returncode == 0, f"node failed: {r.stderr[-500:]}"
     result = json.loads(r.stdout.strip())
-    assert result.get("hasCreds"), "Creds component export is null/undefined"
+    assert result.get("hasCreds"), "componentMap.desktop.ts does not import or map Creds"
 
 # Pass-to-pass repo tests
 

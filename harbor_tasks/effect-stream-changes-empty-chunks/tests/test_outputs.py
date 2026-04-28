@@ -20,7 +20,7 @@ TEST_DIR = f"{REPO}/{PKG}/test/Stream"
 F2P_TEST_FILE = "changes_empty_chunk_regression.test.ts"
 
 F2P_TEST_SOURCE = r"""import { describe, it } from "@effect/vitest"
-import { strictEqual, deepStrictEqual } from "@effect/vitest/utils"
+import { deepStrictEqual, strictEqual } from "@effect/vitest/utils"
 import * as Chunk from "effect/Chunk"
 import * as Effect from "effect/Effect"
 import { pipe } from "effect/Function"

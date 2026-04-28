@@ -38,10 +38,15 @@ With `s := pagemeta.Source{Value: "abcdefgh"}` and
    - **Actual:** an empty string, because `r1` and `r2` are the same reader
      and step 2 left the shared position at 8.
 
-The same problem must not occur when the source value is a `[]byte` or
-another type cast to string by the existing `ValueAsString()` helper. Three
-or more independent readers held simultaneously must each see the full
-content from the start, regardless of read activity on the others.
+The same problem must not occur when the source value is a `[]byte`
+(e.g. `[]byte("0123456789")`) or another type cast to string by the
+existing `ValueAsString()` helper. Three or more independent readers held
+simultaneously must each see the full content from the start, regardless of
+read activity on the others. For instance, with content
+`"the quick brown fox jumps over the lazy dog"` and three readers open at
+once, interleaving reads across them must not disturb independent positions:
+reading 10 bytes from the first, fully consuming the second and third, then
+reading the remainder of the first must yield the expected tail.
 
 This bug breaks downstream callers that pass the returned opener to image
 processing (e.g. `Resize`) when the same source value is also being read
@@ -75,12 +80,9 @@ enforce all of the following on the affected package
 Project-wide guidance from `AGENTS.md` (apply to anything you add):
 
 - Brevity is good. Keep the fix and any new tests minimal.
-- Don't use comments to explain the obvious; reserve comments for
-  non-obvious *why*.
+- Don't use comments to explain the obvious.
 - Don't introduce global state.
 - In tests, use the `qt` matcher style (`c.Assert(x, qt.Equals, y)`) used
   elsewhere in the package, not raw `if`/`t.Fatal`.
 - Never export symbols not needed outside the package.
-- If you add temporary debug prints, remove them before finishing
-  (`hdebug.Printf` is the project's preferred debug helper, but it should
-  not appear in the final diff).
+- If you add temporary debug prints, remove them before finishing.

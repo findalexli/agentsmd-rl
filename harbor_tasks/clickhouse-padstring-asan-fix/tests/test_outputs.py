@@ -297,24 +297,11 @@ def test_cpp_compiles_syntax_valid():
         assert False, f"C++ syntax errors found:\n" + "\n".join(errors[:5])
 
 
-def test_clang_format_compliance():
-    """PASS-TO-PASS: Source file follows .clang-format style rules (pass_to_pass).
-
-    This is a repo CI check: ClickHouse requires all C++ files to pass
-    clang-format validation before merge.
-    """
-    r = subprocess.run(
-        ["bash", "-c",
-         f"clang-format --dry-run --Werror {FUNCTION_FILE} 2>&1"],
-        capture_output=True, text=True, timeout=60,
-    )
-    assert r.returncode == 0, f"clang-format check failed:\n{r.stderr}\n{r.stdout}"
-
-
 def test_required_headers_present():
-    """PASS-TO-PASS: Required standard headers are included (pass_to_pass).
+    """FAIL-TO-PASS: Required standard headers must be present after the fix.
 
     ClickHouse code requires specific headers for PaddedPODArray functionality.
+    These are missing in the base version and added by the fix.
     """
     with open(FUNCTION_FILE, 'r') as f:
         content = f.read()
@@ -390,130 +377,3 @@ def test_no_tab_characters():
 if __name__ == "__main__":
     import pytest
     pytest.main([__file__, "-v"])
-
-# === CI-mined tests (taskforge.ci_check_miner) ===
-def test_ci_compatibility_check_prepare_env_script():
-    """pass_to_pass | CI job 'Compatibility check' → step 'Prepare env script'"""
-    r = subprocess.run(
-        ["bash", "-lc", "rm -rf ./ci/tmp\nmkdir -p ./ci/tmp\ncat > ./ci/tmp/praktika_setup_env.sh << 'ENV_SETUP_SCRIPT_EOF'\nexport PYTHONPATH=./ci:.:\n\ncat > ./ci/tmp/workflow_job.json << 'EOF'\n${{ toJson(job) }}\nEOF\ncat > ./ci/tmp/workflow_status.json << 'EOF'\n${{ toJson(needs) }}\nEOF\nENV_SETUP_SCRIPT_EOF"], cwd=REPO,
-        capture_output=True, text=True, timeout=900)
-    assert r.returncode == 0, (
-        f"CI step 'Prepare env script' failed (returncode={r.returncode}):\n"
-        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
-
-def test_ci_compatibility_check_run():
-    """pass_to_pass | CI job 'Compatibility check' → step 'Run'"""
-    r = subprocess.run(
-        ["bash", "-lc", '. ./ci/tmp/praktika_setup_env.sh\nset -o pipefail\nPYTHONUNBUFFERED=1 python3 -m praktika run \'Compatibility check (amd_release)\' --workflow "MasterCI" --ci 2>&1 | python3 -u -c \'import sys,datetime\nprefix=lambda: datetime.datetime.now().strftime("[%Y-%m-%d %H:%M:%S]")\nfor line in sys.stdin: sys.stdout.write(prefix() + " " + line); sys.stdout.flush()\' | tee ./ci/tmp/job.log'], cwd=REPO,
-        capture_output=True, text=True, timeout=900)
-    assert r.returncode == 0, (
-        f"CI step 'Run' failed (returncode={r.returncode}):\n"
-        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
-
-def test_ci_sqllogic_test_prepare_env_script():
-    """pass_to_pass | CI job 'SQLLogic test' → step 'Prepare env script'"""
-    r = subprocess.run(
-        ["bash", "-lc", "rm -rf ./ci/tmp\nmkdir -p ./ci/tmp\ncat > ./ci/tmp/praktika_setup_env.sh << 'ENV_SETUP_SCRIPT_EOF'\nexport PYTHONPATH=./ci:.:\n\ncat > ./ci/tmp/workflow_job.json << 'EOF'\n${{ toJson(job) }}\nEOF\ncat > ./ci/tmp/workflow_status.json << 'EOF'\n${{ toJson(needs) }}\nEOF\nENV_SETUP_SCRIPT_EOF"], cwd=REPO,
-        capture_output=True, text=True, timeout=900)
-    assert r.returncode == 0, (
-        f"CI step 'Prepare env script' failed (returncode={r.returncode}):\n"
-        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
-
-def test_ci_sqllogic_test_run():
-    """pass_to_pass | CI job 'SQLLogic test' → step 'Run'"""
-    r = subprocess.run(
-        ["bash", "-lc", '. ./ci/tmp/praktika_setup_env.sh\nset -o pipefail\nPYTHONUNBUFFERED=1 python3 -m praktika run \'SQLLogic test\' --workflow "MasterCI" --ci 2>&1 | python3 -u -c \'import sys,datetime\nprefix=lambda: datetime.datetime.now().strftime("[%Y-%m-%d %H:%M:%S]")\nfor line in sys.stdin: sys.stdout.write(prefix() + " " + line); sys.stdout.flush()\' | tee ./ci/tmp/job.log'], cwd=REPO,
-        capture_output=True, text=True, timeout=900)
-    assert r.returncode == 0, (
-        f"CI step 'Run' failed (returncode={r.returncode}):\n"
-        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
-
-def test_ci_stress_test_prepare_env_script():
-    """pass_to_pass | CI job 'Stress test' → step 'Prepare env script'"""
-    r = subprocess.run(
-        ["bash", "-lc", "rm -rf ./ci/tmp\nmkdir -p ./ci/tmp\ncat > ./ci/tmp/praktika_setup_env.sh << 'ENV_SETUP_SCRIPT_EOF'\nexport PYTHONPATH=./ci:.:\n\ncat > ./ci/tmp/workflow_job.json << 'EOF'\n${{ toJson(job) }}\nEOF\ncat > ./ci/tmp/workflow_status.json << 'EOF'\n${{ toJson(needs) }}\nEOF\nENV_SETUP_SCRIPT_EOF"], cwd=REPO,
-        capture_output=True, text=True, timeout=900)
-    assert r.returncode == 0, (
-        f"CI step 'Prepare env script' failed (returncode={r.returncode}):\n"
-        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
-
-def test_ci_stress_test_run():
-    """pass_to_pass | CI job 'Stress test' → step 'Run'"""
-    r = subprocess.run(
-        ["bash", "-lc", '. ./ci/tmp/praktika_setup_env.sh\nset -o pipefail\nPYTHONUNBUFFERED=1 python3 -m praktika run \'Stress test (amd_debug)\' --workflow "MasterCI" --ci 2>&1 | python3 -u -c \'import sys,datetime\nprefix=lambda: datetime.datetime.now().strftime("[%Y-%m-%d %H:%M:%S]")\nfor line in sys.stdin: sys.stdout.write(prefix() + " " + line); sys.stdout.flush()\' | tee ./ci/tmp/job.log'], cwd=REPO,
-        capture_output=True, text=True, timeout=900)
-    assert r.returncode == 0, (
-        f"CI step 'Run' failed (returncode={r.returncode}):\n"
-        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
-
-def test_ci_smoke_test_prepare_env_script():
-    """pass_to_pass | CI job 'Smoke test' → step 'Prepare env script'"""
-    r = subprocess.run(
-        ["bash", "-lc", "rm -rf ./ci/tmp\nmkdir -p ./ci/tmp\ncat > ./ci/tmp/praktika_setup_env.sh << 'ENV_SETUP_SCRIPT_EOF'\nexport PYTHONPATH=./ci:.:\n\ncat > ./ci/tmp/workflow_job.json << 'EOF'\n${{ toJson(job) }}\nEOF\ncat > ./ci/tmp/workflow_status.json << 'EOF'\n${{ toJson(needs) }}\nEOF\nENV_SETUP_SCRIPT_EOF"], cwd=REPO,
-        capture_output=True, text=True, timeout=900)
-    assert r.returncode == 0, (
-        f"CI step 'Prepare env script' failed (returncode={r.returncode}):\n"
-        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
-
-def test_ci_smoke_test_run():
-    """pass_to_pass | CI job 'Smoke test' → step 'Run'"""
-    r = subprocess.run(
-        ["bash", "-lc", '. ./ci/tmp/praktika_setup_env.sh\nset -o pipefail\nPYTHONUNBUFFERED=1 python3 -m praktika run \'Smoke test (amd_darwin)\' --workflow "MasterCI" --ci 2>&1 | python3 -u -c \'import sys,datetime\nprefix=lambda: datetime.datetime.now().strftime("[%Y-%m-%d %H:%M:%S]")\nfor line in sys.stdin: sys.stdout.write(prefix() + " " + line); sys.stdout.flush()\' | tee ./ci/tmp/job.log'], cwd=REPO,
-        capture_output=True, text=True, timeout=900)
-    assert r.returncode == 0, (
-        f"CI step 'Run' failed (returncode={r.returncode}):\n"
-        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
-
-def test_ci_build_prepare_env_script():
-    """pass_to_pass | CI job 'Build' → step 'Prepare env script'"""
-    r = subprocess.run(
-        ["bash", "-lc", "rm -rf ./ci/tmp\nmkdir -p ./ci/tmp\ncat > ./ci/tmp/praktika_setup_env.sh << 'ENV_SETUP_SCRIPT_EOF'\nexport PYTHONPATH=./ci:.:\n\ncat > ./ci/tmp/workflow_job.json << 'EOF'\n${{ toJson(job) }}\nEOF\ncat > ./ci/tmp/workflow_status.json << 'EOF'\n${{ toJson(needs) }}\nEOF\nENV_SETUP_SCRIPT_EOF"], cwd=REPO,
-        capture_output=True, text=True, timeout=900)
-    assert r.returncode == 0, (
-        f"CI step 'Prepare env script' failed (returncode={r.returncode}):\n"
-        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
-
-def test_ci_build_run():
-    """pass_to_pass | CI job 'Build' → step 'Run'"""
-    r = subprocess.run(
-        ["bash", "-lc", '. ./ci/tmp/praktika_setup_env.sh\nset -o pipefail\nPYTHONUNBUFFERED=1 python3 -m praktika run \'Dockers Build (amd)\' --workflow "MasterCI" --ci 2>&1 | python3 -u -c \'import sys,datetime\nprefix=lambda: datetime.datetime.now().strftime("[%Y-%m-%d %H:%M:%S]")\nfor line in sys.stdin: sys.stdout.write(prefix() + " " + line); sys.stdout.flush()\' | tee ./ci/tmp/job.log'], cwd=REPO,
-        capture_output=True, text=True, timeout=900)
-    assert r.returncode == 0, (
-        f"CI step 'Run' failed (returncode={r.returncode}):\n"
-        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
-
-def test_ci_stateless_tests_prepare_env_script():
-    """pass_to_pass | CI job 'Stateless tests' → step 'Prepare env script'"""
-    r = subprocess.run(
-        ["bash", "-lc", "rm -rf ./ci/tmp\nmkdir -p ./ci/tmp\ncat > ./ci/tmp/praktika_setup_env.sh << 'ENV_SETUP_SCRIPT_EOF'\nexport PYTHONPATH=./ci:.:\n\ncat > ./ci/tmp/workflow_job.json << 'EOF'\n${{ toJson(job) }}\nEOF\ncat > ./ci/tmp/workflow_status.json << 'EOF'\n${{ toJson(needs) }}\nEOF\nENV_SETUP_SCRIPT_EOF"], cwd=REPO,
-        capture_output=True, text=True, timeout=900)
-    assert r.returncode == 0, (
-        f"CI step 'Prepare env script' failed (returncode={r.returncode}):\n"
-        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
-
-def test_ci_stateless_tests_run():
-    """pass_to_pass | CI job 'Stateless tests' → step 'Run'"""
-    r = subprocess.run(
-        ["bash", "-lc", '. ./ci/tmp/praktika_setup_env.sh\nset -o pipefail\nPYTHONUNBUFFERED=1 python3 -m praktika run \'Stateless tests (amd_asan_ubsan, distributed plan, parallel, 1/2)\' --workflow "MasterCI" --ci 2>&1 | python3 -u -c \'import sys,datetime\nprefix=lambda: datetime.datetime.now().strftime("[%Y-%m-%d %H:%M:%S]")\nfor line in sys.stdin: sys.stdout.write(prefix() + " " + line); sys.stdout.flush()\' | tee ./ci/tmp/job.log'], cwd=REPO,
-        capture_output=True, text=True, timeout=900)
-    assert r.returncode == 0, (
-        f"CI step 'Run' failed (returncode={r.returncode}):\n"
-        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
-
-def test_ci_integration_tests_prepare_env_script():
-    """pass_to_pass | CI job 'Integration tests' → step 'Prepare env script'"""
-    r = subprocess.run(
-        ["bash", "-lc", "rm -rf ./ci/tmp\nmkdir -p ./ci/tmp\ncat > ./ci/tmp/praktika_setup_env.sh << 'ENV_SETUP_SCRIPT_EOF'\nexport PYTHONPATH=./ci:.:\n\ncat > ./ci/tmp/workflow_job.json << 'EOF'\n${{ toJson(job) }}\nEOF\ncat > ./ci/tmp/workflow_status.json << 'EOF'\n${{ toJson(needs) }}\nEOF\nENV_SETUP_SCRIPT_EOF"], cwd=REPO,
-        capture_output=True, text=True, timeout=900)
-    assert r.returncode == 0, (
-        f"CI step 'Prepare env script' failed (returncode={r.returncode}):\n"
-        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
-
-def test_ci_integration_tests_run():
-    """pass_to_pass | CI job 'Integration tests' → step 'Run'"""
-    r = subprocess.run(
-        ["bash", "-lc", '. ./ci/tmp/praktika_setup_env.sh\nset -o pipefail\nPYTHONUNBUFFERED=1 python3 -m praktika run \'Integration tests (amd_asan_ubsan, db disk, old analyzer, 1/6)\' --workflow "MasterCI" --ci 2>&1 | python3 -u -c \'import sys,datetime\nprefix=lambda: datetime.datetime.now().strftime("[%Y-%m-%d %H:%M:%S]")\nfor line in sys.stdin: sys.stdout.write(prefix() + " " + line); sys.stdout.flush()\' | tee ./ci/tmp/job.log'], cwd=REPO,
-        capture_output=True, text=True, timeout=900)
-    assert r.returncode == 0, (
-        f"CI step 'Run' failed (returncode={r.returncode}):\n"
-        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")

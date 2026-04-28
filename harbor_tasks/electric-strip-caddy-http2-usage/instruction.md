@@ -11,9 +11,9 @@ However, the `@electric-sql/client` package now supports subdomain sharding (as 
 Several files throughout the repository still reference Caddy:
 - The tanstack-db-web-starter example has a Vite plugin that auto-starts Caddy
 - The burn example includes a Caddyfile
-- Multiple READMEs document Caddy installation and setup
-- The root AGENTS.md troubleshooting section recommends using Caddy/nginx as an HTTP/2 proxy
-- The troubleshooting docs explain how to run Caddy as a solution
+- Multiple READMEs document Caddy installation and setup, including `### Caddy` sections, `caddy trust` commands, and `caddy start` instructions
+- The root AGENTS.md troubleshooting section uses the phrase `HTTP/2 proxy (Caddy/nginx)` to recommend a local proxy
+- The troubleshooting docs suggest to `run Caddy` as a workaround
 
 ## Expected Behavior
 

@@ -5,6 +5,50 @@ source:
   base_commit: d7d5e048c6941e80aa56982adff9aa48de260ed7
   merge_commit: e8f0031d821766f32bd5d1f59d73eea342061876
 checks:
+- id: test_update_labels_function_logic
+  type: fail_to_pass
+  origin: pr_diff
+  description: Update-VerificationLabels function implements correct toggle logic with REST API
+- id: test_label_names_and_constants
+  type: fail_to_pass
+  origin: pr_diff
+  description: Script defines $LabelConfirmed and $LabelFailed with correct label strings
+- id: test_labels_called_on_all_paths
+  type: fail_to_pass
+  origin: pr_diff
+  description: Update-VerificationLabels called with correct bool in all 4 verification paths
+- id: test_pr_detection_fallback
+  type: fail_to_pass
+  origin: pr_diff
+  description: PR detection has gh pr list --head fallback for fork branches
+- id: test_skill_md_labels_section
+  type: fail_to_pass
+  origin: pr_diff
+  description: SKILL.md has PR Labels section with both labels, table, and toggle behavior
+- id: test_ps1_not_empty
+  type: pass_to_pass
+  origin: repo_tests
+  description: PowerShell script exists and has non-trivial content with parameter block
+- id: test_existing_verify_failure_mode_preserved
+  type: pass_to_pass
+  origin: repo_tests
+  description: Existing verification logic such as DetectedFixFiles and RequireFullVerification is preserved
+- id: test_powershell_script_basic_structure
+  type: pass_to_pass
+  origin: repo_tests
+  description: PowerShell script has valid shebang, help block, and balanced braces/parens
+- id: test_shared_baseline_script_imports
+  type: pass_to_pass
+  origin: repo_tests
+  description: verify-tests-fail.ps1 imports from EstablishBrokenBaseline.ps1
+- id: test_skill_md_documentation_structure
+  type: pass_to_pass
+  origin: repo_tests
+  description: SKILL.md has required documentation sections and code examples
+- id: test_git_repository_integrity
+  type: pass_to_pass
+  origin: repo_tests
+  description: Git repository is at the expected base commit with clean status
 - id: test_repo_powershell_syntax_validation
   type: pass_to_pass
   origin: repo_tests

@@ -2,28 +2,39 @@
 
 ## Problem
 
-On .NET 10 Windows, calling `Permissions.CheckStatusAsync<Permissions.Microphone>()` throws an exception when the app is running as an **unpackaged app**.
+On .NET 10 Windows, calling `Permissions.CheckStatusAsync<Permissions.Microphone>()` and `Permissions.RequestAsync<Permissions.Microphone>()` throws an exception when the app is running as an **unpackaged app**.
 
-This is a regression introduced after Windows apps were changed to run as unpackaged by default. In unpackaged apps, `AppxManifest.xml` is not used, so microphone capabilities declared in the manifest are not available. However, the current implementation always validates microphone capability declarations against `AppxManifest.xml`, which causes an exception for unpackaged apps.
+In unpackaged apps, `AppxManifest.xml` is not used, so capabilities declared in the manifest are not available. The `Microphone` permission class in `src/Essentials/src/Permissions/Permissions.windows.cs` calls `EnsureDeclared()` to validate that microphone capabilities are declared in the app manifest. For unpackaged apps, there is no manifest to validate against, so this validation fails.
 
-The exception occurs because the manifest capability check (`EnsureDeclared()`) is called unconditionally in both `CheckStatusAsync()` and `RequestAsync()` methods of the `Microphone` permission class on Windows. The fix should only perform this check when the app is packaged (i.e., has a manifest).
+The codebase provides several relevant APIs:
+- `AppInfoUtils.IsPackagedApp` — indicates whether the app is running as a packaged or unpackaged app
+- `EnsureDeclared()` — validates that required capabilities are declared in the app manifest
+- `CheckStatus()` — returns the current device access status
+- `MediaCaptureInitializationSettings` — configures Windows media capture for permission requests
 
 ## Expected Behavior
 
-1. **Code Fix**: For unpackaged Windows apps, the microphone permission methods must not attempt to validate manifest declarations. The codebase provides `AppInfoUtils.IsPackagedApp` to distinguish between packaged and unpackaged apps.
+Calling `Permissions.CheckStatusAsync<Permissions.Microphone>()` on an unpackaged Windows app should return the current permission status (e.g., `Granted`, `Denied`, `Unknown`) without throwing an exception.
 
-   The `CheckStatusAsync()` method should check permission status first, then only validate manifest declarations for packaged apps.
+Calling `Permissions.RequestAsync<Permissions.Microphone>()` on an unpackaged Windows app should request microphone access and return the resulting permission status without throwing an exception.
 
-   The `RequestAsync()` method should also check current status first and extract the permission-requesting logic into a separate helper method (`TryRequestPermissionAsync`). Manifest validation should only occur for packaged apps.
+The `RequestAsync()` method should check the current status first with `var status = CheckStatus()` before attempting any permission request or manifest validation.
 
-2. **Config Update**: Remove stale PR-testing notes from the Copilot instruction files. The old note asking "Are you waiting for the changes in this PR to be merged?" is now redundant. References to "Testing-PR-Builds" and the "Opening PRs" section should also be removed. The `complete-example.md` should retain its "Root Cause" section.
+Manifest validation should only occur for packaged apps. The code should use `if (AppInfoUtils.IsPackagedApp)` to guard any `EnsureDeclared()` calls.
+
+The permission-requesting logic in `RequestAsync()` (which uses `MediaCaptureInitializationSettings`) should be extracted into a separate method with the signature `async Task<PermissionStatus> TryRequestPermissionAsync()`.
+
+## Code Style Requirements
+
+The repository enforces C# code formatting via `dotnet format`. Before completing, verify your changes meet the formatting standard:
+
+```
+dotnet format src/Essentials/src/Essentials.csproj --no-restore --verify-no-changes --include src/Essentials/src/Permissions/Permissions.windows.cs
+```
 
 ## Files to Look At
 
-- `src/Essentials/src/Permissions/Permissions.windows.cs` — Windows-specific microphone permission implementation
-- `.github/copilot-instructions.md` — Main Copilot instructions file
-- `.github/skills/pr-finalize/SKILL.md` — PR finalization skill documentation
-- `.github/skills/pr-finalize/references/complete-example.md` — Example PR description reference
+- `src/Essentials/src/Permissions/Permissions.windows.cs` — Windows-specific permission implementations including the `Microphone` class
 
 ## References
 

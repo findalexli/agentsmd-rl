@@ -11,6 +11,7 @@ Each test function maps 1:1 to a check in eval_manifest.yaml.
 """
 
 import json
+import os
 import re
 import subprocess
 from pathlib import Path
@@ -215,10 +216,10 @@ def test_repo_unit_tests():
         capture_output=True, text=True, timeout=600, cwd=REPO,
     )
     assert r.returncode == 0, f"pnpm install failed:\n{r.stderr[-500:] if r.stderr else r.stdout[-500:]}"
-    # Run tests
+    # Run tests with increased timeout to avoid flaky timeouts on slow CI
     r = subprocess.run(
-        ["bash", "-c", "cd /workspace/supabase/apps/studio && NODE_OPTIONS='--max-old-space-size=3072' pnpm run test:ci"],
-        capture_output=True, text=True, timeout=300, cwd=REPO,
+        ["bash", "-c", "cd /workspace/supabase/apps/studio && NODE_OPTIONS='--max-old-space-size=3072' pnpm run test:ci -- --testTimeout=30000"],
+        capture_output=True, text=True, timeout=600, cwd=REPO,
     )
     assert r.returncode == 0, f"Unit tests failed:\n{r.stderr[-500:] if r.stderr else r.stdout[-500:]}"
 
@@ -275,10 +276,18 @@ def test_repo_prettier():
 
 # === CI-mined tests (taskforge.ci_check_miner) ===
 def test_ci_test_run_tests():
-    """pass_to_pass | CI job 'test' → step 'Run Tests'"""
+    """pass_to_pass | CI job 'test' step 'Run Tests'"""
+    # Install dependencies first (idempotent)
     r = subprocess.run(
-        ["bash", "-lc", 'pnpm run test:ci'], cwd=os.path.join(REPO, './apps/studio'),
-        capture_output=True, text=True, timeout=300)
+        ["bash", "-c", "corepack enable && pnpm install --frozen-lockfile"],
+        capture_output=True, text=True, timeout=600, cwd=REPO,
+    )
+    assert r.returncode == 0, f"pnpm install failed:\n{r.stderr[-500:] if r.stderr else r.stdout[-500:]}"
+    # Run tests (mirrors Studio Unit Tests CI workflow)
+    r = subprocess.run(
+        ["bash", "-lc", "NODE_OPTIONS='--max_old_space_size=3072' pnpm run test:ci -- --testTimeout=30000"],
+        cwd=os.path.join(REPO, 'apps/studio'),
+        capture_output=True, text=True, timeout=600)
     assert r.returncode == 0, (
         f"CI step 'Run Tests' failed (returncode={r.returncode}):\n"
         f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")

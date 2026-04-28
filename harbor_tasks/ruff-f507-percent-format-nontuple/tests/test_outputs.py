@@ -268,111 +268,11 @@ def test_repo_cargo_check_ruff_linter():
     )
     assert r.returncode == 0, f"cargo check failed:\\n{r.stderr[-1000:]}"
 
-# === CI-mined tests (taskforge.ci_check_miner) ===
-def test_ci_benchmarks_instrumented_ty_build_benchmarks():
-    """pass_to_pass | CI job 'benchmarks instrumented ty' → step 'Build benchmarks'"""
+# [repo_tests] pass_to_pass
+def test_repo_ruff_python_semantic_tests():
+    """Repo ruff_python_semantic tests pass — dependency of the F507 fix (pass_to_pass)."""
     r = subprocess.run(
-        ["bash", "-lc", 'cargo codspeed build -m instrumentation --features "codspeed,ty_instrumented" --profile profiling --no-default-features -p ruff_benchmark --bench ty'], cwd=REPO,
-        capture_output=True, text=True, timeout=300)
-    assert r.returncode == 0, (
-        f"CI step 'Build benchmarks' failed (returncode={r.returncode}):\n"
-        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
-
-def test_ci_cargo_fuzz_build_cargo():
-    """pass_to_pass | CI job 'cargo fuzz build' → step ''"""
-    r = subprocess.run(
-        ["bash", "-lc", 'cargo fuzz build -s none'], cwd=REPO,
-        capture_output=True, text=True, timeout=300)
-    assert r.returncode == 0, (
-        f"CI step '' failed (returncode={r.returncode}):\n"
-        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
-
-def test_ci_cargo_test_ty_mdtests_github_annotations():
-    """pass_to_pass | CI job 'cargo test' → step 'ty mdtests (GitHub annotations)'"""
-    r = subprocess.run(
-        ["bash", "-lc", 'cargo test -p ty_python_semantic --test mdtest'], cwd=REPO,
-        capture_output=True, text=True, timeout=300)
-    assert r.returncode == 0, (
-        f"CI step 'ty mdtests (GitHub annotations)' failed (returncode={r.returncode}):\n"
-        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
-
-def test_ci_cargo_test_run_tests():
-    """pass_to_pass | CI job 'cargo test' → step 'Run tests'"""
-    r = subprocess.run(
-        ["bash", "-lc", 'cargo insta test --all-features --unreferenced reject --test-runner nextest'], cwd=REPO,
-        capture_output=True, text=True, timeout=300)
-    assert r.returncode == 0, (
-        f"CI step 'Run tests' failed (returncode={r.returncode}):\n"
-        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
-
-def test_ci_cargo_test_dogfood_ty_on_py_fuzzer():
-    """pass_to_pass | CI job 'cargo test' → step 'Dogfood ty on py-fuzzer'"""
-    r = subprocess.run(
-        ["bash", "-lc", 'uv run --project=./python/py-fuzzer cargo run -p ty check --project=./python/py-fuzzer'], cwd=REPO,
-        capture_output=True, text=True, timeout=300)
-    assert r.returncode == 0, (
-        f"CI step 'Dogfood ty on py-fuzzer' failed (returncode={r.returncode}):\n"
-        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
-
-def test_ci_cargo_test_dogfood_ty_on_the_scripts_directory():
-    """pass_to_pass | CI job 'cargo test' → step 'Dogfood ty on the scripts directory'"""
-    r = subprocess.run(
-        ["bash", "-lc", 'uv run --project=./scripts cargo run -p ty check --project=./scripts'], cwd=REPO,
-        capture_output=True, text=True, timeout=300)
-    assert r.returncode == 0, (
-        f"CI step 'Dogfood ty on the scripts directory' failed (returncode={r.returncode}):\n"
-        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
-
-def test_ci_cargo_test_dogfood_ty_on_ty_benchmark():
-    """pass_to_pass | CI job 'cargo test' → step 'Dogfood ty on ty_benchmark'"""
-    r = subprocess.run(
-        ["bash", "-lc", 'uv run --project=./scripts/ty_benchmark cargo run -p ty check --project=./scripts/ty_benchmark'], cwd=REPO,
-        capture_output=True, text=True, timeout=300)
-    assert r.returncode == 0, (
-        f"CI step 'Dogfood ty on ty_benchmark' failed (returncode={r.returncode}):\n"
-        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
-
-def test_ci_cargo_test_cargo():
-    """pass_to_pass | CI job 'cargo test' → step ''"""
-    r = subprocess.run(
-        ["bash", "-lc", 'cargo doc --all --no-deps'], cwd=REPO,
-        capture_output=True, text=True, timeout=300)
-    assert r.returncode == 0, (
-        f"CI step '' failed (returncode={r.returncode}):\n"
-        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
-
-def test_ci_cargo_test_cargo_2():
-    """pass_to_pass | CI job 'cargo test' → step ''"""
-    r = subprocess.run(
-        ["bash", "-lc", 'cargo doc --no-deps -p ty_python_semantic -p ty -p ty_test -p ruff_db -p ruff_python_formatter --document-private-items'], cwd=REPO,
-        capture_output=True, text=True, timeout=300)
-    assert r.returncode == 0, (
-        f"CI step '' failed (returncode={r.returncode}):\n"
-        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
-
-def test_ci_benchmarks_walltime_build_benchmarks():
-    """pass_to_pass | CI job 'benchmarks walltime' → step 'Build benchmarks'"""
-    r = subprocess.run(
-        ["bash", "-lc", 'cargo codspeed build -m walltime --features "codspeed,ty_walltime" --profile profiling --no-default-features -p ruff_benchmark'], cwd=REPO,
-        capture_output=True, text=True, timeout=300)
-    assert r.returncode == 0, (
-        f"CI step 'Build benchmarks' failed (returncode={r.returncode}):\n"
-        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
-
-def test_ci_test_ruff_lsp_build_ruff_binary():
-    """pass_to_pass | CI job 'test ruff-lsp' → step 'Build Ruff binary'"""
-    r = subprocess.run(
-        ["bash", "-lc", 'cargo build -p ruff --bin ruff'], cwd=REPO,
-        capture_output=True, text=True, timeout=300)
-    assert r.returncode == 0, (
-        f"CI step 'Build Ruff binary' failed (returncode={r.returncode}):\n"
-        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
-
-def test_ci_test_ruff_lsp_run_ruff_lsp_tests():
-    """pass_to_pass | CI job 'test ruff-lsp' → step 'Run ruff-lsp tests'"""
-    r = subprocess.run(
-        ["bash", "-lc", 'pip uninstall --yes ruff && ruff version && just test'], cwd=REPO,
-        capture_output=True, text=True, timeout=300)
-    assert r.returncode == 0, (
-        f"CI step 'Run ruff-lsp tests' failed (returncode={r.returncode}):\n"
-        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+        ["cargo", "test", "-p", "ruff_python_semantic", "--", "--test-threads=4"],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    assert r.returncode == 0, f"ruff_python_semantic tests failed:\n{r.stderr[-1000:]}{r.stdout[-1000:]}"

@@ -1,7 +1,7 @@
 FROM node:22-slim
 
 # Install Python for test runner and git for cloning
-RUN apt-get update && apt-get install -y python3 python3-pip git && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y python3 python3-pip python3-pytest git && rm -rf /var/lib/apt/lists/*
 
 # Create workspace
 WORKDIR /workspace

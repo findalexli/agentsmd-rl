@@ -25,6 +25,11 @@ RUN git clone --filter=blob:none https://github.com/remix-run/remix.git remix \
     && git -c user.email=task@local.test -c user.name=task \
            commit --allow-empty -m "task base"
 
+RUN corepack enable pnpm
+
+WORKDIR /workspace/remix
+RUN pnpm install --frozen-lockfile
+
 WORKDIR /workspace/extractor
 
 RUN npm init -y >/dev/null \

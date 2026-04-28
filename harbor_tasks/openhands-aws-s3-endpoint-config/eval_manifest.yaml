@@ -39,7 +39,7 @@ checks:
 - id: test_repo_mypy_clean
   type: pass_to_pass
   origin: repo_tests
-  description: Repo.s mypy type checking passes on target file
+  description: Repo's mypy type checking passes on target file
 - id: test_repo_validate_pyproject
   type: pass_to_pass
   origin: repo_tests
@@ -48,82 +48,38 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Target file can be imported without errors
-- id: test_pydantic_field_import_present
+- id: test_endpoint_url_https_when_secure_true_no_protocol
   type: fail_to_pass
   origin: pr_diff
-  description: Module imports pydantic Field
-- id: test_injector_uses_self_endpoint_url
+  description: Adds https:// prefix when AWS_S3_SECURE=true and endpoint has no protocol
+- id: test_endpoint_url_converts_http_to_https_when_secure
   type: fail_to_pass
   origin: pr_diff
-  description: Injector uses self.endpoint_url instead of os.getenv in inject method
-- id: test_get_default_aws_endpoint_url_function_exists
+  description: Converts http:// to https:// when AWS_S3_SECURE=true
+- id: test_endpoint_url_http_when_secure_false_no_protocol
   type: fail_to_pass
   origin: pr_diff
-  description: _get_default_aws_endpoint_url function exists
-- id: test_get_default_aws_endpoint_url_function_structure
+  description: Adds http:// prefix when AWS_S3_SECURE=false and endpoint has no protocol
+- id: test_endpoint_url_converts_https_to_http_when_insecure
   type: fail_to_pass
   origin: pr_diff
-  description: _get_default_aws_endpoint_url function handles secure and insecure properly
-- id: test_get_default_aws_endpoint_url_returns_none_when_no_env
+  description: Converts https:// to http:// when AWS_S3_SECURE=false
+- id: test_endpoint_url_none_when_env_not_set
   type: fail_to_pass
   origin: pr_diff
-  description: Function returns None when AWS_S3_ENDPOINT not set
-- id: test_get_default_aws_endpoint_url_handles_https_secure
+  description: Returns None when AWS_S3_ENDPOINT is not set
+- id: test_injector_passes_correct_endpoint_to_boto3
   type: fail_to_pass
   origin: pr_diff
-  description: Function handles https:// with secure=true
-- id: test_get_default_aws_endpoint_url_handles_http_insecure
+  description: AwsEventServiceInjector passes correct endpoint URL to boto3 client
+- id: test_injector_endpoint_url_computed_from_env_vars
   type: fail_to_pass
   origin: pr_diff
-  description: Function handles http:// with secure=false
-- id: test_get_default_aws_endpoint_url_converts_protocol
+  description: AwsEventServiceInjector.endpoint_url computed from environment variables
+- id: test_injector_endpoint_url_none_when_env_empty
   type: fail_to_pass
   origin: pr_diff
-  description: Function converts protocol based on secure setting
-- id: test_injector_has_endpoint_url_field
-  type: fail_to_pass
-  origin: pr_diff
-  description: Injector class has endpoint_url field
-- id: test_injector_endpoint_url_type
-  type: fail_to_pass
-  origin: pr_diff
-  description: endpoint_url field has correct type annotation str | None
-- id: test_injector_endpoint_url_has_default_factory
-  type: fail_to_pass
-  origin: pr_diff
-  description: endpoint_url field has default_factory using _get_default_aws_endpoint_url
-- id: test_injector_endpoint_url_not_required
-  type: fail_to_pass
-  origin: pr_diff
-  description: endpoint_url field is not required (has default)
-- id: test_ci_build_openhands_ui_build_package
-  type: pass_to_pass
-  origin: repo_tests
-  description: 'CI: Build openhands-ui / Build package'
-- id: test_ci_check_package_versions_check_for_any_rev_fields_in_pyproject_to
-  type: pass_to_pass
-  origin: repo_tests
-  description: 'CI: check-package-versions / Check for any ''rev'' fields in pyproject.toml'
-- id: test_ci_fe_e2e_tests_run_playwright_tests
-  type: pass_to_pass
-  origin: repo_tests
-  description: 'CI: FE E2E Tests / Run Playwright tests'
-- id: test_ci_lint_frontend_lint_typescript_compilation_and_translat
-  type: pass_to_pass
-  origin: repo_tests
-  description: 'CI: Lint frontend / Lint, TypeScript compilation, and translation checks'
-- id: test_ci_fe_unit_tests_run_typescript_compilation
-  type: pass_to_pass
-  origin: repo_tests
-  description: 'CI: FE Unit Tests / Run TypeScript compilation'
-- id: test_ci_fe_unit_tests_run_tests_and_collect_coverage
-  type: pass_to_pass
-  origin: repo_tests
-  description: 'CI: FE Unit Tests / Run tests and collect coverage'
-- id: test_ci_python_tests_on_linux_build_environment
-  type: pass_to_pass
-  origin: repo_tests
-  description: 'CI: Python Tests on Linux / Build Environment'
+  description: AwsEventServiceInjector.endpoint_url is None when AWS_S3_ENDPOINT not set
 rubric:
 - rule: Follow existing code style and patterns in the target file. Type annotations should use modern Python syntax (e.g., str | None).
   source:

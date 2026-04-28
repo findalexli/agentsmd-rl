@@ -6,6 +6,7 @@ This tests that the SDK properly validates reconnect Location headers
 to prevent credential leakage to external servers.
 """
 
+import os
 import re
 import subprocess
 import sys
@@ -364,7 +365,7 @@ if __name__ == "__main__":
 def test_ci_build_build_project_for_distribution():
     """pass_to_pass | CI job 'build' → step 'Build project for distribution'"""
     r = subprocess.run(
-        ["bash", "-lc", 'uv build'], cwd=os.path.join(REPO, '${{ inputs.working-directory }}'),
+        ["bash", "-lc", 'uv build'], cwd=REPO,
         capture_output=True, text=True, timeout=300)
     assert r.returncode == 0, (
         f"CI step 'Build project for distribution' failed (returncode={r.returncode}):\n"

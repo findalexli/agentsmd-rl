@@ -10,9 +10,9 @@ The account module in `packages/opencode/src/account/` has several type-safety a
 
 3. **Untyped time fields**: The `Login` schema uses `Schema.Number` for time-based fields like expiration and polling intervals. These should be `Schema.Duration` fields for proper temporal type safety.
 
-4. **Simplistic service registration**: The `AccountRepo` is registered via `Layer.succeed`, which bypasses Effect's dependency injection. The expected pattern uses `Layer.effect` with `Effect.gen`, constructs the service via `AccountRepo.of({...})`, and exports `namespace AccountRepo` with a `Service` type for proper Effect service definitions.
+4. **Simplistic service registration**: The `AccountRepo` is registered via `Layer.succeed`, which bypasses Effect's dependency injection. The expected pattern uses `Layer.effect` with `Effect.gen`, constructs the service via `AccountRepo.of({...})`, and uses `export namespace AccountRepo` with a `Service` type for proper Effect service definitions.
 
-5. **Duplicated HTTP logic**: The service layer has repeated HTTP fetch patterns. Shared logic for fetching org and user data should be extracted into `fetchOrgs` and `fetchUser` helpers.
+5. **Duplicated HTTP logic**: The service layer has repeated HTTP fetch patterns. Shared logic for fetching org and user data should be extracted into reusable helper functions.
 
 ## Documentation
 
@@ -23,14 +23,13 @@ The `packages/opencode/AGENTS.md` file should include an "Effect guide" section 
 
 ## Files
 
-The relevant source files are in `packages/opencode/src/account/`:
-- `schema.ts` — schema definitions
-- `service.ts` — service layer, HTTP handling
-- `repo.ts` — repository layer, database operations
-- `account.sql.ts` — Drizzle table definitions
-- `index.ts` — public API surface
+The relevant source code is in the account module at `packages/opencode/src/account/`. This includes the schema definitions, service layer with HTTP handling, repository layer for database operations, Drizzle table definitions, and the module's public API surface.
 
 Also update `packages/opencode/AGENTS.md` with the Effect guide.
+
+## Code Style Requirements
+
+- The Drizzle schema uses snake_case field naming for column definitions, following the repository convention documented in the root `AGENTS.md`.
 
 ## Verification
 

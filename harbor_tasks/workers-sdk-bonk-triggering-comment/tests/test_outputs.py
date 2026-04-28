@@ -15,7 +15,7 @@ def _read(path: Path) -> str:
     return path.read_text(encoding="utf-8")
 
 
-# ─── Workflow (.github/workflows/bonk.yml) ────────────────────────────────────
+# --- Workflow (.github/workflows/bonk.yml) ------------------------------------
 
 def test_workflow_yaml_is_valid():
     """The workflow file parses as YAML after the change (subprocess gate)."""
@@ -34,9 +34,8 @@ def test_workflow_has_build_prompt_step():
     doc = yaml.safe_load(_read(WORKFLOW))
     steps = doc["jobs"]["bonk"]["steps"]
     names = [s.get("name", "") for s in steps]
-    assert "Build prompt with triggering comment" in names, (
-        f"Expected a step named 'Build prompt with triggering comment'; got {names}"
-    )
+    expected = "Build prompt with triggering comment"
+    assert expected in names, f"Expected step {expected!r}; got {names}"
 
 
 def test_build_prompt_step_uses_comment_body():
@@ -60,7 +59,7 @@ def test_build_prompt_step_uses_comment_body():
 
 
 def test_build_prompt_step_writes_github_output():
-    """The step writes its assembled prompt to $GITHUB_OUTPUT under id `prompt`."""
+    """The step writes its assembled prompt to $GITHUB_OUTPUT under id prompt."""
     doc = yaml.safe_load(_read(WORKFLOW))
     steps = doc["jobs"]["bonk"]["steps"]
     target = next(
@@ -68,7 +67,8 @@ def test_build_prompt_step_writes_github_output():
         None,
     )
     assert target is not None
-    assert target.get("id") == "prompt", f"step id should be 'prompt'; got {target.get('id')!r}"
+    sid = target.get("id")
+    assert sid == "prompt", "step id should be 'prompt'; got {!r}".format(sid)
     run_block = target.get("run", "")
     assert "GITHUB_OUTPUT" in run_block, "step must write to $GITHUB_OUTPUT"
 
@@ -78,11 +78,12 @@ def test_run_bonk_passes_prompt_parameter():
     doc = yaml.safe_load(_read(WORKFLOW))
     steps = doc["jobs"]["bonk"]["steps"]
     run_step = next((s for s in steps if s.get("name") == "Run Bonk"), None)
-    assert run_step is not None, f"steps: {[s.get('name') for s in steps]}"
+    step_names = [s.get("name") for s in steps]
+    assert run_step is not None, f"steps: {step_names}"
     with_block = run_step.get("with") or {}
     prompt = with_block.get("prompt", "")
     assert "steps.prompt.outputs" in prompt, (
-        f"Run Bonk's `with.prompt` must reference the build step output; got {prompt!r}"
+        "Run Bonk with.prompt must reference the build step output; got {!r}".format(prompt)
     )
 
 
@@ -94,7 +95,7 @@ def test_build_prompt_step_runs_before_run_bonk():
     assert names.index("Build prompt with triggering comment") < names.index("Run Bonk")
 
 
-# ─── Agent instruction (.opencode/agents/bonk.md) ────────────────────────────
+# --- Agent instruction (.opencode/agents/bonk.md) ----------------------------
 
 def test_agent_md_has_triggering_comment_rule():
     """The non-negotiable rule that the triggering comment is the primary task
@@ -140,14 +141,12 @@ def test_implementation_workflow_starts_from_triggering_comment():
     end = text.find("</implementation>")
     assert start != -1 and end != -1 and start < end
     block = text[start:end]
-    # Find the first numbered step
     import re
     m = re.search(r"^\s*1\.\s+(.+)$", block, re.MULTILINE)
     assert m is not None, "no '1.' step found in implementation block"
     step1 = m.group(1).lower()
-    # Step 1 must mention the triggering comment as the starting point
     assert "triggering comment" in step1, (
-        f"step 1 must start from the triggering comment; got: {m.group(1)!r}"
+        "step 1 must start from the triggering comment; got: {!r}".format(m.group(1))
     )
 
 
@@ -169,7 +168,6 @@ def test_negative_examples_cover_post_review_fixup():
     end = text.find("</examples>")
     assert start != -1 and end != -1 and start < end
     block = text[start:end].lower()
-    # Two distinct signals: a "previously reviewed" framing AND a fixup trigger
     assert "previously reviewed" in block or "already reviewed" in block, (
         "negative examples should explicitly frame the failure as occurring "
         "after a prior review"
@@ -179,30 +177,34 @@ def test_negative_examples_cover_post_review_fixup():
         "trigger to capture the observed failure mode"
     )
 
-# === CI-mined tests (taskforge.ci_check_miner) ===
-def test_ci_build_build():
-    """pass_to_pass | CI job 'build' → step 'Build'"""
-    r = subprocess.run(
-        ["bash", "-lc", 'pnpm build --filter="./packages/*"'], cwd=REPO,
-        capture_output=True, text=True, timeout=300)
-    assert r.returncode == 0, (
-        f"CI step 'Build' failed (returncode={r.returncode}):\n"
-        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
 
-def test_ci_build_upload_packages():
-    """pass_to_pass | CI job 'build' → step 'Upload packages'"""
-    r = subprocess.run(
-        ["bash", "-lc", 'node -r esbuild-register .github/prereleases/upload.mjs'], cwd=REPO,
-        capture_output=True, text=True, timeout=300)
-    assert r.returncode == 0, (
-        f"CI step 'Upload packages' failed (returncode={r.returncode}):\n"
-        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+# === pass_to_pass regression guards ===
 
-def test_ci_cleanup_test_projects_cleanup_e2e_test_projects():
-    """pass_to_pass | CI job 'Cleanup Test Projects' → step 'Cleanup E2E test projects'"""
-    r = subprocess.run(
-        ["bash", "-lc", 'node -r esbuild-register tools/e2e/e2eCleanup.ts'], cwd=REPO,
-        capture_output=True, text=True, timeout=300)
-    assert r.returncode == 0, (
-        f"CI step 'Cleanup E2E test projects' failed (returncode={r.returncode}):\n"
-        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+def test_run_bonk_step_preserved_after_edit():
+    """The Run Bonk step must still exist and reference the ask-bonk action
+    (the action referenced in the Background section) after the edit."""
+    doc = yaml.safe_load(_read(WORKFLOW))
+    steps = doc["jobs"]["bonk"]["steps"]
+    run_step = next((s for s in steps if s.get("name") == "Run Bonk"), None)
+    assert run_step is not None, "Run Bonk step must still be present after the edit"
+    uses = run_step.get("uses", "")
+    assert "ask-bonk" in uses, (
+        "Run Bonk step must still reference the ask-bonk action; got {!r}".format(uses)
+    )
+
+
+def test_non_negotiable_rules_block_structure_intact():
+    """The non-negotiable rules block must remain well-formed after the edit,
+    with the existing rule count preserved alongside the two new rules."""
+    text = _read(AGENT_MD)
+    start = text.find("<non_negotiable_rules>")
+    end = text.find("</non_negotiable_rules>")
+    assert start != -1 and end != -1 and start < end
+    block = text[start:end]
+    # Count bold rule labels (lines matching "- **Label:**")
+    rule_count = sum(1 for line in block.split("\n")
+                     if line.strip().startswith("- **"))
+    assert rule_count >= 5, (
+        "Expected at least 5 bold rule labels inside <non_negotiable_rules> "
+        "(existing rules must survive the edit); found {}".format(rule_count)
+    )

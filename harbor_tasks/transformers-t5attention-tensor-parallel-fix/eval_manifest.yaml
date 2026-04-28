@@ -12,30 +12,33 @@ checks:
 - id: test_t5attention_tp_compatible
   type: fail_to_pass
   origin: pr_diff
-  description: T5Attention correctly infers n_heads from tensor shape when inner_dim
-    is sharded
+  description: T5Attention.forward view() calls do not use self.n_heads as a hardcoded
+    dimension; heads are inferred via -1
 - id: test_kv_attention_shape_correct
   type: fail_to_pass
   origin: pr_diff
-  description: Key/value attention uses dynamic shape from current_states instead
-    of config n_heads
+  description: Key/value projection shape uses current_states.shape[1] for dynamic
+    sequence dimension
 - id: test_position_bias_dynamic
   type: fail_to_pass
   origin: pr_diff
-  description: position_bias shape uses query_states.shape[1] instead of config n_heads
+  description: position_bias zeros tensor uses query_states.shape[1] instead of
+    self.n_heads
 - id: test_attn_output_reshape
   type: fail_to_pass
   origin: pr_diff
-  description: attn_output.view uses seq_length as fixed dim and -1 for heads dimension
+  description: attn_output.view() does not use self.inner_dim; uses -1 for inferred
+    inner dimension
 - id: test_view_operations_runtime_semantics
-  type: fail_to_pass
+  type: pass_to_pass
   origin: pr_diff
-  description: View operations produce correct shapes under TP-like conditions
+  description: View operation shape arithmetic is verified correct via numpy simulation
 - id: test_copied_files_updated
   type: fail_to_pass
   origin: agent_config
-  description: T5-family model copies (mt5, longt5, etc.) have been updated with the
-    same fix
+  description: All six T5-family model files have the same fix applied (no self.n_heads
+    in view calls, uses current_states.shape[1] and query_states.shape[1], no
+    self.inner_dim in view calls)
   source:
     path: CLAUDE.md
     lines: 45-55

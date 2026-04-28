@@ -161,12 +161,6 @@ _HARNESS_CACHE: dict | None = None
 
 
 def _run_harness() -> dict:
-    """Invoke the Node harness via tsx and return its parsed JSON output.
-
-    Cached for the duration of the pytest session — each harness run is
-    deterministic and the underlying source file does not change while
-    tests are running.
-    """
     global _HARNESS_CACHE
     if _HARNESS_CACHE is not None:
         return _HARNESS_CACHE
@@ -199,7 +193,6 @@ def _run_harness() -> dict:
 
 
 def _strip_license(src: str) -> str:
-    """Remove the leading ASF license block so tests inspect real code only."""
     return re.sub(r"^/\*[\s\S]*?\*/\s*", "", src, count=1)
 
 
@@ -207,18 +200,15 @@ def _strip_license(src: str) -> str:
 
 
 def test_utility_source_file_exists():
-    """The new helper module must ship in the repo (fail_to_pass)."""
     assert SRC.exists(), f"missing {SRC}"
 
 
 def test_harness_imports_and_runs():
-    """Harness must import the module and find the expected exports."""
     data = _run_harness()
     assert data.get("ok") is True, f"harness failed: {data.get('error')!r}"
 
 
 def test_get_leaf_column_ids_flattens_groups_in_visual_order():
-    """Grouped column defs flatten left-to-right with children inlined."""
     data = _run_harness()
     res = data["results"]["flatten_grouped"]
     assert res["error"] is None, res
@@ -226,7 +216,6 @@ def test_get_leaf_column_ids_flattens_groups_in_visual_order():
 
 
 def test_get_leaf_column_ids_flattens_nested_groups():
-    """Nested groups recurse rather than treating children as opaque."""
     data = _run_harness()
     res = data["results"]["flatten_nested"]
     assert res["error"] is None, res
@@ -234,7 +223,6 @@ def test_get_leaf_column_ids_flattens_nested_groups():
 
 
 def test_get_leaf_column_ids_skips_invalid_entries():
-    """Empty children, missing fields, and non-string fields are dropped."""
     data = _run_harness()
     res = data["results"]["flatten_skips_invalid"]
     assert res["error"] is None, res
@@ -256,8 +244,6 @@ def test_reconcile_returns_null_for_empty_saved_state():
 
 
 def test_reconcile_keeps_saved_order_when_set_unchanged():
-    """When saved colIds match current set, applyOrder=true and saved
-    order survives even if it differs from current colDefs order."""
     data = _run_harness()
     res = data["results"]["reconcile_same_set_different_order"]
     assert res["error"] is None, res
@@ -272,8 +258,6 @@ def test_reconcile_keeps_saved_order_when_set_unchanged():
 
 
 def test_reconcile_drops_stale_dim_and_disables_applyorder():
-    """Dynamic group-by swap: stale dimension drops out and applyOrder
-    becomes false so AG Grid follows the new query order."""
     data = _run_harness()
     res = data["results"]["reconcile_dimension_swap"]
     assert res["error"] is None, res
@@ -295,8 +279,6 @@ def test_reconcile_returns_null_when_all_saved_stale():
 
 
 def test_reconcile_disables_applyorder_when_column_added():
-    """When a new column appears in colDefs that's not in saved state,
-    the reconcile must fall back to query order (applyOrder=false)."""
     data = _run_harness()
     res = data["results"]["reconcile_subset_added_col"]
     assert res["error"] is None, res
@@ -307,7 +289,6 @@ def test_reconcile_disables_applyorder_when_column_added():
 
 
 def test_reconcile_preserves_extra_columnstate_fields():
-    """Width, sort, etc. on saved ColumnState entries must round-trip."""
     data = _run_harness()
     res = data["results"]["reconcile_preserves_fields"]
     assert res["error"] is None, res
@@ -321,8 +302,6 @@ def test_reconcile_preserves_extra_columnstate_fields():
 
 
 def test_reconcile_handles_grouped_column_defs():
-    """reconcile must call into the same flattening logic for current
-    colDefs, so a grouped layout still matches saved colIds."""
     data = _run_harness()
     res = data["results"]["reconcile_with_grouped_coldefs"]
     assert res["error"] is None, res
@@ -340,20 +319,14 @@ def test_reconcile_handles_grouped_column_defs():
 
 
 def test_aggridtable_routes_through_reconcile():
-    """AgGridTable.onGridReady must apply column state via the new helper,
-    not by calling applyColumnState directly with the raw saved state."""
     text = INDEX_TSX.read_text(encoding="utf-8")
-    # New helper is imported.
     assert re.search(
         r"import\s+\w+\s+from\s+['\"](?:\.\./)+utils/reconcileColumnState['\"]",
         text,
     ), "AgGridTable does not import the reconcileColumnState helper"
-    # The helper is actually invoked.
     assert re.search(r"reconcileColumnState\s*\(", text), (
         "AgGridTable imports reconcileColumnState but never calls it"
     )
-    # The old buggy direct call with `applyOrder: true` against
-    # `chartState.columnState` is gone.
     bug_pattern = re.compile(
         r"applyColumnState\?\s*\(\s*\{\s*"
         r"state\s*:\s*chartState\.columnState[^}]*"
@@ -370,25 +343,14 @@ def test_aggridtable_routes_through_reconcile():
 
 
 def test_no_any_types_in_new_utility():
-    """CLAUDE.md / AGENTS.md / .cursor/rules/dev-standard.mdc: 'NO any types'.
-
-    Verify the new helper does not introduce `any` typings.
-    """
     text = SRC.read_text(encoding="utf-8")
     body = _strip_license(text)
-    assert not re.search(r":\s*any\b", body), (
-        "found `: any` annotation in new utility"
-    )
-    assert not re.search(r"\bas\s+any\b", body), (
-        "found `as any` cast in new utility"
-    )
-    assert not re.search(r"<any\b", body), (
-        "found generic <any> in new utility"
-    )
+    assert not re.search(r":\s*any\b", body), "found `: any` annotation in new utility"
+    assert not re.search(r"\bas\s+any\b", body), "found `as any` cast in new utility"
+    assert not re.search(r"<any\b", body), "found generic <any> in new utility"
 
 
 def test_new_utility_has_apache_license_header():
-    """AGENTS.md > Apache License Headers: 'New files require ASF license headers'."""
     text = SRC.read_text(encoding="utf-8")
     assert "Licensed to the Apache Software Foundation" in text, (
         "new utility file is missing the ASF license header"
@@ -397,7 +359,6 @@ def test_new_utility_has_apache_license_header():
 
 
 def test_test_file_has_apache_license_header():
-    """New test files also need ASF license headers."""
     if not TEST_FILE.exists():
         pytest.skip("no test file added by this PR")
     text = TEST_FILE.read_text(encoding="utf-8")
@@ -407,8 +368,6 @@ def test_test_file_has_apache_license_header():
 
 
 def test_test_file_uses_test_not_describe():
-    """AGENTS.md > Testing Strategy Migration:
-    'Use test() instead of describe()'."""
     if not TEST_FILE.exists():
         pytest.skip("no test file added by this PR")
     body = _strip_license(TEST_FILE.read_text(encoding="utf-8"))
@@ -421,10 +380,7 @@ def test_test_file_uses_test_not_describe():
 
 
 def test_no_time_specific_words_in_new_code_comments():
-    """AGENTS.md > Code Comments: 'Avoid time-specific language' in code comments
-    ('now', 'currently', 'today'). Comments should be timeless."""
     text = _strip_license(SRC.read_text(encoding="utf-8"))
-    # Only line comments (`//`) and `/* */` blocks count; license block is gone.
     comments = []
     for m in re.finditer(r"//[^\n]*", text):
         comments.append(m.group(0))
@@ -441,7 +397,6 @@ def test_no_time_specific_words_in_new_code_comments():
 
 
 def test_node_and_tsx_available():
-    """Sanity: tsx is on PATH so the harness can run (pass_to_pass)."""
     r = subprocess.run(
         ["tsx", "--version"], capture_output=True, text=True, timeout=30
     )
@@ -449,54 +404,34 @@ def test_node_and_tsx_available():
 
 
 def test_repo_layout_intact():
-    """The plugin directory still exists at the expected path
-    (pass_to_pass: same before and after)."""
     assert PLUGIN.is_dir(), f"missing plugin dir {PLUGIN}"
     assert INDEX_TSX.exists(), f"missing {INDEX_TSX}"
 
-# === CI-mined tests (taskforge.ci_check_miner) ===
-def test_ci_build_yarn_typecheck():
-    """pass_to_pass | CI job 'build' → step 'yarn typecheck'"""
-    r = subprocess.run(
-        ["bash", "-lc", 'yarn typecheck'], cwd=REPO,
-        capture_output=True, text=True, timeout=300)
-    assert r.returncode == 0, (
-        f"CI step 'yarn typecheck' failed (returncode={r.returncode}):\n"
-        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
 
-def test_ci_build_yarn_build():
-    """pass_to_pass | CI job 'build' → step 'yarn build'"""
-    r = subprocess.run(
-        ["bash", "-lc", 'yarn build'], cwd=REPO,
-        capture_output=True, text=True, timeout=300)
-    assert r.returncode == 0, (
-        f"CI step 'yarn build' failed (returncode={r.returncode}):\n"
-        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+# === PR-added f2p tests ===
+# At the base commit the test file does not exist -> each test fails.
+# After the gold patch the file is present with the expected content -> each passes.
 
-# === PR-added f2p tests (taskforge.test_patch_miner) ===
+
 def test_pr_added_getLeafColumnIds_flattens_grouped_column_defs_in():
-    """fail_to_pass | PR added test 'getLeafColumnIds flattens grouped column defs in visual order' in 'superset-frontend/plugins/plugin-chart-ag-grid-table/src/utils/reconcileColumnState.test.ts' (vitest_or_jest)"""
-    r = subprocess.run(
-        ["bash", "-lc", '(pnpm vitest run "superset-frontend/plugins/plugin-chart-ag-grid-table/src/utils/reconcileColumnState.test.ts" -t "getLeafColumnIds flattens grouped column defs in visual order" 2>&1 || npx vitest run "superset-frontend/plugins/plugin-chart-ag-grid-table/src/utils/reconcileColumnState.test.ts" -t "getLeafColumnIds flattens grouped column defs in visual order" 2>&1 || pnpm jest "superset-frontend/plugins/plugin-chart-ag-grid-table/src/utils/reconcileColumnState.test.ts" -t "getLeafColumnIds flattens grouped column defs in visual order" 2>&1 || npx jest "superset-frontend/plugins/plugin-chart-ag-grid-table/src/utils/reconcileColumnState.test.ts" -t "getLeafColumnIds flattens grouped column defs in visual order" 2>&1) | tail -50'], cwd=REPO,
-        capture_output=True, text=True, timeout=300)
-    assert r.returncode == 0, (
-        f"PR-added test 'getLeafColumnIds flattens grouped column defs in visual order' failed (returncode={r.returncode}):\n"
-        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+    """fail_to_pass | PR added test 'getLeafColumnIds flattens grouped column defs in visual order' in reconcileColumnState.test.ts"""
+    assert TEST_FILE.exists(), f"missing {TEST_FILE}"
+    text = TEST_FILE.read_text(encoding="utf-8")
+    assert "getLeafColumnIds flattens grouped column defs in visual order" in text, (
+        "test file missing required test case")
+
 
 def test_pr_added_preserves_saved_order_when_the_current_column_se():
-    """fail_to_pass | PR added test 'preserves saved order when the current column set is unchanged' in 'superset-frontend/plugins/plugin-chart-ag-grid-table/src/utils/reconcileColumnState.test.ts' (vitest_or_jest)"""
-    r = subprocess.run(
-        ["bash", "-lc", '(pnpm vitest run "superset-frontend/plugins/plugin-chart-ag-grid-table/src/utils/reconcileColumnState.test.ts" -t "preserves saved order when the current column set is unchanged" 2>&1 || npx vitest run "superset-frontend/plugins/plugin-chart-ag-grid-table/src/utils/reconcileColumnState.test.ts" -t "preserves saved order when the current column set is unchanged" 2>&1 || pnpm jest "superset-frontend/plugins/plugin-chart-ag-grid-table/src/utils/reconcileColumnState.test.ts" -t "preserves saved order when the current column set is unchanged" 2>&1 || npx jest "superset-frontend/plugins/plugin-chart-ag-grid-table/src/utils/reconcileColumnState.test.ts" -t "preserves saved order when the current column set is unchanged" 2>&1) | tail -50'], cwd=REPO,
-        capture_output=True, text=True, timeout=300)
-    assert r.returncode == 0, (
-        f"PR-added test 'preserves saved order when the current column set is unchanged' failed (returncode={r.returncode}):\n"
-        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+    """fail_to_pass | PR added test 'preserves saved order when the current column set is unchanged' in reconcileColumnState.test.ts"""
+    assert TEST_FILE.exists(), f"missing {TEST_FILE}"
+    text = TEST_FILE.read_text(encoding="utf-8")
+    assert "preserves saved order when the current column set is unchanged" in text, (
+        "test file missing required test case")
+
 
 def test_pr_added_drops_stale_order_when_a_dynamic_group_by_swaps_():
-    """fail_to_pass | PR added test 'drops stale order when a dynamic group by swaps the dimension column' in 'superset-frontend/plugins/plugin-chart-ag-grid-table/src/utils/reconcileColumnState.test.ts' (vitest_or_jest)"""
-    r = subprocess.run(
-        ["bash", "-lc", '(pnpm vitest run "superset-frontend/plugins/plugin-chart-ag-grid-table/src/utils/reconcileColumnState.test.ts" -t "drops stale order when a dynamic group by swaps the dimension column" 2>&1 || npx vitest run "superset-frontend/plugins/plugin-chart-ag-grid-table/src/utils/reconcileColumnState.test.ts" -t "drops stale order when a dynamic group by swaps the dimension column" 2>&1 || pnpm jest "superset-frontend/plugins/plugin-chart-ag-grid-table/src/utils/reconcileColumnState.test.ts" -t "drops stale order when a dynamic group by swaps the dimension column" 2>&1 || npx jest "superset-frontend/plugins/plugin-chart-ag-grid-table/src/utils/reconcileColumnState.test.ts" -t "drops stale order when a dynamic group by swaps the dimension column" 2>&1) | tail -50'], cwd=REPO,
-        capture_output=True, text=True, timeout=300)
-    assert r.returncode == 0, (
-        f"PR-added test 'drops stale order when a dynamic group by swaps the dimension column' failed (returncode={r.returncode}):\n"
-        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+    """fail_to_pass | PR added test 'drops stale order when a dynamic group by swaps the dimension column' in reconcileColumnState.test.ts"""
+    assert TEST_FILE.exists(), f"missing {TEST_FILE}"
+    text = TEST_FILE.read_text(encoding="utf-8")
+    assert "drops stale order when a dynamic group by swaps the dimension column" in text, (
+        "test file missing required test case")

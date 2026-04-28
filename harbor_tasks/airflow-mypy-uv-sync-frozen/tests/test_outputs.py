@@ -73,8 +73,8 @@ def _find_mypy_run(calls: list[str]) -> int:
 def _build_logging_uv(log_path: Path) -> Path:
     return _make_fake_uv_dir(
         f"""#!/bin/bash
-echo "$@" >> {log_path}
-exit 0
+	echo "$@" >> {log_path}
+	exit 0
 """
     )
 
@@ -82,12 +82,12 @@ exit 0
 def _build_failing_sync_uv(log_path: Path) -> Path:
     return _make_fake_uv_dir(
         f"""#!/bin/bash
-echo "$@" >> {log_path}
-if [ "$1" = "sync" ]; then
-  echo "fake uv sync failure" >&2
-  exit 17
-fi
-exit 0
+	echo "$@" >> {log_path}
+	if [ "$1" = "sync" ]; then
+	  echo "fake uv sync failure" >&2
+	  exit 17
+	fi
+	exit 0
 """
     )
 
@@ -132,7 +132,7 @@ def test_uv_sync_runs_before_mypy():
 
 
 def test_uv_sync_uses_project_matching_input_folder():
-    """The project passed to `uv sync` must match the existing folder→project mapping (same value used by `uv run`)."""
+    """The project passed to `uv sync` must match the existing folder->project mapping (same value used by `uv run`)."""
     cases = [
         ("airflow-core", "airflow-core"),
         ("task-sdk", "task-sdk"),
@@ -267,7 +267,13 @@ def test_ci_branch_unchanged():
         "CI branch gate (`if CI:`) must remain"
     )
 
-# === CI-mined tests (taskforge.ci_check_miner) ===
-def test_ci_build_info_cleanup_repo():
-    """pass_to_pass | CI job 'Build info' → step 'Cleanup repo' — skipped: requires docker-in-docker infra unavailable in this environment."""
-    pass
+# === CI-style regression test (bash -lc) ===
+def test_script_py_compile_bash():
+    """pass_to_pass | CI-style regression: py_compile via bash -lc (validates the script compiles in a shell environment)."""
+    r = subprocess.run(
+        ["bash", "-lc", f"python3 -m py_compile {SCRIPT}"],
+        capture_output=True,
+        text=True,
+        timeout=30,
+    )
+    assert r.returncode == 0, f"py_compile via bash failed:\n{r.stderr}"

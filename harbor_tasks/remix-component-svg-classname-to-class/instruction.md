@@ -64,13 +64,17 @@ After your fix:
   <svg viewBox="0 0 24 24" fill="none" class="icon"><path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5"></path></svg>
   ```
 
+  (The output must not contain `class-name` or `classname=` anywhere.)
+
 - After `createRoot(container).render(<svg className="icon" viewBox="0 0 24 24" />)` and `flush()`:
   - `container.querySelector('svg').getAttribute('class')` is `"icon"`.
   - `container.querySelector('svg').getAttribute('class-name')` is `null`.
+  - `container.querySelector('svg').getAttribute('classname')` is `null`.
   - `container.querySelector('svg').getAttribute('viewBox')` is `"0 0 24 24"`.
 
 - `<div className="card">hi</div>` rendered via `renderToStream` still
-  produces output containing `class="card"` and not `class-name`.
+  produces output containing `class="card"` and not `class-name` or
+  `classname=`.
 
 - `pnpm --filter @remix-run/component run typecheck` continues to pass.
 

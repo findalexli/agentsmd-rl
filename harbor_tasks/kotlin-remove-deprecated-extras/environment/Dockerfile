@@ -22,6 +22,9 @@ RUN mkdir -p /workspace/lib && \
     curl -sL "https://repo1.maven.org/maven2/org/jetbrains/kotlin/kotlin-stdlib/${KOTLIN_VERSION}/kotlin-stdlib-${KOTLIN_VERSION}.jar" -o /workspace/lib/kotlin-stdlib.jar && \
     curl -sL "https://repo1.maven.org/maven2/org/jetbrains/kotlin/kotlin-test/${KOTLIN_VERSION}/kotlin-test-${KOTLIN_VERSION}.jar" -o /workspace/lib/kotlin-test.jar
 
+# Install pytest + pytest-json-ctrf for Harbor test harness
+RUN python3 -m pip install -q pytest pytest-json-ctrf
+
 # Download source files from the kotlin-tooling-core module
 ENV BASE_COMMIT=95085a77af52e78028044f0ea5404803232ad697
 ENV BASE_URL=https://raw.githubusercontent.com/JetBrains/kotlin/${BASE_COMMIT}
