@@ -24,8 +24,7 @@ checks:
 - id: valid_module_structure
   type: pass_to_pass
   origin: pr_diff
-  description: 'Generated module has import statements, export default, and type:
-    file'
+  description: 'Generated module has import statements, export default, and type: file'
 - id: not_stub
   type: pass_to_pass
   origin: static
@@ -73,8 +72,7 @@ checks:
 - id: uses_bun_glob_api
   type: pass_to_pass
   origin: agent_config
-  description: Function uses Bun.Glob for file scanning (prefer Bun APIs over native
-    fs)
+  description: Function uses Bun.Glob for file scanning (prefer Bun APIs over native fs)
   source:
     path: AGENTS.md
     lines: '15'
@@ -82,8 +80,7 @@ checks:
 - id: test_repo_typescript_syntax_valid
   type: pass_to_pass
   origin: repo_tests
-  description: Repo's TypeScript files must have valid syntax (bun build can parse
-    them)
+  description: Repo's TypeScript files must have valid syntax (bun build can parse them)
 - id: test_repo_bun_lockfile_valid
   type: pass_to_pass
   origin: repo_tests
@@ -100,94 +97,93 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: All imports in build.ts must use valid syntax
+- id: test_ci_e2e_run_app_e2e_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: e2e / Run app e2e tests'
+- id: test_ci_unit_run_unit_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: unit / Run unit tests'
+- id: test_ci_typecheck_run_typecheck
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: typecheck / Run typecheck'
+- id: test_ci_build_electron_prepare
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: build-electron / Prepare'
+- id: test_ci_build_electron_build
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: build-electron / Build'
+- id: test_ci_build_tauri_show_tauri_cli_version
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: build-tauri / Show tauri-cli version'
 rubric:
-- rule: 'The solution modifies build.ts to fix Windows path issues: uses relative
-    import specifiers, sorts export keys, and normalizes backslashes.'
+- rule: 'The solution modifies build.ts to fix Windows path issues: uses relative import specifiers, sorts export keys, and normalizes backslashes.'
   source:
     path: packages/opencode/script/build.ts
     lines: 68-90
     commit: b7a06e193952a66a8efa07feb4e105f44bf7ea8b
-  reference: "const dist = path.join(appDir, \"dist\")\nconst files = (await Array.fromAsync(new\
-    \ Bun.Glob(\"**/*\").scan({ cwd: dist })))\n  .map((file) => file.replaceAll(\"\
-    \\\\\", \"/\"))\n  .sort()\n"
+  reference: "const dist = path.join(appDir, \"dist\")\nconst files = (await Array.fromAsync(new Bun.Glob(\"**/*\").scan({ cwd: dist })))\n  .map((file) => file.replaceAll(\"\\\\\", \"/\"))\n  .sort()\n"
 - rule: Use single word names by default for new locals, params, and helper functions.
   source:
     path: AGENTS.md
     lines: 21-32
-  evidence: The gold solution introduces new variables `dist`, `files`, `imports`,
-    `entries`, and `spec`, all of which are single words.
+  evidence: The gold solution introduces new variables `dist`, `files`, `imports`, `entries`, and `spec`, all of which are single words.
   category: naming
 - rule: Prefer functional array methods (flatMap, filter, map) over for loops
   source:
     path: AGENTS.md
     lines: 17-18
-  evidence: The gold solution uses `.map()` to transform the `files` array into `imports`
-    and `entries` arrays instead of using a `for` loop.
+  evidence: The gold solution uses `.map()` to transform the `files` array into `imports` and `entries` arrays instead of using a `for` loop.
   category: style
 - rule: Prefer `const` over `let`.
   source:
     path: AGENTS.md
     lines: 60-61
-  evidence: The gold solution uses `const` for all new variables (`dist`, `files`,
-    `imports`, `entries`, `spec`) and avoids reassignment.
+  evidence: The gold solution uses `const` for all new variables (`dist`, `files`, `imports`, `entries`, `spec`) and avoids reassignment.
   category: style
 - rule: Prefer single word names for variables and functions.
   source:
     path: AGENTS.md
     lines: 25-33
-  evidence: The gold solution introduces new variables using single-word names (`files`,
-    `imports`, `entries`, `spec`) instead of multi-word alternatives like `fileList`,
-    `importStatements`, or `importSpecifier`.
+  evidence: The gold solution introduces new variables using single-word names (`files`, `imports`, `entries`, `spec`) instead of multi-word alternatives like `fileList`, `importStatements`, or `importSpecifier`.
   category: naming
 - rule: Prefer `const` over `let`. Use ternaries or early returns instead of reassignment.
   source:
     path: AGENTS.md
     lines: 62-63
-  evidence: 'The gold solution uses `const` for all variable declarations and employs
-    a ternary operator (`spec.startsWith(".") ? spec : ...`) instead of an `if/else`
-    block with a `let` reassignment.'
+  evidence: 'The gold solution uses `const` for all variable declarations and employs a ternary operator (`spec.startsWith(".") ? spec : ...`) instead of an `if/else` block with a `let` reassignment.'
   category: style
-- rule: Prefer single word variable names where possible. Use single word names by
-    default for new locals.
+- rule: Prefer single word variable names where possible. Use single word names by default for new locals.
   source:
     path: AGENTS.md
     lines: 20-32
-  evidence: The gold solution introduces new variables with single-word names like
-    `dist`, `files`, `imports`, `entries`, and `spec`, adhering to the strict naming
-    enforcement.
+  evidence: The gold solution introduces new variables with single-word names like `dist`, `files`, `imports`, `entries`, and `spec`, adhering to the strict naming enforcement.
   category: naming
 distractors:
-- rule: Prefer `Path.Path`, `Config`, `Clock`, and `DateTime` when those concerns
-    are already inside Effect code.
+- rule: Prefer `Path.Path`, `Config`, `Clock`, and `DateTime` when those concerns are already inside Effect code.
   collision_type: architecture_boundary
-  why_distracting: The agent might try to import and use Effect's `Path.Path` service
-    instead of Node's built-in `path` module. However, this is a plain Node/Bun build
-    script, not an Effect service, so introducing Effect dependencies here is incorrect.
+  why_distracting: The agent might try to import and use Effect's `Path.Path` service instead of Node's built-in `path` module. However, this is a plain Node/Bun build script, not an Effect service, so introducing Effect dependencies here is incorrect.
   severity: high
   source:
     path: packages/opencode/AGENTS.md
     lines: 38-40
 - rule: Use `Effect.gen(function* () { ... })` for composition.
   collision_type: architecture_boundary
-  why_distracting: The agent might attempt to refactor the `createEmbeddedWebUIBundle`
-    async function into an `Effect.gen` generator. This would unnecessarily complicate
-    a simple build script that doesn't use the Effect runtime.
+  why_distracting: The agent might attempt to refactor the `createEmbeddedWebUIBundle` async function into an `Effect.gen` generator. This would unnecessarily complicate a simple build script that doesn't use the Effect runtime.
   severity: medium
   source:
     path: packages/opencode/AGENTS.md
     lines: 16-17
 - rule: Reduce total variable count by inlining when a value is only used once.
   collision_type: rule_conflict
-  why_distracting: The agent might try to inline the `imports` and `entries` arrays
-    directly into the final returned array since they are only used once. This would
-    make the template literal logic overly dense and harder to read, conflicting with
-    general readability.
+  why_distracting: The agent might try to inline the `imports` and `entries` arrays directly into the final returned array since they are only used once. This would make the template literal logic overly dense and harder to read, conflicting with general readability.
   severity: low
   source:
     path: AGENTS.md
     lines: 45-46
-hierarchy_analysis: The agent must navigate from the root `AGENTS.md` to the package-level
-  `packages/opencode/AGENTS.md`. The package-level rules are heavily focused on Effect
-  and Drizzle, which are irrelevant for a build script. The agent must recognize the
-  architectural boundary and apply the general style rules from the root config while
-  ignoring the domain-specific rules from the package config.
+hierarchy_analysis: The agent must navigate from the root `AGENTS.md` to the package-level `packages/opencode/AGENTS.md`. The package-level rules are heavily focused on Effect and Drizzle, which are irrelevant for a build script. The agent must recognize the architectural boundary and apply the general style rules from the root config while ignoring the domain-specific rules from the package config.

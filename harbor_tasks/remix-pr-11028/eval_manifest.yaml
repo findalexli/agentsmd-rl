@@ -1,0 +1,119 @@
+version: '2.0'
+source:
+  repo: remix-run/remix
+  pr: 11028
+  base_commit: 35f35e82b26381f7f402d5d75db3b60e5329fb6c
+  merge_commit: f7bfb9452dadef8f99b018379a58d30c219ee7b2
+task:
+  kind: code_fix
+checks:
+- id: test_route_pattern_match_has_params_meta
+  type: fail_to_pass
+  origin: pr_diff
+  description: RoutePattern.match() returns paramsMeta on the result object
+- id: test_trie_matcher_match_has_params_meta
+  type: fail_to_pass
+  origin: pr_diff
+  description: TrieMatcher.match() returns paramsMeta on the result object
+- id: test_specificity_compare_uses_params_meta
+  type: fail_to_pass
+  origin: pr_diff
+  description: compare() from specificity.ts reads paramsMeta from match objects
+- id: test_repo_tests_pass
+  type: pass_to_pass
+  origin: repo_tests
+  description: Route-pattern test suite passes
+- id: test_ci_check_lint
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: check / Lint'
+- id: test_ci_check_typecheck
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: check / Typecheck'
+- id: test_ci_check_check_change_files
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: check / Check change files'
+- id: test_ci_format_format
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: format / Format'
+- id: test_ci_build_build_packages
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: build / Build packages'
+rubric:
+- rule: 'Imports: Always use import type { X } for types (separate from value imports); use export type { X } for type exports; include .ts extensions'
+  source:
+    path: AGENTS.md
+    lines: '19'
+    commit: 35f35e82b26381f7f402d5d75db3b60e5329fb6c
+  evidence: The PR uses import type for TypeScript-only imports like RoutePatternMatch, Params
+  category: style
+  verification: llm_judge
+- rule: 'Variables: Prefer let for locals, const only at module scope; never use var'
+  source:
+    path: AGENTS.md
+    lines: '21'
+    commit: 35f35e82b26381f7f402d5d75db3b60e5329fb6c
+  evidence: The PR's code changes use let for local variables
+  category: style
+  verification: llm_judge
+- rule: 'Functions: Use regular function declarations/expressions by default.'
+  source:
+    path: AGENTS.md
+    lines: '22'
+    commit: 35f35e82b26381f7f402d5d75db3b60e5329fb6c
+  evidence: The diff does not introduce arrow functions unnecessarily
+  category: style
+  verification: llm_judge
+- rule: 'Comments: Only add non-JSDoc comments when the code is doing something surprising or non-obvious'
+  source:
+    path: AGENTS.md
+    lines: '27'
+    commit: 35f35e82b26381f7f402d5d75db3b60e5329fb6c
+  evidence: The PR adds a JSDoc comment for the renamed property
+  category: style
+  verification: llm_judge
+- rule: Tests run from source (no build required), using Node.js test runner
+  source:
+    path: AGENTS.md
+    lines: '16'
+    commit: 35f35e82b26381f7f402d5d75db3b60e5329fb6c
+  evidence: Test changes conform to Node.js test runner conventions
+  category: testing
+  verification: llm_judge
+- rule: 'Adding changes: Create packages/*/.changes/[major|minor|patch].short-description.md files.'
+  source:
+    path: AGENTS.md
+    lines: '33'
+    commit: 35f35e82b26381f7f402d5d75db3b60e5329fb6c
+  evidence: The PR includes a .changes/minor.rename-meta-to-paramsMeta.md changeset file
+  category: process
+  verification: llm_judge
+- rule: 'BREAKING CHANGE: Rename match `meta` to `paramsMeta`'
+  source:
+    path: packages/route-pattern/.changes/minor.rename-meta-to-paramsMeta.md
+    lines: '1'
+    commit: f7bfb9452dadef8f99b018379a58d30c219ee7b2
+  evidence: Gold changeset describes the breaking change accurately
+  category: documentation
+  verification: llm_judge
+distractors:
+- rule: 'No loops or conditionals in test suites: Do not use for loops or conditional statements (if, switch, etc.) to generate test cases within describe() blocks.'
+  source:
+    path: AGENTS.md
+    lines: '30'
+    commit: 35f35e82b26381f7f402d5d75db3b60e5329fb6c
+  collision_type: scope_ambiguity
+  why_distracting: This rule applies to test suite structure, not the implementation code changes in this PR
+  severity: low
+- rule: No TypeScript accessibility modifiers
+  source:
+    path: AGENTS.md
+    lines: '24'
+    commit: 35f35e82b26381f7f402d5d75db3b60e5329fb6c
+  collision_type: scope_ambiguity
+  why_distracting: The PR doesn't add or remove accessibility modifiers; this is about class member style which is unrelated
+  severity: low

@@ -102,12 +102,6 @@ def test_check_cpp_style():
     This is the actual CI style check used in ClickHouse's pull request checks.
     Only checks for style violations in the target file.
     """
-    # Install ripgrep if not present (needed by check_cpp.sh)
-    r = subprocess.run(
-        ["apt-get", "install", "-y", "ripgrep"],
-        capture_output=True, text=True, timeout=60
-    )
-
     # Run the style check script
     r = subprocess.run(
         ["bash", str(REPO / "ci/jobs/scripts/check_style/check_cpp.sh")],

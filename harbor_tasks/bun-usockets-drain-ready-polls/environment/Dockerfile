@@ -12,7 +12,7 @@ RUN apt-get update && \
 RUN git init /workspace/bun && \
     cd /workspace/bun && \
     git remote add origin https://github.com/oven-sh/bun.git && \
-    git fetch --depth=1 origin 3f41407f47eb009c654e45def5f3f67d6ce6c8ee && \
+    git fetch --depth=100 origin 3f41407f47eb009c654e45def5f3f67d6ce6c8ee && \
     git checkout FETCH_HEAD && \
     git config user.email "agent@test" && \
     git config user.name "Agent"

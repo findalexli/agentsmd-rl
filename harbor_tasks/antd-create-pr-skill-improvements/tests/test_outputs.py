@@ -150,3 +150,8 @@ def test_repo_skill_files_present():
     tracked = r.stdout.strip().splitlines()
     assert ".claude/skills/create-pr/SKILL.md" in tracked
     assert ".claude/skills/create-pr/references/template-notes-and-examples.md" in tracked
+
+# === CI-mined tests ===
+# Dropped: test_ci_build_project_run_script (requires yarn toolchain)
+# Dropped: test_ci_test_image_generate_image_snapshots (requires node, puppeteer, network)
+# These CI-mined tests are irrelevant to this markdown_authoring task.

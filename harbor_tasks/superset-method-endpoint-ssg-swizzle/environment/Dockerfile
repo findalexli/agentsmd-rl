@@ -66,7 +66,7 @@ if (!entry || !outfile) {
             }));
             build.onLoad({ filter: /.*/, namespace: 'doc-mock' }, () => ({
               contents:
-                "const fn = function BrowserOnly(){ return null; };\n" +
+                "const fn = function BrowserOnly(){ return '__BROWSER_ONLY_MARKER__'; };\n" +
                 "module.exports = fn;\n" +
                 "module.exports.default = fn;\n",
               loader: 'js',

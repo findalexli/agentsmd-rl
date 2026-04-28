@@ -496,3 +496,13 @@ print("SIGNATURE_OK")
     )
     assert r.returncode == 0, f"Reward function signature check failed: {r.stderr}\\n{r.stdout}"
     assert "SIGNATURE_OK" in r.stdout
+
+# === CI-mined tests (taskforge.ci_check_miner) ===
+def test_ci_build_build_the_book():
+    """pass_to_pass | CI job 'build' → step 'Build the book'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'jupyter-book build docs'], cwd=REPO,
+        capture_output=True, text=True, timeout=900)
+    assert r.returncode == 0, (
+        f"CI step 'Build the book' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")

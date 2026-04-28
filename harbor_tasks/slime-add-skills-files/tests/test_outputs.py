@@ -189,6 +189,8 @@ def test_all_skills_have_required_sections():
         text = _read(p)
         assert "## When to Use" in text, f"{p}: missing '## When to Use' section"
         assert "## Step-by-Step Guide" in text, f"{p}: missing '## Step-by-Step Guide' section"
-        # Frontmatter must declare the slug as the skill name.
+        # Frontmatter must declare the slug as the skill name and carry a
+        # non-trivial description so agents can discover when to invoke it.
         fm = _frontmatter(text)
         assert fm.get("name") == slug, f"{p}: frontmatter name '{fm.get('name')}' != dir slug '{slug}'"
+        assert "description" in fm and len(fm["description"]) > 20,             f"{p}: description missing or too short ({len(fm.get('description', ''))} chars)"

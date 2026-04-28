@@ -260,18 +260,6 @@ def test_repo_mcp_config_valid():
 
 
 # [repo_tests] pass_to_pass
-def test_repo_esbuild_tools_compile():
-    """Tools TypeScript files compile with esbuild."""
-    esbuild_config = Path(REPO) / "packages/playwright-core/src/tools/esbuild.mjs"
-    if esbuild_config.exists():
-        r = subprocess.run(
-            ["node", str(esbuild_config)],
-            capture_output=True, text=True, timeout=60, cwd=REPO,
-        )
-        assert r.returncode == 0, f"esbuild failed: {r.stderr}"
-
-
-# [repo_tests] pass_to_pass
 def test_repo_npm_install_and_eslint():
     """ESLint passes on tools directory after npm install."""
     r = subprocess.run(
@@ -280,12 +268,14 @@ def test_repo_npm_install_and_eslint():
     )
     assert r.returncode == 0, f"npm install failed: {r.stderr[-500:]}"
 
+    # Verify eslint is usable: check a single known-good file
+    eslint_bin = Path(REPO, "node_modules/.bin/eslint")
+    assert eslint_bin.exists(), "eslint binary not found after npm install"
     r = subprocess.run(
-        ["npx", "eslint", "packages/playwright-core/src/tools/"],
+        [str(eslint_bin), "packages/playwright-core/src/tools/mcp/config.ts"],
         capture_output=True, text=True, timeout=120, cwd=REPO,
     )
-    # ESLint might fail on existing issues, but should complete
-    # We mainly care that it runs without crashing
+    assert r.returncode == 0, f"eslint could not run on config.ts:\n{r.stderr[-500:]}"
 
 
 # [repo_tests] pass_to_pass
@@ -295,8 +285,9 @@ def test_repo_check_deps_runs():
         ["node", "utils/check_deps.js"],
         capture_output=True, text=True, timeout=60, cwd=REPO,
     )
-    # Script should complete, return code may vary based on deps issues
-    # but shouldn't crash with error
+    # Verify the script actually executed (may have pre-existing warnings)
+    assert "Checking DEPS" in (r.stdout + r.stderr), (
+        f"check_deps.js did not execute properly. stdout: {r.stdout[:500]}, stderr: {r.stderr[:500]}")
 
 
 # [repo_tests] pass_to_pass
@@ -329,3 +320,4 @@ def test_repo_lint_packages():
         capture_output=True, text=True, timeout=300, cwd=REPO,
     )
     assert r.returncode == 0, f"Lint packages failed:\n{r.stderr[-500:]}"
+

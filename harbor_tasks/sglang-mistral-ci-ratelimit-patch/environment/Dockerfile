@@ -1,7 +1,7 @@
 FROM python:3.12-slim
 
 RUN rm -rf /var/lib/apt/lists/* && apt-get update && apt-get install -y \
-    git curl ca-certificates build-essential tmux \
+    git curl ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 
 # Clone repo at the base commit (before the fix)
@@ -15,14 +15,10 @@ RUN mkdir -p /logs/verifier
 
 WORKDIR /repo
 
-# Install minimal deps — only what we need for testing hf_transformers_utils.py
-# The sglang package needs various deps; install base package in editable mode
-RUN pip install --no-cache-dir -e "python/" 2>/dev/null || \
-    pip install --no-cache-dir -e "python/[dev]" 2>/dev/null || \
-    echo "Editable install attempted"
-
-# Ensure PYTHONPATH includes the repo
-ENV PYTHONPATH="/repo/python:${PYTHONPATH}"
+# Install test-runner dependencies (lightweight).
+# The behavioral fail_to_pass tests use AST extraction + mocked modules
+# and do not need sglang/transformers/torch importable at runtime.
+RUN pip install --no-cache-dir pytest pytest-json-ctrf pyyaml tomli
 
 # Configure git user for any patch operations
 RUN git config user.email "test@test.com" && git config user.name "Test"

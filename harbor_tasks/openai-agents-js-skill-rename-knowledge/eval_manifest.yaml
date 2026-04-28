@@ -1,0 +1,204 @@
+version: '2.0'
+source:
+  repo: openai/openai-agents-js
+  pr: 836
+  base_commit: 41c1b89f650a9d18aeb76677f965dcfb06087c90
+  merge_commit: ece9cd964494339dbb5e76e0389cc527a81384aa
+task:
+  kind: markdown_authoring
+checks:
+- id: test_agents_md_has_code_change_verification_section
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'AGENTS.md has a ### `$code-change-verification` subsection'
+- id: test_agents_md_has_openai_knowledge_section
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'AGENTS.md has a ### `$openai-knowledge` subsection'
+- id: test_agents_md_describes_skip_rules
+  type: fail_to_pass
+  origin: pr_diff
+  description: AGENTS.md describes when code-change-verification can be skipped
+- id: test_agents_md_no_stale_verify_changes_refs
+  type: fail_to_pass
+  origin: pr_diff
+  description: AGENTS.md no longer has stale $verify-changes references
+- id: test_code_change_verification_skill_exists
+  type: fail_to_pass
+  origin: pr_diff
+  description: .codex/skills/code-change-verification/SKILL.md exists with correct frontmatter
+- id: test_openai_knowledge_skill_exists
+  type: fail_to_pass
+  origin: pr_diff
+  description: .codex/skills/openai-knowledge/SKILL.md exists with correct frontmatter
+- id: test_old_skill_directory_removed
+  type: fail_to_pass
+  origin: pr_diff
+  description: Old .codex/skills/verify-changes/ no longer exists
+- id: test_scripts_use_new_name
+  type: fail_to_pass
+  origin: pr_diff
+  description: Verification scripts echo the new skill name
+- id: test_repo_structure_intact
+  type: pass_to_pass
+  origin: static
+  description: Repo root structure intact, run.sh is valid bash
+- id: test_ci_test_build_all_packages
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: test / Build all packages'
+- id: test_ci_test_check_generated_declarations
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: test / Check generated declarations'
+- id: test_ci_test_run_linter
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: test / Run linter'
+- id: test_ci_test_type_check_docs_scripts
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: test / Type-check docs scripts'
+- id: test_ci_test_compile_examples
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: test / Compile examples'
+- id: test_ci_test_run_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: test / Run tests'
+config_edits:
+- path: AGENTS.md
+  tier: 1
+  gold_added: '### `$code-change-verification`
+
+
+    Run `$code-change-verification` before marking work complete when changes affect runtime code, tests, or build/test behavior.
+
+
+    Run it when you change:
+
+
+    - `packages/`, `examples/`, `helpers/`, `scripts/`, or `integration-tests/`
+
+    - Root build/test config such as `package.json`, `pnpm-lock.yaml`, `pnpm-workspace.yaml`, `tsconfig*.json`, `eslint.config.*`, or `vitest*.ts`
+
+
+    You can skip `$code-change-verification` for docs-only or repo-meta changes (for example, `docs/`, `.codex/`, `README.md`, `AGENTS.md`, `.github/`), unless a user explicitly asks to run the full verification stack.
+
+
+    ### `$openai-knowledge`
+
+
+    When working on OpenAI API or OpenAI platform integrations in this repo (Responses API, tools, streaming, Realtime API, auth, models, rate limits, MCP, Agents SDK/ChatGPT Apps SDK), use `$openai-knowledge` to pull authoritative docs via the OpenAI Developer Docs MCP server (and guide setup if it is not configured).
+
+    '
+  gold_removed: 'Always load and use the `$verify-changes` skill immediately after any code change and before you consider the work complete. It executes the mandatory verification stack from the repository root; rerun the stack after fixing failures.
+
+    '
+- path: AGENTS.md
+  tier: 1
+  gold_added: 'When `$code-change-verification` applies (see Mandatory Skill Usage), invoke it to run the required verification stack from the repository root. Rerun the full stack after fixes.
+
+    '
+  gold_removed: 'After any code modification, invoke the `$verify-changes` skill to run the required verification stack from the repository root. Rerun the full stack after fixes.
+
+    '
+- path: AGENTS.md
+  tier: 1
+  gold_added: 'When `$code-change-verification` applies (see Mandatory Skill Usage), run the full validation sequence locally via the `$code-change-verification` skill; do not skip any step or change the order.
+
+    '
+  gold_removed: 'For every code change, run the full validation sequence locally via the `$verify-changes` skill; do not skip any step or change the order.
+
+    '
+- path: AGENTS.md
+  tier: 1
+  gold_added: 'When `$code-change-verification` applies (see Mandatory Skill Usage), run it to execute the full verification stack in order before considering the work complete.
+
+    '
+  gold_removed: 'Run all checks using the `$verify-changes` skill to execute the full verification stack in order before considering the work complete.
+
+    '
+- path: .codex/skills/code-change-verification/SKILL.md
+  tier: 1
+  gold_added: 'name: code-change-verification
+
+    description: Run the mandatory verification stack when changes affect runtime code, tests, or build/test behavior in the OpenAI Agents JS monorepo.
+
+    '
+  gold_removed: 'name: verify-changes
+
+    description: Run all mandatory verification steps for code changes in the OpenAI Agents JS monorepo.
+
+    '
+- path: .codex/skills/code-change-verification/SKILL.md
+  tier: 1
+  gold_added: 'Ensure work is only marked complete after installing dependencies, building, linting, type checking (including generated declarations), and tests pass. Use this skill when changes affect runtime code, tests, or build/test configuration.
+
+    '
+  gold_removed: 'Ensure work is only marked complete after installing dependencies, building, linting, type checking (including generated declarations), and tests pass. Use this skill whenever wrapping up a task, before opening a PR, or when asked to confirm that changes are ready to hand off.
+
+    '
+- path: .codex/skills/openai-knowledge/SKILL.md
+  tier: 1
+  gold_added: "---\nname: openai-knowledge\ndescription: Use when working with the OpenAI API (Responses API) or OpenAI platform features (tools, streaming, Realtime API, auth, models, rate limits, MCP) and you need authoritative, up-to-date documentation (schemas, examples, limits, edge cases). Prefer the OpenAI Developer Documentation MCP server tools when available; otherwise guide the user to enable `openaiDeveloperDocs`.\n---\n\n# OpenAI Knowledge\n\n## Overview\n\nUse the OpenAI Developer Documentation MCP server to search and fetch exact docs (markdown), then base your answer on that text instead of guessing.\n\n## Workflow\n\n### 1) Check whether the Docs MCP server is available\n\nIf the `mcp__openaiDeveloperDocs__*` tools are available, use them.\n\nIf you are unsure, run `codex mcp list` and check for `openaiDeveloperDocs`.\n\n### 2) Use MCP tools to pull exact docs\n\n- Search first, then fetch the specific page(s).\n  - `mcp__openaiDeveloperDocs__search_openai_docs` → pick the best URL.\n  - `mcp__openaiDeveloperDocs__fetch_openai_doc` → retrieve the exact markdown (optionally with an `anchor`).\n- When you need endpoint schemas or parameters, use:\n  - `mcp__openaiDeveloperDocs__get_openapi_spec`\n  - `mcp__openaiDeveloperDocs__list_api_endpoints`\n\nBase your answer on the fetched text and quote or paraphrase it precisely. Do not invent flags, field names, defaults, or limits.\n\n### 3) If MCP is not configured, guide setup (do not change config unless asked)\n\nProvide one of these setup options, then ask the user to restart the Codex session so the tools load:\n\n- CLI:\n  - `codex mcp add openaiDeveloperDocs --url https://developers.openai.com/mcp`\n- Config file (`~/.codex/config.toml`):\n  - Add:\n    ```toml\n    [mcp_servers.openaiDeveloperDocs]\n    url = \"https://developers.openai.com/mcp\"\n    ```\n\nAlso point to: https://developers.openai.com/resources/docs-mcp#quickstart\n"
+  gold_removed: ''
+rubric:
+- rule: 'Run from the repository root in this order: `pnpm i`, `pnpm build`, `pnpm -r build-check`, `pnpm -r -F "@openai/*" dist:check`, `pnpm lint`, `pnpm test`.'
+  source:
+    path: .codex/skills/code-change-verification/SKILL.md
+    lines: '21'
+    commit: ece9cd964494339dbb5e76e0389cc527a81384aa
+  evidence: Gold preserves the full verification command sequence in the renamed skill's Manual workflow section.
+  category: style
+  verification: llm_judge
+- rule: Do not skip steps; stop and fix issues immediately when a command fails.
+  source:
+    path: .codex/skills/code-change-verification/SKILL.md
+    lines: '22'
+    commit: ece9cd964494339dbb5e76e0389cc527a81384aa
+  evidence: Gold retains the fail-fast instruction in the renamed skill.
+  category: style
+  verification: llm_judge
+- rule: Comments must end with a period.
+  source:
+    path: AGENTS.md
+    lines: '96'
+    commit: 41c1b89f650a9d18aeb76677f965dcfb06087c90
+  evidence: All comments in the gold SKILL.md files and AGENTS.md edits end with periods.
+  category: style
+  verification: llm_judge
+- rule: Base your answer on the fetched text and quote or paraphrase it precisely. Do not invent flags, field names, defaults, or limits.
+  source:
+    path: .codex/skills/openai-knowledge/SKILL.md
+    lines: '25'
+    commit: ece9cd964494339dbb5e76e0389cc527a81384aa
+  evidence: Gold openai-knowledge SKILL.md instructs agents to use fetched documentation text verbatim.
+  category: naming
+  verification: llm_judge
+distractors:
+- rule: Always load and use the `$verify-changes` skill immediately after any code change and before you consider the work complete.
+  source:
+    path: AGENTS.md
+    lines: '28'
+    commit: 41c1b89f650a9d18aeb76677f965dcfb06087c90
+  collision_type: rule_conflict
+  why_distracting: Old rule mandates unconditional verify-changes; PR makes it conditional. An agent that preserves the old unconditional language fails.
+  severity: high
+- rule: For every code change, run the full validation sequence locally via the `$verify-changes` skill; do not skip any step or change the order.
+  source:
+    path: AGENTS.md
+    lines: '121'
+    commit: 41c1b89f650a9d18aeb76677f965dcfb06087c90
+  collision_type: rule_conflict
+  why_distracting: Old rule says 'every code change'; PR scopes it to only runtime/test/build changes. An agent that keeps the old unconditional scope fails.
+  severity: high
+- rule: Use this skill whenever wrapping up a task, before opening a PR, or when asked to confirm that changes are ready to hand off.
+  source:
+    path: .codex/skills/verify-changes/SKILL.md
+    lines: '8'
+    commit: 41c1b89f650a9d18aeb76677f965dcfb06087c90
+  collision_type: rule_conflict
+  why_distracting: Old SKILL.md description says to run on every task wrap-up; gold narrows to code/test/build changes only.
+  severity: medium

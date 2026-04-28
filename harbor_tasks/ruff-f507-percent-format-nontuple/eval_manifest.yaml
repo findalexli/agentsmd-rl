@@ -88,127 +88,148 @@ checks:
 - id: repo_ruff_python_semantic_tests
   type: pass_to_pass
   origin: repo_tests
-  description: Repo ruff_python_semantic tests pass - contains ResolvedPythonType
-    used by F507 fix
+  description: Repo ruff_python_semantic tests pass - contains ResolvedPythonType used by F507 fix
+- id: test_ci_cargo_build_build_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: cargo build / Build tests'
+- id: test_ci_benchmarks_instrumented_ty_build_benchmarks
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: benchmarks instrumented ty / Build benchmarks'
+- id: test_ci_cargo_fuzz_build_cargo
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: cargo fuzz build / '
+- id: test_ci_cargo_test_ty_mdtests_github_annotations
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: cargo test / ty mdtests (GitHub annotations)'
+- id: test_ci_cargo_test_run_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: cargo test / Run tests'
+- id: test_ci_cargo_test_dogfood_ty_on_py_fuzzer
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: cargo test / Dogfood ty on py-fuzzer'
+- id: test_ci_cargo_test_dogfood_ty_on_the_scripts_directory
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: cargo test / Dogfood ty on the scripts directory'
+- id: test_ci_cargo_test_dogfood_ty_on_ty_benchmark
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: cargo test / Dogfood ty on ty_benchmark'
+- id: test_ci_cargo_test_cargo
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: cargo test / '
+- id: test_ci_cargo_test_cargo
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: cargo test / '
+- id: test_ci_benchmarks_walltime_build_benchmarks
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: benchmarks walltime / Build benchmarks'
+- id: test_ci_test_ruff_lsp_build_ruff_binary
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: test ruff-lsp / Build Ruff binary'
+- id: test_ci_cargo_test_cargo_2
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: cargo test / '
+- id: test_ci_test_ruff_lsp_run_ruff_lsp_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: test ruff-lsp / Run ruff-lsp tests'
 rubric:
 - rule: Follow existing code style. Check neighboring files for patterns.
   source:
     path: AGENTS.md
     lines: '75'
     commit: b8fad8312fde560943653811ae3e16e22b99dfc7
-- rule: Use comments purposefully. Don't use comments to narrate code, but do use
-    them to explain invariants and why something unusual was done a particular way.
+- rule: Use comments purposefully. Don't use comments to narrate code, but do use them to explain invariants and why something unusual was done a particular way.
   source:
     path: AGENTS.md
     lines: '82'
     commit: b8fad8312fde560943653811ae3e16e22b99dfc7
-- rule: Prefer let chains (if let combined with &&) over nested if let statements
-    to reduce indentation and improve readability.
+- rule: Prefer let chains (if let combined with &&) over nested if let statements to reduce indentation and improve readability.
   source:
     path: AGENTS.md
     lines: '80'
     commit: b8fad8312fde560943653811ae3e16e22b99dfc7
-- rule: Look to see if your tests could go in an existing file before adding a new
-    file for your tests.
+- rule: Look to see if your tests could go in an existing file before adding a new file for your tests.
   source:
     path: AGENTS.md
     lines: 51-52
-  evidence: The gold solution appends test cases to the existing `crates/ruff_linter/resources/test/fixtures/pyflakes/F50x.py`
-    file rather than creating a new fixture file for this specific bug.
+  evidence: The gold solution appends test cases to the existing `crates/ruff_linter/resources/test/fixtures/pyflakes/F50x.py` file rather than creating a new fixture file for this specific bug.
   category: testing
 - rule: Rust imports should always go at the top of the file, never locally in functions.
   source:
     path: AGENTS.md
     lines: 55-56
-  evidence: The gold solution adds `use ruff_python_semantic::analyze::type_inference::{PythonType,
-    ResolvedPythonType};` at the top of `crates/ruff_linter/src/rules/pyflakes/rules/strings.rs`
-    instead of importin
+  evidence: The gold solution adds `use ruff_python_semantic::analyze::type_inference::{PythonType, ResolvedPythonType};` at the top of `crates/ruff_linter/src/rules/pyflakes/rules/strings.rs` instead of importin
   category: style
-- rule: Avoid writing significant amounts of new code. Look for existing utilities
-    first.
+- rule: Avoid writing significant amounts of new code. Look for existing utilities first.
   source:
     path: AGENTS.md
     lines: 58-59
-  evidence: The gold solution leverages the existing `ResolvedPythonType::from(right)`
-    utility to infer the type of the RHS instead of writing custom AST traversal or
-    type checking logic.
+  evidence: The gold solution leverages the existing `ResolvedPythonType::from(right)` utility to infer the type of the RHS instead of writing custom AST traversal or type checking logic.
   category: architecture
 - rule: Prefer let chains (`if let` combined with...)
   source:
     path: AGENTS.md
     lines: 66-66
-  evidence: The gold solution uses `} else if let ResolvedPythonType::Atom(resolved_type)
-    = ResolvedPythonType::from(right) {` to safely extract the resolved type without
-    panicking or unwrapping.
+  evidence: The gold solution uses `} else if let ResolvedPythonType::Atom(resolved_type) = ResolvedPythonType::from(right) {` to safely extract the resolved type without panicking or unwrapping.
   category: style
-- rule: Add tests to an existing test file when possible instead of creating a new
-    one.
+- rule: Add tests to an existing test file when possible instead of creating a new one.
   source:
     path: AGENTS.md
     lines: '73'
-  source_text: '- Look to see if your tests could go in an existing file before adding
-    a new file for your tests.'
-  evidence: The patch extends the existing fixture file `crates/ruff_linter/resources/test/fixtures/pyflakes/F50x.py`
-    with new F507 cases (`gold_diff.patch:1-35`) rather than creating a new test fixture.
+  source_text: '- Look to see if your tests could go in an existing file before adding a new file for your tests.'
+  evidence: The patch extends the existing fixture file `crates/ruff_linter/resources/test/fixtures/pyflakes/F50x.py` with new F507 cases (`gold_diff.patch:1-35`) rather than creating a new test fixture.
   category: testing_pattern
   verification: llm_judge
 - rule: Keep Rust imports at the top of the file, not inside functions.
   source:
     path: AGENTS.md
     lines: '76'
-  source_text: '- Rust imports should always go at the top of the file, never locally
-    in functions.'
-  evidence: The new `use ruff_python_semantic::analyze::type_inference::{PythonType,
-    ResolvedPythonType};` import is added in the top import block of `strings.rs`
-    (`gold_diff.patch:40-45`), and no local import is introduced inside `percent_format_positional_count_mismatch`.
+  source_text: '- Rust imports should always go at the top of the file, never locally in functions.'
+  evidence: The new `use ruff_python_semantic::analyze::type_inference::{PythonType, ResolvedPythonType};` import is added in the top import block of `strings.rs` (`gold_diff.patch:40-45`), and no local import is introduced inside `percent_format_positional_count_mismatch`.
   category: imports
   verification: llm_judge
-- rule: Prefer a small change that reuses existing mechanisms over writing new bespoke
-    logic.
+- rule: Prefer a small change that reuses existing mechanisms over writing new bespoke logic.
   source:
     path: AGENTS.md
     lines: '78'
-  source_text: '- Avoid writing significant amounts of new code. This is often a sign
-    that we''re missing an existing method or mechanism that could help solve the
-    problem. Look for existing utilities first.'
-  evidence: Instead of adding custom RHS-shape inference, the patch reuses `ResolvedPythonType::from(right)`
-    and compares against `PythonType::Tuple` (`gold_diff.patch:44,52-57`). That is
-    a targeted extension built on existing type-inference utilities.
+  source_text: '- Avoid writing significant amounts of new code. This is often a sign that we''re missing an existing method or mechanism that could help solve the problem. Look for existing utilities first.'
+  evidence: Instead of adding custom RHS-shape inference, the patch reuses `ResolvedPythonType::from(right)` and compares against `PythonType::Tuple` (`gold_diff.patch:44,52-57`). That is a targeted extension built on existing type-inference utilities.
   category: reuse_existing_utilities
   verification: llm_judge
-- rule: Use comments to explain invariants or unusual behavior, not to narrate obvious
-    code.
+- rule: Use comments to explain invariants or unusual behavior, not to narrate obvious code.
   source:
     path: AGENTS.md
     lines: '82'
-  source_text: '- Use comments purposefully. Don''t use comments to narrate code,
-    but do use them to explain invariants and why something unusual was done a particular
-    way.'
-  evidence: 'The added comment in `strings.rs` explains the invariant behind the new
-    branch: known non-tuple RHS values count as a single positional argument, while
-    `Unknown` values are left alone because they may be tuples at runtime (`gold_diff.patch:53-56`).'
+  source_text: '- Use comments purposefully. Don''t use comments to narrate code, but do use them to explain invariants and why something unusual was done a particular way.'
+  evidence: 'The added comment in `strings.rs` explains the invariant behind the new branch: known non-tuple RHS values count as a single positional argument, while `Unknown` values are left alone because they may be tuples at runtime (`gold_diff.patch:53-56`).'
   category: comments
   verification: llm_judge
 distractors:
-- rule: When working on ty, PR titles should start with `[ty]` and be tagged with
-    the `ty` GitHub label.
+- rule: When working on ty, PR titles should start with `[ty]` and be tagged with the `ty` GitHub label.
   collision_type: scope_ambiguity
-  why_distracting: The agent might try to apply `ty` PR guidelines (like prefixing
-    with `[ty]`) to this task, but the task is explicitly about fixing a bug in `ruff_linter`,
-    not the `ty` type checker.
+  why_distracting: The agent might try to apply `ty` PR guidelines (like prefixing with `[ty]`) to this task, but the task is explicitly about fixing a bug in `ruff_linter`, not the `ty` type checker.
   severity: medium
   source:
     path: AGENTS.md
     lines: 54-55
 - rule: 'Run tests for a specific crate: cargo nextest run -p ty_python_semantic'
   collision_type: scope_ambiguity
-  why_distracting: The agent might try to run tests specifically for `ty_python_semantic`
-    as suggested by the example command, which would fail to verify the fix made in
-    `ruff_linter`.
+  why_distracting: The agent might try to run tests specifically for `ty_python_semantic` as suggested by the example command, which would fail to verify the fix made in `ruff_linter`.
   severity: low
   source:
     path: AGENTS.md
     lines: 15-17
-hierarchy_analysis: The config hierarchy is flat (CLAUDE.md just includes AGENTS.md).
-  The main challenge is distinguishing between rules that apply to the `ruff` crates
-  versus the `ty` crates within the same repository.
+hierarchy_analysis: The config hierarchy is flat (CLAUDE.md just includes AGENTS.md). The main challenge is distinguishing between rules that apply to the `ruff` crates versus the `ty` crates within the same repository.

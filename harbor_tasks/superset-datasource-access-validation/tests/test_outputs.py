@@ -447,3 +447,76 @@ def test_views_module_importable_via_subprocess() -> None:
     assert r.returncode == 0 and "ok" in r.stdout, (
         f"import failed:\nSTDOUT:\n{r.stdout}\nSTDERR:\n{r.stderr}"
     )
+
+# === PR-added f2p tests (taskforge.test_patch_miner) ===
+def test_pr_added_test_get_raises_when_access_denied():
+    """fail_to_pass | PR added test 'test_get_raises_when_access_denied' in 'tests/unit_tests/views/datasource/views_test.py' (pytest)"""
+    r = subprocess.run(
+        ["bash", "-lc", 'set -o pipefail; python3 -m pytest -x --no-header -p no:cacheprovider "tests/unit_tests/views/datasource/views_test.py::test_get_raises_when_access_denied" 2>&1 | tail -50'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"PR-added test 'test_get_raises_when_access_denied' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_pr_added_test_get_succeeds_for_authorised_user():
+    """fail_to_pass | PR added test 'test_get_succeeds_for_authorised_user' in 'tests/unit_tests/views/datasource/views_test.py' (pytest)"""
+    r = subprocess.run(
+        ["bash", "-lc", 'set -o pipefail; python3 -m pytest -x --no-header -p no:cacheprovider "tests/unit_tests/views/datasource/views_test.py::test_get_succeeds_for_authorised_user" 2>&1 | tail -50'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"PR-added test 'test_get_succeeds_for_authorised_user' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_pr_added_test_external_metadata_raises_when_access_denied():
+    """fail_to_pass | PR added test 'test_external_metadata_raises_when_access_denied' in 'tests/unit_tests/views/datasource/views_test.py' (pytest)"""
+    r = subprocess.run(
+        ["bash", "-lc", 'set -o pipefail; python3 -m pytest -x --no-header -p no:cacheprovider "tests/unit_tests/views/datasource/views_test.py::test_external_metadata_raises_when_access_denied" 2>&1 | tail -50'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"PR-added test 'test_external_metadata_raises_when_access_denied' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_pr_added_test_external_metadata_succeeds_for_authorised_u():
+    """fail_to_pass | PR added test 'test_external_metadata_succeeds_for_authorised_user' in 'tests/unit_tests/views/datasource/views_test.py' (pytest)"""
+    r = subprocess.run(
+        ["bash", "-lc", 'set -o pipefail; python3 -m pytest -x --no-header -p no:cacheprovider "tests/unit_tests/views/datasource/views_test.py::test_external_metadata_succeeds_for_authorised_user" 2>&1 | tail -50'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"PR-added test 'test_external_metadata_succeeds_for_authorised_user' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_pr_added_test_external_metadata_by_name_known_datasource_():
+    """fail_to_pass | PR added test 'test_external_metadata_by_name_known_datasource_raises_when_access_denied' in 'tests/unit_tests/views/datasource/views_test.py' (pytest)"""
+    r = subprocess.run(
+        ["bash", "-lc", 'set -o pipefail; python3 -m pytest -x --no-header -p no:cacheprovider "tests/unit_tests/views/datasource/views_test.py::test_external_metadata_by_name_known_datasource_raises_when_access_denied" 2>&1 | tail -50'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"PR-added test 'test_external_metadata_by_name_known_datasource_raises_when_access_denied' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_pr_added_test_external_metadata_by_name_no_datasource_rai():
+    """fail_to_pass | PR added test 'test_external_metadata_by_name_no_datasource_raises_when_access_denied' in 'tests/unit_tests/views/datasource/views_test.py' (pytest)"""
+    r = subprocess.run(
+        ["bash", "-lc", 'set -o pipefail; python3 -m pytest -x --no-header -p no:cacheprovider "tests/unit_tests/views/datasource/views_test.py::test_external_metadata_by_name_no_datasource_raises_when_access_denied" 2>&1 | tail -50'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"PR-added test 'test_external_metadata_by_name_no_datasource_raises_when_access_denied' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_pr_added_test_save_always_checks_ownership_even_without_o():
+    """fail_to_pass | PR added test 'test_save_always_checks_ownership_even_without_owners_field' in 'tests/unit_tests/views/datasource/views_test.py' (pytest)"""
+    r = subprocess.run(
+        ["bash", "-lc", 'set -o pipefail; python3 -m pytest -x --no-header -p no:cacheprovider "tests/unit_tests/views/datasource/views_test.py::test_save_always_checks_ownership_even_without_owners_field" 2>&1 | tail -50'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"PR-added test 'test_save_always_checks_ownership_even_without_owners_field' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_pr_added_test_save_non_owner_with_owners_field_is_rejecte():
+    """fail_to_pass | PR added test 'test_save_non_owner_with_owners_field_is_rejected' in 'tests/unit_tests/views/datasource/views_test.py' (pytest)"""
+    r = subprocess.run(
+        ["bash", "-lc", 'set -o pipefail; python3 -m pytest -x --no-header -p no:cacheprovider "tests/unit_tests/views/datasource/views_test.py::test_save_non_owner_with_owners_field_is_rejected" 2>&1 | tail -50'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"PR-added test 'test_save_non_owner_with_owners_field_is_rejected' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")

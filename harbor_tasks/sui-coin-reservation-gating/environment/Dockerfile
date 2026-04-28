@@ -1,6 +1,6 @@
 FROM rust:1.85-slim
 
-# Install dependencies
+# Install system dependencies
 RUN apt-get update && apt-get install -y \
     git \
     curl \
@@ -13,6 +13,9 @@ RUN apt-get update && apt-get install -y \
     python3-pip \
     && rm -rf /var/lib/apt/lists/*
 
+# Install Rust components needed for testing
+RUN rustup component add clippy rustfmt
+
 # Install Python dependencies for testing
 RUN pip3 install pytest --break-system-packages
 
@@ -20,7 +23,6 @@ RUN pip3 install pytest --break-system-packages
 WORKDIR /workspace
 
 # Clone the Sui repository at base commit
-# Using --filter=blob:none for faster clone
 RUN git clone --filter=blob:none https://github.com/MystenLabs/sui.git /workspace/sui
 WORKDIR /workspace/sui
 

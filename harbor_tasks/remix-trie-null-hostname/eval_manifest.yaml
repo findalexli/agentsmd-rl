@@ -1,0 +1,115 @@
+version: '2.0'
+source:
+  repo: remix-run/remix
+  pr: 10992
+  base_commit: 3aa3d939d558aac03bfb0f3796bb7d6d4aacfa70
+  merge_commit: d662c33fb9d6ddec885c71bf1e1fa8c523b44c8e
+task:
+  kind: code_fix
+checks:
+- id: test_pathname_only_pattern_matches
+  type: fail_to_pass
+  origin: pr_diff
+  description: Pathname-only patterns (no hostname) match URLs with any hostname
+- id: test_pathname_only_with_variable_matches
+  type: fail_to_pass
+  origin: pr_diff
+  description: Pathname-only patterns with variable segments match correctly
+- id: test_pathname_only_wildcard_matches
+  type: fail_to_pass
+  origin: pr_diff
+  description: Pathname-only patterns with wildcard segments match correctly
+- id: test_match_returns_null_for_no_match
+  type: fail_to_pass
+  origin: pr_diff
+  description: match() returns null (not undefined) when no route matches
+- id: test_trie_matcher_importable
+  type: pass_to_pass
+  origin: static
+  description: TrieMatcher can be imported from its source file
+- id: test_ci_check_lint
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: check / Lint (scoped to route-pattern)'
+- id: test_ci_check_typecheck
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: check / Typecheck (scoped to route-pattern)'
+- id: test_ci_check_check_change_files
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: check / Check change files'
+- id: test_ci_build_build_packages
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: build / Build packages (scoped to route-pattern)'
+- id: test_ci_test_run_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: test / Run tests (scoped to route-pattern trie tests)'
+rubric:
+- rule: 'Imports: Always use `import type { X }` for types (separate from value imports); use `export type { X }` for type exports; include `.ts` extensions'
+  source:
+    path: AGENTS.md
+    lines: '15'
+    commit: 3aa3d939d558aac03bfb0f3796bb7d6d4aacfa70
+  evidence: Gold patch adds import of TrieMatcher with .ts extension and uses proper import type for type-only imports
+  category: naming
+  verification: llm_judge
+- rule: 'Classes: Use native fields (omit `public`), `#private` for private members (no TypeScript accessibility modifiers)'
+  source:
+    path: AGENTS.md
+    lines: '22'
+    commit: 3aa3d939d558aac03bfb0f3796bb7d6d4aacfa70
+  evidence: Gold patch modifies TrieMatcher and Trie classes maintaining native field conventions
+  category: style
+  verification: llm_judge
+- rule: 'No loops or conditionals in test suites: Do not use `for` loops or conditional statements (`if`, `switch`, etc.) to generate test cases within `describe()` blocks'
+  source:
+    path: AGENTS.md
+    lines: '27'
+    commit: 3aa3d939d558aac03bfb0f3796bb7d6d4aacfa70
+  evidence: Gold patch test additions use flat describe/it blocks without loops or conditionals
+  category: testing
+  verification: llm_judge
+- rule: Prefer `let` for locals, `const` only at module scope; never use `var`
+  source:
+    path: AGENTS.md
+    lines: '17'
+    commit: 3aa3d939d558aac03bfb0f3796bb7d6d4aacfa70
+  evidence: Gold patch uses let for local variables in test blocks and trie methods
+  category: style
+  verification: llm_judge
+- rule: 'Formatting: Prettier (printWidth: 100, no semicolons, single quotes, spaces not tabs)'
+  source:
+    path: AGENTS.md
+    lines: '24'
+    commit: 3aa3d939d558aac03bfb0f3796bb7d6d4aacfa70
+  evidence: 'Gold patch follows prettier formatting: no semicolons, single quotes'
+  category: style
+  verification: llm_judge
+- rule: 'Comments: Only add non-JSDoc comments when the code is doing something surprising or non-obvious'
+  source:
+    path: AGENTS.md
+    lines: '26'
+    commit: 3aa3d939d558aac03bfb0f3796bb7d6d4aacfa70
+  evidence: Gold patch adds a comment for any hostname matching path which is non-obvious trie traversal behavior
+  category: style
+  verification: llm_judge
+distractors:
+- rule: All demo servers should use port **44100** for consistency across the monorepo
+  source:
+    path: AGENTS.md
+    lines: '30'
+    commit: 3aa3d939d558aac03bfb0f3796bb7d6d4aacfa70
+  collision_type: scope_ambiguity
+  why_distracting: This rule applies to demo servers, not to the route-pattern library code being modified
+  severity: low
+- rule: 'Versioning: Follow semver, but ensure you follow 0.x conventions where breaking changes can happen in minor releases'
+  source:
+    path: AGENTS.md
+    lines: '38'
+    commit: 3aa3d939d558aac03bfb0f3796bb7d6d4aacfa70
+  collision_type: scope_ambiguity
+  why_distracting: Release versioning conventions are irrelevant to fixing the TrieMatcher matching behavior
+  severity: low

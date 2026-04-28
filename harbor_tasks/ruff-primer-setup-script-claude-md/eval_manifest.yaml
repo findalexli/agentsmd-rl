@@ -78,8 +78,7 @@ checks:
   origin: repo_tests
   description: No typos detected in scripts directory
 rubric:
-- rule: CLAUDE.md must document the new setup_primer_project.py script with usage
-    instructions.
+- rule: CLAUDE.md must document the new setup_primer_project.py script with usage instructions.
   source:
     path: CLAUDE.md
     lines: '73'
@@ -87,8 +86,7 @@ rubric:
   reference: '## Reproducing ty ecosystem changes
 
 
-    If asked to reproduce changes in the ty ecosystem, use this script to clone the
-    project to some
+    If asked to reproduce changes in the ty ecosystem, use this script to clone the project to some
 
     directory and install its dependencies into `.venv`:
 
@@ -102,9 +100,7 @@ rubric:
   source:
     path: CLAUDE.md
     lines: '73'
-  evidence: The new section added to CLAUDE.md uses `## ` for the header and ````sh`
-    for the code block, matching the style of existing sections like `## Running Debug
-    Builds`.
+  evidence: The new section added to CLAUDE.md uses `## ` for the header and ````sh` for the code block, matching the style of existing sections like `## Running Debug Builds`.
   category: documentation
 config_edits:
 - path: CLAUDE.md
@@ -112,8 +108,7 @@ config_edits:
   gold_added: '## Reproducing ty ecosystem changes
 
 
-    If asked to reproduce changes in the ty ecosystem, use this script to clone the
-    project to some
+    If asked to reproduce changes in the ty ecosystem, use this script to clone the project to some
 
     directory and install its dependencies into `.venv`:
 
@@ -125,27 +120,18 @@ config_edits:
     ```'
   gold_removed: ''
 distractors:
-- rule: Avoid writing significant amounts of new code. This is often a sign that we're
-    missing an existing method or mechanism that could help solve the problem.
+- rule: Avoid writing significant amounts of new code. This is often a sign that we're missing an existing method or mechanism that could help solve the problem.
   collision_type: rule_conflict
-  why_distracting: The task explicitly requires creating a new ~100 line Python script
-    to automate a previously manual workflow. An agent strictly following this rule
-    might hesitate to write the full script or waste time searching for non-existent
-    utilities instead of fulfilling the prompt.
+  why_distracting: The task explicitly requires creating a new ~100 line Python script to automate a previously manual workflow. An agent strictly following this rule might hesitate to write the full script or waste time searching for non-existent utilities instead of fulfilling the prompt.
   severity: high
   source:
     path: CLAUDE.md
     lines: 52-53
-- rule: Avoid falling back to patterns that require `panic!`, `unreachable!`, or `.unwrap()`.
-    Instead, try to encode those constraints in the type system.
+- rule: Avoid falling back to patterns that require `panic!`, `unreachable!`, or `.unwrap()`. Instead, try to encode those constraints in the type system.
   collision_type: architecture_boundary
-  why_distracting: This rule is specific to the Rust codebase (Ruff/ty), but the agent
-    is tasked with writing a Python script. The agent might get confused about the
-    language context or try to apply Rust-specific error handling paradigms in Python.
+  why_distracting: This rule is specific to the Rust codebase (Ruff/ty), but the agent is tasked with writing a Python script. The agent might get confused about the language context or try to apply Rust-specific error handling paradigms in Python.
   severity: low
   source:
     path: CLAUDE.md
     lines: 54-55
-hierarchy_analysis: 'The config hierarchy is flat (only CLAUDE.md is provided), but
-  the task introduces a unique meta-referential dynamic: the agent must read CLAUDE.md
-  for general guidelines while simultaneously treating it as a target file to be edited.'
+hierarchy_analysis: 'The config hierarchy is flat (only CLAUDE.md is provided), but the task introduces a unique meta-referential dynamic: the agent must read CLAUDE.md for general guidelines while simultaneously treating it as a target file to be edited.'

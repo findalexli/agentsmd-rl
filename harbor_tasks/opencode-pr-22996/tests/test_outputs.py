@@ -94,3 +94,13 @@ def test_repo_config_tests_pass():
         f"Repo config tests failed.\n"
         f"--- stdout ---\n{r.stdout[-3000:]}\n--- stderr ---\n{r.stderr[-3000:]}"
     )
+
+# === CI-mined tests (taskforge.ci_check_miner) ===
+def test_ci_typecheck_run_typecheck():
+    """pass_to_pass | CI job 'typecheck' step 'Run typecheck' (scoped to opencode package)"""
+    r = subprocess.run(
+        ["bash", "-lc", 'bun typecheck'], cwd=PACKAGE,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Run typecheck' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")

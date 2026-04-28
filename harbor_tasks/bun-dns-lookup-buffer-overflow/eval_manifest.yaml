@@ -37,21 +37,21 @@ checks:
   type: fail_to_pass
   origin: pr_diff
   description: The vulnerable fixed 1024-byte buffer pattern must be removed
-- id: test_dynamic_allocation_pattern
+- id: test_dynamic_allocation_in_lookup
   type: fail_to_pass
   origin: pr_diff
   description: The fix must use dynamic heap allocation (any form) instead of fixed stack buffer
-- id: test_memory_cleanup_with_defer
+- id: test_memory_cleanup_with_defer_in_lookup
   type: fail_to_pass
   origin: pr_diff
-  description: The fix must properly free the allocated memory with defer
-- id: test_allocation_and_cleanup_both_present
+  description: The fix must properly free the allocated memory with defer in the lookup function
+- id: test_allocation_and_cleanup_both_in_lookup
   type: fail_to_pass
   origin: pr_diff
-  description: Verify both allocation and cleanup patterns appear in actual code
+  description: Verify both allocation and cleanup patterns appear in the lookup function
 - id: test_zig_build_lib_check
-  type: fail_to_pass
-  origin: pr_diff
+  type: pass_to_pass
+  origin: static
   description: Verify the modified file can be parsed with zig ast-check
 rubric:
 - rule: Memory management - In Zig code, be careful with allocators and use defer

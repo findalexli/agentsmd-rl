@@ -48,8 +48,7 @@ checks:
   type: fail_to_pass
   origin: pr_diff
 - id: object_processor_rpc_client
-  description: ObjectProcessor has new rpc_client field and get_original_package_id
-    method
+  description: ObjectProcessor has new rpc_client field and get_original_package_id method
   type: fail_to_pass
   origin: pr_diff
 - id: cargo_toml_updated
@@ -64,15 +63,45 @@ checks:
   description: pipeline.rs has updated function signature with rpc_url parameter
   type: fail_to_pass
   origin: pr_diff
+- id: test_ci_license_check_run_license_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: license-check / Run license check'
+- id: test_ci_windows_cli_tests_cargo_test
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: windows-cli-tests / cargo test'
+- id: test_ci_windows_build_cargo_build
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: windows-build / cargo build'
+- id: test_ci_tree_sitter___run_tests_run_tests_sh
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: Tree Sitter - run tests / '
+- id: test_ci_move_formatter___run_tests_npm
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: Move Formatter - run tests / '
+- id: test_ci_move_formatter___check_formatt_npx
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: Move Formatter - check formatting / '
+- id: test_ci_external_crates_test_external_crates_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: external-crates-test / External crates tests'
+- id: test_ci_lint__build__and_test_build
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: Lint, Build, and Test / Build'
 rubric:
-- rule: 'All new files must start with the Mysten Labs license header: // Copyright
-    (c) Mysten Labs, Inc. and // SPDX-License-Identifier: Apache-2.0'
+- rule: 'All new files must start with the Mysten Labs license header: // Copyright (c) Mysten Labs, Inc. and // SPDX-License-Identifier: Apache-2.0'
   source:
     path: CLAUDE.md
     lines: 17-20
     commit: 591ac7c96a2877709479724edeea7038d01f064b
-- rule: 'Never use #[allow(dead_code)], #[allow(unused)], or any other linting suppressions
-    - fix the underlying issues instead'
+- rule: 'Never use #[allow(dead_code)], #[allow(unused)], or any other linting suppressions - fix the underlying issues instead'
   source:
     path: CLAUDE.md
     lines: '113'
@@ -82,38 +111,27 @@ rubric:
     path: CLAUDE.md
     lines: 59-60
     commit: 591ac7c96a2877709479724edeea7038d01f064b
-- rule: All new files must start with the Mysten Labs copyright and Apache-2.0 license
-    header.
+- rule: All new files must start with the Mysten Labs copyright and Apache-2.0 license header.
   source:
     path: CLAUDE.md
     lines: 16-20
-  evidence: 'The newly created file `crates/sui-analytics-indexer/src/handlers/system_package_eviction.rs`
-    starts exactly with the required `// Copyright (c) Mysten Labs, Inc.` and `//
-    SPDX-License-Identifier: Apa'
+  evidence: 'The newly created file `crates/sui-analytics-indexer/src/handlers/system_package_eviction.rs` starts exactly with the required `// Copyright (c) Mysten Labs, Inc.` and `// SPDX-License-Identifier: Apa'
   category: style
-- rule: 'All new files must start with the following license in comments at the top
-    of the file: Copyright (c) Mysten Labs, Inc. SPDX-License-Identifier: Apache-2.0'
+- rule: 'All new files must start with the following license in comments at the top of the file: Copyright (c) Mysten Labs, Inc. SPDX-License-Identifier: Apache-2.0'
   source:
     path: CLAUDE.md
     lines: 18-20
-  evidence: The newly created file `crates/sui-analytics-indexer/src/handlers/system_package_eviction.rs`
-    starts with the exact copyright and SPDX license header specified in the config.
+  evidence: The newly created file `crates/sui-analytics-indexer/src/handlers/system_package_eviction.rs` starts with the exact copyright and SPDX license header specified in the config.
   category: documentation
 distractors:
 - rule: 'Storage Layer: Uses RocksDB for persistent storage'
   collision_type: architecture_boundary
-  why_distracting: The architecture section states that the storage layer uses RocksDB
-    for persistent storage. The agent might try to retain RocksDB usage for the new
-    package cache or implement a RocksDB layer for `sui-rpc-resolver`, conflicting
-    with the instruction to remove the old package cache and use the built-in caching
-    of `sui-rpc-resolver`.
+  why_distracting: The architecture section states that the storage layer uses RocksDB for persistent storage. The agent might try to retain RocksDB usage for the new package cache or implement a RocksDB layer for `sui-rpc-resolver`, conflicting with the instruction to remove the old package cache and use the built-in caching of `sui-rpc-resolver`.
   severity: medium
   source:
     path: CLAUDE.md
     lines: 65-66
-hierarchy_analysis: The hierarchy is flat, with only root-level `CLAUDE.md` and `AGENTS.md`
-  files applying to the task. The agent must apply the root-level license header rule
-  to the newly created file.
+hierarchy_analysis: The hierarchy is flat, with only root-level `CLAUDE.md` and `AGENTS.md` files applying to the task. The agent must apply the root-level license header rule to the newly created file.
 version: '2.0'
 source:
   repo: MystenLabs/sui

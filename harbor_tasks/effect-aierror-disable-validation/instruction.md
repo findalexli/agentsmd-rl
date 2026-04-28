@@ -110,7 +110,12 @@ formatting (2-space indent, no trailing whitespace, no stray imports).
 
 - The three `Headers.isHeaders(...)` assertions above all return `true`
   after the factories run.
-- The scalar fields on the produced errors are unchanged.
+- The scalar fields on the produced errors are unchanged. The grader's test
+  fixture constructs a request error with method `"POST"`, URL
+  `"https://api.example.com/v1/chat"`, module `"TestModule"`, reason
+  `"Transport"` and a response error with status `429`, module
+  `"TestModule"`, reason `"StatusCode"` — all of these must round-trip
+  back to the caller without alteration.
 - A `.changeset/*.md` exists that names `"@effect/ai"` with a `patch`,
   `minor`, or `major` release type.
 - `pnpm exec tsc -b tsconfig.json` exits 0 for the `@effect/ai` package.

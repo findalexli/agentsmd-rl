@@ -12,8 +12,7 @@ checks:
 - id: test_repo_yaml_valid
   type: pass_to_pass
   origin: repo_tests
-  description: All YAML config files in areal/tests/, examples/, benchmark/ parse
-    without errors
+  description: All YAML config files in areal/tests/, examples/, benchmark/ parse without errors
 - id: test_repo_no_wildcard_imports
   type: pass_to_pass
   origin: repo_tests
@@ -37,8 +36,7 @@ checks:
 - id: test_repo_all_python_syntax
   type: pass_to_pass
   origin: repo_tests
-  description: All Python files in the repository (excluding evaluation/) parse without
-    syntax errors
+  description: All Python files in the repository (excluding evaluation/) parse without syntax errors
 - id: test_repo_json_valid
   type: pass_to_pass
   origin: repo_tests
@@ -50,8 +48,7 @@ checks:
 - id: test_repo_python_no_trailing_whitespace
   type: pass_to_pass
   origin: repo_tests
-  description: All Python files have no trailing whitespace (pre-commit trailing-whitespace
-    check)
+  description: All Python files have no trailing whitespace (pre-commit trailing-whitespace check)
 - id: python_syntax
   type: pass_to_pass
   origin: static
@@ -59,13 +56,11 @@ checks:
 - id: format_reward_function
   type: fail_to_pass
   origin: pr_diff
-  description: format_reward returns correct scores for matching and non-matching
-    inputs
+  description: format_reward returns correct scores for matching and non-matching inputs
 - id: yaml_config_structure
   type: fail_to_pass
   origin: pr_diff
-  description: YAML config parses and contains required training keys (actor, vllm,
-    datasets)
+  description: YAML config parses and contains required training keys (actor, vllm, datasets)
 - id: shell_script_references
   type: fail_to_pass
   origin: pr_diff
@@ -85,111 +80,77 @@ checks:
 - id: reward_fn_signature
   type: fail_to_pass
   origin: agent_config
-  description: Reward function accepts (prompt, completions, prompt_ids, completion_ids,
-    **data)
+  description: Reward function accepts (prompt, completions, prompt_ids, completion_ids, **data)
   source:
     path: AGENTS.md
     lines: 184-185
     commit: b942ed019df2c66b851c397c0836fd31a3787b70
+- id: test_ci_build_build_the_book
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: build / Build the book'
 rubric:
-- rule: 'Training scripts should group imports by: (1) standard library, (2) third-party,
-    (3) internal areal/ modules, avoiding wildcard imports'
+- rule: 'Training scripts should group imports by: (1) standard library, (2) third-party, (3) internal areal/ modules, avoiding wildcard imports'
   source:
     path: AGENTS.md
     lines: 119-120
     commit: b942ed019df2c66b851c397c0836fd31a3787b70
-- rule: Reward functions in examples should follow the signature (prompt, completions,
-    prompt_ids, completion_ids, **kwargs) and extract answers deterministically
+- rule: Reward functions in examples should follow the signature (prompt, completions, prompt_ids, completion_ids, **kwargs) and extract answers deterministically
   source:
     path: AGENTS.md
     lines: 183-186
     commit: b942ed019df2c66b851c397c0836fd31a3787b70
-- rule: YAML configurations for examples should be placed in examples/** and launchers
-    should parse CLI overrides
+- rule: YAML configurations for examples should be placed in examples/** and launchers should parse CLI overrides
   source:
     path: AGENTS.md
     lines: 151-152
     commit: b942ed019df2c66b851c397c0836fd31a3787b70
-- rule: Do not modify or import from the deprecated `realhf/` package; migrate uses
-    into `areal/` equivalents instead.
+- rule: Do not modify or import from the deprecated `realhf/` package; migrate uses into `areal/` equivalents instead.
   source:
     path: AGENTS.md
     lines: 31-32
   commit: b942ed019df2c66b851c397c0836fd31a3787b70
-  evidence: The gold solution imports modules from `areal` (e.g., `areal.api.cli_args`,
-    `areal.workflow.vision_rlvr`) and does not use the deprecated `realhf` package.
+  evidence: The gold solution imports modules from `areal` (e.g., `areal.api.cli_args`, `areal.workflow.vision_rlvr`) and does not use the deprecated `realhf` package.
   category: architecture
-- rule: Place end-to-end wiring scripts for VLM and launcher recipes in the `examples/`
-    directory.
+- rule: Place end-to-end wiring scripts for VLM and launcher recipes in the `examples/` directory.
   source:
     path: AGENTS.md
     lines: 66-67
     commit: b942ed019df2c66b851c397c0836fd31a3787b70
-  evidence: The gold solution creates the new NPU training scripts and README inside
-    the `examples/vlm_npu/` directory.
+  evidence: The gold solution creates the new NPU training scripts and README inside the `examples/vlm_npu/` directory.
   category: architecture
-- rule: 'Legacy code: `realhf/` is deprecated—do not modify or import from it; migrate
-    uses into `areal/` equivalents instead.'
+- rule: 'Legacy code: `realhf/` is deprecated—do not modify or import from it; migrate uses into `areal/` equivalents instead.'
   source:
     path: AGENTS.md
     lines: 22-23
   commit: b942ed019df2c66b851c397c0836fd31a3787b70
-  evidence: The gold solution imports all framework components from `areal.*` (e.g.,
-    `areal.api.cli_args`, `areal.workflow.vision_rlvr`) instead of the deprecated
-    `realhf` package.
+  evidence: The gold solution imports all framework components from `areal.*` (e.g., `areal.api.cli_args`, `areal.workflow.vision_rlvr`) instead of the deprecated `realhf` package.
   category: architecture
-- rule: '`examples/` — End-to-end wiring scripts for math, RLHF, VLM, multi-turn,
-    search agents, and launcher recipes.'
+- rule: '`examples/` — End-to-end wiring scripts for math, RLHF, VLM, multi-turn, search agents, and launcher recipes.'
   source:
     path: AGENTS.md
     lines: ''
     commit: b942ed019df2c66b851c397c0836fd31a3787b70
-  evidence: The new VLM training scripts and README are placed in the `examples/vlm_npu/`
-    directory, matching the repository map definition.
+  evidence: The new VLM training scripts and README are placed in the `examples/vlm_npu/` directory, matching the repository map definition.
   category: architecture
 config_edits:
 - path: examples/vlm_npu/README.md
   tier: 2
-  gold_added: "# Training VLMs with GRPO on NPU:\nIn this instruction, we will introduce\
-    \ how to train VLMs with GRPO on NPU.\n\n### Hardware\n\nThe following hardware\
-    \ configuration has been extensively tested:\n\n- **NPU**: 16x NPU per node\n\
-    - **CPU**: 64 cores per node\n- **Memory**: 1TB per node\n- **Network**: RoCE\
-    \ 3.2 Tbps\n- **Storage**:\n  - 1TB local storage for single-node experiments\n\
-    \  - 10TB shared storage (NAS) for distributed experiments\n\n### Key Contributions\n\
-    -\tTrained Qwen2.5VL-3B-instruct model upto 70 epochs with (4 cards+ 4 cards)\
-    \ train-infer configuration. Took around 19hr to finish full training.\n- Trained\
-    \ model is tested with more than one benchmark using VLMEvalKit.\n\n\n### System\
-    \ configuration:\n-\tVllm==0.11.0 ; vllm-ascend==0.11.0rc0 ;\n-\tTorch==0.7.1+cpu\
-    \ ; torch_npu==2.7.1.dev20250724\n-\tAreal==0.4.1\n-\tCANN==8.1RC1 ; 910c npus\
-    \ (65 gigs X 16)\n\n### Results:\nWe trained Qwen2.5-VL-3B for 70 epochs on Geometry3K\
-    \ and evaluated the checkpoints using VLMEvalKit on out of distribution tasks\
-    \ such as MathVision, MathVista, and LogicVista. The training was performed on\
-    \ both NPU and GPU and results are as follows:\n\n| Method     | LogicVista |\
-    \ MathVision_mini | MathVista_mini | Avg.  |\n|------------|------------|------------------|----------------|-------|\n\
-    | Base Model | 31.0       | 18.3             | 52.3           | 33.8     |\n|\
-    \ GRPO-GPU   | 35.4       | 20.9             | 55.9           | **37.4** |\n|\
-    \ GRPO-NPU   | 35.3       | 20.5             | 54.7           | **36.8** |"
+  gold_added: "# Training VLMs with GRPO on NPU:\nIn this instruction, we will introduce how to train VLMs with GRPO on NPU.\n\n### Hardware\n\nThe following hardware configuration has been extensively tested:\n\n- **NPU**: 16x NPU per node\n- **CPU**: 64 cores per node\n- **Memory**: 1TB per node\n- **Network**: RoCE 3.2 Tbps\n- **Storage**:\n  - 1TB local storage for single-node experiments\n  - 10TB shared storage (NAS) for distributed experiments\n\n### Key Contributions\n-\tTrained Qwen2.5VL-3B-instruct model upto 70 epochs with (4 cards+ 4 cards) train-infer configuration. Took around 19hr to finish full training.\n- Trained model is tested with more than one benchmark using VLMEvalKit.\n\n\n### System configuration:\n-\tVllm==0.11.0 ; vllm-ascend==0.11.0rc0 ;\n-\tTorch==0.7.1+cpu ; torch_npu==2.7.1.dev20250724\n-\tAreal==0.4.1\n-\tCANN==8.1RC1 ; 910c npus (65 gigs X 16)\n\n### Results:\nWe trained Qwen2.5-VL-3B for 70 epochs on Geometry3K and evaluated the checkpoints using VLMEvalKit on out of distribution tasks such as MathVision, MathVista, and LogicVista. The training was performed on both NPU and GPU and results are as follows:\n\n| Method     | LogicVista | MathVision_mini | MathVista_mini | Avg.  |\n|------------|------------|------------------|----------------|-------|\n| Base Model | 31.0       | 18.3             | 52.3           | 33.8     |\n| GRPO-GPU   | 35.4       | 20.9             | 55.9           | **37.4** |\n| GRPO-NPU   | 35.3       | 20.5             | 54.7           | **36.8** |"
   gold_removed: ''
 distractors:
 - rule: 'Docs: Source lives under `docs/` (Jupyter Book).'
   collision_type: scope_ambiguity
-  why_distracting: The agent might try to place the README documentation in the `docs/`
-    directory because the rule states that documentation source lives there. However,
-    the instruction explicitly asks for a README under `examples/vlm_npu/`.
+  why_distracting: The agent might try to place the README documentation in the `docs/` directory because the rule states that documentation source lives there. However, the instruction explicitly asks for a README under `examples/vlm_npu/`.
   severity: high
   source:
     path: AGENTS.md
     lines: ''
 - rule: '`areal/reward/` — Built-in reward functions, math parsers, and helpers.'
   collision_type: architecture_boundary
-  why_distracting: The agent might try to place the reward functions (`format_reward`,
-    `acc_reward`, `geometry3k_reward_fn`) in `areal/reward/` because the rule designates
-    it for built-in reward functions. However, the instruction explicitly requests
-    the reward functions to be included directly in the Python training script `geometry3k_grpo.py`.
+  why_distracting: The agent might try to place the reward functions (`format_reward`, `acc_reward`, `geometry3k_reward_fn`) in `areal/reward/` because the rule designates it for built-in reward functions. However, the instruction explicitly requests the reward functions to be included directly in the Python training script `geometry3k_grpo.py`.
   severity: high
   source:
     path: AGENTS.md
     lines: ''
-hierarchy_analysis: The configuration is contained within a single file (`AGENTS.md`).
-  The primary challenge is resolving conflicts between the general repository map guidelines
-  in the config and the specific, localized requirements of the PR instruction.
+hierarchy_analysis: The configuration is contained within a single file (`AGENTS.md`). The primary challenge is resolving conflicts between the general repository map guidelines in the config and the specific, localized requirements of the PR instruction.

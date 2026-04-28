@@ -10,17 +10,13 @@ The JSON-RPC API is returning fake coin objects (coin reservations) even when th
 
 The gRPC path already properly gates these responses, but the JSON-RPC path is missing these checks.
 
-## Required Implementation
+## Required Behavior
 
-Your fix must implement the following patterns:
+The `enable_coin_reservation_obj_refs()` method on the protocol configuration determines whether coin reservation features are active. Your fix must read this protocol config flag and use it to gate the coin reservation logic in the JSON-RPC path, similar to how the gRPC path already does.
 
-1. **Variable naming**: Define a boolean variable named `coin_reservations_enabled` that stores the result of calling `enable_coin_reservation_obj_refs()` on the protocol configuration.
+For object reads: when the lookup result is `ObjectRead::NotExists`, the code must check whether `enable_coin_reservation_obj_refs()` returns true before attempting to unmask the object ID as a coin reservation. The `ObjectRead::NotExists` condition and the `enable_coin_reservation_obj_refs()` check should be evaluated together.
 
-2. **Early return pattern**: Use the pattern `if !coin_reservations_enabled { HashMap::new() }` to return an empty map when coin reservations are disabled.
-
-3. **Protocol config access**: Access the protocol configuration via the epoch store's `protocol_config()` method.
-
-4. **Object retrieval condition**: When an object is not found (represented by `ObjectRead::NotExists`), only proceed to check for a masked/coin-reservation object ID when `enable_coin_reservation_obj_refs()` returns true. The check should use the `&&` operator to combine these conditions.
+For coin listing: the function must determine whether `enable_coin_reservation_obj_refs()` returns true before constructing fake coins. When the feature is not enabled (`!coin_reservations_enabled`), the result should be an empty coin map (`HashMap::new()`). Fake coins should only be constructed when `enable_coin_reservation_obj_refs()` returns true.
 
 ## Verification
 
@@ -37,4 +33,4 @@ Run these commands to verify:
 
 Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
 
-- `cargo fmt (Rust formatter)`
+- `cargo fmt` (Rust formatter)

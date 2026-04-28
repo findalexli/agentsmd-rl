@@ -538,23 +538,31 @@ def test_repo_no_obvious_errors():
     assert src.count(")") >= src.count("("), "Unbalanced parentheses (more opening)"
 
 
-# [repo_tests] pass_to_pass
-# Repo product lint check - validates product structure per PostHog conventions
-def test_repo_hogli_product_lint():
-    """Product structure lint passes for all products (pass_to_pass)."""
-    import pytest
+# === CI-scoped test (scoped to products/tasks/backend, uses pytest test runner) ===
+def test_ci_pytest_tasks_backend_syntax():
+    """pass_to_pass | CI: pytest verifies products/tasks/backend Python files parse without errors"""
+    import os as _os
 
-    # Check if required dependencies are available
-    r = subprocess.run(
-        ["python3", "-c", "import requests, click, yaml"],
-        capture_output=True, text=True, cwd=REPO, timeout=10,
-    )
-    if r.returncode != 0:
-        pytest.skip("hogli dependencies not available")
-
-    # Run hogli product:lint --all
-    r = subprocess.run(
-        ["python3", "bin/hogli", "product:lint", "--all"],
-        capture_output=True, text=True, cwd=REPO, timeout=300,
-    )
-    assert r.returncode == 0, f"Product lint failed:\n{r.stdout}\n{r.stderr}"
+    test_code = '''import ast, pathlib
+def test_tasks_backend_python_files_parse():
+    """All Python files in products/tasks/backend parse without syntax errors."""
+    backend_dir = pathlib.Path("products/tasks/backend")
+    errors = []
+    for py_file in backend_dir.rglob("*.py"):
+        try:
+            ast.parse(py_file.read_text())
+        except SyntaxError as e:
+            errors.append(f"{py_file}: {e}")
+    assert not errors, "\\\\n".join(errors)
+'''
+    tmp = "/tmp/test_scoped_ci_tasks.py"
+    with open(tmp, "w") as f:
+        f.write(test_code)
+    try:
+        r = subprocess.run(
+            ["bash", "-lc", f"python -m pytest {tmp} -v"],
+            capture_output=True, text=True, cwd=REPO, timeout=60,
+        )
+        assert r.returncode == 0, f"Pytest scoped test failed:\\n{r.stdout}\\n{r.stderr}"
+    finally:
+        _os.unlink(tmp)

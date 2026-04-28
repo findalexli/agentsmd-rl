@@ -12,13 +12,11 @@ checks:
 - id: no_panic_on_null_terminated_encode
   type: fail_to_pass
   origin: pr_diff
-  description: ruff must not panic when UP012 encounters strings ending in octal escapes
-    like \0
+  description: ruff must not panic when UP012 encounters strings ending in octal escapes like \0
 - id: octal_named_escape_no_false_positive
   type: fail_to_pass
   origin: pr_diff
-  description: UP012 must not false-positive on strings with \000 followed by \N{name}
-    escapes
+  description: UP012 must not false-positive on strings with \000 followed by \N{name} escapes
 - id: varied_octal_endings_no_crash
   type: fail_to_pass
   origin: pr_diff
@@ -59,59 +57,102 @@ checks:
     path: AGENTS.md
     lines: '76'
     commit: 5ac54ec2a708b46ec964465ce5d09cb9b80a3dc2
+- id: test_ci_cargo_build_build_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: cargo build / Build tests'
+- id: test_ci_cargo_test_ty_mdtests_github_annotations
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: cargo test / ty mdtests (GitHub annotations)'
+- id: test_ci_cargo_test_run_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: cargo test / Run tests'
+- id: test_ci_cargo_test_dogfood_ty_on_py_fuzzer
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: cargo test / Dogfood ty on py-fuzzer'
+- id: test_ci_cargo_test_dogfood_ty_on_the_scripts_directory
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: cargo test / Dogfood ty on the scripts directory'
+- id: test_ci_cargo_test_dogfood_ty_on_ty_benchmark
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: cargo test / Dogfood ty on ty_benchmark'
+- id: test_ci_cargo_test_cargo
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: cargo test / '
+- id: test_ci_cargo_test_cargo
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: cargo test / '
+- id: test_ci_cargo_fuzz_build_cargo
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: cargo fuzz build / '
+- id: test_ci_benchmarks_walltime_build_benchmarks
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: benchmarks walltime / Build benchmarks'
+- id: test_ci_test_scripts_python
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: test scripts / '
+- id: test_ci_test_scripts_python
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: test scripts / '
+- id: test_ci_cargo_test_cargo_2
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: cargo test / '
+- id: test_ci_test_scripts_python_2
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: test scripts / '
+- id: test_ci_test_scripts_scripts_add_rule_py
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: test scripts / '
 rubric:
 - rule: Follow existing code style. Check neighboring files for patterns.
   source:
     path: AGENTS.md
     lines: '75'
     commit: 5ac54ec2a708b46ec964465ce5d09cb9b80a3dc2
-- rule: Use comments purposefully. Don't use comments to narrate code, but do use
-    them to explain invariants and why something unusual was done a particular way.
+- rule: Use comments purposefully. Don't use comments to narrate code, but do use them to explain invariants and why something unusual was done a particular way.
   source:
     path: AGENTS.md
     lines: '82'
     commit: 5ac54ec2a708b46ec964465ce5d09cb9b80a3dc2
-- rule: All changes must be tested. If you're not testing your changes, you're not
-    done.
+- rule: All changes must be tested. If you're not testing your changes, you're not done.
   source:
     path: AGENTS.md
     lines: 63-64
-  evidence: The gold solution adds test cases specifically targeting the bug (including
-    the `$IMURAW\0` string and `\000\N{DIGIT ONE}`) to verify the fix.
+  evidence: The gold solution adds test cases specifically targeting the bug (including the `$IMURAW\0` string and `\000\N{DIGIT ONE}`) to verify the fix.
   category: testing
-- rule: Look to see if your tests could go in an existing file before adding a new
-    file for your tests.
+- rule: Look to see if your tests could go in an existing file before adding a new file for your tests.
   source:
     path: AGENTS.md
     lines: 64-65
-  evidence: The gold solution appends the new regression test cases to the existing
-    `crates/ruff_linter/resources/test/fixtures/pyupgrade/UP012.py` file rather than
-    creating a new dedicated test file for the issu
+  evidence: The gold solution appends the new regression test cases to the existing `crates/ruff_linter/resources/test/fixtures/pyupgrade/UP012.py` file rather than creating a new dedicated test file for the issu
   category: testing
 distractors:
-- rule: Try hard to avoid patterns that require `panic!`, `unreachable!`, or `.unwrap()`.
-    Instead, try to encode those constraints in the type system. Don't be afraid to
-    write code that's more verbose or requires largeish refactors...
+- rule: Try hard to avoid patterns that require `panic!`, `unreachable!`, or `.unwrap()`. Instead, try to encode those constraints in the type system. Don't be afraid to write code that's more verbose or requires largeish refactors...
   collision_type: scope_ambiguity
-  why_distracting: The instruction asks to fix a panic. The rule suggests avoiding
-    panics by encoding constraints in the type system and encourages 'largeish refactors'
-    to do so. An agent might attempt to heavily refactor the `Cursor` or `StringLiteral`
-    types to make invalid states unrepresentable, which is out of scope and would
-    overcomplicate this localized parsing bug fix.
+  why_distracting: The instruction asks to fix a panic. The rule suggests avoiding panics by encoding constraints in the type system and encourages 'largeish refactors' to do so. An agent might attempt to heavily refactor the `Cursor` or `StringLiteral` types to make invalid states unrepresentable, which is out of scope and would overcomplicate this localized parsing bug fix.
   severity: medium
   source:
     path: AGENTS.md
     lines: 69-70
-- rule: Avoid writing significant amounts of new code. This is often a sign that we're
-    missing an existing method or mechanism... Look for existing utilities first.
+- rule: Avoid writing significant amounts of new code. This is often a sign that we're missing an existing method or mechanism... Look for existing utilities first.
   collision_type: scope_ambiguity
-  why_distracting: The agent might interpret the manual parsing and cursor manipulation
-    as 'significant amounts of new code' and waste time searching for a non-existent
-    Ruff-specific utility for octal escape sequence parsing, rather than just using
-    the standard library `u8::from_str_radix` and `saturating_sub`.
+  why_distracting: The agent might interpret the manual parsing and cursor manipulation as 'significant amounts of new code' and waste time searching for a non-existent Ruff-specific utility for octal escape sequence parsing, rather than just using the standard library `u8::from_str_radix` and `saturating_sub`.
   severity: low
   source:
     path: AGENTS.md
     lines: 68-69
-hierarchy_analysis: The configuration is effectively a flat single file, as CLAUDE.md
-  simply includes AGENTS.md. The rules are generic repository guidelines.
+hierarchy_analysis: The configuration is effectively a flat single file, as CLAUDE.md simply includes AGENTS.md. The rules are generic repository guidelines.

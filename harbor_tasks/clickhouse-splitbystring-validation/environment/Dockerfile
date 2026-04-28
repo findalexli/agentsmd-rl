@@ -29,7 +29,7 @@ WORKDIR /workspace
 RUN git init /workspace/ClickHouse && \
     cd /workspace/ClickHouse && \
     git remote add origin https://github.com/ClickHouse/ClickHouse.git && \
-    git fetch --depth=1 origin 7dad4d8f7af43976fa63a062d20225aad04842c8 && \
+    git fetch --depth=1 origin 2ffea49f37f25c9a09a74b9ecb338b05eb426370 && \
     git checkout FETCH_HEAD
 
 WORKDIR /workspace/ClickHouse

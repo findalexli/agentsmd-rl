@@ -304,3 +304,17 @@ def test_repo_init_isort():
         cwd=REPO,
     )
     assert result.returncode == 0, f"custom_init_isort check failed:\n{result.stdout}\n{result.stderr}"
+
+
+# [repo_tests] pass_to_pass — pytest on utils/import_utils (CI/CD test runner gate)
+def test_pytest_utils_import_utils():
+    """CI: pytest tests/utils/test_hf_argparser.py must pass (pass_to_pass)."""
+    import subprocess
+
+    result = subprocess.run(
+        ["bash", "-lc", "cd /workspace/transformers && python -m pytest tests/utils/test_hf_argparser.py -x --tb=short -q"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+    )
+    assert result.returncode == 0, f"pytest test_hf_argparser failed:\n{result.stdout}\n{result.stderr}"

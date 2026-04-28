@@ -16,8 +16,7 @@ checks:
 - id: login_uses_duration
   type: fail_to_pass
   origin: pr_diff
-  description: Login schema uses Duration fields for expiry and interval, with branded
-    types for codes
+  description: Login schema uses Duration fields for expiry and interval, with branded types for codes
 - id: repo_uses_layer_effect
   type: fail_to_pass
   origin: pr_diff
@@ -25,13 +24,11 @@ checks:
 - id: agents_md_has_effect_guide
   type: fail_to_pass
   origin: pr_diff
-  description: packages/opencode/AGENTS.md includes an Effect guide section with schema,
-    service, and error patterns
+  description: packages/opencode/AGENTS.md includes an Effect guide section with schema, service, and error patterns
 - id: agents_md_branded_schema_rule
   type: fail_to_pass
   origin: pr_diff
-  description: AGENTS.md documents branded schema (Schema.brand) usage for single-value
-    types
+  description: AGENTS.md documents branded schema (Schema.brand) usage for single-value types
 - id: drizzle_snake_case
   type: pass_to_pass
   origin: agent_config
@@ -84,20 +81,39 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: CLI import tests pass - tests share URL/import utilities
+- id: test_ci_typecheck_run_typecheck
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: typecheck / Run typecheck'
+- id: test_ci_unit_run_unit_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: unit / Run unit tests'
+- id: test_ci_e2e_run_app_e2e_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: e2e / Run app e2e tests'
+- id: test_ci_build_tauri_prepare
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: build-tauri / Prepare'
+- id: test_ci_build_tauri_show_tauri_cli_version
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: build-tauri / Show tauri-cli version'
+- id: test_ci_build_electron_build
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: build-electron / Build'
 rubric:
-- rule: packages/opencode/AGENTS.md must include an Effect guide section documenting
-    Schema patterns (Schema.Class for multi-field types, Schema.brand for single-value
-    types)
+- rule: packages/opencode/AGENTS.md must include an Effect guide section documenting Schema patterns (Schema.Class for multi-field types, Schema.brand for single-value types)
   source:
     path: packages/opencode/AGENTS.md
-  reference: '# opencode Effect guide\n\n## Schemas\n- Use `Schema.Class` for data
-    types with multiple fields.\n- Use branded schemas (`Schema.brand`) for single-value\n    types.'
-- rule: packages/opencode/AGENTS.md Effect guide must document Layer.effect pattern
-    with ServiceName.of() for service implementations
+  reference: '# opencode Effect guide\n\n## Schemas\n- Use `Schema.Class` for data types with multiple fields.\n- Use branded schemas (`Schema.brand`) for single-value\n    types.'
+- rule: packages/opencode/AGENTS.md Effect guide must document Layer.effect pattern with ServiceName.of() for service implementations
   source:
     path: packages/opencode/AGENTS.md
-  reference: '## Services\n- In `Layer.effect`, always return service implementations
-    with `ServiceName.of({ ... })`, never a plain object.'
+  reference: '## Services\n- In `Layer.effect`, always return service implementations with `ServiceName.of({ ... })`, never a plain object.'
 config_edits:
 - path: packages/opencode/AGENTS.md
   tier: 1
@@ -120,8 +136,7 @@ config_edits:
 
     - Services use `ServiceMap.Service<ServiceName, ServiceName.Service>()("@console/<Name>")`.
 
-    - In `Layer.effect`, always return service implementations with `ServiceName.of({
-    ... })`, never a plain object.
+    - In `Layer.effect`, always return service implementations with `ServiceName.of({ ... })`, never a plain object.
 
 
     ## Errors
@@ -131,8 +146,7 @@ config_edits:
 
     - For defect-like causes, use `Schema.Defect` instead of `unknown`.
 
-    - In `Effect.gen`, prefer `yield* new MyError(...)` over `yield* Effect.fail(new
-    MyError(...))` for direct early-failure branches.
+    - In `Effect.gen`, prefer `yield* new MyError(...)` over `yield* Effect.fail(new MyError(...))` for direct early-failure branches.
 
 
     ## Effects
@@ -140,52 +154,37 @@ config_edits:
 
     - Use `Effect.gen(function* () { ... })` for composition.
 
-    - Use `Effect.fn("ServiceName.method")` for named/traced effects and `Effect.fnUntraced`
-    for internal helpers.
+    - Use `Effect.fn("ServiceName.method")` for named/traced effects and `Effect.fnUntraced` for internal helpers.
 
-    - `Effect.fn` / `Effect.fnUntraced` accept pipeable operators as extra arguments,
-    so avoid unnecessary `flow` or outer `.pipe()` wrappers.
+    - `Effect.fn` / `Effect.fnUntraced` accept pipeable operators as extra arguments, so avoid unnecessary `flow` or outer `.pipe()` wrappers.
 
 
     ## Time
 
 
-    - Prefer `DateTime.nowAsDate` over `new Date(yield* Clock.currentTimeMillis)`
-    when you need a `Date`.
+    - Prefer `DateTime.nowAsDate` over `new Date(yield* Clock.currentTimeMillis)` when you need a `Date`.
 
 
     ## Errors
 
 
-    - In `Effect.gen/fn`, prefer `yield* new MyError(...)` over `yield* Effect.fail(new
-    MyError(...))` for direct early-failure branches.
+    - In `Effect.gen/fn`, prefer `yield* new MyError(...)` over `yield* Effect.fail(new MyError(...))` for direct early-failure branches.
 
-    ## Naming - Prefer single word variable names where possible (e.g., `pid`, `cfg`,
-    `err`, `opts`, `dir`). - Multi-word names are allowed only when a single word
-    would be unclear or ambiguous.'
+    ## Naming - Prefer single word variable names where possible (e.g., `pid`, `cfg`, `err`, `opts`, `dir`). - Multi-word names are allowed only when a single word would be unclear or ambiguous.'
   gold_removed: ''
 distractors:
-- rule: Use single word names by default... Do not introduce new camelCase compounds
-    when a short single-word alternative is clear.
+- rule: Use single word names by default... Do not introduce new camelCase compounds when a short single-word alternative is clear.
   collision_type: rule_conflict
-  why_distracting: The config strictly forbids multi-word camelCase compounds and
-    mandates single-word names, but the task explicitly requires creating branded
-    types named `RefreshToken`, `DeviceCode`, `UserCode`, `AccessToken`, and `AccountID`.
+  why_distracting: The config strictly forbids multi-word camelCase compounds and mandates single-word names, but the task explicitly requires creating branded types named `RefreshToken`, `DeviceCode`, `UserCode`, `AccessToken`, and `AccountID`.
   severity: high
   source:
     path: AGENTS.md
     lines: 20-33
-- rule: Rely on type inference when possible; avoid explicit type annotations or interfaces
-    unless necessary for exports or clarity
+- rule: Rely on type inference when possible; avoid explicit type annotations or interfaces unless necessary for exports or clarity
   collision_type: rule_conflict
-  why_distracting: The config advises avoiding explicit type annotations, but the
-    task requires adding explicit `$type<...>()` annotations to the Drizzle schema
-    to enforce the new branded types.
+  why_distracting: The config advises avoiding explicit type annotations, but the task requires adding explicit `$type<...>()` annotations to the Drizzle schema to enforce the new branded types.
   severity: medium
   source:
     path: AGENTS.md
     lines: 14-15
-hierarchy_analysis: The agent must navigate a 3-level hierarchy. Crucially, the task
-  requires the agent to edit the level 2 config file (`packages/opencode/AGENTS.md`)
-  to add new rules based on the refactor, making this a meta-referential task where
-  the agent writes its own future instructions.
+hierarchy_analysis: The agent must navigate a 3-level hierarchy. Crucially, the task requires the agent to edit the level 2 config file (`packages/opencode/AGENTS.md`) to add new rules based on the refactor, making this a meta-referential task where the agent writes its own future instructions.

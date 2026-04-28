@@ -66,6 +66,30 @@ def test_refresh_non_preview_still_locks():
     )
 
 
+def test_all_harbor_tests_pass():
+    """fail_to_pass: both Refresh harbor tests pass together.
+
+    At base TestRefreshPreviewOnlySkipsLockHarbor fails because Refresh
+    unconditionally acquires the lock. At gold both harbor tests are green.
+    This complements test_refresh_preview_only_skips_lock by verifying the
+    aggregate pass count rather than a single assertion.
+    """
+    r = _go_test(r"^TestRefresh(PreviewOnlySkipsLock|NonPreviewStillLocks)Harbor$")
+    assert r.returncode == 0, (
+        "One or more harbor tests still fail.\n"
+        f"stdout:\n{r.stdout[-3000:]}\nstderr:\n{r.stderr[-2000:]}"
+    )
+    assert "PASS" in r.stdout, (
+        f"Expected PASS line in:\n{r.stdout[-1500:]}"
+    )
+    # At base the non-preview test passes but the preview-only test fails;
+    # confirm the failure is specifically the "currently locked" assertion,
+    # not some other error.
+    assert "FAIL" not in r.stdout, (
+        f"Some harbor tests still fail:\n{r.stdout[-1500:]}"
+    )
+
+
 def test_diy_backend_package_tests_pass():
     """pass_to_pass: pre-existing pkg/backend/diy unit tests still green.
 

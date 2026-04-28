@@ -20,8 +20,7 @@ checks:
 - id: skill_md_no_separate_snapshot_step
   type: fail_to_pass
   origin: pr_diff
-  description: SKILL.md core workflow does not list Snapshot as a separate numbered
-    step
+  description: SKILL.md core workflow does not list Snapshot as a separate numbered step
 - id: skill_md_workflow_step_count
   type: fail_to_pass
   origin: pr_diff
@@ -78,9 +77,44 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Test file linting passes
+- id: test_ci_lint_snippets_npm
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: Lint snippets / '
+- id: test_ci_lint_snippets_pip
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: Lint snippets / '
+- id: test_ci_lint_snippets_mvn
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: Lint snippets / '
+- id: test_ci_lint_snippets_node
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: Lint snippets / '
+- id: test_ci_docs___lint_npm
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: docs & lint / '
+- id: test_ci_docs___lint_npx
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: docs & lint / '
+- id: test_ci_docs___lint_npm
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: docs & lint / '
+- id: test_ci_docs___lint_audit_prod_npm_dependencies
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: docs & lint / Audit prod NPM dependencies'
+- id: test_ci_docs___lint_npm_2
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: docs & lint / '
 rubric:
-- rule: SKILL.md core workflow instructions are clear and concise, consistent with
-    existing style
+- rule: SKILL.md core workflow instructions are clear and concise, consistent with existing style
   source:
     path: packages/playwright/src/mcp/terminal/SKILL.md
     lines: 1-10
@@ -107,8 +141,7 @@ config_edits:
   gold_added: '2. Interact using refs from the snapshot
 
     3. Re-snapshot after significant changes'
-  gold_removed: '2. Snapshot: `playwright-cli snapshot` (returns elements with refs
-    like `ref=e1`, `ref=e2`)
+  gold_removed: '2. Snapshot: `playwright-cli snapshot` (returns elements with refs like `ref=e1`, `ref=e2`)
 
     3. Interact using refs from the snapshot
 
@@ -120,32 +153,23 @@ distractors:
     lines: '39'
   source_text: '   - Do not take screenshots unless absolutely necessary'
   collision_type: rule_conflict
-  why_distracting: The PR explicitly adds a snapshot via `response.setIncludeSnapshot();`
-    when pressing Enter. An AI might follow this planner agent rule and avoid implementing
-    the snapshot feature.
+  why_distracting: The PR explicitly adds a snapshot via `response.setIncludeSnapshot();` when pressing Enter. An AI might follow this planner agent rule and avoid implementing the snapshot feature.
   severity: high
-- rule: For inherently dynamic data, utilize regular expressions to produce resilient
-    locators
+- rule: For inherently dynamic data, utilize regular expressions to produce resilient locators
   source:
     path: packages/playwright/src/agents/playwright-test-healer.agent.md
     lines: '39'
-  source_text: '   - For inherently dynamic data, utilize regular expressions to produce
-    resilient locators'
+  source_text: '   - For inherently dynamic data, utilize regular expressions to produce resilient locators'
   collision_type: scope_ambiguity
-  why_distracting: This rule applies to writing reliable Playwright tests. The PR
-    modifies the core `keyboard.ts` framework code which relies on internal element
-    abstractions, not test locators.
+  why_distracting: This rule applies to writing reliable Playwright tests. The PR modifies the core `keyboard.ts` framework code which relies on internal element abstractions, not test locators.
   severity: low
 - rule: Never wait for networkidle or use other discouraged or deprecated apis
   source:
     path: packages/playwright/src/agents/playwright-test-healer.agent.md
     lines: '55'
-  source_text: '- Never wait for networkidle or use other discouraged or deprecated
-    apis'
+  source_text: '- Never wait for networkidle or use other discouraged or deprecated apis'
   collision_type: scope_ambiguity
-  why_distracting: Intended for end-users writing tests. Framework code often needs
-    to handle waits inherently (e.g., the PR uses `waitForCompletion`). An AI might
-    mistakenly avoid adding waiting logic.
+  why_distracting: Intended for end-users writing tests. Framework code often needs to handle waits inherently (e.g., the PR uses `waitForCompletion`). An AI might mistakenly avoid adding waiting logic.
   severity: medium
 - rule: File should contain single test
   source:
@@ -153,18 +177,13 @@ distractors:
     lines: '41'
   source_text: '  - File should contain single test'
   collision_type: scope_ambiguity
-  why_distracting: This dictates test file structure for generated test code. An AI
-    modifying TypeScript files in the framework repository might assume this applies
-    to all files.
+  why_distracting: This dictates test file structure for generated test code. An AI modifying TypeScript files in the framework repository might assume this applies to all files.
   severity: medium
-- rule: Includes a comment with the step text before each step execution. Do not duplicate
-    comments if step requires multiple actions.
+- rule: Includes a comment with the step text before each step execution. Do not duplicate comments if step requires multiple actions.
   source:
     path: packages/playwright/src/agents/playwright-test-generator.agent.md
     lines: 45-46
-  source_text: "  - Includes a comment with the step text before each step execution.\
-    \ Do not duplicate comments if step requires\n    multiple actions."
+  source_text: "  - Includes a comment with the step text before each step execution. Do not duplicate comments if step requires\n    multiple actions."
   collision_type: scope_ambiguity
-  why_distracting: This rule enforces a specific commenting style for generated Playwright
-    tests. An AI might erroneously apply this style to the framework's internal tools.
+  why_distracting: This rule enforces a specific commenting style for generated Playwright tests. An AI might erroneously apply this style to the framework's internal tools.
   severity: low

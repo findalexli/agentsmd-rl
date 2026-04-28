@@ -45,10 +45,31 @@ def _run_pytest(test_node_id: str, timeout: int = 300) -> subprocess.CompletedPr
     )
 
 
+def _run_pytest_pr(test_node_id: str, timeout: int = 300) -> subprocess.CompletedProcess:
+    """Run a pytest node from the PR-added test file (created by the gold patch)."""
+    return subprocess.run(
+        [
+            "pytest",
+            "-xvs",
+            "--no-header",
+            "-p",
+            "no:cacheprovider",
+            f"tests/unit_tests/daos/test_report_dao.py::{test_node_id}",
+        ],
+        cwd=str(REPO),
+        capture_output=True,
+        text=True,
+        timeout=timeout,
+    )
+
+
 def _format(r: subprocess.CompletedProcess) -> str:
     tail_out = "\n".join(r.stdout.splitlines()[-80:])
     tail_err = "\n".join(r.stderr.splitlines()[-40:])
     return f"returncode={r.returncode}\n--- STDOUT ---\n{tail_out}\n--- STDERR ---\n{tail_err}"
+
+
+# === Held-out fail_to_pass tests ===
 
 
 def test_percent_in_slug_must_be_literal() -> None:
@@ -69,6 +90,9 @@ def test_trailing_percent_no_wildcard() -> None:
     assert r.returncode == 0, _format(r)
 
 
+# === Held-out pass_to_pass tests ===
+
+
 def test_basic_substring_match_still_works() -> None:
     """p2p — a vanilla slug must still find its row after the fix."""
     r = _run_pytest("test_basic_substring_match_still_works")
@@ -78,4 +102,52 @@ def test_basic_substring_match_still_works() -> None:
 def test_no_match_returns_empty_list() -> None:
     """p2p — slug not present anywhere returns []."""
     r = _run_pytest("test_no_match_returns_empty_list")
+    assert r.returncode == 0, _format(r)
+
+
+# === PR-added fail_to_pass tests (test file created by gold patch) ===
+
+
+def test_pr_added_test_find_by_extra_metadata_returns_matching_rep() -> None:
+    """f2p — PR test: basic matching works after fix."""
+    r = _run_pytest_pr("test_find_by_extra_metadata_returns_matching_reports")
+    assert r.returncode == 0, _format(r)
+
+
+def test_pr_added_test_find_by_extra_metadata_returns_empty_when_n() -> None:
+    """f2p — PR test: no-match slug returns empty list."""
+    r = _run_pytest_pr("test_find_by_extra_metadata_returns_empty_when_no_match")
+    assert r.returncode == 0, _format(r)
+
+
+def test_pr_added_test_find_by_extra_metadata_escapes_percent_wild() -> None:
+    """f2p — PR test: '%' in slug is treated as literal, not LIKE wildcard."""
+    r = _run_pytest_pr("test_find_by_extra_metadata_escapes_percent_wildcard")
+    assert r.returncode == 0, _format(r)
+
+
+def test_pr_added_test_find_by_extra_metadata_escapes_underscore_w() -> None:
+    """f2p — PR test: '_' in slug is treated as literal, not LIKE wildcard."""
+    r = _run_pytest_pr("test_find_by_extra_metadata_escapes_underscore_wildcard")
+    assert r.returncode == 0, _format(r)
+
+
+# === Scoped CI regression test (pass_to_pass) ===
+
+
+def test_existing_report_dao_unit_tests_still_pass() -> None:
+    """p2p — existing daos and report-command unit tests pass after the fix."""
+    r = subprocess.run(
+        [
+            "python3", "-m", "pytest",
+            "tests/unit_tests/daos/",
+            "tests/unit_tests/commands/report/",
+            "-x", "--no-header", "-p", "no:cacheprovider",
+            "-q",
+        ],
+        cwd=str(REPO),
+        capture_output=True,
+        text=True,
+        timeout=300,
+    )
     assert r.returncode == 0, _format(r)

@@ -375,3 +375,4 @@ def test_repo_lint():
         env=env
     )
     assert r.returncode == 0, f"Lint failed:\n{r.stdout[-1000:]}\n{r.stderr[-500:]}"
+

@@ -15,6 +15,10 @@ After the change:
 - `CLAUDE.md` should be a symbolic link pointing to `AGENTS.md` (so it returns the same content)
 - `.alexignore` should list both `AGENTS.md` and `CLAUDE.md`
 
+## Code Style Requirements
+
+This repository uses `alex` for insensitive language linting. The `.alexignore` file controls which files alex skips. Any changes to `.alexignore` must ensure both `AGENTS.md` and `CLAUDE.md` are listed so that alex does not check these agent instruction files.
+
 ## Verification
 
 The agent instructions file should contain these sections:

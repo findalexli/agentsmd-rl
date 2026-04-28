@@ -19,6 +19,9 @@ RUN git init /workspace/next.js && \
 
 WORKDIR /workspace/next.js
 
-# No build deps needed — tests only read TypeScript source and errors.json
+# Enable corepack and install pnpm for CI-mined tests
+RUN corepack enable && corepack prepare pnpm@9.6.0 --activate && \
+    pnpm install --frozen-lockfile
+
 # Verifier output directory (Harbor bind-mounts this)
 RUN mkdir -p /logs/verifier

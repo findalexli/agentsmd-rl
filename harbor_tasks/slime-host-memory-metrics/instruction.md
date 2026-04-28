@@ -27,3 +27,13 @@ Values must be numeric (int or float) in the GB range (not raw bytes).
 ## Files to Look At
 
 - `slime/utils/memory_utils.py` — memory utility functions including `available_memory()` and the `_byte_to_gb` helper
+
+## Code Style Requirements
+
+This project enforces consistent code style via pre-commit hooks:
+
+- **ruff** for linting
+- **isort** for import sorting (with `--profile=black`)
+- **black** for code formatting
+
+All code changes must pass these checks. New imports (if any) should be placed following the existing import ordering conventions used in the file.

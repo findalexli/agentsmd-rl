@@ -82,5 +82,5 @@ The repository's contributor guidelines apply:
 - Keep changes minimal — do not refactor unrelated code.
 - The fix should be consistent with how related AST-traversal helpers in the
   same file handle the same situation (look for the existing handling of
-  similar wrapper-style AST nodes elsewhere in `SchemaAST.ts`).
+  similar wrapper-style AST nodes elsewhere in the schema-AST source code).
 - TypeScript code must continue to typecheck cleanly.

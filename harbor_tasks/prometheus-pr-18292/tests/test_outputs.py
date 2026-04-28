@@ -3,12 +3,11 @@ Test suite for prometheus/prometheus#18292 - tsdb/agent: fix getOrCreate race.
 
 This test verifies the race condition fix by checking actual concurrent behavior:
 1. Concurrent appends for same label set produce exactly one series (not duplicates)
-2. Concurrent operations don't deadlock with GC
+2. Concurrent operations do not deadlock with GC
 3. The package compiles cleanly
 """
 
 import subprocess
-import re
 import sys
 import os
 
@@ -30,13 +29,11 @@ def test_concurrent_append_same_labels():
     """
     Fail-to-pass: Verifies concurrent appends for same label set produce exactly one series.
 
-    This test runs a Go test that performs 100 concurrent appends for the same label set
+    Runs a Go test that performs 100 concurrent appends for the same label set
     and verifies only 1 series was created (not 100 duplicates from a race condition).
-    The test name TestConcurrentAppendSameLabels is consistent across all possible fixes.
     """
     result = run_go_test("TestConcurrentAppendSameLabels")
 
-    # Check if test exists - if no tests to run, the fix wasn't applied
     if "no tests to run" in result.stdout:
         assert False, "TestConcurrentAppendSameLabels must be added by the fix - test not found"
 
@@ -52,10 +49,8 @@ def test_concurrent_atomic_insert():
     Fail-to-pass: Verifies atomic insert behavior for concurrent same-label operations.
 
     Runs tests that check concurrent calls to the series creation method all return
-    the same canonical series and don't create duplicates. Uses a pattern that matches
-    any test with "Concurrent" and "SameLabels" in the name.
+    the same canonical series and do not create duplicates.
     """
-    # Run tests with Concurrent + SameLabels pattern - works for any method name
     result = run_go_test("Test.*Concurrent.*SameLabels")
 
     if "no tests to run" in result.stdout:
@@ -66,7 +61,7 @@ def test_concurrent_atomic_insert():
 
 def test_gc_concurrent_safety():
     """
-    Fail-to-pass: Verifies concurrent operations don't deadlock with GC.
+    Fail-to-pass: Verifies concurrent operations do not deadlock with GC.
 
     Uses a pattern that matches any test with "Concurrent" and "GC" in the name.
     """
@@ -82,34 +77,15 @@ def test_stripe_series_atomic_operation():
     """
     Fail-to-pass: Verifies stripeSeries atomic "check-then-insert" works correctly.
 
-    This checks the basic atomic operation behavior: inserting a series returns created=true,
+    Checks the basic atomic operation behavior: inserting a series returns created=true,
     and re-inserting the same labels returns created=false with the same canonical series.
-    Uses a pattern matching any StripeSeries test with atomic/concurrent behavior keywords.
     """
-    # Match any StripeSeries test that exercises atomic/insert/concurrent behavior
     result = run_go_test("TestStripeSeries_(SetUnlessAlreadySet|GetOrInsert|InsertIfAbsent|Atomic)")
 
     if "no tests to run" in result.stdout:
         assert False, "StripeSeries atomic operation test must be added by the fix - test not found"
 
     assert result.returncode == 0, "StripeSeries atomic operation test failed - method may not work correctly"
-
-
-def test_method_signature_updated():
-    """
-    Fail-to-pass: Verifies getOrCreate signature was changed to accept ref parameter.
-
-    The fix changes getOrCreate(l labels.Labels) to getOrCreate(ref, l).
-    If the signature is wrong, compilation will fail.
-    """
-    result = subprocess.run(
-        ["go", "build", "./tsdb/agent/"],
-        capture_output=True,
-        text=True,
-        cwd=REPO,
-    )
-
-    assert result.returncode == 0, f"Build failed - getOrCreate signature may be wrong: {result.stderr}"
 
 
 def test_agent_package_compiles():
@@ -132,7 +108,6 @@ def test_existing_agent_tests():
 
     Excludes the new tests added by this fix to avoid counting them twice.
     """
-    # Get list of all tests
     result = subprocess.run(
         ["go", "test", "-list", ".", "./tsdb/agent/"],
         capture_output=True,
@@ -145,7 +120,6 @@ def test_existing_agent_tests():
 
     all_tests = result.stdout.strip().split("\n")
 
-    # Filter out the new tests added by this fix (by name pattern, not method name)
     new_test_patterns = [
         "TestConcurrentAppendSameLabels",
         "TestSetUnlessAlreadySet",
@@ -163,7 +137,6 @@ def test_existing_agent_tests():
     if not existing_tests:
         assert False, "No existing tests found to run"
 
-    # Run each existing test
     for test in existing_tests:
         result = run_go_test(test, timeout="60s")
         if result.returncode != 0:
@@ -182,25 +155,6 @@ def test_go_vet_passes():
     )
 
     assert result.returncode == 0, f"go vet failed: {result.stderr}"
-
-
-def test_atomic_method_exists():
-    """
-    Fail-to-pass: Verifies an atomic insert method exists in stripeSeries.
-
-    This uses go build as a behavioral check - the package must compile,
-    which means it has the methods needed by the fix.
-    """
-    # Build the package to verify the required methods are available
-    result = subprocess.run(
-        ["go", "build", "./tsdb/agent/"],
-        capture_output=True,
-        text=True,
-        cwd=REPO,
-    )
-
-    if result.returncode != 0:
-        assert False, f"stripeSeries must have atomic insert method - build failed: {result.stderr}"
 
 
 def test_go_mod_verify():
@@ -251,5 +205,4 @@ def test_agent_go_fmt():
         text=True,
         cwd=REPO,
     )
-    # go fmt returns 0 on success; output is empty if no changes needed
     assert result.returncode == 0, f"go fmt failed: {result.stderr}"

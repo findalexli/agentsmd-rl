@@ -169,6 +169,11 @@ def test_method_color_class_patch_warning():
     assert "badge--warning" in html
 
 
+def test_method_color_class_head_secondary():
+    html = _ssr({"method": "head", "path": "/x"})
+    assert "badge--secondary" in html
+
+
 def test_event_method_omits_path():
     """When method is 'event', the path heading is not rendered."""
     html = _ssr({"method": "event", "path": "/hook"})
@@ -218,10 +223,9 @@ def test_callback_context_omits_server_url():
     # Should still render the heading and the substituted path
     assert "openapi__method-endpoint-path" in html
     assert ":id" in html
-    # The mocked BrowserOnly returns null, so server URL would be empty
-    # either way during SSG. We check that the html does not contain
-    # the BrowserOnly wrapper marker on callback (BrowserOnly is not
-    # rendered for callbacks per the gold logic).
+    assert "__BROWSER_ONLY_MARKER__" not in html, (
+        "BrowserOnly/server URL wrapper must not appear for callback context"
+    )
 
 
 # ----------------------- agent_config rules -----------------------
@@ -299,6 +303,31 @@ def test_p2p_existing_theme_file_compiles():
         )
         assert r.returncode == 0, (
             f"Existing theme file should compile cleanly: {r.stderr}"
+        )
+    finally:
+        shutil.rmtree(out, ignore_errors=True)
+
+
+def test_p2p_ci_typecheck_mimic():
+    """Mimic the docs CI pipeline typecheck/compile step.
+
+    The CI workflow (.github/workflows/superset-docs-verify.yml) runs
+    'yarn typecheck' then 'yarn build' scoped to the docs/ directory.
+    Both would catch TypeScript/compilation errors in theme files.
+    This test validates that an existing theme file compiles via the
+    same esbuild bundler the CI pipeline invokes.
+    """
+    existing = os.path.join(REPO, "docs/src/theme/Root.js")
+    assert os.path.isfile(existing)
+    out = tempfile.mkdtemp(prefix="ci_mimic_", dir=HARNESS)
+    try:
+        r = subprocess.run(
+            ["bash", "-lc",
+             f"cd /workspace/test_harness && node bundle.js {existing} {os.path.join(out, 'out.js')}"],
+            capture_output=True, text=True, timeout=60,
+        )
+        assert r.returncode == 0, (
+            f"CI typecheck equivalent should pass: {r.stderr}"
         )
     finally:
         shutil.rmtree(out, ignore_errors=True)

@@ -12,8 +12,7 @@ checks:
 - id: standard_schema_validation
   type: fail_to_pass
   origin: pr_diff
-  description: createTable produces Standard Schema-compatible tables with parseSafe
-    support
+  description: createTable produces Standard Schema-compatible tables with parseSafe support
 - id: validate_partial_row_exported
   type: fail_to_pass
   origin: pr_diff
@@ -29,8 +28,7 @@ checks:
 - id: timestamp_schema_uses_create_schema
   type: fail_to_pass
   origin: pr_diff
-  description: timestampSchema uses createSchema from data-schema instead of inline
-    ~standard
+  description: timestampSchema uses createSchema from data-schema instead of inline ~standard
 - id: agents_md_cross_package_rule
   type: fail_to_pass
   origin: pr_diff
@@ -75,6 +73,42 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Data-schema unit tests pass
+- id: test_ci_build_build_packages
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: build / Build packages'
+- id: test_ci_mysql_integration_run_mysql_integration_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: MySQL Integration / Run mysql integration tests'
+- id: test_ci_sqlite_integration_build_sqlite_native_module
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: SQLite Integration / Build sqlite native module'
+- id: test_ci_sqlite_integration_run_sqlite_adapter_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: SQLite Integration / Run sqlite adapter tests'
+- id: test_ci_postgres_integration_run_postgres_integration_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: Postgres Integration / Run postgres integration tests'
+- id: test_ci_check_lint
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: check / Lint'
+- id: test_ci_check_typecheck
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: check / Typecheck'
+- id: test_ci_check_check_change_files
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: check / Check change files'
+- id: test_ci_format_format
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: format / Format'
 rubric:
 - rule: Config update is consistent with the style of existing AGENTS.md entries
   source:
@@ -82,13 +116,15 @@ rubric:
     lines: 1-20
     commit: 89db125c56d3b0d637a283ac9122c6cb8f5542c3
   reference: '- **Cross-package boundaries**: Avoid re-exporting APIs/types from other packages. Consumers should import from the owning package directly. Reuse shared concepts from sibling packages internally instead of creating bespoke duplicate implementations.'
-- rule: README Data Validation section follows the structure and tone of existing
-    README sections
+- rule: README Data Validation section follows the structure and tone of existing README sections
   source:
     path: packages/data-table/README.md
     lines: 1-30
     commit: 89db125c56d3b0d637a283ac9122c6cb8f5542c3
-  reference: "### Data Validation\n\nFor write operations, data validation happens before SQL is executed"
+  reference: '### Data Validation
+
+
+    For write operations, data validation happens before SQL is executed'
 - rule: AGENTS.md documents cross-package boundary rule about re-exports
   source:
     path: AGENTS.md
@@ -102,27 +138,18 @@ rubric:
     commit: 28d74aae012ca78b82fedaf6f7f5de53094fd002
   reference: 'Tables are also [Standard Schema](https://standardschema.dev/)-compatible, so you can run the same validation explicitly with `remix/data-schema` before writing:'
 distractors:
-- rule: All `exports` in `package.json` have a dedicated file in `src` that defines
-    the public API by re-exporting from within `src/lib`
+- rule: All `exports` in `package.json` have a dedicated file in `src` that defines the public API by re-exporting from within `src/lib`
   collision_type: rule_conflict
-  why_distracting: The task explicitly requires removing the re-export of `DataSchema`
-    from `data-table`. The agent might hesitate to remove it from `src/index.ts` because
-    of the rule stating that public APIs are defined by re-exporting from within `src/lib`.
+  why_distracting: The task explicitly requires removing the re-export of `DataSchema` from `data-table`. The agent might hesitate to remove it from `src/index.ts` because of the rule stating that public APIs are defined by re-exporting from within `src/lib`.
   severity: high
   source:
     path: AGENTS.md
     lines: 13-13
-- rule: 'Adding changes: Create `packages/*/.changes/[major|minor|patch].short-description.md`
-    files.'
+- rule: 'Adding changes: Create `packages/*/.changes/[major|minor|patch].short-description.md` files.'
   collision_type: scope_ambiguity
-  why_distracting: The agent might create a `.changes` file for this PR, but the instructions
-    only specify updating `AGENTS.md` and `README.md`. Creating unrequested change
-    files pollutes the PR.
+  why_distracting: The agent might create a `.changes` file for this PR, but the instructions only specify updating `AGENTS.md` and `README.md`. Creating unrequested change files pollutes the PR.
   severity: medium
   source:
     path: AGENTS.md
     lines: 41-41
-hierarchy_analysis: 'The configuration is a flat single file (`AGENTS.md`), but the
-  task introduces a unique meta-referential challenge: the agent is instructed to
-  edit `AGENTS.md` itself to add a new architectural guideline. This requires the
-  agent to treat its own instruction file as a mutable target.'
+hierarchy_analysis: 'The configuration is a flat single file (`AGENTS.md`), but the task introduces a unique meta-referential challenge: the agent is instructed to edit `AGENTS.md` itself to add a new architectural guideline. This requires the agent to treat its own instruction file as a mutable target.'

@@ -19,7 +19,9 @@ RUN git init /workspace/AReaL && \
 
 WORKDIR /workspace/AReaL
 
-# Tests extract and execute functions via AST — no heavy deps needed beyond stdlib
+# Pre-build wheel so CI-mined wheel artifact test can verify it
+RUN mkdir -p dist && \
+    pip wheel --no-deps . -w dist/ -q 2>/dev/null
 
 # Verifier output directory (Harbor bind-mounts this)
 RUN mkdir -p /logs/verifier

@@ -395,3 +395,4 @@ def test_repo_tanstack_plugin_format():
         capture_output=True, text=True, timeout=60, cwd=EXAMPLE_DIR,
     )
     assert r.returncode == 0, f"Plugin format check failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
+

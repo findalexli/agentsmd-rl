@@ -1,0 +1,93 @@
+version: '2.0'
+source:
+  repo: openai/openai-agents-js
+  pr: 856
+  base_commit: 47d10c0dabd3f179b5d59e7eb9c5eefcec93a98f
+  merge_commit: 6a59de9033feb090d5dfa2712fd2d2fc3e8ce005
+task:
+  kind: markdown_authoring
+checks:
+- id: test_agents_md_has_version_search_rule
+  type: fail_to_pass
+  origin: pr_diff
+  description: AGENTS.md includes the rule to web-search for latest stable major versions
+    of official GitHub Actions before updating workflow pins
+- id: test_agents_md_has_before_updating_pins_clause
+  type: fail_to_pass
+  origin: pr_diff
+  description: AGENTS.md includes the 'before updating version pins' clause to complete
+    the GitHub Actions version-pinning guidance
+- id: test_ci_build_run_build
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: build / Run build'
+- id: test_ci_test_check_generated_declarations
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: test / Check generated declarations'
+- id: test_ci_test_run_linter
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: test / Run linter'
+- id: test_ci_test_type_check_docs_scripts
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: test / Type-check docs scripts'
+- id: test_ci_test_compile_examples
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: test / Compile examples'
+- id: test_ci_test_run_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: test / Run tests'
+config_edits:
+- path: AGENTS.md
+  tier: 1
+  gold_added: '- When editing GitHub Actions workflows, always web-search for the
+    latest stable major versions of official actions (e.g., `actions/checkout`, `actions/setup-node`)
+    before updating version pins.'
+rubric:
+- rule: Tips for Navigating the Repo section uses bullet points with clear actionable
+    guidance
+  source:
+    path: AGENTS.md
+    lines: 239-247
+    commit: 47d10c0dabd3f179b5d59e7eb9c5eefcec93a98f
+  evidence: Gold adds a new bullet point under Tips for Navigating the Repo with specific,
+    actionable advice about web-searching for latest action versions
+  category: style
+  verification: llm_judge
+- rule: When `$code-change-verification` applies (see Mandatory Skill Usage), run
+    it to execute the full verification stack in order before considering the work
+    complete
+  source:
+    path: AGENTS.md
+    lines: 182-183
+    commit: 47d10c0dabd3f179b5d59e7eb9c5eefcec93a98f
+  evidence: Gold diff only touches AGENTS.md and .github/workflows/ — both are docs-only/repo-meta
+    paths where code-change-verification can be skipped per the Mandatory Skill Usage
+    section
+  category: process
+  verification: llm_judge
+- rule: Use Conventional Commits
+  source:
+    path: AGENTS.md
+    lines: 190-206
+    commit: 47d10c0dabd3f179b5d59e7eb9c5eefcec93a98f
+  evidence: The gold PR title uses 'ci:' prefix which follows Conventional Commit
+    format
+  category: naming
+  verification: llm_judge
+distractors:
+- rule: When you change anything under packages/ or touch .changeset/, use $changeset-validation
+    to create and validate the changeset
+  source:
+    path: AGENTS.md
+    lines: 20-22
+    commit: 47d10c0dabd3f179b5d59e7eb9c5eefcec93a98f
+  collision_type: scope_ambiguity
+  why_distracting: This PR does not touch packages/ or .changeset/, so changeset validation
+    is unnecessary — but the rule might make the agent think it needs to run changeset
+    commands
+  severity: low

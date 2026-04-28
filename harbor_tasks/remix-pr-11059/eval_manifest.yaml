@@ -1,0 +1,107 @@
+version: '2.0'
+source:
+  repo: remix-run/remix
+  pr: 11059
+  base_commit: aec113e9563f860ea1d0abfcbd2743dd2f6c6bc5
+  merge_commit: 8954f7be72c295b6f7060bfbd88ba9fdde43c2d8
+task:
+  kind: code_fix
+checks:
+- id: test_removes_attributes
+  type: fail_to_pass
+  origin: pr_diff
+  description: Removing props should fully remove reflected attributes from DOM elements
+- id: test_removes_reflected_attributes_cleanly
+  type: fail_to_pass
+  origin: pr_diff
+  description: Removing host props on a div should remove all reflected attributes without leaving empty strings
+- id: test_updates_element_with_attributes
+  type: fail_to_pass
+  origin: pr_diff
+  description: Updating an element's attributes should reuse the same DOM node and apply new values
+- id: test_repo_full_test_suite
+  type: pass_to_pass
+  origin: repo_tests
+  description: Full component test suite passes
+- id: test_repo_typecheck
+  type: pass_to_pass
+  origin: repo_tests
+  description: TypeScript typecheck passes for the component package
+- id: test_ci_test_run_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: test / Run tests'
+- id: test_ci_build_build_packages
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: build / Build packages'
+- id: test_ci_check_lint
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: check / Lint'
+- id: test_ci_check_typecheck
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: check / Typecheck'
+- id: test_ci_check_check_change_files
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: check / Check change files'
+rubric:
+- rule: 'No loops or conditionals in test suites: Do not use for loops or conditional statements (if, switch, etc.) to generate test cases within describe() blocks.'
+  source:
+    path: AGENTS.md
+    lines: '35'
+    commit: aec113e9563f860ea1d0abfcbd2743dd2f6c6bc5
+  evidence: Gold patch adds two new test cases as flat it() blocks without loops or conditionals in describe()
+  category: testing
+  verification: llm_judge
+- rule: When writing tests, use root.flush() to synchronously execute all pending updates and tasks. This ensures the DOM and component state are fully synchronized before making assertions.
+  source:
+    path: packages/component/AGENTS.md
+    lines: '1950'
+    commit: aec113e9563f860ea1d0abfcbd2743dd2f6c6bc5
+  evidence: Gold test cases call root.flush() before making assertions about DOM state
+  category: testing
+  verification: llm_judge
+- rule: 'Formatting: Prettier (printWidth: 100, no semicolons, single quotes, spaces not tabs)'
+  source:
+    path: AGENTS.md
+    lines: '28'
+    commit: aec113e9563f860ea1d0abfcbd2743dd2f6c6bc5
+  evidence: Gold code uses no semicolons, single quotes, and consistent spacing matching Prettier defaults
+  category: style
+  verification: llm_judge
+- rule: Prefer let for locals, const only at module scope; never use var
+  source:
+    path: AGENTS.md
+    lines: '24'
+    commit: aec113e9563f860ea1d0abfcbd2743dd2f6c6bc5
+  evidence: Gold test code uses let for locally-scoped variables
+  category: style
+  verification: llm_judge
+- rule: Only add non-JSDoc comments when the code is doing something surprising or non-obvious
+  source:
+    path: AGENTS.md
+    lines: '31'
+    commit: aec113e9563f860ea1d0abfcbd2743dd2f6c6bc5
+  evidence: Gold adds a single comment explaining why runtime state clearing is needed for form-like props
+  category: style
+  verification: llm_judge
+distractors:
+- rule: Don't store input state you don't need
+  source:
+    path: packages/component/AGENTS.md
+    lines: '546'
+    commit: aec113e9563f860ea1d0abfcbd2743dd2f6c6bc5
+  collision_type: scope_ambiguity
+  why_distracting: The clearRuntimePropertyOnRemoval function resets DOM property state, which could be misinterpreted as violating 'minimal state' guidance
+  severity: medium
+- rule: For callback-based APIs (array methods, Promise callbacks, test callbacks, transaction callbacks, etc.), prefer arrow functions over function expressions.
+  source:
+    path: AGENTS.md
+    lines: '25'
+    commit: aec113e9563f860ea1d0abfcbd2743dd2f6c6bc5
+  collision_type: rule_conflict
+  why_distracting: The gold fix introduces clearRuntimePropertyOnRemoval as a regular function declaration, which appears to conflict with the arrow-function preference
+  severity: low

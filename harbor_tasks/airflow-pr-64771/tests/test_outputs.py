@@ -12,6 +12,12 @@ REPO = "/workspace/airflow"
 UI_DIR = os.path.join(REPO, "airflow-core/src/airflow/ui")
 
 
+def _count_tests_passed(stdout: str) -> int:
+    """Extract the number of tests that passed from vitest output."""
+    m = re.search(r'Tests\s+(\d+)\s+passed', stdout)
+    return int(m.group(1)) if m else 0
+
+
 def test_dagversionselect_vitest():
     """
     Run vitest tests for DagVersionSelect component (fail_to_pass).
@@ -28,6 +34,10 @@ def test_dagversionselect_vitest():
         timeout=120,
     )
     assert result.returncode == 0, f"Vitest tests failed:\n{result.stdout}\n{result.stderr}"
+    passed = _count_tests_passed(result.stdout)
+    assert passed >= 2, (
+        f"Expected at least 2 tests to pass (filtered + unfiltered), got {passed}"
+    )
 
 
 def test_typescript_check():
@@ -48,9 +58,7 @@ def test_component_imports_dag_run_hook():
     """
     Verify the component fetches and uses DagRun data for filtering (fail_to_pass).
 
-    The component must fetch DagRun data when a runId is present in the URL.
-    This is verified by running the vitest test that checks the component
-    correctly filters versions when a specific DagRun is selected.
+    Runs the vitest case that checks filtering when a DagRun is selected.
     """
     result = subprocess.run(
         ["pnpm", "vitest", "run", "-t", "DagRun is selected",
@@ -64,15 +72,17 @@ def test_component_imports_dag_run_hook():
         f"DagRun filtering test failed — component must fetch DagRun data "
         f"and filter versions when a run is selected:\n{result.stdout}\n{result.stderr}"
     )
+    passed = _count_tests_passed(result.stdout)
+    assert passed >= 1, (
+        f"No tests ran — the filtered DagRun test case must execute:\n{result.stdout}"
+    )
 
 
 def test_component_extracts_runid():
     """
     Verify the component responds to runId in the URL for filtering (fail_to_pass).
 
-    The component must use runId from URL params to determine which DagRun is
-    selected. Verified by running the vitest test that checks the component
-    shows all versions when no DagRun is present (unfiltered baseline).
+    Runs the vitest case that checks all versions render when no DagRun is selected.
     """
     result = subprocess.run(
         ["pnpm", "vitest", "run", "-t", "no DagRun",
@@ -85,6 +95,10 @@ def test_component_extracts_runid():
     assert result.returncode == 0, (
         f"No-runId baseline test failed — component must correctly render "
         f"all versions when no DagRun is selected:\n{result.stdout}\n{result.stderr}"
+    )
+    passed = _count_tests_passed(result.stdout)
+    assert passed >= 1, (
+        f"No tests ran — the unfiltered baseline test case must execute:\n{result.stdout}"
     )
 
 
@@ -104,12 +118,9 @@ def test_component_filters_versions():
         timeout=120,
     )
     assert result.returncode == 0, f"Vitest tests failed:\n{result.stdout}\n{result.stderr}"
-    # Match the "Tests  N passed" summary line (not "Test Files  N passed")
-    passed_match = re.search(r'Tests\s+(\d+)\s+passed', result.stdout)
-    assert passed_match, f"No test results found in vitest output:\n{result.stdout}"
-    num_passed = int(passed_match.group(1))
-    assert num_passed >= 2, (
-        f"Expected at least 2 test cases (filtered + unfiltered), found {num_passed}"
+    passed = _count_tests_passed(result.stdout)
+    assert passed >= 2, (
+        f"Expected at least 2 test cases (filtered + unfiltered), found {passed}"
     )
 
 

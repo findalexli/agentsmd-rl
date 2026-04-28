@@ -1,202 +1,131 @@
 version: '2.0'
-task:
-  name: remix-route-pattern-href-error-types
-  title: Fix HrefError detail types and messages for nameless wildcards
-  kind: code_fix
-  difficulty: medium
 source:
   repo: remix-run/remix
-  pr_url: https://github.com/remix-run/remix/pull/11020
-  pr_number: 11020
+  pr: 11020
   base_commit: 96c3f0c095dc8de98543af55df0b9400656f961b
   merge_commit: 327c4881a5ee957137e6386d0767969cd0a8b23a
-  pr: 11020
-repo:
-  workdir: /workspace/remix
-  package_dir: packages/route-pattern
+task:
+  kind: code_fix
 checks:
-- id: test_nameless_wildcard_hostname
+- id: test_nameless_wildcard_hostname_error_type
   type: fail_to_pass
   origin: pr_diff
-  description: 'Calling .href() on `RoutePattern(''://*.example.com/path'')` must throw
-
-    an HrefError whose `details.type === ''nameless-wildcard''` (was wrongly
-
-    reporting `missing-params` before the fix).
-
-    '
-- id: test_nameless_wildcard_pathname
+  description: Nameless wildcard in hostname throws nameless-wildcard error, not missing-params
+- id: test_nameless_wildcard_pathname_error_type
   type: fail_to_pass
   origin: pr_diff
-  description: 'Calling .href() on `RoutePattern(''/files/*'')` must throw an HrefError
-
-    whose `details.type === ''nameless-wildcard''`.
-
-    '
-- id: test_missing_params_has_missingParams_field_single
+  description: Nameless wildcard in pathname throws nameless-wildcard error, not missing-params
+- id: test_missing_params_error_message_format
   type: fail_to_pass
   origin: pr_diff
-  description: 'The HrefError details object for missing-params must include a
-
-    `missingParams: string[]` field listing the names of required params
-
-    that were not provided. Verifies a single missing param.
-
-    '
-- id: test_missing_params_has_missingParams_field_multiple
+  description: Missing-params error message uses colon, quotes param names, omits variant listing
+- id: test_missing_search_params_error_message_format
   type: fail_to_pass
   origin: pr_diff
-  description: 'missingParams contains every undefined param name in declaration order.
-
-    '
-- id: test_missing_params_partial_provided
-  type: fail_to_pass
+  description: Missing search params error uses colon after param(s) and quotes param names
+- id: test_valid_href_still_works
+  type: pass_to_pass
   origin: pr_diff
-  description: 'When some required params are supplied, missingParams contains only the
-
-    names that were not supplied.
-
-    '
-- id: test_missing_params_message_format
-  type: fail_to_pass
-  origin: pr_diff
-  description: 'Stringified missing-params error matches the new compact format:
-
-    `HrefError: missing param(s): ''name1'', ''name2''\n\nPattern: ...\nParams: ...`
-
-    (previously listed Pathname/Hostname variants).
-
-    '
-- id: test_missing_search_params_message_format_multiple
-  type: fail_to_pass
-  origin: pr_diff
-  description: 'Stringified missing-search-params error quotes each name individually
-
-    and uses a colon separator: `missing required search param(s): ''q'', ''sort''`
-
-    (was: `missing required search param(s) ''q, sort''`).
-
-    '
-- id: test_missing_search_params_message_format_single
-  type: fail_to_pass
-  origin: pr_diff
-  description: 'Same colon-separator format applies to a single missing search param:
-
-    `missing required search param(s): ''q''`.
-
-    '
-- id: test_route_pattern_test_suite
+  description: Valid href() calls with all required params still work correctly
+- id: test_repo_test_suite
   type: pass_to_pass
   origin: repo_tests
-  description: 'The route-pattern package''s full node:test suite passes
-
-    (`pnpm --filter @remix-run/route-pattern run test`).
-
-    '
-- id: test_route_pattern_typecheck
+  description: Full test suite for route-pattern passes
+- id: test_ci_test_run_tests
   type: pass_to_pass
   origin: repo_tests
-  description: 'The route-pattern package typecheck passes
-
-    (`pnpm --filter @remix-run/route-pattern run typecheck`).
-
-    '
+  description: 'CI: test / Run tests'
+- id: test_ci_build_build_packages
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: build / Build packages'
+- id: test_ci_format_format
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: format / Format'
+- id: test_ci_check_lint
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: check / Lint'
+- id: test_ci_check_typecheck
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: check / Typecheck'
+- id: test_ci_check_check_change_files
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: check / Check change files'
+- id: test_pr_added_throws_for_nameless_wildcard
+  type: fail_to_pass
+  origin: pr_diff
+  description: PR added test 'throws for nameless wildcard' in packages/route-pattern/src/lib/route-pattern.test.ts
+- id: test_pr_added_excludes_nameless_wildcard_from_params
+  type: fail_to_pass
+  origin: pr_diff
+  description: PR added test 'excludes nameless wildcard from params' in packages/route-pattern/src/lib/route-pattern.test.ts
+- id: test_pr_added_shows_pattern
+  type: fail_to_pass
+  origin: pr_diff
+  description: PR added test 'shows pattern' in packages/route-pattern/src/lib/route-pattern/href.test.ts
+- id: test_pr_added_shows_missing_param_pattern_and_params
+  type: fail_to_pass
+  origin: pr_diff
+  description: PR added test 'shows missing param, pattern, and params' in packages/route-pattern/src/lib/route-pattern/href.test.ts
 rubric:
-- id: import_type_syntax
+- rule: Always use `import type { X }` for types (separate from value imports); use `export type { X }` for type exports; include `.ts` extensions
   source:
-    ref: '## Code Style — Imports'
-    commit: 96c3f0c095dc8de98543af55df0b9400656f961b
     path: AGENTS.md
-  rule: 'Type-only imports use `import type { X }` (separate from value imports);
-
-    type re-exports use `export type { X }`.
-
-    '
-- id: ts_extension_in_relative_imports
+    lines: '31'
+    commit: 96c3f0c095dc8de98543af55df0b9400656f961b
+  evidence: Gold patch uses import type correctly for RoutePattern import in href.ts
+  category: style
+  verification: llm_judge
+- rule: Use regular function declarations/expressions by default. Only use arrow functions as callbacks (e.g., route handlers, array methods) where preserving lexical `this` is beneficial or the syntax is more concise
   source:
-    ref: '## Code Style — Imports'
-    commit: 96c3f0c095dc8de98543af55df0b9400656f961b
     path: AGENTS.md
-  rule: 'Relative imports include the `.ts` extension (the codebase uses
-
-    bundler-style resolution with `verbatimModuleSyntax`).
-
-    '
-- id: prefer_let_for_locals
+    lines: '33'
+    commit: 96c3f0c095dc8de98543af55df0b9400656f961b
+  evidence: Gold patch removes hrefOrThrow regular function and integrates logic into exported part function
+  category: style
+  verification: llm_judge
+- rule: 'Prettier (printWidth: 100, no semicolons, single quotes, spaces not tabs)'
   source:
-    ref: '## Code Style — Variables'
-    commit: 96c3f0c095dc8de98543af55df0b9400656f961b
     path: AGENTS.md
-  rule: 'Prefer `let` for local variables; reserve `const` for module scope only;
-
-    never use `var`.
-
-    '
-- id: function_declarations_over_arrow
+    lines: '35'
+    commit: 96c3f0c095dc8de98543af55df0b9400656f961b
+  evidence: Gold patch code follows Prettier formatting rules
+  category: style
+  verification: llm_judge
+- rule: Only add non-JSDoc comments when the code is doing something surprising or non-obvious
   source:
-    ref: '## Code Style — Functions'
-    commit: 96c3f0c095dc8de98543af55df0b9400656f961b
     path: AGENTS.md
-  rule: 'Use regular function declarations/expressions by default. Arrow
-
-    functions only as callbacks (e.g. array methods, route handlers) where
-
-    preserving lexical `this` is beneficial or syntax is more concise.
-
-    '
-- id: descriptive_lowercase_generics
+    lines: '37'
+    commit: 96c3f0c095dc8de98543af55df0b9400656f961b
+  evidence: Gold patch adds only a JSDoc @param tag, no unnecessary comments
+  category: style
+  verification: llm_judge
+- rule: 'No loops or conditionals in test suites: Do not use `for` loops or conditional statements (`if`, `switch`, etc.) to generate test cases within `describe()` blocks.'
   source:
-    ref: '## Code Style — Generics'
-    commit: 96c3f0c095dc8de98543af55df0b9400656f961b
     path: AGENTS.md
-  rule: 'Generic type parameters use descriptive lowercase names (e.g. `source`,
-
-    `method`, `pattern`) rather than single uppercase letters (`T`, `P`, `K`).
-
-    '
-- id: minimal_comments
+    lines: '40'
+    commit: 96c3f0c095dc8de98543af55df0b9400656f961b
+  evidence: Gold patch test changes do not introduce loops or conditionals in describe blocks
+  category: testing
+  verification: llm_judge
+distractors:
+- rule: Prefer `let` for locals, `const` only at module scope; never use `var`
   source:
-    ref: '## Code Style — Comments'
-    commit: 96c3f0c095dc8de98543af55df0b9400656f961b
     path: AGENTS.md
-  rule: 'Only add non-JSDoc comments when the code is doing something surprising
-
-    or non-obvious. Don''t restate what the code does.
-
-    '
-- id: no_loops_or_conditionals_in_test_suites
+    lines: '32'
+    commit: 96c3f0c095dc8de98543af55df0b9400656f961b
+  collision_type: rule_conflict
+  why_distracting: Agent may try to change existing `let` declarations in part() to `const` since the variables are only assigned once, but the repo convention is `let` for locals
+  severity: low
+- rule: Use descriptive lowercase names for type parameters (e.g., `source`, `method`, `pattern`) instead of single uppercase letters like `T`, `P`, or `K`
   source:
-    ref: '## Test Structure'
-    commit: 96c3f0c095dc8de98543af55df0b9400656f961b
     path: AGENTS.md
-  rule: 'Test files do not use `for` loops or conditionals (`if`, `switch`) to
-
-    generate test cases inside `describe()` blocks; this breaks IDE test
-
-    navigation in the Node test runner.
-
-    '
-- id: prettier_formatting
-  source:
-    ref: '## Code Style — Formatting'
+    lines: '36'
     commit: 96c3f0c095dc8de98543af55df0b9400656f961b
-    path: AGENTS.md
-  rule: 'Code follows Prettier style: printWidth 100, no semicolons, single
-
-    quotes, spaces (not tabs).
-
-    '
-- id: change_file_added
-  source:
-    ref: '## Changes and Releases'
-    commit: 96c3f0c095dc8de98543af55df0b9400656f961b
-    path: AGENTS.md
-  rule: 'A new change file is added at
-
-    `packages/route-pattern/.changes/[major|minor|patch].short-description.md`
-
-    describing the user-visible change in the format used by the rest of
-
-    that directory.
-
-    '
+  collision_type: scope_ambiguity
+  why_distracting: The RoutePattern class already uses descriptive generics; agent may waste time reviewing or changing generic names unrelated to the href fix
+  severity: low

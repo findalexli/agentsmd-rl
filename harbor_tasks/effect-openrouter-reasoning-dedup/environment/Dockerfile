@@ -15,7 +15,8 @@ RUN corepack enable && corepack prepare pnpm@10.17.1 --activate
 
 RUN python3 -m venv /opt/pyvenv && \
     /opt/pyvenv/bin/pip install --no-cache-dir \
-        pytest==8.3.4
+        pytest==8.3.4 \
+        pytest-json-ctrf==0.4.1
 ENV PATH="/opt/pyvenv/bin:${PATH}"
 
 WORKDIR /workspace

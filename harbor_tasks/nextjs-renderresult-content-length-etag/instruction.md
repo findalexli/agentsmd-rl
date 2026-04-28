@@ -15,10 +15,9 @@ Data requests and cached HTML responses served by the Pages Router are not retur
 
 In `render-result.ts`, the `RenderResult` class has an `isDynamic` getter that returns `true` when the response is not a string (e.g., a `Buffer` or stream). When `isDynamic` is `true`, the server skips setting `Content-Length` and `ETag` headers on the response. Understanding what causes `isDynamic` to return `true` for data requests and cached HTML responses is key to diagnosing and fixing this bug.
 
-## Files to Examine
+## Where to Look
 
-- `packages/next/src/server/route-modules/pages/pages-handler.ts` — Pages Router request handler; look at how `RenderResult` is constructed for data requests and cached HTML responses
-- `packages/next/src/server/render-result.ts` — `RenderResult` class definition, particularly the `isDynamic` getter
+The issue is in how `RenderResult` objects are constructed for Pages Router data requests and cached HTML responses. Search for `RenderResult` usage within the Pages route modules to find where response objects are created. The `RenderResult` class itself (which defines the `isDynamic` behavior) is in the server package.
 
 ## Additional Task: Update AGENTS.md
 

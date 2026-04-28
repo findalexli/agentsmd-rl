@@ -1,0 +1,111 @@
+version: '2.0'
+source:
+  repo: Effect-TS/effect
+  pr: 6071
+  base_commit: 4f2107548fa64c21a8643b7b0efcd556cd16d4b9
+  merge_commit: a91364d0ef48de0f66afe801c4da13bfe8a5aeed
+task:
+  kind: code_fix
+checks:
+- id: test_missing_name_decode
+  type: fail_to_pass
+  origin: pr_diff
+  description: ChatStreamingMessageToolCall schema accepts chunks without function.name
+- id: test_repo_typecheck
+  type: pass_to_pass
+  origin: repo_tests
+  description: TypeScript type checking passes on the openrouter package
+- id: test_ci_build_pnpm
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: Build / '
+- id: test_ci_test_test
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: Test / Test'
+- id: test_ci_test_test
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: Test / Test'
+- id: test_ci_lint_pnpm
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: Lint / '
+- id: test_ci_lint_pnpm
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: Lint / '
+- id: test_ci_lint_pnpm
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: Lint / '
+- id: test_ci_lint_check_for_codegen_changes
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: Lint / Check for codegen changes'
+- id: test_ci_lint_pnpm_2
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: Lint / '
+- id: test_ci_lint_pnpm_3
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: Lint / '
+rubric:
+- rule: 'Zero Tolerance for Errors: All automated checks must pass'
+  source:
+    path: AGENTS.md
+    lines: '9'
+    commit: 4f2107548fa64c21a8643b7b0efcd556cd16d4b9
+  evidence: The fix changes one field from required to optional using Schema.optionalWith and passes type checking.
+  category: testing
+  verification: llm_judge
+- rule: 'Clarity over Cleverness: Choose clear, maintainable solutions'
+  source:
+    path: AGENTS.md
+    lines: '19'
+    commit: 4f2107548fa64c21a8643b7b0efcd556cd16d4b9
+  evidence: 'The fix uses Schema.optionalWith(Schema.String, { nullable: true }) matching the existing pattern used for the id field.'
+  category: style
+  verification: llm_judge
+- rule: Run `pnpm lint-fix` after editing files
+  source:
+    path: AGENTS.md
+    lines: '11'
+    commit: 4f2107548fa64c21a8643b7b0efcd556cd16d4b9
+  evidence: The fix is a single-field schema change; code formatting should follow project conventions.
+  category: testing
+  verification: llm_judge
+- rule: 'Run type checking: `pnpm check`'
+  source:
+    path: AGENTS.md
+    lines: 14-16
+    commit: 4f2107548fa64c21a8643b7b0efcd556cd16d4b9
+  evidence: The change compiles without type errors on the openrouter package.
+  category: testing
+  verification: llm_judge
+distractors:
+- rule: 'Build the project: `pnpm build`'
+  source:
+    path: AGENTS.md
+    lines: '17'
+    commit: 4f2107548fa64c21a8643b7b0efcd556cd16d4b9
+  collision_type: rule_conflict
+  why_distracting: Building the entire Effect monorepo for a single schema field change is wasted effort. The Schema.Class is a type-level definition validated by tsc; a full build (compilation, annotation, CJS transform) is unnecessary.
+  severity: medium
+- rule: All pull requests must include a changeset in the `.changeset/` directory
+  source:
+    path: AGENTS.md
+    lines: 24-25
+    commit: 4f2107548fa64c21a8643b7b0efcd556cd16d4b9
+  collision_type: scope_ambiguity
+  why_distracting: The task is to fix the schema, not to prepare a release PR. Adding a changeset is a release-process concern outside the scope of the code fix.
+  severity: low
+- rule: 'Check JSDoc examples compile: `pnpm docgen`'
+  source:
+    path: AGENTS.md
+    lines: '18'
+    commit: 4f2107548fa64c21a8643b7b0efcd556cd16d4b9
+  collision_type: rule_conflict
+  why_distracting: Running docgen on the full monorepo for a single schema field change is overkill. The affected class has no JSDoc examples to verify.
+  severity: low

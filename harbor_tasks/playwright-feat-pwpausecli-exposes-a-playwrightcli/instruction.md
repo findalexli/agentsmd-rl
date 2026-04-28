@@ -29,7 +29,7 @@ In `packages/playwright/src/cli/daemon/daemon.ts`:
 ### 4. Browser backend in browserBackend.ts
 
 In `packages/playwright/src/mcp/test/browserBackend.ts`:
-- Export an async function that launches the MCP daemon for a test context
+- Export an async function `runDaemonForContext` that launches the MCP daemon for a test context
 - This function must check `process.env.PWPAUSE` to determine if it should activate
 - It must call `startMcpDaemonServer` from `packages/playwright/src/cli/daemon/daemon.ts`
 
@@ -57,3 +57,7 @@ Create `packages/playwright/src/skill/references/playwright-tests.md` documentin
 - The `playwright-cli` tool for connecting to paused test sessions
 - The `--session=<name>` flag for specifying which session to connect to
 - The workflow: set `PWPAUSE=cli`, run the test, wait for debugging instructions, then connect with `playwright-cli --session=<name>`
+
+## Code Style Requirements
+
+This project uses ESLint for code quality. After making your changes, ensure they pass the repository's lint checks. TypeScript types must also be correct — run `npm run tsc` to type-check.

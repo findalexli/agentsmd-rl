@@ -53,73 +53,66 @@ def _find_agent_test_files():
 
 # [pr_diff] fail_to_pass
 def test_type_guard_before_tostring():
-    """Type validation guard exists before toString() call — verified by running agent's test."""
-    agent_test_files = _find_agent_test_files()
-    assert len(agent_test_files) > 0, (
-        "No test file found for mock.module non-string validation. "
-        "Agent must create a test file in test/ that verifies TypeError is thrown "
-        "for non-string arguments."
-    )
+    """Type validation guard exists on argument(0) before toString() call in JSMock__jsModuleMock."""
+    cpp_path = Path(REPO) / "src/bun.js/bindings/BunPlugin.cpp"
+    assert cpp_path.exists(), "BunPlugin.cpp not found"
+    content = cpp_path.read_text()
 
-    result = subprocess.run(
-        ["bun", "test", "--bail", str(agent_test_files[0])],
-        capture_output=True,
-        text=True,
-        timeout=60,
-        cwd=REPO,
-    )
+    mock_start = content.find("JSMock__jsModuleMock")
+    assert mock_start != -1, "JSMock__jsModuleMock function not found"
+    rest = content[mock_start:]
+    next_func = rest.find("BUN_DECLARE_HOST_FUNCTION", len("JSMock__jsModuleMock"))
+    mock_body = rest[:next_func] if next_func != -1 else rest
 
-    assert result.returncode == 0, (
-        f"Agent test file failed — mock.module does not properly handle non-string "
-        f"arguments (type guard may be missing):\n"
-        f"stdout: {result.stdout[-500:]}\n"
-        f"stderr: {result.stderr[-500:]}"
+    # The fix adds a guard checking argument(0).isString() before argument(0).toString()
+    guard_pos = mock_body.find("argument(0).isString()")
+    assert guard_pos != -1, (
+        "No argument(0).isString() type guard found in JSMock__jsModuleMock"
+    )
+    tostring_pos = mock_body.find("argument(0).toString(")
+    assert guard_pos < tostring_pos, (
+        "argument(0).isString() guard must appear before argument(0).toString() call"
     )
 
 
 # [pr_diff] fail_to_pass
 def test_type_guard_error_path():
-    """Error thrown and early return when first argument is not a string — verified by running agent's test."""
-    agent_test_files = _find_agent_test_files()
-    assert len(agent_test_files) > 0, (
-        "No test file found for mock.module non-string validation"
-    )
+    """createTypeError is thrown when first argument is not a string in JSMock__jsModuleMock."""
+    cpp_path = Path(REPO) / "src/bun.js/bindings/BunPlugin.cpp"
+    assert cpp_path.exists(), "BunPlugin.cpp not found"
+    content = cpp_path.read_text()
 
-    result = subprocess.run(
-        ["bun", "test", "--bail", str(agent_test_files[0])],
-        capture_output=True,
-        text=True,
-        timeout=60,
-        cwd=REPO,
-    )
+    mock_start = content.find("JSMock__jsModuleMock")
+    assert mock_start != -1, "JSMock__jsModuleMock function not found"
+    rest = content[mock_start:]
+    next_func = rest.find("BUN_DECLARE_HOST_FUNCTION", len("JSMock__jsModuleMock"))
+    mock_body = rest[:next_func] if next_func != -1 else rest
 
-    assert result.returncode == 0, (
-        f"Agent test file failed — error path may not be correct:\n"
-        f"stdout: {result.stdout[-500:]}\n"
-        f"stderr: {result.stderr[-500:]}"
+    # The guard must check argument(0).isString() and throw createTypeError
+    guard_pos = mock_body.find("argument(0).isString()")
+    assert guard_pos != -1, "No argument(0).isString() check found"
+    after_guard = mock_body[guard_pos:]
+    # The next createTypeError after the isString check uses the new message
+    create_type_error_pos = after_guard.find("createTypeError")
+    assert create_type_error_pos != -1, (
+        "No createTypeError call after argument(0).isString() guard"
+    )
+    # Find the next return {}; after the createTypeError — ensures early exit
+    after_create = after_guard[create_type_error_pos:]
+    assert "return {};" in after_create, (
+        "No early return after createTypeError — error path incomplete"
     )
 
 
 # [pr_diff] fail_to_pass
 def test_error_message_descriptive():
-    """Error message is descriptive — verified by running agent's test which asserts on message."""
-    agent_test_files = _find_agent_test_files()
-    assert len(agent_test_files) > 0, (
-        "No test file found for mock.module non-string validation"
-    )
+    """Error message mentions 'module name string' so the user knows what went wrong."""
+    cpp_path = Path(REPO) / "src/bun.js/bindings/BunPlugin.cpp"
+    assert cpp_path.exists(), "BunPlugin.cpp not found"
+    content = cpp_path.read_text()
 
-    result = subprocess.run(
-        ["bun", "test", "--bail", str(agent_test_files[0])],
-        capture_output=True,
-        text=True,
-        timeout=60,
-        cwd=REPO,
-    )
-
-    assert result.returncode == 0, (
-        f"Agent test file failed — error message may not be descriptive:\n"
-        f"stdout: {result.stdout[-500:]}\n"
-        f"stderr: {result.stderr[-500:]}"
+    assert "mock(module, fn) requires a module name string" in content, (
+        "Missing descriptive error message 'mock(module, fn) requires a module name string'"
     )
 
 
@@ -352,52 +345,39 @@ def test_repo_describe_tests():
 # [static] fail_to_pass
 def test_meaningful_source_changes():
     """
-    A meaningful fix for the type guard bug exists in the codebase.
-    Verified behaviorally by checking that:
-    1. Non-string arguments throw TypeError with the expected message
-    2. The error message mentions 'module name string' or similar
+    At least 3 meaningful non-comment lines added to BunPlugin.cpp for the
+    type validation guard. Verified by checking that the isString guard block
+    (from argument(0).isString() check through createTypeError to return {})
+    contains the required number of logical code lines: the !isString condition,
+    the throwException/createTypeError call, and the return {};.
     """
-    # Create a test file that specifically checks the expected fix behavior
-    test_code = '''
-import { expect, mock, test } from "bun:test";
+    cpp_path = Path(REPO) / "src/bun.js/bindings/BunPlugin.cpp"
+    assert cpp_path.exists(), "BunPlugin.cpp not found"
+    content = cpp_path.read_text()
 
-// Verify the specific error message behavior
-const expectedMessage = "mock(module, fn) requires a module name string";
+    mock_start = content.find("JSMock__jsModuleMock")
+    assert mock_start != -1, "JSMock__jsModuleMock function not found"
+    rest = content[mock_start:]
+    next_func = rest.find("BUN_DECLARE_HOST_FUNCTION", len("JSMock__jsModuleMock"))
+    mock_body = rest[:next_func] if next_func != -1 else rest
 
-test("mock.module throws TypeError with specific message for non-string", () => {
-  // @ts-expect-error
-  expect(() => mock.module(123, () => ({}))).toThrow(expectedMessage);
-});
+    # Find the argument(0).isString() guard and extract the block through return {};
+    guard_pos = mock_body.find("argument(0).isString()")
+    assert guard_pos != -1, "No argument(0).isString() guard in JSMock__jsModuleMock"
 
-test("mock.module throws for multiple non-string types", () => {
-  // @ts-expect-error
-  expect(() => mock.module({}, () => ({}))).toThrow(/module.*string|string.*module/i);
-  // @ts-expect-error
-  expect(() => mock.module(Symbol("test"), () => ({}))).toThrow(/module.*string|string.*module/i);
-});
-'''
+    guard_block = mock_body[guard_pos:]
+    return_pos = guard_block.find("return {};")
+    assert return_pos != -1, "No return {}; after isString guard"
 
-    with tempfile.NamedTemporaryFile(mode='w', suffix='.test.ts', delete=False) as f:
-        f.write(test_code)
-        temp_test = f.name
-
-    try:
-        result = subprocess.run(
-            ["bun", "test", "--bail", temp_test],
-            capture_output=True,
-            text=True,
-            timeout=60,
-            cwd=REPO,
-        )
-
-        assert result.returncode == 0, (
-            f"Behavioral check for meaningful fix failed — "
-            f"expected TypeError with 'module name string' message:\n"
-            f"stdout: {result.stdout[-500:]}\n"
-            f"stderr: {result.stderr[-500:]}"
-        )
-    finally:
-        os.unlink(temp_test)
+    guard_region = guard_block[:return_pos + len("return {};")]
+    guard_lines = [
+        ln.strip() for ln in guard_region.split("\n")
+        if ln.strip() and not ln.strip().startswith("//") and not ln.strip().startswith("/*")
+    ]
+    assert len(guard_lines) >= 3, (
+        f"Expected at least 3 meaningful lines in isString guard block, "
+        f"found {len(guard_lines)}: {guard_lines}"
+    )
 
 
 # ---------------------------------------------------------------------------

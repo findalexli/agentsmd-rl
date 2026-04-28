@@ -3,6 +3,10 @@
 **PR:** `1039`
 **Target:** `areal/engine/vllm_ext/areal_vllm_server.py`
 
+## Code Style Requirements
+
+This repository enforces code style via **Ruff** (linting and formatting) and **pre-commit hooks** (check-yaml, end-of-file-fixer, trailing-whitespace). Your changes must pass `ruff check`, `ruff format --check`, and all configured pre-commit hooks on the target file.
+
 ## Background
 
 After a successful XCCL-based LoRA weight update, the `openai_serving_models.lora_requests` registry can end up with stale entries:

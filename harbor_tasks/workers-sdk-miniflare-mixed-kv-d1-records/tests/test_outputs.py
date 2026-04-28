@@ -254,3 +254,16 @@ def test_miniflare_typecheck():
         f"--- stdout ---\n{r.stdout[-1500:]}\n"
         f"--- stderr ---\n{r.stderr[-1500:]}"
     )
+
+# === pass-to-pass from the repo's own test suite ===
+
+def test_repo_vitest_index_spec():
+    """Repo's vitest suite for test/index.spec.ts must continue to pass."""
+    r = subprocess.run(
+        ["bash", "-lc", "pnpm --filter miniflare exec vitest run test/index.spec.ts"],
+        capture_output=True, text=True, timeout=300, cwd=str(REPO),
+    )
+    assert r.returncode == 0, (
+        f"vitest index.spec.ts failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}"
+    )

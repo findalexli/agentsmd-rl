@@ -1,32 +1,64 @@
 # Task
 
-Cursor-based pagination on `DateTime` columns silently returns the wrong rows
-when the cursor is applied. The query executes without error but the cursor has
-no effect — rows that should be excluded by the cursor boundary are still
-returned.
+Cursor-based pagination queries using `DateTime` columns in Prisma return
+incorrect results. When a query specifies a cursor on a `DateTime` field,
+rows that should be excluded by the cursor boundary are still included in
+the result set. The query executes without errors — the cursor simply has
+no filtering effect, and pages beyond the first page include records that
+belong on earlier pages.
 
-The root cause: a string-to-date conversion is missing in the query variable
-resolution path for `DateTime` typed placeholders. The scope value arrives as a
-JavaScript string, but the database comparison expects a `Date` object. The two
-compare as not equal even when they represent the same date.
+## Affected Queries
 
-When a placeholder passed to `evaluateArg()` has the shape:
+Queries like the following are affected:
+
 ```typescript
-{
-  prisma__type: 'param',
-  prisma__value: { name: string, type: 'DateTime' }
-}
+const page2 = await prisma.model.findMany({
+  cursor: { createdAt: "2025-01-03" },
+  take: 10,
+  skip: 1,
+})
 ```
-and the corresponding scope entry is a string such as `'2025-01-03'`, the
-function must return a `Date` instance rather than the bare string.
 
-**Note:** The fix must apply only when `type` is `"DateTime"` — other
-placeholder types (e.g., `"String"`, `"Int"`, `"Float"`, `"Boolean"`,
-`"Json"`) must remain unaffected and return their scope value unchanged.
+When `createdAt` is a `DateTime` column and the cursor value is provided
+as a string (which is the natural way to pass dates from API inputs or
+serialized data), the pagination boundary is silently ignored. The same
+query works correctly for non-`DateTime` cursor fields.
+
+## Expected Behavior
+
+A `DateTime` cursor value such as `"2025-01-03"` should produce a correct
+pagination boundary: all returned rows must satisfy the date comparison
+relative to that cursor value.
+
+The date value must be preserved through any conversion — a cursor of
+`"2025-01-03"` must map to the same calendar date, not a shifted or
+truncated date.
+
+## Non-Affected Types
+
+The following query variable types are **not** affected and must continue
+to behave as they currently do:
+
+- `String`
+- `Int`
+- `Float`
+- `Boolean`
+- `Json`
+
+No change in behavior is acceptable for these types. Their values must
+pass through without any conversion.
+
+## Verification
+
+To verify your fix, you can test with a `DateTime` cursor by constructing
+a query that paginates over a model with a `DateTime` field. The second
+page should not include rows from the first page. Prisma's existing test
+suite and linters must continue to pass.
 
 ## Code Style Requirements
 
-Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+Your solution will be checked by the repository's existing linters and
+formatters. All modified files must pass:
 
-- `prettier (JS/TS/JSON/Markdown formatter)`
-- `eslint (JS/TS linter)`
+- `prettier` (JS/TS/JSON/Markdown formatter)
+- `eslint` (JS/TS linter)

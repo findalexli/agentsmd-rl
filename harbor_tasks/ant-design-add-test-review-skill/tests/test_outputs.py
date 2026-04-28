@@ -133,3 +133,4 @@ def test_repo_root_configs_intact():
     assert r.returncode == 0, f"git ls-files failed: {r.stderr}"
     assert "CLAUDE.md" in r.stdout, "CLAUDE.md must be tracked"
     assert "AGENTS.md" in r.stdout, "AGENTS.md must be tracked"
+

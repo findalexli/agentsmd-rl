@@ -18,7 +18,7 @@ RUN mkdir -p /logs/verifier
 WORKDIR /workspace/transformers
 
 # Install ruff for style checks (config-derived grading)
-RUN pip install --no-cache-dir ruff
+RUN pip install --no-cache-dir ruff pytest pytest-json-ctrf
 
 # Configure git user for applying patches
 RUN git config --global user.email "test@test.com" \

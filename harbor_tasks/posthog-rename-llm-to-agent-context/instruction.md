@@ -61,7 +61,7 @@ Update **all three files** so the section is renamed to "Agent context", is **al
 
 ### `AGENTS.md`
 
-In the "PR descriptions" subsection, update the rule that currently says
+In the `### PR descriptions` subsection, update the rule that currently says
 ``Always uncomment and fill the `## LLM context` section for agent-authored PRs.``
 so it points at the new section name. Since the section is no longer commented out, the rule should be along the lines of
 ``Always fill the `## 🤖 Agent context` section when creating PRs.``

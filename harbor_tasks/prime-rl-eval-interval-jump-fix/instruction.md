@@ -80,6 +80,8 @@ This repo's `AGENTS.md` lays down two rules you must follow:
 
 Tests in this repo are **plain pytest functions with fixtures, never class-based**.
 
+The repo's CI enforces **ruff** linting (version 0.13.0, configured in `pyproject.toml`). Any file you modify must pass `ruff check --config=pyproject.toml` without errors.
+
 ## Files to modify
 
 - `src/prime_rl/orchestrator/eval_utils.py` — add the new function.

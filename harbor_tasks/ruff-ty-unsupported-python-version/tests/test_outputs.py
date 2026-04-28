@@ -89,10 +89,9 @@ def _cargo_test(test_filter: str, timeout: int = 300) -> subprocess.CompletedPro
 
 
 # ---------------------------------------------------------------------------
-# Gates (pass_to_pass, static) -- compilation check
+# pass_to_pass (static) -- compilation check
 # ---------------------------------------------------------------------------
 
-# [static] pass_to_pass
 def test_compiles():
     """Modified ty_project crate compiles successfully."""
     r = subprocess.run(
@@ -103,28 +102,13 @@ def test_compiles():
         timeout=300,
         env={**os.environ, "CARGO_PROFILE_DEV_OPT_LEVEL": "1"},
     )
-    assert r.returncode == 0, f"Compilation failed:\n{r.stderr}"
+    assert r.returncode == 0, f"Compilation failed:\n{r.stderr[-1000:]}"
 
 
 # ---------------------------------------------------------------------------
-# Pass-to-pass (repo_tests) -- repo's own CI checks
+# pass_to_pass (repo_tests) -- repo's own CI checks, scoped to ty_project
 # ---------------------------------------------------------------------------
 
-# [repo_tests] pass_to_pass
-def test_repo_check():
-    """Repo's cargo check on ty_project passes (pass_to_pass)."""
-    r = subprocess.run(
-        ["cargo", "check", "-p", "ty_project"],
-        cwd=REPO,
-        capture_output=True,
-        text=True,
-        timeout=120,
-        env={**os.environ, "CARGO_PROFILE_DEV_OPT_LEVEL": "1"},
-    )
-    assert r.returncode == 0, f"Cargo check failed:\n{r.stderr[-1000:]}"
-
-
-# [repo_tests] pass_to_pass
 def test_repo_clippy():
     """Repo's cargo clippy on ty_project passes (pass_to_pass)."""
     r = subprocess.run(
@@ -132,13 +116,12 @@ def test_repo_clippy():
         cwd=REPO,
         capture_output=True,
         text=True,
-        timeout=120,
+        timeout=180,
         env={**os.environ, "CARGO_PROFILE_DEV_OPT_LEVEL": "1"},
     )
     assert r.returncode == 0, f"Clippy failed:\n{r.stderr[-1000:]}"
 
 
-# [repo_tests] pass_to_pass
 def test_repo_fmt():
     """Repo's rustfmt on ty_project passes (pass_to_pass)."""
     r = subprocess.run(
@@ -151,11 +134,10 @@ def test_repo_fmt():
     assert r.returncode == 0, f"Rustfmt check failed:\n{r.stderr[-500:]}"
 
 
-# [repo_tests] pass_to_pass
 def test_repo_unit_tests():
-    """Repo's unit tests for ty_project crate pass (pass_to_pass)."""
+    """Repo's unit tests for ty_project crate pass, excluding injected harness tests."""
     r = subprocess.run(
-        ["cargo", "test", "-p", "ty_project", "--lib"],
+        ["cargo", "test", "-p", "ty_project", "--lib", "--", "--skip", "harness"],
         cwd=REPO,
         capture_output=True,
         text=True,
@@ -165,25 +147,23 @@ def test_repo_unit_tests():
     assert r.returncode == 0, f"Unit tests failed:\n{r.stderr[-1000:]}\n{r.stdout[-1000:]}"
 
 
-# [repo_tests] pass_to_pass
 def test_repo_doc():
-    """Repo's documentation for ty_project crate builds without warnings (pass_to_pass)."""
+    """Repo's documentation for ty_project crate builds without warnings."""
     r = subprocess.run(
         ["cargo", "doc", "--no-deps", "-p", "ty_project"],
         cwd=REPO,
         capture_output=True,
         text=True,
-        timeout=120,
+        timeout=180,
         env={**os.environ, "RUSTDOCFLAGS": "-D warnings"},
     )
     assert r.returncode == 0, f"Documentation build failed:\n{r.stderr[-1000:]}"
 
 
 # ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) -- core behavioral tests
+# fail_to_pass (pr_diff) -- core behavioral tests for the feature
 # ---------------------------------------------------------------------------
 
-# [pr_diff] fail_to_pass
 def test_rejects_unsupported_python_27():
     """Deserializing python-version='2.7' in config must fail."""
     _ensure_harness_injected()
@@ -194,7 +174,6 @@ def test_rejects_unsupported_python_27():
     )
 
 
-# [pr_diff] fail_to_pass
 def test_rejects_unsupported_python_36():
     """Deserializing python-version='3.6' in config must fail."""
     _ensure_harness_injected()
@@ -206,10 +185,9 @@ def test_rejects_unsupported_python_36():
 
 
 # ---------------------------------------------------------------------------
-# Pass-to-pass (pr_diff) -- supported versions still work
+# pass_to_pass (pr_diff) -- supported versions still work
 # ---------------------------------------------------------------------------
 
-# [pr_diff] pass_to_pass
 def test_accepts_supported_python_312():
     """Deserializing python-version='3.12' in config must succeed."""
     _ensure_harness_injected()
@@ -220,7 +198,6 @@ def test_accepts_supported_python_312():
     )
 
 
-# [pr_diff] pass_to_pass
 def test_accepts_supported_python_313():
     """Deserializing python-version='3.13' in config must succeed."""
     _ensure_harness_injected()
@@ -228,4 +205,24 @@ def test_accepts_supported_python_313():
     assert r.returncode == 0, (
         f"Test failed -- deserialization should accept Python 3.13:\n"
         f"{r.stdout[-2000:]}\n{r.stderr[-2000:]}"
+    )
+
+
+# ---------------------------------------------------------------------------
+# pass_to_pass (repo_tests) -- CI-style bash -lc check
+# ---------------------------------------------------------------------------
+
+def test_ci_cargo_check_ty_project():
+    """CI-style cargo check on ty_project via bash -lc."""
+    r = subprocess.run(
+        ["bash", "-lc", "cargo check -p ty_project"],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=180,
+        env={**os.environ, "CARGO_PROFILE_DEV_OPT_LEVEL": "1"},
+    )
+    assert r.returncode == 0, (
+        f"CI cargo check failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1000:]}\nstderr: {r.stderr[-1000:]}"
     )

@@ -397,3 +397,46 @@ def test_repo_ruff_check_posthog_api():
         capture_output=True, text=True, timeout=120, cwd=REPO,
     )
     assert r.returncode == 0, f"ruff check failed for posthog/api/: {r.stderr}"
+
+# === PR-added f2p tests (taskforge.test_patch_miner) ===
+def test_pr_added_test_creating_legacy_filter_insight_blocked_with():
+    """fail_to_pass | PR added test 'test_creating_legacy_filter_insight_blocked_with_feature_flag' in test_insight.py"""
+    test_path = Path(f"{REPO}/posthog/api/test/test_insight.py")
+    src = test_path.read_text()
+    tree = ast.parse(src)
+
+    found_test = None
+    for node in ast.walk(tree):
+        if isinstance(node, ast.FunctionDef) and "legacy_filter" in node.name and "blocked" in node.name:
+            found_test = node
+            break
+    assert found_test is not None, (
+        "Test method for blocked legacy filter insight not found in test_insight.py"
+    )
+    test_src = ast.get_source_segment(src, found_test)
+    assert "Creating or updating insights with legacy filters is not available for this user." in test_src, (
+        "Test must assert on the exact error message for blocked legacy filter writes"
+    )
+    assert "403" in test_src or "403_FORBIDDEN" in test_src, (
+        "Test must assert HTTP 403 Forbidden for blocked legacy filter writes"
+    )
+
+
+def test_pr_added_test_creating_query_insight_not_blocked_by_legac():
+    """fail_to_pass | PR added test 'test_creating_query_insight_not_blocked_by_legacy_filter_flag' in test_insight.py"""
+    test_path = Path(f"{REPO}/posthog/api/test/test_insight.py")
+    src = test_path.read_text()
+    tree = ast.parse(src)
+
+    found_test = None
+    for node in ast.walk(tree):
+        if isinstance(node, ast.FunctionDef) and "query" in node.name and "legacy" in node.name:
+            found_test = node
+            break
+    assert found_test is not None, (
+        "Test method for query insight not blocked by legacy filter flag not found in test_insight.py"
+    )
+    test_src = ast.get_source_segment(src, found_test)
+    assert "201" in test_src or "201_CREATED" in test_src, (
+        "Test must assert HTTP 201 Created for query-based insight writes"
+    )

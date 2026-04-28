@@ -242,3 +242,31 @@ def test_package_typecheck():
     assert r.returncode == 0, (
         f"tsc failed.\nstdout: {r.stdout[-2000:]}\nstderr: {r.stderr[-1000:]}"
     )
+
+# === CI-mined tests (taskforge.ci_check_miner) ===
+def test_ci_lint_pnpm():
+    """pass_to_pass | CI job 'Lint' → step ''"""
+    r = subprocess.run(
+        ["bash", "-lc", 'pnpm circular'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step '' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_lint_pnpm_2():
+    """pass_to_pass | CI job 'Lint' → step ''"""
+    r = subprocess.run(
+        ["bash", "-lc", 'pnpm lint'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step '' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_lint_pnpm_3():
+    """pass_to_pass | CI job 'Lint' → step ''"""
+    r = subprocess.run(
+        ["bash", "-lc", 'pnpm codegen'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step '' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")

@@ -8,13 +8,11 @@ checks:
 - id: syntax_check
   type: pass_to_pass
   origin: static
-  description: All modified files (base.py, multi.py, wandb.py, prime.py, eval_utils.py)
-    parse without errors
+  description: All modified files (base.py, multi.py, wandb.py, prime.py, eval_utils.py) parse without errors
 - id: abc_enforces_log_eval_samples
   type: fail_to_pass
   origin: pr_diff
-  description: Monitor ABC declares log_eval_samples as abstract; subclass omitting
-    it raises TypeError
+  description: Monitor ABC declares log_eval_samples as abstract; subclass omitting it raises TypeError
 - id: noop_monitor_accepts_log_eval_samples
   type: fail_to_pass
   origin: pr_diff
@@ -22,18 +20,15 @@ checks:
 - id: multi_monitor_delegates_eval_samples
   type: fail_to_pass
   origin: pr_diff
-  description: MultiMonitor forwards log_eval_samples to all sub-monitors with correct
-    args
+  description: MultiMonitor forwards log_eval_samples to all sub-monitors with correct args
 - id: wandb_log_eval_samples_processes_rollouts
   type: fail_to_pass
   origin: pr_diff
-  description: WandbMonitor.log_eval_samples iterates rollouts, adds rows to table,
-    calls wandb.log
+  description: WandbMonitor.log_eval_samples iterates rollouts, adds rows to table, calls wandb.log
 - id: wandb_log_eval_samples_skips_empty_completion
   type: fail_to_pass
   origin: pr_diff
-  description: Rollouts with empty or missing completion are not added to the eval
-    samples table
+  description: Rollouts with empty or missing completion are not added to the eval samples table
 - id: evaluate_env_calls_log_eval_samples
   type: fail_to_pass
   origin: pr_diff
@@ -45,8 +40,7 @@ checks:
 - id: existing_abstract_methods_preserved
   type: pass_to_pass
   origin: repo_tests
-  description: Original abstract methods (log, log_samples, log_final_samples) are
-    still enforced
+  description: Original abstract methods (log, log_samples, log_final_samples) are still enforced
 - id: test_repo_ruff_check
   type: pass_to_pass
   origin: repo_tests
@@ -80,70 +74,51 @@ checks:
     lines: '5'
     commit: 714d0ea90421ddfe4b5b5c6dca250e330f5ebe65
 rubric:
-- rule: New methods in monitor implementations should avoid try/except blocks unless
-    explicitly for fault tolerance (e.g., MultiMonitor delegating to sub-monitors)
+- rule: New methods in monitor implementations should avoid try/except blocks unless explicitly for fault tolerance (e.g., MultiMonitor delegating to sub-monitors)
   source:
     path: AGENTS.md
     lines: '5'
     commit: 714d0ea90421ddfe4b5b5c6dca250e330f5ebe65
-- rule: New code should not add unnecessary comments explaining the work process or
-    referring to old code; use targeted comments sparingly only for ambiguous code
+- rule: New code should not add unnecessary comments explaining the work process or referring to old code; use targeted comments sparingly only for ambiguous code
   source:
     path: AGENTS.md
     lines: '7'
     commit: 714d0ea90421ddfe4b5b5c6dca250e330f5ebe65
-- rule: 'Code should follow the Zen of Python: simple is better than complex, readability
-    counts, practicality beats purity'
+- rule: 'Code should follow the Zen of Python: simple is better than complex, readability counts, practicality beats purity'
   source:
     path: AGENTS.md
     lines: 13-33
     commit: 714d0ea90421ddfe4b5b5c6dca250e330f5ebe65
-- rule: You can add try catch on code that explicitly aims to be fault tolerant like
-    adding retry mechanisms or explicit and intentional robustness.
+- rule: You can add try catch on code that explicitly aims to be fault tolerant like adding retry mechanisms or explicit and intentional robustness.
   source:
     path: AGENTS.md
     lines: 7-7
-  evidence: 'In `src/prime_rl/utils/monitor/multi.py`, the `log_eval_samples` method
-    wraps the call to each monitor in a `try/except` block, logging a warning on failure.
-    This applies the exception for ''code that '
+  evidence: 'In `src/prime_rl/utils/monitor/multi.py`, the `log_eval_samples` method wraps the call to each monitor in a `try/except` block, logging a warning on failure. This applies the exception for ''code that '
   category: architecture
-- rule: Do not add unnecessary comments. Especially do not try to explain code change
-    that reflect your work process, do not refer to old code.
+- rule: Do not add unnecessary comments. Especially do not try to explain code change that reflect your work process, do not refer to old code.
   source:
     path: AGENTS.md
     lines: 9-9
-  evidence: The gold solution adds the new `log_eval_samples` methods across multiple
-    files without adding any explanatory comments about the change, avoiding the anti-pattern
-    of explaining work process.
+  evidence: The gold solution adds the new `log_eval_samples` methods across multiple files without adding any explanatory comments about the change, avoiding the anti-pattern of explaining work process.
   category: style
 - rule: Errors should never pass silently. Unless explicitly silenced.
   source:
     path: AGENTS.md
     lines: 23-24
-  evidence: In `MultiMonitor.log_eval_samples`, the caught exception is not ignored
-    but explicitly logged using `self.logger.warning(...)`.
+  evidence: In `MultiMonitor.log_eval_samples`, the caught exception is not ignored but explicitly logged using `self.logger.warning(...)`.
   category: style
 - rule: Errors should never pass silently.
   source:
     path: AGENTS.md
     lines: 23-24
-  evidence: The except block in `MultiMonitor.log_eval_samples` logs a warning (`self.logger.warning(...)`)
-    rather than using `pass`, ensuring the error is surfaced.
+  evidence: The except block in `MultiMonitor.log_eval_samples` logs a warning (`self.logger.warning(...)`) rather than using `pass`, ensuring the error is surfaced.
   category: style
 distractors:
-- rule: Avoid try/except blocks unless it's really necessary. It's fine that a program
-    fails if something goes wrong as this helps us to catch non-obvious bugs.
+- rule: Avoid try/except blocks unless it's really necessary. It's fine that a program fails if something goes wrong as this helps us to catch non-obvious bugs.
   collision_type: rule_conflict
-  why_distracting: The agent might strictly follow the first half of the rule ('Avoid
-    try/except blocks unless it's really necessary. It's fine that a program fails...')
-    and omit the try/except block in `MultiMonitor.log_eval_samples`. This would break
-    the composite pattern's fault tolerance, causing a single monitor's failure (e.g.,
-    a W&B network timeout) to crash the entire evaluation run.
+  why_distracting: The agent might strictly follow the first half of the rule ('Avoid try/except blocks unless it's really necessary. It's fine that a program fails...') and omit the try/except block in `MultiMonitor.log_eval_samples`. This would break the composite pattern's fault tolerance, causing a single monitor's failure (e.g., a W&B network timeout) to crash the entire evaluation run.
   severity: high
   source:
     path: AGENTS.md
     lines: 5-7
-hierarchy_analysis: The config hierarchy is flat, with all relevant rules residing
-  in `AGENTS.md`. The primary challenge is internal rule conflict within a single
-  guideline regarding error handling, requiring the agent to recognize the architectural
-  intent of `MultiMonitor`.
+hierarchy_analysis: The config hierarchy is flat, with all relevant rules residing in `AGENTS.md`. The primary challenge is internal rule conflict within a single guideline regarding error handling, requiring the agent to recognize the architectural intent of `MultiMonitor`.

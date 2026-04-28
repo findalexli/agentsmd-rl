@@ -100,39 +100,103 @@ checks:
   type: pass_to_pass
   origin: repo_tests
 - id: move_analyzer_ide_testsuite
-  description: move-analyzer IDE testsuite passes (33 tests for completion, hints,
-    etc.)
+  description: move-analyzer IDE testsuite passes (33 tests for completion, hints, etc.)
   type: pass_to_pass
   origin: repo_tests
+- id: test_ci_external_crates_test_external_crates_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: external-crates-test / External crates tests'
+- id: test_ci_windows_cli_tests_cargo_test
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: windows-cli-tests / cargo test'
+- id: test_ci_windows_cli_tests_scripts_changed_files_sh
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: windows-cli-tests / '
+- id: test_ci_license_check_run_license_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: license-check / Run license check'
+- id: test_ci_license_check_git_checks
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: license-check / Git checks'
+- id: test_ci_check_docs_run_afdocs_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: check-docs / Run afdocs check'
+- id: test_ci_move_formatter___check_formatt_npm
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: Move Formatter - check formatting / '
+- id: test_ci_move_formatter___check_formatt_npx
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: Move Formatter - check formatting / '
+- id: test_ci_move_formatter___run_tests_tree_sitter
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: Move Formatter - run tests / '
+- id: test_ci_move_formatter___run_tests_npm
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: Move Formatter - run tests / '
+- id: test_ci_lint__build__and_test_build
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: Lint, Build, and Test / Build'
+- id: test_ci_tree_sitter___run_tests_run_tests_sh
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: Tree Sitter - run tests / '
+- id: test_ci_validate_mainnet_run_split_cluster_check_script
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: validate-mainnet / Run split cluster check script'
+- id: test_ci_validate_mainnet_bisect
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: validate-mainnet / Bisect'
+- id: test_ci_validate_mainnet_mark_failures
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: validate-mainnet / Mark Failures'
+- id: test_ci_validate_testnet_run_split_cluster_check_script
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: validate-testnet / Run split cluster check script'
+- id: test_ci_validate_testnet_bisect
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: validate-testnet / Bisect'
+- id: test_ci_validate_testnet_mark_failures
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: validate-testnet / Mark Failures'
 rubric:
 - rule: TypeScript files should follow project linting conventions
   source:
     path: external-crates/move/crates/move-analyzer/editors/code/.eslintrc.json
   category: style
-- rule: 'All new files must start with the following license in comments at the top
-    of the file: Copyright (c) Mysten Labs, Inc. SPDX-License-Identifier: Apache-2.0'
+- rule: 'All new files must start with the following license in comments at the top of the file: Copyright (c) Mysten Labs, Inc. SPDX-License-Identifier: Apache-2.0'
   source:
     path: CLAUDE.md
     lines: 16-18
-  evidence: The newly created activity_monitor.ts file includes the Mysten Labs copyright
-    and Apache-2.0 license header at the top.
+  evidence: The newly created activity_monitor.ts file includes the Mysten Labs copyright and Apache-2.0 license header at the top.
   category: documentation
 distractors:
-- rule: Run e2e tests. simtests must be run with `cargo simtest` to avoid false negatives...
-    cargo simtest -p sui-e2e-tests
+- rule: Run e2e tests. simtests must be run with `cargo simtest` to avoid false negatives... cargo simtest -p sui-e2e-tests
   collision_type: scope_ambiguity
-  why_distracting: The root CLAUDE.md suggests running `sui-e2e-tests` and `sui-core`
-    tests, but this PR only modifies the `move-analyzer` language server and its VSCode
-    extension client. Running the root tests would waste significant time and compute.
+  why_distracting: The root CLAUDE.md suggests running `sui-e2e-tests` and `sui-core` tests, but this PR only modifies the `move-analyzer` language server and its VSCode extension client. Running the root tests would waste significant time and compute.
   severity: medium
   source:
     path: CLAUDE.md
     lines: 28-32
-- rule: Build a specific crate. Generally don't need to do release build. cargo build
-    -p sui-core
+- rule: Build a specific crate. Generally don't need to do release build. cargo build -p sui-core
   collision_type: scope_ambiguity
-  why_distracting: The build instructions suggest running `cargo build -p sui-core`,
-    which is irrelevant to the `move-analyzer` crate being modified.
+  why_distracting: The build instructions suggest running `cargo build -p sui-core`, which is irrelevant to the `move-analyzer` crate being modified.
   severity: low
   source:
     path: CLAUDE.md
@@ -142,26 +206,16 @@ distractors:
     path: .claude/skills/simtest-debug/SKILL.md
     lines: 1-10
   collision_type: scope_ambiguity
-  why_distracting: The agent might attempt to use the `simtest-debug` skill to test
-    the language server changes, but `simtest` is a deterministic simulation testing
-    framework for the Sui blockchain consensus and execution layers, not for the Move
-    language server or VSCode extension.
+  why_distracting: The agent might attempt to use the `simtest-debug` skill to test the language server changes, but `simtest` is a deterministic simulation testing framework for the Sui blockchain consensus and execution layers, not for the Move language server or VSCode extension.
   severity: high
 - rule: Manage protocol configurations and feature flags for Sui
   source:
     path: .claude/skills/protocol-config/SKILL.md
     lines: 1-10
   collision_type: architecture_boundary
-  why_distracting: The agent might think that adding a new feature (activity indicator)
-    requires a protocol config flag to gate the feature, but this is a purely client-side
-    and local language server enhancement that does not affect the blockchain protocol.
+  why_distracting: The agent might think that adding a new feature (activity indicator) requires a protocol config flag to gate the feature, but this is a purely client-side and local language server enhancement that does not affect the blockchain protocol.
   severity: medium
-hierarchy_analysis: The root CLAUDE.md and AGENTS.md provide general repository guidelines,
-  but the task is localized to `external-crates/move/crates/move-analyzer`. The root
-  config suggests running `sui-core` builds and `sui-e2e-tests`, which are out of
-  scope for this specific crate. The agent must recognize that the `move-analyzer`
-  crate is an independent component and ignore the root-level Sui blockchain testing
-  commands.
+hierarchy_analysis: The root CLAUDE.md and AGENTS.md provide general repository guidelines, but the task is localized to `external-crates/move/crates/move-analyzer`. The root config suggests running `sui-core` builds and `sui-e2e-tests`, which are out of scope for this specific crate. The agent must recognize that the `move-analyzer` crate is an independent component and ignore the root-level Sui blockchain testing commands.
 version: '2.0'
 source:
   repo: MystenLabs/sui

@@ -329,3 +329,67 @@ def test_claude_md_formatting_section():
     assert "yarn prettier-all" in content, (
         "CLAUDE.md should document 'yarn prettier-all' formatting command"
     )
+
+# === CI-mined tests (taskforge.ci_check_miner) ===
+def test_ci_jest_babel_plugin_react_compil_yarn():
+    """pass_to_pass | CI job 'Jest babel-plugin-react-compiler' → step ''"""
+    r = subprocess.run(
+        ["bash", "-lc", 'yarn install --frozen-lockfile'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step '' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_jest_babel_plugin_react_compil_yarn_2():
+    """pass_to_pass | CI job 'Jest babel-plugin-react-compiler' → step ''"""
+    r = subprocess.run(
+        ["bash", "-lc", 'yarn workspace babel-plugin-react-compiler jest'], cwd=COMPILER,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step '' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_lint_babel_plugin_react_compil_yarn():
+    """pass_to_pass | CI job 'Lint babel-plugin-react-compiler' → step ''"""
+    r = subprocess.run(
+        ["bash", "-lc", 'yarn workspace babel-plugin-react-compiler lint'], cwd=COMPILER,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step '' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_test_eslint_plugin_react_hooks_scripts_react_compiler_build_compiler_sh():
+    """pass_to_pass | CI job 'Test eslint-plugin-react-hooks' → step ''"""
+    r = subprocess.run(
+        ["bash", "-lc", './scripts/react-compiler/build-compiler.sh && ./scripts/react-compiler/link-compiler.sh'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step '' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_test_eslint_plugin_react_hooks_yarn():
+    """pass_to_pass | CI job 'Test eslint-plugin-react-hooks' → step ''"""
+    r = subprocess.run(
+        ["bash", "-lc", 'yarn workspace eslint-plugin-react-hooks test'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step '' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_yarn_build_and_lint_yarn():
+    """pass_to_pass | CI job 'yarn build and lint' → step ''"""
+    r = subprocess.run(
+        ["bash", "-lc", 'yarn --cwd compiler install --frozen-lockfile'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step '' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_yarn_build_and_lint_lint_build():
+    """pass_to_pass | CI job 'yarn build and lint' → step 'Lint build'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'yarn lint-build'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Lint build' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")

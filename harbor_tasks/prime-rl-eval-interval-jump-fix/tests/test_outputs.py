@@ -197,3 +197,17 @@ def test_orchestrator_file_compiles_with_python():
         timeout=30,
     )
     assert r.returncode == 0, f"Syntax error in orchestrator.py:\n{r.stderr}"
+
+# === CI-mined tests (taskforge.ci_check_miner) ===
+def test_ci_ruff_lint_on_changed_files():
+    """pass_to_pass | CI job 'Ruff' — lint orchestrator files touched by this PR."""
+    r = subprocess.run(
+        ["bash", "-lc",
+         "ruff check --config=pyproject.toml"
+         " src/prime_rl/orchestrator/eval_utils.py"
+         " src/prime_rl/orchestrator/orchestrator.py"],
+        cwd=REPO,
+        capture_output=True, text=True, timeout=120)
+    assert r.returncode == 0, (
+        f"CI Ruff lint failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")

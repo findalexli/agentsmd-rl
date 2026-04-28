@@ -5,7 +5,7 @@ source:
   base_commit: 7b0d983ead8d91921252ad835a3c43b2288b7fe1
   merge_commit: ed4eba8c8b74485da87be318453edf041c800c6f
 checks:
-- id: syntax_check
+- id: test_syntax_check
   type: pass_to_pass
   origin: static
   description: Modified Rust files must compile without errors
@@ -37,23 +37,21 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Repo's prqlc-parser crate compiles without errors
-- id: distinct_on_wildcard
+- id: test_distinct_on_wildcard
   type: fail_to_pass
   origin: pr_diff
-  description: DISTINCT ON with group/take produces * not NULL in SQL output
-- id: distinct_on_aggregate_wildcard
+  description: DISTINCT ON with group/take + select on DuckDB produces * not NULL in SQL output
+- id: test_distinct_on_aggregate_wildcard
   type: fail_to_pass
   origin: pr_diff
-  description: DISTINCT ON with group/take + aggregate produces * not NULL
+  description: DISTINCT ON with group/take + aggregate on PostgreSQL produces * not empty projection
 rubric:
-- rule: Test strategy guidance is consistent with the style and tone of the existing
-    CLAUDE.md content
+- rule: Test strategy guidance is consistent with the style and tone of the existing CLAUDE.md content
   source:
     path: CLAUDE.md
     lines: 1-47
     commit: 7b0d983ead8d91921252ad835a3c43b2288b7fe1
-- rule: Test strategy appropriately references the project's existing test tooling
-    (insta, nextest, cargo)
+- rule: Test strategy appropriately references the project's existing test tooling (insta, nextest, cargo)
   source:
     path: CLAUDE.md
     lines: 1-47
@@ -63,39 +61,24 @@ rubric:
     path: CLAUDE.md
     lines: 49-79
     commit: ed4eba8c8b74485da87be318453edf041c800c6f
-  reference: "### Test Strategy\n\n**Prefer small inline `\nsta` snapshot tests**\
-    \ over full integration tests:\n\n- **Use inline tests** for most bug fixes and\
-    \ small features\n  - Add `#[test]` functions in a `#[cfg(test)]` module at the\
-    \ end of the file\n  - Use `insta::assert_snapshot!` for compact, readable test\
-    \ assertions\n  - Fast to run, easy to review in PRs\n\n- **Use integration tests**\
-    \ (`prqlc/tests/integration/queries/*.prql`) only\n  when:\n  - Developing large,\
-    \ complex features that need comprehensive testin"
+  reference: "### Test Strategy\n\n**Prefer small inline `\nsta` snapshot tests** over full integration tests:\n\n- **Use inline tests** for most bug fixes and small features\n  - Add `#[test]` functions in a `#[cfg(test)]` module at the end of the file\n  - Use `insta::assert_snapshot!` for compact, readable test assertions\n  - Fast to run, easy to review in PRs\n\n- **Use integration tests** (`prqlc/tests/integration/queries/*.prql`) only\n  when:\n  - Developing large, complex features that need comprehensive testin"
 - rule: CLAUDE.md explains when to use inline tests vs integration tests
   source:
     path: CLAUDE.md
     lines: 49-79
     commit: ed4eba8c8b74485da87be318453edf041c800c6f
-  reference: "### Test Strategy\n\n**Prefer small inline `\nsta` snapshot tests**\
-    \ over full integration tests:\n\n- **Use inline tests** for most bug fixes and\
-    \ small features\n  - Add `#[test]` functions in a `#[cfg(test)]` module at the\
-    \ end of the file\n  - Use `insta::assert_snapshot!` for compact, readable test\
-    \ assertions\n  - Fast to run, easy to review in PRs\n\n- **Use integration tests**\
-    \ (`prqlc/tests/integration/queries/*.prql`) only\n  when:\n  - Developing large,\
-    \ complex features that need comprehensive testin"
+  reference: "### Test Strategy\n\n**Prefer small inline `\nsta` snapshot tests** over full integration tests:\n\n- **Use inline tests** for most bug fixes and small features\n  - Add `#[test]` functions in a `#[cfg(test)]` module at the end of the file\n  - Use `insta::assert_snapshot!` for compact, readable test assertions\n  - Fast to run, easy to review in PRs\n\n- **Use integration tests** (`prqlc/tests/integration/queries/*.prql`) only\n  when:\n  - Developing large, complex features that need comprehensive testin"
 - rule: Prefer inline snapshots for almost all tests
   source:
     path: CLAUDE.md
     lines: 39-41
-  evidence: The gold solution adds `test_distinct_on_with_aggregate` as an inline
-    test in `prqlc/prqlc/src/sql/gen_query.rs` using `insta::assert_snapshot!`.
+  evidence: The gold solution adds `test_distinct_on_with_aggregate` as an inline test in `prqlc/prqlc/src/sql/gen_query.rs` using `insta::assert_snapshot!`.
   category: testing
 - rule: Prefer inline snapshots for almost all tests using `insta::assert_snapshot!`.
   source:
     path: CLAUDE.md
     lines: 35-48
-  evidence: The gold solution implements the bug fix test as an inline `#[test]` module
-    at the bottom of `prqlc/prqlc/src/sql/gen_query.rs` using `insta::assert_snapshot!`,
-    directly following the existing config'
+  evidence: The gold solution implements the bug fix test as an inline `#[test]` module at the bottom of `prqlc/prqlc/src/sql/gen_query.rs` using `insta::assert_snapshot!`, directly following the existing config'
   category: testing
 - rule: Use inline `insta` snapshot assertions for tests.
   source:
@@ -109,42 +92,20 @@ rubric:
     insta::assert_snapshot!(result, @"expected output");
 
     ```'
-  evidence: The diff adds an inline unit test `test_distinct_on_with_aggregate` in
-    `prqlc/prqlc/src/sql/gen_query.rs` that asserts with `assert_snapshot!(crate::tests::compile(query).unwrap(),
-    @r"...")`. It also updates the existing snapshot assertion in `prqlc/prqlc/tests/integration/sql.rs`
-    to match the new SQL output (`DISTINCT ON (col1) *`).
+  evidence: The diff adds an inline unit test `test_distinct_on_with_aggregate` in `prqlc/prqlc/src/sql/gen_query.rs` that asserts with `assert_snapshot!(crate::tests::compile(query).unwrap(), @r"...")`. It also updates the existing snapshot assertion in `prqlc/prqlc/tests/integration/sql.rs` to match the new SQL output (`DISTINCT ON (col1) *`).
   category: testing_pattern
   verification: llm_judge
 config_edits:
 - path: CLAUDE.md
   tier: 1
-  gold_added: "### Test Strategy\n\n**Prefer small inline `insta` snapshot tests**\
-    \ over full integration tests:\n\n- **Use inline tests** for most bug fixes and\
-    \ small features\n  - Add `#[test]` functions in a `#[cfg(test)]` module at the\
-    \ end of the file\n  - Use `insta::assert_snapshot!` for compact, readable test\
-    \ assertions\n  - Fast to run, easy to review in PRs\n\n- **Use integration tests**\
-    \ (`prqlc/tests/integration/queries/*.prql`) only\n  when:\n  - Developing large,\
-    \ complex features that need comprehensive testing\n  - Testing end-to-end behavior\
-    \ across multiple compilation stages\n  - The test requires external resources\
-    \ or multi-file scenarios\n\nExample of a good inline test:\n\n```rust\n#[cfg(test)]\n\
-    mod test {\n    use insta::assert_snapshot;\n\n    #[test]\n    fn test_my_feature()\
-    \ {\n        let query = \"from employees | filter country == 'USA'\";\n     \
-    \   assert_snapshot!(crate::tests::compile(query).unwrap(), @\"\");\n    }\n}\n\
-    ```"
+  gold_added: "### Test Strategy\n\n**Prefer small inline `insta` snapshot tests** over full integration tests:\n\n- **Use inline tests** for most bug fixes and small features\n  - Add `#[test]` functions in a `#[cfg(test)]` module at the end of the file\n  - Use `insta::assert_snapshot!` for compact, readable test assertions\n  - Fast to run, easy to review in PRs\n\n- **Use integration tests** (`prqlc/tests/integration/queries/*.prql`) only\n  when:\n  - Developing large, complex features that need comprehensive testing\n  - Testing end-to-end behavior across multiple compilation stages\n  - The test requires external resources or multi-file scenarios\n\nExample of a good inline test:\n\n```rust\n#[cfg(test)]\nmod test {\n    use insta::assert_snapshot;\n\n    #[test]\n    fn test_my_feature() {\n        let query = \"from employees | filter country == 'USA'\";\n        assert_snapshot!(crate::tests::compile(query).unwrap(), @\"\");\n    }\n}\n```"
   gold_removed: ''
 distractors:
-- rule: 'Initialize tests with empty snapshots, then run with `--accept`: `insta::assert_snapshot!(result,
-    @"");`'
+- rule: 'Initialize tests with empty snapshots, then run with `--accept`: `insta::assert_snapshot!(result, @"");`'
   collision_type: meta_confusion
-  why_distracting: The rule instructs to initialize tests with empty snapshots `(@"")`
-    and run with `--accept`. An agent might literally leave the snapshot empty in
-    the final patch, failing to realize that the final committed code must contain
-    the populated snapshot output.
+  why_distracting: The rule instructs to initialize tests with empty snapshots `(@"")` and run with `--accept`. An agent might literally leave the snapshot empty in the final patch, failing to realize that the final committed code must contain the populated snapshot output.
   severity: high
   source:
     path: CLAUDE.md
     lines: 43-48
-hierarchy_analysis: The configuration is a flat single file (`CLAUDE.md`), but the
-  task is highly meta-referential. The agent must read `CLAUDE.md` to understand the
-  testing conventions, apply them to fix the bug, and then modify `CLAUDE.md` itself
-  to expand the documentation on those very testing conventions.
+hierarchy_analysis: The configuration is a flat single file (`CLAUDE.md`), but the task is highly meta-referential. The agent must read `CLAUDE.md` to understand the testing conventions, apply them to fix the bug, and then modify `CLAUDE.md` itself to expand the documentation on those very testing conventions.

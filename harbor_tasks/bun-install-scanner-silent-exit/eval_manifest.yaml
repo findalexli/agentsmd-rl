@@ -6,19 +6,17 @@ source:
   merge_commit: af24e281ebacd6ac77c0f14b4206599cf4ae1c9f
 checks:
 - id: bun_install_produces_error_message
-  type: fail_to_pass
+  type: pass_to_pass
   origin: pr_diff
   description: bun install with invalid scanner config produces error message on stderr
 - id: catch_all_produces_output
   type: fail_to_pass
   origin: pr_diff
-  description: Empty else => {} catch-all in scanner error switch replaced with Output.*
-    error messages
+  description: Empty else => {} catch-all in scanner error switch replaced with Output.* error messages
 - id: error_variant_coverage
   type: fail_to_pass
   origin: pr_diff
-  description: All error variants (3+ named or dynamic catch-all) produce diagnostic
-    output
+  description: All error variants (3+ named or dynamic catch-all) produce diagnostic output
 - id: error_printing_centralized
   type: fail_to_pass
   origin: pr_diff
@@ -26,18 +24,15 @@ checks:
 - id: error_variant_propagated
   type: fail_to_pass
   origin: pr_diff
-  description: .error variant from retry result propagated instead of collapsed into
-    SecurityScannerRetryFailed
+  description: .error variant from retry result propagated instead of collapsed into SecurityScannerRetryFailed
 - id: uses_err_generic
   type: fail_to_pass
   origin: pr_diff
-  description: Error messages use Output.errGeneric, not Output.pretty with raw <red>
-    formatting
+  description: Error messages use Output.errGeneric, not Output.pretty with raw <red> formatting
 - id: regression_test_location
   type: fail_to_pass
   origin: agent_config
-  description: Regression test placed at test/regression/issue/28193.test.ts per CLAUDE.md
-    rule
+  description: Regression test placed at test/regression/issue/28193.test.ts per CLAUDE.md rule
   source:
     path: CLAUDE.md
     lines: '28'
@@ -45,8 +40,7 @@ checks:
 - id: regression_test_uses_harness
   type: fail_to_pass
   origin: agent_config
-  description: Regression test imports bunExe/bunEnv from 'harness' per test/CLAUDE.md
-    rule
+  description: Regression test imports bunExe/bunEnv from 'harness' per test/CLAUDE.md rule
   source:
     path: test/CLAUDE.md
     lines: '28'
@@ -62,8 +56,7 @@ checks:
 - id: exit_code_assertion_last
   type: pass_to_pass
   origin: agent_config
-  description: Regression test asserts stdout/stderr content before asserting exit
-    code
+  description: Regression test asserts stdout/stderr content before asserting exit code
   source:
     path: CLAUDE.md
     lines: '101'
@@ -95,8 +88,7 @@ checks:
 - id: test_repo_package_json_valid
   type: pass_to_pass
   origin: repo_tests
-  description: Repo package.json is valid JSON and parseable by bun (validates name
-    and version fields)
+  description: Repo package.json is valid JSON and parseable by bun (validates name and version fields)
 - id: test_repo_tsconfig_valid
   type: pass_to_pass
   origin: repo_tests
@@ -112,55 +104,47 @@ checks:
 - id: test_repo_zig_files_valid
   type: pass_to_pass
   origin: static
-  description: Zig source files have valid structure with expected keywords (performSecurityScanAfterResolution
-    present)
+  description: Zig source files have valid structure with expected keywords (performSecurityScanAfterResolution present)
 - id: test_repo_typescript_check
   type: pass_to_pass
   origin: static
-  description: TypeScript regression test location is valid (passes if file doesn't
-    exist on base commit)
+  description: TypeScript regression test location is valid (passes if file doesn't exist on base commit)
+- id: test_pr_added_bun_install_prints_error_when_security_scanner_i
+  type: fail_to_pass
+  origin: pr_diff
+  description: PR added test 'bun install prints error when security scanner is unavailable' in test/regression/issue/28193.test.ts
+- id: test_pr_added_bun_install_prints_error_when_scanner_package_is
+  type: fail_to_pass
+  origin: pr_diff
+  description: PR added test 'bun install prints error when scanner package is invalid' in test/regression/issue/28193.test.ts
 rubric:
-- rule: If a test is for a specific numbered GitHub Issue, it should be placed in
-    `test/regression/issue/${issueNumber}.test.ts`.
+- rule: If a test is for a specific numbered GitHub Issue, it should be placed in `test/regression/issue/${issueNumber}.test.ts`.
   source:
     path: CLAUDE.md
     lines: 30-32
-  evidence: The gold solution places the regression test in `test/regression/issue/28193.test.ts`
-    corresponding to the issue number.
+  evidence: The gold solution places the regression test in `test/regression/issue/28193.test.ts` corresponding to the issue number.
   category: testing
   verification: llm_judge
 - rule: When spawning Bun processes, use `bunExe` and `bunEnv` from `harness`.
   source:
     path: test/CLAUDE.md
     lines: 24-25
-  evidence: The test file (implied by the edited files list and project conventions)
-    uses `bunExe` and `bunEnv` from `harness` to spawn the Bun process for testing
-    the install command.
+  evidence: The test file (implied by the edited files list and project conventions) uses `bunExe` and `bunEnv` from `harness` to spawn the Bun process for testing the install command.
   category: testing
   verification: llm_judge
 distractors:
 - rule: When a test file spawns a Bun process, we like for that file to end in `*-fixture.ts`.
   collision_type: rule_conflict
-  why_distracting: The agent might name the test file `28193-fixture.ts` because it
-    tests a CLI command by spawning a process, but the regression issue naming convention
-    strictly requires `${issueNumber}.test.ts`.
+  why_distracting: The agent might name the test file `28193-fixture.ts` because it tests a CLI command by spawning a process, but the regression issue naming convention strictly requires `${issueNumber}.test.ts`.
   severity: high
   source:
     path: test/AGENTS.md
     lines: 79-80
-- rule: Always use `bun.*` APIs instead of `std.*`. Using std.fs, std.posix, or std.os
-    directly is wrong.
+- rule: Always use `bun.*` APIs instead of `std.*`. Using std.fs, std.posix, or std.os directly is wrong.
   collision_type: architecture_boundary
-  why_distracting: The agent might try to use `bun.sys.write` to write to stderr (fd
-    2) to avoid `std.*` functions, missing the higher-level `Output.errGeneric` abstraction
-    already used in the file for CLI error reporting.
+  why_distracting: The agent might try to use `bun.sys.write` to write to stderr (fd 2) to avoid `std.*` functions, missing the higher-level `Output.errGeneric` abstraction already used in the file for CLI error reporting.
   severity: medium
   source:
     path: src/AGENTS.md
     lines: 16-18
-hierarchy_analysis: The config hierarchy is moderate, with root-level rules defining
-  general test placement and directory-specific rules defining test naming conventions
-  and Zig system call patterns. There is a direct conflict between the root `AGENTS.md`
-  rule for issue test naming (`${issueNumber}.test.ts`) and the `test/AGENTS.md` rule
-  for process-spawning test naming (`*-fixture.ts`). The root rule takes precedence
-  for regression tests.
+hierarchy_analysis: The config hierarchy is moderate, with root-level rules defining general test placement and directory-specific rules defining test naming conventions and Zig system call patterns. There is a direct conflict between the root `AGENTS.md` rule for issue test naming (`${issueNumber}.test.ts`) and the `test/AGENTS.md` rule for process-spawning test naming (`*-fixture.ts`). The root rule takes precedence for regression tests.

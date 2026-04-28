@@ -167,3 +167,29 @@ def test_repo_commands_package_compiles():
         timeout=600,
     )
     assert r.returncode == 0, f"commands package failed to build:\n{r.stderr}"
+
+# === Additional pass-to-pass (repo CI signals) ===
+
+def test_repo_commands_unit_tests():
+    """Existing tests in the commands package (the directly modified package)
+    must still pass after the fix."""
+    r = subprocess.run(
+        ["go", "test", "-count=1", "-timeout=120s", "./commands/..."],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=300,
+    )
+    assert r.returncode == 0, f"commands tests failed:\n{r.stdout}\n{r.stderr}"
+
+
+def test_repo_full_build():
+    """The full project must compile without errors."""
+    r = subprocess.run(
+        ["go", "build", "./..."],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=600,
+    )
+    assert r.returncode == 0, f"full build failed:\n{r.stderr}"

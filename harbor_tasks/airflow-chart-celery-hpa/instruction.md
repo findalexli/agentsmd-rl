@@ -109,6 +109,12 @@ The chart's JSON schema must:
 
 The chart's existing test suites must also continue to pass after the changes.
 
+## Code Style Requirements
+
+- The Helm chart must pass `helm lint` without errors.
+- Chart values must be validated against `values.schema.json`.
+- Existing chart tests under `helm-tests/` must continue to pass.
+
 ## Testing
 
 Run tests with: `pytest /tests/test_outputs.py -v`

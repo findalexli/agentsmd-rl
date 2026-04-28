@@ -88,6 +88,31 @@ def test_unit_tests_compose():
 
 
 # ---------------------------------------------------------------------------
+# CI-sourced pass_to_pass — vet and build for the e2e package touched by PR
+# ---------------------------------------------------------------------------
+
+
+def test_ci_vet_e2e_package():
+    """pass_to_pass | CI-sourced: go vet ./pkg/e2e/ compiles without errors."""
+    r = subprocess.run(
+        ["go", "vet", "./pkg/e2e/"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+        env={**os.environ, "GOTOOLCHAIN": "auto"},
+    )
+    assert r.returncode == 0, f"go vet ./pkg/e2e/ failed: {r.stderr[-500:]}"
+
+
+def test_ci_build_e2e_tags():
+    """pass_to_pass | CI-sourced: go build -tags e2e ./pkg/e2e/ compiles the e2e package."""
+    r = subprocess.run(
+        ["go", "build", "-tags", "e2e", "./pkg/e2e/"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+        env={**os.environ, "GOTOOLCHAIN": "auto"},
+    )
+    assert r.returncode == 0, f"go build ./pkg/e2e/ failed: {r.stderr[-500:]}"
+
+
+# ---------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) — core code style tests
 # ---------------------------------------------------------------------------
 

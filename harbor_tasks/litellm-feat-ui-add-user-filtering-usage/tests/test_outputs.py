@@ -431,3 +431,32 @@ def test_repo_top_model_view_tests():
         cwd=UI,
     )
     assert r.returncode == 0, f"TopModelView tests failed:\n{r.stderr[-500:]}"
+
+# === CI-mined tests (taskforge.ci_check_miner) ===
+def test_ci_unit_test_install_helm_unit_test_plugin():
+    """pass_to_pass | CI job 'unit-test' → step 'Install Helm Unit Test Plugin'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'helm plugin install https://github.com/helm-unittest/helm-unittest --version v0.4.4'], cwd=REPO,
+        capture_output=True, text=True, timeout=900)
+    assert r.returncode == 0, (
+        f"CI step 'Install Helm Unit Test Plugin' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_unit_test_run_unit_tests():
+    """pass_to_pass | CI job 'unit-test' → step 'Run unit tests'"""
+    r = subprocess.run(
+        ["bash", "-lc", "helm unittest -f 'tests/*.yaml' deploy/charts/litellm-helm"], cwd=REPO,
+        capture_output=True, text=True, timeout=900)
+    assert r.returncode == 0, (
+        f"CI step 'Run unit tests' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+# === PR-added f2p tests (taskforge.test_patch_miner) ===
+def test_pr_added_should_render_with_user_entity_type_and_call_use():
+    """fail_to_pass | PR added test 'should render with user entity type and call user API' in 'ui/litellm-dashboard/src/components/UsagePage/components/EntityUsage/EntityUsage.test.tsx' (vitest_or_jest)"""
+    r = subprocess.run(
+        ["bash", "-lc", '(pnpm vitest run "ui/litellm-dashboard/src/components/UsagePage/components/EntityUsage/EntityUsage.test.tsx" -t "should render with user entity type and call user API" 2>&1 || npx vitest run "ui/litellm-dashboard/src/components/UsagePage/components/EntityUsage/EntityUsage.test.tsx" -t "should render with user entity type and call user API" 2>&1 || pnpm jest "ui/litellm-dashboard/src/components/UsagePage/components/EntityUsage/EntityUsage.test.tsx" -t "should render with user entity type and call user API" 2>&1 || npx jest "ui/litellm-dashboard/src/components/UsagePage/components/EntityUsage/EntityUsage.test.tsx" -t "should render with user entity type and call user API" 2>&1) | tail -50'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"PR-added test 'should render with user entity type and call user API' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")

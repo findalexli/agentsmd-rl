@@ -16,8 +16,7 @@ checks:
 - id: todo_comments_removed
   type: fail_to_pass
   origin: pr_diff
-  description: TODO(charlie) comments about nested class false positives removed from
-    fixture
+  description: TODO(charlie) comments about nested class false positives removed from fixture
 - id: top_level_super_still_triggers
   type: pass_to_pass
   origin: pr_diff
@@ -25,8 +24,7 @@ checks:
 - id: full_chain_dotted_super_triggers
   type: pass_to_pass
   origin: pr_diff
-  description: super(A.B.C, self) where chain matches full nesting still triggers
-    UP008
+  description: super(A.B.C, self) where chain matches full nesting still triggers UP008
 - id: up008_snapshot_tests_pass
   type: pass_to_pass
   origin: repo_tests
@@ -74,33 +72,88 @@ checks:
 - id: no_nested_if_let
   type: pass_to_pass
   origin: agent_config
-  description: Modified rule file must not use nested if-let blocks where a let chain
-    would suffice
+  description: Modified rule file must not use nested if-let blocks where a let chain would suffice
   source:
     path: AGENTS.md
     lines: '80'
     commit: 0f41bc554bd89d14dbeb7e1791b34dc7319339bc
+- id: test_ci_cargo_build_build_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: cargo build / Build tests'
+- id: test_ci_cargo_fuzz_build_cargo
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: cargo fuzz build / '
+- id: test_ci_cargo_test_ty_mdtests_github_annotations
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: cargo test / ty mdtests (GitHub annotations)'
+- id: test_ci_cargo_test_run_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: cargo test / Run tests'
+- id: test_ci_cargo_test_dogfood_ty_on_py_fuzzer
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: cargo test / Dogfood ty on py-fuzzer'
+- id: test_ci_cargo_test_dogfood_ty_on_the_scripts_directory
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: cargo test / Dogfood ty on the scripts directory'
+- id: test_ci_cargo_test_dogfood_ty_on_ty_benchmark
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: cargo test / Dogfood ty on ty_benchmark'
+- id: test_ci_cargo_test_cargo
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: cargo test / '
+- id: test_ci_cargo_test_cargo
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: cargo test / '
+- id: test_ci_test_scripts_python
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: test scripts / '
+- id: test_ci_test_scripts_python
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: test scripts / '
+- id: test_ci_test_scripts_scripts_add_rule_py
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: test scripts / '
+- id: test_ci_cargo_test_cargo_2
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: cargo test / '
+- id: test_ci_test_scripts_python_2
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: test scripts / '
+- id: test_ci_test_scripts_cargo
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: test scripts / '
 rubric:
 - rule: Follow existing code style. Check neighboring files for patterns.
   source:
     path: AGENTS.md
     lines: '75'
     commit: 0f41bc554bd89d14dbeb7e1791b34dc7319339bc
-- rule: Look to see if your tests could go in an existing file before adding a new
-    file for your tests.
+- rule: Look to see if your tests could go in an existing file before adding a new file for your tests.
   source:
     path: AGENTS.md
     lines: '73'
     commit: 0f41bc554bd89d14dbeb7e1791b34dc7319339bc
-- rule: Avoid writing significant amounts of new code. This is often a sign that we're
-    missing an existing method or mechanism that could help solve the problem. Look
-    for existing utilities first.
+- rule: Avoid writing significant amounts of new code. This is often a sign that we're missing an existing method or mechanism that could help solve the problem. Look for existing utilities first.
   source:
     path: AGENTS.md
     lines: '78'
     commit: 0f41bc554bd89d14dbeb7e1791b34dc7319339bc
-- rule: Prefer let chains (`if let` combined with `&&`) over nested `if let` statements
-    to reduce indentation and improve readability.
+- rule: Prefer let chains (`if let` combined with `&&`) over nested `if let` statements to reduce indentation and improve readability.
   source:
     path: AGENTS.md
     lines: '80'
@@ -109,38 +162,26 @@ rubric:
   source:
     path: AGENTS.md
     lines: '76'
-  evidence: The gold solution adds `ScopeKind` to the existing `ruff_python_semantic`
-    import at the top of `super_call_with_parameters.rs` rather than importing it
-    locally within the function.
+  evidence: The gold solution adds `ScopeKind` to the existing `ruff_python_semantic` import at the top of `super_call_with_parameters.rs` rather than importing it locally within the function.
   category: style
-- rule: Avoid writing significant amounts of new code. Look for existing utilities
-    first.
+- rule: Avoid writing significant amounts of new code. Look for existing utilities first.
   source:
     path: AGENTS.md
     lines: '78'
-  evidence: The gold solution leverages the existing `checker.semantic().current_scopes()`
-    utility to iterate over scopes and filter for `ScopeKind::Class`, rather than
-    writing a custom AST traversal to find encl
+  evidence: The gold solution leverages the existing `checker.semantic().current_scopes()` utility to iterate over scopes and filter for `ScopeKind::Class`, rather than writing a custom AST traversal to find encl
   category: architecture
 - rule: Try hard to avoid patterns that require `panic!`, `unreachable!`, or `.unwrap()`.
   source:
     path: AGENTS.md
     lines: '79'
-  evidence: The gold solution uses `let ScopeKind::Class(class_def) = &scope.kind
-    else { return None; };` and `let Some(...) = enclosing_classes.next() else { return;
-    };` to safely handle options without unwrappi
+  evidence: The gold solution uses `let ScopeKind::Class(class_def) = &scope.kind else { return None; };` and `let Some(...) = enclosing_classes.next() else { return; };` to safely handle options without unwrappi
   category: style
 distractors:
 - rule: Prefer let chains (`if let` combined wit
   collision_type: rule_conflict
-  why_distracting: The agent might try to combine the scope filtering and the `next()`
-    call into a complex `if let` chain, but the gold solution cleanly separates the
-    iterator creation (using `let ... else` inside `filter_map`) and the `let Some(...)
-    = ... else` for early returns, which is more readable.
+  why_distracting: The agent might try to combine the scope filtering and the `next()` call into a complex `if let` chain, but the gold solution cleanly separates the iterator creation (using `let ... else` inside `filter_map`) and the `let Some(...) = ... else` for early returns, which is more readable.
   severity: low
   source:
     path: AGENTS.md
     lines: 67-67
-hierarchy_analysis: The configuration is flat, with all rules contained in a single
-  `AGENTS.md` file (which is referenced by `CLAUDE.md`). There are no conflicting
-  rules across different levels of a hierarchy.
+hierarchy_analysis: The configuration is flat, with all rules contained in a single `AGENTS.md` file (which is referenced by `CLAUDE.md`). There are no conflicting rules across different levels of a hierarchy.

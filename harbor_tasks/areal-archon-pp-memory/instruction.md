@@ -142,9 +142,9 @@ The behaviors above are what the test suite checks. As a sanity guide:
   `areal/experimental/models/archon/utils.py` exposes
   `is_moe_model_config` and it returns the documented truth values for
   configs with various `num_experts` / `num_local_experts`.
-- The list-shim class is defined as a top-level class in
-  `archon_runner.py` (so an AST/import inspection can find it),
-  subclasses `list`, and its `append` discards the argument.
+- The `_NullOutputChunks` class is defined as a top-level class in
+  `archon_runner.py` (so an AST/import inspection can find it by
+  name), subclasses `list`, and its `append` discards the argument.
 - `ArchonEngineConfig()` constructs cleanly; the new field's default
   is the literal string `"default"`; passing
   `reshard_after_forward_policy="invalid"` raises `ValueError` with a

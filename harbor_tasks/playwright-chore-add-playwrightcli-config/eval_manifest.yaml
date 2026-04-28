@@ -72,30 +72,44 @@ checks:
 - id: skill_md_documents_config
   type: fail_to_pass
   origin: pr_diff
-  description: SKILL.md documents the config command with usage examples and session
-    flags
+  description: SKILL.md documents the config command with usage examples and session flags
 - id: daemon_config_has_viewport
   type: fail_to_pass
   origin: pr_diff
   description: Daemon browser config sets default viewport 1280x720 for headless mode
+- id: test_ci_build_playwright_driver_npm
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: npm ci installs dependencies successfully'
+- id: test_ci_build_playwright_driver_npm_2
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: npm run build compiles successfully'
 rubric:
-- rule: New command categories must be documented in SKILL.md with usage examples
-    and session flag examples
+- rule: New command categories must be documented in SKILL.md with usage examples and session flag examples
   source:
     path: packages/playwright/src/mcp/terminal/SKILL.md
     lines: 108-118
     commit: 71e5079b735eda08a72b0fac58a3dd02fde6bb9f
-  reference: '### Configuration
-    ```bash
-    # configure the session
-    playwright-cli config my-config.json
-    # Configure named session
-    playwright-cli --session=mysession config my-config.json
-    # Start with configured session
-    playwright-cli open --config=my-config.json
-    ```'
+  reference: '### Configuration ```bash # configure the session playwright-cli config my-config.json # Configure named session playwright-cli --session=mysession config my-config.json # Start with configured session playwright-cli open --config=my-config.json ```'
 config_edits:
 - path: packages/playwright/src/mcp/terminal/SKILL.md
   tier: 1
-  gold_added: "### Configuration\n```bash\n# configure the session\nplaywright-cli config my-config.json\n# Configure named session\nplaywright-cli --session=mysession config my-config.json\n# Start with configured session\nplaywright-cli open --config=my-config.json\n```"
+  gold_added: '### Configuration
+
+    ```bash
+
+    # configure the session
+
+    playwright-cli config my-config.json
+
+    # Configure named session
+
+    playwright-cli --session=mysession config my-config.json
+
+    # Start with configured session
+
+    playwright-cli open --config=my-config.json
+
+    ```'
   gold_removed: ''

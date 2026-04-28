@@ -28,8 +28,7 @@ checks:
 - id: test_repo_config_none_str_to_none
   type: pass_to_pass
   origin: repo_tests
-  description: BaseConfig._none_str_to_none converts 'None' strings to None values
-    (PR-related feature)
+  description: BaseConfig._none_str_to_none converts 'None' strings to None values (PR-related feature)
 - id: flat_none_conversion
   type: fail_to_pass
   origin: pr_diff
@@ -65,16 +64,13 @@ checks:
 - id: no_process_comments
   type: pass_to_pass
   origin: agent_config
-  description: Changed files must not contain comments referring to old code or work
-    process
+  description: Changed files must not contain comments referring to old code or work process
   source:
     path: AGENTS.md
     lines: '7'
     commit: 692dfc8a4b9471e65004d8ac154d07ebb73bc61c
 rubric:
-- rule: Do not add unnecessary comments. Especially do not try to explain code change
-    that reflect your work process, do not refer to old code. Prefer to use targeted
-    comments sparingly to explain ambiguous code.
+- rule: Do not add unnecessary comments. Especially do not try to explain code change that reflect your work process, do not refer to old code. Prefer to use targeted comments sparingly to explain ambiguous code.
   source:
     path: AGENTS.md
     lines: '7'
@@ -99,41 +95,30 @@ rubric:
     path: AGENTS.md
     lines: '29'
     commit: 692dfc8a4b9471e65004d8ac154d07ebb73bc61c
-- rule: Errors should never pass silently. Explicit is better than implicit. (Zen
-    of Python)
+- rule: Errors should never pass silently. Explicit is better than implicit. (Zen of Python)
   source:
     path: AGENTS.md
     lines: 10-30
-  evidence: The gold solution fixes the bug where `exclude_none=True` silently dropped
-    `None` values during TOML serialization, ensuring they are explicitly converted
-    to the string '"None"' instead of failing sil
+  evidence: The gold solution fixes the bug where `exclude_none=True` silently dropped `None` values during TOML serialization, ensuring they are explicitly converted to the string '"None"' instead of failing sil
   category: architecture
 - rule: Use the string 'None' in TOML to set a field to None.
   source:
     path: skills/toml-config/SKILL.md
     lines: 40-44
-  evidence: The gold solution implements `none_to_none_str` to convert Python `None`
-    to the string `"None"` before dumping to TOML, matching the documented convention
-    for setting None in TOML configs.
+  evidence: The gold solution implements `none_to_none_str` to convert Python `None` to the string `"None"` before dumping to TOML, matching the documented convention for setting None in TOML configs.
   category: architecture
   verification: llm_judge
 distractors:
-- rule: You are also responsible for keeping the skills up to date whenever you or
-    anyone else modifies the code.
+- rule: You are also responsible for keeping the skills up to date whenever you or anyone else modifies the code.
   collision_type: scope_ambiguity
-  why_distracting: The feature instructs the agent to keep skills up to date when
-    modifying code. The agent might update `skills/toml-config` to document the new
-    `None` serialization behavior, but the gold solution strictly fixes the bug in
-    the python files without touching the skills.
+  why_distracting: The feature instructs the agent to keep skills up to date when modifying code. The agent might update `skills/toml-config` to document the new `None` serialization behavior, but the gold solution strictly fixes the bug in the python files without touching the skills.
   severity: medium
   source:
     path: AGENTS.md
     lines: 40-42
 - rule: Write tests as plain functions with pytest fixtures.
   collision_type: scope_ambiguity
-  why_distracting: The feature instructs the agent to requirements to write tests
-    as plain functions. The agent might write a test for `none_to_none_str` or the
-    serialization behavior, but the gold solution does not include any tests.
+  why_distracting: The feature instructs the agent to requirements to write tests as plain functions. The agent might write a test for `none_to_none_str` or the serialization behavior, but the gold solution does not include any tests.
   severity: low
   source:
     path: AGENTS.md
@@ -143,9 +128,6 @@ distractors:
     path: skills/toml-config/SKILL.md
     lines: 28-38
   collision_type: architecture_boundary
-  why_distracting: The agent might attempt to write a custom TOML dumper to handle
-    None values and struggle with TOML section ordering rules, rather than simply
-    preprocessing the dictionary before passing it to the existing tomli_w.dump().
+  why_distracting: The agent might attempt to write a custom TOML dumper to handle None values and struggle with TOML section ordering rules, rather than simply preprocessing the dictionary before passing it to the existing tomli_w.dump().
   severity: medium
-hierarchy_analysis: The configuration is essentially a flat single file, as CLAUDE.md
-  simply includes AGENTS.md. The rules are generic and apply globally.
+hierarchy_analysis: The configuration is essentially a flat single file, as CLAUDE.md simply includes AGENTS.md. The rules are generic and apply globally.

@@ -446,6 +446,95 @@ def test_repo_ruff_format_constants():
     assert r.returncode == 0, f"Ruff format check failed on constants.py:\n{r.stdout[-500:]}\n{r.stderr[-500:]}"
 
 
+# [repo_tests] fail_to_pass — run pytest as test runner against actor KL behavior
+def test_repo_pytest_actor_kl():
+    """Run pytest (real test runner) against generated test file for actor KL divergence."""
+    import tempfile
+
+    test_code = _EVAL_HELPERS + """
+def test_kl_estimators_computed_via_pytest():
+    logprobs = torch.tensor([-1.0, -2.0, -3.0])
+    old_logp = torch.tensor([-1.5, -2.5, -3.5])
+    tracker = extract_and_call(logprobs, old_logp)
+    direct, taylor, dual = get_kl_tensors(tracker)
+    assert direct is not None, "KL direct estimator not logged"
+    assert taylor is not None, "KL taylor estimator not logged"
+    assert dual is not None, "KL dual estimator not logged"
+    log_ratio = (logprobs.float() - old_logp.float()).detach()
+    assert torch.allclose(direct.float(), -log_ratio, atol=1e-5)
+    assert torch.allclose(taylor.float(), log_ratio ** 2 / 2.0, atol=1e-5)
+    assert torch.allclose(dual.float(), log_ratio.exp() - 1 - log_ratio, atol=1e-5)
+
+def test_kl_estimators_diverse_via_pytest():
+    test_cases = [
+        ([-1.0, -2.0, -3.0], [-1.0, -2.0, -3.0]),
+        ([-0.1, -0.2], [-5.0, -10.0]),
+        ([-5.0, -10.0], [-0.1, -0.2]),
+        ([-0.5], [-1.5]),
+    ]
+    for lp_vals, olp_vals in test_cases:
+        logprobs = torch.tensor(lp_vals)
+        old_logp = torch.tensor(olp_vals)
+        tracker = extract_and_call(logprobs, old_logp)
+        direct, taylor, dual = get_kl_tensors(tracker)
+        assert direct is not None and taylor is not None and dual is not None
+        log_ratio = (logprobs.float() - old_logp.float()).detach()
+        assert torch.allclose(direct.float(), -log_ratio, atol=1e-5)
+        assert torch.allclose(taylor.float(), log_ratio ** 2 / 2.0, atol=1e-5)
+        assert torch.allclose(dual.float(), log_ratio.exp() - 1 - log_ratio, atol=1e-5)
+        assert (taylor.float() >= -1e-6).all()
+        assert (dual.float() >= -1e-6).all()
+        if lp_vals == olp_vals:
+            assert (direct.float().abs() < 1e-5).all()
+            assert (taylor.float().abs() < 1e-5).all()
+            assert (dual.float().abs() < 1e-5).all()
+
+def test_kl_estimators_detached_via_pytest():
+    logprobs = torch.tensor([-1.0, -2.0], requires_grad=True)
+    old_logp = torch.tensor([-1.5, -2.5])
+    tracker = extract_and_call(logprobs, old_logp)
+    direct, taylor, dual = get_kl_tensors(tracker)
+    assert direct is not None and not direct.requires_grad, "direct must be detached"
+    assert taylor is not None and not taylor.requires_grad, "taylor must be detached"
+    assert dual is not None and not dual.requires_grad, "dual must be detached"
+
+def test_kl_denominator_via_pytest():
+    logprobs = torch.tensor([-1.0, -2.0, -3.0])
+    old_logp = torch.tensor([-1.5, -2.5, -3.5])
+    tracker = extract_and_call(logprobs, old_logp)
+    kl_calls = [
+        c for c in tracker.calls
+        if any(("direct" in k or "taylor" in k or "dual" in k) for k in c.keys())
+    ]
+    assert len(kl_calls) >= 1, "No stat calls with KL keys found"
+    assert all("denominator" in c for c in kl_calls)
+
+def test_logprobs_none_no_kl_via_pytest():
+    old_logp = torch.tensor([-1.5, -2.5, -3.5])
+    tracker = extract_and_call(None, old_logp)
+    all_kw = {}
+    for c in tracker.calls:
+        all_kw.update(c)
+    has_kl = any(
+        ("direct" in k or "taylor" in k or "dual" in k) and isinstance(v, torch.Tensor)
+        for k, v in all_kw.items()
+    )
+    assert not has_kl, "KL stats should not be logged when logprobs is None"
+"""
+
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".py", prefix="test_ppo_actor_kl_", dir="/tmp", delete=False) as f:
+        f.write(test_code)
+        test_fpath = f.name
+    try:
+        r = subprocess.run(
+            ["bash", "-lc", f"cd {REPO} && python3 -m pytest {test_fpath} -q --tb=short"],
+            capture_output=True, text=True, timeout=120,
+        )
+        assert r.returncode == 0, f"pytest test failed:\nSTDOUT:\n{r.stdout}\nSTDERR:\n{r.stderr}"
+    finally:
+        Path(test_fpath).unlink(missing_ok=True)
+
+
 # [repo_tests] pass_to_pass — AST parsing validation for constants.py
 def test_repo_constants_ast_parse():
     """constants.py (PROX_APPROX enums) parses as valid Python AST."""

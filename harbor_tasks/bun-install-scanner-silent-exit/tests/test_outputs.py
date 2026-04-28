@@ -573,3 +573,24 @@ def test_repo_typescript_check():
         content = rt_file.read_text()
         assert "import" in content, "No imports in regression test"
         assert "test(" in content or "describe(" in content, "No test definitions found"
+
+# === PR-added f2p tests (taskforge.test_patch_miner) ===
+def test_pr_added_bun_install_prints_error_when_security_scanner_i():
+    """fail_to_pass | PR added test 'bun install prints error when security scanner is unavailable' in 'test/regression/issue/28193.test.ts'"""
+    r = subprocess.run(
+        ["bun", "test", "./test/regression/issue/28193.test.ts", "-t",
+         "bun install prints error when security scanner is unavailable"],
+        capture_output=True, text=True, timeout=120, cwd=REPO)
+    assert r.returncode == 0, (
+        f"PR-added test 'bun install prints error when security scanner is unavailable' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_pr_added_bun_install_prints_error_when_scanner_package_is():
+    """fail_to_pass | PR added test 'bun install prints error when scanner package is invalid' in 'test/regression/issue/28193.test.ts'"""
+    r = subprocess.run(
+        ["bun", "test", "./test/regression/issue/28193.test.ts", "-t",
+         "bun install prints error when scanner package is invalid"],
+        capture_output=True, text=True, timeout=120, cwd=REPO)
+    assert r.returncode == 0, (
+        f"PR-added test 'bun install prints error when scanner package is invalid' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")

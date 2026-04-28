@@ -204,3 +204,167 @@ def test_repo_lint_passes():
         f"--- stdout tail ---\n{r.stdout[-2000:]}\n"
         f"--- stderr tail ---\n{r.stderr[-1000:]}"
     )
+
+# === CI-mined tests (taskforge.ci_check_miner) ===
+def test_ci_test_build_all_packages():
+    """pass_to_pass | CI job 'test' → step 'Build all packages'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'pnpm build:ci'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Build all packages' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_test_check_generated_declarations():
+    """pass_to_pass | CI job 'test' → step 'Check generated declarations'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'pnpm -r -F "@openai/*" dist:check'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Check generated declarations' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_test_run_linter():
+    """pass_to_pass | CI job 'test' → step 'Run linter'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'pnpm lint'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Run linter' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_test_type_check_docs_scripts():
+    """pass_to_pass | CI job 'test' → step 'Type-check docs scripts'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'pnpm docs:scripts:check'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Type-check docs scripts' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_test_compile_examples():
+    """pass_to_pass | CI job 'test' → step 'Compile examples'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'pnpm -r build-check'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Compile examples' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_test_run_tests():
+    """pass_to_pass | CI job 'test' → step 'Run tests'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'pnpm test'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Run tests' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+# === PR-added f2p tests (taskforge.test_patch_miner) ===
+def test_pr_added_detects_GPT_5_models_while_ignoring_chat_latest_():
+    """fail_to_pass | PR added test 'detects GPT-5 models while ignoring chat latest families' in 'packages/agents-core/test/defaultModel.test.ts' (vitest_or_jest)"""
+    r = subprocess.run(
+        ["bash", "-lc", '(pnpm vitest run "packages/agents-core/test/defaultModel.test.ts" -t "detects GPT-5 models while ignoring chat latest families" 2>&1 || npx vitest run "packages/agents-core/test/defaultModel.test.ts" -t "detects GPT-5 models while ignoring chat latest families" 2>&1 || pnpm jest "packages/agents-core/test/defaultModel.test.ts" -t "detects GPT-5 models while ignoring chat latest families" 2>&1 || npx jest "packages/agents-core/test/defaultModel.test.ts" -t "detects GPT-5 models while ignoring chat latest families" 2>&1) | tail -50'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"PR-added test 'detects GPT-5 models while ignoring chat latest families' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_pr_added_returns_none_reasoning_defaults_for_GPT_5_1_mode():
+    """fail_to_pass | PR added test 'returns none reasoning defaults for GPT-5.1 models' in 'packages/agents-core/test/defaultModel.test.ts' (vitest_or_jest)"""
+    r = subprocess.run(
+        ["bash", "-lc", '(pnpm vitest run "packages/agents-core/test/defaultModel.test.ts" -t "returns none reasoning defaults for GPT-5.1 models" 2>&1 || npx vitest run "packages/agents-core/test/defaultModel.test.ts" -t "returns none reasoning defaults for GPT-5.1 models" 2>&1 || pnpm jest "packages/agents-core/test/defaultModel.test.ts" -t "returns none reasoning defaults for GPT-5.1 models" 2>&1 || npx jest "packages/agents-core/test/defaultModel.test.ts" -t "returns none reasoning defaults for GPT-5.1 models" 2>&1) | tail -50'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"PR-added test 'returns none reasoning defaults for GPT-5.1 models' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_pr_added_returns_none_reasoning_defaults_for_GPT_5_2_mode():
+    """fail_to_pass | PR added test 'returns none reasoning defaults for GPT-5.2 models' in 'packages/agents-core/test/defaultModel.test.ts' (vitest_or_jest)"""
+    r = subprocess.run(
+        ["bash", "-lc", '(pnpm vitest run "packages/agents-core/test/defaultModel.test.ts" -t "returns none reasoning defaults for GPT-5.2 models" 2>&1 || npx vitest run "packages/agents-core/test/defaultModel.test.ts" -t "returns none reasoning defaults for GPT-5.2 models" 2>&1 || pnpm jest "packages/agents-core/test/defaultModel.test.ts" -t "returns none reasoning defaults for GPT-5.2 models" 2>&1 || npx jest "packages/agents-core/test/defaultModel.test.ts" -t "returns none reasoning defaults for GPT-5.2 models" 2>&1) | tail -50'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"PR-added test 'returns none reasoning defaults for GPT-5.2 models' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_pr_added_returns_none_reasoning_defaults_for_GPT_5_3_code():
+    """fail_to_pass | PR added test 'returns none reasoning defaults for GPT-5.3 codex models' in 'packages/agents-core/test/defaultModel.test.ts' (vitest_or_jest)"""
+    r = subprocess.run(
+        ["bash", "-lc", '(pnpm vitest run "packages/agents-core/test/defaultModel.test.ts" -t "returns none reasoning defaults for GPT-5.3 codex models" 2>&1 || npx vitest run "packages/agents-core/test/defaultModel.test.ts" -t "returns none reasoning defaults for GPT-5.3 codex models" 2>&1 || pnpm jest "packages/agents-core/test/defaultModel.test.ts" -t "returns none reasoning defaults for GPT-5.3 codex models" 2>&1 || npx jest "packages/agents-core/test/defaultModel.test.ts" -t "returns none reasoning defaults for GPT-5.3 codex models" 2>&1) | tail -50'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"PR-added test 'returns none reasoning defaults for GPT-5.3 codex models' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_pr_added_returns_none_reasoning_defaults_for_GPT_5_4_mode():
+    """fail_to_pass | PR added test 'returns none reasoning defaults for GPT-5.4 models' in 'packages/agents-core/test/defaultModel.test.ts' (vitest_or_jest)"""
+    r = subprocess.run(
+        ["bash", "-lc", '(pnpm vitest run "packages/agents-core/test/defaultModel.test.ts" -t "returns none reasoning defaults for GPT-5.4 models" 2>&1 || npx vitest run "packages/agents-core/test/defaultModel.test.ts" -t "returns none reasoning defaults for GPT-5.4 models" 2>&1 || pnpm jest "packages/agents-core/test/defaultModel.test.ts" -t "returns none reasoning defaults for GPT-5.4 models" 2>&1 || npx jest "packages/agents-core/test/defaultModel.test.ts" -t "returns none reasoning defaults for GPT-5.4 models" 2>&1) | tail -50'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"PR-added test 'returns none reasoning defaults for GPT-5.4 models' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_pr_added_returns_none_reasoning_defaults_for_GPT_5_4_snap():
+    """fail_to_pass | PR added test 'returns none reasoning defaults for GPT-5.4 snapshot families' in 'packages/agents-core/test/defaultModel.test.ts' (vitest_or_jest)"""
+    r = subprocess.run(
+        ["bash", "-lc", '(pnpm vitest run "packages/agents-core/test/defaultModel.test.ts" -t "returns none reasoning defaults for GPT-5.4 snapshot families" 2>&1 || npx vitest run "packages/agents-core/test/defaultModel.test.ts" -t "returns none reasoning defaults for GPT-5.4 snapshot families" 2>&1 || pnpm jest "packages/agents-core/test/defaultModel.test.ts" -t "returns none reasoning defaults for GPT-5.4 snapshot families" 2>&1 || npx jest "packages/agents-core/test/defaultModel.test.ts" -t "returns none reasoning defaults for GPT-5.4 snapshot families" 2>&1) | tail -50'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"PR-added test 'returns none reasoning defaults for GPT-5.4 snapshot families' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_pr_added_returns_none_reasoning_defaults_for_GPT_5_4_mini():
+    """fail_to_pass | PR added test 'returns none reasoning defaults for GPT-5.4 mini and nano models' in 'packages/agents-core/test/defaultModel.test.ts' (vitest_or_jest)"""
+    r = subprocess.run(
+        ["bash", "-lc", '(pnpm vitest run "packages/agents-core/test/defaultModel.test.ts" -t "returns none reasoning defaults for GPT-5.4 mini and nano models" 2>&1 || npx vitest run "packages/agents-core/test/defaultModel.test.ts" -t "returns none reasoning defaults for GPT-5.4 mini and nano models" 2>&1 || pnpm jest "packages/agents-core/test/defaultModel.test.ts" -t "returns none reasoning defaults for GPT-5.4 mini and nano models" 2>&1 || npx jest "packages/agents-core/test/defaultModel.test.ts" -t "returns none reasoning defaults for GPT-5.4 mini and nano models" 2>&1) | tail -50'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"PR-added test 'returns none reasoning defaults for GPT-5.4 mini and nano models' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_pr_added_returns_low_effort_defaults_for_the_base_GPT_5_m():
+    """fail_to_pass | PR added test 'returns low-effort defaults for the base GPT-5 model' in 'packages/agents-core/test/defaultModel.test.ts' (vitest_or_jest)"""
+    r = subprocess.run(
+        ["bash", "-lc", '(pnpm vitest run "packages/agents-core/test/defaultModel.test.ts" -t "returns low-effort defaults for the base GPT-5 model" 2>&1 || npx vitest run "packages/agents-core/test/defaultModel.test.ts" -t "returns low-effort defaults for the base GPT-5 model" 2>&1 || pnpm jest "packages/agents-core/test/defaultModel.test.ts" -t "returns low-effort defaults for the base GPT-5 model" 2>&1 || npx jest "packages/agents-core/test/defaultModel.test.ts" -t "returns low-effort defaults for the base GPT-5 model" 2>&1) | tail -50'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"PR-added test 'returns low-effort defaults for the base GPT-5 model' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_pr_added_returns_low_effort_defaults_for_GPT_5_2_codex_mo():
+    """fail_to_pass | PR added test 'returns low-effort defaults for GPT-5.2 codex models' in 'packages/agents-core/test/defaultModel.test.ts' (vitest_or_jest)"""
+    r = subprocess.run(
+        ["bash", "-lc", '(pnpm vitest run "packages/agents-core/test/defaultModel.test.ts" -t "returns low-effort defaults for GPT-5.2 codex models" 2>&1 || npx vitest run "packages/agents-core/test/defaultModel.test.ts" -t "returns low-effort defaults for GPT-5.2 codex models" 2>&1 || pnpm jest "packages/agents-core/test/defaultModel.test.ts" -t "returns low-effort defaults for GPT-5.2 codex models" 2>&1 || npx jest "packages/agents-core/test/defaultModel.test.ts" -t "returns low-effort defaults for GPT-5.2 codex models" 2>&1) | tail -50'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"PR-added test 'returns low-effort defaults for GPT-5.2 codex models' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_pr_added_returns_medium_defaults_for_GPT_5_pro_models():
+    """fail_to_pass | PR added test 'returns medium defaults for GPT-5 pro models' in 'packages/agents-core/test/defaultModel.test.ts' (vitest_or_jest)"""
+    r = subprocess.run(
+        ["bash", "-lc", '(pnpm vitest run "packages/agents-core/test/defaultModel.test.ts" -t "returns medium defaults for GPT-5 pro models" 2>&1 || npx vitest run "packages/agents-core/test/defaultModel.test.ts" -t "returns medium defaults for GPT-5 pro models" 2>&1 || pnpm jest "packages/agents-core/test/defaultModel.test.ts" -t "returns medium defaults for GPT-5 pro models" 2>&1 || npx jest "packages/agents-core/test/defaultModel.test.ts" -t "returns medium defaults for GPT-5 pro models" 2>&1) | tail -50'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"PR-added test 'returns medium defaults for GPT-5 pro models' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_pr_added_omits_reasoning_defaults_for_GPT_5_variants_with():
+    """fail_to_pass | PR added test 'omits reasoning defaults for GPT-5 variants without confirmed support' in 'packages/agents-core/test/defaultModel.test.ts' (vitest_or_jest)"""
+    r = subprocess.run(
+        ["bash", "-lc", '(pnpm vitest run "packages/agents-core/test/defaultModel.test.ts" -t "omits reasoning defaults for GPT-5 variants without confirmed support" 2>&1 || npx vitest run "packages/agents-core/test/defaultModel.test.ts" -t "omits reasoning defaults for GPT-5 variants without confirmed support" 2>&1 || pnpm jest "packages/agents-core/test/defaultModel.test.ts" -t "omits reasoning defaults for GPT-5 variants without confirmed support" 2>&1 || npx jest "packages/agents-core/test/defaultModel.test.ts" -t "omits reasoning defaults for GPT-5 variants without confirmed support" 2>&1) | tail -50'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"PR-added test 'omits reasoning defaults for GPT-5 variants without confirmed support' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_pr_added_returns_empty_settings_for_GPT_5_chat_latest_ali():
+    """fail_to_pass | PR added test 'returns empty settings for GPT-5 chat latest aliases' in 'packages/agents-core/test/defaultModel.test.ts' (vitest_or_jest)"""
+    r = subprocess.run(
+        ["bash", "-lc", '(pnpm vitest run "packages/agents-core/test/defaultModel.test.ts" -t "returns empty settings for GPT-5 chat latest aliases" 2>&1 || npx vitest run "packages/agents-core/test/defaultModel.test.ts" -t "returns empty settings for GPT-5 chat latest aliases" 2>&1 || pnpm jest "packages/agents-core/test/defaultModel.test.ts" -t "returns empty settings for GPT-5 chat latest aliases" 2>&1 || npx jest "packages/agents-core/test/defaultModel.test.ts" -t "returns empty settings for GPT-5 chat latest aliases" 2>&1) | tail -50'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"PR-added test 'returns empty settings for GPT-5 chat latest aliases' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")

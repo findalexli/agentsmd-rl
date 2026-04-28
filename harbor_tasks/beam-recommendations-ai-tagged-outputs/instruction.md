@@ -14,12 +14,13 @@ The underlying `DoFn` already yields `TaggedOutput` for failures, but the `expan
 
 This matches the Dead Letter Queue pattern described in the Beam concepts documentation, and is consistent with how `_CreateCatalogItemFn.process()` already yields tagged outputs for failures.
 
-## Files to Look At
-
-- `sdks/python/apache_beam/ml/gcp/recommendations_ai.py` — the `CreateCatalogItem` PTransform and its `expand()` method
+The relevant code is in the Recommendations AI connector module of the Python SDK's ML/GCP package — specifically the `CreateCatalogItem` PTransform class and its `expand()` method.
 
 ## Code Style Requirements
 
 Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
 
-- `pylint (Python linter)`
+- `pylint` (Python linter)
+- `yapf` (Python formatter)
+- `flake8` (Python syntax checker)
+- `isort` (Python import ordering)

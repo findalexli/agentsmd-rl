@@ -15,14 +15,19 @@ Concurrent appends for the same label set must:
 
 ## Requirements
 
-The `stripeSeries` type in `tsdb/agent/series.go` must provide an atomic "check-then-insert" operation that:
+The stripeSeries type in the agent package must provide an atomic "check-then-insert" operation that:
 
 - Returns the canonical series for a label set (newly inserted or pre-existing)
 - Returns a boolean indicating whether insertion occurred
 - Cleans up loser refs when a concurrent insert wins
 - Does not hold multiple stripe locks simultaneously (deadlock risk with GC)
 
-The `getOrCreate` method in the agent package must be updated to support callers that already hold a series reference, allowing them to skip redundant lookups. The package must build cleanly.
+The getOrCreate method in the agent package must be updated to support callers that already hold a series reference, allowing them to skip redundant lookups. The package must build cleanly.
+
+## Code Style Requirements
+
+- Run `go vet ./tsdb/agent/` to check for common Go issues — it must pass with no warnings.
+- Run `go fmt ./tsdb/agent/` to verify formatting — it must produce no changes.
 
 ## Verification
 
@@ -34,7 +39,7 @@ go test -v -run 'TestConcurrentAppendSameLabels|TestStripeSeries_SetUnlessAlread
 go build ./tsdb/agent/
 ```
 
-All four tests must pass and the package must compile.
+All four tests must pass and the package must compile. Any existing tests in the agent package must continue to pass.
 
 ## Constraints
 

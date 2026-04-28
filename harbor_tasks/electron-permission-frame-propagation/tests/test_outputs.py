@@ -245,7 +245,8 @@ def test_header_guards_follow_convention():
 def test_clang_format():
     """P2P: Modified C++ files must follow clang-format rules."""
     r = subprocess.run(
-        ["python3", "script/run-clang-format.py", "-r", "-c",
+        ["python3", "script/run-clang-format.py", "-r",
+         "--clang-format-executable", "/usr/bin/clang-format",
          "shell/browser/web_contents_permission_helper.h",
          "shell/browser/web_contents_permission_helper.cc",
          "shell/browser/api/electron_api_web_contents.cc",

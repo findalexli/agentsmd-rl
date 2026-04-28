@@ -4,11 +4,10 @@ RUN rm -rf /var/lib/apt/lists/* && apt-get update && apt-get install -y \
     git curl ca-certificates build-essential tmux \
     && rm -rf /var/lib/apt/lists/*
 
-# Install test dependencies (numpy + pandas for eval_utils)
-RUN pip install --no-cache-dir numpy pandas pyyaml pytest pytest-json-ctrf
+# Install test dependencies (numpy + pandas for eval_utils, uv for pytest runner)
+RUN pip install --no-cache-dir numpy pandas pyyaml pytest pytest-json-ctrf uv
 
 # Clone repo at base commit (BEFORE the fix)
-# Use --filter=blob:none for faster clone (fetches blobs on demand)
 RUN git init /workspace && \
     cd /workspace && \
     git remote add origin https://github.com/PrimeIntellect-ai/prime-rl.git && \

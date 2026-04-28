@@ -637,3 +637,104 @@ def test_no_magic_sentinels():
     assert len(sentinels) == 0, (
         f"Found magic sentinel fallbacks in handler code: {sentinels}"
     )
+
+# === CI-mined tests (taskforge.ci_check_miner) ===
+def test_ci_build_bun_artifacts_build_a2ui_bundle():
+    """pass_to_pass | CI job 'build-bun-artifacts' → step 'Build A2UI bundle'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'pnpm canvas:a2ui:bundle'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Build A2UI bundle' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_check_additional_check_types_and_lint_and_oxfmt():
+    """pass_to_pass | CI job 'check-additional' → step 'Check types and lint and oxfmt'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'pnpm check'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Check types and lint and oxfmt' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_check_additional_strict_ts_build_smoke():
+    """pass_to_pass | CI job 'check-additional' → step 'Strict TS build smoke'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'pnpm build:strict-smoke'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Strict TS build smoke' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_build_artifacts_build_dist():
+    """pass_to_pass | CI job 'build-artifacts' → step 'Build dist'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'pnpm build'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Build dist' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_build_artifacts_build_control_ui():
+    """pass_to_pass | CI job 'build-artifacts' → step 'Build Control UI'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'pnpm ui:build'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Build Control UI' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_check_run_matrix_task_matrix_runtime():
+    """pass_to_pass | CI job 'check' → step 'Run ${{ matrix.task }} (${{ matrix.runtime }})'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'pnpm test:extensions && pnpm build && pnpm test:contracts && pnpm protocol:check'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Run ${{ matrix.task }} (${{ matrix.runtime }})' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_build_smoke_smoke_test_cli_launcher_help():
+    """pass_to_pass | CI job 'build-smoke' → step 'Smoke test CLI launcher help'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'node openclaw.mjs --help'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Smoke test CLI launcher help' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_build_smoke_smoke_test_cli_launcher_status_json():
+    """pass_to_pass | CI job 'build-smoke' → step 'Smoke test CLI launcher status json'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'node openclaw.mjs status --json --timeout 1'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Smoke test CLI launcher status json' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_build_smoke_smoke_test_built_bundled_plugin_singleto():
+    """pass_to_pass | CI job 'build-smoke' → step 'Smoke test built bundled plugin singleton'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'pnpm test:build:singleton'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Smoke test built bundled plugin singleton' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_build_smoke_check_cli_startup_memory():
+    """pass_to_pass | CI job 'build-smoke' → step 'Check CLI startup memory'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'pnpm test:startup:memory'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Check CLI startup memory' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+# === PR-added f2p tests (taskforge.test_patch_miner) ===
+def test_pr_added_rejects_excess_concurrent_pre_auth_body_reads_fr():
+    """fail_to_pass | PR added test 'rejects excess concurrent pre-auth body reads from the same remote IP' in 'extensions/synology-chat/src/webhook-handler.test.ts' (vitest_or_jest)"""
+    r = subprocess.run(
+        ["bash", "-lc", '(pnpm vitest run "extensions/synology-chat/src/webhook-handler.test.ts" -t "rejects excess concurrent pre-auth body reads from the same remote IP" 2>&1 || npx vitest run "extensions/synology-chat/src/webhook-handler.test.ts" -t "rejects excess concurrent pre-auth body reads from the same remote IP" 2>&1 || pnpm jest "extensions/synology-chat/src/webhook-handler.test.ts" -t "rejects excess concurrent pre-auth body reads from the same remote IP" 2>&1 || npx jest "extensions/synology-chat/src/webhook-handler.test.ts" -t "rejects excess concurrent pre-auth body reads from the same remote IP" 2>&1) | tail -50'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"PR-added test 'rejects excess concurrent pre-auth body reads from the same remote IP' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")

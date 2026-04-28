@@ -20,8 +20,7 @@ checks:
 - id: omegaconf_roundtrip
   type: fail_to_pass
   origin: pr_diff
-  description: OmegaConf structured -> YAML -> reload roundtrip preserves strategy
-    values
+  description: OmegaConf structured -> YAML -> reload roundtrip preserves strategy values
 - id: default_instantiation
   type: pass_to_pass
   origin: pr_diff
@@ -61,8 +60,7 @@ checks:
 - id: validation_raises_valueerror
   type: fail_to_pass
   origin: agent_config
-  description: Validation must raise ValueError (not assert/RuntimeError) with clear
-    message
+  description: Validation must raise ValueError (not assert/RuntimeError) with clear message
   source:
     path: AGENTS.md
     lines: '156'
@@ -83,23 +81,35 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Repo's unit tests for datapack and train_controller pass
+- id: test_ci_install_test_set_up_python
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: Install test / Set up Python'
+- id: test_ci_install_test_verify_package_import
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: Install test / Verify package import'
+- id: test_ci_install_test_verify_core_modules_are_importable
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: Install test / Verify core modules are importable'
+- id: test_ci_install_test_build_wheel
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: Install test / Build wheel'
+- id: test_ci_install_test_verify_wheel_artifact
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: Install test / Verify wheel artifact'
 rubric:
-- rule: For code-only bug fixes that do not affect developer workflows or coding standards,
-    no documentation file modifications are required. The gold solution for this task
-    modifies only areal/api/cli_args.py and does not change AGENTS.md, CLAUDE.md,
-    or any other documentation files.
+- rule: For code-only bug fixes that do not affect developer workflows or coding standards, no documentation file modifications are required. The gold solution for this task modifies only areal/api/cli_args.py and does not change AGENTS.md, CLAUDE.md, or any other documentation files.
   category: code_only_fix
 - rule: Use __post_init__ for validation and raise ValueError
   source:
     path: /workspace/repo/.claude/rules/api-config.md
     lines: 35-43
-  source_text: "## Validation\n\n- Use `__post_init__` for validation\n- Raise `ValueError`\
-    \ with clear message:\n  ```python\n  def __post_init__(self):\n      if self.batch_size\
-    \ <= 0:\n          raise ValueError(f\"batch_size must be positive, got {self.batch_size}\"\
-    )\n  ```"
-  evidence: The gold diff adds a `__post_init__` method to `SchedulingSpec` that validates
-    `self.ray_placement_strategy` and raises a `ValueError` with a clear message showing
-    the invalid value and valid options.
+  source_text: "## Validation\n\n- Use `__post_init__` for validation\n- Raise `ValueError` with clear message:\n  ```python\n  def __post_init__(self):\n      if self.batch_size <= 0:\n          raise ValueError(f\"batch_size must be positive, got {self.batch_size}\")\n  ```"
+  evidence: The gold diff adds a `__post_init__` method to `SchedulingSpec` that validates `self.ray_placement_strategy` and raises a `ValueError` with a clear message showing the invalid value and valid options.
   category: error handling / validation
   verification: llm_judge
 - rule: Use __post_init__ with ValueError (AGENTS.md)
@@ -107,26 +117,20 @@ rubric:
     path: /workspace/repo/AGENTS.md
     lines: 156-156
   source_text: '- **Validation**: `__post_init__` with `ValueError` and clear message.'
-  evidence: The diff implements `__post_init__` dynamically checking the string and
-    raising a `ValueError` for invalid choices.
+  evidence: The diff implements `__post_init__` dynamically checking the string and raising a `ValueError` for invalid choices.
   category: error handling / validation
   verification: llm_judge
 distractors:
 - rule: 'Ask first before: Modifying config structures in `areal/api/cli_args.py`.'
   collision_type: meta_confusion
-  why_distracting: The config explicitly forbids modifying config structures in `areal/api/cli_args.py`
-    without asking first. However, the user instruction explicitly requests a bug
-    fix in this exact file. An agent might refuse to edit the file, use a question
-    tool, or leave a TODO comment instead of completing the task.
+  why_distracting: The config explicitly forbids modifying config structures in `areal/api/cli_args.py` without asking first. However, the user instruction explicitly requests a bug fix in this exact file. An agent might refuse to edit the file, use a question tool, or leave a TODO comment instead of completing the task.
   severity: high
   source:
     path: AGENTS.md
     lines: 31-32
 - rule: Add tests for new functionality.
   collision_type: scope_ambiguity
-  why_distracting: The config requires adding tests for new functionality. Since this
-    is a bug fix for an existing field rather than new functionality, attempting to
-    write new tests would be out of scope and is not present in the gold solution.
+  why_distracting: The config requires adding tests for new functionality. Since this is a bug fix for an existing field rather than new functionality, attempting to write new tests would be out of scope and is not present in the gold solution.
   severity: medium
   source:
     path: AGENTS.md
@@ -139,20 +143,15 @@ distractors:
 
     - Use `Literal` for enum-like choices'
   collision_type: rule_conflict
-  why_distracting: The rule mandates using `Literal` for enum choices, but the core
-    of the gold diff explicitly removes the `Literal` type hint from `ray_placement_strategy`
-    and replaces it with `str`. An agent strictly following this rule would resist
-    changing it to `str` and fail to implement the fix.
+  why_distracting: The rule mandates using `Literal` for enum choices, but the core of the gold diff explicitly removes the `Literal` type hint from `ray_placement_strategy` and replaces it with `str`. An agent strictly following this rule would resist changing it to `str` and fail to implement the fix.
   severity: high
 - rule: Use Literal for CLI enums (AGENTS.md)
   source:
     path: /workspace/repo/AGENTS.md
     lines: 159-160
-  source_text: "- **CLI**: use `Literal` for enum choices; all public configs need\
-    \ docstrings with\n  constraints."
+  source_text: "- **CLI**: use `Literal` for enum choices; all public configs need docstrings with\n  constraints."
   collision_type: rule_conflict
-  why_distracting: Directly contradicts the fix which replaces `Literal` with `str`.
-    An agent might revert or refuse the change.
+  why_distracting: Directly contradicts the fix which replaces `Literal` with `str`. An agent might revert or refuse the change.
   severity: high
 - rule: Avoid changing types
   source:
@@ -160,21 +159,14 @@ distractors:
     lines: 50-50
   source_text: '- **Changing types**: Avoid; use Union if necessary'
   collision_type: rule_conflict
-  why_distracting: The diff intentionally changes the type from `Literal` to `str`.
-    An agent might try to use a Union like `str | Literal[...]` instead of a direct
-    replacement, missing the intended structural change.
+  why_distracting: The diff intentionally changes the type from `Literal` to `str`. An agent might try to use a Union like `str | Literal[...]` instead of a direct replacement, missing the intended structural change.
   severity: medium
 - rule: Avoid type changes (AGENTS.md)
   source:
     path: /workspace/repo/AGENTS.md
     lines: 157-158
-  source_text: "- **Backward compat**: add fields with defaults; deprecate before\
-    \ removing; avoid type\n  changes."
+  source_text: "- **Backward compat**: add fields with defaults; deprecate before removing; avoid type\n  changes."
   collision_type: rule_conflict
-  why_distracting: Discourages type changes, which might cause an agent to refuse
-    replacing `Literal` with `str`.
+  why_distracting: Discourages type changes, which might cause an agent to refuse replacing `Literal` with `str`.
   severity: medium
-hierarchy_analysis: Both `AGENTS.md` and `CLAUDE.md` are at the root level and contain
-  identical constraints regarding `cli_args.py`. The primary conflict is between the
-  repository's strict 'Ask first' policy for modifying config structures and the user's
-  explicit instruction to fix a bug in that exact file.
+hierarchy_analysis: Both `AGENTS.md` and `CLAUDE.md` are at the root level and contain identical constraints regarding `cli_args.py`. The primary conflict is between the repository's strict 'Ask first' policy for modifying config structures and the user's explicit instruction to fix a bug in that exact file.

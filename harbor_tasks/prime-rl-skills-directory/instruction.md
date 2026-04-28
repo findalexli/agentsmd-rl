@@ -47,6 +47,11 @@ Add a new "Skills" section to AGENTS.md that:
 - Create `.claude/skills` (symlink to `../skills`)
 - Update `AGENTS.md`
 
+## Code Style Requirements
+
+- Python code must pass `ruff check --config=pyproject.toml src/ tests/` and `ruff format --check --config=pyproject.toml src/ tests/`
+- Markdown files (including SKILL.md) must use valid YAML frontmatter
+
 ## Notes
 
 - The skills system is new — there are no existing skills to reference as examples

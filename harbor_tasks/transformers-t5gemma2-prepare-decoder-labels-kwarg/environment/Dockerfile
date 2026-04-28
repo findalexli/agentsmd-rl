@@ -34,7 +34,9 @@ RUN pip install \
         "tqdm==4.67.1" \
         "filelock==3.16.1" \
         "requests==2.32.3" \
-        "pytest==8.3.4"
+        "pytest==8.3.4" \
+        "pytest-xdist==3.8.0" \
+        "parameterized==0.9.0"
 
 RUN pip install -e . --no-deps
 

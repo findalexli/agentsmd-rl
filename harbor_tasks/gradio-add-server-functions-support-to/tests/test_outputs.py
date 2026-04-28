@@ -341,3 +341,22 @@ def test_code_style_consistency():
     assert import_line is not None, "Import line not found"
     assert 'Component, server' in import_line or 'Component,server' in import_line, \
         "Import style inconsistent"
+
+# === CI-mined tests (taskforge.ci_check_miner) ===
+def test_ci__storybook_build_generate_theme_css():
+    """pass_to_pass | CI job ':storybook-build' → step 'generate theme.css'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'python scripts/generate_theme.py --outfile js/storybook/theme.css'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'generate theme.css' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_hygiene_test_generate_notebooks():
+    """pass_to_pass | CI job 'hygiene-test' → step 'Generate Notebooks'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'python3 -m venv venv && pip install nbformat && python scripts/generate_notebooks.py'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Generate Notebooks' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")

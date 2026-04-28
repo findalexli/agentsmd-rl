@@ -249,3 +249,67 @@ def test_only_if_expr_trait_method_exists():
     assert r.returncode == 0, (
         f"expr_query cargo test failed (rc={r.returncode}):\n{tail}"
     )
+
+# === CI-mined tests (taskforge.ci_check_miner) ===
+def test_ci_lint_format_check():
+    """pass_to_pass | CI job 'Lint' → step 'Format check'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'ruff format --check .'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Format check' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_lint_lint():
+    """pass_to_pass | CI job 'Lint' → step 'Lint'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'ruff check .'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Lint' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_build_build_python():
+    """pass_to_pass | CI job 'build' → step 'Build Python'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'python -m pip install --extra-index-url https://pypi.fury.io/lance-format/ --extra-index-url https://pypi.fury.io/lancedb/ -e . && python -m pip install --extra-index-url https://pypi.fury.io/lance-format/ --extra-index-url https://pypi.fury.io/lancedb/ -r ../docs/requirements.txt'], cwd=os.path.join(REPO, 'python'),
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Build Python' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_build_no_lock_build_all():
+    """pass_to_pass | CI job 'build-no-lock' → step 'Build all'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'cargo build --profile ci --benches --all-features --tests'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Build all' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_lint_run_format():
+    """pass_to_pass | CI job 'lint' → step 'Run format'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'cargo fmt --all -- --check'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Run format' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_lint_run_clippy():
+    """pass_to_pass | CI job 'lint' → step 'Run clippy'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'cargo clippy --profile ci --workspace --tests --all-features -- -D warnings'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Run clippy' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_lint_run_clippy_without_remote_feature():
+    """pass_to_pass | CI job 'lint' → step 'Run clippy (without remote feature)'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'cargo clippy --profile ci --workspace --tests -- -D warnings'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Run clippy (without remote feature)' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")

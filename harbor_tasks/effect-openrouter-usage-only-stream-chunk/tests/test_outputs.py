@@ -22,7 +22,10 @@ from pathlib import Path
 REPO = Path("/workspace/effect")
 PKG = REPO / "packages/ai/openrouter"
 RUNNER_DST = PKG / "streaming_runner.mts"
-TSX = REPO / "node_modules/.bin/tsx"
+
+# tsx is installed globally; use it from PATH rather than the workspace
+# node_modules (which may not include it when --filter is used at install time).
+TSX = "tsx"
 
 # TS test harness. Lives in this file (rather than a sibling .mts) so the
 # tests/ directory stays clean. Materialized into the package directory at
@@ -112,7 +115,7 @@ def _ensure_runner_installed() -> None:
 def _run_scenario(name: str) -> dict:
     _ensure_runner_installed()
     result = subprocess.run(
-        [str(TSX), RUNNER_DST.name, name],
+        [TSX, str(RUNNER_DST), name],
         cwd=PKG,
         capture_output=True,
         text=True,
@@ -203,28 +206,70 @@ def test_changeset_file_added():
 
 def test_repo_lint_passes():
     """Repo's eslint passes on the openrouter package src."""
-    eslint = REPO / "node_modules/.bin/eslint"
-    r = subprocess.run(
-        [str(eslint), "src"],
+    result = subprocess.run(
+        ["pnpm", "exec", "eslint", "src"],
         cwd=PKG,
         capture_output=True,
         text=True,
         timeout=300,
     )
-    assert r.returncode == 0, (
-        f"eslint failed:\n{r.stdout[-1500:]}\n{r.stderr[-1500:]}"
+    assert result.returncode == 0, (
+        f"eslint failed:\n{result.stdout[-1500:]}\n{result.stderr[-1500:]}"
     )
 
 
 def test_repo_typecheck_passes():
     """Repo's `pnpm check` (tsc -b) passes on the openrouter package."""
-    r = subprocess.run(
+    result = subprocess.run(
         ["pnpm", "check"],
         cwd=PKG,
         capture_output=True,
         text=True,
         timeout=600,
     )
-    assert r.returncode == 0, (
-        f"pnpm check failed:\n{r.stdout[-1500:]}\n{r.stderr[-1500:]}"
+    assert result.returncode == 0, (
+        f"pnpm check failed:\n{result.stdout[-1500:]}\n{result.stderr[-1500:]}"
     )
+
+
+def test_ci_lint_pnpm():
+    """pass_to_pass | CI job 'Lint' step: pnpm circular"""
+    result = subprocess.run(
+        ["pnpm", "circular"],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=300,
+    )
+    assert result.returncode == 0, (
+        f"pnpm circular failed (returncode={result.returncode}):\n"
+        f"stdout: {result.stdout[-1500:]}\nstderr: {result.stderr[-1500:]}")
+
+
+def test_ci_lint_pnpm_2():
+    """pass_to_pass | CI job 'Lint' step: pnpm lint"""
+    result = subprocess.run(
+        ["pnpm", "lint"],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=300,
+    )
+    assert result.returncode == 0, (
+        f"pnpm lint failed (returncode={result.returncode}):\n"
+        f"stdout: {result.stdout[-1500:]}\nstderr: {result.stderr[-1500:]}")
+
+
+def test_ci_lint_pnpm_3():
+    """pass_to_pass | CI job 'Lint' step: pnpm codegen"""
+    result = subprocess.run(
+        ["pnpm", "codegen"],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=300,
+    )
+    assert result.returncode == 0, (
+        f"pnpm codegen failed (returncode={result.returncode}):\n"
+        f"stdout: {result.stdout[-1500:]}\nstderr: {result.stderr[-1500:]}")
+

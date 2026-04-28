@@ -4,6 +4,10 @@
 
 Developers frequently forget to run `pnpm swc-build-native` after pulling Rust changes in the `crates/` or `turbopack/` directories, leading to confusing runtime errors from stale native binaries. Conversely, rebuilding native binaries when nothing changed wastes significant time. The current workflow requires developers to manually decide which build command to run based on what they changed.
 
+## Code Style Requirements
+
+All code must pass `prettier` formatting checks. The repository uses prettier for consistent code formatting across JavaScript, TypeScript, JSON, and Markdown files. The CI pipeline runs `prettier --check` on all changed files.
+
 ## Expected Behavior
 
 `pnpm build` should automatically handle native SWC binary rebuilding. The build automation for `@next/swc` lives in a script named `maybe-build-native.mjs` inside `packages/next-swc/` and must:
@@ -26,7 +30,7 @@ The script should be wired into the turborepo pipeline:
 
 Additionally, `scripts/build-native.ts` must use prettier via stdin (`--stdin-filepath`) instead of writing files before formatting. The script must not use `--write` with prettier (neither single-quoted `'--write'` nor double-quoted `"--write"`).
 
-After implementing the code changes, update the `AGENTS.md` rebuild instructions:
+After implementing the code changes, update the `AGENTS.md` rebuild instructions (preserving the existing `## Rebuilding Before Running Tests` section header):
 - Remove the line `**Edited Turbopack (Rust)?** → pnpm swc-build-native`
 - Remove the line `**Edited both?** → pnpm turbo build build-native`
 - Add a line containing the words `Turbopack`, `Rust`, and `pnpm build` on the same line to indicate that for Turbopack/Rust edits, `pnpm build` is sufficient

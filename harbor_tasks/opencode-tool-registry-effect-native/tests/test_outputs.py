@@ -107,7 +107,7 @@ if (/\ball\s*=\s*Effect\.fn\b/.test(code) || /\ball\s*=\s*Effect\.gen\b/.test(co
 # [pr_diff] fail_to_pass
 def test_effect_concurrency():
     """Promise.all replaced with Effect.forEach or Effect.all for concurrent tool init."""
-    r = _run_node("""
+    r = _run_node(r"""
 import { readFileSync } from 'fs';
 
 const code = readFileSync('packages/opencode/src/tool/registry.ts', 'utf-8');
@@ -131,7 +131,7 @@ console.log('PASS');
 # [pr_diff] fail_to_pass
 def test_services_yielded_in_layer():
     """Config.Service and Plugin.Service must be obtained via Effect dependency graph."""
-    r = _run_node("""
+    r = _run_node(r"""
 import { readFileSync } from 'fs';
 
 const code = readFileSync('packages/opencode/src/tool/registry.ts', 'utf-8');
@@ -249,7 +249,7 @@ def test_public_facades_exported():
 # ---------------------------------------------------------------------------
 
 
-# [agent_config] fail_to_pass — added by fix (not present in base)
+# [agent_config] pass_to_pass
 def test_effect_fn_usage():
     """Service methods should use Effect.fn for named/traced effects (>= 3 uses)."""
     code = _strip_comments(REGISTRY.read_text())

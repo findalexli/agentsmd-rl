@@ -11,10 +11,22 @@ source:
   merge_commit: 18d89f25ce4db6258a01d409dd516003b1df7f0c
   pr: 39504
 checks:
-- id: test_full_transitive_chain_oracle
+- id: test_transitive_chain_linear_merge
   type: fail_to_pass
   origin: pr_diff
-  description: A dependency chain A -> B -> C -> D where each level lists only its direct parent must propagate every ancestor's `extra_form_data` to D on the first Apply. The buggy implementation walks only direct `cascadeParentIds` and so omits transitive ancestors. Verified end-to-end via jest by calling `useFilterDependencies('D', ...)` and asserting the merged filter list contains every ancestor's clause.
+  description: A dependency chain A->B->C->D where each level lists only its direct parent must propagate every ancestor's `extra_form_data` to D on the first Apply. The buggy implementation walks only direct `cascadeParentIds` and so omits transitive ancestors. Verified end-to-end via jest by calling `useFilterDependencies('D', ...)` and asserting the merged filter list contains every ancestor's clause.
+- id: test_transitive_chain_diamond_merge
+  type: fail_to_pass
+  origin: pr_diff
+  description: A diamond dependency graph where D has parents B and C that both depend on A must deduplicate A's contribution and still include all three ancestors. The buggy single-hop walk would miss A entirely. Verified via jest with `useFilterDependencies('D', ...)` asserting 3 unique filters with the shared root appearing once.
+- id: test_scalar_override_precedence
+  type: pass_to_pass
+  origin: pr_diff
+  description: For chain A->B->C where A and B both set `time_range`, C must receive B's value (closest ancestor wins). This holds on both base (direct parent walk) and gold (topological walk with override).
+- id: test_cycle_protection
+  type: pass_to_pass
+  origin: pr_diff
+  description: A cyclic A<->B filter config must produce a finite ancestor set without crashing or looping forever. Both the base single-hop walk and the gold DFS-with-visited-set satisfy this.
 - id: test_filtercontrols_existing_jest_suite_passes
   type: pass_to_pass
   origin: repo_tests

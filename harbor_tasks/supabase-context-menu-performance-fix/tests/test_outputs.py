@@ -365,3 +365,50 @@ console.log('Results.test.tsx validation passed')
         cwd=REPO,
     )
     assert r.returncode == 0, f"Results component test validation failed:\n{r.stderr}\n{r.stdout}"
+
+# === CI-mined tests (taskforge.ci_check_miner) ===
+def test_ci_e2e_tests_reset_supabase():
+    """pass_to_pass | CI job 'E2E tests' → step 'Reset supabase'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'pnpm exec supabase init'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Reset supabase' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_e2e_reports_merge_playwright_reports():
+    """pass_to_pass | CI job 'E2E reports' → step 'Merge Playwright reports'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'npx playwright merge-reports --config=e2e/studio/playwright.merge.config.ts -- e2e/studio/blob-report'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Merge Playwright reports' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_test_run_tests():
+    """pass_to_pass | CI job 'test' → step 'Run Tests'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'pnpm run test:ci'], cwd=os.path.join(REPO, './apps/studio'),
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Run Tests' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+# === PR-added f2p tests (taskforge.test_patch_miner) ===
+def test_pr_added_renders_a_single_context_menu_regardless_of_row_():
+    """fail_to_pass | PR added test 'renders a single context menu regardless of row count' in 'apps/studio/tests/components/SQLEditor/Results.test.tsx' (vitest_or_jest)"""
+    r = subprocess.run(
+        ["bash", "-lc", '(pnpm vitest run "apps/studio/tests/components/SQLEditor/Results.test.tsx" -t "renders a single context menu regardless of row count" 2>&1 || npx vitest run "apps/studio/tests/components/SQLEditor/Results.test.tsx" -t "renders a single context menu regardless of row count" 2>&1 || pnpm jest "apps/studio/tests/components/SQLEditor/Results.test.tsx" -t "renders a single context menu regardless of row count" 2>&1 || npx jest "apps/studio/tests/components/SQLEditor/Results.test.tsx" -t "renders a single context menu regardless of row count" 2>&1) | tail -50'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"PR-added test 'renders a single context menu regardless of row count' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_pr_added_shows_empty_state_when_no_rows_provided():
+    """fail_to_pass | PR added test 'shows empty state when no rows provided' in 'apps/studio/tests/components/SQLEditor/Results.test.tsx' (vitest_or_jest)"""
+    r = subprocess.run(
+        ["bash", "-lc", '(pnpm vitest run "apps/studio/tests/components/SQLEditor/Results.test.tsx" -t "shows empty state when no rows provided" 2>&1 || npx vitest run "apps/studio/tests/components/SQLEditor/Results.test.tsx" -t "shows empty state when no rows provided" 2>&1 || pnpm jest "apps/studio/tests/components/SQLEditor/Results.test.tsx" -t "shows empty state when no rows provided" 2>&1 || npx jest "apps/studio/tests/components/SQLEditor/Results.test.tsx" -t "shows empty state when no rows provided" 2>&1) | tail -50'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"PR-added test 'shows empty state when no rows provided' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")

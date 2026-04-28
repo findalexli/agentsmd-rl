@@ -64,8 +64,13 @@ index. Once fixed, decoding behaves as follows:
 | `["a", true, 9, "1", "2"]`                      | `Left`, error at `[2]`                  |
 
 The same correctness must hold for tuples with more rest matches and longer
-tails (e.g. `Tuple([], Number, String, String, String, NumberFromString)`
-with a length-7 input).
+tails:
+
+| Input to `Tuple([], Number, String, String, String, NumberFromString)` | Expected outcome                       |
+|------------------------------------------------------------------------|----------------------------------------|
+| `[1, 2, 3, "x", "y", "z", "nope"]`                                    | `Left`, error at `[6]`, NumberFromString failure |
+| `[1, 2, 3, "x", "y", "z", "42"]`                                       | `Right` equal to `[1, 2, 3, "x", "y", "z", 42]` |
+| `[1, 2, 3, "x", "y", 7, "42"]`                                         | `Left`, error at `[5]`                  |
 
 ## Constraints
 

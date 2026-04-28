@@ -338,7 +338,7 @@ def test_repo_prettier_format():
     Ensures code style consistency in bake test files.
     """
     r = subprocess.run(
-        ["npx", "--yes", "prettier@latest", "--check", CLIENT, HARNESS],
+        ["npx", "--yes", "prettier@3.6.2", "--check", CLIENT, HARNESS],
         capture_output=True, text=True, timeout=60, cwd=REPO,
     )
     assert r.returncode == 0, f"Prettier format check failed:\n{r.stdout[-500:]}{r.stderr[-500:]}"
@@ -352,7 +352,7 @@ def test_repo_oxlint():
     Ensures no critical lint errors (undefined vars, duplicate keys, etc).
     """
     r = subprocess.run(
-        ["npx", "--yes", "oxlint@latest", "--format=github", CLIENT, HARNESS],
+        ["npx", "--yes", "oxlint@0.16.1", "--format=github", CLIENT, HARNESS],
         capture_output=True, text=True, timeout=60, cwd=REPO,
     )
     # oxlint returns 0 on success (no errors), 1 on errors

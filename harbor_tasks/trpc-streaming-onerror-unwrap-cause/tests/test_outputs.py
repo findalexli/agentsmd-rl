@@ -2,21 +2,33 @@
 from __future__ import annotations
 
 import os
-import shutil
 import subprocess
 import textwrap
 from pathlib import Path
 
 REPO = Path("/workspace/trpc")
 TESTS_DIR = REPO / "packages" / "tests" / "server"
-REGRESSION_TEST = TESTS_DIR / "_regression_streaming_onerror.test.ts"
-TARGET_FILE = REPO / "packages" / "server" / "src" / "unstable-core-do-not-import" / "http" / "resolveResponse.ts"
 
-# Fresh regression test file written into the repo at test-time.
-# It exercises the exact code path the PR fixes: streaming server-side onError
-# must receive a TRPCError whose .message and .cause.message are the original
-# thrown error's message — not the empty string produced by the bug.
-REGRESSION_TEST_SRC = textwrap.dedent(
+
+def _run_vitest(test_path: str, timeout: int = 240) -> subprocess.CompletedProcess:
+    env = os.environ.copy()
+    env["CI"] = "1"
+    env["NODE_OPTIONS"] = env.get("NODE_OPTIONS", "") + " --no-warnings"
+    return subprocess.run(
+        ["pnpm", "test", "--", "--watch", "false", test_path],
+        cwd=str(REPO),
+        env=env,
+        capture_output=True,
+        text=True,
+        timeout=timeout,
+    )
+
+
+# ---------------------------------------------------------------------------
+# Fail-to-pass tests (must FAIL on base commit, PASS on a correct fix)
+# ---------------------------------------------------------------------------
+
+THROWN_ERROR_REGRESSION_SRC = textwrap.dedent(
     """
     /* eslint-disable */
     import { testServerAndClientResource } from '@trpc/client/__tests__/testClientResource';
@@ -54,13 +66,23 @@ REGRESSION_TEST_SRC = textwrap.dedent(
 
         const serverErrorOpts = ctx.onErrorSpy.mock.calls[0]![0];
         expect(serverErrorOpts.error).toBeInstanceOf(TRPCError);
-        // The server-side TRPCError must surface the *real* message, not an
-        // empty string that the buggy `getTRPCErrorFromUnknown(cause)` produces.
         expect(serverErrorOpts.error.message).toBe('stream broke');
         expect(serverErrorOpts.error.cause).toBeInstanceOf(Error);
         expect(serverErrorOpts.error.cause!.message).toBe('stream broke');
       });
+    });
+    """
+).strip() + "\n"
 
+VALIDATION_ERROR_REGRESSION_SRC = textwrap.dedent(
+    """
+    /* eslint-disable */
+    import { testServerAndClientResource } from '@trpc/client/__tests__/testClientResource';
+    import { waitError } from '@trpc/server/__tests__/waitError';
+    import { TRPCClientError } from '@trpc/client';
+    import { initTRPC, TRPCError } from '@trpc/server';
+
+    describe('regression: streaming output-validation onError', () => {
       test('server onError carries a non-empty message for streaming validation errors', async () => {
         const { z } = await import('zod');
         const t = initTRPC.create();
@@ -94,8 +116,6 @@ REGRESSION_TEST_SRC = textwrap.dedent(
         expect(ctx.onErrorSpy.mock.calls.length).toBeGreaterThanOrEqual(1);
         const serverError = ctx.onErrorSpy.mock.calls[0]![0].error;
         expect(serverError).toBeInstanceOf(TRPCError);
-        // The bug surfaces here as message === "". Any reasonable fix yields
-        // a non-empty descriptive message about the validation failure.
         expect(serverError.message.length).toBeGreaterThan(0);
         expect(serverError.message).not.toBe('');
       });
@@ -104,33 +124,12 @@ REGRESSION_TEST_SRC = textwrap.dedent(
 ).strip() + "\n"
 
 
-def _ensure_regression_test_written() -> None:
-    REGRESSION_TEST.write_text(REGRESSION_TEST_SRC, encoding="utf-8")
-
-
-def _run_vitest(test_path: str, timeout: int = 240) -> subprocess.CompletedProcess:
-    env = os.environ.copy()
-    env["CI"] = "1"
-    env["NODE_OPTIONS"] = env.get("NODE_OPTIONS", "") + " --no-warnings"
-    return subprocess.run(
-        ["pnpm", "test", "--", "--watch", "false", test_path],
-        cwd=str(REPO),
-        env=env,
-        capture_output=True,
-        text=True,
-        timeout=timeout,
-    )
-
-
-# ---------------------------------------------------------------------------
-# Fail-to-pass tests (must FAIL on base commit, PASS on a correct fix)
-# ---------------------------------------------------------------------------
-
 def test_streaming_onerror_unwraps_cause_regression():
     """Regression: the server-side onError callback for streaming must surface
     the underlying thrown Error's message, not an empty string."""
-    _ensure_regression_test_written()
-    rel = REGRESSION_TEST.relative_to(REPO).as_posix()
+    test_file = TESTS_DIR / "_regression_thrown_error.test.ts"
+    test_file.write_text(THROWN_ERROR_REGRESSION_SRC, encoding="utf-8")
+    rel = test_file.relative_to(REPO).as_posix()
     r = _run_vitest(rel, timeout=300)
     out = (r.stdout or "") + "\n" + (r.stderr or "")
     assert r.returncode == 0, (
@@ -138,17 +137,33 @@ def test_streaming_onerror_unwraps_cause_regression():
         f"{r.stdout[-4000:] if r.stdout else ''}\n--- STDERR ---\n"
         f"{r.stderr[-4000:] if r.stderr else ''}"
     )
-    # Sanity: vitest reported tests passing, not "no tests found".
     assert "passed" in out.lower(), f"vitest reported no passing tests:\n{out[-2000:]}"
 
+
+def test_streaming_validation_onerror_nonempty_message():
+    """Regression: streaming output-validation failures must surface non-empty
+    error messages in the server-side onError callback."""
+    test_file = TESTS_DIR / "_regression_validation_error.test.ts"
+    test_file.write_text(VALIDATION_ERROR_REGRESSION_SRC, encoding="utf-8")
+    rel = test_file.relative_to(REPO).as_posix()
+    r = _run_vitest(rel, timeout=300)
+    out = (r.stdout or "") + "\n" + (r.stderr or "")
+    assert r.returncode == 0, (
+        "Regression vitest run did not pass.\n--- STDOUT ---\n"
+        f"{r.stdout[-4000:] if r.stdout else ''}\n--- STDERR ---\n"
+        f"{r.stderr[-4000:] if r.stderr else ''}"
+    )
+    assert "passed" in out.lower(), f"vitest reported no passing tests:\n{out[-2000:]}"
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass tests (must PASS on both base and gold, drawn from the repo)
+# ---------------------------------------------------------------------------
 
 def test_resolveresponse_passes_cause_error_not_wrapper():
     """Behavioral test: import the module that contains the fix and verify it
     is callable without errors. (Compilation-level smoke check; the deeper
     behavioral check lives in the regression vitest run above.)"""
-    # Compile-check the fixed file by asking tsx to import it transitively
-    # via a minimal script. If the file is syntactically broken or its
-    # exports drift, this will fail.
     script = textwrap.dedent(
         """
         import { TRPCError } from '@trpc/server';
@@ -180,10 +195,6 @@ def test_resolveresponse_passes_cause_error_not_wrapper():
         except FileNotFoundError:
             pass
 
-
-# ---------------------------------------------------------------------------
-# Pass-to-pass tests (must PASS on both base and gold, drawn from the repo)
-# ---------------------------------------------------------------------------
 
 def test_repo_errors_test_passes():
     """Existing repo test file `errors.test.ts` (13 tests) must continue to

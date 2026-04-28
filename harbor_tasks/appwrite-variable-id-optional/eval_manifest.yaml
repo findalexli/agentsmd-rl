@@ -99,6 +99,26 @@ source:
   base_commit: 20f80ac067e0042ea05ac9566f0a9ff1624bf3b2
   merge_commit: 597b20a6cb2eb3cc93a5a25814f2ec39b35cd3cd
 checks:
+- id: test_php_syntax_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: Modified PHP file has valid syntax
+- id: test_variable_id_param_optional
+  type: fail_to_pass
+  origin: repo_tests
+  description: variableId param is marked as optional
+- id: test_variable_id_has_non_empty_default
+  type: fail_to_pass
+  origin: repo_tests
+  description: variableId param has a non-empty default value
+- id: test_variable_id_uses_custom_id_validator
+  type: pass_to_pass
+  origin: repo_tests
+  description: variableId param uses CustomId validator
+- id: test_variable_id_matches_pattern_used_elsewhere
+  type: fail_to_pass
+  origin: repo_tests
+  description: variableId param follows same optional pattern as Functions/Sites endpoints
 - id: test_repo_composer_validate
   type: pass_to_pass
   origin: repo_tests

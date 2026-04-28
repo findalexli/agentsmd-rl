@@ -7,10 +7,14 @@ source:
 task:
   kind: code_fix
 checks:
-- id: test_description_only_notification_behavior
+- id: test_description_only_dom_structure
   type: fail_to_pass
   origin: pr_diff
-  description: 'Description-only notification renders correctly: no title div, description is first child, inline-end spacing CSS generated'
+  description: 'Description-only notification DOM: no title div when title absent, description is first child, title still renders when provided'
+- id: test_description_only_css_inline_spacing
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'CSS includes margin-inline-end spacing rule for first-child description'
 - id: test_notification_unit_tests
   type: pass_to_pass
   origin: repo_tests

@@ -1,18 +1,18 @@
-#!/usr/bin/env bash
+#!/bin/bash
 set -euo pipefail
 
 cd /workspace/remix
 
-# Idempotency: if the gold patch is already applied, exit early.
-if grep -q "missing param(s):" packages/route-pattern/src/lib/route-pattern/href.ts 2>/dev/null; then
-    echo "Gold already applied"
-    exit 0
+# Idempotency check: if the patch is already applied, exit early
+if grep -q "'nameless-wildcard'" packages/route-pattern/src/lib/route-pattern.test.ts 2>/dev/null; then
+  echo "Patch already applied, skipping."
+  exit 0
 fi
 
-git apply --whitespace=nowarn <<'PATCH'
+git apply <<'PATCH'
 diff --git a/packages/route-pattern/.changes/patch.href-errors.md b/packages/route-pattern/.changes/patch.href-errors.md
 new file mode 100644
-index 00000000000..d428ee429ee
+index 000000000..30f85a75f
 --- /dev/null
 +++ b/packages/route-pattern/.changes/patch.href-errors.md
 @@ -0,0 +1,7 @@
@@ -23,9 +23,8 @@ index 00000000000..d428ee429ee
 +Error messages have also been improved for many of the `HrefError` types.
 +Notably, the variants shown in `missing-params` were confusing since they leaked internal formatting for params.
 +That has been removed and the resulting error message is now shorter and simpler.
-\ No newline at end of file
 diff --git a/packages/route-pattern/src/lib/route-pattern.test.ts b/packages/route-pattern/src/lib/route-pattern.test.ts
-index 24ce4ffbaed..b2bde262c91 100644
+index 8ac1ef6e4..c5ffdd5f5 100644
 --- a/packages/route-pattern/src/lib/route-pattern.test.ts
 +++ b/packages/route-pattern/src/lib/route-pattern.test.ts
 @@ -472,10 +472,10 @@ describe('RoutePattern', () => {
@@ -69,10 +68,10 @@ index 24ce4ffbaed..b2bde262c91 100644
        })
      })
 diff --git a/packages/route-pattern/src/lib/route-pattern.ts b/packages/route-pattern/src/lib/route-pattern.ts
-index 364f85e1b07..e4431188fd8 100644
+index fa4b06e7c..046a2ed02 100644
 --- a/packages/route-pattern/src/lib/route-pattern.ts
 +++ b/packages/route-pattern/src/lib/route-pattern.ts
-@@ -146,7 +146,7 @@ export class RoutePattern<source extends string = string> {
+@@ -146,15 +146,15 @@ export class RoutePattern<source extends string = string> {
            pattern: this,
          })
        }
@@ -81,7 +80,7 @@ index 364f85e1b07..e4431188fd8 100644
 
        // port
        let port = this.ast.port === null ? '' : `:${this.ast.port}`
-@@ -154,7 +154,7 @@ export class RoutePattern<source extends string = string> {
+       result += `${protocol}://${hostname}${port}`
      }
 
      // pathname
@@ -112,7 +111,7 @@ index 364f85e1b07..e4431188fd8 100644
 -  return result
 -}
 diff --git a/packages/route-pattern/src/lib/route-pattern/href.test.ts b/packages/route-pattern/src/lib/route-pattern/href.test.ts
-index 23312a0a966..be86a9e1788 100644
+index 3c0e1ccd4..aa9f36fd1 100644
 --- a/packages/route-pattern/src/lib/route-pattern/href.test.ts
 +++ b/packages/route-pattern/src/lib/route-pattern/href.test.ts
 @@ -8,7 +8,7 @@ import { RoutePattern } from '../route-pattern.ts'
@@ -218,7 +217,7 @@ index 23312a0a966..be86a9e1788 100644
            Pattern: https://example.com/search?q=&sort=
            Search params: {"page":1}
 diff --git a/packages/route-pattern/src/lib/route-pattern/href.ts b/packages/route-pattern/src/lib/route-pattern/href.ts
-index f37ed069999..dba6af6ac21 100644
+index a55afb280..f25ca4b05 100644
 --- a/packages/route-pattern/src/lib/route-pattern/href.ts
 +++ b/packages/route-pattern/src/lib/route-pattern/href.ts
 @@ -21,11 +21,14 @@ type ParamsArg<source extends string> =
@@ -315,4 +314,4 @@ index f37ed069999..dba6af6ac21 100644
      unreachable(details)
 PATCH
 
-echo "Gold patch applied successfully"
+echo "Patch applied successfully."

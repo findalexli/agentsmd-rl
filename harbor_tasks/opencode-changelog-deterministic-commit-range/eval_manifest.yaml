@@ -12,13 +12,11 @@ checks:
 - id: changelog_help_deterministic
   type: fail_to_pass
   origin: pr_diff
-  description: 'Running --help must show ''non-draft'' release behavior (behavioral:
-    bun execution)'
+  description: 'Running --help must show ''non-draft'' release behavior (behavioral: bun execution)'
 - id: changelog_transpile_no_llm_sdk
   type: fail_to_pass
   origin: pr_diff
-  description: 'Transpiling changelog.ts with Bun must not contain LLM SDK references
-    (behavioral: Bun.Transpiler)'
+  description: 'Transpiling changelog.ts with Bun must not contain LLM SDK references (behavioral: Bun.Transpiler)'
 - id: version_pins_upper_bound
   type: fail_to_pass
   origin: pr_diff
@@ -26,8 +24,7 @@ checks:
 - id: command_prompt_consumes_structured_data
   type: fail_to_pass
   origin: pr_diff
-  description: Command prompt consumes pre-computed data instead of instructing LLM
-    to fetch releases
+  description: Command prompt consumes pre-computed data instead of instructing LLM to fetch releases
 - id: gitignore_upcoming_changelog
   type: fail_to_pass
   origin: pr_diff
@@ -43,8 +40,7 @@ checks:
 - id: single_word_function_names
   type: fail_to_pass
   origin: agent_config
-  description: Declared functions in changelog.ts must use single-word names, not
-    multi-word camelCase
+  description: Declared functions in changelog.ts must use single-word names, not multi-word camelCase
   source:
     path: AGENTS.md
     lines: 27-32
@@ -60,8 +56,7 @@ checks:
 - id: no_camelcase_locals
   type: fail_to_pass
   origin: agent_config
-  description: Local variable declarations in changelog.ts must not use multi-word
-    camelCase names
+  description: Local variable declarations in changelog.ts must not use multi-word camelCase names
   source:
     path: AGENTS.md
     lines: 27-32
@@ -82,50 +77,46 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Repo TypeScript version.ts builds successfully via bun build
+- id: test_ci_typecheck_run_typecheck
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: typecheck / Run typecheck'
+- id: test_ci_e2e_run_app_e2e_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: e2e / Run app e2e tests'
+- id: test_ci_unit_run_unit_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: unit / Run unit tests'
 rubric:
 - rule: Use Bun APIs when possible, like `Bun.file()`
   source:
     path: AGENTS.md
     lines: 12-13
-  evidence: The gold solution imports and uses `$` from `bun` to execute shell commands
-    deterministically instead of relying on the LLM or Node's `child_process`.
+  evidence: The gold solution imports and uses `$` from `bun` to execute shell commands deterministically instead of relying on the LLM or Node's `child_process`.
   category: tooling
   verification: llm_judge
 - rule: Prefer `const` over `let`. Use ternaries or early returns instead of reassignment.
   source:
     path: AGENTS.md
     lines: 55-56
-  evidence: The gold solution uses `const` for variable declarations and avoids `let`
-    when processing the commit range and formatting the changelog input.
+  evidence: The gold solution uses `const` for variable declarations and avoids `let` when processing the commit range and formatting the changelog input.
   category: style
   verification: llm_judge
 distractors:
 - rule: ALWAYS USE PARALLEL TOOLS WHEN APPLICABLE.
   collision_type: architecture_boundary
-  why_distracting: The original `.opencode/command/changelog.md` instructed the LLM
-    to 'spawn a subagent' for each PR. An agent reading 'ALWAYS USE PARALLEL TOOLS'
-    might try to preserve this parallel subagent architecture or implement parallel
-    LLM tool calls in `script/changelog.ts`. However, the architectural fix is to
-    remove the LLM's responsibility for gathering/fetching entirely, replacing it
-    with deterministic shell commands and a single LLM summarization pass.
+  why_distracting: The original `.opencode/command/changelog.md` instructed the LLM to 'spawn a subagent' for each PR. An agent reading 'ALWAYS USE PARALLEL TOOLS' might try to preserve this parallel subagent architecture or implement parallel LLM tool calls in `script/changelog.ts`. However, the architectural fix is to remove the LLM's responsibility for gathering/fetching entirely, replacing it with deterministic shell commands and a single LLM summarization pass.
   severity: high
   source:
     path: AGENTS.md
     lines: 2-2
-- rule: The default branch in this repo is `dev`. Local `main` ref may not exist;
-    use `dev` or `origin/dev` for diffs.
+- rule: The default branch in this repo is `dev`. Local `main` ref may not exist; use `dev` or `origin/dev` for diffs.
   collision_type: would_cause_bug
-  why_distracting: The bug is caused by a missing upper bound in the commit range,
-    allowing commits after the release cut to leak into the changelog. The rule states
-    to use `dev` or `origin/dev` for diffs. If an agent uses `dev` as the upper bound
-    for the commit range instead of pinning it to the current `GITHUB_SHA` or `HEAD`
-    at the time of the release cut, it will reproduce the exact bug being fixed.
+  why_distracting: The bug is caused by a missing upper bound in the commit range, allowing commits after the release cut to leak into the changelog. The rule states to use `dev` or `origin/dev` for diffs. If an agent uses `dev` as the upper bound for the commit range instead of pinning it to the current `GITHUB_SHA` or `HEAD` at the time of the release cut, it will reproduce the exact bug being fixed.
   severity: high
   source:
     path: AGENTS.md
     lines: 3-4
-hierarchy_analysis: The `AGENTS.md` file provides general guidelines for the repository.
-  There are no conflicting child configs, but the general rules about parallel tools
-  and default branches create significant distractors for this specific bug fix, which
-  requires deterministic, linear script execution and precise commit range bounds
-  rather than branch-based diffs.
+hierarchy_analysis: The `AGENTS.md` file provides general guidelines for the repository. There are no conflicting child configs, but the general rules about parallel tools and default branches create significant distractors for this specific bug fix, which requires deterministic, linear script execution and precise commit range bounds rather than branch-based diffs.

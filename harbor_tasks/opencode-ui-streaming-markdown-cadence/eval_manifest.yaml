@@ -35,13 +35,11 @@ checks:
 - id: incremental_reveal
   type: fail_to_pass
   origin: pr_diff
-  description: Text revealed in small increments via position tracking, not whole-buffer
-    dump
+  description: Text revealed in small increments via position tracking, not whole-buffer dump
 - id: test_pacing_algorithm_behavior
   type: fail_to_pass
   origin: pr_diff
-  description: Pacing helper functions execute correctly via Node.js, producing bounded
-    incremental reveals
+  description: Pacing helper functions execute correctly via Node.js, producing bounded incremental reveals
 - id: both_displays_use_pacing
   type: pass_to_pass
   origin: pr_diff
@@ -66,8 +64,7 @@ checks:
 - id: test_repo_tsx_valid_syntax
   type: pass_to_pass
   origin: static
-  description: Repo TSX files have valid JSX structure (balanced expressions, valid
-    TS constructs)
+  description: Repo TSX files have valid JSX structure (balanced expressions, valid TS constructs)
   notes: 'CI typecheck equivalent: verifies JSX expression balance and TS keywords'
 - id: test_repo_lint_basic
   type: pass_to_pass
@@ -111,15 +108,13 @@ checks:
 - id: no_multiple_create_signals
   type: pass_to_pass
   origin: agent_config
-  description: Pacing function must not use multiple createSignal calls; prefer createStore
-    for multiple signals
+  description: Pacing function must not use multiple createSignal calls; prefer createStore for multiple signals
   source:
     path: packages/app/AGENTS.md
     lines: '15'
     commit: af2ccc94ebc632d0014f54ea5c5e6c2e26b5dda5
 rubric:
-- rule: Prefer single word names for variables and functions. Only use multiple words
-    if necessary.
+- rule: Prefer single word names for variables and functions. Only use multiple words if necessary.
   source:
     path: AGENTS.md
     lines: 21-32
@@ -134,8 +129,7 @@ rubric:
     path: AGENTS.md
     lines: '70'
     commit: af2ccc94ebc632d0014f54ea5c5e6c2e26b5dda5
-- rule: Rely on type inference when possible; avoid explicit type annotations or interfaces
-    unless necessary for exports or clarity.
+- rule: Rely on type inference when possible; avoid explicit type annotations or interfaces unless necessary for exports or clarity.
   source:
     path: AGENTS.md
     lines: '16'
@@ -144,39 +138,27 @@ rubric:
   source:
     path: AGENTS.md
     lines: 22-34
-  evidence: The gold solution introduces helper functions `step`, `next`, `clear`,
-    `sync`, `run` and variables `shown`, `live`, `end`, `max`, `size`, all of which
-    strictly adhere to the single-word naming constra
+  evidence: The gold solution introduces helper functions `step`, `next`, `clear`, `sync`, `run` and variables `shown`, `live`, `end`, `max`, `size`, all of which strictly adhere to the single-word naming constra
   category: naming
 - rule: Avoid `else` statements. Prefer early returns.
   source:
     path: AGENTS.md
     lines: 65-75
-  evidence: In `run` and `createEffect`, the gold solution uses multiple `if (...)
-    { ...; return }` statements to handle edge cases (like `!live?.()` or text shrinking)
-    instead of using `if/else` blocks.
+  evidence: In `run` and `createEffect`, the gold solution uses multiple `if (...) { ...; return }` statements to handle edge cases (like `!live?.()` or text shrinking) instead of using `if/else` blocks.
   category: style
 distractors:
 - rule: Prefer `const` over `let`. Use ternaries or early returns instead of reassignment.
   collision_type: would_cause_bug
-  why_distracting: The pacing algorithm inherently requires tracking mutable state
-    (`shown` text and `timeout` handle) across asynchronous `setTimeout` callbacks.
-    Attempting to strictly avoid `let` and reassignment here would force the agent
-    into unnatural recursive patterns or cause bugs in the pacing logic.
+  why_distracting: The pacing algorithm inherently requires tracking mutable state (`shown` text and `timeout` handle) across asynchronous `setTimeout` callbacks. Attempting to strictly avoid `let` and reassignment here would force the agent into unnatural recursive patterns or cause bugs in the pacing logic.
   severity: medium
   source:
     path: AGENTS.md
     lines: 56-67
 - rule: Keep things in one function unless composable or reusable
   collision_type: scope_ambiguity
-  why_distracting: The pacing logic involves calculating step sizes and finding snap
-    boundaries. Extracting `step` and `next` as helper functions keeps `createPacedValue`
-    readable. An agent strictly following 'keep things in one function' might inline
-    these, bloating the main function unnecessarily.
+  why_distracting: The pacing logic involves calculating step sizes and finding snap boundaries. Extracting `step` and `next` as helper functions keeps `createPacedValue` readable. An agent strictly following 'keep things in one function' might inline these, bloating the main function unnecessarily.
   severity: low
   source:
     path: AGENTS.md
     lines: 10-11
-hierarchy_analysis: The configuration is a flat, single-file (`AGENTS.md`) setup containing
-  generic style guidelines. There is no complex inheritance or overriding between
-  multiple config files.
+hierarchy_analysis: The configuration is a flat, single-file (`AGENTS.md`) setup containing generic style guidelines. There is no complex inheritance or overriding between multiple config files.

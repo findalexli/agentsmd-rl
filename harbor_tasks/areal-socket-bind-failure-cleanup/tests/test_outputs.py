@@ -635,3 +635,18 @@ def test_repo_no_trailing_whitespace():
         for i, line in enumerate(lines, 1):
             if line.rstrip() != line:
                 raise AssertionError(f"{f}:{i} has trailing whitespace")
+
+# === CI-mined tests (taskforge.ci_check_miner) ===
+# Dropped: test_ci_build_build_the_book — requires uv + jupyter-book + GPU/network deps
+# Dropped: test_ci_install_test_verify_package_import — requires uv + all project deps (torch, etc.)
+# Dropped: test_ci_install_test_verify_core_modules_are_importable — broken command, requires uv + all project deps
+# Dropped: test_ci_install_test_build_wheel — requires uv + uv_build backend
+# Kept: test_ci_install_test_verify_wheel_artifact (stdlib-only, passes on both nop and gold)
+def test_ci_install_test_verify_wheel_artifact():
+    """pass_to_pass | CI job 'Install test' → step 'Verify wheel artifact'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'python -m zipfile -l dist/*.whl | head -20'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Verify wheel artifact' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")

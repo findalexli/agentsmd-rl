@@ -8,19 +8,19 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 # Install pytest and dependencies
-RUN pip install pytest pyyaml
+RUN pip install pytest pyyaml cpplint --break-system-packages
 
 # Create logs directory
 RUN mkdir -p /logs/verifier
 
-# Clone electron repository at base commit
-# Using --filter=blob:none to avoid downloading full blob history
-RUN git clone --filter=blob:none https://github.com/electron/electron.git /workspace/electron
+# Clone electron repository efficiently with shallow depth
+RUN git clone --depth=1 https://github.com/electron/electron.git /workspace/electron
 
 WORKDIR /workspace/electron
 
-# Checkout the base commit (parent of merge commit)
-RUN git checkout 821b738db0a64c863e8371e7141564cef70d56b8
+# Fetch the specific base commit
+RUN git fetch --depth=1 origin 821b738db0a64c863e8371e7141564cef70d56b8 \
+    && git checkout FETCH_HEAD
 
 # Set working directory
 WORKDIR /workspace

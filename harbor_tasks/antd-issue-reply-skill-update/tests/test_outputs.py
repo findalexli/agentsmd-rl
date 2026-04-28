@@ -137,3 +137,7 @@ def test_repo_at_correct_base_commit():
     assert sha == "15df8e60f14be71095dff1640933b92b770e9217", (
         f"Repo HEAD should be the base commit; got {sha}"
     )
+
+# === CI-mined tests (taskforge.ci_check_miner) ===
+# Dropped: test_ci_build_project_run_script, test_ci_test_image_generate_image_snapshots
+# — require Node.js/yarn + network at test time; irrelevant for markdown_authoring task.

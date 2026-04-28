@@ -8,6 +8,7 @@ Each test function maps 1:1 to a check in eval_manifest.yaml.
 """
 
 import json
+import os
 import subprocess
 from pathlib import Path
 
@@ -223,8 +224,8 @@ def test_build_copies_terminal_md():
     """build.js must copy terminal .md files to lib output."""
     build_js = Path(REPO) / "utils/build/build.js"
     content = build_js.read_text()
-    assert "terminal/" in content and "*.md" in content, \
-        "build.js must have a copy rule for terminal .md files"
+    assert "terminal/*.md" in content, \
+        "build.js must have a copy rule for terminal/*.md files"
 
 
 # [pr_diff] fail_to_pass
@@ -244,3 +245,4 @@ def test_clearedby_type_is_object():
             found_object_type = True
             break
     assert found_object_type, "clearedBy must be an object type, not a plain string"
+

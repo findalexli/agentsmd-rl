@@ -151,3 +151,31 @@ def test_data_collator_passes_labels_kwarg():
         "DataCollatorForSeq2Seq must still call the method with labels= kwarg "
         "(this confirms the call-site that the fix targets is unchanged)"
     )
+
+
+def test_ci_regression():
+    """Repo's own test suite for the affected model must still pass.
+
+    Runs the existing test_shift_right test from the upstream test file,
+    which exercises prepare_decoder_input_ids_from_labels with positional
+    args. This is the CI gate that ran on the original PR — it must keep
+    passing after the parameter rename (the shift behavior is preserved).
+    """
+    r = subprocess.run(
+        [
+            sys.executable, "-m", "pytest",
+            "tests/models/t5gemma2/test_modeling_t5gemma2.py",
+            "-k", "test_shift_right",
+            "--override-ini=addopts=",
+            "-o", "filterwarnings=ignore",
+            "--no-header", "-q",
+        ],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, (
+        f"CI regression test failed (returncode={r.returncode}):\n"
+        f"stdout:\n{r.stdout[-800:]}\nstderr:\n{r.stderr[-800:]}"
+    )

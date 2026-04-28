@@ -53,14 +53,69 @@ checks:
     path: AGENTS.md
     lines: '76'
     commit: de6d6be794a1b649ba5d60af6fe956c194dc9b2a
+- id: test_ci_cargo_build_build_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: cargo build / Build tests'
+- id: test_ci_cargo_test_ty_mdtests_github_annotations
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: cargo test / ty mdtests (GitHub annotations)'
+- id: test_ci_cargo_test_run_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: cargo test / Run tests'
+- id: test_ci_cargo_test_dogfood_ty_on_py_fuzzer
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: cargo test / Dogfood ty on py-fuzzer'
+- id: test_ci_cargo_test_dogfood_ty_on_the_scripts_directory
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: cargo test / Dogfood ty on the scripts directory'
+- id: test_ci_cargo_test_dogfood_ty_on_ty_benchmark
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: cargo test / Dogfood ty on ty_benchmark'
+- id: test_ci_cargo_test_cargo
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: cargo test / '
+- id: test_ci_cargo_test_cargo
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: cargo test / '
+- id: test_ci_cargo_fuzz_build_cargo
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: cargo fuzz build / '
+- id: test_ci_benchmarks_instrumented_ty_build_benchmarks
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: benchmarks instrumented ty / Build benchmarks'
+- id: test_ci_benchmarks_walltime_build_benchmarks
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: benchmarks walltime / Build benchmarks'
+- id: test_ci_test_scripts_python
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: test scripts / '
+- id: test_ci_cargo_test_cargo_2
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: cargo test / '
+- id: test_ci_test_scripts_python_2
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: test scripts / '
 rubric:
 - rule: Follow existing code style. Check neighboring files for patterns.
   source:
     path: AGENTS.md
     lines: '75'
     commit: de6d6be794a1b649ba5d60af6fe956c194dc9b2a
-- rule: Use comments purposefully. Don't use comments to narrate code, but do use
-    them to explain invariants and why something unusual was done a particular way.
+- rule: Use comments purposefully. Don't use comments to narrate code, but do use them to explain invariants and why something unusual was done a particular way.
   source:
     path: AGENTS.md
     lines: '82'
@@ -69,20 +124,14 @@ rubric:
   source:
     path: AGENTS.md
     lines: 64-64
-  evidence: In `crates/ruff_linter/src/rules/flake8_simplify/rules/collapsible_if.rs`,
-    the imports `use ruff_diagnostics::Applicability::{Safe, Unsafe};` and `use crate::preview::is_collapsible_if_fix_safe_enable
+  evidence: In `crates/ruff_linter/src/rules/flake8_simplify/rules/collapsible_if.rs`, the imports `use ruff_diagnostics::Applicability::{Safe, Unsafe};` and `use crate::preview::is_collapsible_if_fix_safe_enable
   category: style
 distractors:
-- rule: All changes must be tested. If you're not testing your changes, you're not
-    done.
+- rule: All changes must be tested. If you're not testing your changes, you're not done.
   collision_type: scope_ambiguity
-  why_distracting: The agent might try to manually write new test functions or files
-    to verify the preview behavior. However, Ruff uses snapshot tests (`insta`) which
-    are updated automatically via the test command provided in the instructions, so
-    manually writing new test code is unnecessary and distracting.
+  why_distracting: The agent might try to manually write new test functions or files to verify the preview behavior. However, Ruff uses snapshot tests (`insta`) which are updated automatically via the test command provided in the instructions, so manually writing new test code is unnecessary and distracting.
   severity: medium
   source:
     path: AGENTS.md
     lines: 51-51
-hierarchy_analysis: The configuration is flat, with `CLAUDE.md` simply including `AGENTS.md`.
-  There are no conflicting rules between files.
+hierarchy_analysis: The configuration is flat, with `CLAUDE.md` simply including `AGENTS.md`. There are no conflicting rules between files.

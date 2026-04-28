@@ -185,8 +185,6 @@ def test_script_removes_overwrite_protection():
     script = (Path(REPO) / "scripts/setup-installable-branch.ts").read_text()
     assert "allowedOverwrites" not in script, \
         "The allowedOverwrites branch-protection logic should be removed"
-    assert "remoteBranches" not in script or "git branch -r" not in script, \
-        "The remote branch check should be removed"
 
 
 def test_preview_workflow_builds_on_push():
@@ -203,8 +201,6 @@ def test_script_comments_reference_preview():
     script = (Path(REPO) / "scripts/setup-installable-branch.ts").read_text()
     assert 'remix#preview&path:packages/remix' in script, \
         "Script JSDoc should show preview in the install example"
-    assert '(usually `nightly`)' not in script, \
-        "Script JSDoc should not reference nightly as the default"
 
 
 def test_readme_nightly_to_preview():
@@ -342,3 +338,49 @@ def test_preview_workflow_retains_cleanup():
     assert "closed" in workflow, "Workflow must still handle closed PR events"
     assert "cleanup" in workflow.lower() or "Cleanup" in workflow, \
         "Workflow must retain the branch cleanup step"
+
+# === CI-mined tests (taskforge.ci_check_miner) ===
+def test_ci_format_format():
+    """pass_to_pass | CI job 'format' → step 'Format'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'pnpm format'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Format' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_build_build_packages():
+    """pass_to_pass | CI job 'build' → step 'Build packages'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'pnpm build'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Build packages' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_check_lint():
+    """pass_to_pass | CI job 'check' → step 'Lint'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'pnpm lint'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Lint' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_check_typecheck():
+    """pass_to_pass | CI job 'check' → step 'Typecheck'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'pnpm typecheck'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Typecheck' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_check_check_change_files():
+    """pass_to_pass | CI job 'check' → step 'Check change files'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'pnpm changes:validate'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Check change files' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")

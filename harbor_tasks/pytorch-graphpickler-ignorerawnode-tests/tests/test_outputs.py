@@ -434,3 +434,41 @@ def test_uses_assert_raises_for_errors():
     )
     # Tests ran and passed, which means they properly used assertRaises
     assert "PASSED" in r.stdout, f"Tests did not pass: {r.stdout[-300:]}"
+
+# === CI-mined tests (taskforge.ci_check_miner) ===
+def test_ci_test_collect_env_run_collect_env_py_nonretryable():
+    """pass_to_pass | CI job 'Test collect_env' → step 'Run collect_env.py (nonretryable)'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'python3 torch/utils/collect_env.py'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Run collect_env.py (nonretryable)' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_test__run_test_py__is_usable_w_run_run_test_py_nonretryable():
+    """pass_to_pass | CI job 'Test `run_test.py` is usable without boto3' → step 'Run run_test.py (nonretryable)'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'python3 test/run_test.py --include test_vulkan --verbose'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Run run_test.py (nonretryable)' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+# === PR-added f2p tests (taskforge.test_patch_miner) ===
+def test_pr_added_test_raw_node_in_meta_raises_by_default():
+    """fail_to_pass | PR added test 'test_raw_node_in_meta_raises_by_default' in 'test/fx/test_graph_pickler.py' (pytest)"""
+    r = subprocess.run(
+        ["bash", "-lc", 'python3 -m pytest -x --no-header -p no:cacheprovider "test/fx/test_graph_pickler.py::test_raw_node_in_meta_raises_by_default" 2>&1 | tail -50'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"PR-added test 'test_raw_node_in_meta_raises_by_default' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_pr_added_test_raw_node_in_meta_with_ignore_raw_node():
+    """fail_to_pass | PR added test 'test_raw_node_in_meta_with_ignore_raw_node' in 'test/fx/test_graph_pickler.py' (pytest)"""
+    r = subprocess.run(
+        ["bash", "-lc", 'python3 -m pytest -x --no-header -p no:cacheprovider "test/fx/test_graph_pickler.py::test_raw_node_in_meta_with_ignore_raw_node" 2>&1 | tail -50'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"PR-added test 'test_raw_node_in_meta_with_ignore_raw_node' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")

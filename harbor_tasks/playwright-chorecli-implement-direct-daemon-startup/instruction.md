@@ -10,7 +10,7 @@ The session flag is also named `-b` (for "browser") which is confusing since the
 
 1. **Direct daemon startup**: Instead of polling for a socket, the parent process should read the daemon's stdout to know when it's ready (or if it failed). The daemon should:
    - Launch the browser context directly at startup (not lazily on first tool call)
-   - Signal success or failure back to the parent via stdout markers
+   - Signal success or failure back to the parent via stdout markers (`### Success` for success, `<EOF>` for end-of-output)
    - Exit cleanly if the browser context closes
 
 2. **Rename session flag**: The `-b` alias should be renamed to `-s` everywhere — argument parsing, help text, error messages, and console output.

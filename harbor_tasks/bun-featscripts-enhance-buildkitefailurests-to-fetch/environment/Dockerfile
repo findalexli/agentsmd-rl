@@ -9,7 +9,9 @@ RUN apt-get update && \
     rm -rf /var/lib/apt/lists/*
 
 # Install bun (needed to run and test the TypeScript script)
-RUN curl -fsSL https://bun.sh/install | bash
+# Pin to a specific version to avoid floating-latest breakage
+ENV BUN_VERSION=bun-v1.2.9
+RUN curl -fsSL https://bun.sh/install | bash -s -- "$BUN_VERSION"
 ENV BUN_INSTALL="/root/.bun"
 ENV PATH="$BUN_INSTALL/bin:$PATH"
 

@@ -233,15 +233,18 @@ def test_lint_uses_pattern_validation():
 
 def test_vitest_file_created():
     """A vitest test file validates runtime TOOL_MAP entries against name constraints."""
-    test_file = Path(REPO) / "services/mcp/tests/unit/tool-name-validation.test.ts"
+    _ensure_deps()
+    test_rel = "tests/unit/tool-name-validation.test.ts"
+    test_file = Path(REPO) / "services/mcp" / test_rel
+    assert test_file.exists(), "Tool name validation test file must exist"
     content = test_file.read_text()
-    content_lower = content.lower()
-    # Check that the test file contains validation logic for tool names and length
-    # (checking for behavior keywords rather than specific constant names)
-    assert "pattern" in content_lower or "regex" in content_lower, \
-        "Test must check pattern validation for tool names"
-    assert "map" in content_lower, "Test must validate TOOL_MAP or GENERATED_TOOL_MAP"
-    assert "length" in content_lower, "Test must check length constraint"
+    assert "TOOL_NAME_PATTERN" in content, "Test must reference TOOL_NAME_PATTERN"
+    assert "MAX_TOOL_NAME_LENGTH" in content, "Test must reference MAX_TOOL_NAME_LENGTH"
+    r = subprocess.run(
+        ["pnpm", "exec", "vitest", "run", test_rel],
+        capture_output=True, text=True, timeout=120, cwd=f"{REPO}/services/mcp",
+    )
+    assert r.returncode == 0, f"Vitest validation test failed:\n{r.stderr[-800:]}"
 
 
 # ---------------------------------------------------------------------------
@@ -277,3 +280,30 @@ def test_handbook_documents_feature_naming():
         "Handbook must specify snake_case format for feature identifiers"
     assert "pattern" in content_lower or "[a-z0-9" in content, \
         "Handbook must document the character pattern validation"
+
+
+# === CI-scoped tests (pass_to_pass, bash -lc real test runners) ===
+
+
+def test_ci_mcp_unit_tests():
+    """CI: MCP unit tests pass via vitest (from repo root with pnpm filter)."""
+    _ensure_deps()
+    r = subprocess.run(
+        ["bash", "-lc", "pnpm --filter=@posthog/mcp run test run"],
+        capture_output=True, text=True, timeout=180, cwd=REPO,
+    )
+    assert r.returncode == 0, (
+        f"CI MCP unit tests failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-800:]}\nstderr: {r.stderr[-800:]}")
+
+
+def test_ci_mcp_build():
+    """CI: MCP package build passes (from repo root with pnpm filter)."""
+    _ensure_deps()
+    r = subprocess.run(
+        ["bash", "-lc", "pnpm --filter=@posthog/mcp build"],
+        capture_output=True, text=True, timeout=180, cwd=REPO,
+    )
+    assert r.returncode == 0, (
+        f"CI MCP build failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-800:]}\nstderr: {r.stderr[-800:]}")

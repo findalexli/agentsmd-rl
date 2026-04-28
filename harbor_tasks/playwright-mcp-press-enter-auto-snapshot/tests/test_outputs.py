@@ -314,3 +314,4 @@ def test_repo_lint_tests():
         capture_output=True, text=True, timeout=60, cwd=REPO,
     )
     assert r.returncode == 0, f"lint-tests failed: {r.stderr[-500:]}"
+

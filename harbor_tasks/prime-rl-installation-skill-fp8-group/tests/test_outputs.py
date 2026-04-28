@@ -113,3 +113,13 @@ def test_existing_skills_still_present():
     for name in ("inference-server", "toml-config"):
         p = REPO / "skills" / name / "SKILL.md"
         assert p.exists(), f"existing skill {name} disappeared at {p}"
+
+# === CI-mined tests (taskforge.ci_check_miner) ===
+def test_ci_ruff_check():
+    """pass_to_pass | CI job 'Ruff' → ruff check --config=pyproject.toml"""
+    r = subprocess.run(
+        ["ruff", "check", "--config=pyproject.toml", "."], cwd=REPO,
+        capture_output=True, text=True, timeout=120)
+    assert r.returncode == 0, (
+        f"CI step 'Ruff' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")

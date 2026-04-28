@@ -10,8 +10,7 @@ checks:
 - id: test_type_definition_behavior
   type: fail_to_pass
   origin: pr_diff
-  description: PopconfirmSemanticType type definition includes icon field in both
-    classNames and styles
+  description: PopconfirmSemanticType type definition includes icon field in both classNames and styles
 - id: test_icon_uses_popconfirm_semantic_type
   type: fail_to_pass
   origin: pr_diff
@@ -60,16 +59,100 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Popconfirm TypeScript type tests pass
+- id: test_ci_test_react_latest_dist_ut
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: test-react-latest-dist / '
+- id: test_ci_test_react_latest_dist_dom_test
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: test-react-latest-dist / dom test'
+- id: test_ci_test_react_latest_dist_persist_coverages
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: test-react-latest-dist / persist coverages'
+- id: test_ci_test_image_ut
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: test image / '
+- id: test_ci_test_image_generate_image_snapshots
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: test image / generate image snapshots'
+- id: test_ci_test_lib_es_module_ut
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: test lib/es module / '
+- id: test_ci_test_lib_es_module_compile
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: test lib/es module / compile'
+- id: test_ci_test_lib_es_module_test
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: test lib/es module / test'
+- id: test_ci_lint_ut
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: lint / '
+- id: test_ci_lint_ut
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: lint / '
+- id: test_ci_test_node_ut
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: test-node / '
+- id: test_ci_test_node_ut
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: test-node / '
+- id: test_ci_build_ut
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: build / '
+- id: test_ci_build_compile
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: build / compile'
+- id: test_ci_build_dist
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: build / dist'
+- id: test_ci_build_check_build_files
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: build / check build files'
+- id: test_ci_build_zip_builds
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: build / zip builds'
+- id: test_ci_test_react_latest_ut
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: test-react-latest / '
+- id: test_ci_test_react_latest_dom_test
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: test-react-latest / dom test'
+- id: test_ci_test_react_latest_persist_coverages
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: test-react-latest / persist coverages'
+- id: test_ci_test_react_legacy_ut
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: test-react-legacy / '
+- id: test_ci_test_react_legacy_dom_test
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: test-react-legacy / dom test'
 rubric:
-- rule: Follow the established project structure for components, separating implementation,
-    demos, and tests.
+- rule: Follow the established project structure for components, separating implementation, demos, and tests.
   source:
     path: CLAUDE.md
     lines: 14-26
-  evidence: The gold solution correctly navigates the Ant Design project structure
-    by modifying the component implementation (PurePanel.tsx), the export index (index.tsx),
-    the demo file (demo/_semantic.tsx), and the test file (__tests__/semantic.test.tsx)
-    in their respective designated directories.
+  evidence: The gold solution correctly navigates the Ant Design project structure by modifying the component implementation (PurePanel.tsx), the export index (index.tsx), the demo file (demo/_semantic.tsx), and the test file (__tests__/semantic.test.tsx) in their respective designated directories.
   category: architecture
   verification: llm_judge
 - rule: Provide both English and Chinese documentation
@@ -77,10 +160,7 @@ rubric:
     path: .github/copilot-instructions.md
     lines: '90'
   source_text: '- Provide both English and Chinese documentation'
-  evidence: The gold diff updates `components/popconfirm/demo/_semantic.tsx` to include
-    the description for the new `icon` semantic element in both the `cn` object ('图标元素，设置确认图标的尺寸、颜色和布局样式')
-    and the `en` object ('Icon element, set the confirmation icon size, color and
-    layout styles').
+  evidence: The gold diff updates `components/popconfirm/demo/_semantic.tsx` to include the description for the new `icon` semantic element in both the `cn` object ('图标元素，设置确认图标的尺寸、颜色和布局样式') and the `en` object ('Icon element, set the confirmation icon size, color and layout styles').
   category: documentation
   verification: llm_judge
 - rule: Write comprehensive tests and target 100% test coverage
@@ -90,9 +170,7 @@ rubric:
   source_text: '- Write comprehensive tests using Jest and React Testing Library
 
     - Target 100% test coverage'
-  evidence: The gold diff adds explicit assertions to `components/popconfirm/__tests__/semantic.test.tsx`
-    (e.g., `expect(iconElement).toHaveClass('custom-icon')`) to verify that the new
-    `icon` semantic configuration applies correctly.
+  evidence: The gold diff adds explicit assertions to `components/popconfirm/__tests__/semantic.test.tsx` (e.g., `expect(iconElement).toHaveClass('custom-icon')`) to verify that the new `icon` semantic configuration applies correctly.
   category: testing
   verification: llm_judge
 - rule: Include snapshot tests for UI components
@@ -100,28 +178,20 @@ rubric:
     path: .github/copilot-instructions.md
     lines: '84'
   source_text: '- Include snapshot tests for UI components'
-  evidence: The gold diff updates the snapshot file `components/popconfirm/__tests__/__snapshots__/demo-semantic.test.tsx.snap`
-    to verify the modified HTML output behavior containing the new `semantic-mark-icon`
-    span.
+  evidence: The gold diff updates the snapshot file `components/popconfirm/__tests__/__snapshots__/demo-semantic.test.tsx.snap` to verify the modified HTML output behavior containing the new `semantic-mark-icon` span.
   category: testing
   verification: llm_judge
 distractors:
 - rule: Demo 导入规范要求使用绝对路径，但明确排除了 semantic.test.tsx
   collision_type: scope_ambiguity
-  why_distracting: The agent might apply Demo import rules (which mandate absolute
-    paths) to `semantic.test.tsx` because it is closely related to the semantic demo
-    feature. However, the rule explicitly excludes `semantic.test.tsx`, meaning it
-    must follow the Test import rules (relative paths) instead.
+  why_distracting: The agent might apply Demo import rules (which mandate absolute paths) to `semantic.test.tsx` because it is closely related to the semantic demo feature. However, the rule explicitly excludes `semantic.test.tsx`, meaning it must follow the Test import rules (relative paths) instead.
   severity: high
   source:
     path: AGENTS.md
     lines: 28-33
 - rule: Changelog 规范与 PR 规范
   collision_type: meta_confusion
-  why_distracting: The config provides extensive rules for Changelog and PR creation.
-    Given the presence of `antd-create-pr` and `changelog-collect` skills in the repository,
-    the agent might waste time trying to generate a PR or modify CHANGELOG.md, which
-    is out of scope for this specific code-level implementation task.
+  why_distracting: The config provides extensive rules for Changelog and PR creation. Given the presence of `antd-create-pr` and `changelog-collect` skills in the repository, the agent might waste time trying to generate a PR or modify CHANGELOG.md, which is out of scope for this specific code-level implementation task.
   severity: medium
   source:
     path: AGENTS.md
@@ -131,9 +201,7 @@ distractors:
     path: .claude/skills/issue-reply/SKILL.md
     lines: 1-5
   collision_type: meta_confusion
-  why_distracting: The task description is formatted like an issue ('Problem Description...'),
-    which might trigger the issue-reply skill. The agent needs to implement code,
-    not generate a reply to a GitHub issue.
+  why_distracting: The task description is formatted like an issue ('Problem Description...'), which might trigger the issue-reply skill. The agent needs to implement code, not generate a reply to a GitHub issue.
   severity: low
 - rule: Use interfaces (not type aliases) for object structures
   source:
@@ -141,10 +209,7 @@ distractors:
     lines: '19'
   source_text: '- Use interfaces (not type aliases) for object structures'
   collision_type: rule_conflict
-  why_distracting: The diff correctly creates `PopconfirmSemanticType` as a `type`
-    alias so it can seamlessly intersect (`&`) with complex mapped types like `PopoverSemanticType['classNames']`.
-    An agent adhering to this rule might mistakenly try to convert it into an `interface`,
-    breaking TypeScript type resolution for Ant Design's semantic token configuration.
+  why_distracting: The diff correctly creates `PopconfirmSemanticType` as a `type` alias so it can seamlessly intersect (`&`) with complex mapped types like `PopoverSemanticType['classNames']`. An agent adhering to this rule might mistakenly try to convert it into an `interface`, breaking TypeScript type resolution for Ant Design's semantic token configuration.
   severity: high
 - rule: 国际化规范 (Internationalization Config Location)
   source:
@@ -157,11 +222,7 @@ distractors:
 
     - 添加或修改本地化配置时，需同时修改所有语言文件'
   collision_type: architecture_boundary
-  why_distracting: The PR adds Chinese and English translation strings directly to
-    `components/popconfirm/demo/_semantic.tsx`. An agent reading this internationalization
-    rule might mistakenly attempt to extract these demo-specific descriptions into
-    the global `components/locale/` directory, violating the encapsulation of demo
-    assets.
+  why_distracting: The PR adds Chinese and English translation strings directly to `components/popconfirm/demo/_semantic.tsx`. An agent reading this internationalization rule might mistakenly attempt to extract these demo-specific descriptions into the global `components/locale/` directory, violating the encapsulation of demo assets.
   severity: high
 - rule: Component props interfaces should be named ComponentNameProps
   source:
@@ -169,15 +230,9 @@ distractors:
     lines: '21'
   source_text: '- Component props interfaces should be named `ComponentNameProps`'
   collision_type: scope_ambiguity
-  why_distracting: The diff modifies `PopconfirmSemanticType` and `PopconfirmSemanticAllType`.
-    An agent might misidentify these structural types as the component's main props
-    interface and rename them to `PopconfirmSemanticProps`, breaking the specific
-    naming conventions used for the semantic token system.
+  why_distracting: The diff modifies `PopconfirmSemanticType` and `PopconfirmSemanticAllType`. An agent might misidentify these structural types as the component's main props interface and rename them to `PopconfirmSemanticProps`, breaking the specific naming conventions used for the semantic token system.
   severity: low
-hierarchy_analysis: The configuration is flat, with identical rules duplicated in
-  AGENTS.md and CLAUDE.md. The primary challenge is scope discrimination within the
-  same file, specifically noticing the explicit exception for `semantic.test.tsx`
-  in the Demo import rules and correctly applying the contrasting Test import rules.
+hierarchy_analysis: The configuration is flat, with identical rules duplicated in AGENTS.md and CLAUDE.md. The primary challenge is scope discrimination within the same file, specifically noticing the explicit exception for `semantic.test.tsx` in the Demo import rules and correctly applying the contrasting Test import rules.
 version: '2.0'
 source:
   repo: ant-design/ant-design

@@ -25,6 +25,17 @@ The project's `.claude/CLAUDE.md` should be updated to give agents guidance on h
 
 ## Code Style Requirements
 
-Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+Your solution will be checked by the repository's existing linters and formatters. All modified files must pass each of the following checks with zero errors:
 
-- `pylint (Python linter)`
+| Tool | What it checks |
+|---|---|
+| `pylint --errors-only` | Python errors (no warnings, just errors) |
+| `pyflakes` | Undefined names, unused imports |
+| `ruff check` | Fast Python linter |
+| `black --check` | Code formatting |
+| `isort --check` | Import order |
+| `bandit` | Security issues |
+| `pycodestyle` | PEP 8 style |
+| `flake8` | Style and logical errors |
+
+The script must also import cleanly as a Python module, and `--help` must produce usage output without error.

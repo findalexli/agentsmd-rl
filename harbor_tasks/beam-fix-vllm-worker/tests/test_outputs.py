@@ -371,3 +371,8 @@ def test_readme_documents_gpu_memory_constraints():
     )
     assert has_conservative_defaults, \
         "README must document that conservative default values are provided for small GPUs"
+
+# === CI-mined tests (taskforge.ci_check_miner) ===
+# Go and TypeScript CI tests dropped: they require toolchains (Go, Node.js)
+# not available in this image and test unrelated monorepo sections.
+# This PR only touches Python files under sdks/python/.

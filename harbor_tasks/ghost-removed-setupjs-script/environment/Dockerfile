@@ -5,7 +5,7 @@ ENV LANG=C.UTF-8
 
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
-        git curl ca-certificates tmux && \
+        git curl ca-certificates tmux nodejs && \
     rm -rf /var/lib/apt/lists/*
 
 # Ghost is huge — shallow clone only. We only need files, not build.

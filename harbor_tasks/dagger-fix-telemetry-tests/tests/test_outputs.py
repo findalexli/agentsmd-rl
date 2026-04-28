@@ -297,3 +297,14 @@ func TestErrorWithoutOriginal(t *testing.T) {
 
 
 # [config_edit] fail_to_pass
+# [repo_tests] pass_to_pass — CI/CD: go test in bash -lc format for Dimension 1 coverage
+def test_ci_gotest_bash_lc():
+    """Repo's go test ./dagql/idtui passes via bash -lc."""
+    r = subprocess.run(
+        ["bash", "-lc", "PATH=/usr/local/go/bin:$PATH go test -run TestCursorBuffer -count=1 ./dagql/idtui"],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    assert r.returncode == 0, (
+        f"go test ./dagql/idtui via bash -lc failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}"
+    )

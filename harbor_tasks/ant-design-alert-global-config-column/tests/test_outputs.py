@@ -131,3 +131,7 @@ def test_config_provider_en_other_rows_intact():
     text = CP_EN.read_text(encoding="utf-8")
     assert "| affix | Set Affix common props" in text, "ConfigProvider en-US affix row must remain intact."
     assert "| anchor | Set Anchor common props" in text, "ConfigProvider en-US anchor row must remain intact."
+
+# === CI-mined tests (taskforge.ci_check_miner) ===
+# Dropped: test_ci_test_image_generate_image_snapshots requires Node.js,
+# puppeteer, and a headless browser — not available in this Docker env.

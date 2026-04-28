@@ -401,3 +401,112 @@ print("PASS")
     )
     assert r.returncode == 0, f"Failed: {r.stderr}"
     assert "PASS" in r.stdout
+
+# === CI-mined tests (taskforge.ci_check_miner) ===
+def test_ci_openapi_codegen_tests_run_tests():
+    """pass_to_pass | CI job 'OpenAPI codegen tests' → step 'Run tests'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'pnpm --filter=@posthog/openapi-codegen test'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Run tests' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_build_agent_skills_from_source_run_migrations():
+    """pass_to_pass | CI job 'Build agent skills from source' → step 'Run migrations'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'python manage.py migrate --noinput && python manage.py setup_dev --no-data'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Run migrations' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_build_rust_services_run_cargo_build():
+    """pass_to_pass | CI job 'Build Rust services' → step 'Run cargo build'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'cargo build --all --locked --release'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Run cargo build' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_test_rust_set_up_databases():
+    """pass_to_pass | CI job 'Test Rust' → step 'Set up databases'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'python manage.py setup_test_environment'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Set up databases' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_lint_rust_services_check_format():
+    """pass_to_pass | CI job 'Lint Rust services' → step 'Check format'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'cargo fmt -- --check'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Check format' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_lint_rust_services_run_clippy():
+    """pass_to_pass | CI job 'Lint Rust services' → step 'Run clippy'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'cargo clippy --all-targets --all-features -- -D warnings'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Run clippy' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_lint_rust_services_run_cargo_check():
+    """pass_to_pass | CI job 'Lint Rust services' → step 'Run cargo check'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'cargo check --all-features'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Run cargo check' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_lint_rust_services_run_cargo_shear():
+    """pass_to_pass | CI job 'Lint Rust services' → step 'Run cargo shear'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'cargo shear'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Run cargo shear' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_node_js_build_check_builds_correctly():
+    """pass_to_pass | CI job 'Node.js Build' → step 'Check builds correctly'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'pnpm --filter=@posthog/nodejs build'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Check builds correctly' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_node_js_tests_set_up_databases_fast_path_restore_schem():
+    """pass_to_pass | CI job 'Node.js Tests' → step 'Set up databases (fast path - restore schema)'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'pnpm run setup:test:rust && pnpm run setup:test:persons-parity'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Set up databases (fast path - restore schema)' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_node_js_tests_set_up_databases_slow_path_run_migration():
+    """pass_to_pass | CI job 'Node.js Tests' → step 'Set up databases (slow path - run migrations)'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'pnpm --filter=@posthog/nodejs setup:test && pnpm run setup:test:persons-parity'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Set up databases (slow path - run migrations)' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_node_js_tests_test_postgres_parity_isolated_db():
+    """pass_to_pass | CI job 'Node.js Tests' → step 'Test postgres-parity (isolated DB)'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'pnpm run test:postgres-parity'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Test postgres-parity (isolated DB)' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")

@@ -1,0 +1,105 @@
+version: '2.0'
+source:
+  repo: remix-run/remix
+  pr: 11089
+  base_commit: 2055f7743da5b0f578005adae60af31664b9d577
+  merge_commit: d173d8dae856115fa11d8108c8d564f3acaa0d8f
+task:
+  name: remix-make-pr-skill
+  kind: markdown_authoring
+  difficulty: easy
+  tags:
+  - markdown
+  - skill-authoring
+  - agent-instructions
+  - pr-workflow
+checks:
+- id: test_make_pr_skill_file_exists
+  type: fail_to_pass
+  origin: pr_diff
+  description: skills/make-pr/SKILL.md created with correct frontmatter name
+- id: test_agents_md_references_make_pr
+  type: fail_to_pass
+  origin: pr_diff
+  description: AGENTS.md lists the make-pr skill with a description and file path
+- id: test_openai_config_exists
+  type: fail_to_pass
+  origin: pr_diff
+  description: skills/make-pr/agents/openai.yaml created with display name
+- id: test_supersede_pr_skill_intact
+  type: pass_to_pass
+  origin: repo_tests
+  description: Existing supersede-pr skill was not damaged by the changes
+config_edits:
+- path: AGENTS.md
+  tier: 1
+  gold_added: '- **make-pr**: Create GitHub pull requests with clear context, issue/feature bullets, and required usage examples for new or changed APIs. (file: `./skills/make-pr/SKILL.md`)
+
+    '
+  gold_removed: ''
+- path: skills/make-pr/SKILL.md
+  tier: 1
+  gold_added: "---\nname: make-pr\ndescription: Create GitHub pull requests with clear, reviewer-friendly descriptions. Use when asked to open or prepare a PR, especially when the PR needs strong context, related links, and feature usage examples. This skill enforces concise PR structure, avoids redundant sections like validation/testing, and creates the PR with gh CLI.\n---\n\n# Make PR\n\n## Overview\n\nUse this skill to draft and open a PR with consistent, high-signal writing.\nKeep headings sparse and focus on the problem/feature explanation, context links, and practical code examples.\n\n## Workflow\n\n1. Gather context from branch diff and related work.\n- Capture what changed, why it changed, and who it affects.\n- Find related issues/PRs and include links when relevant.\n\n1. Draft the PR body with minimal structure.\n- Start with 1-2 short introductory paragraphs.\n- In those intro paragraphs, include clear bullets describing:\n  - the feature and/or issue addressed\n  - key behavior/API changes\n  - expected impact\n- If the change is extensive, expand to up to 3-4 paragraphs and include background context with related links.\n\n1. Add required usage examples for feature work.\n- If the PR introduces a new feature, include a comprehensive usage snippet.\n- If it replaces or improves an older approach, include before/after examples.\n\n1. Exclude redundant sections.\n- Do not include `Validation`, `Testing`, or other process sections that are already implicit in PR workflow.\n- Do not add boilerplate sections that do not help review.\n\n1. Create the PR.\n- Save the body to a temporary file and run:\n```bash\ngh pr create --base main --head <branch> --title \"<title>\" --body-file <file>\n```\n\n## Body Template\n\nUse this as a base and fill with concrete repo-specific details:\n\n```md\n<One or two short intro paragraphs explaining the change and why it matters.>\n\n- <Feature/issue addressed>\n- <What changed in behavior or API>\n- <Why this is needed now>\n\n<Optional additional context paragraph(s), up to 3-4 total for large changes, including links to related PRs/issues.>\n\n```ts\n// New feature usage example\n```\n\n```ts\n// Before\n```\n\n```ts\n// After\n```\n```\n"
+  gold_removed: ''
+- path: skills/make-pr/agents/openai.yaml
+  tier: 1
+  gold_added: "interface:\n  display_name: \"Make PR\"\n  short_description: \"Create high-quality GitHub pull requests\"\n  default_prompt: \"Use $make-pr to draft and create a GitHub pull request with clear context and examples.\"\n"
+  gold_removed: ''
+rubric:
+- rule: A skill is a reusable local instruction set stored in a `SKILL.md` file.
+  source:
+    path: AGENTS.md
+    lines: '69'
+    commit: 2055f7743da5b0f578005adae60af31664b9d577
+  evidence: The gold solution creates skills/make-pr/SKILL.md with standard frontmatter (name, description) and documented workflow
+  category: structure
+  verification: semantic_diff
+- rule: Include clear bullets describing the feature and/or issue addressed, key behavior/API changes, and expected impact
+  source:
+    path: skills/make-pr/SKILL.md
+    lines: 18-23
+    commit: d173d8dae856115fa11d8108c8d564f3acaa0d8f
+  evidence: The Workflow section enumerates required bullet points for PR body structure
+  category: content
+  verification: semantic_diff
+- rule: Add required usage examples for feature work — include a comprehensive usage snippet for new features, and before/after examples for improvements
+  source:
+    path: skills/make-pr/SKILL.md
+    lines: 25-27
+    commit: d173d8dae856115fa11d8108c8d564f3acaa0d8f
+  evidence: The Workflow step 3 and Body Template include usage example slots with before/after patterns
+  category: content
+  verification: semantic_diff
+- rule: Do not include `Validation`, `Testing`, or other process sections that are already implicit in PR workflow
+  source:
+    path: skills/make-pr/SKILL.md
+    lines: 29-31
+    commit: d173d8dae856115fa11d8108c8d564f3acaa0d8f
+  evidence: Workflow step 4 explicitly excludes these redundant sections
+  category: structure
+  verification: semantic_diff
+distractors:
+- rule: Prefer `let` for locals, `const` only at module scope; never use `var`
+  source:
+    path: AGENTS.md
+    lines: '26'
+    commit: 2055f7743da5b0f578005adae60af31664b9d577
+  collision_type: scope_ambiguity
+  why_distracting: This TypeScript variable preference is irrelevant to writing markdown skill files — applying it to SKILL.md content would be nonsensical
+  severity: low
+- rule: Use `import type { X }` for types (separate from value imports); use `export type { X }` for type exports; include `.ts` extensions
+  source:
+    path: AGENTS.md
+    lines: '24'
+    commit: 2055f7743da5b0f578005adae60af31664b9d577
+  collision_type: scope_ambiguity
+  why_distracting: This import-style rule applies to TypeScript source code, not to markdown skill files — agents might waste effort trying to apply it
+  severity: low
+- rule: 'Cross-package boundaries: Avoid re-exporting APIs/types from other packages. Consumers should import from the owning package directly.'
+  source:
+    path: AGENTS.md
+    lines: '18'
+    commit: 2055f7743da5b0f578005adae60af31664b9d577
+  collision_type: architecture_boundary
+  why_distracting: This package-boundary rule governs TypeScript exports in the monorepo — it has no bearing on writing agent instruction files
+  severity: low

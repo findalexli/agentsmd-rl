@@ -50,7 +50,7 @@ The following exported async functions in `framework-helpers.ts` and `workers-he
 
 In `packages/create-cloudflare/src/helpers/__tests__/mocks.ts`:
 - Must not use `expect.fail()` for validation failures (this requires importing `expect`)
-- Must have at least 3 validation checks that throw errors when assertions fail
+- Must have at least 3 validation checks that use `throw new Error()` when assertions fail
 - Must not import `expect` from vitest (only `vi` should be imported)
 
 ### Test file call sites
@@ -62,6 +62,12 @@ The e2e test files must pass `expect` to the refactored helper functions:
 
 **`packages/create-cloudflare/e2e/tests/workers/workers.test.ts`:**
 - Must pass `expect` to: `runC3ForWorkerTest`
+
+## Code Style Requirements
+
+- TypeScript source files must be formatted with `oxfmt`
+- Lint rules are enforced with `oxlint --deny-warnings --type-aware`
+- Imports of types from `vitest` must use `import type` syntax (consistent-type-imports rule)
 
 ## Verification
 

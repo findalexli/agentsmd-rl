@@ -242,3 +242,68 @@ def test_upstream_errors_vitest_passes():
         f"vitest errors failed:\nstdout tail:\n{proc.stdout[-2000:]}\n"
         f"stderr tail:\n{proc.stderr[-1500:]}"
     )
+
+# === CI-mined tests (taskforge.ci_check_miner) ===
+def test_ci_test_build_all_packages():
+    """pass_to_pass | CI job 'test' → step 'Build all packages'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'pnpm build'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Build all packages' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_test_check_generated_declarations():
+    """pass_to_pass | CI job 'test' → step 'Check generated declarations'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'pnpm -r -F "@openai/*" dist:check'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Check generated declarations' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_test_run_linter():
+    """pass_to_pass | CI job 'test' → step 'Run linter'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'pnpm lint'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Run linter' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_test_type_check_docs_scripts():
+    """pass_to_pass | CI job 'test' → step 'Type-check docs scripts'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'pnpm docs:scripts:check'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Type-check docs scripts' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_test_compile_examples():
+    """pass_to_pass | CI job 'test' → step 'Compile examples'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'pnpm -r build-check'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Compile examples' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_test_run_tests():
+    """pass_to_pass | CI job 'test' → step 'Run tests'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'pnpm test'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Run tests' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+# === PR-added f2p tests (taskforge.test_patch_miner) ===
+def test_pr_added_should_set_error_names():
+    """fail_to_pass | PR added test 'should set error names' in 'packages/agents-core/test/errors.test.ts' (vitest_or_jest)"""
+    r = subprocess.run(
+        ["bash", "-lc", '(pnpm vitest run "packages/agents-core/test/errors.test.ts" -t "should set error names" 2>&1 || npx vitest run "packages/agents-core/test/errors.test.ts" -t "should set error names" 2>&1 || pnpm jest "packages/agents-core/test/errors.test.ts" -t "should set error names" 2>&1 || npx jest "packages/agents-core/test/errors.test.ts" -t "should set error names" 2>&1) | tail -50'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"PR-added test 'should set error names' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")

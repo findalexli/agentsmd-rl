@@ -8,6 +8,9 @@ RUN apt-get update && \
         git curl ca-certificates build-essential tmux && \
     rm -rf /var/lib/apt/lists/*
 
+# Install uv (needed for CI-mined tests: uv build --wheel)
+RUN pip install --no-cache-dir uv
+
 # Clone repo at base commit
 RUN git init /workspace/areal && \
     cd /workspace/areal && \

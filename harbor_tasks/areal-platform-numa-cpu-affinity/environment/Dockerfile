@@ -24,6 +24,9 @@ RUN pip install --no-cache-dir colorlog
 # Install CI/CD testing tools (ruff for linting/formatting, pytest for testing)
 RUN pip install --no-cache-dir ruff pytest pytest-json-ctrf
 
+# Install uv for CI-mined build/install tests
+RUN pip install --no-cache-dir uv
+
 # Configure git for potential patch application
 RUN git config --global user.email "test@test.com" && \
     git config --global user.name "Test"

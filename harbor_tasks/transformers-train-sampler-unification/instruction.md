@@ -2,42 +2,44 @@
 
 ## Problem
 
-The `transformers` library currently has a `group_by_length` boolean parameter in `TrainingArguments` that controls whether to use the `LengthGroupedSampler` during training. This is limiting because:
+The `transformers` library's training pipeline currently uses a boolean flag called `group_by_length` to control whether training uses random sampling or length-grouped sampling. This design has several limitations:
 
-1. We only have two options: random sampling (default) or group_by_length
-2. Users have requested sequential sampling for deterministic/reproducible training
-3. The API is not extensible for future sampling strategies
+1. Only two sampling modes exist: the default random behavior and `group_by_length`
+2. Users have requested a `"sequential"` sampling mode for deterministic, reproducible training runs
+3. Adding more boolean flags for each new sampling strategy does not scale
 
-## Requirements
+## Desired Behavior
 
-Refactor the training sampler selection to use a unified `train_sampling_strategy` parameter instead of the boolean `group_by_length` flag. The implementation must satisfy these requirements:
+The training configuration should expose a unified string parameter named `train_sampling_strategy` that can be set to one of three values:
 
-### Parameter Specification
-- Replace `group_by_length: bool` with `train_sampling_strategy: str` in `TrainingArguments`
-- Default value must be `"random"`
-- Must accept exactly three values: `"random"`, `"sequential"`, and `"group_by_length"`
+- `"random"` — uses the default random sampler (equivalent to current default behavior)
+- `"sequential"` — uses a `SequentialSampler` for deterministic epoch ordering
+- `"group_by_length"` — uses the existing `LengthGroupedSampler` (equivalent to current `--group_by_length` behavior)
 
-### Behavior Requirements
-1. **Random sampling** (`"random"`): Use PyTorch's `RandomSampler` for training (this is the current default behavior)
-2. **Sequential sampling** (`"sequential"`): Use PyTorch's `SequentialSampler` for deterministic iteration order
-3. **Group by length** (`"group_by_length"`): Use the existing `LengthGroupedSampler` for bucketing similar-length sequences
+The old `group_by_length` boolean parameter should no longer exist. The `train_sampling_strategy` parameter must default to `"random"` and its set of valid values should be documented via the dataclass field's `metadata` dictionary under the `"choices"` key, following existing patterns in the codebase.
 
-### IterableDataset Handling
-When training with an `IterableDataset`, the sampling strategy selection should be ignored gracefully. Instead of raising a `ValueError`, the code should log an info message of the form: `The `train_sampling_strategy={value}` argument is ignored when using an IterableDataset.`
+## Sampling Logic
 
-### Documentation Updates
-The `examples/pytorch/speech-recognition/README.md` contains 6 example commands that currently use `--group_by_length`. All 6 examples must be updated to use the new parameter format `--train_sampling_strategy group_by_length` instead.
+The method that builds the training sampler (`_get_train_sampler`) must be updated to inspect the new parameter name rather than the old boolean flag. It should return:
 
-## Files to Modify
+- `SequentialSampler` when the strategy is `"sequential"`
+- `LengthGroupedSampler` when the strategy is `"group_by_length"`
+- `RandomSampler` otherwise (the default)
 
-- `src/transformers/training_args.py` - Define the new parameter with its default and valid choices
-- `src/transformers/trainer.py` - Implement the sampler selection logic based on the new parameter
-- `examples/pytorch/speech-recognition/README.md` - Update all 6 example commands
+The evaluation sampler method (`_get_eval_sampler`) also references this configuration option and must be updated accordingly.
+
+## IterableDataset Handling
+
+When training uses an `IterableDataset`, samplers cannot be used because they require indexed access. Currently, using a non-default sampling option with an `IterableDataset` causes the training script to crash with a `ValueError` during argument validation in `_validate_args`. Instead of crashing, the code should call `logger.info(` to emit an info-level message noting that the `train_sampling_strategy` argument is ignored for `IterableDataset`. Training should proceed normally after logging.
+
+## Example Commands
+
+The speech recognition examples directory contains a README with 6 training command examples that pass `--group_by_length` as a command-line flag. These example commands must be updated to use `--train_sampling_strategy group_by_length` instead, which is the new CLI argument format that maps to the unified parameter.
 
 ## Verification
 
-After making changes:
-1. `TrainingArguments` should accept all three sampling strategies: `"random"`, `"sequential"`, `"group_by_length"`
-2. The README examples should use `--train_sampling_strategy group_by_length` format
-3. The transformers module should import without errors
-4. When using `IterableDataset`, an info message should be logged instead of raising an exception
+After the changes:
+1. The configuration class should accept initialization with `train_sampling_strategy` set to any of the three valid values without error
+2. The example commands in the README should all use `--train_sampling_strategy group_by_length` and no command should use the old `--group_by_length` flag
+3. The module should import successfully
+4. Using any sampling strategy with an `IterableDataset` should not crash the training script

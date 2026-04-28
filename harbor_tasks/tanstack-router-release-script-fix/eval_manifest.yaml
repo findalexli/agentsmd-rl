@@ -1,95 +1,99 @@
 rubric:
 - rule: Code should follow the project's style and include helpful comments
 checks:
-- id: release_logs_uses_array_parsing
-  description: releaseLogs parsed as array with split and filter
-  type: fail_to_pass
-  origin: agent_config
-  source:
-    path: AGENTS.md - Code style
-    lines: ''
-- id: range_from_logic
-  description: rangeFrom uses currentRelease/previousRelease variables
+- id: old_release_log_pattern_removed
+  description: Old git log command with -n 1 and HEAD~1 is removed
   type: fail_to_pass
   origin: pr_diff
-- id: commit_range_uses_current_release
-  description: Git log range uses currentRelease instead of HEAD~1
+- id: release_log_parsed_as_array
+  description: Release log parsed as array with split and filter
   type: fail_to_pass
   origin: pr_diff
-- id: non_conventional_commit_uses_split
+- id: git_log_range_no_longer_uses_head
+  description: Git log range no longer uses HEAD~1 reference
+  type: fail_to_pass
+  origin: pr_diff
+- id: non_conventional_commit_parsing_uses_split
   description: Non-conventional commits use split() not indexOf()
   type: fail_to_pass
   origin: pr_diff
-- id: latest_flag_conditional
-  description: --latest flag is conditional on isPrerelease
+- id: latest_flag_no_longer_unconditional
+  description: --latest flag is conditional, not unconditional
   type: fail_to_pass
   origin: pr_diff
-- id: prerelease_flag_unchanged
-  description: prereleaseFlag logic is preserved
+- id: timing_comment_added
+  description: Comment explains script runs right after release commit
   type: fail_to_pass
-  origin: pr_diff
+  origin: agent_config
+  source:
+    path: AGENTS.md - Code style
+    lines: ''
+- id: conventional_commit_format_comment_added
+  description: Comment explains conventional commit format with placeholders
+  type: fail_to_pass
+  origin: agent_config
+  source:
+    path: AGENTS.md - Code style
+    lines: ''
+- id: non_conventional_comment_added
+  description: Comment explains non-conventional commits go to Other
+  type: fail_to_pass
+  origin: agent_config
+  source:
+    path: AGENTS.md - Code style
+    lines: ''
 - id: script_syntax_valid
   description: Script has valid JavaScript syntax
-  type: fail_to_pass
-  origin: agent_config
+  type: pass_to_pass
+  origin: repo_tests
   source:
-    path: AGENTS.md - Testing instructions
+    path: bash -lc 'node --check scripts/create-github-release.mjs'
     lines: ''
-- id: comments_explain_changes
-  description: Comments explain git range and commit parsing logic
-  type: fail_to_pass
-  origin: agent_config
-  source:
-    path: AGENTS.md - Code style
-    lines: ''
-- id: conventional_commit_regex_comment
-  description: Comment explains conventional commit format pattern
-  type: fail_to_pass
-  origin: agent_config
-  source:
-    path: AGENTS.md - Code style
-    lines: ''
+- id: prerelease_flag_preserved
+  description: prereleaseFlag logic is preserved
+  type: pass_to_pass
+  origin: pr_diff
 - id: test_repo_script_syntax
   description: Repo's release script has valid JavaScript syntax
   type: pass_to_pass
   origin: repo_tests
   source:
-    path: node --check scripts/create-github-release.mjs
+    path: bash -lc 'node --check scripts/create-github-release.mjs'
     lines: ''
 - id: test_repo_script_formatting
   description: Repo's release script follows Prettier formatting
   type: pass_to_pass
   origin: repo_tests
   source:
-    path: npx prettier --check scripts/create-github-release.mjs
+    path: bash -lc 'npx prettier --check scripts/create-github-release.mjs'
     lines: ''
 - id: test_repo_all_mjs_scripts_syntax
   description: All .mjs scripts have valid JavaScript syntax
   type: pass_to_pass
   origin: repo_tests
   source:
-    path: node --check scripts/*.mjs
+    path: bash -lc 'node --check scripts/*.mjs'
     lines: ''
 - id: test_repo_all_scripts_formatting
   description: All scripts follow Prettier formatting
   type: pass_to_pass
   origin: repo_tests
   source:
-    path: npx prettier --check scripts/
+    path: bash -lc 'npx prettier --check scripts/'
     lines: ''
 - id: test_repo_markdown_formatting
   description: Markdown files follow Prettier formatting
   type: pass_to_pass
   origin: repo_tests
   source:
-    path: npx prettier --check *.md
+    path: bash -lc 'npx prettier --check *.md'
     lines: ''
 - id: test_repo_package_json_formatting
   description: package.json follows Prettier formatting
   type: pass_to_pass
   origin: repo_tests
   source:
-    path: npx prettier --check package.json
+    path: bash -lc 'npx prettier --check package.json'
     lines: ''
 - id: test_repo_git_valid
   description: Repo has a valid git repository with commits
@@ -103,21 +107,21 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   source:
-    path: npx prettier --check pnpm-workspace.yaml nx.json
+    path: bash -lc 'npx prettier --check pnpm-workspace.yaml nx.json'
     lines: ''
 - id: test_repo_all_scripts_syntax
   description: All scripts (.mjs, .js, .ts) have valid JavaScript/TypeScript syntax
   type: pass_to_pass
   origin: repo_tests
   source:
-    path: node --check scripts/*
+    path: bash -lc 'node --check scripts/*'
     lines: ''
 - id: test_repo_all_scripts_individual_formatting
   description: Each script file follows Prettier formatting
   type: pass_to_pass
   origin: repo_tests
   source:
-    path: npx prettier --check scripts/*.mjs scripts/*.js scripts/*.ts
+    path: bash -lc 'npx prettier --check scripts/*.mjs scripts/*.js scripts/*.ts'
     lines: ''
 - id: test_repo_git_status_clean
   description: Repo has clean working tree

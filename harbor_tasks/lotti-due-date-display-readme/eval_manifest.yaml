@@ -52,13 +52,11 @@ checks:
 - id: task_card_hides_due_date_for_completed
   type: fail_to_pass
   origin: pr_diff
-  description: ModernTaskCard._buildDateRow skips due date display for completed/rejected
-    tasks
+  description: ModernTaskCard._buildDateRow skips due date display for completed/rejected tasks
 - id: due_date_wrapper_disables_urgency
   type: fail_to_pass
   origin: pr_diff
-  description: TaskDueDateWrapper disables urgency styling for completed/rejected
-    tasks
+  description: TaskDueDateWrapper disables urgency styling for completed/rejected tasks
 - id: readme_updated
   type: fail_to_pass
   origin: pr_diff
@@ -66,8 +64,31 @@ checks:
 - id: changelog_documents_changes
   type: fail_to_pass
   origin: pr_diff
-  description: CHANGELOG documents due date visibility changes for completed/rejected
-    tasks
+  description: CHANGELOG documents due date visibility changes for completed/rejected tasks
+- id: test_ci_type_check_run_mypy_type_checking
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: type-check / Run MyPy Type Checking'
+- id: test_ci_flutter_test_on_linux_get_dependencies
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: Flutter Test on Linux / Get dependencies'
+- id: test_ci_flutter_test_on_linux_activate_very_good_cli
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: Flutter Test on Linux / Activate very_good_cli'
+- id: test_ci_flutter_test_on_linux_run_flutter_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: Flutter Test on Linux / Run Flutter tests'
+- id: test_ci_matrix_test_on_linux_with_degr_update_apt_get
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: Matrix Test on Linux with degraded network / Update apt-get'
+- id: test_ci_matrix_test_on_linux_update_apt_get
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: Matrix Test on Linux / Update apt-get'
 rubric:
 - rule: Config update is consistent with the style of existing documentation in README.md
   source:
@@ -82,27 +103,16 @@ rubric:
   reference: '## Blog Series: Meet Lotti
 
 
-    The beginning of a [**multi-part blog series with video walkthroughs**](https://matthiasnehlsen.substack.com/p/meet-lotti)
-    exploring everything Lotti can do is now live! From task management to AI-powered
-    insights — learn how to take control of your productivity while keeping your data
-    private.
+    The beginning of a [**multi-part blog series with video walkthroughs**](https://matthiasnehlsen.substack.com/p/meet-lotti) exploring everything Lotti can do is now live! From task management to AI-powered insights — learn how to take control of your productivity while keeping your data private.
 
 
-    Start reading: [**Meet Lotti**](https://matthiasnehlsen.substack.com/p/meet-lotti)
-    | [**Project Background**](docs/BACKGROUND.md)'
-- rule: CHANGELOG.md documents due date visibility changes for completed/rejected
-    tasks
+    Start reading: [**Meet Lotti**](https://matthiasnehlsen.substack.com/p/meet-lotti) | [**Project Background**](docs/BACKGROUND.md)'
+- rule: CHANGELOG.md documents due date visibility changes for completed/rejected tasks
   source:
     path: CHANGELOG.md
     lines: 11-19
     commit: 48f5da393b2006f134fc55a77fbe8983135e0fb8
-  reference: "## [0.9.794] - 2026-01-02\n### Changed\n- Due Date Visibility Refinements:\
-    \ Improved UX for completed and rejected tasks\n  - Due dates are now hidden on\
-    \ task cards for completed and rejected tasks\n  - Due dates in entry details\
-    \ view show grayed-out styling for completed/rejected tasks (no red/orange urgency\
-    \ colors)\n- Updated README and Flatpak metainfo to reference the launched \"\
-    Meet Lotti\" blog series\n\n### Added\n- Tests for due date visibility behavior\
-    \ based on task status"
+  reference: "## [0.9.794] - 2026-01-02\n### Changed\n- Due Date Visibility Refinements: Improved UX for completed and rejected tasks\n  - Due dates are now hidden on task cards for completed and rejected tasks\n  - Due dates in entry details view show grayed-out styling for completed/rejected tasks (no red/orange urgency colors)\n- Updated README and Flatpak metainfo to reference the launched \"Meet Lotti\" blog series\n\n### Added\n- Tests for due date visibility behavior based on task status"
 - rule: The README.md blog section must be updated with the Meet Lotti link
   reference: 'The README.md file should contain:
 
@@ -117,55 +127,35 @@ rubric:
   source:
     path: AGENTS.md
     lines: 31-32
-  evidence: The gold solution updates README.md and flatpak/com.matthiasn.lotti.metainfo.xml
-    to reflect the launched status of the blog series, adhering to the guideline to
-    keep documentation updated.
+  evidence: The gold solution updates README.md and flatpak/com.matthiasn.lotti.metainfo.xml to reflect the launched status of the blog series, adhering to the guideline to keep documentation updated.
   category: documentation
 config_edits:
 - path: CHANGELOG.md
   tier: 2
-  gold_added: "## [0.9.794] - 2026-01-02\n### Changed\n- Due Date Visibility Refinements:\
-    \ Improved UX for completed and rejected tasks\n  - Due dates are now hidden on\
-    \ task cards for completed and rejected tasks\n  - Due dates in entry details\
-    \ view show grayed-out styling for completed/rejected tasks (no red/orange urgency\
-    \ colors)\n- Updated README and Flatpak metainfo to reference the launched \"\
-    Meet Lotti\" blog series\n\n### Added\n- Tests for due date visibility behavior\
-    \ based on task status"
+  gold_added: "## [0.9.794] - 2026-01-02\n### Changed\n- Due Date Visibility Refinements: Improved UX for completed and rejected tasks\n  - Due dates are now hidden on task cards for completed and rejected tasks\n  - Due dates in entry details view show grayed-out styling for completed/rejected tasks (no red/orange urgency colors)\n- Updated README and Flatpak metainfo to reference the launched \"Meet Lotti\" blog series\n\n### Added\n- Tests for due date visibility behavior based on task status"
   gold_removed: ''
 - path: README.md
   tier: 2
   gold_added: '## Blog Series: Meet Lotti
 
 
-    The beginning of a [**multi-part blog series with video walkthroughs**](https://matthiasnehlsen.substack.com/p/meet-lotti)
-    exploring everything Lotti can do is now live! From task management to AI-powered
-    insights — learn how to take control of your productivity while keeping your data
-    private.
+    The beginning of a [**multi-part blog series with video walkthroughs**](https://matthiasnehlsen.substack.com/p/meet-lotti) exploring everything Lotti can do is now live! From task management to AI-powered insights — learn how to take control of your productivity while keeping your data private.
 
 
-    Start reading: [**Meet Lotti**](https://matthiasnehlsen.substack.com/p/meet-lotti)
-    | [**Project Background**](docs/BACKGROUND.md)'
+    Start reading: [**Meet Lotti**](https://matthiasnehlsen.substack.com/p/meet-lotti) | [**Project Background**](docs/BACKGROUND.md)'
   gold_removed: '## Coming Soon: Deep Dive Series
 
 
-    Coming in **December 2025**: a **10-part blog series with video walkthroughs**
-    exploring everything Lotti can do. From task management to AI-powered insights
-    — learn how to take control of your productivity while keeping your data private.
+    Coming in **December 2025**: a **10-part blog series with video walkthroughs** exploring everything Lotti can do. From task management to AI-powered insights — learn how to take control of your productivity while keeping your data private.
 
 
-    Read more on [**Substack**](https://matthiasnehlsen.substack.com) | [**Project
-    Background**](docs/BACKGROUND.md)'
+    Read more on [**Substack**](https://matthiasnehlsen.substack.com) | [**Project Background**](docs/BACKGROUND.md)'
 distractors:
 - rule: Update docs and localization as needed (run `make l10n`)
   collision_type: scope_ambiguity
-  why_distracting: The rule pairs updating documentation with updating localization
-    (running `make l10n`). An agent might assume that modifying the UI for task cards
-    requires localization updates, but the changes only involve hiding widgets and
-    changing colors, so searching for `.arb` files or running localization scripts
-    would be a waste of time.
+  why_distracting: The rule pairs updating documentation with updating localization (running `make l10n`). An agent might assume that modifying the UI for task cards requires localization updates, but the changes only involve hiding widgets and changing colors, so searching for `.arb` files or running localization scripts would be a waste of time.
   severity: low
   source:
     path: AGENTS.md
     lines: 31-32
-hierarchy_analysis: The repository uses a flat, single-file configuration (`AGENTS.md`)
-  at the root level. No complex hierarchy traversal is required.
+hierarchy_analysis: The repository uses a flat, single-file configuration (`AGENTS.md`) at the root level. No complex hierarchy traversal is required.

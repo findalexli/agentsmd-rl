@@ -182,3 +182,28 @@ def test_repo_at_expected_base_or_descendant():
     assert pkg.get("name") == "nextjs-project", (
         f"Unexpected root package: {pkg.get('name')!r}"
     )
+
+
+# ---------------------------------------------------------------------------
+# CI-mined test (taskforge.ci_check_miner)
+# ---------------------------------------------------------------------------
+
+
+def test_ci_pnpm_workspace_resolves_packages():
+    """pass_to_pass | CI: pnpm workspace resolution finds @next/swc among 20+ packages."""
+    r = subprocess.run(
+        ["bash", "-lc", (
+            "cd /workspace/nextjs && "
+            "pnpm ls -r --depth -1 --json 2>/dev/null | "
+            "python3 -c \""
+            "import json,sys; "
+            "pkgs=[p['name'] for p in json.load(sys.stdin)]; "
+            "print(len(pkgs)); "
+            "assert len(pkgs) > 20; "
+            "assert '@next/swc' in pkgs"
+            "\""
+        )],
+        capture_output=True, text=True, timeout=120)
+    assert r.returncode == 0, (
+        f"pnpm workspace resolution failed (rc={r.returncode}): "
+        f"stderr: {r.stderr[-800:]}")

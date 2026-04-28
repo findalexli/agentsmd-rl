@@ -89,90 +89,58 @@ checks:
   type: pass_to_pass
   origin: static
   description: turbo.json is valid JSON with expected structure
+- id: test_ci_lint_lint
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: scoped lint on @payloadcms/translations'
 rubric:
 - rule: Key Directories - packages/ - All publishable packages
   source:
     path: CLAUDE.md
     lines: 10-21
   category: documentation
-  evidence: Adds `packages/kv-redis` and `R2` to the existing Key Directories list,
-    maintaining the established documentation structure for packages.
+  evidence: Adds `packages/kv-redis` and `R2` to the existing Key Directories list, maintaining the established documentation structure for packages.
 - rule: Monorepo uses pnpm workspaces and Turbo for builds
   source:
     path: CLAUDE.md
     lines: 36-37
   category: tooling
-  evidence: Configures `.claude/settings.json` permissions to explicitly allow `pnpm`
-    commands including `pnpm turbo:*`, aligning with the monorepo's build tooling.
-- rule: List publishable packages under `packages/` with a brief description of their
-    purpose.
+  evidence: Configures `.claude/settings.json` permissions to explicitly allow `pnpm` commands including `pnpm turbo:*`, aligning with the monorepo's build tooling.
+- rule: List publishable packages under `packages/` with a brief description of their purpose.
   source:
     path: CLAUDE.md
     lines: 10-20
-  evidence: The gold solution adds `packages/kv-redis` and `R2` to the `packages/`
-    list in the `Key Directories` section, following the existing bullet point format
-    and description style.
+  evidence: The gold solution adds `packages/kv-redis` and `R2` to the `packages/` list in the `Key Directories` section, following the existing bullet point format and description style.
   category: documentation
 - rule: Document the standard development workflow (install, build core, dev server).
   source:
     path: CLAUDE.md
     lines: 38-52
-  evidence: 'The gold solution creates a Quick Start section that logically sequences
-    the existing documented commands: install dependencies, build core, and start
-    the dev server.'
+  evidence: 'The gold solution creates a Quick Start section that logically sequences the existing documented commands: install dependencies, build core, and start the dev server.'
   category: documentation
-- rule: Maintain the existing structure and categorization of the Key Directories
-    section when documenting new packages.
+- rule: Maintain the existing structure and categorization of the Key Directories section when documenting new packages.
   source:
     path: CLAUDE.md
     lines: 14-25
-  evidence: The gold solution adds `packages/kv-redis` and `R2` to the existing `Key
-    Directories` section, matching the established bulleted list format and descriptions.
+  evidence: The gold solution adds `packages/kv-redis` and `R2` to the existing `Key Directories` section, matching the established bulleted list format and descriptions.
   category: documentation
 config_edits:
 - path: CLAUDE.md
   tier: 1
-  gold_added: "- `packages/kv-redis` - Redis key-value store adapter\n  - `packages/storage-*`\
-    \ - Storage adapters (S3, Azure, GCS, Uploadthing, Vercel Blob, R2)\n## Quick\
-    \ Start\n\n1. `pnpm install`\n2. `pnpm run build:core`\n3.  `pnpm run dev` (MongoDB)\
-    \ or `pnpm run dev:postgres`\n\n-  `pnpm install` - Install all dependencies\n\
-    - `pnpm turbo` - All Turbo commands should be run from root with pnpm - not with`turbo`\
-    \ directly\n- `pnpm run build` or `pnpm run build:core` - Build core packages\
-    \ (excludes plugins and storage adapters)\n- `pnpm run build:all` - Build all\
-    \ packages\n- `pnpm run build:<directory_name>` - Build specific package (e.g.\
-    \ `pnpm run build:db-mongodb`, `pnpm run build:ui`)\n- `pnpm run dev` - Start\
-    \ dev server with default config (`test/_community/config.ts`)\n- `pnpm run dev\
-    \ <directory_name>` - Start dev server with specific test config (e.g. `pnpm run\
-    \ dev fields` loads `test/fields/config.ts`)\n- `pnpm run dev:postgres` - Run\
-    \ dev server with Postgres\n- `pnpm run dev:memorydb` - Run dev server with in-memory\
-    \ MongoDB\n- `pnpm run test` - Run all tests (integration + components + e2e)\n\
-    - `pnpm run test:int` - Integration tests (MongoDB, recommended)\n- `pnpm run\
-    \ test:int <dir>` - Specific test suite (e.g. `fields`)\n- `pnpm run test:int:postgres|sqlite`\
-    \ - Integration tests with other databases\n- `pnpm run test:e2e` - Playwright\
-    \ tests (add `:headed` or `:debug` suffix)\n- `pnpm run test:unit|components|types`\
-    \ - Other test suites\nGenerate types for a test directory: `pnpm run dev:generate-types\
-    \ <directory_name>`\n- `pnpm run lint` - Run linter across all packages\n-  `pnpm\
-    \ run lint:fix` - Fix linting issues\n- Run `pnpm run translateNewKeys` to auto-translate\
-    \ new keys (requires `OPENAI_KEY` in `.env`)\n- Lexical translations: `cd packages/richtext-lexical\
-    \ && pnpm run translateNewKeys`"
-  gold_removed: '- \u0060packages/storage-*\u0060 - Storage adapters (S3, Azure, GCS,
-    Uploadthing, Vercel Blob)
+  gold_added: "- `packages/kv-redis` - Redis key-value store adapter\n  - `packages/storage-*` - Storage adapters (S3, Azure, GCS, Uploadthing, Vercel Blob, R2)\n## Quick Start\n\n1. `pnpm install`\n2. `pnpm run build:core`\n3.  `pnpm run dev` (MongoDB) or `pnpm run dev:postgres`\n\n-  `pnpm install` - Install all dependencies\n- `pnpm turbo` - All Turbo commands should be run from root with pnpm - not with`turbo` directly\n- `pnpm run build` or `pnpm run build:core` - Build core packages (excludes plugins and storage adapters)\n- `pnpm run build:all` - Build all packages\n- `pnpm run build:<directory_name>` - Build specific package (e.g. `pnpm run build:db-mongodb`, `pnpm run build:ui`)\n- `pnpm run dev` - Start dev server with default config (`test/_community/config.ts`)\n- `pnpm run dev <directory_name>` - Start dev server with specific test config (e.g. `pnpm run dev fields` loads `test/fields/config.ts`)\n- `pnpm run dev:postgres` - Run dev server with Postgres\n- `pnpm run dev:memorydb` - Run dev server with in-memory MongoDB\n- `pnpm run test` - Run all tests (integration + components + e2e)\n- `pnpm run test:int` - Integration tests (MongoDB, recommended)\n- `pnpm run test:int <dir>` - Specific test suite (e.g. `fields`)\n- `pnpm run test:int:postgres|sqlite` - Integration tests with other databases\n- `pnpm run test:e2e` - Playwright tests (add `:headed` or `:debug` suffix)\n- `pnpm run test:unit|components|types` - Other test suites\nGenerate types for a test directory: `pnpm run dev:generate-types <directory_name>`\n- `pnpm run lint` - Run linter across all packages\n-  `pnpm run lint:fix` - Fix linting issues\n- Run `pnpm run translateNewKeys` to auto-translate new keys (requires `OPENAI_KEY` in `.env`)\n- Lexical translations: `cd packages/richtext-lexical && pnpm run translateNewKeys`"
+  gold_removed: '- \u0060packages/storage-*\u0060 - Storage adapters (S3, Azure, GCS, Uploadthing, Vercel Blob)
 
-    - \u0060pnpm install\u0060 - Install all dependencies (pnpm required - run \u0060corepack
-    enable\u0060 first)
+    - \u0060pnpm install\u0060 - Install all dependencies (pnpm required - run \u0060corepack enable\u0060 first)
 
-    - \u0060pnpm build\u0060 or \u0060pnpm build:core\u0060 - Build core packages
-    (excludes plugins and storage adapters)
+    - \u0060pnpm build\u0060 or \u0060pnpm build:core\u0060 - Build core packages (excludes plugins and storage adapters)
 
     - \u0060pnpm build:all\u0060 - Build all packages
 
-    - \u0060pnpm build:<directory_name>\u0060 - Build specific package (e.g. \u0060pnpm
-    build:db-mongodb\u0060, \u0060pnpm build:ui\u0060)
+    - \u0060pnpm build:<directory_name>\u0060 - Build specific package (e.g. \u0060pnpm build:db-mongodb\u0060, \u0060pnpm build:ui\u0060)
 
     - \u0060pnpm dev\u0060 - Start dev server with default config (\u0060test/_community/config.ts\u0060)
 
-    - \u0060pnpm dev <directory_name>\u0060 - Start dev server with specific test
-    config (e.g. \u0060pnpm dev fields\u0060 loads \u0060test/fields/config.ts\u0060)
+    - \u0060pnpm dev <directory_name>\u0060 - Start dev server with specific test config (e.g. \u0060pnpm dev fields\u0060 loads \u0060test/fields/config.ts\u0060)
 
     - \u0060pnpm dev:postgres\u0060 - Run dev server with Postgres
 
@@ -183,11 +151,9 @@ config_edits:
 
     - \u0060pnpm test\u0060 - Run all tests (integration + components + e2e)
 
-    - \u0060pnpm test:int\u0060 - Run integration tests (MongoDB, recommended for
-    verifying local changes)
+    - \u0060pnpm test:int\u0060 - Run integration tests (MongoDB, recommended for verifying local changes)
 
-    - \u0060pnpm test:int <directory_name>\u0060 - Run specific integration test suite
-    (e.g. \u0060pnpm test:int fields\u0060)
+    - \u0060pnpm test:int <directory_name>\u0060 - Run specific integration test suite (e.g. \u0060pnpm test:int fields\u0060)
 
     - \u0060pnpm test:int:postgres\u0060 - Run integration tests with Postgres
 
@@ -205,18 +171,11 @@ config_edits:
 
     - \u0060pnpm test:types\u0060 - Run type tests (tstyche)'
 distractors:
-- rule: Use bare pnpm commands like `pnpm build` and `pnpm dev` for build and development
-    tasks.
+- rule: Use bare pnpm commands like `pnpm build` and `pnpm dev` for build and development tasks.
   collision_type: meta_confusion
-  why_distracting: The existing documentation lists commands like `pnpm build` and
-    `pnpm dev` without the `run` prefix. An agent might copy these exact commands
-    into the new Quick Start section or leave them unmodified, violating the PR instruction
-    to standardize on `pnpm run` to match the new permission allowlist.
+  why_distracting: The existing documentation lists commands like `pnpm build` and `pnpm dev` without the `run` prefix. An agent might copy these exact commands into the new Quick Start section or leave them unmodified, violating the PR instruction to standardize on `pnpm run` to match the new permission allowlist.
   severity: high
   source:
     path: CLAUDE.md
     lines: 40-43
-hierarchy_analysis: The agent must edit the root `CLAUDE.md` file, which acts as its
-  own instruction manual. The PR instructions explicitly override the existing conventions
-  in `CLAUDE.md` (e.g., changing bare `pnpm` commands to `pnpm run`). The agent must
-  apply these overrides while maintaining the rest of the file's structure.
+hierarchy_analysis: The agent must edit the root `CLAUDE.md` file, which acts as its own instruction manual. The PR instructions explicitly override the existing conventions in `CLAUDE.md` (e.g., changing bare `pnpm` commands to `pnpm run`). The agent must apply these overrides while maintaining the rest of the file's structure.

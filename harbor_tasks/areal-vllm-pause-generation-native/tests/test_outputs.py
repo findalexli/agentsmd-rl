@@ -508,3 +508,28 @@ def test_endpoint_functions_typed():
                     untyped.append(f"{node.name}:{arg.arg}")
 
     assert not untyped, f"Parameters missing type annotations: {untyped}"
+
+# === CI-mined tests (taskforge.ci_check_miner) ===
+def test_ci_install_test_set_up_python():
+    """pass_to_pass | CI job 'Install test' → step 'Set up Python'"""
+    pytest.skip("Requires uv + heavy GPU deps (torch, vllm) not available in Docker env")
+
+def test_ci_install_test_verify_package_import():
+    """pass_to_pass | CI job 'Install test' → step 'Verify package import'"""
+    pytest.skip("Requires uv + heavy GPU deps (torch, vllm) not available in Docker env")
+
+def test_ci_install_test_verify_core_modules_are_importable():
+    """pass_to_pass | CI job 'Install test' → step 'Verify core modules are importable'"""
+    pytest.skip("Requires uv + heavy GPU deps (torch, vllm) not available in Docker env")
+
+def test_ci_install_test_build_wheel():
+    """pass_to_pass | CI job 'Install test' → step 'Build wheel'"""
+    pytest.skip("Requires uv + heavy GPU deps (torch, vllm) not available in Docker env")
+
+def test_ci_install_test_verify_wheel_artifact():
+    """pass_to_pass | CI job 'Install test' → step 'Verify wheel artifact'"""
+    pytest.skip("Requires wheel build from unavailable uv build step in Docker env")
+
+def test_ci_build_build_the_book():
+    """pass_to_pass | CI job 'build' → step 'Build the book'"""
+    pytest.skip("Requires build_all.sh + heavy deps not available in Docker env")

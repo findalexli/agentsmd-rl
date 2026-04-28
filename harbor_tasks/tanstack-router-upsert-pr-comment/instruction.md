@@ -41,7 +41,9 @@ Create a script that:
 - Use `node:fs/promises` for file operations
 - Use `node:path` for path resolution
 - Use `node:util` for argument parsing
-- Handle the GitHub API pagination pattern properly
+- Implement API requests in a `githubRequest` async helper function that builds proper URLs and sends JSON bodies
+- Implement comment listing with pagination in a `listIssueComments` async function that iterates through all pages of results
+- Handle the GitHub API pagination pattern properly (track page number, fetch per_page=100, break when fewer results are returned)
 - Include proper error handling with process.exit(1) on failure
 
 ## Files to Modify

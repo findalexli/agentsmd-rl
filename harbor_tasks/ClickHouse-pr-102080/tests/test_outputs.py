@@ -574,3 +574,4 @@ def test_repo_clickhouse_proc_py():
     )
     assert result.returncode == 0, \
         f"clickhouse_proc.py has syntax errors: {result.stderr}"
+

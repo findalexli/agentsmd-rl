@@ -119,56 +119,75 @@ checks:
     script presence, not full execution (which would take too long).
 
     '
+- id: test_ci_test_brew
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: test / '
+- id: test_ci_test_choco
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: test / '
+- id: test_ci_test_pandoc
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: test / '
+- id: test_ci_test_choco
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: test / '
+- id: test_ci_test_run_staticcheck
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: test / Run staticcheck'
+- id: test_ci_test_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: test / Check'
+- id: test_ci_test_test
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: test / Test'
+- id: test_ci_test_build_for_dragonfly
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: test / Build for dragonfly'
 rubric:
-- rule: Brevity is good. Don't write a novel in code, comments, or commit messages.
-    Debug utility comments for deprecation handling are acceptable.
+- rule: Brevity is good. Don't write a novel in code, comments, or commit messages. Debug utility comments for deprecation handling are acceptable.
   source:
     path: AGENTS.md
     lines: 1,9
     commit: fa8658111f9c79b3f6381273fe822854a759fe1a
-- rule: Assume maintainers are Go experts - don't explain the obvious with comments.
-    Temporary debug utilities (e.g., hdebug) with brief explanations are acceptable.
+- rule: Assume maintainers are Go experts - don't explain the obvious with comments. Temporary debug utilities (e.g., hdebug) with brief explanations are acceptable.
   source:
     path: AGENTS.md
     lines: 2-4
     commit: fa8658111f9c79b3f6381273fe822854a759fe1a
-- rule: In tests, use qt matchers (e.g., b.Assert(err, qt.ErrorMatches, ...)) instead
-    of raw if/t.Fatal checks.
+- rule: In tests, use qt matchers (e.g., b.Assert(err, qt.ErrorMatches, ...)) instead of raw if/t.Fatal checks.
   source:
     path: AGENTS.md
     lines: '8'
     commit: fa8658111f9c79b3f6381273fe822854a759fe1a
-- rule: In tests, always use the latest Hugo specification for layouts (e.g., layouts/page.html
-    not layouts/_default/single.html).
+- rule: In tests, always use the latest Hugo specification for layouts (e.g., layouts/page.html not layouts/_default/single.html).
   source:
     path: AGENTS.md
     lines: '9'
     commit: fa8658111f9c79b3f6381273fe822854a759fe1a
 distractors:
-- rule: In tests, use `qt` matchers (e.g. `b.Assert(err, qt.ErrorMatches, ...)`) instead
-    of raw `if`/`t.Fatal` checks.
+- rule: In tests, use `qt` matchers (e.g. `b.Assert(err, qt.ErrorMatches, ...)`) instead of raw `if`/`t.Fatal` checks.
   collision_type: scope_ambiguity
-  why_distracting: The agent is modifying multiple test files to fix deprecated tokens.
-    It might be tempted to refactor existing test assertions to use `qt` matchers
-    while it is editing these files, which would unnecessarily expand the scope of
-    the PR and create a noisy diff.
+  why_distracting: The agent is modifying multiple test files to fix deprecated tokens. It might be tempted to refactor existing test assertions to use `qt` matchers while it is editing these files, which would unnecessarily expand the scope of the PR and create a noisy diff.
   severity: medium
   source:
     path: AGENTS.md
     lines: 10-10
-- rule: 'If you need to add temporary debug printing, use `hdebug.Printf`.[^1] ...
-    [^1]: CI build fail if you forget to remove the debug printing.'
+- rule: 'If you need to add temporary debug printing, use `hdebug.Printf`.[^1] ... [^1]: CI build fail if you forget to remove the debug printing.'
   collision_type: would_cause_bug
-  why_distracting: The gold solution adds a commented-out `hdebug.Panicf` to help
-    debug deprecation errors in `common/hugo/hugo.go`. An agent might add uncommented
-    `hdebug.Printf` statements to debug the tests and forget to remove them, which
-    would fail the CI build as warned by the footnote.
+  why_distracting: The gold solution adds a commented-out `hdebug.Panicf` to help debug deprecation errors in `common/hugo/hugo.go`. An agent might add uncommented `hdebug.Printf` statements to debug the tests and forget to remove them, which would fail the CI build as warned by the footnote.
   severity: high
   source:
     path: AGENTS.md
     lines: 6-17
-hierarchy_analysis: The configuration is flat, with `CLAUDE.md` simply including `AGENTS.md`.
-  The rules in `AGENTS.md` apply globally across the repository.
+hierarchy_analysis: The configuration is flat, with `CLAUDE.md` simply including `AGENTS.md`. The rules in `AGENTS.md` apply globally across the repository.
 version: '2.0'
 source:
   repo: gohugoio/hugo

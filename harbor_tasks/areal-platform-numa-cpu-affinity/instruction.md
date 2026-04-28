@@ -27,3 +27,7 @@ The platform abstraction layer (`areal/infra/platforms/platform.py` and its subc
 - The CUDA implementation should use `pynvml` (the `nvidia-ml-py` package) for NVML access.
 - Use `os.sched_getaffinity(0)` to verify the affinity was set and log the number of bound CPU cores.
 - Ensure NVML is properly initialized and shut down (use a `finally` block).
+
+## Code Style Requirements
+
+This repository uses `ruff` for Python linting and formatting. All modified files must pass `ruff check` and `ruff format --check` without errors.

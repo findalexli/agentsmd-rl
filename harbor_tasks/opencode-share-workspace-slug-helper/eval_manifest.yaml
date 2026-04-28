@@ -17,6 +17,10 @@ checks:
   type: fail_to_pass
   origin: pr_diff
   description: actions.ts exports slugFromUrl function with correct regex
+- id: slug_from_url_runtime_behavior
+  type: fail_to_pass
+  origin: pr_diff
+  description: slugFromUrl correctly extracts workspace slugs from URLs at runtime
 - id: actions_has_wait_slug
   type: fail_to_pass
   origin: pr_diff
@@ -82,62 +86,41 @@ checks:
   origin: repo_tests
   description: Repo CI - Prettier formatting check passes on all modified spec files
 rubric:
-- rule: E2E spec files must use shared helper functions from '../actions' rather than
-    defining duplicate local helpers
+- rule: E2E spec files must use shared helper functions from '../actions' rather than defining duplicate local helpers
   source:
     path: packages/app/e2e/AGENTS.md
     lines: '171'
   reference: When validating routing, use shared helpers from `../actions`.
-- rule: Document new helper functions in the E2E testing guide and place reusable
-    actions in `actions.ts`.
+- rule: Document new helper functions in the E2E testing guide and place reusable actions in `actions.ts`.
   source:
     path: packages/app/e2e/AGENTS.md
     lines: 40-50
-  reference: The gold solution adds `slugFromUrl` and `waitSlug` to `actions.ts` and
-    documents them in `packages/app/e2e/AGENTS.md` under the Helper Functions section.
+  reference: The gold solution adds `slugFromUrl` and `waitSlug` to `actions.ts` and documents them in `packages/app/e2e/AGENTS.md` under the Helper Functions section.
   category: documentation
 - rule: 'Helper Functions: Actions (`actions.ts`): Reusable action helpers'
   source:
     path: packages/app/e2e/AGENTS.md
     lines: 36-46
-  reference: The gold solution moves the `slugFromUrl` and `waitSlug` functions into
-    `packages/app/e2e/actions.ts`, following the architectural guideline that reusable
-    action helpers belong in this file.
+  reference: The gold solution moves the `slugFromUrl` and `waitSlug` functions into `packages/app/e2e/actions.ts`, following the architectural guideline that reusable action helpers belong in this file.
   category: architecture
 config_edits:
 - path: packages/app/e2e/AGENTS.md
   tier: 1
-  gold_added: '- `sessionIDFromUrl(url)` - Read session ID from URL\n\n    - `slugFromUrl(url)`
-    - Read workspace slug from URL\n\n    - `waitSlug(page, skip?)` - Wait for resolved
-    workspace slug\n\n    4. When validating routing, use shared helpers from `../actions`.
-    Workspace URL\n    slugs can be canonicalized on Windows, so assert against canonical
-    or resolved\n    workspace slugs.\n\n    5. Clean up any created resources\n\n    6.
-    Use specific selectors (avoid CSS classes)\n\n    7. Test one feature per test
-    file'
-  gold_removed: 4. Clean up any created resources\n\n    5. Use specific selectors
-    (avoid CSS classes)\n\n    6. Test one feature per test file
+  gold_added: '- `sessionIDFromUrl(url)` - Read session ID from URL\n\n    - `slugFromUrl(url)` - Read workspace slug from URL\n\n    - `waitSlug(page, skip?)` - Wait for resolved workspace slug\n\n    4. When validating routing, use shared helpers from `../actions`. Workspace URL\n    slugs can be canonicalized on Windows, so assert against canonical or resolved\n    workspace slugs.\n\n    5. Clean up any created resources\n\n    6. Use specific selectors (avoid CSS classes)\n\n    7. Test one feature per test file'
+  gold_removed: 4. Clean up any created resources\n\n    5. Use specific selectors (avoid CSS classes)\n\n    6. Test one feature per test file
 distractors:
 - rule: Prefer `const` over `let`. Use ternaries or early returns instead of reassignment.
   collision_type: would_cause_bug
-  why_distracting: The `waitSlug` helper must track state across multiple polling
-    iterations to ensure the slug has settled. This requires using `let` and reassigning
-    `prev` and `next` variables. Avoiding reassignment would make it impossible to
-    track the previous value across `expect.poll` calls.
+  why_distracting: The `waitSlug` helper must track state across multiple polling iterations to ensure the slug has settled. This requires using `let` and reassigning `prev` and `next` variables. Avoiding reassignment would make it impossible to track the previous value across `expect.poll` calls.
   severity: high
   source:
     path: AGENTS.md
     lines: 68-78
 - rule: Use single word names by default for new locals, params, and helper functions.
   collision_type: rule_conflict
-  why_distracting: The task explicitly requires creating helper functions named `slugFromUrl`
-    and `waitSlug`. An agent strictly following the single-word naming rule might
-    try to name them `slug` and `wait`, which would violate the explicit task instructions.
+  why_distracting: The task explicitly requires creating helper functions named `slugFromUrl` and `waitSlug`. An agent strictly following the single-word naming rule might try to name them `slug` and `wait`, which would violate the explicit task instructions.
   severity: medium
   source:
     path: AGENTS.md
     lines: 28-35
-hierarchy_analysis: The task involves editing `packages/app/e2e/AGENTS.md`, which
-  is a Level 3 config file. This means the agent is modifying its own instructions
-  for future tasks. The Level 0 config enforces strict rules on naming and variable
-  reassignment, but the specific requirements of the E2E polling logic (tracking state
-  across polls) and the explicit task instructions override these general style rules.
+hierarchy_analysis: The task involves editing `packages/app/e2e/AGENTS.md`, which is a Level 3 config file. This means the agent is modifying its own instructions for future tasks. The Level 0 config enforces strict rules on naming and variable reassignment, but the specific requirements of the E2E polling logic (tracking state across polls) and the explicit task instructions override these general style rules.

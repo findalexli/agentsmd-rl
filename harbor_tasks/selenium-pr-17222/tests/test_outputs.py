@@ -91,9 +91,6 @@ def test_docker_session_stop_uses_try_finally():
     """DockerSession.stop() uses try-finally for exception safety (fail_to_pass)."""
     source = (REPO / "java/src/org/openqa/selenium/grid/node/docker/DockerSession.java").read_text()
 
-    # Find the stop() method and check for try-finally pattern
-    # The pattern should be: public void stop() { try { ... } finally { container.stop... } }
-
     # Look for the method signature followed by try block
     stop_with_try_pattern = r'public\s+void\s+stop\s*\(\s*\)\s*\{\s*try\s*\{'
     assert re.search(stop_with_try_pattern, source, re.DOTALL), "stop() method should have try block"
@@ -184,7 +181,6 @@ def test_docker_session_uses_read_fully_not_skip_bytes():
 
 def test_java_source_compiles_syntax_check():
     """Java source files have valid syntax (pass_to_pass)."""
-    # Use javac to check syntax of modified files
     files = [
         "java/src/org/openqa/selenium/grid/node/docker/DockerSession.java",
         "java/src/org/openqa/selenium/grid/node/docker/DockerOptions.java",
@@ -197,11 +193,25 @@ def test_java_source_compiles_syntax_check():
         assert path.exists(), f"Source file missing: {f}"
         content = path.read_text()
 
-        # Basic syntax checks - matching braces, semicolons
+        # Basic structural integrity checks
         assert content.count('{') == content.count('}'), f"Unbalanced braces in {f}"
+        assert content.count('(') == content.count(')'), f"Unbalanced parentheses in {f}"
 
-        # Check for obvious syntax errors
-        assert "public class" in content or "class" in content, f"No class definition in {f}"
+        # Must have a package declaration
+        assert "package org.openqa.selenium" in content, f"Missing package declaration in {f}"
+
+        # Must have a class, interface, or enum definition
+        import_keywords = ("public class ", "public interface ", "public enum ",
+                           "class ", "interface ", "enum ")
+        assert any(kw in content for kw in import_keywords), f"No class/interface/enum definition in {f}"
+
+        # Check no unclosed string literals on any non-comment line
+        for i, line in enumerate(content.split('\n'), 1):
+            stripped = line.strip()
+            if stripped.startswith('//') or stripped.startswith('*') or stripped.startswith('/*'):
+                continue
+            dq_count = stripped.count('"') - stripped.count('\\"')
+            assert dq_count % 2 == 0, f"Unbalanced double quotes on line {i} in {f}"
 
 
 def test_docker_session_preserves_existing_fields():

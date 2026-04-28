@@ -279,24 +279,111 @@ describe(`Cache buster one-shot behavior`, () => {
 
     def test_behavioral_cache_buster_execution(self):
         """
-        Behavioral test: Verify the cache-busting mechanism works correctly
-        by actually executing the TypeScript code via vitest.
+        Behavioral test: End-to-end exercise of the full 409 recovery flow
+        with missing handle header, verifying multiple invariants together.
 
-        This test runs the actual code to verify that a cache-busting function
-        produces unique values.
+        This test runs actual TypeScript code to verify:
+        - No '-next' suffix appears in any URL after 409 handling
+        - The code recovers and continues streaming after the 409
+        - Warns about missing handle header (proxy/CDN issue)
         """
-        # Run the unit tests via vitest which actually executes the TypeScript
-        result = subprocess.run(
-            ["pnpm", "exec", "vitest", "run", "--config", "vitest.unit.config.ts"],
-            cwd=CLIENT_DIR,
-            capture_output=True,
-            text=True,
-            timeout=180,
-        )
+        test_code = """
+import { describe, expect, it, vi } from 'vitest'
+import { ShapeStream, FetchError } from '../src'
 
-        # Check that vitest ran successfully (which exercises the actual code)
-        err_msg = "Vitest unit tests failed. Check that the code compiles and tests pass."
-        assert result.returncode == 0, err_msg
+describe(`End-to-end 409 recovery without handle`, () => {
+  it(`recovers from 409 with cache buster and continues streaming`, async () => {
+    const shapeUrl = `https://example.com/v1/shape`
+    const aborter = new AbortController()
+    const capturedUrls: string[] = []
+    const warnings: string[] = []
+    let requestCount = 0
+
+    // Spy on console.warn to verify warning emission in practice
+    vi.spyOn(console, 'warn').mockImplementation((msg: string) => {
+      warnings.push(msg)
+    })
+
+    const fetchMock = (input: string | URL | Request) => {
+      const url = input instanceof Request ? input.url : input.toString()
+      capturedUrls.push(url)
+      requestCount++
+
+      if (requestCount <= 2) {
+        // First two requests: 409 without handle header (simulates proxy stripping)
+        throw new FetchError(
+          409,
+          JSON.stringify([{ headers: { control: `must-refetch` } }]),
+          [{ headers: { control: `must-refetch` } }],
+          {},
+          url
+        )
+      }
+
+      if (requestCount >= 8) aborter.abort()
+      return Promise.resolve(
+        new Response(JSON.stringify([{ headers: { control: `up-to-date` } }]), {
+          status: 200,
+          headers: {
+            'content-type': `application/json`,
+            'electric-handle': `recovered-handle-xyz`,
+            'electric-offset': `0_0`,
+            'electric-schema': `{}`,
+            'electric-up-to-date': `true`,
+          },
+        })
+      )
+    }
+
+    const stream = new ShapeStream({
+      url: shapeUrl,
+      params: { table: `items` },
+      signal: aborter.signal,
+      fetchClient: fetchMock,
+      subscribe: false,
+    })
+
+    stream.subscribe(() => {})
+
+    await new Promise((resolve) => setTimeout(resolve, 200))
+
+    // Invariant 1: All URLs must be free of the '-next' suffix
+    capturedUrls.forEach((u) => {
+      expect(u).not.toContain(`-next`)
+    })
+
+    // Invariant 2: At least 3 requests were made (initial + retries + recovery)
+    expect(capturedUrls.length).toBeGreaterThanOrEqual(3)
+
+    // Invariant 3: The retry URLs after 409 must be unique (different cache busters)
+    if (capturedUrls.length >= 2) {
+      const retryUrl1 = new URL(capturedUrls[1])
+      const retryUrl2 = new URL(capturedUrls[2])
+      const params1 = Array.from(retryUrl1.searchParams.entries()).sort()
+      const params2 = Array.from(retryUrl2.searchParams.entries()).sort()
+      expect(params1).not.toEqual(params2)
+    }
+
+    // Invariant 4: A warning about missing handle header was emitted
+    const headerWarning = warnings.find(w =>
+      w.includes('Received 409 response without a shape handle header')
+    )
+    expect(headerWarning).toBeDefined()
+
+    // Invariant 5: The proxy/CDN warning was emitted
+    const proxyWarning = warnings.find(w =>
+      w.includes('proxy or CDN stripping required headers')
+    )
+    expect(proxyWarning).toBeDefined()
+
+    vi.restoreAllMocks()
+  })
+})
+"""
+        result = _run_ts_behavioral_test(test_code)
+        assert result.returncode == 0, (
+            f"Behavioral test failed:\n{result.stdout}\n{result.stderr}"
+        )
 
 
 class TestRepoIntegration:
@@ -391,3 +478,4 @@ class TestRepoIntegration:
         )
 
         assert result.returncode == 0, "ESLint stylecheck failed"
+

@@ -7,19 +7,19 @@ source:
 task:
   kind: code_fix
 checks:
-- id: test_pad_string_uses_padded_buffer
+- id: test_pad_string_member_not_string_type
   type: fail_to_pass
   origin: pr_diff
-  description: Pad string storage uses PaddedPODArray instead of String for memory-safe read padding
-- id: test_write_slice_compatible_with_buffer
+  description: Pad string member in PaddingChars is not declared as String type
+- id: test_no_reinterpret_cast_on_pad_data
   type: fail_to_pass
   origin: pr_diff
   description: writeSlice calls use pad_string.data() directly without reinterpret_cast
-- id: test_uses_standard_argument_validation
+- id: test_no_manual_argument_count_check
   type: fail_to_pass
   origin: pr_diff
-  description: Uses validateFunctionArguments helper instead of manual type checks
-- id: test_error_message_reflects_accepted_types
+  description: Argument validation uses standard helpers instead of manual NUMBER_OF_ARGUMENTS_DOESNT_MATCH
+- id: test_error_message_lists_both_accepted_types
   type: fail_to_pass
   origin: pr_diff
   description: Error message mentions both String and FixedString as accepted types

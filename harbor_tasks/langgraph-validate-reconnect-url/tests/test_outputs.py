@@ -359,3 +359,13 @@ def test_no_double_backticks():
 if __name__ == "__main__":
     import pytest
     sys.exit(pytest.main([__file__, "-v"]))
+
+# === CI-mined tests (taskforge.ci_check_miner) ===
+def test_ci_build_build_project_for_distribution():
+    """pass_to_pass | CI job 'build' → step 'Build project for distribution'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'uv build'], cwd=os.path.join(REPO, '${{ inputs.working-directory }}'),
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Build project for distribution' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")

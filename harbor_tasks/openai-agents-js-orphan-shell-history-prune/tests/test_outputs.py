@@ -44,6 +44,7 @@ import type {
   ModelResponse,
 } from '../src';
 
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 interface TurnResponse extends ModelResponse {}
 
 class TrackingModel implements Model {
@@ -178,6 +179,10 @@ def _write_oracle() -> None:
     ORACLE_PATH.write_text(ORACLE_TS)
 
 
+def _cleanup_oracle() -> None:
+    ORACLE_PATH.unlink(missing_ok=True)
+
+
 def _run_vitest(test_filter: str, test_path: str = f"test/{ORACLE_NAME}") -> subprocess.CompletedProcess:
     """Run vitest against a single file, optionally filtering by test name."""
     return subprocess.run(
@@ -213,23 +218,32 @@ def _assert_passed(r: subprocess.CompletedProcess, expected_test_name: str) -> N
 def test_get_turn_input_drops_orphan_shell_call():
     """f2p: getTurnInput must drop orphan hosted shell calls from generated items."""
     _write_oracle()
-    r = _run_vitest("getTurnInput_drops_orphan_shell")
-    _assert_passed(r, "getTurnInput_drops_orphan_shell")
+    try:
+        r = _run_vitest("getTurnInput_drops_orphan_shell")
+        _assert_passed(r, "getTurnInput_drops_orphan_shell")
+    finally:
+        _cleanup_oracle()
 
 
 def test_run_state_history_drops_orphan_shell_call():
     """f2p: RunState.history must filter out orphan hosted shell calls."""
     _write_oracle()
-    r = _run_vitest("runState_history_drops_orphan_shell")
-    _assert_passed(r, "runState_history_drops_orphan_shell")
+    try:
+        r = _run_vitest("runState_history_drops_orphan_shell")
+        _assert_passed(r, "runState_history_drops_orphan_shell")
+    finally:
+        _cleanup_oracle()
 
 
 def test_continuation_does_not_reintroduce_orphan_shell_call():
     """f2p: continuing a run from result.history / state.history must not
     re-send orphan hosted shell calls to the model."""
     _write_oracle()
-    r = _run_vitest("continuation_does_not_reintroduce_orphan_shell")
-    _assert_passed(r, "continuation_does_not_reintroduce_orphan_shell")
+    try:
+        r = _run_vitest("continuation_does_not_reintroduce_orphan_shell")
+        _assert_passed(r, "continuation_does_not_reintroduce_orphan_shell")
+    finally:
+        _cleanup_oracle()
 
 
 # ───────────────────────── Pass-to-pass (regression) ──────────────────────
@@ -311,3 +325,58 @@ def test_agents_core_lint_clean():
         f"eslint failed with code {r.returncode}:\n"
         f"---stdout---\n{r.stdout[-3000:]}\n---stderr---\n{r.stderr[-2000:]}"
     )
+
+# === CI-mined tests (taskforge.ci_check_miner) ===
+def test_ci_test_build_all_packages():
+    """pass_to_pass | CI job 'test' → step 'Build all packages'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'pnpm build:ci'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Build all packages' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_test_check_generated_declarations():
+    """pass_to_pass | CI job 'test' → step 'Check generated declarations'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'pnpm -r -F "@openai/*" dist:check'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Check generated declarations' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_test_run_linter():
+    """pass_to_pass | CI job 'test' → step 'Run linter'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'pnpm lint'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Run linter' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_test_type_check_docs_scripts():
+    """pass_to_pass | CI job 'test' → step 'Type-check docs scripts'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'pnpm docs:scripts:check'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Type-check docs scripts' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_test_compile_examples():
+    """pass_to_pass | CI job 'test' → step 'Compile examples'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'pnpm -r build-check'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Compile examples' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_test_run_tests():
+    """pass_to_pass | CI job 'test' → step 'Run tests'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'pnpm test'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Run tests' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")

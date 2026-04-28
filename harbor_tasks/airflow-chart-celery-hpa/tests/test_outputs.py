@@ -1,5 +1,6 @@
 """Test outputs for Airflow Helm chart workers.celery.hpa feature."""
 
+import json
 import subprocess
 import sys
 import jmespath
@@ -391,10 +392,6 @@ def test_old_hpa_schema_has_deprecation_note():
         "properties.workers.properties.hpa.description", schema
     )
     assert "deprecated" in hpa_desc.lower(), "Old hpa should have deprecation note"
-
-
-# Need to import json here
-import json
 
 
 if __name__ == "__main__":

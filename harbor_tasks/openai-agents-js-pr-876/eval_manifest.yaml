@@ -1,0 +1,102 @@
+version: '2.0'
+source:
+  repo: openai/openai-agents-js
+  pr: 876
+  base_commit: 98e47658f70f3ba60dcb37cff3e36b7c4a41e302
+  merge_commit: 4feaaae2ce7e22d07628cad6c9f6da28f0618e87
+task:
+  kind: code_fix
+checks:
+- id: test_gpt51_default_reasoning_none
+  type: fail_to_pass
+  origin: pr_diff
+  description: getDefaultModelSettings('gpt-5.1') returns reasoning effort 'none'
+- id: test_gpt52_default_reasoning_none
+  type: fail_to_pass
+  origin: pr_diff
+  description: getDefaultModelSettings('gpt-5.2') returns reasoning effort 'none'
+- id: test_xhigh_reasoning_effort_valid
+  type: fail_to_pass
+  origin: pr_diff
+  description: '''xhigh'' is accepted as a ModelSettingsReasoningEffort value'
+- id: test_gpt52_codex_still_low_effort
+  type: pass_to_pass
+  origin: static
+  description: getDefaultModelSettings('gpt-5.2-codex') retains effort 'low'
+- id: test_repo_build_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: TypeScript build check passes for agents-core
+- id: test_repo_existing_vitest
+  type: pass_to_pass
+  origin: repo_tests
+  description: Existing defaultModel vitest tests pass
+- id: test_repo_lint
+  type: pass_to_pass
+  origin: repo_tests
+  description: ESLint passes on the changed source files
+- id: test_ci_test_build_all_packages
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: test / Build all packages'
+- id: test_ci_test_check_generated_declarations
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: test / Check generated declarations'
+- id: test_ci_test_run_linter
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: test / Run linter'
+- id: test_ci_test_type_check_docs_scripts
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: test / Type-check docs scripts'
+- id: test_ci_test_compile_examples
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: test / Compile examples'
+- id: test_ci_test_run_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: test / Run tests'
+- id: test_pr_added_returns_reasoning_defaults_for_GPT_5_2_models
+  type: pass_to_pass
+  origin: pr_diff
+  description: PR added test 'returns reasoning defaults for GPT-5.2 models' in packages/agents-core/test/defaultModel.test.ts
+- id: test_pr_added_returns_reasoning_defaults_for_GPT_5_2_codex_mod
+  type: pass_to_pass
+  origin: pr_diff
+  description: PR added test 'returns reasoning defaults for GPT-5.2 codex models' in packages/agents-core/test/defaultModel.test.ts
+- id: test_pr_added_returns_reasoning_defaults_for_GPT_5_1_models
+  type: pass_to_pass
+  origin: pr_diff
+  description: PR added test 'returns reasoning defaults for GPT-5.1 models' in packages/agents-core/test/defaultModel.test.ts
+- id: test_pr_added_returns_reasoning_defaults_for_other_GPT_5_model
+  type: pass_to_pass
+  origin: pr_diff
+  description: PR added test 'returns reasoning defaults for other GPT-5 models' in packages/agents-core/test/defaultModel.test.ts
+rubric:
+- rule: Comments must end with a period.
+  source:
+    path: AGENTS.md
+    lines: '95'
+    commit: 98e47658f70f3ba60dcb37cff3e36b7c4a41e302
+  evidence: Gold patch updates comments to end with a period.
+  category: style
+  verification: programmatic
+- rule: Add or update unit tests for any code change unless it is truly infeasible; if something prevents adding tests, explain why in the PR.
+  source:
+    path: AGENTS.md
+    lines: '74'
+    commit: 98e47658f70f3ba60dcb37cff3e36b7c4a41e302
+  evidence: Gold patch adds new test cases for gpt-5.1 and gpt-5.2 default model settings.
+  category: testing
+  verification: llm_judge
+- rule: Follow ESLint rules (eslint.config.mjs), no unused imports, adhere to Prettier.
+  source:
+    path: AGENTS.md
+    lines: '138'
+    commit: 98e47658f70f3ba60dcb37cff3e36b7c4a41e302
+  evidence: Gold patch passes ESLint on the changed files.
+  category: style
+  verification: programmatic

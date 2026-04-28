@@ -14,20 +14,17 @@ checks:
   origin: pr_diff
   description: WandBConfig with invalid mode raises ValueError with descriptive message
 - id: wandb_valid_modes_accepted
-  type: fail_to_pass
+  type: pass_to_pass
   origin: pr_diff
-  description: WandBConfig with valid modes (online, offline, disabled, shared) creates
-    config without error
+  description: WandBConfig with valid modes (online, offline, disabled, shared) creates config without error
 - id: swanlab_invalid_mode_raises
   type: fail_to_pass
   origin: pr_diff
-  description: SwanlabConfig with invalid mode raises ValueError with descriptive
-    message
+  description: SwanlabConfig with invalid mode raises ValueError with descriptive message
 - id: swanlab_valid_modes_accepted
-  type: fail_to_pass
+  type: pass_to_pass
   origin: pr_diff
-  description: SwanlabConfig with valid modes (cloud, local, disabled, offline) creates
-    config without error
+  description: SwanlabConfig with valid modes (cloud, local, disabled, offline) creates config without error
 - id: wandb_default_mode
   type: pass_to_pass
   origin: pr_diff
@@ -37,11 +34,11 @@ checks:
   origin: pr_diff
   description: SwanlabConfig default mode is 'disabled'
 - id: wandb_post_init_validates
-  type: pass_to_pass
+  type: fail_to_pass
   origin: pr_diff
   description: WandBConfig has __post_init__ with validation logic (not a stub)
 - id: swanlab_post_init_validates
-  type: pass_to_pass
+  type: fail_to_pass
   origin: pr_diff
   description: SwanlabConfig has __post_init__ with validation logic (not a stub)
 - id: no_wildcard_imports
@@ -75,8 +72,7 @@ checks:
 - id: test_repo_precommit_hooks
   type: pass_to_pass
   origin: repo_tests
-  description: Repo pre-commit hooks pass (ruff, yaml check, trailing whitespace,
-    etc.)
+  description: Repo pre-commit hooks pass (ruff, yaml check, trailing whitespace, etc.)
 - id: test_repo_yaml_valid
   type: pass_to_pass
   origin: repo_tests
@@ -85,33 +81,50 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: No trailing whitespace in source files (pre-commit check)
+- id: test_ci_install_test_set_up_python
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: Install test / Set up Python'
+- id: test_ci_install_test_verify_package_import
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: Install test / Verify package import'
+- id: test_ci_install_test_verify_core_modules_are_importable
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: Install test / Verify core modules are importable'
+- id: test_ci_install_test_build_wheel
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: Install test / Build wheel'
+- id: test_ci_install_test_verify_wheel_artifact
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: Install test / Verify wheel artifact'
+- id: test_ci_build_build_the_book
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: build / Build the book'
 rubric:
-- rule: Implement __post_init__ method with mode validation that raises ValueError
-    for invalid modes
+- rule: Implement __post_init__ method with mode validation that raises ValueError for invalid modes
   source:
     path: areal/api/cli_args.py
-  reference: WandBConfig and SwanlabConfig have __post_init__ validating mode against
-    allowed values
+  reference: WandBConfig and SwanlabConfig have __post_init__ validating mode against allowed values
 - rule: Error messages must include the invalid mode and list all valid options
   source:
     path: areal/api/cli_args.py
-  reference: ValueError messages contain 'Invalid wandb/swanlab mode' and enumerate
-    valid_modes
+  reference: ValueError messages contain 'Invalid wandb/swanlab mode' and enumerate valid_modes
 - rule: Follow existing code patterns in the same module
   source:
     path: CLAUDE.md
     lines: 47-47
-  evidence: The gold solution uses `field(default=..., metadata=...)` for the `mode`
-    fields, matching the existing pattern for CLI argument dataclasses in the module,
-    rather than just adding a simple type hint.
+  evidence: The gold solution uses `field(default=..., metadata=...)` for the `mode` fields, matching the existing pattern for CLI argument dataclasses in the module, rather than just adding a simple type hint.
   category: style
 - rule: Follow existing code patterns in the same module.
   source:
     path: AGENTS.md
     lines: '32'
-  evidence: 'The gold solution redefines the `mode` attribute using `dataclasses.field`
-    with `metadata={help: ..., choices: ...}`, adhering to the established pattern
-    for CLI argument dataclasses in the module'
+  evidence: 'The gold solution redefines the `mode` attribute using `dataclasses.field` with `metadata={help: ..., choices: ...}`, adhering to the established pattern for CLI argument dataclasses in the module'
   category: style
 - rule: Use `__post_init__` for validation and raise `ValueError` with clear message
   source:
@@ -120,9 +133,7 @@ rubric:
   source_text: '- Use `__post_init__` for validation
 
     - Raise `ValueError` with clear message:'
-  evidence: The diff adds `__post_init__` methods to both `WandBConfig` and `SwanlabConfig`
-    to validate the `mode` field, raising a `ValueError` with a descriptive message
-    if an invalid mode is provided.
+  evidence: The diff adds `__post_init__` methods to both `WandBConfig` and `SwanlabConfig` to validate the `mode` field, raising a `ValueError` with a descriptive message if an invalid mode is provided.
   category: Validation
   verification: llm_judge
 - rule: Fields exposed to CLI must have clear `help` in metadata
@@ -130,29 +141,20 @@ rubric:
     path: .claude/rules/api-config.md
     lines: 54-54
   source_text: '- Fields exposed to CLI must have clear `help` in metadata'
-  evidence: The diff updates the `mode` fields in `WandBConfig` and `SwanlabConfig`
-    to use `dataclasses.field` with a `metadata` dictionary that includes a clear
-    `help` string describing the tracking mode.
+  evidence: The diff updates the `mode` fields in `WandBConfig` and `SwanlabConfig` to use `dataclasses.field` with a `metadata` dictionary that includes a clear `help` string describing the tracking mode.
   category: CLI Integration
   verification: llm_judge
 distractors:
 - rule: 'Ask first before: Modifying config structures in areal/api/cli_args.py.'
   collision_type: meta_confusion
-  why_distracting: The repository instructions explicitly forbid modifying config
-    structures in `areal/api/cli_args.py` without asking first. However, the user
-    prompt explicitly commands the agent to modify this exact file to add validation.
-    An overly compliant agent might halt and ask for permission, failing to complete
-    the task.
+  why_distracting: The repository instructions explicitly forbid modifying config structures in `areal/api/cli_args.py` without asking first. However, the user prompt explicitly commands the agent to modify this exact file to add validation. An overly compliant agent might halt and ask for permission, failing to complete the task.
   severity: high
   source:
     path: AGENTS.md
     lines: 35-36
-- rule: 'Logging: areal.utils.logging.getLogger(name) with PascalCase names -- never
-    print or logging.__name__.'
+- rule: 'Logging: areal.utils.logging.getLogger(name) with PascalCase names -- never print or logging.__name__.'
   collision_type: rule_conflict
-  why_distracting: The agent might be tempted to use the repository's custom logger
-    (`areal.utils.logging.getLogger`) to report the invalid mode, but the prompt explicitly
-    requires raising a `ValueError` to fail fast.
+  why_distracting: The agent might be tempted to use the repository's custom logger (`areal.utils.logging.getLogger`) to report the invalid mode, but the prompt explicitly requires raising a `ValueError` to fail fast.
   severity: medium
   source:
     path: AGENTS.md
@@ -163,25 +165,14 @@ distractors:
     lines: 54-54
   source_text: '- Use `monkeypatch` for environment variables'
   collision_type: scope_ambiguity
-  why_distracting: The code uses `os.getenv("SWANLAB_API_KEY")` to read an environment
-    variable. An AI might see the rule about using `monkeypatch` for environment variables
-    and try to apply it here, but that rule is strictly for test files (as defined
-    by the paths in testing.md), not for the actual application code. Using `monkeypatch`
-    in `cli_args.py` would cause a bug.
+  why_distracting: The code uses `os.getenv("SWANLAB_API_KEY")` to read an environment variable. An AI might see the rule about using `monkeypatch` for environment variables and try to apply it here, but that rule is strictly for test files (as defined by the paths in testing.md), not for the actual application code. Using `monkeypatch` in `cli_args.py` would cause a bug.
   severity: high
 - rule: Read the model's `config.json` to identify model_type
   source:
     path: .claude/skills/add-archon-model/SKILL.md
     lines: 35-37
-  source_text: "1. Read the model's `config.json` (via `AutoConfig.from_pretrained`)\
-    \ to identify:\n\n   - `model_type` string (this is the key used for registry\
-    \ lookup)"
+  source_text: "1. Read the model's `config.json` (via `AutoConfig.from_pretrained`) to identify:\n\n   - `model_type` string (this is the key used for registry lookup)"
   collision_type: meta_confusion
-  why_distracting: The diff modifies `WandBConfig` and `SwanlabConfig`, which both
-    contain a `config` attribute. An AI might confuse these CLI/tracking configurations
-    with the HuggingFace model configurations mentioned in the skill, incorrectly
-    attempting to integrate `AutoConfig.from_pretrained` or `config.json` logic here.
+  why_distracting: The diff modifies `WandBConfig` and `SwanlabConfig`, which both contain a `config` attribute. An AI might confuse these CLI/tracking configurations with the HuggingFace model configurations mentioned in the skill, incorrectly attempting to integrate `AutoConfig.from_pretrained` or `config.json` logic here.
   severity: low
-hierarchy_analysis: The agent must recognize that the specific user instruction to
-  modify `areal/api/cli_args.py` overrides the general repository constraint in `AGENTS.md`
-  and `CLAUDE.md` that requires asking for permission before modifying config structures.
+hierarchy_analysis: The agent must recognize that the specific user instruction to modify `areal/api/cli_args.py` overrides the general repository constraint in `AGENTS.md` and `CLAUDE.md` that requires asking for permission before modifying config structures.

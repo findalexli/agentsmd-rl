@@ -79,11 +79,11 @@ reported, even if its size exceeds the threshold.
 ### 5. Surfacing existing violations
 
 After your check is in place, run it against the repository as it
-currently is. If it reports any file that is not in the whitelist, that
-file represents the kind of bloat the check is meant to prevent. Where
-the file is genuinely unused (its only references are in dead/commented
-code), remove it from git so the check passes cleanly. Do not edit the
-whitelist to suppress a real violation.
+currently is. The repo already contains an unused 14 MB test file named
+`zookeeper_log.parquet` and possibly other large files — your check will
+surface them. If a flagged file is genuinely unused (its only references
+are in dead/commented code), remove it from git so the check passes
+cleanly. Do not edit the whitelist to suppress a real violation.
 
 ## Constraints
 

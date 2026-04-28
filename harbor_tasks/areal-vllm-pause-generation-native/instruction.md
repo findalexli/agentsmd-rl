@@ -68,8 +68,17 @@ The following Pydantic request model classes must remain defined:
 2. All `setattr(EngineCore, ...)` calls are removed
 3. The standalone `abort_all_reqs()` function is removed
 4. The imports of `EngineCore`, `EngineCoreOutput`, `EngineCoreOutputs`, `FinishReason`, `RequestStatus`, and `LoRARequestStates` are removed
-5. The weight update endpoints properly pause generation before performing RPC calls and resume generation afterward (even when the RPC fails)
-6. The `areal_pause_generation` endpoint uses `llm.pause_generation(wait_for_inflight_requests=False, clear_cache=True)` instead of calling `llm.engine_core.call_utility_async("abort_all_reqs")`
-7. The `areal_continue_generation` endpoint calls `llm.resume_generation()` in addition to setting the event flag
+5. The weight update endpoints properly pause generation before performing RPC calls and resume generation afterward (even when the RPC fails). The pause must not wait for in-flight requests to finish and must clear the prefix cache.
+6. The `areal_pause_generation` endpoint uses the engine client's native pause capability instead of routing through `engine_core.call_utility_async`
+7. The `areal_continue_generation` endpoint invokes the engine client's native resume method in addition to setting the event flag
 8. All existing API route paths and Pydantic request model classes are preserved
 9. The modified file passes linting, type checking, and formatting requirements
+
+## Code Style Requirements
+
+- Python code must pass `ruff check` (linting and import sorting via `ruff check --select I`)
+- Python code must pass `ruff format --check` (code formatting)
+- No trailing whitespace anywhere in the file
+- File must end with exactly one newline character
+- No wildcard imports (`from x import *`)
+- All async endpoint function parameters must have explicit type annotations

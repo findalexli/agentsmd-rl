@@ -457,3 +457,37 @@ def test_repo_nemotron_h_modeling_conventions():
             break
     else:
         raise AssertionError("NemotronHBlock class not found in modeling file")
+
+# === CI-mined tests (taskforge.ci_check_miner) ===
+def test_ci_get_tests_get_models_to_test():
+    """pass_to_pass | CI job 'get-tests' -> pytest modular conversion order test
+
+    Runs the actual pytest test for modular file conversion ordering.
+    This is a real CI test from the transformers test suite that validates
+    the dependency ordering of modular model files, which is directly relevant
+    to any PR touching modular model files like nemotron_h.
+    """
+    r = subprocess.run(
+        ["bash", "-lc",
+         "python -m pytest /workspace/transformers/tests/repo_utils/modular/test_conversion_order.py --noconftest -x -q"],
+        cwd=REPO, capture_output=True, text=True, timeout=30,
+    )
+    assert r.returncode == 0, (
+        f"pytest modular conversion order test failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_check___report_process_and_filter_reports():
+    """pass_to_pass | CI job 'Check & Report' -> ruff lint+format on nemotron_h files via bash -lc
+
+    Runs ruff check and ruff format --check in a single shell invocation
+    scoped to the affected nemotron_h package, matching how transformers CI
+    orchestrates style enforcement (make style / check-repo).
+    """
+    r = subprocess.run(
+        ["bash", "-lc",
+         f"ruff check --quiet {MODELING} {MODULAR} && ruff format --check {MODELING} {MODULAR}"],
+        cwd=REPO, capture_output=True, text=True, timeout=30,
+    )
+    assert r.returncode == 0, (
+        f"ruff lint/format check failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")

@@ -67,7 +67,8 @@ Update `areal/reward/clevr_count_70k.py` so that:
   (`0.0` and `1.0`), and its return-type annotation reflects this
   (`-> float`).
 - `extract_answer` is **not** part of this task and must keep its current
-  behaviour.
+  behaviour (e.g. returns `"2.5"` from `"foo [1] bar [2.5] baz"`, or `""`
+  when no brackets are found).
 
 ## Code Style Requirements
 

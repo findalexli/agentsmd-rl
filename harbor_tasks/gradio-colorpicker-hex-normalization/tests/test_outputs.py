@@ -340,8 +340,6 @@ console.log(JSON.stringify(results));
 # [pr_diff] fail_to_pass
 def test_normalize_color_various_formats():
     """A normalize function must convert rgb/hsl/named/shorthand colors to #rrggbb."""
-    # Discover the normalizer: any exported function (not format_color/hsva_to_rgba)
-    # that converts 'red' -> '#ff0000'
     script = EVAL_UTILS_JS + r"""
 const fn = new Function('tinycolor', js + ';' +
     'return { ' + (js.match(/function\s+(\w+)/g) || []).map(m => {
@@ -351,6 +349,8 @@ const fn = new Function('tinycolor', js + ';' +
 );
 const fns = fn(tinycolor);
 
+// Find a normalizer function (not format_color, not hsva_to_rgba)
+// that converts color strings to #rrggbb hex
 let normalizer = null;
 let normalizerName = null;
 for (const [name, func] of Object.entries(fns)) {
@@ -367,17 +367,7 @@ for (const [name, func] of Object.entries(fns)) {
 }
 
 if (!normalizer) {
-    // Fallback: check if format_color('...', 'hex') works as normalizer
-    try {
-        if (fns['format_color'] && /^#[0-9a-f]{6}$/i.test(fns['format_color']('rgb(255,0,0)', 'hex'))) {
-            normalizer = (c) => fns['format_color'](c, 'hex');
-            normalizerName = 'format_color_hex_mode';
-        }
-    } catch(e) {}
-}
-
-if (!normalizer) {
-    console.log(JSON.stringify({ found: false }));
+    console.log(JSON.stringify({ found: false, reason: 'No normalize_color function discovered' }));
     process.exit(0);
 }
 
@@ -438,16 +428,7 @@ for (const [name, func] of Object.entries(fns)) {
 }
 
 if (!normalizer) {
-    // Fallback: check if format_color('...', 'hex') works as normalizer
-    try {
-        if (fns['format_color'] && /^#[0-9a-f]{6}$/i.test(fns['format_color']('rgb(255,0,0)', 'hex'))) {
-            normalizer = (c) => fns['format_color'](c, 'hex');
-        }
-    } catch(e) {}
-}
-
-if (!normalizer) {
-    console.log(JSON.stringify({ found: false }));
+    console.log(JSON.stringify({ found: false, reason: 'No normalize_color function discovered' }));
     process.exit(0);
 }
 
@@ -512,54 +493,23 @@ def test_svelte_text_input_normalization():
 
 
 # [agent_config] fail_to_pass
-# Behavioral test: verify that exported functions have TypeScript type annotations
-def test_functions_have_typescript_types():
-    """Exported functions in utils.ts must have explicit TypeScript parameter and return type annotations."""
+# Behavioral test: verify that normalize_color has TypeScript type annotations
+def test_normalize_color_has_typescript_types():
+    """normalize_color must have explicit TypeScript parameter and return type annotations."""
     src = Path(UTILS_TS).read_text()
 
-    # Discover all exported functions
-    script = r"""
-const fs = require('fs');
-const src = fs.readFileSync('/workspace/gradio/js/colorpicker/shared/utils.ts', 'utf8');
+    # Look for a normalize_color export with proper TypeScript types
+    pattern = r'export\s+function\s+normalize_color\s*\(([^)]*)\)\s*:\s*(\w+)'
+    match = re.search(pattern, src)
 
-// Find all exported functions and their signatures
-const exportMatches = src.match(/export\s+function\s+\w+\s*\([^)]*\)\s*:?\s*\w*\s*\{/g) || [];
-const results = [];
-
-for (const match of exportMatches) {
-    const nameMatch = match.match(/export\s+function\s+(\w+)/);
-    if (!nameMatch) continue;
-    const name = nameMatch[1];
-
-    // Check for type annotations (either param types or return type)
-    const hasParamTypes = /\w+\s*:\s*(string|number|boolean|\{[^}]+\})/.test(match);
-    const hasReturnType = /\)\s*:\s*(string|number|boolean|void)/.test(match);
-
-    results.push({
-        name: name,
-        hasParamTypes: hasParamTypes,
-        hasReturnType: hasReturnType,
-        hasAnyTypes: hasParamTypes || hasReturnType,
-        signature: match.slice(0, 100)
-    });
-}
-
-console.log(JSON.stringify(results));
-"""
-    r = subprocess.run(
-        ["node", "-e", script],
-        capture_output=True,
-        text=True,
-        timeout=30,
+    assert match, (
+        "normalize_color function not found with TypeScript return type. "
+        "Expected: export function normalize_color(color: string): string"
     )
-    assert r.returncode == 0, f"TypeScript type check failed: {r.stderr}"
 
-    functions = json.loads(r.stdout)
-    assert len(functions) > 0, "No exported functions found in utils.ts"
+    params = match.group(1)
+    return_type = match.group(2)
 
-    # At least one exported function must have TypeScript type annotations
-    has_types = any(f["hasAnyTypes"] for f in functions)
-    assert has_types, (
-        "No exported function has explicit TypeScript type annotations. "
-        "At least one function should declare parameter or return types."
-    )
+    assert "string" in return_type, f"normalize_color return type must be 'string', got '{return_type}'"
+    assert "color" in params, "normalize_color must have a parameter"
+    assert "string" in params, "normalize_color parameter must have 'string' type annotation"

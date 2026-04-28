@@ -199,6 +199,10 @@ def _run_vitest_segmented_once() -> dict:
     parsed["_stdout"] = _strip_ansi(r.stdout)[-4000:]
     parsed["_stderr"] = _strip_ansi(r.stderr)[-4000:]
     _VITEST_CACHE["result"] = parsed
+    # Remove the scratch test file so later repo-wide vitest runs (e.g. pnpm test)
+    # do not pick it up and fail at base.
+    if SCRATCH_TEST_FILE.exists():
+        SCRATCH_TEST_FILE.unlink()
     return parsed
 
 
@@ -241,7 +245,7 @@ def test_segmented_skips_non_output_text():
 
 
 def test_get_last_text_still_returns_last_segment():
-    """f2p: getLastTextFromOutputMessage preserves last-segment behavior."""
+    """p2p: getLastTextFromOutputMessage preserves last-segment behavior."""
     _check_seg("seg-last-preserved")
 
 
@@ -289,3 +293,58 @@ def test_agents_core_typecheck_passes():
         f"STDOUT:\n{_strip_ansi(r.stdout)[-3000:]}\n"
         f"STDERR:\n{_strip_ansi(r.stderr)[-3000:]}"
     )
+
+# === CI-mined tests (taskforge.ci_check_miner) ===
+def test_ci_test_build_all_packages():
+    """pass_to_pass | CI job 'test' → step 'Build all packages'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'pnpm build:ci'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Build all packages' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_test_check_generated_declarations():
+    """pass_to_pass | CI job 'test' → step 'Check generated declarations'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'pnpm -r -F "@openai/*" dist:check'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Check generated declarations' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_test_run_linter():
+    """pass_to_pass | CI job 'test' → step 'Run linter'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'pnpm lint'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Run linter' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_test_type_check_docs_scripts():
+    """pass_to_pass | CI job 'test' → step 'Type-check docs scripts'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'pnpm docs:scripts:check'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Type-check docs scripts' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_test_compile_examples():
+    """pass_to_pass | CI job 'test' → step 'Compile examples'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'pnpm -r build-check'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Compile examples' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_test_run_tests():
+    """pass_to_pass | CI job 'test' → step 'Run tests'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'pnpm test'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Run tests' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")

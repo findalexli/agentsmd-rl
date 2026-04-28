@@ -22,82 +22,122 @@ REMOTE_FILE = f"{REPO}/areal/engine/vllm_remote.py"
 
 
 # ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) — core behavioral tests
+# Helpers — AST extract + execute for behavioral tests
 # ---------------------------------------------------------------------------
+
+def _make_mock_namespace():
+    """Return a namespace dict with stub types needed by the remote function."""
+
+    class HttpRequest:
+        def __init__(self, endpoint, payload):
+            self.endpoint = endpoint
+            self.payload = payload
+
+    class WeightUpdateRequests:
+        def __init__(self, requests):
+            self.requests = requests
+
+    class WeightUpdateMeta:
+        pass
+
+    class ParamSpec:
+        pass
+
+    def get_versioned_lora_name(lora_name, version):
+        return f"{lora_name}-v{version}"
+
+    return {
+        "HttpRequest": HttpRequest,
+        "WeightUpdateRequests": WeightUpdateRequests,
+        "WeightUpdateMeta": WeightUpdateMeta,
+        "ParamSpec": ParamSpec,
+        "get_versioned_lora_name": get_versioned_lora_name,
+    }
+
+
+def _load_build_distributed():
+    """Parse vllm_remote.py, extract build_distributed_weight_update_requests,
+    strip annotations, compile it in a mock namespace, and return the callable."""
+    src = Path(REMOTE_FILE).read_text()
+    tree = ast.parse(src)
+
+    func_node = None
+    for node in ast.walk(tree):
+        if isinstance(node, ast.FunctionDef) and node.name == "build_distributed_weight_update_requests":
+            func_node = node
+            break
+
+    if func_node is None:
+        pytest.fail("build_distributed_weight_update_requests not found in source")
+
+    # Strip type annotations so we don't need the real types at compile time
+    func_node.returns = None
+    for arg in func_node.args.args:
+        arg.annotation = None
+
+    ns = _make_mock_namespace()
+    code = compile(ast.unparse(func_node), REMOTE_FILE, "exec")
+    exec(code, ns)
+    return ns["build_distributed_weight_update_requests"]
+
 
 def _call_build_distributed(use_lora, version, lora_name="test-lora",
                             lora_int_id=42, base_model_name="qwen2"):
-    """
-    Call build_distributed_weight_update_requests from the VLLMBackend class.
-    Import the real module and call it to test actual behavior.
-    """
-    sys.path.insert(0, REPO)
-    try:
-        from areal.engine.vllm_remote import VLLMBackend
-    except ImportError:
-        pytest.skip("VLLMBackend not importable outside of full environment")
+    """Extract and execute build_distributed_weight_update_requests with mock inputs."""
+    func = _load_build_distributed()
 
-    class WeightUpdateMeta:
-        type = "xccl"
-        use_lora = False
-        version = None
-        lora_name = ""
-        lora_int_id = 0
-        base_model_name = ""
-        peft_config = {}
-        nccl_group_name = "test_group"
-
-    meta = WeightUpdateMeta()
+    ns = _make_mock_namespace()
+    meta = ns["WeightUpdateMeta"]()
+    meta.nccl_group_name = "test_group"
     meta.use_lora = use_lora
     meta.version = version
     meta.lora_name = lora_name
     meta.lora_int_id = lora_int_id
-    meta.base_model_name = base_model_name
     meta.peft_config = {
         "target_modules": ["q_proj", "v_proj"],
         "r": 8,
         "lora_alpha": 16,
         "bias": "none",
     }
-    meta.nccl_group_name = "test_nccl_group"
-    meta.type = "xccl"
+    meta.base_model_name = base_model_name
 
-    param_specs = [type("ParamSpec", (), {"name": "layer.0.weight", "shape": (4, 4), "dtype": "float32"})]
+    ParamSpec = ns["ParamSpec"]
+    ps = ParamSpec()
+    ps.name = "layer.0.weight"
+    ps.shape = (4, 4)
+    ps.dtype = "float32"
+    param_specs = [ps]
 
-    backend = VLLMBackend()
-    result = backend.build_distributed_weight_update_requests(meta, param_specs)
-    return result
+    return func(None, meta, param_specs)
 
 
-def _get_lora_request(result):
-    """Find the LoRA-specific request in the list of requests."""
+def _get_lora_update_req(result):
+    """Find the LoRA update (not meta) request in the list."""
     for req in result.requests:
-        if hasattr(req, "endpoint") and "lora" in req.endpoint.lower():
+        if hasattr(req, "endpoint") and "lora" in req.endpoint.lower() and "meta" not in req.endpoint.lower():
             return req
     return None
 
 
+# ---------------------------------------------------------------------------
+# Fail-to-pass (pr_diff) — core behavioral tests
+# ---------------------------------------------------------------------------
+
 # [pr_diff] fail_to_pass
 def test_lora_xccl_update_payload_has_lora_fields():
-    """When use_lora=True, the LoRA-specific XCCL request carries non-empty metadata."""
+    """When use_lora=True, the LoRA-specific XCCL update request carries LoRA metadata."""
     result = _call_build_distributed(
         use_lora=True, version=1, lora_name="gsm8k-lora", lora_int_id=10
     )
 
-    lora_req = _get_lora_request(result)
+    lora_req = _get_lora_update_req(result)
     assert lora_req is not None, (
-        f"No LoRA-specific request found in {len(result.requests)} requests: "
-        f"{[r.endpoint for r in result.requests]}"
+        f"No LoRA update request found in {len(result.requests)} requests: "
+        f"{[(r.endpoint, type(r.payload).__name__, len(str(r.payload))) for r in result.requests]}"
     )
 
-    # The LoRA endpoint must differ from the base XCCL endpoint
-    base_req = result.requests[0]
-    assert lora_req.endpoint != base_req.endpoint, (
-        f"LoRA endpoint should differ from base endpoint"
-    )
-
-    # Payload must be non-empty when use_lora is True
-    assert lora_req.payload, f"LoRA XCCL payload is empty: {lora_req.payload}"
+    # Payload must be non-empty (carrying the LoRA metadata including lora_name/lora_int_id)
+    assert lora_req.payload, f"LoRA XCCL update payload is empty: {lora_req.payload}"
 
     # The payload must encode the LoRA name with version suffix
     payload_str = str(lora_req.payload)
@@ -111,14 +151,14 @@ def test_lora_xccl_update_payload_has_lora_fields():
 
 # [pr_diff] fail_to_pass
 def test_lora_xccl_update_payload_varies_with_version():
-    """The LoRA metadata in the XCCL request reflects the version number."""
+    """The LoRA metadata in the XCCL update request reflects the version number."""
     for version, lora_name, lora_int_id in [(0, "code-lora", 7), (5, "math-lora", 99)]:
         result = _call_build_distributed(
             use_lora=True, version=version, lora_name=lora_name, lora_int_id=lora_int_id
         )
 
-        lora_req = _get_lora_request(result)
-        assert lora_req is not None, f"No LoRA request found for version={version}"
+        lora_req = _get_lora_update_req(result)
+        assert lora_req is not None, f"No LoRA update request found for version={version}"
 
         payload_str = str(lora_req.payload)
         expected_suffix = f"v{version}"
@@ -157,7 +197,6 @@ def test_lora_xccl_endpoint_updates_lora_registry():
     assert func_src is not None
 
     # The function body must reference the registry (the models object)
-    # This is the core behavior: the endpoint must update the registry
     has_registry_ref = (
         "openai_serving_models" in func_src or
         "models_obj" in func_src or
@@ -184,14 +223,14 @@ def test_non_lora_xccl_payload_empty():
     """When use_lora is False, XCCL update request payload must be empty."""
     result = _call_build_distributed(use_lora=False, version=None)
 
-    # First request is the base XCCL update
-    base_req = result.requests[0]
-    assert base_req.payload == {}, f"Non-LoRA payload should be empty, got {base_req.payload}"
+    # The XCCL update endpoint request (index 1, non-LoRA) must have empty payload
+    xccl_req = result.requests[1]
+    assert xccl_req.payload == {}, f"Non-LoRA XCCL update payload should be empty, got {xccl_req.payload}"
 
     # There should not be a LoRA-specific request when use_lora is False
-    lora_req = _get_lora_request(result)
+    lora_req = _get_lora_update_req(result)
     assert lora_req is None, (
-        f"No LoRA request should exist when use_lora=False, but found: {lora_req}"
+        f"No LoRA update request should exist when use_lora=False, but found: {lora_req}"
     )
 
 
@@ -329,3 +368,16 @@ def test_repo_end_of_file_newline():
         src = Path(filepath).read_text()
         if src and not src.endswith('\n'):
             raise AssertionError(f"File {filepath} does not end with a newline")
+
+
+# === CI-mined test ===
+def test_ci_install_test_verify_wheel_artifact():
+    """pass_to_pass | CI job 'Install test' -> step 'Verify wheel artifact'"""
+    r = subprocess.run(
+        ["bash", "-lc",
+         'python -m zipfile -l dist/*.whl > /dev/null 2>&1'],
+        cwd=REPO, capture_output=True, text=True, timeout=300,
+    )
+    assert r.returncode == 0, (
+        f"CI step 'Verify wheel artifact' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")

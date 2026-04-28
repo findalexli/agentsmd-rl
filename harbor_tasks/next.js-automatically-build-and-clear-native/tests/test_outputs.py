@@ -54,7 +54,17 @@ def test_maybe_build_native_runs_without_ci():
     assert "unhandled" not in output.lower() and "exception" not in output.lower()
 
 
+def test_maybe_build_native_has_rust_detection():
+    """maybe-build-native.mjs must define hasRustChanges and getVersionBumpCommit functions."""
+    script = Path(REPO) / "packages" / "next-swc" / "maybe-build-native.mjs"
+    assert script.exists(), f"Script not found: {script}"
+    content = script.read_text()
+    assert "function hasRustChanges" in content, "must define function hasRustChanges"
+    assert "function getVersionBumpCommit" in content, "must define function getVersionBumpCommit"
+
+
 def test_package_json_build_script():
+    """packages/next-swc/package.json must have a build script referencing maybe-build-native."""
     pkg = Path(REPO) / "packages" / "next-swc" / "package.json"
     data = json.loads(pkg.read_text())
     scripts = data.get("scripts", {})
@@ -63,6 +73,7 @@ def test_package_json_build_script():
 
 
 def test_turbo_json_build_task():
+    """packages/next-swc/turbo.json must define a build task with Rust inputs and CI env."""
     turbo = Path(REPO) / "packages" / "next-swc" / "turbo.json"
     data = json.loads(turbo.read_text())
     tasks = data.get("tasks", {})
@@ -76,23 +87,22 @@ def test_turbo_json_build_task():
 
 
 def test_build_native_prettier_pipeline():
-    vendored_types_path = Path(REPO) / "packages" / "next" / "src" / "build" / "swc" / "generated-native.d.ts"
-    if not vendored_types_path.exists():
-        return
-    content = vendored_types_path.read_text()
-    result = subprocess.run(
-        ["npx", "prettier", "--stdin-filepath", str(vendored_types_path)],
-        input=content,
-        capture_output=True,
-        text=True,
-        timeout=30,
-        cwd=REPO,
+    """scripts/build-native.ts must use --stdin-filepath not --write with prettier."""
+    script = Path(REPO) / "scripts" / "build-native.ts"
+    content = script.read_text()
+    assert "--stdin-filepath" in content, (
+        "scripts/build-native.ts must use --stdin-filepath for prettier formatting"
     )
-    assert result.returncode == 0, f"prettier --stdin-filepath failed"
-    assert len(result.stdout) > 0, "prettier should produce formatted output via stdout"
+    assert "'--write'" not in content, (
+        "scripts/build-native.ts must not use '--write' with prettier"
+    )
+    assert '"--write"' not in content, (
+        'scripts/build-native.ts must not use "--write" with prettier'
+    )
 
 
 def test_agents_md_simplified_rebuild():
+    """AGENTS.md must unify Rust/Turbopack rebuild instructions under pnpm build."""
     agents_md = Path(REPO) / "AGENTS.md"
     content = agents_md.read_text()
     assert "pnpm swc-build-native" not in content
@@ -103,6 +113,7 @@ def test_agents_md_simplified_rebuild():
 
 
 def test_maybe_build_native_syntax():
+    """maybe-build-native.mjs must exist and have valid JavaScript syntax."""
     script = Path(REPO) / "packages" / "next-swc" / "maybe-build-native.mjs"
     if not script.exists():
         raise AssertionError("maybe-build-native.mjs does not exist")
@@ -116,26 +127,31 @@ def test_maybe_build_native_syntax():
 
 
 def test_repo_package_json_valid():
+    """Root package.json must be valid JSON."""
     pkg = Path(REPO) / "package.json"
     json.loads(pkg.read_text())
 
 
 def test_repo_turbo_json_valid():
+    """Root turbo.json must be valid JSON."""
     turbo = Path(REPO) / "turbo.json"
     json.loads(turbo.read_text())
 
 
 def test_repo_next_swc_package_json_valid():
+    """packages/next-swc/package.json must be valid JSON."""
     pkg = Path(REPO) / "packages" / "next-swc" / "package.json"
     json.loads(pkg.read_text())
 
 
 def test_repo_next_swc_turbo_json_valid():
+    """packages/next-swc/turbo.json must be valid JSON."""
     turbo = Path(REPO) / "packages" / "next-swc" / "turbo.json"
     json.loads(turbo.read_text())
 
 
 def test_repo_validate_externals_doc_syntax():
+    """scripts/validate-externals-doc.js must have valid syntax."""
     script = Path(REPO) / "scripts" / "validate-externals-doc.js"
     result = subprocess.run(
         ["node", "--check", str(script)],
@@ -147,6 +163,7 @@ def test_repo_validate_externals_doc_syntax():
 
 
 def test_repo_build_native_syntax():
+    """scripts/build-native.ts must have valid syntax (TypeScript via node --check)."""
     script = Path(REPO) / "scripts" / "build-native.ts"
     result = subprocess.run(
         ["node", "--check", str(script)],
@@ -158,6 +175,7 @@ def test_repo_build_native_syntax():
 
 
 def test_repo_prettier_build_native():
+    """scripts/build-native.ts must pass prettier formatting check."""
     script = Path(REPO) / "scripts" / "build-native.ts"
     result = subprocess.run(
         ["npx", "prettier", "--check", str(script)],
@@ -170,6 +188,7 @@ def test_repo_prettier_build_native():
 
 
 def test_repo_prettier_validate_externals_doc():
+    """scripts/validate-externals-doc.js must pass prettier formatting check."""
     script = Path(REPO) / "scripts" / "validate-externals-doc.js"
     result = subprocess.run(
         ["npx", "prettier", "--check", str(script)],
@@ -182,6 +201,7 @@ def test_repo_prettier_validate_externals_doc():
 
 
 def test_repo_prettier_package_json():
+    """Root package.json must pass prettier formatting check."""
     pkg = Path(REPO) / "package.json"
     result = subprocess.run(
         ["npx", "prettier", "--check", str(pkg)],
@@ -194,6 +214,7 @@ def test_repo_prettier_package_json():
 
 
 def test_repo_prettier_next_swc_package_json():
+    """packages/next-swc/package.json must pass prettier formatting check."""
     pkg = Path(REPO) / "packages" / "next-swc" / "package.json"
     result = subprocess.run(
         ["npx", "prettier", "--check", str(pkg)],
@@ -206,6 +227,7 @@ def test_repo_prettier_next_swc_package_json():
 
 
 def test_repo_prettier_turbo_json():
+    """turbo.json files must pass prettier formatting check."""
     root_turbo = Path(REPO) / "turbo.json"
     next_swc_turbo = Path(REPO) / "packages" / "next-swc" / "turbo.json"
     for turbo_file in [root_turbo, next_swc_turbo]:
@@ -220,6 +242,7 @@ def test_repo_prettier_turbo_json():
 
 
 def test_repo_prettier_maybe_build_native():
+    """packages/next-swc/maybe-build-native.mjs must pass prettier formatting check."""
     script = Path(REPO) / "packages" / "next-swc" / "maybe-build-native.mjs"
     result = subprocess.run(
         ["npx", "prettier", "--check", str(script)],
@@ -232,6 +255,7 @@ def test_repo_prettier_maybe_build_native():
 
 
 def test_repo_maybe_build_native_syntax_p2p():
+    """maybe-build-native.mjs must have valid syntax (checked both before and after patch)."""
     script = Path(REPO) / "packages" / "next-swc" / "maybe-build-native.mjs"
     result = subprocess.run(
         ["node", "--check", str(script)],
@@ -243,6 +267,7 @@ def test_repo_maybe_build_native_syntax_p2p():
 
 
 def test_repo_build_wasm_syntax():
+    """scripts/build-wasm.cjs must have valid syntax."""
     script = Path(REPO) / "scripts" / "build-wasm.cjs"
     result = subprocess.run(
         ["node", "--check", str(script)],
@@ -254,6 +279,7 @@ def test_repo_build_wasm_syntax():
 
 
 def test_repo_prettier_agents_md():
+    """AGENTS.md must pass prettier formatting check."""
     agents_md = Path(REPO) / "AGENTS.md"
     result = subprocess.run(
         ["npx", "prettier", "--check", str(agents_md)],
@@ -263,3 +289,17 @@ def test_repo_prettier_agents_md():
         cwd=REPO,
     )
     assert result.returncode == 0, f"Prettier check failed"
+
+
+def test_ci_prettier_next_swc():
+    """pass_to_pass | CI lint: prettier check on next-swc package files."""
+    r = subprocess.run(
+        ["bash", "-lc", "npx prettier --check packages/next-swc/package.json packages/next-swc/turbo.json"],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+    assert r.returncode == 0, (
+        f"prettier check failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")

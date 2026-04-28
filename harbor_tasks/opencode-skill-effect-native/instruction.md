@@ -34,6 +34,8 @@ When the Effect runtime manages the Skill service layer, the following runtime i
 - `Config.Service` and `Bus.Service` are yielded from the Effect context and threaded through as parameters
 - `discovery.pull()` results are yielded natively
 - `defaultLayer` provides layers for `Discovery`, `Config`, and `Bus` alongside each other
+- Error reporting still publishes `Session.Event.Error` events to the bus
+- Core patterns like `Skill.state` (the InstanceState accessor) remain intact
 
 ## Codebase Standards (from AGENTS.md)
 

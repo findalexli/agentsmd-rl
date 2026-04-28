@@ -12,8 +12,7 @@ checks:
 - id: requires_python_27_no_panic
   type: fail_to_pass
   origin: pr_diff
-  description: ty handles requires-python='==2.7' gracefully, resolving to the lowest
-    supported version instead of panicking
+  description: ty handles requires-python='==2.7' gracefully, resolving to the lowest supported version instead of panicking
 - id: requires_python_future_version_error
   type: fail_to_pass
   origin: pr_diff
@@ -29,8 +28,7 @@ checks:
 - id: no_unwrap_in_resolve_requires_python
   type: pass_to_pass
   origin: agent_config
-  description: 'resolve_requires_python avoids .unwrap() and panic! (AGENTS.md: avoid
-    panic!/unwrap)'
+  description: 'resolve_requires_python avoids .unwrap() and panic! (AGENTS.md: avoid panic!/unwrap)'
   source:
     path: AGENTS.md
     lines: '79'
@@ -38,8 +36,7 @@ checks:
 - id: no_local_imports_in_resolve
   type: pass_to_pass
   origin: agent_config
-  description: 'No local use/import statements inside functions (AGENTS.md: imports
-    at top of file)'
+  description: 'No local use/import statements inside functions (AGENTS.md: imports at top of file)'
   source:
     path: AGENTS.md
     lines: '76'
@@ -55,54 +52,95 @@ checks:
 - id: repo_cargo_clippy_ty_project
   type: pass_to_pass
   origin: repo_tests
-  description: cargo clippy -p ty_project --all-targets --all-features passes (repo
-    CI)
+  description: cargo clippy -p ty_project --all-targets --all-features passes (repo CI)
+- id: test_ci_cargo_fuzz_build_cargo
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: cargo fuzz build / '
+- id: test_ci_cargo_test_ty_mdtests_github_annotations
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: cargo test / ty mdtests (GitHub annotations)'
+- id: test_ci_cargo_test_run_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: cargo test / Run tests'
+- id: test_ci_cargo_test_dogfood_ty_on_py_fuzzer
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: cargo test / Dogfood ty on py-fuzzer'
+- id: test_ci_cargo_test_dogfood_ty_on_the_scripts_directory
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: cargo test / Dogfood ty on the scripts directory'
+- id: test_ci_cargo_test_dogfood_ty_on_ty_benchmark
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: cargo test / Dogfood ty on ty_benchmark'
+- id: test_ci_cargo_test_cargo
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: cargo test / '
+- id: test_ci_cargo_test_cargo
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: cargo test / '
+- id: test_ci_cargo_build_build_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: cargo build / Build tests'
+- id: test_ci_benchmarks_walltime_build_benchmarks
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: benchmarks walltime / Build benchmarks'
+- id: test_ci_benchmarks_instrumented_ty_build_benchmarks
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: benchmarks instrumented ty / Build benchmarks'
+- id: test_ci_test_scripts_python
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: test scripts / '
+- id: test_ci_cargo_test_cargo_2
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: cargo test / '
+- id: test_ci_test_scripts_python_2
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: test scripts / '
 rubric:
-- rule: All changes must be tested. If you're not testing your changes, you're not
-    done.
+- rule: All changes must be tested. If you're not testing your changes, you're not done.
   source:
     path: AGENTS.md
     lines: 56-56
-  reference: The gold solution adds two new tests (`requires_python_old_version_uses_lowest_supported_version`
-    and `requires_python_unsupported_future_version`) to verify the new behavior.
+  reference: The gold solution adds two new tests (`requires_python_old_version_uses_lowest_supported_version` and `requires_python_unsupported_future_version`) to verify the new behavior.
   category: testing
-- rule: Look to see if your tests could go in an existing file before adding a new
-    file for your tests.
+- rule: Look to see if your tests could go in an existing file before adding a new file for your tests.
   source:
     path: AGENTS.md
     lines: 57-57
-  reference: The gold solution adds the new tests to the existing `crates/ty_project/src/metadata.rs`
-    file rather than creating a new test file.
+  reference: The gold solution adds the new tests to the existing `crates/ty_project/src/metadata.rs` file rather than creating a new test file.
   category: testing
 - rule: Try hard to avoid patterns that require `panic!`, `unreachable!`, or `.unwrap()`.
   source:
     path: AGENTS.md
     lines: 63-63
-  reference: The gold solution handles the `None` case from `PythonVersion::iter().find(...)`
-    by returning a `ResolveRequiresPythonError::NoSupportedVersion` instead of using
-    `.unwrap()` or panicking.
+  reference: The gold solution handles the `None` case from `PythonVersion::iter().find(...)` by returning a `ResolveRequiresPythonError::NoSupportedVersion` instead of using `.unwrap()` or panicking.
   category: architecture
 distractors:
-- rule: Run a single mdtest file. The path to the mdtest file should be relative to
-    the `crates/ty_python_semantic/resources/mdtest` folder
+- rule: Run a single mdtest file. The path to the mdtest file should be relative to the `crates/ty_python_semantic/resources/mdtest` folder
   collision_type: architecture_boundary
-  why_distracting: The agent might try to write an mdtest for this feature since it's
-    a ty-specific change, but project metadata discovery is tested via standard Rust
-    unit tests in `metadata.rs`.
+  why_distracting: The agent might try to write an mdtest for this feature since it's a ty-specific change, but project metadata discovery is tested via standard Rust unit tests in `metadata.rs`.
   severity: medium
   source:
     path: AGENTS.md
     lines: 18-26
-- rule: Avoid writing significant amounts of new code. This is often a sign that we're
-    missing an existing method or mechanism that could help solve the problem. Look
-    for existing utilities first.
+- rule: Avoid writing significant amounts of new code. This is often a sign that we're missing an existing method or mechanism that could help solve the problem. Look for existing utilities first.
   collision_type: scope_ambiguity
-  why_distracting: The agent might waste time looking for an existing version clamping
-    utility, but the gold solution implements the clamping logic manually using `PythonVersion::iter().find(...)`.
+  why_distracting: The agent might waste time looking for an existing version clamping utility, but the gold solution implements the clamping logic manually using `PythonVersion::iter().find(...)`.
   severity: low
   source:
     path: AGENTS.md
     lines: 70-70
-hierarchy_analysis: The config hierarchy is flat, with `CLAUDE.md` simply pointing
-  to `AGENTS.md`. The rules are general repository guidelines rather than deeply nested
-  or conflicting module-specific rules.
+hierarchy_analysis: The config hierarchy is flat, with `CLAUDE.md` simply pointing to `AGENTS.md`. The rules are general repository guidelines rather than deeply nested or conflicting module-specific rules.

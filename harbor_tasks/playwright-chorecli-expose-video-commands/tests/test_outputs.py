@@ -254,6 +254,11 @@ console.log('PASS');
 # [pr_diff] fail_to_pass
 def test_video_tools_executable():
     """The video tools can be loaded and invoked via the MCP server (behavioral test)."""
+    # Ensure dependencies are installed so TypeScript is available
+    subprocess.run(
+        ["npm", "install"],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
     # Test that the TypeScript module compiles and exports expected tools
     r = _run_node("""
 const ts = require('typescript');
@@ -337,3 +342,31 @@ def test_skill_md_preserves_existing_commands():
     assert "tracing-start" in content, "SKILL.md must still have tracing-start"
     assert "tracing-stop" in content, "SKILL.md must still have tracing-stop"
     assert "playwright-cli" in content, "SKILL.md must still reference playwright-cli"
+
+# === CI-mined tests (taskforge.ci_check_miner) ===
+def test_ci_lint_snippets_npm():
+    """pass_to_pass | CI job 'Lint snippets' -> step ''"""
+    r = subprocess.run(
+        ["bash", "-lc", 'npm ci'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step '' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_docs___lint_npm():
+    """pass_to_pass | CI job 'docs & lint' -> step ''"""
+    r = subprocess.run(
+        ["bash", "-lc", 'npm run build'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step '' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_docs___lint_npx():
+    """pass_to_pass | CI job 'docs & lint' -> step ''"""
+    r = subprocess.run(
+        ["bash", "-lc", 'npx playwright install --with-deps'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step '' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")

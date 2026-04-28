@@ -218,3 +218,4 @@ def test_skill_yaml_parses_clean():
     )
     assert r.returncode == 0, f"YAML parse failed:\n{r.stderr}"
     assert "ok" in r.stdout
+

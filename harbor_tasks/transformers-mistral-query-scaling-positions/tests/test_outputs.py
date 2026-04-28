@@ -528,3 +528,16 @@ print("MISTRAL4_IMPORT_OK")
     )
     assert r.returncode == 0, f"Mistral4 import failed: {r.stderr}"
     assert "MISTRAL4_IMPORT_OK" in r.stdout
+
+# [repo_tests] pass_to_pass — run pytest on RoPE utilities (related to position encodings used by attention)
+def test_repo_pytest_rope_utils():
+    """Run pytest on rope_utils tests — regression guard for position encoding utilities (pass_to_pass)."""
+    r = subprocess.run(
+        ["bash", "-lc",
+         "pip install parameterized --quiet && "
+         "cd /tmp && pytest --noconftest "
+         "/workspace/transformers/tests/utils/test_modeling_rope_utils.py "
+         "-v --no-header --tb=short"],
+        capture_output=True, text=True, timeout=120, cwd="/tmp",
+    )
+    assert r.returncode == 0, f"Rope utils pytest failed:\n{r.stdout}\n{r.stderr}"

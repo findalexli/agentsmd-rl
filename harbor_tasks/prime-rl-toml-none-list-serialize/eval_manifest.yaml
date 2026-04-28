@@ -77,57 +77,36 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Ruff import check (I rules) passes on the modified config.py (p2p_enrichment)
+- id: test_ci_unit_tests_run_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: Unit tests / Run tests'
 rubric:
 - rule: Code should have minimal unnecessary comments and work process notes in config.py.
   source:
     path: src/prime_rl/utils/config.py
     lines: 1-30
-  reference: |
-    def _convert_none(obj):
-        """Recursively convert None values to 'None' strings."""
-        if isinstance(obj, dict):
-            return {k: _convert_none(v) for k, v in obj.items()}
-        elif isinstance(obj, list):
-            return [_convert_none(item) for item in obj]
-        elif obj is None:
-            return "None"
-        return obj
+  reference: "def _convert_none(obj):\n    \"\"\"Recursively convert None values to 'None' strings.\"\"\"\n    if isinstance(obj, dict):\n        return {k: _convert_none(v) for k, v in obj.items()}\n    elif isinstance(obj, list):\n        return [_convert_none(item) for item in obj]\n    elif obj is None:\n        return \"None\"\n    return obj\n"
   category: style
 - rule: Avoid try/except blocks unless it's really necessary in config.py.
   source:
     path: src/prime_rl/utils/config.py
     lines: 1-30
-  reference: |
-    def _convert_none(obj):
-        if isinstance(obj, dict):
-            return {k: _convert_none(v) for k, v in obj.items()}
-        elif isinstance(obj, list):
-            return [_convert_none(item) for item in obj]
-        elif obj is None:
-            return "None"
-        return obj
+  reference: "def _convert_none(obj):\n    if isinstance(obj, dict):\n        return {k: _convert_none(v) for k, v in obj.items()}\n    elif isinstance(obj, list):\n        return [_convert_none(item) for item in obj]\n    elif obj is None:\n        return \"None\"\n    return obj\n"
   category: style
 distractors:
 - rule: Flat is better than nested.
   collision_type: rule_conflict
-  why_distracting: The data structure being serialized is inherently nested (dicts
-    containing lists containing dicts). An agent might try to follow 'Flat is better
-    than nested' by avoiding recursion and writing a complex iterative stack-based
-    implementation, which would violate 'Simple is better than complex'.
+  why_distracting: The data structure being serialized is inherently nested (dicts containing lists containing dicts). An agent might try to follow 'Flat is better than nested' by avoiding recursion and writing a complex iterative stack-based implementation, which would violate 'Simple is better than complex'.
   severity: medium
   source:
     path: AGENTS.md
     lines: 15-15
-- rule: You are responsible for maintaining the skills folder. When a workflow fails
-    and you fix it... you must update the skills to make implicit knowledge explicit.
+- rule: You are responsible for maintaining the skills folder. When a workflow fails and you fix it... you must update the skills to make implicit knowledge explicit.
   collision_type: scope_ambiguity
-  why_distracting: The agent might attempt to edit the `toml-config` skill file to
-    document that `None` values inside lists are now supported. However, this is an
-    internal bug fix for serialization, not a workflow change or new implicit knowledge
-    that belongs in user-facing skill documentation.
+  why_distracting: The agent might attempt to edit the `toml-config` skill file to document that `None` values inside lists are now supported. However, this is an internal bug fix for serialization, not a workflow change or new implicit knowledge that belongs in user-facing skill documentation.
   severity: high
   source:
     path: AGENTS.md
     lines: 40-42
-hierarchy_analysis: The hierarchy is effectively flat, as CLAUDE.md simply includes
-  AGENTS.md. The rules are global and generic, with no deep overriding logic required.
+hierarchy_analysis: The hierarchy is effectively flat, as CLAUDE.md simply includes AGENTS.md. The rules are global and generic, with no deep overriding logic required.

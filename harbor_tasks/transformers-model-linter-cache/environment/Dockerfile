@@ -15,17 +15,15 @@ RUN git init /workspace/transformers && \
 
 RUN pip install --no-cache-dir torch --index-url https://download.pytorch.org/whl/cpu
 
-RUN pip install --no-cache-dir ruff
-
 RUN mkdir -p /logs/verifier
 
 WORKDIR /workspace/transformers
 
 # Install minimal deps: rich (for Console), ruff (for config-derived checks)
-RUN pip install --no-cache-dir rich ruff pytest pytest-json-ctrf 2>&1 | tail -5
+RUN pip install --no-cache-dir rich ruff pytest pytest-json-ctrf
 
 # Configure git user for any git operations
 RUN git config --global user.email "test@test.com" && \
     git config --global user.name "Test"
 
-ENV PYTHONPATH="/workspace/transformers/utils:/workspace/transformers/src:${PYTHONPATH}"
+ENV PYTHONPATH="/workspace/transformers/utils:/workspace/transformers/src"

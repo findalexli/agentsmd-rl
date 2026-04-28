@@ -8,6 +8,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         python3 \
         python3-pip \
         python3-venv \
+        curl \
+        unzip \
+        build-essential \
+        python3-dev \
     && rm -rf /var/lib/apt/lists/*
 
 RUN python3 -m venv /opt/venv
@@ -17,10 +21,16 @@ RUN pip install --no-cache-dir \
         pytest==8.3.4 \
         pytest-json-ctrf==0.4.1
 
+# Install bun pinned to 1.3.13 (matching the repo's packageManager field)
+ENV BUN_INSTALL=/usr/local
+RUN curl -fsSL https://bun.sh/install | bash -s -- bun-v1.3.13
+
 WORKDIR /workspace
 
 RUN git clone --filter=blob:none https://github.com/anomalyco/opencode.git \
     && cd opencode \
     && git checkout 7c6948cf6f90b52a74ad56ac7a7eb16863e65f19
+
+RUN cd /workspace/opencode && bun install --frozen-lockfile
 
 RUN mkdir -p /logs/verifier

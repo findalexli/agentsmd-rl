@@ -25,6 +25,11 @@ Several other parts of the multimodal pipeline also lack robustness for non-Qwen
 
 4. **`slime_plugins/megatron_bridge/glm4v_moe.py`**: With context parallelism (CP > 1), the vision encoder produces embeddings for ALL image tokens across the full sequence, but each CP rank only holds a zigzag chunk. The image embeddings need to be sliced to match the local chunk's image token positions. Additionally, the vision encoder should be frozen during RL training (no gradients, eval mode), and the vision output extraction needs updating.
 
+## Code Style Requirements
+
+- Python code must pass `ruff` linting checks (rules E, F, B, and UP as configured in the repo's `pyproject.toml`)
+- Imports must be sorted correctly according to `isort` (black-compatible profile, as configured in `pyproject.toml`)
+
 ## Files to investigate
 
 - `slime/utils/processing_utils.py` — `process_vision_info`, `load_processor`

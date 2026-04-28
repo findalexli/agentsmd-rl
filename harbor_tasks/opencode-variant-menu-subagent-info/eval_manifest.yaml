@@ -68,8 +68,7 @@ checks:
 - id: subagent_footer_shows_type
   type: fail_to_pass
   origin: pr_diff
-  description: Footer extracts agent type from session title via regex and displays
-    it
+  description: Footer extracts agent type from session title via regex and displays it
 - id: subagent_footer_shows_index
   type: fail_to_pass
   origin: pr_diff
@@ -98,14 +97,25 @@ checks:
     path: AGENTS.md
     lines: '12'
     commit: 860531c275cf845f80ccf26bba5bad745fe98398
+- id: test_ci_e2e_run_app_e2e_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: e2e / Run app e2e tests'
+- id: test_ci_unit_run_unit_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: unit / Run unit tests'
+- id: test_ci_typecheck_run_typecheck
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: typecheck / Run typecheck'
 rubric:
 - rule: 'CODE VERIFIED: subagent-footer.tsx contains no try/catch blocks (AGENTS.md:12)'
   source:
     path: AGENTS.md
     lines: '12'
     commit: 860531c275cf845f80ccf26bba5bad745fe98398
-- rule: 'CODE VERIFIED: Sibling computation uses functional array methods .filter()
-    and .findIndex() (AGENTS.md:17)'
+- rule: 'CODE VERIFIED: Sibling computation uses functional array methods .filter() and .findIndex() (AGENTS.md:17)'
   source:
     path: AGENTS.md
     lines: '17'
@@ -114,63 +124,45 @@ rubric:
   source:
     path: AGENTS.md
     lines: 73-82
-  evidence: In `subagent-footer.tsx`, the `subagentInfo` memo uses `if (!s) return
-    ...` and `if (!s.parentID) return ...` instead of wrapping the rest of the logic
-    in `else` blocks.
+  evidence: In `subagent-footer.tsx`, the `subagentInfo` memo uses `if (!s) return ...` and `if (!s.parentID) return ...` instead of wrapping the rest of the logic in `else` blocks.
   category: style
 - rule: Prefer functional array methods (flatMap, filter, map) over for loops
   source:
     path: AGENTS.md
     lines: 17-18
-  evidence: In `subagent-footer.tsx`, the `siblings` array is computed using `.filter()`
-    and `.toSorted()` rather than a traditional `for` loop.
+  evidence: In `subagent-footer.tsx`, the `siblings` array is computed using `.filter()` and `.toSorted()` rather than a traditional `for` loop.
   category: style
 - rule: Avoid unnecessary destructuring. Use dot notation to preserve context.
   source:
     path: AGENTS.md
     lines: 51-59
-  evidence: In `subagent-footer.tsx`, the gold solution accesses properties directly
-    via `s.title`, `s.parentID`, and `s.id` rather than destructuring the session
-    object.
+  evidence: In `subagent-footer.tsx`, the gold solution accesses properties directly via `s.title`, `s.parentID`, and `s.id` rather than destructuring the session object.
   category: style
 - rule: Rely on type inference when possible; avoid explicit type annotations
   source:
     path: AGENTS.md
     lines: 16-17
-  evidence: 'The `subagentInfo` memo in `subagent-footer.tsx` does not declare an
-    explicit return type, relying on TypeScript to infer the `{ label: string, index:
-    number, total: number }` shape.'
+  evidence: 'The `subagentInfo` memo in `subagent-footer.tsx` does not declare an explicit return type, relying on TypeScript to infer the `{ label: string, index: number, total: number }` shape.'
   category: style
 - rule: Use single word names by default for new locals, params, and helper functions.
   source:
     path: AGENTS.md
     lines: 18-31
-  evidence: In `subagent-footer.tsx`, the gold solution uses single-word variable
-    names like `s`, `label`, `siblings`, and `index` to adhere to the naming enforcement
-    rule.
+  evidence: In `subagent-footer.tsx`, the gold solution uses single-word variable names like `s`, `label`, `siblings`, and `index` to adhere to the naming enforcement rule.
   category: naming
 distractors:
 - rule: Prefer `const` over `let`. Use ternaries or early returns instead of reassignment.
   collision_type: scope_ambiguity
-  why_distracting: The existing `cycleSession` logic uses `let next = ...` and reassigns
-    it if it goes out of bounds. An agent strictly following 'Prefer const over let'
-    might try to refactor this into a complex ternary or modulo expression, which
-    is out of scope for a simple direction inversion and risks introducing bugs.
+  why_distracting: The existing `cycleSession` logic uses `let next = ...` and reassigns it if it goes out of bounds. An agent strictly following 'Prefer const over let' might try to refactor this into a complex ternary or modulo expression, which is out of scope for a simple direction inversion and risks introducing bugs.
   severity: medium
   source:
     path: AGENTS.md
     lines: 70-79
 - rule: Avoid using the `any` type
   collision_type: scope_ambiguity
-  why_distracting: 'The `ToolTitle` component contains `when: any`. An agent might
-    try to fix this type violation by replacing `any` with a proper type, missing
-    the fact that the component is entirely unreferenced and should just be deleted
-    as per the hint.'
+  why_distracting: 'The `ToolTitle` component contains `when: any`. An agent might try to fix this type violation by replacing `any` with a proper type, missing the fact that the component is entirely unreferenced and should just be deleted as per the hint.'
   severity: medium
   source:
     path: AGENTS.md
     lines: 13-14
-hierarchy_analysis: The agent must apply general TypeScript/SolidJS style rules from
-  the root `AGENTS.md` (Level 0) while ignoring the Effect and Database specific rules
-  in `packages/opencode/AGENTS.md` (Level 2) since this is a TUI React/Solid component
-  task.
+hierarchy_analysis: The agent must apply general TypeScript/SolidJS style rules from the root `AGENTS.md` (Level 0) while ignoring the Effect and Database specific rules in `packages/opencode/AGENTS.md` (Level 2) since this is a TUI React/Solid component task.

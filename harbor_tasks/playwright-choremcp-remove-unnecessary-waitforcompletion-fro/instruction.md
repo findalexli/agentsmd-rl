@@ -16,14 +16,18 @@ The affected tools are:
 - `browser_hover`, `browser_select_option`, `browser_mouse_move_xy`: Execute their action directly without `waitForCompletion`.
 - Other tools that CAN cause navigation (like `browser_click`, `browser_press_key` for Enter) must continue using `waitForCompletion`.
 
-After fixing the code, update the project's skill documentation to reflect the `--submit` flag behavior for the fill command. The SKILL.md at `packages/playwright-core/src/tools/cli-client/skill/SKILL.md` should be updated so users understand when Enter is pressed after filling.
+After fixing the code, update the project's CLI skill documentation to reflect the `--submit` flag behavior for the fill command, so users understand when Enter is pressed after filling.
 
-## Files to Look At
+## Where to Look
 
-- `packages/playwright-core/src/tools/backend/keyboard.ts` — contains the `browser_type` tool handler
-- `packages/playwright-core/src/tools/backend/mouse.ts` — contains the `browser_mouse_move_xy` tool handler
-- `packages/playwright-core/src/tools/backend/snapshot.ts` — contains `browser_hover` and `browser_select_option` tool handlers
-- `packages/playwright-core/src/tools/cli-client/skill/SKILL.md` — CLI skill documentation
+Search the repository for the tool handler definitions by their schema names:
+
+- `browser_type` (fill) — the tool that types into or fills an element, defined with `name: 'browser_type'`
+- `browser_hover` — the tool that hovers over an element, defined with `name: 'browser_hover'`
+- `browser_select_option` — the tool that selects a dropdown option, defined with `name: 'browser_select_option'`
+- `browser_mouse_move_xy` — the tool that moves the mouse to coordinates, defined with `name: 'browser_mouse_move_xy'`
+
+The CLI skill documentation (where the `--submit` flag must be documented) lives under the `packages/playwright-core/src/tools/cli-client/skill/` directory.
 
 ## Code Style Requirements
 

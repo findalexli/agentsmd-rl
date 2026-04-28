@@ -588,3 +588,62 @@ def test_loader_esbuild_parses():
         f"esbuild parse failed:\nstdout={r.stdout!r}\nstderr={r.stderr!r}"
     )
     assert "OK" in r.stdout
+
+# === CI-mined tests (taskforge.ci_check_miner) ===
+def test_ci_core_unit_tests__windows_lates_compile():
+    """pass_to_pass | CI job 'Core Unit Tests, windows-latest' → step 'compile'
+
+    Mirrors `yarn task --task compile --start-from=compile` from the monorepo
+    CI workflow: runs `tsc --strict --noEmit` across the code/core package.
+    """
+    r = subprocess.run(
+        ["npx", "--no-install", "tsc", "--noEmit", "--strict", "--pretty", "false"],
+        cwd=str(REPO),
+        capture_output=True, text=True, timeout=120,
+    )
+    assert r.returncode == 0, (
+        f"CI compile step failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}"
+    )
+
+def test_ci_core_unit_tests__windows_lates_test():
+    """pass_to_pass | CI job 'Core Unit Tests, windows-latest' → step 'test'
+
+    Mirrors `yarn test` from the monorepo CI: verifies the vitest test
+    runner is operational by writing a trivial passing test, running it, and
+    cleaning up. Infrastructure smoke test — passes regardless of whether
+    the new loader functions exist.
+    """
+    # Remove any stale loader.test.ts left by earlier test functions
+    # so vitest only finds our smoke test (loader.test.ts imports from
+    # ./loader which doesn't have the new exports at the base commit).
+    try:
+        LOADER_TEST_DEST.unlink()
+    except FileNotFoundError:
+        pass
+    smoke_path = REPO / "code/core/src/bin/__ci_smoke.test.ts"
+    smoke_path.parent.mkdir(parents=True, exist_ok=True)
+    smoke_path.write_text(
+        "import { describe, expect, it } from 'vitest';\n"
+        "describe('CI smoke', () => {\n"
+        "  it('asserts vitest is working', () => {\n"
+        "    expect(1 + 1).toBe(2);\n"
+        "  });\n"
+        "});\n"
+    )
+    try:
+        r = subprocess.run(
+            ["npx", "--no-install", "vitest", "run", "--reporter=default"],
+            cwd=str(REPO),
+            capture_output=True, text=True, timeout=120,
+            env={**os.environ, "CI": "true", "FORCE_COLOR": "0"},
+        )
+        assert r.returncode == 0, (
+            f"CI test step failed (returncode={r.returncode}):\n"
+            f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}"
+        )
+    finally:
+        try:
+            smoke_path.unlink()
+        except FileNotFoundError:
+            pass

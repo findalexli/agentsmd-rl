@@ -796,3 +796,23 @@ process.exit(failed > 0 ? 1 : 0);
         capture_output=True, text=True, timeout=30, cwd="/workspace/next.js",
     )
     assert result.returncode == 0, f"TypeScript syntax check failed:\n{result.stdout}\n{result.stderr}"
+
+# === CI-mined tests (taskforge.ci_check_miner) ===
+def test_ci_pnpm_prettier_scoped():
+    """pass_to_pass | Scoped CI: run prettier on affected files via pnpm workspace
+    filter. Uses bash -lc to mirror CI shell environment and pnpm -F next to scope
+    to the affected package, matching CI's own test-runner invocation patterns.
+    Corepack enables pnpm from the Node.js 22 distribution."""
+    r = subprocess.run(
+        ["bash", "-lc",
+         "cd /workspace/next.js && "
+         "corepack enable pnpm && "
+         "pnpm -F next exec prettier --check "
+         "src/server/route-modules/pages/pages-handler.ts "
+         "src/server/send-payload.ts "
+         "src/server/render-result.ts"],
+        cwd=REPO,
+        capture_output=True, text=True, timeout=120)
+    assert r.returncode == 0, (
+        f"Scoped prettier check via pnpm failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")

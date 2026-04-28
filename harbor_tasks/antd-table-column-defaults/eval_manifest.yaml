@@ -97,32 +97,117 @@ checks:
     commit: b73b49c02f70e54ffc67c6e7ec895ec8d62378f3
     path: CLAUDE.md
   description: Test file uses relative imports per project convention
+- id: test_ci_test_react_latest_dist_ut
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: test-react-latest-dist / '
+- id: test_ci_test_react_latest_dist_dom_test
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: test-react-latest-dist / dom test'
+- id: test_ci_test_react_latest_dist_persist_coverages
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: test-react-latest-dist / persist coverages'
+- id: test_ci_test_image_ut
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: test image / '
+- id: test_ci_test_image_generate_image_snapshots
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: test image / generate image snapshots'
+- id: test_ci_test_lib_es_module_ut
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: test lib/es module / '
+- id: test_ci_test_lib_es_module_compile
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: test lib/es module / compile'
+- id: test_ci_test_lib_es_module_test
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: test lib/es module / test'
+- id: test_ci_test_react_legacy_ut
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: test-react-legacy / '
+- id: test_ci_test_react_legacy_dom_test
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: test-react-legacy / dom test'
+- id: test_ci_test_node_ut
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: test-node / '
+- id: test_ci_test_node_ut
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: test-node / '
+- id: test_ci_lint_ut
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: lint / '
+- id: test_ci_lint_ut
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: lint / '
+- id: test_ci_test_react_latest_ut
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: test-react-latest / '
+- id: test_ci_test_react_latest_dom_test
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: test-react-latest / dom test'
+- id: test_ci_test_react_latest_persist_coverages
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: test-react-latest / persist coverages'
+- id: test_ci_build_ut
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: build / '
+- id: test_ci_build_compile
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: build / compile'
+- id: test_ci_build_dist
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: build / dist'
+- id: test_ci_build_check_build_files
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: build / check build files'
+- id: test_ci_build_zip_builds
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: build / zip builds'
+- id: test_pr_added_supports_column_align_with_per_column_override_a
+  type: fail_to_pass
+  origin: pr_diff
+  description: PR added test 'supports column align with per-column override and special columns' in components/table/__tests__/Table.test.tsx
 rubric:
 - rule: 'Test 导入规范: 测试文件应优先从当前组件目录、相邻内部模块或共享测试工具目录通过相对路径引用，禁止使用绝对路径引用仓库内代码。'
   source:
     path: CLAUDE.md
     lines: 39-43
-  evidence: 'The gold solution modifies `components/table/__tests__/Table.test.tsx`
-    to add a new test case without introducing any absolute imports for internal Ant
-    Design modules, adhering to the relative import '
+  evidence: 'The gold solution modifies `components/table/__tests__/Table.test.tsx` to add a new test case without introducing any absolute imports for internal Ant Design modules, adhering to the relative import '
   category: testing
-- rule: Test files must use relative paths for internal imports and normal package
-    names for external dependencies.
+- rule: Test files must use relative paths for internal imports and normal package names for external dependencies.
   source:
     path: AGENTS.md
     lines: 38-44
-  evidence: The gold solution modifies `components/table/__tests__/Table.test.tsx`
-    to add a test case using the existing `Table` component without introducing any
-    absolute imports for internal Ant Design modules,
+  evidence: The gold solution modifies `components/table/__tests__/Table.test.tsx` to add a test case using the existing `Table` component without introducing any absolute imports for internal Ant Design modules,
   category: testing
 - rule: 项目组件和逻辑必须使用 TypeScript 和 React 进行开发。
   source:
     path: AGENTS.md
     lines: 8-8
   source_text: '- 使用 TypeScript 和 React 开发'
-  evidence: The diff introduces a new file `useFilledColumns.ts` written in TypeScript,
-    which imports React (`import * as React from 'react';`), and uses TypeScript types
-    like `ColumnsType<RecordType>` and `Partial<ColumnType<RecordType>>`.
+  evidence: The diff introduces a new file `useFilledColumns.ts` written in TypeScript, which imports React (`import * as React from 'react';`), and uses TypeScript types like `ColumnsType<RecordType>` and `Partial<ColumnType<RecordType>>`.
   category: architecture
   verification: llm_judge
 - rule: 单元测试文件应存放在对应组件目录下的 `__tests__/` 文件夹中。
@@ -130,9 +215,7 @@ rubric:
     path: AGENTS.md
     lines: 21-21
   source_text: '│   │   ├── __tests__/            # 单元测试'
-  evidence: The diff adds a new test case for the Table component's column alignment
-    inside the file `components/table/__tests__/Table.test.tsx`, following the project
-    structure for unit tests.
+  evidence: The diff adds a new test case for the Table component's column alignment inside the file `components/table/__tests__/Table.test.tsx`, following the project structure for unit tests.
   category: architecture
   verification: llm_judge
 - rule: 跨组件共享的工具函数和类型定义应放置在 `_util/` 目录中。
@@ -140,36 +223,27 @@ rubric:
     path: AGENTS.md
     lines: 25-25
   source_text: '│   ├── _util/                   # 共享工具函数库'
-  evidence: The newly added hook `useFilledColumns.ts` imports the shared `AnyObject`
-    type from the `_util` directory (`import type { AnyObject } from '../../_util/type';`).
+  evidence: The newly added hook `useFilledColumns.ts` imports the shared `AnyObject` type from the `_util` directory (`import type { AnyObject } from '../../_util/type';`).
   category: architecture
   verification: llm_judge
 distractors:
-- rule: Demo files must use absolute paths (e.g., `antd`, `antd/es/*`) for internal
-    imports.
+- rule: Demo files must use absolute paths (e.g., `antd`, `antd/es/*`) for internal imports.
   collision_type: scope_ambiguity
-  why_distracting: The agent might confuse the test file or internal component files
-    with demo files and attempt to use absolute paths like `antd/es/table/hooks/useFilledColumns`
-    instead of relative paths.
+  why_distracting: The agent might confuse the test file or internal component files with demo files and attempt to use absolute paths like `antd/es/table/hooks/useFilledColumns` instead of relative paths.
   severity: high
   source:
     path: AGENTS.md
     lines: 28-36
-- rule: API documentation must be updated with specific table formats when adding
-    new properties.
+- rule: API documentation must be updated with specific table formats when adding new properties.
   collision_type: scope_ambiguity
-  why_distracting: The agent might try to update `components/table/index.en-US.md`
-    and `index.zh-CN.md` to document the new `column` prop. While good practice generally,
-    the instructions strictly scope the task to code and tests, making doc updates
-    a distraction.
+  why_distracting: The agent might try to update `components/table/index.en-US.md` and `index.zh-CN.md` to document the new `column` prop. While good practice generally, the instructions strictly scope the task to code and tests, making doc updates a distraction.
   severity: medium
   source:
     path: AGENTS.md
     lines: 48-77
 - rule: Changelog entries must be added for new features in both English and Chinese.
   collision_type: scope_ambiguity
-  why_distracting: The agent might attempt to update `CHANGELOG.en-US.md` and `CHANGELOG.zh-CN.md`
-    to announce the new feature, which is out of scope for the provided instructions.
+  why_distracting: The agent might attempt to update `CHANGELOG.en-US.md` and `CHANGELOG.zh-CN.md` to announce the new feature, which is out of scope for the provided instructions.
   severity: medium
   source:
     path: AGENTS.md
@@ -179,13 +253,9 @@ distractors:
     path: .claude/skills/issue-reply/SKILL.md
     lines: 1-5
   collision_type: meta_confusion
-  why_distracting: The task description is formatted similarly to a GitHub issue ('Problem',
-    'Goal'). The agent might activate this irrelevant skill and attempt to generate
-    an issue response or comment instead of implementing the actual feature code.
+  why_distracting: The task description is formatted similarly to a GitHub issue ('Problem', 'Goal'). The agent might activate this irrelevant skill and attempt to generate an issue response or comment instead of implementing the actual feature code.
   severity: low
-hierarchy_analysis: The configuration is provided in identical flat files (`AGENTS.md`
-  and `CLAUDE.md`) at the repository root. There is no deep hierarchy or overriding
-  between directories.
+hierarchy_analysis: The configuration is provided in identical flat files (`AGENTS.md` and `CLAUDE.md`) at the repository root. There is no deep hierarchy or overriding between directories.
 version: '2.0'
 source:
   repo: ant-design/ant-design

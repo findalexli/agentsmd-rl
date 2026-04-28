@@ -1,0 +1,72 @@
+version: '2.0'
+source:
+  repo: cloudflare/workers-sdk
+  pr: 12885
+  base_commit: 2363d485a67b8c5abdffd01eee1bd3eb6bd53b10
+  merge_commit: 12505c97c280e3516ace4354fef0a8434f87cdf4
+task:
+  kind: code_with_config
+checks:
+- id: test_vite8_peer_dependency
+  type: fail_to_pass
+  origin: pr_diff
+  description: peerDependencies.vite in package.json includes ^8.0.0
+- id: test_agents_md_vite8_stable
+  type: fail_to_pass
+  origin: pr_diff
+  description: AGENTS.md describes Vite 8 as stable, not beta
+- id: test_package_json_parseable
+  type: pass_to_pass
+  origin: repo_tests
+  description: package.json is valid JSON parseable by Node.js
+- id: test_vite_peer_dep_retains_v6_v7
+  type: pass_to_pass
+  origin: repo_tests
+  description: peerDependencies.vite retains ^6.1.0 and ^7.0.0 after adding Vite 8
+config_edits:
+- path: packages/vite-plugin-cloudflare/AGENTS.md
+  tier: 1
+  gold_added: '- Playground tests: Playwright-based, tested across Vite 6/7/8 in CI'
+  gold_removed: '- Playground tests: Playwright-based, tested across Vite 6/7/8-beta in CI'
+rubric:
+- rule: All changes to published packages require a changeset
+  source:
+    path: AGENTS.md
+    lines: '143'
+    commit: 2363d485a67b8c5abdffd01eee1bd3eb6bd53b10
+  evidence: Gold PR adds .changeset/green-buses-melt.md with a minor bump for @cloudflare/vite-plugin
+  category: process
+  verification: llm_judge
+- rule: 'PR title format: `[package name] description` (e.g. `[wrangler] Fix bug in dev command`)'
+  source:
+    path: AGENTS.md
+    lines: '96'
+    commit: 2363d485a67b8c5abdffd01eee1bd3eb6bd53b10
+  evidence: 'Gold PR title is ''feat(vite-plugin-cloudflare): add Vite 8 to the supported peer dependency range'''
+  category: naming
+  verification: llm_judge
+- rule: 'patch: bug fixes; minor: new features, deprecations, experimental breaking changes; major: stable breaking changes only'
+  source:
+    path: AGENTS.md
+    lines: '116'
+    commit: 2363d485a67b8c5abdffd01eee1bd3eb6bd53b10
+  evidence: Gold changeset uses 'minor' for the new Vite 8 feature, matching the rule
+  category: process
+  verification: llm_judge
+distractors:
+- rule: Major versions for `wrangler` are currently **forbidden**
+  source:
+    path: AGENTS.md
+    lines: '115'
+    commit: 2363d485a67b8c5abdffd01eee1bd3eb6bd53b10
+  collision_type: scope_ambiguity
+  why_distracting: The wrangler major-version ban might make an agent hesitate to bump any package version, but this PR correctly uses 'minor' for vite-plugin
+  severity: low
+- rule: Never commit without changesets for user-facing changes
+  source:
+    path: AGENTS.md
+    lines: '88'
+    commit: 2363d485a67b8c5abdffd01eee1bd3eb6bd53b10
+  collision_type: meta_confusion
+  why_distracting: Similar to the changeset rule but could be read as requiring a separate changeset per file rather than one per PR
+  severity: low

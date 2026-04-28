@@ -80,28 +80,23 @@ checks:
 - id: help_json_command_names
   type: fail_to_pass
   origin: pr_diff
-  description: help.json contains new command names (press, keydown, etc.) and not
-    old hyphenated names, validated via Node JSON parse
+  description: help.json contains new command names (press, keydown, etc.) and not old hyphenated names, validated via Node JSON parse
 - id: eval_auto_wrap
   type: fail_to_pass
   origin: pr_diff
-  description: evaluate tool auto-wraps expressions without => into arrow functions,
-    verified by checking source pattern and testing logic via Node
+  description: evaluate tool auto-wraps expressions without => into arrow functions, verified by checking source pattern and testing logic via Node
 - id: render_modal_skill_mode
   type: fail_to_pass
   origin: pr_diff
-  description: renderModalStates accepts config, branches on skillMode to show skill
-    name vs tool name, verified via Node execution
+  description: renderModalStates accepts config, branches on skillMode to show skill name vs tool name, verified via Node execution
 - id: command_names_renamed
   type: fail_to_pass
   origin: pr_diff
-  description: commands.ts declares short command names (press, keydown, mousemove)
-    not old hyphenated forms
+  description: commands.ts declares short command names (press, keydown, mousemove) not old hyphenated forms
 - id: modal_state_cleared_by_type
   type: fail_to_pass
   origin: pr_diff
-  description: 'ModalState clearedBy typed as { tool: string; skill: string } not
-    plain string'
+  description: 'ModalState clearedBy typed as { tool: string; skill: string } not plain string'
 - id: daemon_sets_skill_mode
   type: fail_to_pass
   origin: pr_diff
@@ -118,9 +113,72 @@ checks:
   type: fail_to_pass
   origin: pr_diff
   description: Build script copies terminal .md files to lib output
+- id: test_ci_docs___lint_npm
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: docs & lint / '
+- id: test_ci_docs___lint_npm
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: docs & lint / '
+- id: test_ci_docs___lint_npx
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: docs & lint / '
+- id: test_ci_docs___lint_npm
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: docs & lint / '
+- id: test_ci_docs___lint_audit_prod_npm_dependencies
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: docs & lint / Audit prod NPM dependencies'
+- id: test_ci_lint_snippets_pip
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: Lint snippets / '
+- id: test_ci_lint_snippets_mvn
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: Lint snippets / '
+- id: test_ci_lint_snippets_node
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: Lint snippets / '
+- id: test_ci_docs___lint_npm_2
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: docs & lint / '
+- id: test_ci_docs___lint_npm_3
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: docs & lint / '
+- id: test_pr_added_eval_no_arrow
+  type: fail_to_pass
+  origin: pr_diff
+  description: PR added test 'eval no arrow' in tests/mcp/cli.spec.ts
+- id: test_pr_added_press
+  type: fail_to_pass
+  origin: pr_diff
+  description: PR added test 'press' in tests/mcp/cli.spec.ts
+- id: test_pr_added_keydown_keyup
+  type: fail_to_pass
+  origin: pr_diff
+  description: PR added test 'keydown keyup' in tests/mcp/cli.spec.ts
+- id: test_pr_added_mousemove
+  type: fail_to_pass
+  origin: pr_diff
+  description: PR added test 'mousemove' in tests/mcp/cli.spec.ts
+- id: test_pr_added_mousedown_mouseup
+  type: fail_to_pass
+  origin: pr_diff
+  description: PR added test 'mousedown mouseup' in tests/mcp/cli.spec.ts
+- id: test_pr_added_mousewheel
+  type: fail_to_pass
+  origin: pr_diff
+  description: PR added test 'mousewheel' in tests/mcp/cli.spec.ts
 rubric:
-- rule: SKILL.md documentation should be comprehensive and cover common workflows
-    with examples
+- rule: SKILL.md documentation should be comprehensive and cover common workflows with examples
   source:
     path: packages/playwright/src/mcp/terminal/SKILL.md
     lines: 1-159
@@ -132,10 +190,7 @@ config_edits:
 
     name: playwright-cli
 
-    description: Automates browser interactions for web testing, form filling, screenshots,
-    and data extraction. Use when the user needs to navigate websites, interact with
-    web pages, fill forms, take screenshots, test web applications, or extract information
-    from web pages.
+    description: Automates browser interactions for web testing, form filling, screenshots, and data extraction. Use when the user needs to navigate websites, interact with web pages, fill forms, take screenshots, test web applications, or extract information from web pages.
 
     allowed-tools: Bash(playwright-cli:*)
 
@@ -166,8 +221,7 @@ config_edits:
 
     1. Navigate: `playwright-cli open https://example.com`
 
-    2. Snapshot: `playwright-cli snapshot` (returns elements with refs like `ref=e1`,
-    `ref=e2`)
+    2. Snapshot: `playwright-cli snapshot` (returns elements with refs like `ref=e1`, `ref=e2`)
 
     3. Interact using refs from the snapshot
 
@@ -384,59 +438,39 @@ distractors:
     lines: 41-41
   source_text: '- File should contain single test'
   collision_type: scope_ambiguity
-  why_distracting: The agent might create a new file for the 'eval no arrow' test
-    or try to split cli.spec.ts, but this rule applies to generated E2E user tests,
-    not to internal framework tests.
+  why_distracting: The agent might create a new file for the 'eval no arrow' test or try to split cli.spec.ts, but this rule applies to generated E2E user tests, not to internal framework tests.
   severity: medium
-- rule: For inherently dynamic data, utilize regular expressions to produce resilient
-    locators
+- rule: For inherently dynamic data, utilize regular expressions to produce resilient locators
   source:
     path: /workspace/repo/packages/playwright/src/agents/playwright-test-healer.agent.md
     lines: 39-39
-  source_text: '- For inherently dynamic data, utilize regular expressions to produce
-    resilient locators'
+  source_text: '- For inherently dynamic data, utilize regular expressions to produce resilient locators'
   collision_type: scope_ambiguity
-  why_distracting: The agent might try to replace the exact strings in the cli.spec.ts
-    framework tests (such as the dialog modal state strings) with regular expressions,
-    which is not desired for these framework tests.
+  why_distracting: The agent might try to replace the exact strings in the cli.spec.ts framework tests (such as the dialog modal state strings) with regular expressions, which is not desired for these framework tests.
   severity: medium
-- rule: If the error persists and you have high level of confidence that the test
-    is correct, mark this test as test.fixme() so that it is skipped during the execution.
+- rule: If the error persists and you have high level of confidence that the test is correct, mark this test as test.fixme() so that it is skipped during the execution.
   source:
     path: /workspace/repo/packages/playwright/src/agents/playwright-test-healer.agent.md
     lines: 51-53
-  source_text: "- If the error persists and you have high level of confidence that\
-    \ the test is correct, mark this test as test.fixme()\n  so that it is skipped\
-    \ during the execution. Add a comment before the failing step explaining what\
-    \ is happening instead\n  of the expected behavior."
+  source_text: "- If the error persists and you have high level of confidence that the test is correct, mark this test as test.fixme()\n  so that it is skipped during the execution. Add a comment before the failing step explaining what is happening instead\n  of the expected behavior."
   collision_type: would_cause_bug
-  why_distracting: If the agent encounters a test failure while modifying the CLI
-    behavior, it might incorrectly mark the framework test as test.fixme() instead
-    of actually fixing the MCP tool logic.
+  why_distracting: If the agent encounters a test failure while modifying the CLI behavior, it might incorrectly mark the framework test as test.fixme() instead of actually fixing the MCP tool logic.
   severity: high
-- rule: Includes a comment with the step text before each step execution. Do not duplicate
-    comments if step requires multiple actions.
+- rule: Includes a comment with the step text before each step execution. Do not duplicate comments if step requires multiple actions.
   source:
     path: /workspace/repo/packages/playwright/src/agents/playwright-test-generator.agent.md
     lines: 45-46
-  source_text: "- Includes a comment with the step text before each step execution.\
-    \ Do not duplicate comments if step requires\n  multiple actions."
+  source_text: "- Includes a comment with the step text before each step execution. Do not duplicate comments if step requires\n  multiple actions."
   collision_type: scope_ambiguity
-  why_distracting: The agent might add step text comments to the framework test (like
-    the new 'eval no arrow' test) when these comments are only expected in generated
-    E2E tests.
+  why_distracting: The agent might add step text comments to the framework test (like the new 'eval no arrow' test) when these comments are only expected in generated E2E tests.
   severity: low
-- rule: Always save the complete test plan as a markdown file with clear headings,
-    numbered steps, and professional formatting
+- rule: Always save the complete test plan as a markdown file with clear headings, numbered steps, and professional formatting
   source:
     path: /workspace/repo/packages/playwright/src/agents/playwright-test-planner.agent.md
     lines: 72-73
-  source_text: '**Output Format**: Always save the complete test plan as a markdown
-    file with clear headings, numbered steps, and
+  source_text: '**Output Format**: Always save the complete test plan as a markdown file with clear headings, numbered steps, and
 
     professional formatting suitable for sharing with development and QA teams.'
   collision_type: scope_ambiguity
-  why_distracting: The agent is tasked with creating a SKILL.md file and might mistakenly
-    format it as a 'test plan' with test scenarios and numbered steps, whereas it
-    should be formatted as an LLM skill definition.
+  why_distracting: The agent is tasked with creating a SKILL.md file and might mistakenly format it as a 'test plan' with test scenarios and numbered steps, whereas it should be formatted as an LLM skill definition.
   severity: medium

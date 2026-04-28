@@ -253,3 +253,58 @@ def test_repo_email_impls_tests():
         capture_output=True, text=True, timeout=300, cwd=REPO,
     )
     assert r.returncode == 0, f"Email impls tests failed:\n{r.stderr[-500:]}"
+
+# === CI-mined tests (taskforge.ci_check_miner) ===
+def test_ci_test_website_test_app_coverage():
+    """pass_to_pass | CI job 'Test Website' → step 'Test App Coverage'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'bun run test-app:coverage'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Test App Coverage' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_test_database_lint():
+    """pass_to_pass | CI job 'Test Database' → step 'Lint'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'npm run lint'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Lint' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_test_database_test_client_db():
+    """pass_to_pass | CI job 'Test Database' → step 'Test Client DB'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'pnpm --filter @lobechat/database test:client-db'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Test Client DB' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_test_database_test_coverage():
+    """pass_to_pass | CI job 'Test Database' → step 'Test Coverage'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'pnpm --filter @lobechat/database test:coverage'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Test Coverage' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_test_desktop_app_test_desktop_client():
+    """pass_to_pass | CI job 'Test Desktop App' → step 'Test Desktop Client'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'pnpm test'], cwd=os.path.join(REPO, 'apps/desktop'),
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Test Desktop Client' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_test_web_app_run_e2e_tests():
+    """pass_to_pass | CI job 'Test Web App' → step 'Run E2E tests'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'bun run e2e'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Run E2E tests' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")

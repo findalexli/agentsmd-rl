@@ -32,7 +32,7 @@ checks:
 - id: test_repo_turbo_jsonc_exists
   type: pass_to_pass
   origin: repo_tests
-  description: turbo.jsonc exists and is readable (pass_to_pass)
+  description: turbo.jsonc or turbo.json exists and is readable (pass_to_pass)
 - id: test_repo_build_script_exists
   type: pass_to_pass
   origin: repo_tests
@@ -44,13 +44,11 @@ checks:
 - id: test_repo_turbo_json_valid
   type: pass_to_pass
   origin: repo_tests
-  description: packages/next-swc/turbo.json or turbo.jsonc has expected structure
-    (pass_to_pass)
+  description: packages/next-swc/turbo.json or turbo.jsonc has expected structure (pass_to_pass)
 - id: test_repo_root_scripts_valid
   type: pass_to_pass
   origin: repo_tests
-  description: Root package.json has expected CI scripts - build, lint, test-unit
-    (pass_to_pass)
+  description: Root package.json has expected CI scripts - build, lint, test-unit (pass_to_pass)
 - id: test_repo_agents_md_readable
   type: pass_to_pass
   origin: repo_tests
@@ -62,8 +60,7 @@ checks:
 - id: test_repo_turbo_json_tasks_exist
   type: pass_to_pass
   origin: repo_tests
-  description: packages/next-swc/turbo.json has expected tasks including build and
-    rust-check (pass_to_pass)
+  description: packages/next-swc/turbo.json has expected tasks including build and rust-check (pass_to_pass)
 - id: build_all_script_exists
   type: fail_to_pass
   origin: pr_diff
@@ -84,9 +81,12 @@ checks:
   type: fail_to_pass
   origin: pr_diff
   description: AGENTS.md recommends build-all for branch switches and Turbopack edits
+- id: test_ci_prettier_package_json
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: prettier --check package.json via bash login shell'
 rubric:
-- rule: AGENTS.md must document pnpm build-all for building both JS and Rust code,
-    and distinguish it from pnpm build (JS only)
+- rule: AGENTS.md must document pnpm build-all for building both JS and Rust code, and distinguish it from pnpm build (JS only)
   source:
     path: AGENTS.md
     lines: 58-70
@@ -95,27 +95,19 @@ rubric:
   source:
     path: AGENTS.md
     lines: 58-65
-  evidence: The gold solution updates the 'Build Commands' section to redefine `pnpm
-    build` as 'Build all JS code' and adds `pnpm build-all` for 'Build all JS and
-    Rust code'.
+  evidence: The gold solution updates the 'Build Commands' section to redefine `pnpm build` as 'Build all JS code' and adds `pnpm build-all` for 'Build all JS and Rust code'.
   category: documentation
-- rule: Document build commands in the 'Build Commands' section with their specific
-    use cases.
+- rule: Document build commands in the 'Build Commands' section with their specific use cases.
   source:
     path: AGENTS.md
     lines: 58-65
-  evidence: The gold solution correctly identifies the 'Build Commands' section and
-    adds the new `pnpm build-all` command while updating the comment for `pnpm build`
-    to 'Build all JS code', maintaining the existi
+  evidence: The gold solution correctly identifies the 'Build Commands' section and adds the new `pnpm build-all` command while updating the comment for `pnpm build` to 'Build all JS code', maintaining the existi
   category: documentation
-- rule: Maintain accurate documentation of build commands and their purposes in the
-    developer guide.
+- rule: Maintain accurate documentation of build commands and their purposes in the developer guide.
   source:
     path: AGENTS.md
     lines: 58-65
-  evidence: The gold solution updates the build commands documentation in AGENTS.md
-    to specify that `pnpm build` builds JS code only, and adds `pnpm build-all` for
-    JS and Rust code.
+  evidence: The gold solution updates the build commands documentation in AGENTS.md to specify that `pnpm build` builds JS code only, and adds `pnpm build-all` for JS and Rust code.
   category: documentation
 config_edits:
 - path: AGENTS.md
@@ -127,12 +119,9 @@ config_edits:
     pnpm build-all
 
 
-    After the workspace is bootstrapped, prefer `pnpm --filter=next build` when edits
-    are limited to core Next.js files. Use full `pnpm build-all` for branch switches/bootstrap,
-    before CI push, or when changes span multiple packages.
+    After the workspace is bootstrapped, prefer `pnpm --filter=next build` when edits are limited to core Next.js files. Use full `pnpm build-all` for branch switches/bootstrap, before CI push, or when changes span multiple packages.
 
-    pnpm build-all   # Sets up outputs for dependent packages (Turborepo dedupes if
-    unchanged)
+    pnpm build-all   # Sets up outputs for dependent packages (Turborepo dedupes if unchanged)
 
     - Capture to file once, then analyze: e.g. `pnpm build 2>&1 | tee /tmp/build.log`
 
@@ -141,9 +130,7 @@ config_edits:
     - **Edited Next.js code or Turbopack (Rust)?** → `pnpm build-all`'
   gold_removed: '# Build everything
 
-    After the workspace is bootstrapped, prefer `pnpm --filter=next build` when edits
-    are limited to core Next.js files. Use full `pnpm build` for branch switches/bootstrap,
-    before CI push, or when changes span multiple packages.
+    After the workspace is bootstrapped, prefer `pnpm --filter=next build` when edits are limited to core Next.js files. Use full `pnpm build` for branch switches/bootstrap, before CI push, or when changes span multiple packages.
 
     pnpm build   # Sets up outputs for dependent packages (Turborepo dedupes if unchanged)
 
@@ -157,27 +144,16 @@ distractors:
 
     pnpm build'
   collision_type: meta_confusion
-  why_distracting: The existing instruction states that `pnpm build` builds everything.
-    An agent might treat this as an immutable system prompt/rule and refuse to change
-    it, or try to make `pnpm build` continue building everything despite the task
-    instructions.
+  why_distracting: The existing instruction states that `pnpm build` builds everything. An agent might treat this as an immutable system prompt/rule and refuse to change it, or try to make `pnpm build` continue building everything despite the task instructions.
   severity: high
   source:
     path: AGENTS.md
     lines: 61-62
-- rule: 'Use full `pnpm build` for branch switches/bootstrap... Always run a full
-    bootstrap build after switching branches: pnpm build'
+- rule: 'Use full `pnpm build` for branch switches/bootstrap... Always run a full bootstrap build after switching branches: pnpm build'
   collision_type: meta_confusion
-  why_distracting: 'The file explicitly instructs the developer/agent to ''Always
-    run a full bootstrap build after switching branches: pnpm build''. The agent must
-    recognize that it is supposed to rewrite its own instructions rather than follow
-    the outdated ones.'
+  why_distracting: 'The file explicitly instructs the developer/agent to ''Always run a full bootstrap build after switching branches: pnpm build''. The agent must recognize that it is supposed to rewrite its own instructions rather than follow the outdated ones.'
   severity: high
   source:
     path: AGENTS.md
     lines: 94-100
-hierarchy_analysis: The task involves a flat config structure but is highly meta-referential.
-  The agent must edit `AGENTS.md`, which serves as its own system prompt/guidance
-  file. It must override the existing rules about `pnpm build` and replace them with
-  the new `pnpm build-all` workflow, requiring it to distinguish between following
-  instructions and updating them.
+hierarchy_analysis: The task involves a flat config structure but is highly meta-referential. The agent must edit `AGENTS.md`, which serves as its own system prompt/guidance file. It must override the existing rules about `pnpm build` and replace them with the new `pnpm build-all` workflow, requiring it to distinguish between following instructions and updating them.

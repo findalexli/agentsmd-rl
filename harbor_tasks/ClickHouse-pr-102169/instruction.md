@@ -2,7 +2,7 @@
 
 ## Problem
 
-In the ClickHouse codebase, there's a bug in the user-defined function (UDF) refresh mechanism located in `src/Functions/UserDefined/UserDefinedSQLObjectsZooKeeperStorage.cpp`. When ZooKeeper session expires during the refresh operation, the retry mechanism fails because it continues using the expired session handle instead of obtaining a fresh one.
+In the ClickHouse codebase, there's a bug in the user-defined function (UDF) refresh mechanism that uses ZooKeeper storage. When ZooKeeper session expires during the refresh operation, the retry mechanism fails because it continues using the expired session handle instead of obtaining a fresh one.
 
 ### Symptoms
 
@@ -20,7 +20,7 @@ When a ZooKeeper session expires during UDF refresh:
 
 ## Expected Behavior
 
-The UDF refresh logic in `src/Functions/UserDefined/UserDefinedSQLObjectsZooKeeperStorage.cpp` should:
+The UDF refresh logic should:
 
 1. Check inside the `retryLoop` whether the current iteration is a retry by calling `isRetry()` on the retries control object
 2. When retrying (i.e., `isRetry()` returns true), obtain a fresh ZooKeeper session by calling `getZooKeeper()` before performing any operations
@@ -40,4 +40,6 @@ The UDF refresh logic in `src/Functions/UserDefined/UserDefinedSQLObjectsZooKeep
 
 Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
 
-- `typos (spell-check)`
+- `clang-format` (C++ source formatting)
+- `ci/jobs/scripts/check_style/check_cpp.sh` (ClickHouse C++ style checks)
+- `codespell` (typo detection)

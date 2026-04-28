@@ -261,3 +261,58 @@ def test_p2p_go_vet_clean():
         timeout=300,
     )
     assert r.returncode == 0, f"go vet failed:\n{r.stderr[-1500:]}"
+
+# === CI-mined tests (taskforge.ci_check_miner) ===
+def test_ci_end_to_end_test_run_make_minimaltools():
+    """pass_to_pass | CI job 'End-to-End Test' → step 'Run make minimaltools'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'make minimaltools'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Run make minimaltools' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_run_upgrade_downgrade_test___q_run_query_serving_tests_vtgate_n_1_vttab():
+    """pass_to_pass | CI job 'Run Upgrade Downgrade Test - Query Serving' → step 'Run query serving tests (vtgate=N-1, vttablet=N, vtctld=N)'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'go run test.go -skip-build -keep-data=false -docker=false -print-log -follow -tag upgrade_downgrade_query_serving_queries'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Run query serving tests (vtgate=N-1, vttablet=N, vtctld=N)' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_run_upgrade_downgrade_test___r_run_reparent_tests_vtctl_n_vttablet_n_1():
+    """pass_to_pass | CI job 'Run Upgrade Downgrade Test - Reparent New VTTablet' → step 'Run reparent tests (vtctl=N, vttablet=N+1)'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'go run test.go -skip-build -keep-data=false -docker=false -print-log -follow -tag upgrade_downgrade_reparent'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Run reparent tests (vtctl=N, vttablet=N+1)' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_run_semi_sync_upgrade_downgrad_run_semi_sync_tests():
+    """pass_to_pass | CI job 'Run Semi Sync Upgrade Downgrade Test' → step 'Run semi sync tests'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'go test -v -count=1 -run="" ./go/test/endtoend/reparent/semisync'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Run semi sync tests' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_run_endtoend_tests_on_vitess_t_run_cluster_endtoend_test():
+    """pass_to_pass | CI job 'Run endtoend tests on Vitess Tester' → step 'Run cluster endtoend test'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'make build'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Run cluster endtoend test' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_run_upgrade_downgrade_test___o_run_online_ddl_tests_primary_n_replica_n():
+    """pass_to_pass | CI job 'Run Upgrade Downgrade Test - Online DDL flow' → step 'Run Online DDL tests (primary=N, replica=N-1)'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'go run test.go -skip-build -keep-data=false -docker=false -print-log -follow -tag upgrade_downgrade_onlineddl_flow'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Run Online DDL tests (primary=N, replica=N-1)' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")

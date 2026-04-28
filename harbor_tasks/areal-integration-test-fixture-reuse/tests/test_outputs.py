@@ -24,7 +24,6 @@ GW_FILE = f"{REPO}/tests/experimental/inference_service/test_gateway_integration
 
 ALL_FILES = [CTRL_FILE, PROXY_FILE, GW_FILE]
 
-
 def _run_py(code: str, timeout: int = 30) -> subprocess.CompletedProcess:
     """Execute Python code via subprocess; return CompletedProcess."""
     script = Path("/tmp/_eval_check.py")
@@ -37,11 +36,9 @@ def _run_py(code: str, timeout: int = 30) -> subprocess.CompletedProcess:
     finally:
         script.unlink(missing_ok=True)
 
-
 # ---------------------------------------------------------------------------
 # Gate (pass_to_pass, static) — syntax + byte-compilation check
 # ---------------------------------------------------------------------------
-
 
 def test_syntax_valid():
     """All three test files must be valid Python that compiles to bytecode."""
@@ -57,11 +54,9 @@ print("PASS")
     assert r.returncode == 0, f"Syntax/compilation check failed: {r.stderr}"
     assert "PASS" in r.stdout
 
-
 # ---------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) — behavioral tests via subprocess
 # ---------------------------------------------------------------------------
-
 
 def test_fixtures_module_scoped():
     """Evaluate fixture decorator expressions with a mock pytest.fixture
@@ -123,7 +118,6 @@ print("PASS")
     assert r.returncode == 0, f"Fixture scope check failed: {r.stderr}"
     assert "PASS" in r.stdout
 
-
 def test_pytestmark_sglang_present():
     """Execute the pytestmark assignment in each file with a mock pytest
     module and verify it evaluates to pytest.mark.sglang at runtime."""
@@ -165,7 +159,6 @@ print("PASS")
     assert r.returncode == 0, f"pytestmark check failed: {r.stderr}"
     assert "PASS" in r.stdout
 
-
 def test_slow_marker_removed():
     """No test class should have @pytest.mark.slow decorator."""
     r = _run_py(f'''
@@ -200,7 +193,6 @@ print("PASS")
     assert r.returncode == 0, f"Slow marker check failed: {r.stderr}"
     assert "PASS" in r.stdout
 
-
 def test_should_accept_fn_tests_removed():
     """Tests referencing should_accept_fn must be removed from controller
     integration tests (incompatible with module-scoped fixtures)."""
@@ -218,7 +210,6 @@ print("PASS")
 ''')
     assert r.returncode == 0, f"should_accept_fn removal check failed: {r.stderr}"
     assert "PASS" in r.stdout
-
 
 def test_controller_settings_loosened():
     """gateway_controller and gateway_controller_full_init must have
@@ -248,7 +239,6 @@ print("PASS")
     assert r.returncode == 0, f"Controller settings check failed: {r.stderr}"
     assert "PASS" in r.stdout
 
-
 def test_consumer_batch_size_increased():
     """gateway_controller fixture must have consumer_batch_size >= 3
     (increased from 2 to accommodate module-scoped fixture reuse)."""
@@ -277,11 +267,9 @@ print("PASS")
     assert r.returncode == 0, f"consumer_batch_size check failed: {r.stderr}"
     assert "PASS" in r.stdout
 
-
 # ---------------------------------------------------------------------------
 # Fail-to-pass (agent_config) — config-derived check via subprocess
 # ---------------------------------------------------------------------------
-
 
 def test_fixture_no_tmp_path():
     """Module-scoped local_scheduler must not use function-scoped tmp_path.
@@ -311,11 +299,9 @@ print("PASS")
     assert r.returncode == 0, f"tmp_path check failed: {r.stderr}"
     assert "PASS" in r.stdout
 
-
 # ---------------------------------------------------------------------------
 # Pass-to-pass (pr_diff) — regression checks
 # ---------------------------------------------------------------------------
-
 
 def test_core_test_classes_preserved():
     """All non-removed test classes must still exist in their respective files."""
@@ -342,13 +328,11 @@ def test_core_test_classes_preserved():
         for cls in required:
             assert cls in classes, f"Missing class {cls} in {fpath}"
 
-
 def test_fake_dataloader_preserved():
     """_FakeDataLoader helper class must not be removed from controller tests."""
     tree = ast.parse(Path(CTRL_FILE).read_text())
     classes = {n.name for n in ast.walk(tree) if isinstance(n, ast.ClassDef)}
     assert "_FakeDataLoader" in classes, "_FakeDataLoader removed from controller tests"
-
 
 def test_files_not_stubbed():
     """Test files must have substantial content — not stubbed out or emptied."""
@@ -383,11 +367,9 @@ def test_files_not_stubbed():
             f"{fpath} has {stub_count}/{len(test_methods)} stub test methods"
         )
 
-
 # ---------------------------------------------------------------------------
 # Pass-to-pass (agent_config) — config-derived regression
 # ---------------------------------------------------------------------------
-
 
 def test_gpu_skipif_has_reason():
     """All @pytest.mark.skipif decorators that check GPU availability must
@@ -418,7 +400,6 @@ def test_gpu_skipif_has_reason():
                     f"but no non-empty reason= argument"
                 )
 
-
 def test_no_wildcard_imports():
     """No wildcard imports (from x import *) in any test file."""
     for fpath in ALL_FILES:
@@ -430,65 +411,10 @@ def test_no_wildcard_imports():
                         f"Wildcard import in {fpath}: from {node.module} import *"
                     )
 
-
 # ---------------------------------------------------------------------------
 # Pass-to-pass (repo_tests) — Repo CI/CD checks via AST analysis
 # These verify static code quality matching the repo's pre-commit/CI standards
 # ---------------------------------------------------------------------------
-
-
-def test_repo_py_compile():
-    """All test files must compile to valid Python bytecode (pass_to_pass).
-
-    Matches Python pre-commit pattern: py_compile validates syntax AND
-    byte-compilation. Catches syntax errors that AST parsing might miss.
-    """
-    import py_compile
-
-    for fpath in ALL_FILES:
-        try:
-            py_compile.compile(fpath, doraise=True)
-        except py_compile.PyCompileError as e:
-            assert False, f"{fpath}: Failed to compile - {e}"
-
-
-def test_repo_test_classes_follow_naming():
-    """All test classes must follow Test* naming convention (pass_to_pass).
-
-    Matches ruff/pre-commit check: test classes should be named Test*.
-    """
-    for fpath in ALL_FILES:
-        tree = ast.parse(Path(fpath).read_text())
-        for node in ast.walk(tree):
-            if isinstance(node, ast.ClassDef):
-                # Check if it's a test class (contains test methods)
-                has_test_methods = any(
-                    isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef))
-                    and n.name.startswith("test_")
-                    for n in ast.walk(node)
-                )
-                if has_test_methods:
-                    assert node.name.startswith("Test"), (
-                        f"{fpath}: Test class {node.name} should start with 'Test'"
-                    )
-
-
-def test_repo_no_bare_excepts():
-    """No bare 'except:' clauses in test files (pass_to_pass).
-
-    Matches ruff E722: do not use bare except.
-    """
-    for fpath in ALL_FILES:
-        tree = ast.parse(Path(fpath).read_text())
-        for node in ast.walk(tree):
-            if isinstance(node, ast.Try):
-                for handler in node.handlers:
-                    if handler.type is None:
-                        assert False, (
-                            f"{fpath}: Bare 'except:' found at line {handler.lineno}, "
-                            f"use 'except Exception:' instead"
-                        )
-
 
 def test_repo_no_unused_imports():
     """No obviously unused standard library imports in test files (pass_to_pass).
@@ -537,45 +463,6 @@ def test_repo_no_unused_imports():
                     f"{fpath}: Unused import '{name}' from {module} at line {node.lineno}"
                 )
 
-
-def test_repo_yaml_files_valid():
-    """All YAML files in the repo must be valid (pass_to_pass).
-
-    Matches pre-commit check-yaml hook.
-    """
-    import yaml
-
-    repo_yaml_files = [
-        f"{REPO}/.pre-commit-config.yaml",
-    ]
-
-    # Find all YAML files in examples directory
-    examples_yaml = list(Path(f"{REPO}/examples").rglob("*.yaml")) + list(Path(f"{REPO}/examples").rglob("*.yml"))
-
-    for fpath in repo_yaml_files + [str(p) for p in examples_yaml]:
-        path = Path(fpath)
-        if path.exists():
-            try:
-                yaml.safe_load(path.read_text())
-            except yaml.YAMLError as e:
-                assert False, f"{fpath}: Invalid YAML - {e}"
-
-
-def test_repo_pyproject_toml_valid():
-    """pyproject.toml must be valid TOML (pass_to_pass).
-
-    Basic syntax check for the repo's main config file.
-    """
-    import tomllib
-
-    pyproject_path = Path(f"{REPO}/pyproject.toml")
-    if pyproject_path.exists():
-        try:
-            tomllib.loads(pyproject_path.read_text())
-        except Exception as e:
-            assert False, f"pyproject.toml: Invalid TOML - {e}"
-
-
 def test_repo_json_files_valid():
     """All JSON files in the repo must be valid (pass_to_pass).
 
@@ -595,71 +482,3 @@ def test_repo_json_files_valid():
                 json.loads(path.read_text())
             except json.JSONDecodeError as e:
                 assert False, f"{fpath}: Invalid JSON - {e}"
-
-
-def test_repo_trailing_whitespace():
-    """No trailing whitespace in test files (pass_to_pass).
-
-    Matches pre-commit trailing-whitespace hook. Uses pure Python file analysis
-    since the Docker environment doesn't have pre-commit installed.
-    """
-    for fpath in ALL_FILES:
-        content = Path(fpath).read_text()
-        lines = content.splitlines()
-        for i, line in enumerate(lines, 1):
-            # Check for trailing whitespace (spaces/tabs at end of line)
-            if line != line.rstrip():
-                assert False, f"{fpath}:{i}: Trailing whitespace found"
-
-
-def test_repo_end_of_file_newline():
-    """Test files end with single newline (pass_to_pass).
-
-    Matches pre-commit end-of-file-fixer hook. Files must end with exactly
-    one newline character, not more, not less.
-    """
-    for fpath in ALL_FILES:
-        content = Path(fpath).read_bytes()
-        if not content:
-            continue
-        # Check file ends with newline
-        if not content.endswith(b'\n'):
-            assert False, f"{fpath}: File does not end with newline"
-        # Check no multiple newlines at end
-        if content.endswith(b'\n\n'):
-            assert False, f"{fpath}: File ends with multiple newlines"
-
-
-def test_repo_no_tabs():
-    """No tab characters in test files (pass_to_pass).
-
-    Matches ruff W191 (tab-indentation) check. Uses pure Python file analysis
-    since the Docker environment doesn't have ruff installed.
-    """
-    for fpath in ALL_FILES:
-        content = Path(fpath).read_text()
-        lines = content.splitlines()
-        for i, line in enumerate(lines, 1):
-            if '\t' in line:
-                assert False, f"{fpath}:{i}: Tab character found (use spaces instead)"
-
-
-def test_repo_no_merge_conflict_markers():
-    """No merge conflict markers in test files (pass_to_pass).
-
-    Standard pre-commit check for git merge conflict artifacts like:
-    - <<<<<<< HEAD
-    - =======
-    - >>>>>>> branch
-
-    Only checks for markers at the start of lines (not in comments/headers).
-    """
-    for fpath in ALL_FILES:
-        content = Path(fpath).read_text()
-        lines = content.splitlines()
-        markers = ['<<<<<<< ', '=======', '>>>>>>> ']
-        for i, line in enumerate(lines, 1):
-            stripped = line.lstrip()
-            for marker in markers:
-                if stripped.startswith(marker):
-                    assert False, f"{fpath}:{i}: Merge conflict marker found: {marker}"

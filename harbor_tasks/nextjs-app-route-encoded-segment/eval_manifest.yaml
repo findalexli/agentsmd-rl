@@ -52,8 +52,7 @@ checks:
 - id: no_require_calls
   type: pass_to_pass
   origin: agent_config
-  description: No bare require() calls in shared lib file — use ES imports for DCE
-    safety
+  description: No bare require() calls in shared lib file — use ES imports for DCE safety
   source:
     path: AGENTS.md
     lines: '396'
@@ -85,56 +84,43 @@ checks:
 - id: test_repo_unit_validate_app_paths
   type: pass_to_pass
   origin: repo_tests
-  description: App paths validation unit tests pass - directly tests parseAppRoute
-    from modified app.ts
+  description: App paths validation unit tests pass - directly tests parseAppRoute from modified app.ts
 - id: test_repo_unit_extract_pathname_segments
   type: pass_to_pass
   origin: repo_tests
-  description: Extract pathname route param segments unit tests pass - directly imports
-    parseAppRoute from modified app.ts
+  description: Extract pathname route param segments unit tests pass - directly imports parseAppRoute from modified app.ts
 rubric:
 - rule: Source code is in `packages/next/src/` and compiled output goes to `packages/next/dist/`.
   source:
     path: CLAUDE.md
     lines: 25-31
-  evidence: The patch correctly targets the source file `packages/next/src/shared/lib/router/routes/app.ts`
-    instead of modifying the compiled output in `packages/next/dist/`.
+  evidence: The patch correctly targets the source file `packages/next/src/shared/lib/router/routes/app.ts` instead of modifying the compiled output in `packages/next/dist/`.
   category: architecture
 - rule: Source code is in packages/next/src/.
   source:
     path: AGENTS.md
     lines: 28-28
-  evidence: The patch correctly targets the source file in `packages/next/src/shared/lib/router/routes/app.ts`
-    rather than attempting to modify the compiled output in `dist/`.
+  evidence: The patch correctly targets the source file in `packages/next/src/shared/lib/router/routes/app.ts` rather than attempting to modify the compiled output in `dist/`.
   category: architecture
 - rule: Source code for the main Next.js framework is located in packages/next/src/.
   source:
     path: AGENTS.md
     lines: 25-26
-  evidence: The gold solution modifies a file within the packages/next/src/ directory,
-    adhering to the defined source code location.
+  evidence: The gold solution modifies a file within the packages/next/src/ directory, adhering to the defined source code location.
   category: architecture
 distractors:
-- rule: Start pnpm --filter=next dev in a separate terminal session before making
-    edits.
+- rule: Start pnpm --filter=next dev in a separate terminal session before making edits.
   collision_type: meta_confusion
-  why_distracting: The instruction to start a background dev server (pnpm --filter=next
-    dev) is intended for human interactive development. An agent attempting to start
-    a long-running background process might hang the evaluation environment or waste
-    execution time.
+  why_distracting: The instruction to start a background dev server (pnpm --filter=next dev) is intended for human interactive development. An agent attempting to start a long-running background process might hang the evaluation environment or waste execution time.
   severity: high
   source:
     path: AGENTS.md
     lines: 62-66
 - rule: Always run a full bootstrap build after switching branches using pnpm build-all.
   collision_type: scope_ambiguity
-  why_distracting: Running a full bootstrap build (pnpm build-all) is unnecessary
-    for a localized router bug fix and would consume significant time and resources
-    during agent evaluation.
+  why_distracting: Running a full bootstrap build (pnpm build-all) is unnecessary for a localized router bug fix and would consume significant time and resources during agent evaluation.
   severity: medium
   source:
     path: AGENTS.md
     lines: 85-89
-hierarchy_analysis: The config hierarchy consists of identical AGENTS.md and CLAUDE.md
-  files at the root level. They provide generic repository onboarding instructions
-  rather than specific coding conventions.
+hierarchy_analysis: The config hierarchy consists of identical AGENTS.md and CLAUDE.md files at the root level. They provide generic repository onboarding instructions rather than specific coding conventions.

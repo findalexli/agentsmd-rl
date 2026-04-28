@@ -11,12 +11,11 @@ into them.
 
 ## What is broken right now
 
-The schemas in `packages/opencode/src/config/skills.ts`,
-`packages/opencode/src/config/formatter.ts`, and
-`packages/opencode/src/config/console-state.ts` are still defined with `zod`
-directly. They do not expose the `.zod` accessor that the rest of the
-migrated codebase has adopted, and they cannot participate in any future
-Effect-Schema-first DTO surface.
+The skills, formatter, and console-state config schemas (each a file under
+`packages/opencode/src/config/`) are still defined with `zod` directly. They
+do not expose the `.zod` accessor that the rest of the migrated codebase has
+adopted, and they cannot participate in any future Effect-Schema-first DTO
+surface.
 
 Concretely, the failing contract is:
 
@@ -35,13 +34,13 @@ Concretely, the failing contract is:
 
 The two existing consumers that touch these schemas are also wrong:
 
-- `packages/opencode/src/config/config.ts` calls `ConfigSkills.Info.optional()`
-  and `ConfigFormatter.Info.optional()` directly — that only works while those
-  exports are Zod schemas. After migration these calls must read the `.zod`
-  shim instead. (For comparison, the same file already uses
+- The root config schema that imports and composes all sub-schemas calls
+  `ConfigSkills.Info.optional()` and `ConfigFormatter.Info.optional()` directly —
+  that only works while those exports are Zod schemas. After migration these calls
+  must read the `.zod` shim instead. (For comparison, the same file already uses
   `ConfigLSP.Info.zod.optional()` for an already-migrated sibling — match that
   pattern.)
-- `packages/opencode/src/server/routes/instance/experimental.ts` passes
+- The experimental routes module that serves the console state endpoint passes
   `ConsoleState` directly into Hono's `resolver(...)`, which expects a Zod
   schema. After migration it must pass the `.zod` shim.
 

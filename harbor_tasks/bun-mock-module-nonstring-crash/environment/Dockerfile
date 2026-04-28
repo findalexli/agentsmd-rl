@@ -1,11 +1,11 @@
 FROM node:22-slim
 
 RUN rm -rf /var/lib/apt/lists/* && apt-get update && apt-get install -y \
-    git curl ca-certificates build-essential unzip tmux python3 \
+    git curl ca-certificates build-essential unzip tmux python3 python3-pip python3-venv \
     && rm -rf /var/lib/apt/lists/*
 
-# Install bun (needed for running test validation)
-RUN curl -fsSL https://bun.sh/install | bash
+# Install bun v1.3.13 (needed for running test validation)
+RUN curl -fsSL https://bun.sh/install | bash -s "bun-v1.3.13"
 ENV PATH="/root/.bun/bin:${PATH}"
 
 RUN git init /workspace/bun && \

@@ -29,3 +29,9 @@ When logging metrics via `monitor.log()`, include at minimum:
 - A key containing "fail" (case-insensitive) with an integer value equal to the number of failed rollouts (requested - returned)
 - Optionally, a key in the format `eval/{env_name}/failed_rollouts` with the same value
 - Standard keys: `progress/ckpt_step` and `step` (if the monitoring API requires them)
+
+## Code Style Requirements
+
+This project uses ruff for linting and formatting. Follow these rules from the project's AGENTS.md:
+- No bare except blocks — always specify an exception type.
+- Do not add unnecessary comments. Do not add comments that explain what code changes were made or reference old code.

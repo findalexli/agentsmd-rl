@@ -63,7 +63,7 @@ const lines = source.split('\\n');
 let titleDivLineIdx = -1;
 for (let i = 0; i < lines.length; i++) {
   // Looking for <div ...className...title...> pattern for the title div
-  if (lines[i].includes('<div') && 
+  if (lines[i].includes('<div') &&
       (lines[i].includes('className') || lines[i].includes('class')) &&
       lines[i].includes('title')) {
     titleDivLineIdx = i;
@@ -182,7 +182,9 @@ const source = fs.readFileSync(purePanelPath, 'utf8');
 // This prevents empty elements from affecting layout
 const hasPureContent = source.includes('export const PureContent');
 const hasDescriptionCond = /description\\s*&&/.test(source);
-const hasTitleCond = /title\\s*&&|title\\s*\\?/.test(source);
+// Match JSX conditional: {title && ( or {title ? x : y
+// Avoid matching "title ??" nullish coalescing in const mergedTitle = title ?? message
+const hasTitleCond = /\\{title\\s*&&|\\{title\\s*\\?/.test(source);
 
 if (hasPureContent && hasDescriptionCond && hasTitleCond) {
   console.log('PASS');

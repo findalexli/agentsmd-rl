@@ -161,6 +161,7 @@ def test_no_unintended_changelog_changes():
         timeout=30,
     )
     assert r.returncode == 0, f"git diff failed: {r.stderr}"
+    assert r.stdout.strip(), "expected changes in changelog files (none found)"
     for line in r.stdout.strip().splitlines():
         if not line.strip():
             continue
@@ -190,3 +191,9 @@ if __name__ == "__main__":
     import pytest
 
     sys.exit(pytest.main([__file__, "-v"]))
+
+# === CI-mined tests (taskforge.ci_check_miner) ===
+# Dropped: test_ci_build_project_run_script (needs yarn + network),
+# test_ci_test_image_generate_image_snapshots (needs node + node_modules).
+# This is a markdown_authoring task; those CI jobs exercise the build
+# pipeline, not the markdown-content changes the PR introduces.

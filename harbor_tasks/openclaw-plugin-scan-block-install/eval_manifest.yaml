@@ -16,13 +16,11 @@ checks:
 - id: error_codes_defined
   type: fail_to_pass
   origin: pr_diff
-  description: PLUGIN_INSTALL_ERROR_CODE has security_scan_blocked and security_scan_failed
-    entries
+  description: PLUGIN_INSTALL_ERROR_CODE has security_scan_blocked and security_scan_failed entries
 - id: error_codes_used_in_handling
   type: fail_to_pass
   origin: pr_diff
-  description: Security scan error codes are used in error-handling logic, not just
-    defined
+  description: Security scan error codes are used in error-handling logic, not just defined
 - id: runtime_blocks_critical_findings
   type: fail_to_pass
   origin: pr_diff
@@ -38,8 +36,7 @@ checks:
 - id: blocked_type_has_code_field
   type: fail_to_pass
   origin: agent_config
-  description: Scan result blocked type has structured code field (closed error-code
-    union)
+  description: Scan result blocked type has structured code field (closed error-code union)
   source:
     path: CLAUDE.md
     lines: '150'
@@ -55,8 +52,7 @@ checks:
 - id: no_explicit_any
   type: pass_to_pass
   origin: agent_config
-  description: Modified TypeScript files must not use explicit 'any' type annotations
-    or assertions
+  description: Modified TypeScript files must not use explicit 'any' type annotations or assertions
   source:
     path: CLAUDE.md
     lines: '147'
@@ -93,60 +89,94 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Repo's plugin loader tests pass (73 tests)
+- id: test_ci_build_bun_artifacts_build_a2ui_bundle
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: build-bun-artifacts / Build A2UI bundle'
+- id: test_ci_check_additional_check_types_and_lint_and_oxfmt
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: check-additional / Check types and lint and oxfmt'
+- id: test_ci_check_additional_strict_ts_build_smoke
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: check-additional / Strict TS build smoke'
+- id: test_ci_build_artifacts_build_dist
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: build-artifacts / Build dist'
+- id: test_ci_build_artifacts_build_control_ui
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: build-artifacts / Build Control UI'
+- id: test_ci_check_run_matrix_task_matrix_runtime
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: check / Run ${{ matrix.task }} (${{ matrix.runtime }})'
+- id: test_ci_build_smoke_smoke_test_cli_launcher_help
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: build-smoke / Smoke test CLI launcher help'
+- id: test_ci_build_smoke_smoke_test_cli_launcher_status_json
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: build-smoke / Smoke test CLI launcher status json'
+- id: test_ci_build_smoke_smoke_test_built_bundled_plugin_singleto
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: build-smoke / Smoke test built bundled plugin singleton'
+- id: test_ci_build_smoke_check_cli_startup_memory
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: build-smoke / Check CLI startup memory'
+- id: test_pr_added_blocks_package_installs_when_plugin_contains_dan
+  type: fail_to_pass
+  origin: pr_diff
+  description: PR added test 'blocks package installs when plugin contains dangerous code patterns' in src/plugins/install.test.ts
+- id: test_pr_added_blocks_bundle_installs_when_bundle_contains_dang
+  type: fail_to_pass
+  origin: pr_diff
+  description: PR added test 'blocks bundle installs when bundle contains dangerous code patterns' in src/plugins/install.test.ts
+- id: test_pr_added_blocks_install_when_scanner_throws
+  type: fail_to_pass
+  origin: pr_diff
+  description: PR added test 'blocks install when scanner throws' in src/plugins/install.test.ts
+- id: test_pr_added_blocks_plain_file_installs_when_the_scanner_find
+  type: fail_to_pass
+  origin: pr_diff
+  description: PR added test 'blocks plain file installs when the scanner finds dangerous code patterns' in src/plugins/install.test.ts
 rubric:
-- rule: Keep loader behavior aligned with the documented Plugin SDK and manifest contracts.
-    Do not create private backdoors that bundled plugins can use but external plugins
-    cannot.
+- rule: Keep loader behavior aligned with the documented Plugin SDK and manifest contracts. Do not create private backdoors that bundled plugins can use but external plugins cannot.
   source:
     path: src/plugins/CLAUDE.md
     lines: 18-20
-  evidence: 'The gold solution applies the blocking logic uniformly to all plugin
-    install paths (bundle, file, package) by updating the shared `InstallSecurityScanResult`
-    type and returning the blocked status for '
+  evidence: 'The gold solution applies the blocking logic uniformly to all plugin install paths (bundle, file, package) by updating the shared `InstallSecurityScanResult` type and returning the blocked status for '
   category: architecture
-- rule: 'Architecture Boundaries: `src/plugins/*` = plugin discovery, manifest validation,
-    loader, registry, and contract enforcement'
+- rule: 'Architecture Boundaries: `src/plugins/*` = plugin discovery, manifest validation, loader, registry, and contract enforcement'
   source:
     path: CLAUDE.md
     lines: 28-33
-  evidence: The gold solution enforces the security contract by actively blocking
-    the installation in the `src/plugins/install-security-scan.runtime.ts` file when
-    critical patterns are found, rather than just log
+  evidence: The gold solution enforces the security contract by actively blocking the installation in the `src/plugins/install-security-scan.runtime.ts` file when critical patterns are found, rather than just log
   category: architecture
-- rule: If a loader or registry change affects plugin authors, update the public SDK,
-    docs, and contract tests instead of relying on incidental internals.
+- rule: If a loader or registry change affects plugin authors, update the public SDK, docs, and contract tests instead of relying on incidental internals.
   source:
     path: src/plugins/AGENTS.md
     lines: 23-24
-  evidence: The gold solution updates the `InstallSecurityScanResult` type to include
-    a `code` field, formalizing the error contract for plugin authors rather than
-    relying on string parsing of the reason.
+  evidence: The gold solution updates the `InstallSecurityScanResult` type to include a `code` field, formalizing the error contract for plugin authors rather than relying on string parsing of the reason.
   category: architecture
 distractors:
-- rule: Do not edit files covered by security-focused CODEOWNERS rules unless a listed
-    owner explicitly asked for the change or is already reviewing it with you. Treat
-    those paths as restricted surfaces, not drive-by cleanup.
+- rule: Do not edit files covered by security-focused CODEOWNERS rules unless a listed owner explicitly asked for the change or is already reviewing it with you. Treat those paths as restricted surfaces, not drive-by cleanup.
   collision_type: meta_confusion
-  why_distracting: The task involves fixing a critical security scan bypass in `install-security-scan.runtime.ts`.
-    An agent might refuse to edit these files or ask for permission, failing the task
-    because it misinterprets the instruction as a drive-by cleanup of a restricted
-    security surface.
+  why_distracting: The task involves fixing a critical security scan bypass in `install-security-scan.runtime.ts`. An agent might refuse to edit these files or ask for permission, failing the task because it misinterprets the instruction as a drive-by cleanup of a restricted security surface.
   severity: high
   source:
     path: AGENTS.md
     lines: 5-6
-- rule: 'Preserve manifest-first behavior: discovery, config validation, and setup
-    should work from metadata before plugin runtime executes.'
+- rule: 'Preserve manifest-first behavior: discovery, config validation, and setup should work from metadata before plugin runtime executes.'
   collision_type: architecture_boundary
-  why_distracting: The agent might attempt to move the security scan logic into the
-    manifest validation phase to comply with 'manifest-first behavior', rather than
-    fixing the install-time scan as requested, leading to a massive out-of-scope refactor.
+  why_distracting: The agent might attempt to move the security scan logic into the manifest validation phase to comply with 'manifest-first behavior', rather than fixing the install-time scan as requested, leading to a massive out-of-scope refactor.
   severity: high
   source:
     path: src/plugins/AGENTS.md
     lines: 15-16
-hierarchy_analysis: The config hierarchy includes root-level guidelines and plugin-specific
-  boundary rules. The root rules emphasize security file restrictions, while the plugin-specific
-  rules emphasize contract enforcement and manifest-first behavior. The agent must
-  navigate these rules to fix the install-time security scan without being derailed
-  by the security file restriction or the manifest-first architectural guideline.
+hierarchy_analysis: The config hierarchy includes root-level guidelines and plugin-specific boundary rules. The root rules emphasize security file restrictions, while the plugin-specific rules emphasize contract enforcement and manifest-first behavior. The agent must navigate these rules to fix the install-time security scan without being derailed by the security file restriction or the manifest-first architectural guideline.

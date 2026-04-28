@@ -2,7 +2,7 @@
 
 ## Problem
 
-In the file `src/transformers/models/auto/processing_auto.py`, when calling `AutoProcessor.from_pretrained` with hub-related keyword arguments, the arguments are silently discarded and never reach the internal `cached_file` function. This prevents users from controlling caching, authentication, or versioning when loading processors through the auto class.
+When calling `AutoProcessor.from_pretrained` with hub-related keyword arguments, the arguments are silently discarded and never reach the internal `cached_file` function. This prevents users from controlling caching, authentication, or versioning when loading processors through the auto class.
 
 The implementation builds a `cached_file_kwargs` dictionary to filter which kwargs get forwarded to `cached_file`. Currently, hub-related kwargs are being incorrectly excluded from this dictionary.
 

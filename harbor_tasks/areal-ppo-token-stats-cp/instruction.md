@@ -26,6 +26,13 @@ Create a helper function `infer_token_denominator` in `areal/trainer/ppo/stats.p
 
 Both `areal/trainer/ppo/actor.py` and `areal/trainer/ppo/critic.py` must import and use this helper. The old per-rank token patterns must be replaced with calls to `infer_token_denominator`.
 
+## Code Style Requirements
+
+- The repository uses **Ruff** for Python linting and formatting. Run `ruff check` and `ruff format --check` on any files you modify. Ruff must pass without errors (line-length warnings may be ignored).
+- No wildcard imports (`from x import *`), no bare `print()` calls, no hardcoded absolute paths or URLs.
+- All function parameters and return types must have explicit type annotations.
+- Use `areal.utils.logging.getLogger(name)` instead of `print()` for logging.
+
 ## Notes
 
 - Both actor and critic logging paths are affected

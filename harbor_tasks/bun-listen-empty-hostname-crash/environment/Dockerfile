@@ -4,8 +4,8 @@ RUN rm -rf /var/lib/apt/lists/* && apt-get update && apt-get install -y \
     git curl ca-certificates build-essential tmux python3 unzip \
     && rm -rf /var/lib/apt/lists/*
 
-# Install bun for running JS tests
-RUN curl -fsSL https://bun.sh/install | bash
+# Install bun with pinned version for reproducibility
+RUN curl -fsSL https://bun.sh/install | bash -s "bun-v1.3.13"
 ENV PATH="/root/.bun/bin:${PATH}"
 
 ARG BASE_COMMIT=73361607d70bd77041d0fc20e45a6dbe2373a677
@@ -23,5 +23,3 @@ WORKDIR /workspace/bun
 
 # Configure git user for agent commits
 RUN git config user.name "agent" && git config user.email "agent@test.local"
-
-# Copy test and evaluation files

@@ -4,11 +4,11 @@
 
 When developing `uv` inside a [Jujutsu](https://martinvonz.github.io/jj/) repository, every `cargo build` triggers a full rebuild of a crate — even when no source code has changed.
 
-Jujutsu (jj) is a VCS that frequently snapshots the working copy. The `uv-cli` crate (located at `crates/uv-cli`) has a build script at `crates/uv-cli/build.rs` that retrieves git commit metadata (hash, date, tag distance) via the `commit_info` function and sets `cargo:rerun-if-changed` directives on git internal files. In a jj-managed repository, jj's frequent snapshots cause these git state files to change constantly, which triggers Cargo to re-run the build script and recompile the crate on every build.
+Jujutsu (jj) is a VCS that frequently snapshots the working copy. The `uv-cli` crate has a build script (`build.rs`) that retrieves git commit metadata (hash, date, tag distance) via the `commit_info` function and sets `cargo:rerun-if-changed` directives on git internal files. In a jj-managed repository, jj's frequent snapshots cause these git state files to change constantly, which triggers Cargo to re-run the build script and recompile the crate on every build.
 
 ## Expected behavior
 
-When the workspace root contains a `.jj` directory (indicating a jj repository), the `commit_info` function in `crates/uv-cli/build.rs` should avoid performing the git-related operations that cause unnecessary rebuilds. Specifically:
+When the workspace root contains a `.jj` directory (indicating a jj repository), the `commit_info` function should avoid performing the git-related operations that cause unnecessary rebuilds. Specifically:
 
 1. Check if the workspace root contains a `.jj` directory before performing git operations
 2. If `.jj` exists, skip the git metadata retrieval and return early

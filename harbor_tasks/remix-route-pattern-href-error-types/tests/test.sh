@@ -1,21 +1,19 @@
-#!/usr/bin/env bash
-# Boilerplate test runner. Do NOT add task-specific logic here.
-set -u
+#!/bin/bash
+set -uo pipefail
 
-mkdir -p /logs/verifier
+# --- pytest harness ---
+pip3 install pytest==8.3.4 --break-system-packages --quiet
 
 cd /tests
-python3 -m pytest test_outputs.py -v --tb=short \
-    --ctrf=/logs/verifier/ctrf.json \
-    2>&1 | tee /logs/verifier/pytest.log
 
-PYTEST_EXIT=${PIPESTATUS[0]}
+python3 -m pytest -v --tb=short test_outputs.py 2>&1 | tee /logs/verifier/pytest.log
 
-if [ "${PYTEST_EXIT}" -eq 0 ]; then
-    echo 1 > /logs/verifier/reward.txt
+# --- reward ---
+if [ $? -eq 0 ]; then
+  echo 1 > /logs/verifier/reward.txt
 else
-    echo 0 > /logs/verifier/reward.txt
+  echo 0 > /logs/verifier/reward.txt
 fi
 
-echo "pytest exit code: ${PYTEST_EXIT}"
-echo "reward: $(cat /logs/verifier/reward.txt)"
+# --- LLM Judge ---
+echo "LLM judge placeholder"

@@ -16,8 +16,7 @@ checks:
 - id: test_export_header_supports_single_select_mode
   type: fail_to_pass
   origin: pr_diff
-  description: UsageExportHeader accepts filterMode prop for single/multiple select
-    control
+  description: UsageExportHeader accepts filterMode prop for single/multiple select control
 - id: test_entity_usage_handles_user_type
   type: fail_to_pass
   origin: pr_diff
@@ -25,8 +24,7 @@ checks:
 - id: test_agents_md_documents_contract_mismatch
   type: fail_to_pass
   origin: pr_diff
-  description: AGENTS.md documents the UI/Backend Contract Mismatch pitfall (single
-    vs array)
+  description: AGENTS.md documents the UI/Backend Contract Mismatch pitfall (single vs array)
 - id: test_claude_md_adds_ui_backend_consistency
   type: fail_to_pass
   origin: pr_diff
@@ -83,9 +81,20 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Repo CI - TopModelView component tests pass
+- id: test_ci_unit_test_install_helm_unit_test_plugin
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: unit-test / Install Helm Unit Test Plugin'
+- id: test_ci_unit_test_run_unit_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: unit-test / Run unit tests'
+- id: test_pr_added_should_render_with_user_entity_type_and_call_use
+  type: fail_to_pass
+  origin: pr_diff
+  description: PR added test 'should render with user entity type and call user API' in ui/litellm-dashboard/src/components/UsagePage/components/EntityUsage/EntityUsage.test.tsx
 rubric:
-- rule: Config updates should follow the style and format of existing pitfall entries
-    in AGENTS.md
+- rule: Config updates should follow the style and format of existing pitfall entries in AGENTS.md
   source:
     path: AGENTS.md
     lines: 170-176
@@ -99,62 +108,42 @@ rubric:
   source:
     path: AGENTS.md
     lines: 172-172
-  source_text: '1. **Breaking Changes**: LiteLLM has many users - avoid breaking existing
-    APIs'
-  evidence: 'The diff keeps existing behavior opt-in safe: `UsageExportHeader` adds
-    `filterMode = "multiple"` as the default, preserves the old multi-select path
-    with `mode={filterMode === "single" ? undefined : "multiple"}`, and only switches
-    to single-select when `EntityUsage` passes `filterMode={entityType === "user"
-    ? "single" : "multiple"}`.'
+  source_text: '1. **Breaking Changes**: LiteLLM has many users - avoid breaking existing APIs'
+  evidence: 'The diff keeps existing behavior opt-in safe: `UsageExportHeader` adds `filterMode = "multiple"` as the default, preserves the old multi-select path with `mode={filterMode === "single" ? undefined : "multiple"}`, and only switches to single-select when `EntityUsage` passes `filterMode={entityType === "user" ? "single" : "multiple"}`.'
   category: backward_compatibility
   verification: llm_judge
 config_edits:
 - path: AGENTS.md
   tier: 1
-  gold_added: '6. **UI/Backend Contract Mismatch**: When adding a new entity type
-    to the UI, always check whether the backend endpoint accepts a single value or
-    an array. Match the UI control accordingly (single-select vs. multi-select) to
-    avoid silently dropping user selections
+  gold_added: '6. **UI/Backend Contract Mismatch**: When adding a new entity type to the UI, always check whether the backend endpoint accepts a single value or an array. Match the UI control accordingly (single-select vs. multi-select) to avoid silently dropping user selections
 
-    7. **Missing Tests for New Entity Types**: When adding a new entity type (e.g.,
-    in `EntityUsage`, `UsageViewSelect`), always add corresponding tests in the existing
-    test files and update any icon/component mocks'
+    7. **Missing Tests for New Entity Types**: When adding a new entity type (e.g., in `EntityUsage`, `UsageViewSelect`), always add corresponding tests in the existing test files and update any icon/component mocks'
   gold_removed: ''
 - path: CLAUDE.md
   tier: 1
-  gold_added: '- **Always add tests when adding new entity types or features** — if
-    the existing test file covers other entity types, add corresponding tests for
-    the new one
+  gold_added: '- **Always add tests when adding new entity types or features** — if the existing test file covers other entity types, add corresponding tests for the new one
 
 
     ### UI / Backend Consistency
 
-    - When wiring a new UI entity type to an existing backend endpoint, verify the
-    backend API contract (single value vs. array, required vs. optional params) and
-    ensure the UI controls match — e.g., use a single-select dropdown when the backend
-    accepts a single value, not a multi-select'
+    - When wiring a new UI entity type to an existing backend endpoint, verify the backend API contract (single value vs. array, required vs. optional params) and ensure the UI controls match — e.g., use a single-select dropdown when the backend accepts a single value, not a multi-select'
   gold_removed: ''
 distractors:
 - rule: Add at least 1 test in tests/litellm/
   collision_type: architecture_boundary
-  why_distracting: The rule mandates adding tests in the Python backend directory
-    (tests/litellm/), but this PR is strictly for the React UI dashboard. An agent
-    might erroneously create Python tests for a Next.js feature.
+  why_distracting: The rule mandates adding tests in the Python backend directory (tests/litellm/), but this PR is strictly for the React UI dashboard. An agent might erroneously create Python tests for a Next.js feature.
   severity: high
   source:
     path: CLAUDE.md
     lines: 28-30
 - rule: Tremor is DEPRECATED, do not use Tremor components in new features/changes
   collision_type: scope_ambiguity
-  why_distracting: The agent is modifying UI components and might encounter existing
-    Tremor components. The deprecation warning might cause the agent to unnecessarily
-    refactor existing code, expanding the PR scope beyond the requested feature.
+  why_distracting: The agent is modifying UI components and might encounter existing Tremor components. The deprecation warning might cause the agent to unnecessarily refactor existing code, expanding the PR scope beyond the requested feature.
   severity: medium
   source:
     path: AGENTS.md
     lines: 44-45
-- rule: Place tests in backend/provider test directories like `tests/test_litellm/`,
-    `tests/llm_translation/`, `tests/proxy_unit_tests/`, or `tests/load_tests/`.
+- rule: Place tests in backend/provider test directories like `tests/test_litellm/`, `tests/llm_translation/`, `tests/proxy_unit_tests/`, or `tests/load_tests/`.
   source:
     path: CLAUDE.md
     lines: 96-99
@@ -166,12 +155,6 @@ distractors:
 
     - Load tests in `tests/load_tests/`'
   collision_type: scope_ambiguity
-  why_distracting: 'A repo-wide feature addition often suggests adding tests under
-    the main project test directories. Here that would miss the actual surface area:
-    the gold diff changes React components in `ui/litellm-dashboard`, so the correct
-    coverage lives in the existing co-located Vitest files under the dashboard code.'
+  why_distracting: 'A repo-wide feature addition often suggests adding tests under the main project test directories. Here that would miss the actual surface area: the gold diff changes React components in `ui/litellm-dashboard`, so the correct coverage lives in the existing co-located Vitest files under the dashboard code.'
   severity: medium
-hierarchy_analysis: The repository uses two root-level configuration files (AGENTS.md
-  and CLAUDE.md) that mix backend (Python) and frontend (React) guidelines. The agent
-  must filter rules based on the architecture boundary (UI vs. Backend) to avoid applying
-  Python testing rules to Next.js components.
+hierarchy_analysis: The repository uses two root-level configuration files (AGENTS.md and CLAUDE.md) that mix backend (Python) and frontend (React) guidelines. The agent must filter rules based on the architecture boundary (UI vs. Backend) to avoid applying Python testing rules to Next.js components.

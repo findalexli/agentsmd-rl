@@ -297,6 +297,7 @@ def test_syntax_check():
     files_to_check = [
         "openhands/integrations/gitlab/service/repos.py",
         "openhands/integrations/provider.py",
+        "enterprise/server/routes/user.py",
     ]
 
     for file_path in files_to_check:
@@ -460,3 +461,4 @@ async def test_api_returns_expected_structure_for_bitbucket():
         'provider': 'bitbucket',
         'organizations': ['workspace1'],
     }, f"Unexpected result structure: {result}"
+

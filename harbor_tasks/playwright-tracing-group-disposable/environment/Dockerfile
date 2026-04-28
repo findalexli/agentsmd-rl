@@ -13,7 +13,7 @@ RUN python3 -m venv /opt/venv
 ENV PATH="/opt/venv/bin:$PATH"
 
 # Install pytest and dependencies
-RUN pip install pytest
+RUN pip install pytest pytest-json-ctrf==0.4.1
 
 WORKDIR /workspace
 

@@ -26,6 +26,6 @@ RUN git clone --filter=blob:none https://github.com/apache/superset.git superset
 
 WORKDIR /workspace/superset/superset-frontend
 
-RUN npm ci --no-audit --no-fund --prefer-offline --legacy-peer-deps 2>&1 | tail -50
+RUN bash -o pipefail -c 'npm ci --no-audit --no-fund --prefer-offline --legacy-peer-deps 2>&1 | tail -50'
 
 RUN mkdir -p /logs/verifier

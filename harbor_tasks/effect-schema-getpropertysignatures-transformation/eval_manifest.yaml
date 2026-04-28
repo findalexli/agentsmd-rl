@@ -40,13 +40,33 @@ checks:
   origin: repo_tests
   description: pnpm check (tsc -b tsconfig.json) within packages/effect must succeed.
 - id: test_changeset_present
-  type: pass_to_pass
+  type: fail_to_pass
   origin: agent_config
   description: AGENTS.md requires every PR to ship a changeset in .changeset/ describing the change.
   source:
     path: AGENTS.md
     lines: 44-45
     commit: ab3b64c20a039eb4d573fe757c41278925b22687
+- id: test_ci_lint_pnpm
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: Lint / pnpm circular check must pass.'
+- id: test_ci_lint_pnpm_2
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: Lint / pnpm lint must pass.'
+- id: test_ci_lint_pnpm_3
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: Lint / pnpm codegen must pass.'
+- id: test_pr_added_Transformation_Struct_with_optionalWith_default
+  type: fail_to_pass
+  origin: pr_diff
+  description: PR added test 'Transformation (Struct with optionalWith default)' in packages/effect/test/Schema/SchemaAST/getPropertySignatures.test.ts
+- id: test_pr_added_Transformation_Struct_with_optionalWith_as_Optio
+  type: fail_to_pass
+  origin: pr_diff
+  description: PR added test 'Transformation (Struct with optionalWith as Option)' in packages/effect/test/Schema/SchemaAST/getPropertySignatures.test.ts
 config_edits: []
 rubric:
 - rule: Run `pnpm lint-fix` after editing files

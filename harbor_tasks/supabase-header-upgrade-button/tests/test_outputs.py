@@ -458,3 +458,7 @@ def test_repo_floating_mobile_toolbar():
     )
     assert r.returncode == 0, f"FloatingMobileToolbar tests failed:\n{r.stderr[-500:]}"
 
+# === CI-mined tests (taskforge.ci_check_miner) ===
+# NOTE: CI checks that cannot run in Docker (Docker-in-Docker, network APIs,
+# remote-dependent scripts) are intentionally omitted. The remaining pass_to_pass
+# tests provide adequate regression coverage.

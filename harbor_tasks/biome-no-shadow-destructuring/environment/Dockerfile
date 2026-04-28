@@ -18,6 +18,10 @@ RUN pip3 install --no-cache-dir --break-system-packages \
     pytest==8.3.4 \
     pytest-json-report==1.5.0
 
+# Fix bash -lc: /etc/profile hardcodes a PATH without /usr/local/cargo/bin.
+# Copy the rustup env shim to /etc/profile.d so login shells source it.
+RUN cp /usr/local/cargo/env /etc/profile.d/rust.sh
+
 WORKDIR /workspace
 
 RUN git init /workspace/biome && \
@@ -35,6 +39,9 @@ COPY fixtures/invalidDestructuring.js     /workspace/biome/crates/biome_js_analy
 COPY fixtures/invalidDestructuring.js.snap /workspace/biome/crates/biome_js_analyze/tests/specs/nursery/noShadow/invalidDestructuring.js.snap
 COPY fixtures/validDestructuring.js        /workspace/biome/crates/biome_js_analyze/tests/specs/nursery/noShadow/validDestructuring.js
 COPY fixtures/validDestructuring.js.snap   /workspace/biome/crates/biome_js_analyze/tests/specs/nursery/noShadow/validDestructuring.js.snap
+
+# Install rustfmt so cargo fmt --check works inside the container.
+RUN rustup component add rustfmt
 
 # Build test binaries (and all transitive deps) once during image build.
 # This is the long pole; subsequent agent edits get incremental rebuilds.

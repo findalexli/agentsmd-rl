@@ -5,7 +5,6 @@ source:
   base_commit: 25d303f03424011dc0ad36d027a7af3368618eab
   merge_commit: e0e7f41e80247f857e97cb23f4833d2eee2122fe
 checks:
-# Pass-to-pass tests with origin: static (file-read checks)
 - id: syntax_check
   type: pass_to_pass
   origin: static
@@ -38,8 +37,6 @@ checks:
   type: pass_to_pass
   origin: static
   description: Modified files in terminal/ have proper DEPS.list entries
-
-# Pass-to-pass tests with origin: repo_tests (real CI commands via subprocess.run)
 - id: test_repo_node_syntax_check
   type: pass_to_pass
   origin: repo_tests
@@ -88,8 +85,6 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Repo builds successfully without errors
-
-# Fail-to-pass tests (pr_diff) - behavioral and structural tests
 - id: session_flag_normalization_behavior
   type: fail_to_pass
   origin: pr_diff
@@ -97,8 +92,7 @@ checks:
 - id: browser_error_includes_channel_name
   type: fail_to_pass
   origin: pr_diff
-  description: throwBrowserIsNotInstalledError includes specific browser channel in
-    error
+  description: throwBrowserIsNotInstalledError includes specific browser channel in error
 - id: help_generator_shows_new_flag
   type: fail_to_pass
   origin: pr_diff
@@ -123,6 +117,14 @@ checks:
   type: fail_to_pass
   origin: pr_diff
   description: session-management.md uses -s= for session flag, not -b
+- id: test_ci_build_playwright_driver_npm
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: build-playwright-driver / '
+- id: test_ci_build_playwright_driver_npm_2
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: build-playwright-driver / '
 rubric:
 - rule: SKILL.md uses -s= for session flag in code examples
   source:
@@ -132,5 +134,17 @@ rubric:
 config_edits:
 - path: packages/playwright/src/skill/SKILL.md
   tier: 1
-  gold_added: "playwright-cli -s=mysession open example.com\nplaywright-cli -s=mysession click e6\nplaywright-cli -s=mysession close  # stop a named browser\nplaywright-cli -s=mysession delete-data  # delete user data for named browser"
-  gold_removed: "playwright-cli -b mysession open example.com\nplaywright-cli -b mysession click e6\nplaywright-cli -b mysession close  # stop a named browser\nplaywright-cli -b mysession delete-data  # delete user data for named browser"
+  gold_added: 'playwright-cli -s=mysession open example.com
+
+    playwright-cli -s=mysession click e6
+
+    playwright-cli -s=mysession close  # stop a named browser
+
+    playwright-cli -s=mysession delete-data  # delete user data for named browser'
+  gold_removed: 'playwright-cli -b mysession open example.com
+
+    playwright-cli -b mysession click e6
+
+    playwright-cli -b mysession close  # stop a named browser
+
+    playwright-cli -b mysession delete-data  # delete user data for named browser'

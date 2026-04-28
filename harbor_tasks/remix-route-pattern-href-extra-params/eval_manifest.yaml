@@ -1,0 +1,107 @@
+version: '2.0'
+source:
+  repo: remix-run/remix
+  pr: 11017
+  base_commit: 7a028b5a1cccb5b231f6b908da2aa06a95000a7f
+  merge_commit: d96a99e1fa649f2a542a455d4f687c04853a1bd4
+task:
+  kind: code_fix
+checks:
+- id: test_typecheck_allows_extra_params_in_href
+  type: fail_to_pass
+  origin: pr_diff
+  description: TypeScript typecheck passes when extra params are passed to href() as object literals — TS2353 errors are absent
+- id: test_typecheck_extra_params_on_optional_routes
+  type: fail_to_pass
+  origin: pr_diff
+  description: TypeScript typecheck passes when extra params are passed to href() on routes with optional segments — no TS2353 errors
+- id: test_route_pattern_tests_pass
+  type: pass_to_pass
+  origin: repo_tests
+  description: Existing route-pattern test suite passes (node --test)
+- id: test_package_typecheck_passes
+  type: pass_to_pass
+  origin: repo_tests
+  description: tsgo --noEmit passes on the route-pattern package
+- id: test_ci_format_format
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: format (check-only, pnpm format:check)'
+- id: test_ci_check_lint
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: check / Lint'
+- id: test_ci_check_typecheck
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: check / Typecheck'
+- id: test_ci_check_check_change_files
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: check / Check change files'
+- id: test_ci_test_run_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: test / Run tests (scoped to route-pattern package)'
+- id: test_ci_build_build_packages
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: build / Build packages (scoped to route-pattern package)'
+rubric:
+- rule: 'Generics: Use descriptive lowercase names for type parameters (e.g., `source`, `method`, `pattern`) instead of single uppercase letters like `T`, `P`, or `K`'
+  source:
+    path: AGENTS.md
+    lines: '32'
+    commit: 7a028b5a1cccb5b231f6b908da2aa06a95000a7f
+  evidence: Gold renames type parameter T to source in HrefArgs and HrefParams
+  category: naming
+  verification: semantic_diff
+- rule: 'Imports: Always use `import type { X }` for types (separate from value imports); use `export type { X }` for type exports; include `.ts` extensions'
+  source:
+    path: AGENTS.md
+    lines: '18'
+    commit: 7a028b5a1cccb5b231f6b908da2aa06a95000a7f
+  evidence: Gold preserves import type style with .ts extensions
+  category: style
+  verification: semantic_diff
+- rule: 'Formatting: Prettier (printWidth: 100, no semicolons, single quotes, spaces not tabs)'
+  source:
+    path: AGENTS.md
+    lines: '29'
+    commit: 7a028b5a1cccb5b231f6b908da2aa06a95000a7f
+  evidence: Gold diff respects prettier formatting with // prettier-ignore preserved
+  category: style
+  verification: semantic_diff
+- rule: 'Comments: Only add non-JSDoc comments when the code is doing something surprising or non-obvious'
+  source:
+    path: AGENTS.md
+    lines: '34'
+    commit: 7a028b5a1cccb5b231f6b908da2aa06a95000a7f
+  evidence: Gold does not add unnecessary comments to the type definitions
+  category: style
+  verification: semantic_diff
+- rule: 'No loops or conditionals in test suites: Do not use `for` loops or conditional statements (`if`, `switch`, etc.) to generate test cases within `describe()` blocks'
+  source:
+    path: AGENTS.md
+    lines: '38'
+    commit: 7a028b5a1cccb5b231f6b908da2aa06a95000a7f
+  evidence: Gold test cases are individually written without loops or conditionals
+  category: testing
+  verification: llm_judge
+distractors:
+- rule: 'Variables: Prefer `let` for locals, `const` only at module scope; never use `var`'
+  source:
+    path: AGENTS.md
+    lines: '20'
+    commit: 7a028b5a1cccb5b231f6b908da2aa06a95000a7f
+  collision_type: scope_ambiguity
+  why_distracting: Type parameters are not variables; this rule does not apply to type-level code
+  severity: low
+- rule: 'Functions: Use regular function declarations/expressions by default. Only use arrow functions as callbacks'
+  source:
+    path: AGENTS.md
+    lines: '23'
+    commit: 7a028b5a1cccb5b231f6b908da2aa06a95000a7f
+  collision_type: scope_ambiguity
+  why_distracting: This rule applies to runtime functions, not type-level constructs
+  severity: low

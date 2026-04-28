@@ -18,6 +18,7 @@ RUN corepack enable && corepack prepare pnpm@10.17.1 --activate
 RUN python3 -m venv /opt/venv \
  && /opt/venv/bin/pip install --no-cache-dir \
         pytest==8.3.4 \
+        pytest-json-ctrf==0.3.2 \
         pyyaml==6.0.2
 ENV PATH=/opt/venv/bin:$PATH
 

@@ -28,8 +28,7 @@ checks:
 - id: event_bus_imports_resolve
   type: fail_to_pass
   origin: pr_diff
-  description: Bus and WorkspaceContext imported from modules that resolve to real
-    files
+  description: Bus and WorkspaceContext imported from modules that resolve to real files
 - id: instance_disposed_handling
   type: fail_to_pass
   origin: pr_diff
@@ -37,8 +36,7 @@ checks:
 - id: rpc_exports_intact
   type: pass_to_pass
   origin: pr_diff
-  description: All RPC methods still exported (fetch, snapshot, server, checkUpgrade,
-    reload, shutdown)
+  description: All RPC methods still exported (fetch, snapshot, server, checkUpgrade, reload, shutdown)
 - id: global_bus_forwarding
   type: pass_to_pass
   origin: pr_diff
@@ -106,8 +104,7 @@ checks:
 - id: repo_project_module_syntax
   type: pass_to_pass
   origin: repo_tests
-  description: Project/Instance module TypeScript files must parse without syntax
-    errors
+  description: Project/Instance module TypeScript files must parse without syntax errors
 - id: repo_server_rpc_syntax
   type: pass_to_pass
   origin: repo_tests
@@ -115,8 +112,7 @@ checks:
 - id: repo_cross_module_imports_resolve
   type: pass_to_pass
   origin: repo_tests
-  description: Cross-module imports between Bus, Control-plane, Project, and TUI resolve
-    correctly
+  description: Cross-module imports between Bus, Control-plane, Project, and TUI resolve correctly
 - id: repo_git_integrity
   type: pass_to_pass
   origin: repo_tests
@@ -124,8 +120,7 @@ checks:
 - id: repo_tsc_syntax_validation
   type: pass_to_pass
   origin: repo_tests
-  description: TypeScript compiler can parse key PR-modified files without syntax
-    errors
+  description: TypeScript compiler can parse key PR-modified files without syntax errors
 - id: repo_worker_file_structure
   type: pass_to_pass
   origin: repo_tests
@@ -134,32 +129,38 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Git repository has meaningful commit history at base commit
+- id: test_ci_typecheck_run_typecheck
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: typecheck / Run typecheck'
+- id: test_ci_e2e_run_app_e2e_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: e2e / Run app e2e tests'
+- id: test_ci_unit_run_unit_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: unit / Run unit tests'
 rubric:
-- rule: Code style compliance verified via AST tests (no AGENTS.md changes required
-    for this code fix)
+- rule: Code style compliance verified via AST tests (no AGENTS.md changes required for this code fix)
   source:
     path: AGENTS.md
     lines: '1'
-  reference: Style rules checked by test_no_try_catch, test_no_else, test_no_any_type,
-    test_const_over_let
+  reference: Style rules checked by test_no_try_catch, test_no_else, test_no_any_type, test_const_over_let
 - rule: Avoid try/catch
   source:
     path: AGENTS.md
     lines: 12-12
   source_text: '- Avoid `try`/`catch` where possible'
-  evidence: The implementation gracefully handles errors from the `WorkspaceContext.provide`
-    promise by appending `.catch((error) => { ... })` rather than wrapping the asynchronous
-    block in a `try`/`catch`.
+  evidence: The implementation gracefully handles errors from the `WorkspaceContext.provide` promise by appending `.catch((error) => { ... })` rather than wrapping the asynchronous block in a `try`/`catch`.
   category: error_handling
   verification: llm_judge
 - rule: Single word names
   source:
     path: AGENTS.md
     lines: 27-27
-  source_text: '- Use single word names by default for new locals, params, and helper
-    functions.'
-  evidence: The new variables and arguments introduced in the patch are predominantly
-    single words such as `unsub`, `settle`, `settled`, `value`, `resolve`, and `error`.
+  source_text: '- Use single word names by default for new locals, params, and helper functions.'
+  evidence: The new variables and arguments introduced in the patch are predominantly single words such as `unsub`, `settle`, `settled`, `value`, `resolve`, and `error`.
   category: naming
   verification: llm_judge
 - rule: Dot notation for context
@@ -167,9 +168,7 @@ rubric:
     path: AGENTS.md
     lines: 57-57
   source_text: Avoid unnecessary destructuring. Use dot notation to preserve context.
-  evidence: The event properties are accessed using dot notation (`event.type` and
-    `Bus.InstanceDisposed.type`) inside the subscription callback instead of destructuring
-    `type` from the event payload.
+  evidence: The event properties are accessed using dot notation (`event.type` and `Bus.InstanceDisposed.type`) inside the subscription callback instead of destructuring `type` from the event payload.
   category: style
   verification: llm_judge
 - rule: Prefer early returns
@@ -177,41 +176,27 @@ rubric:
     path: AGENTS.md
     lines: 84-84
   source_text: Avoid `else` statements. Prefer early returns.
-  evidence: Inside the `settle` local function, an early return (`if (settled) return`)
-    immediately stops execution without necessitating an `else` block for the remaining
-    state logic.
+  evidence: Inside the `settle` local function, an early return (`if (settled) return`) immediately stops execution without necessitating an `else` block for the remaining state logic.
   category: control_flow
   verification: llm_judge
 distractors:
 - rule: Use Effect.gen(function* () { ... }) for composition and other Effect rules.
   collision_type: architecture_boundary
-  why_distracting: The agent might attempt to rewrite the worker's event streaming
-    logic using `Effect.gen`, `Effect.async`, or `Effect.forkScoped` because of the
-    extensive Effect guidelines. However, this file currently uses standard Promises
-    and async/await, and the PR scope is strictly to bypass the HTTP SSE layer, not
-    to migrate the file to Effect.
+  why_distracting: The agent might attempt to rewrite the worker's event streaming logic using `Effect.gen`, `Effect.async`, or `Effect.forkScoped` because of the extensive Effect guidelines. However, this file currently uses standard Promises and async/await, and the PR scope is strictly to bypass the HTTP SSE layer, not to migrate the file to Effect.
   severity: high
   source:
     path: packages/opencode/AGENTS.md
     lines: 14-20
-- rule: Use Instance.bind(fn) to capture the current Instance AsyncLocalStorage context
-    for callbacks.
+- rule: Use Instance.bind(fn) to capture the current Instance AsyncLocalStorage context for callbacks.
   collision_type: scope_ambiguity
-  why_distracting: The agent might wrap the `Bus.subscribeAll` callback with `Instance.bind`
-    to preserve context. However, the rule explicitly states it's for native addon
-    callbacks, whereas `Bus.subscribeAll` is an internal event emitter. The context
-    is already correctly established by wrapping the entire execution in `Instance.provide`.
+  why_distracting: The agent might wrap the `Bus.subscribeAll` callback with `Instance.bind` to preserve context. However, the rule explicitly states it's for native addon callbacks, whereas `Bus.subscribeAll` is an internal event emitter. The context is already correctly established by wrapping the entire execution in `Instance.provide`.
   severity: medium
   source:
     path: packages/opencode/AGENTS.md
     lines: 46-54
 - rule: Reduce total variable count by inlining when a value is only used once.
   collision_type: rule_conflict
-  why_distracting: The agent might inline the `WorkspaceID.make(input.workspaceID)`
-    call directly into the `WorkspaceContext.provide` arguments since it's only used
-    once. However, doing so would place it inside the `while (!signal.aborted)` loop,
-    causing unnecessary re-evaluation on every reconnection attempt. The gold solution
-    correctly extracts it outside the loop.
+  why_distracting: The agent might inline the `WorkspaceID.make(input.workspaceID)` call directly into the `WorkspaceContext.provide` arguments since it's only used once. However, doing so would place it inside the `while (!signal.aborted)` loop, causing unnecessary re-evaluation on every reconnection attempt. The gold solution correctly extracts it outside the loop.
   severity: low
   source:
     path: AGENTS.md
@@ -222,10 +207,7 @@ distractors:
     lines: 20-20
   source_text: '- Use `Effect.gen(function* () { ... })` for composition.'
   collision_type: architecture_boundary
-  why_distracting: An agent may mistakenly attempt to refactor the newly introduced
-    asynchronous logic using `Effect.gen()`. This is distracting because this specific
-    worker file uses standard native Promises and async/await, and enforcing Effect
-    framework patterns here breaks the local architectural boundary.
+  why_distracting: An agent may mistakenly attempt to refactor the newly introduced asynchronous logic using `Effect.gen()`. This is distracting because this specific worker file uses standard native Promises and async/await, and enforcing Effect framework patterns here breaks the local architectural boundary.
   severity: high
 - rule: Use makeRuntime for services
   source:
@@ -233,35 +215,26 @@ distractors:
     lines: 36-36
   source_text: '- Use `makeRuntime` (from `src/effect/run-service.ts`) for all services.'
   collision_type: architecture_boundary
-  why_distracting: An agent might try to wrap the dependency injection logic in `makeRuntime`,
-    confusing the existing `WorkspaceContext.provide` standard class usage with the
-    separate Effect service layer injection.
+  why_distracting: An agent might try to wrap the dependency injection logic in `makeRuntime`, confusing the existing `WorkspaceContext.provide` standard class usage with the separate Effect service layer injection.
   severity: high
 - rule: Instance.bind for native callbacks
   source:
     path: packages/opencode/AGENTS.md
     lines: 54-56
-  source_text: '`Instance.bind(fn)` captures the current Instance AsyncLocalStorage
-    context and restores it synchronously when called.
+  source_text: '`Instance.bind(fn)` captures the current Instance AsyncLocalStorage context and restores it synchronously when called.
 
 
-    Use it for native addon callbacks (`@parcel/watcher`, `node-pty`, native `fs.watch`,
-    etc.) that need to call `Bus.publish` or anything that reads `Instance.directory`.'
+    Use it for native addon callbacks (`@parcel/watcher`, `node-pty`, native `fs.watch`, etc.) that need to call `Bus.publish` or anything that reads `Instance.directory`.'
   collision_type: scope_ambiguity
-  why_distracting: An agent might incorrectly wrap the `Bus.subscribeAll` callback
-    in `Instance.bind`. The rule specifies it is solely meant for native C++ addon
-    callbacks that cross into JavaScript, not standard internal Bus callbacks.
+  why_distracting: An agent might incorrectly wrap the `Bus.subscribeAll` callback in `Instance.bind`. The rule specifies it is solely meant for native C++ addon callbacks that cross into JavaScript, not standard internal Bus callbacks.
   severity: medium
 - rule: Snake_case schema definitions
   source:
     path: AGENTS.md
     lines: 102-102
-  source_text: Use snake_case for field names so column names don't need to be redefined
-    as strings.
+  source_text: Use snake_case for field names so column names don't need to be redefined as strings.
   collision_type: scope_ambiguity
-  why_distracting: An agent might interpret this rule globally and apply snake_case
-    to the properties of the payload schemas or emitted bus events, even though the
-    rule strictly applies only to Drizzle database schemas.
+  why_distracting: An agent might interpret this rule globally and apply snake_case to the properties of the payload schemas or emitted bus events, even though the rule strictly applies only to Drizzle database schemas.
   severity: low
 - rule: Renderer IPC Handlers
   source:
@@ -271,15 +244,6 @@ distractors:
 
     - Main process should register IPC handlers in `src/main/ipc.ts`.'
   collision_type: scope_ambiguity
-  why_distracting: An agent could interpret the presence of `Rpc.emit` as Electron
-    IPC routing and attempt to follow desktop electron standards, failing to realize
-    this worker module sits within the `packages/opencode` backend domain.
+  why_distracting: An agent could interpret the presence of `Rpc.emit` as Electron IPC routing and attempt to follow desktop electron standards, failing to realize this worker module sits within the `packages/opencode` backend domain.
   severity: medium
-hierarchy_analysis: The root `AGENTS.md` provides general TypeScript style guidelines
-  (avoiding try/catch, early returns, single-word naming), which the gold solution
-  follows closely. The package-level `packages/opencode/AGENTS.md` introduces highly
-  specific rules for Effect and `Instance.bind`. These package-level rules act as
-  distractors here because the file in question is not using the Effect framework,
-  and the callbacks involved are not native addon callbacks. The agent must recognize
-  the architectural boundary of the current file and not blindly apply the Effect
-  migration rules from the package-level config.
+hierarchy_analysis: The root `AGENTS.md` provides general TypeScript style guidelines (avoiding try/catch, early returns, single-word naming), which the gold solution follows closely. The package-level `packages/opencode/AGENTS.md` introduces highly specific rules for Effect and `Instance.bind`. These package-level rules act as distractors here because the file in question is not using the Effect framework, and the callbacks involved are not native addon callbacks. The agent must recognize the architectural boundary of the current file and not blindly apply the Effect migration rules from the package-level config.

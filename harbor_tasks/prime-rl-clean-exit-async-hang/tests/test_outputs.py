@@ -263,7 +263,7 @@ sys.exit(0)
 # This is the key behavior that would break with os._exit (finally doesn't run)
 # ---------------------------------------------------------------------------
 
-# [pr_diff] fail_to_pass
+# [pr_diff] pass_to_pass
 def test_async_cleanup_runs():
     """Async clean_exit must call destroy_process_group in finally block on error."""
     r = _run_subprocess("""\
@@ -322,7 +322,7 @@ else:
     )
 
 
-# [pr_diff] fail_to_pass
+# [pr_diff] pass_to_pass
 def test_sync_cleanup_runs():
     """Sync clean_exit must call destroy_process_group in finally block on error."""
     r = _run_subprocess("""\
@@ -687,3 +687,45 @@ def test_repo_tests_dir_lint():
         capture_output=True, text=True, timeout=120, cwd=REPO,
     )
     assert r.returncode == 0, f"Ruff lint on tests/ failed:\n{r.stdout[-500:]}{r.stderr[-500:]}"
+
+# === CI-mined tests (taskforge.ci_check_miner) ===
+# [repo_tests] pass_to_pass
+def test_ci_unit_tests_run_unit_tests():
+    """pass_to_pass | CI job 'Unit tests' → step 'Run unit tests' (scoped to utils package)"""
+    # Install uv (matches CI toolchain from astral-sh/setup-uv@v5)
+    try:
+        subprocess.run(["uv", "--version"], capture_output=True, check=True)
+    except (subprocess.CalledProcessError, FileNotFoundError):
+        subprocess.run(["pip3", "install", "-q", "uv"], capture_output=True, check=False)
+
+    # Create a minimal venv and install test deps (avoids full uv sync which pulls torch)
+    subprocess.run(
+        ["bash", "-lc",
+         'cd /workspace/prime-rl && '
+         'uv venv --python python3 .ci-venv 2>/dev/null && '
+         '. .ci-venv/bin/activate && '
+         'uv pip install -q pytest loguru'],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+
+    # Run unit tests scoped to the utils package (matches CI: uv run pytest tests/unit -m "not gpu")
+    conftest = Path(REPO) / "tests" / "conftest.py"
+    conftest_bak = Path(REPO) / "tests" / "conftest.py.bak"
+    try:
+        if conftest.exists():
+            conftest.rename(conftest_bak)
+        r = subprocess.run(
+            ["bash", "-lc",
+             'cd /workspace/prime-rl && '
+             '. .ci-venv/bin/activate && '
+             'PYTHONPATH=/workspace/prime-rl/src '
+             'uv run --no-sync pytest tests/unit/utils/test_pathing.py -v --tb=short'],
+            capture_output=True, text=True, timeout=120, cwd=REPO,
+        )
+    finally:
+        if conftest_bak.exists():
+            conftest_bak.rename(conftest)
+
+    assert r.returncode == 0, (
+        f"CI step 'Run unit tests' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")

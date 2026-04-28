@@ -26,4 +26,6 @@ In `slime/ray/rollout.py`, the function that launches the router configures seve
 
 Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
 
-- `black (Python formatter)`
+- `black` (Python formatter)
+- `isort` (import order)
+- `ruff` (linter)

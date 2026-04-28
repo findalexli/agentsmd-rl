@@ -1,36 +1,20 @@
-FROM node:22.14.0-slim
+FROM node:22-slim
 
-ENV DEBIAN_FRONTEND=noninteractive
+# Install pnpm and tsx globally
+RUN npm install -g pnpm@9.15.4 tsx@4.19.2
 
-RUN apt-get update && apt-get install -y --no-install-recommends \
-        python3=3.11.2-1+b1 \
-        python3-pip \
-        python3-venv \
-        ca-certificates \
-        curl \
-        git \
-    && rm -rf /var/lib/apt/lists/*
+# Install Python for test harness
+RUN apt-get update && apt-get install -y --no-install-recommends python3 python3-pip git && \
+    rm -rf /var/lib/apt/lists/*
 
-RUN python3 -m venv /opt/pyenv \
- && /opt/pyenv/bin/pip install --no-cache-dir \
-        pytest==8.3.4 \
-        pytest-json-ctrf==0.4.1 \
-        pyyaml==6.0.2
-ENV PATH="/opt/pyenv/bin:${PATH}"
+RUN pip3 install pytest==8.3.4 --break-system-packages
 
+# Clone the repo at base commit
 WORKDIR /workspace
-RUN curl -fsSL "https://codeload.github.com/cloudflare/workers-sdk/legacy.tar.gz/525a46bca7c9a8a57972ac152ab9c400df0bf186" -o /tmp/repo.tar.gz \
- && mkdir -p /workspace/workers-sdk \
- && tar xzf /tmp/repo.tar.gz -C /workspace/workers-sdk --strip-components=1 \
- && rm /tmp/repo.tar.gz
-
-WORKDIR /test-runner
-COPY runner/package.json ./package.json
-COPY runner/vitest.config.ts ./vitest.config.ts
-COPY runner/tsconfig.json ./tsconfig.json
-COPY runner/test ./test
-RUN npm install --no-audit --no-fund --include=optional
+RUN git clone --filter=blob:none https://github.com/cloudflare/workers-sdk.git && \
+    cd workers-sdk && \
+    git checkout 525a46bca7c9a8a57972ac152ab9c400df0bf186
 
 RUN mkdir -p /logs/verifier
 
-WORKDIR /workspace
+WORKDIR /workspace/workers-sdk

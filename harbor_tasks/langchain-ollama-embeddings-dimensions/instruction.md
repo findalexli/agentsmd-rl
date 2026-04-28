@@ -2,7 +2,7 @@
 
 ## Problem
 
-The `OllamaEmbeddings` class in `libs/partners/ollama/langchain_ollama/embeddings.py` does not support specifying the output embedding dimensionality. Users need to be able to control the size of embedding vectors returned by the Ollama API, as some models support variable dimensions.
+The `OllamaEmbeddings` class in the ollama partner package does not support specifying the output embedding dimensionality. Users need to be able to control the size of embedding vectors returned by the Ollama API, as some models support variable dimensions.
 
 When attempting to pass `dimensions=768` (or any value) to `OllamaEmbeddings`, the current implementation does not accept this parameter.
 
@@ -17,7 +17,7 @@ Add a `dimensions` parameter to the `OllamaEmbeddings` class that:
 
 ## Files to Modify
 
-- `libs/partners/ollama/langchain_ollama/embeddings.py` - Add the `dimensions` field and validation
+- The embeddings module in the ollama partner package — Add the `dimensions` field and validation
 
 ## Testing
 

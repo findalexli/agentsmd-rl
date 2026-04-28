@@ -27,4 +27,12 @@ WORKDIR /workspace/compose
 
 RUN go mod download
 
+# Install golangci-lint matching the project version (v2.11.3 from repo Dockerfile ARG).
+# Pinned binary release URL for reproducibility — GitHub release artifacts are immutable.
+RUN curl -fsSL https://github.com/golangci/golangci-lint/releases/download/v2.11.3/golangci-lint-2.11.3-linux-amd64.tar.gz \
+    | tar -xz -C /tmp && \
+    mv /tmp/golangci-lint-2.11.3-linux-amd64/golangci-lint /usr/local/bin/golangci-lint && \
+    rm -rf /tmp/golangci-lint-2.11.3-linux-amd64 && \
+    golangci-lint --version
+
 RUN mkdir -p /logs/verifier

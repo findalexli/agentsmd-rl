@@ -40,6 +40,12 @@ checks:
   description: 'Same defect, exercised with float16; output dtype must match the model dtype.
 
     '
+- id: test_ci_runner_dtype_fix_bash_pytest
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'Verifies the dtype fix in a CI-style subprocess: writes a pytest test file to a temp directory, then invokes it via `bash -lc python -m pytest`. At base the inner test hits the dtype-mismatch RuntimeError; after the fix the subprocess exits cleanly.
+
+    '
 - id: test_modular_and_modeling_router_forward_bodies_match
   type: pass_to_pass
   origin: agent_config

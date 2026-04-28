@@ -210,3 +210,51 @@ def test_existing_cli_error_test_still_passes():
         f"existing test/cli/error.test.ts failed (rc={r.returncode}).\n"
         f"stdout:\n{r.stdout}\nstderr:\n{r.stderr[-500:]}"
     )
+
+# === PR-added f2p tests (taskforge.test_patch_miner) ===
+# These run individual tests from the PR-authored bun:test file via `bun test -t`.
+# On the base commit the file does not exist → bun exits non-zero (fail_to_pass).
+def test_pr_added_includes_http_method_and_path():
+    """fail_to_pass | PR added test 'includes http method and path' in packages/opencode/test/server/trace-attributes.test.ts"""
+    r = subprocess.run(
+        ["bash", "-lc", "bun test ./test/server/trace-attributes.test.ts -t 'includes http method' 2>&1"],
+        cwd=str(PKG), capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"PR-added test 'includes http method and path' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_pr_added_strips_query_string_from_path():
+    """fail_to_pass | PR added test 'strips query string from path' in packages/opencode/test/server/trace-attributes.test.ts"""
+    r = subprocess.run(
+        ["bash", "-lc", "bun test ./test/server/trace-attributes.test.ts -t 'strips query string' 2>&1"],
+        cwd=str(PKG), capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"PR-added test 'strips query string from path' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_pr_added_tags_route_params_with_opencode_param_prefix():
+    """fail_to_pass | PR added test 'tags route params with opencode.<param> prefix' in packages/opencode/test/server/trace-attributes.test.ts"""
+    r = subprocess.run(
+        ["bash", "-lc", "bun test ./test/server/trace-attributes.test.ts -t 'tags route params' 2>&1"],
+        cwd=str(PKG), capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"PR-added test 'tags route params with opencode.<param> prefix' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_pr_added_produces_no_param_attributes_when_no_params_are_():
+    """fail_to_pass | PR added test 'produces no param attributes when no params are matched' in packages/opencode/test/server/trace-attributes.test.ts"""
+    r = subprocess.run(
+        ["bash", "-lc", "bun test ./test/server/trace-attributes.test.ts -t 'produces no param attributes' 2>&1"],
+        cwd=str(PKG), capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"PR-added test 'produces no param attributes when no params are matched' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_pr_added_handles_non_ID_params_e_g_mcp_name_without_mangl():
+    """fail_to_pass | PR added test 'handles non-ID params (e.g. mcp :name) without mangling' in packages/opencode/test/server/trace-attributes.test.ts"""
+    r = subprocess.run(
+        ["bash", "-lc", "bun test ./test/server/trace-attributes.test.ts -t 'handles non-ID params' 2>&1"],
+        cwd=str(PKG), capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"PR-added test 'handles non-ID params (e.g. mcp :name) without mangling' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")

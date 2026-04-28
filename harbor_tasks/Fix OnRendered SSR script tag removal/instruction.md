@@ -2,36 +2,25 @@
 
 ## Problem
 
-In the `@tanstack/router` repository at `/workspace/router`, the `OnRendered` component in the react-router package renders a `<script>` sentinel tag during server-side rendering (SSR). This creates unnecessary DOM markup and causes hydration mismatches, requiring `suppressHydrationWarning` as a workaround.
-
-The SSR test in `packages/react-router/tests/Scripts.test.tsx` currently expects this bare `<script></script>` sentinel in its `toEqual` assertions.
+In the `@tanstack/router` repository at `/workspace/router`, the `OnRendered` component in the react-router package produces a `<script>` tag sentinel during server-side rendering. This creates unnecessary DOM markup and causes hydration mismatches between the server-rendered HTML and the client-side React tree. The current code uses `suppressHydrationWarning` as a workaround for these mismatches.
 
 ## Symptom
 
-The `OnRendered` component in `packages/react-router/src/Match.tsx` renders a `<script>` element to detect render completion. This results in:
+When the react-router package renders pages on the server, the HTML output includes a bare `<script></script>` tag injected by the `OnRendered` component. This sentinel:
 
-- A `<script></script>` sentinel tag appearing in SSR HTML output
-- The use of `suppressHydrationWarning` to mask hydration issues
-- Unnecessary DOM nodes in the rendered page
+- Appears in the SSR HTML output tested in `packages/react-router/tests/Scripts.test.tsx`
+- Creates unwanted DOM nodes in the rendered page
+- Requires `suppressHydrationWarning` to mask the resulting hydration warnings
 
 ## Expected Behavior
 
-The component should not render any DOM element — it should `return null` instead of producing markup. Render completion should be detected through React hooks rather than a DOM-based sentinel.
-
-The corrected implementation should exhibit the following properties:
-
-- **No script element:** The source file must not contain both `<script` and `suppressHydrationWarning` — the component returns null.
-- **Server detection:** On the server, the component should return null immediately. The check `isServer ?? router.isServer` should be used for this.
-- **Event emission:** The component must still emit the `onRendered` event on the client via `router.emit` with `{ type: 'onRendered', ...getLocationChangeInfo(...) }`.
-- **Layout effect timing:** Event emission should happen through `useLayoutEffect` (importable from `./utils`), with the hook call structured as `useLayoutEffect(() => {`.
-- **Change detection:** The event should only fire when the href actually changes. A ref named `prevHrefRef` should be used to track the previous href value.
-- **Reset key prop:** The component must accept a `resetKey` prop typed `{ resetKey: number }`. The existing call site `<OnRendered />` should pass `resetKey={resetKey}`, and `resetKey` should be included in the effect's dependency array.
+The `OnRendered` component should not render any DOM element. Render completion should be detected through the React component lifecycle rather than by inserting DOM-based sentinels. No `<script>` tag should appear in the component's rendered output, and `suppressHydrationWarning` should not be needed.
 
 ## Other Files to Update
 
-- **SSR test** (`packages/react-router/tests/Scripts.test.tsx`): Remove the bare `<script></script>` sentinel from the `toEqual` assertions. The expected SSR HTML should no longer contain this tag.
+- **SSR test** (`packages/react-router/tests/Scripts.test.tsx`): The expected SSR HTML in the `toEqual` assertions contains a bare `<script></script>` tag that the sentinel produces. This expected output string must be updated so the test passes once `OnRendered` no longer injects the tag.
 
-- **Solid Router comment** (`packages/solid-router/src/Match.tsx`): Update the comment above OnRendered to reflect the new approach. The updated comment should indicate the component "needs to run" or has "committed" after the route subtree, replacing the old text about "renders a dummy dom element."
+- **Solid Router** (`packages/solid-router/src/Match.tsx`): The comment above the `OnRendered` function describes the old behavior where the component "renders a dummy dom element." This comment should be updated to describe the new approach — that the component needs to run after the route subtree has committed below the root layout.
 
 ## Verification
 
@@ -40,6 +29,7 @@ The corrected implementation should exhibit the following properties:
 
 ## Code Style Requirements
 
-Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+Your solution will be checked by the repository's existing linters and type checker. All modified files must pass:
 
-- `eslint (JS/TS linter)`
+- `eslint` (JS/TS linter)
+- `tsc` (TypeScript type-check, via the project's test:types target)

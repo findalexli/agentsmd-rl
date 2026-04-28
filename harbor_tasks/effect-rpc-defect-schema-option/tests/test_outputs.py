@@ -165,3 +165,50 @@ def test_changeset_added_for_rpc():
         "Changeset must reference the @effect/rpc package (the package being modified). "
         f"Got:\n{text[:500]}"
     )
+
+# === CI-mined tests (taskforge.ci_check_miner) ===
+def test_ci_build_pnpm():
+    """pass_to_pass | CI job 'Build' → step ''"""
+    r = subprocess.run(
+        ["bash", "-lc", 'pnpm docgen'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step '' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_lint_pnpm():
+    """pass_to_pass | CI job 'Lint' → step ''"""
+    r = subprocess.run(
+        ["bash", "-lc", 'pnpm circular'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step '' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_lint_pnpm_2():
+    """pass_to_pass | CI job 'Lint' → step ''"""
+    r = subprocess.run(
+        ["bash", "-lc", 'pnpm lint'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step '' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_lint_pnpm_3():
+    """pass_to_pass | CI job 'Lint' → step ''"""
+    r = subprocess.run(
+        ["bash", "-lc", 'pnpm codegen'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step '' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+# === PR-added f2p tests (taskforge.test_patch_miner) ===
+def test_pr_added_exitSchema_uses_custom_defect_schema():
+    """fail_to_pass | PR added test 'exitSchema uses custom defect schema' in 'packages/rpc/test/Rpc.test.ts' (vitest_or_jest)"""
+    r = subprocess.run(
+        ["bash", "-lc", '(pnpm vitest run "packages/rpc/test/Rpc.test.ts" -t "exitSchema uses custom defect schema" 2>&1 || npx vitest run "packages/rpc/test/Rpc.test.ts" -t "exitSchema uses custom defect schema" 2>&1 || pnpm jest "packages/rpc/test/Rpc.test.ts" -t "exitSchema uses custom defect schema" 2>&1 || npx jest "packages/rpc/test/Rpc.test.ts" -t "exitSchema uses custom defect schema" 2>&1) | tail -50'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"PR-added test 'exitSchema uses custom defect schema' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")

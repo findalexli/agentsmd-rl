@@ -266,3 +266,8 @@ def test_ci_branch_unchanged():
     assert "if CI:" in src or "if CI :" in src, (
         "CI branch gate (`if CI:`) must remain"
     )
+
+# === CI-mined tests (taskforge.ci_check_miner) ===
+def test_ci_build_info_cleanup_repo():
+    """pass_to_pass | CI job 'Build info' → step 'Cleanup repo' — skipped: requires docker-in-docker infra unavailable in this environment."""
+    pass

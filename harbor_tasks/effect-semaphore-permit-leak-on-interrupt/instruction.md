@@ -15,7 +15,12 @@ A correct semaphore must satisfy the following invariant: **if a fiber waiting i
 
 ## Reproducer
 
-The following test (already placed in your workspace at `packages/effect/test/Effect/leak_regression.test.ts`) demonstrates the bug. It uses `Scheduler.ControlledScheduler` to deterministically interleave the release and the interrupt:
+Two regression tests have been placed in your workspace to demonstrate the bug:
+
+- `packages/effect/test/Effect/leak_regression.test.ts` — the single-permit (`n=1`) case
+- `packages/effect/test/Effect/leak_regression_multi.test.ts` — the multi-permit (`n=2`) case
+
+Both use `Scheduler.ControlledScheduler` to deterministically interleave the release and the interrupt. The first test (`n=1`):
 
 ```ts
 import { assert, describe, it } from "@effect/vitest"
@@ -50,20 +55,21 @@ describe("Semaphore regression", () => {
 })
 ```
 
-On the unfixed code this test fails on the final assertion: `withPermitsIfAvailable(1)` returns `Option.none` because the interrupted waiter has already debited the permit count.
+On the unfixed code both tests fail on their final assertion: `withPermitsIfAvailable` returns `Option.none` because the interrupted waiter has already debited the permit count.
 
-You can run it with:
+You can run either with:
 
 ```
 cd /workspace/effect/packages/effect
 pnpm exec vitest run --no-coverage test/Effect/leak_regression.test.ts
+pnpm exec vitest run --no-coverage test/Effect/leak_regression_multi.test.ts
 ```
 
-You may **not** edit `leak_regression.test.ts`; it is the regression contract.
+You may **not** edit either `leak_regression.test.ts` or `leak_regression_multi.test.ts`; they are the regression contract.
 
 ## Task
 
-Fix the bug so that the regression test passes and the existing tests in `packages/effect/test/Effect/semaphore.test.ts` (`semaphore works`, `releaseAll`, `resize`) continue to pass. You will need to make the permit-claim observable to interrupts: it must not be considered "taken" until the waiting fiber has actually been allowed to resume.
+Fix the bug so that both regression tests pass and the existing tests in `packages/effect/test/Effect/semaphore.test.ts` (`semaphore works`, `releaseAll`, `resize`) continue to pass. You will need to make the permit-claim observable to interrupts: it must not be considered "taken" until the waiting fiber has actually been allowed to resume.
 
 The fix lives entirely inside the core `effect` package's internal semaphore implementation. You do not need to change any public API.
 
@@ -82,6 +88,7 @@ Per the repository's `AGENTS.md`:
 ```
 cd /workspace/effect/packages/effect
 pnpm exec vitest run --no-coverage test/Effect/leak_regression.test.ts        # must pass
+pnpm exec vitest run --no-coverage test/Effect/leak_regression_multi.test.ts   # must pass
 pnpm exec vitest run --no-coverage test/Effect/semaphore.test.ts              # must still pass
 pnpm exec tsc --noEmit -p tsconfig.src.json                                   # must succeed
 ```

@@ -125,3 +125,4 @@ def test_ai_package_typecheck():
         f"`tsc -b tsconfig.json` failed in {AI_PKG}\n"
         f"stdout:\n{proc.stdout[-2000:]}\nstderr:\n{proc.stderr[-2000:]}"
     )
+

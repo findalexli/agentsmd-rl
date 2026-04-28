@@ -244,3 +244,20 @@ def test_chromium_source_parses_as_typescript():
     assert r.returncode == 0, (
         f"_innerDefaultArgs extraction or eval failed:\nstderr:\n{r.stderr}"
     )
+
+
+# ─────────────────────── scoped CI guard (eslint on affected module) ───────────────────────
+
+
+def test_scoped_eslint_on_chromium_source():
+    """ESLint must pass on the patched chromium.ts source — scoped to the affected module."""
+    r = subprocess.run(
+        ["bash", "-lc",
+         "npm ci && ./node_modules/.bin/eslint packages/playwright-core/src/server/chromium/chromium.ts"],
+        cwd=REPO,
+        capture_output=True, text=True, timeout=300,
+    )
+    assert r.returncode == 0, (
+        f"scoped eslint failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}"
+    )

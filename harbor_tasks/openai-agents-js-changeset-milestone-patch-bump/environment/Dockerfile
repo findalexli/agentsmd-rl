@@ -20,4 +20,8 @@ RUN git clone --filter=blob:none https://github.com/openai/openai-agents-js.git
 WORKDIR /workspace/openai-agents-js
 RUN git checkout f0ad7065c8ec8c532bf702d1912b7d42ee17b141
 
+RUN npm install -g pnpm@9 && \
+    pnpm install --frozen-lockfile && \
+    npm uninstall -g pnpm
+
 RUN mkdir -p /logs/verifier

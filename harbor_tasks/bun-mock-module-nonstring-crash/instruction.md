@@ -36,3 +36,10 @@ Create a test file in `test/js/bun/` that:
 - Asserts the error message contains `"mock(module, fn) requires a module name string"`
 - Uses `toThrow` or similar assertions to verify the error is thrown
 - Does not use `setTimeout`, custom timeouts, or shell commands like `find`/`grep`
+
+## Code Style Requirements
+
+- **TypeScript typechecking**: The repository uses `tsc --noEmit` for type checking. All code must pass typechecking.
+- **JS linting**: The repository uses `oxlint` on `src/js/bun/` for JavaScript/TypeScript linting.
+- **Banned words**: The repository has a banned words check (`test/internal/ban-words.test.ts`) that must pass.
+- **Package.json lint**: The repository validates `package.json` files for exact version strings (`test/package-json-lint.test.ts`).

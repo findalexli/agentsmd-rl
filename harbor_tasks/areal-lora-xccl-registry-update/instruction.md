@@ -6,13 +6,13 @@ After performing a LoRA weight update through the XCCL (cross-collective communi
 
 Additionally, the distributed weight update request builder may not be forwarding the LoRA metadata payload to the XCCL update endpoint, so the server endpoint never receives the information it would need to update the registry.
 
-## Files to Modify
+## Where to Look
 
-The fix requires changes in two files:
+The fix requires changes in two locations:
 
-1. **`areal/engine/vllm_remote.py`**: Contains the `build_distributed_weight_update_requests` method in the `VLLMBackend` class. This method constructs the HTTP requests sent during XCCL weight updates.
+1. **Distributed weight update request builder**: The `VLLMBackend` class contains a method `build_distributed_weight_update_requests` that constructs the HTTP requests sent during XCCL weight updates. This method lives in the engine's remote module.
 
-2. **`areal/engine/vllm_ext/areal_vllm_server.py`**: Contains the `update_weight_lora_xccl` async function (registered at the `/areal_update_weights_lora_xccl` endpoint). This function receives the weight update request and must update the registry after weights are updated.
+2. **XCCL LoRA weight update endpoint handler**: The async function `update_weight_lora_xccl` is registered at the `/areal_update_weights_lora_xccl` endpoint. This function, defined in the server's vLLM extension module, receives the weight update request and must update the registry after weights are updated.
 
 ## Expected Behavior
 
@@ -40,4 +40,4 @@ After a successful LoRA weight update via XCCL:
 
 Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
 
-- `ruff format and ruff check`
+- `ruff format` and `ruff check`

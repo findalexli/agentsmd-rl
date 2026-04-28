@@ -240,3 +240,4 @@ try {
         # Clean up script if assertion fails
         subprocess.run(["rm", "-f", "/workspace/next.js/ts_check.js"], check=False)
         raise
+

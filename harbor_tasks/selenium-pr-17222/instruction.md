@@ -1,38 +1,38 @@
 # Selenium Grid Docker Container Stop Issues
 
-There are several issues with how Selenium Grid's `DockerSession` handles container shutdown:
+The Selenium Grid's Docker integration has several issues with container lifecycle management that need to be fixed across the Docker node module.
 
-## Problem 1: Hardcoded Timeouts
+## Problem 1: Unconfigurable Container Stop Timeouts
 
-The browser container and video container use hardcoded timeout values (60 seconds and 10 seconds respectively) when stopping. Grid operators have no way to configure these values, which can be problematic:
+When Selenium Grid stops a Docker browser session, it terminates the browser container and any associated video recording container. However, these stop timeout values are hardcoded — operators cannot adjust how long the system waits before forcibly terminating containers.
 
-- In environments with slow container shutdown, 60 seconds may not be enough
-- For video containers, 10 seconds might be too short to properly finalize recordings
+In environments with slow container shutdown, the current timeout values may not be sufficient. In other environments, shorter timeouts may be desirable to reclaim resources faster.
 
-Look at `DockerSession.stop()` to see the hardcoded `Duration.ofMinutes(1)` and `Duration.ofSeconds(10)` values.
+A new `--docker-stop-grace-period` command-line flag is needed, defaulting to 60 seconds. This flag should be backed by a TOML configuration option under the `[docker]` section with the key `stop-grace-period`. The flag description should mention "grace period" so operators understand its purpose.
+
+The configuration value must be validated: supplying a negative value should produce an error message containing "stop-grace-period must be a non-negative" explaining the validation failure.
+
+The options class needs a new constant named `DEFAULT_STOP_GRACE_PERIOD` set to 60, and a new `getStopGracePeriod` method that reads the configuration and returns a `Duration`. Follow the same patterns used by the existing `DEFAULT_SERVER_START_TIMEOUT` constant and `getServerStartTimeout()` method for naming and structure. Add `import java.time.Duration` in any file that uses `Duration`.
+
+The session class that manages Docker container lifecycles needs two new `Duration` fields: `containerStopTimeout` and `videoContainerStopTimeout`. These must be initialized in the constructor using `Require.nonNull` for validation, with descriptive parameter names like "Container stop timeout" and "Video container stop timeout". The configured values must flow from the session factory to each session instance. The factory class needs a `stopGracePeriod` field that it receives in its constructor and passes when creating sessions.
+
+When the session's stop method executes, it must use the stored timeout fields instead of any hardcoded Duration literals.
 
 ## Problem 2: Missing Exception Safety
 
-If stopping the video container fails with an exception, or if saving logs throws an error, the browser container cleanup and `super.stop()` may never execute. This can leave orphaned containers running.
+When stopping a Docker session, the system performs several steps in sequence: stop the video container (if present), save container logs, stop the browser container, and invoke the parent stop. If stopping the video container throws an unchecked exception, or if saving logs fails, the call to stop the browser container (`container.stop`) and the call to `super.stop()` may never execute. This can leave orphaned containers consuming resources.
 
-The `stop()` method needs proper try-finally handling to ensure container cleanup always happens.
+The stop method needs proper exception handling using a try-finally pattern so that `container.stop` and `super.stop()` are always invoked regardless of earlier failures.
 
 ## Problem 3: Stream Parsing Bug
 
-In `DockerSession.parseMultiplexedStream()`, the code uses `skipBytes()` to skip header bytes. However, `DataInputStream.skipBytes()` may skip fewer bytes than requested without throwing an exception, which can corrupt the stream parsing.
+The Docker multiplexed stream parser reads container log output from Docker's multiplexed stream format. The format consists of a stream type byte, three padding bytes, a 4-byte payload size, and the payload data.
 
-## Your Task
+The current implementation consumes header bytes using a skip method that may skip fewer bytes than requested without throwing an exception, which can silently corrupt the stream. The fix should use `readFully` to guarantee all requested bytes are consumed.
 
-Fix these issues by:
+## Code Style Requirements
 
-1. Adding a configurable `--docker-stop-grace-period` command-line flag that allows operators to set the container stop timeout (default: 60 seconds)
-
-2. Implementing proper exception safety in `DockerSession.stop()` so that container cleanup always executes
-
-3. Fixing the stream parsing to properly consume header bytes
-
-Files to examine:
-- `java/src/org/openqa/selenium/grid/node/docker/DockerSession.java`
-- `java/src/org/openqa/selenium/grid/node/docker/DockerOptions.java`
-- `java/src/org/openqa/selenium/grid/node/docker/DockerFlags.java`
-- `java/src/org/openqa/selenium/grid/node/docker/DockerSessionFactory.java`
+- Use `java.time.Duration` for timeout values — add the necessary `import java.time.Duration` statement in files that use it
+- Use `Require.nonNull` for parameter validation, following the existing pattern in the codebase
+- Preserve all existing fields in modified classes: `container`, `videoContainer`, and `assetsPath`
+- Follow the naming conventions already established in the Docker options and session classes — look at how `DEFAULT_SERVER_START_TIMEOUT` and `getServerStartTimeout()` are structured for guidance

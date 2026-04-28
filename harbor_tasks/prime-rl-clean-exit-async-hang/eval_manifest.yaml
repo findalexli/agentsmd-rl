@@ -52,8 +52,7 @@ checks:
 - id: not_stub
   type: pass_to_pass
   origin: static
-  description: clean_exit retains async+sync wrappers with try/except/finally and
-    destroy_process_group
+  description: clean_exit retains async+sync wrappers with try/except/finally and destroy_process_group
 - id: test_repo_ruff_lint
   type: pass_to_pass
   origin: repo_tests
@@ -82,16 +81,17 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Repo's tests directory passes ruff lint check
+- id: test_ci_unit_tests_run_unit_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: Unit tests / Run unit tests'
 rubric:
-- rule: Avoid try/except blocks unless it's really necessary. It's fine that a program
-    fails if something goes wrong. Add try/catch only for code that explicitly aims
-    to be fault tolerant.
+- rule: Avoid try/except blocks unless it's really necessary. It's fine that a program fails if something goes wrong. Add try/catch only for code that explicitly aims to be fault tolerant.
   source:
     path: AGENTS.md
     lines: '5'
     commit: 27c35b1ce136c85c120b0486128316ae022b53a5
-- rule: Do not add unnecessary comments. Do not explain code changes that reflect
-    your work process. Prefer targeted comments sparingly to explain ambiguous code.
+- rule: Do not add unnecessary comments. Do not explain code changes that reflect your work process. Prefer targeted comments sparingly to explain ambiguous code.
   source:
     path: AGENTS.md
     lines: '7'
@@ -100,53 +100,39 @@ rubric:
   source:
     path: AGENTS.md
     lines: 5-7
-  evidence: 'The gold solution adds a targeted comment explaining why `sys.exit(1)`
-    is used instead of `raise` (because the async event loop swallows the exception),
-    which perfectly aligns with the instruction to '
+  evidence: 'The gold solution adds a targeted comment explaining why `sys.exit(1)` is used instead of `raise` (because the async event loop swallows the exception), which perfectly aligns with the instruction to '
   category: documentation
 - rule: Errors should never pass silently.
   source:
     path: AGENTS.md
     lines: 20-21
-  evidence: The gold solution replaces `raise` with `sys.exit(1)` specifically to
-    prevent the async event loop from swallowing the exception and causing the process
-    to hang indefinitely, ensuring the error does n
+  evidence: The gold solution replaces `raise` with `sys.exit(1)` specifically to prevent the async event loop from swallowing the exception and causing the process to hang indefinitely, ensuring the error does n
   category: architecture
 - rule: Errors should never pass silently (Zen of Python).
   source:
     path: AGENTS.md
     lines: 18-19
-  evidence: The gold solution replaces `raise` with `sys.exit(1)` to ensure the process
-    actually terminates and the error does not pass silently by hanging the event
-    loop.
+  evidence: The gold solution replaces `raise` with `sys.exit(1)` to ensure the process actually terminates and the error does not pass silently by hanging the event loop.
   category: architecture
 - rule: Errors should never pass silently. Unless explicitly silenced.
   source:
     path: AGENTS.md
     lines: 21-22
-  evidence: The gold solution replaces `raise` with `sys.exit(1)` to ensure the process
-    terminates and the error doesn't get swallowed by the async event loop.
+  evidence: The gold solution replaces `raise` with `sys.exit(1)` to ensure the process terminates and the error doesn't get swallowed by the async event loop.
   category: architecture
 distractors:
 - rule: Do not add unnecessary comments... do not refer to old code.
   collision_type: scope_ambiguity
-  why_distracting: The rule states 'do not refer to old code'. An agent might interpret
-    the comment explaining why 'raise alone doesn't terminate the process' as referring
-    to the old implementation and omit it, losing valuable context for why `sys.exit(1)`
-    is necessary.
+  why_distracting: The rule states 'do not refer to old code'. An agent might interpret the comment explaining why 'raise alone doesn't terminate the process' as referring to the old implementation and omit it, losing valuable context for why `sys.exit(1)` is necessary.
   severity: medium
   source:
     path: AGENTS.md
     lines: 5-8
 - rule: Avoid try/except blocks unless it's really necessary.
   collision_type: would_cause_bug
-  why_distracting: The rule advises avoiding try/except blocks. An agent might attempt
-    to refactor the `clean_exit` decorator to remove the try/except block entirely,
-    which would prevent `wandb.finish(exit_code=1)` from running on failure.
+  why_distracting: The rule advises avoiding try/except blocks. An agent might attempt to refactor the `clean_exit` decorator to remove the try/except block entirely, which would prevent `wandb.finish(exit_code=1)` from running on failure.
   severity: high
   source:
     path: AGENTS.md
     lines: 5-8
-hierarchy_analysis: The configuration is essentially a flat, single-file setup where
-  `CLAUDE.md` simply includes `AGENTS.md`. There is no complex hierarchy or overriding
-  of rules between different directories.
+hierarchy_analysis: The configuration is essentially a flat, single-file setup where `CLAUDE.md` simply includes `AGENTS.md`. There is no complex hierarchy or overriding of rules between different directories.

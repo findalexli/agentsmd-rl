@@ -1,0 +1,123 @@
+version: '2.0'
+source:
+  repo: remix-run/remix
+  pr: 11034
+  base_commit: 69fb670d88798e2abe3064f9c1dff4946aba0c2b
+  merge_commit: a393a0208d870203b1c536709e0bd1f97943d888
+task:
+  kind: code_fix
+checks:
+- id: test_normal_style_processing
+  type: pass_to_pass
+  origin: static
+  description: Basic style processing produces correct CSS on the base commit
+- id: test_undefined_nested_selector_no_throw
+  type: fail_to_pass
+  origin: pr_diff
+  description: processStyle skips undefined nested selector values instead of throwing TypeError
+- id: test_undefined_at_rule_no_throw
+  type: fail_to_pass
+  origin: pr_diff
+  description: processStyle skips undefined at-rule values instead of throwing TypeError
+- id: test_conditional_nested_selector_skip
+  type: fail_to_pass
+  origin: pr_diff
+  description: Undefined nested selectors are absent from generated CSS output
+- id: test_conditional_at_rule_skip
+  type: fail_to_pass
+  origin: pr_diff
+  description: Undefined at-rules are absent from CSS while defined ones remain
+- id: test_mixed_undefined_defined_nested
+  type: fail_to_pass
+  origin: pr_diff
+  description: Mix of defined and undefined nested selectors produces correct output
+- id: test_array_not_treated_as_record
+  type: fail_to_pass
+  origin: pr_diff
+  description: Array values for nested selectors are skipped rather than iterated
+- id: test_null_nested_selector_skip
+  type: fail_to_pass
+  origin: pr_diff
+  description: Null values for nested selectors are silently skipped
+- id: test_ci_format_format
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: format / Format'
+- id: test_ci_test_run_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: test / Run tests'
+- id: test_ci_build_build_packages
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: build / Build packages'
+- id: test_ci_check_lint
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: check / Lint'
+- id: test_ci_check_typecheck
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: check / Typecheck'
+- id: test_ci_check_check_change_files
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: check / Check change files'
+rubric:
+- rule: Only add non-JSDoc comments when the code is doing something surprising or non-obvious
+  source:
+    path: AGENTS.md
+    lines: '33'
+    commit: 69fb670d88798e2abe3064f9c1dff4946aba0c2b
+  evidence: Gold adds brief inline comments explaining that conditional disabling is allowed for nested selectors and at-rules, which is non-obvious behavior
+  category: style
+  verification: llm_judge
+- rule: Use regular function declarations/expressions by default. Only use arrow functions as callbacks (e.g., route handlers, array methods) where preserving lexical this is beneficial or the syntax is more concise
+  source:
+    path: AGENTS.md
+    lines: '22'
+    commit: 69fb670d88798e2abe3064f9c1dff4946aba0c2b
+  evidence: New toRecord helper is a regular function declaration, not an arrow function
+  category: style
+  verification: llm_judge
+- rule: Prefer let for locals, const only at module scope; never use var
+  source:
+    path: AGENTS.md
+    lines: '21'
+    commit: 69fb670d88798e2abe3064f9c1dff4946aba0c2b
+  evidence: Gold uses let for all local variables within functions
+  category: style
+  verification: llm_judge
+- rule: 'No loops or conditionals in test suites: Do not use for loops or conditional statements (if, switch, etc.) to generate test cases within describe() blocks. This breaks the Node.js test runner''s ability to run individual tests via IDE features (like clicking test icons in the sidebar).'
+  source:
+    path: AGENTS.md
+    lines: '36'
+    commit: 69fb670d88798e2abe3064f9c1dff4946aba0c2b
+  evidence: Gold test additions do not use loops or conditionals in describe blocks
+  category: testing
+  verification: llm_judge
+- rule: 'Formatting: Prettier (printWidth: 100, no semicolons, single quotes, spaces not tabs)'
+  source:
+    path: AGENTS.md
+    lines: '26'
+    commit: 69fb670d88798e2abe3064f9c1dff4946aba0c2b
+  evidence: Gold diff follows Prettier formatting conventions for the project
+  category: formatting
+  verification: llm_judge
+distractors:
+- rule: All demo servers should use port 44100 for consistency across the monorepo
+  source:
+    path: AGENTS.md
+    lines: '40'
+    commit: 69fb670d88798e2abe3064f9c1dff4946aba0c2b
+  collision_type: scope_ambiguity
+  why_distracting: This demo server rule is irrelevant to CSS style processing — an agent might waste time ensuring style functions work with demo ports
+  severity: low
+- rule: Web standards-first, runtime-agnostic (Node.js, Bun, Deno, Cloudflare Workers). Use Web Streams API, Uint8Array, Web Crypto API, Blob/File instead of Node.js APIs
+  source:
+    path: AGENTS.md
+    lines: '14'
+    commit: 69fb670d88798e2abe3064f9c1dff4946aba0c2b
+  collision_type: scope_ambiguity
+  why_distracting: This runtime-agnostic philosophy applies to network/IO code, not string-manipulation style processing — an agent might avoid using Node-specific APIs unnecessarily
+  severity: low

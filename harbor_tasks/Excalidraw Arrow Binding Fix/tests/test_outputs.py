@@ -274,3 +274,13 @@ def test_repo_binding_tests_pass():
         capture_output=True, text=True, timeout=120, cwd=REPO,
     )
     assert r.returncode == 0, f"Binding tests failed:\n{r.stderr[-500:]}"
+
+# === CI-mined tests (taskforge.ci_check_miner) ===
+def test_ci_test_install_and_test():
+    """pass_to_pass | CI job 'test' → step 'Install and test'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'yarn install && yarn test:app'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Install and test' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")

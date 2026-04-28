@@ -1,0 +1,82 @@
+version: "2.0"
+
+source:
+  repo: "huggingface/transformers"
+  pr: 45572
+  base_commit: "628c54c23d73cf2bf04816e9168d41deb33b1a2f"
+  merge_commit: "8ca32875a6f3239a77f326ed801b6cb539494362"
+
+task:
+  kind: code_fix
+
+checks:
+  - id: test_route_tokens_masks_with_neg_inf
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Dots1MoE.route_tokens_to_experts uses float('-inf') not 0.0 for masked scores"
+
+  - id: test_import_model
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Dots1MoE can be imported and instantiated"
+
+  - id: test_repo_consistency_check
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Modular and modeling files are syntactically valid"
+
+rubric:
+  - rule: "When a `modular` file is present, generated files should not be edited, as changes will be overwritten by `make fix-repo`! Instead, edit the `modular` file."
+    source:
+      path: "AGENTS.md"
+      lines: "58-59"
+      commit: "628c54c23d73cf2bf04816e9168d41deb33b1a2f"
+    evidence: "Gold removes the Dots1MoE.route_tokens_to_experts override from modular_dots1.py and adds 'pass' to let it inherit from DeepseekV3MoE."
+    category: "architecture"
+    verification: semantic_diff
+
+  - rule: "PRs should be as brief as possible. Bugfix PRs in particular can often be only one or two lines long, and do not need large comments, docstrings or new functions in this case."
+    source:
+      path: ".github/copilot-instructions.md"
+      lines: "14"
+      commit: "628c54c23d73cf2bf04816e9168d41deb33b1a2f"
+    evidence: "Gold diff is minimal: removes the redundant method override (26 lines deleted, 1 added 'pass'), plus a 2-line fix in the generated file."
+    category: "style"
+    verification: llm_judge
+
+  - rule: "After making changes, you should usually run `make fixup` to ensure any copies and modular files are updated, and then test all affected models."
+    source:
+      path: ".github/copilot-instructions.md"
+      lines: "26"
+      commit: "628c54c23d73cf2bf04816e9168d41deb33b1a2f"
+    evidence: "The modular file edit is the canonical fix; running make fixup regenerates the modeling file correctly from it."
+    category: "process"
+    verification: llm_judge
+
+  - rule: "If a model has a modular file, the modeling file should never be edited directly! Instead, changes should be made in the modular file, and then you should run `make fixup` to update the modeling file automatically."
+    source:
+      path: ".github/copilot-instructions.md"
+      lines: "30-31"
+      commit: "628c54c23d73cf2bf04816e9168d41deb33b1a2f"
+    evidence: "Gold edits modular_dots1.py (the modular file) to remove the redundant override, then the modeling file gets updated via the generated code path."
+    category: "architecture"
+    verification: semantic_diff
+
+distractors:
+  - rule: "Do not edit a `# Copied from` block, as it will be reverted by `make fix-repo`. Ideally you should edit the code it's copying from and propagate the change."
+    source:
+      path: "AGENTS.md"
+      lines: "54-55"
+      commit: "628c54c23d73cf2bf04816e9168d41deb33b1a2f"
+    collision_type: scope_ambiguity
+    why_distracting: "The Dots1MoE method is not in a Copied-from block — it's a hand-written override in a modular file. The copy rule applies to generated modeling files, not modular sources."
+    severity: medium
+
+  - rule: "Mechanical cleanups are acceptable but not as first contributions."
+    source:
+      path: "AGENTS.md"
+      lines: "25"
+      commit: "628c54c23d73cf2bf04816e9168d41deb33b1a2f"
+    collision_type: meta_confusion
+    why_distracting: "This rule governs PR submission etiquette, not code correctness. The task is to fix a behavioral bug, not submit a PR."
+    severity: low

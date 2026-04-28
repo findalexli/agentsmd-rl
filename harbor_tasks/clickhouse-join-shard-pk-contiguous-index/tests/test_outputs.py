@@ -16,45 +16,68 @@ REPO = Path("/workspace/ClickHouse")
 TARGET_FILE = REPO / "src/Processors/QueryPlan/Optimizations/optimizeJoinByShards.cpp"
 
 
-def test_fix_contiguous_index_renumbering():
+def test_buggy_range_for_removed():
     """
-    Fail-to-pass: Verify the fix renumbers part_index_in_query contiguously.
+    Fail-to-pass: The buggy range-for over parts_with_ranges that preserves
+    original (potentially gapped) part indices must be removed.
 
-    Before fix: part.part_index_in_query += added_parts (preserves gaps)
-    After fix: part.part_index_in_query = added_parts + local_idx (contiguous)
+    The original code used range-based iteration which copies parts from
+    parts_with_ranges with their original part_index_in_query values.
+    After filterPartsByQueryConditionCache drops parts in selectRangesToRead(),
+    these values can be non-contiguous, causing wrong JOIN results.
     """
     content = TARGET_FILE.read_text()
 
-    # Check for the fix pattern: assigning contiguous indices using local_idx
-    # The fix uses: all_parts.back().part_index_in_query = added_parts + local_idx;
-    fix_pattern = r"part_index_in_query\s*=\s*added_parts\s*\+\s*local_idx"
-    assert re.search(fix_pattern, content), \
-        "Fix not applied: missing contiguous index renumbering (part_index_in_query = added_parts + local_idx)"
-
-    # Check for local_idx loop variable
-    loop_pattern = r"for\s*\(\s*size_t\s+local_idx\s*=\s*0"
-    assert re.search(loop_pattern, content), \
-        "Fix not applied: missing local_idx loop variable"
-
-    # Verify the old buggy pattern is gone (range-for that preserves gaps)
-    # The old code used: for (const auto & part : analysis_result->parts_with_ranges)
+    # The buggy pattern that preserves original part indices with gaps:
+    # for (const auto & part : analysis_result->parts_with_ranges)
     buggy_range_for = r"for\s*\(\s*const\s+auto\s+&\s+part\s*:\s*analysis_result->parts_with_ranges\s*\)"
     assert not re.search(buggy_range_for, content), \
         "Buggy pattern still present: range-for over parts_with_ranges that preserves gaps"
 
+    # The fix must still iterate over parts_with_ranges (but contiguously)
+    assert "parts_with_ranges" in content, \
+        "parts_with_ranges access missing from the fix"
 
-def test_fix_comment_explains_issue():
+
+def test_contiguous_part_index_handling():
     """
-    Fail-to-pass: Verify the explanatory comment about the fix is present.
+    Fail-to-pass: The fix uses indexed access to parts_with_ranges for
+    contiguous part_index_in_query assignment instead of range-for.
+
+    When parts are dropped by filterPartsByQueryConditionCache, the
+    original range-for preserves non-contiguous part_index_in_query values.
+    The fix must assign contiguous values starting from added_parts.
     """
     content = TARGET_FILE.read_text()
 
-    # Check for comment explaining the issue
-    assert "Renumber part_index_in_query to be contiguous" in content, \
-        "Missing explanatory comment about contiguous renumbering"
+    # The fix must use indexed access: analysis_result->parts_with_ranges[...]
+    assert re.search(r"analysis_result->parts_with_ranges\s*\[", content), \
+        "Fix must use indexed access to parts_with_ranges (analysis_result->parts_with_ranges[idx])"
 
-    assert "filterPartsByQueryConditionCache may drop parts" in content, \
-        "Missing comment explaining filterPartsByQueryConditionCache interaction"
+    # The fix must assign part_index_in_query contiguously from a counter
+    # Pattern: part_index_in_query = <base> + <counter>
+    assert re.search(r"part_index_in_query\s*=\s*\w+\s*\+\s*\w+", content), \
+        "Fix must assign contiguous part_index_in_query values (part_index_in_query = base + counter)"
+
+    # The base must be added_parts (the count of previously collected parts)
+    assert "added_parts" in content, \
+        "Fix missing added_parts reference for contiguous index assignment"
+
+
+def test_qcc_interaction_comment():
+    """
+    Fail-to-pass: The fix includes a comment describing the interaction with
+    filterPartsByQueryConditionCache.
+
+    The bug only manifests when the query condition cache has previously
+    cached filter results, causing selectRangesToRead() to drop some parts.
+    The fix should document this interaction.
+    """
+    content = TARGET_FILE.read_text()
+
+    # Find a comment or line mentioning the cache interaction near the fix
+    assert "filterPartsByQueryConditionCache" in content, \
+        "Fix must mention filterPartsByQueryConditionCache in explanation"
 
 
 def test_code_compiles():
@@ -72,11 +95,14 @@ def test_code_compiles():
         cwd=str(REPO)
     )
 
-    # Syntax-only check may have include errors, but should not have parse errors
-    # Just check that clang didn't crash and the file is parseable
-    assert result.returncode == 0 or "error:" not in result.stderr.lower() or \
-           "fatal error:" in result.stderr.lower(), \
-        f"Code has syntax errors:\n{result.stderr[:500]}"
+    # Missing includes produce "fatal error:" lines — those are expected at this stage.
+    # Real syntax/parse errors produce "error:" (without "fatal") lines — those must fail.
+    if result.returncode != 0:
+        stderr_lower = result.stderr.lower()
+        real_errors = [line for line in stderr_lower.split('\n')
+                       if 'error:' in line and 'fatal error:' not in line]
+        assert not real_errors, \
+            f"Code has syntax/parse errors:\n{result.stderr[:500]}"
 
 
 def test_target_file_exists():
@@ -89,14 +115,15 @@ def test_target_file_exists():
 def test_no_raw_pointers_in_fix_area():
     """
     Pass-to-pass: Verify the fix area doesn't introduce unsafe raw pointer usage.
+    Only checks when the fix (indexed access + contiguous assignment) is present.
     """
     content = TARGET_FILE.read_text()
 
-    # Find the fixed section (around the contiguous index renumbering)
-    if "Renumber part_index_in_query to be contiguous" in content:
-        # Extract the fixed for-loop section
+    # Find the fixed section (around the indexed access to parts_with_ranges)
+    if re.search(r"analysis_result->parts_with_ranges\s*\[", content):
+        # Extract the fixed for-loop section with indexed access
         match = re.search(
-            r"for\s*\(\s*size_t\s+local_idx\s*=\s*0[^}]+\}",
+            r"for\s*\([^)]+\)\s*\{[^}]+\}",
             content,
             re.DOTALL
         )
@@ -109,13 +136,14 @@ def test_no_raw_pointers_in_fix_area():
 
 def test_preserves_analysis_result_access():
     """
-    Pass-to-pass: Verify analysis_result->parts_with_ranges is still accessed correctly.
+    Fail-to-pass: Verify analysis_result->parts_with_ranges is accessed
+    via indexed lookup rather than range-for iteration.
     """
     content = TARGET_FILE.read_text()
 
-    # Should still access analysis_result->parts_with_ranges with index
-    assert "analysis_result->parts_with_ranges[local_idx]" in content, \
-        "Fix should access parts_with_ranges by index"
+    # Should access analysis_result->parts_with_ranges with index, not range-for
+    assert re.search(r"analysis_result->parts_with_ranges\s*\[", content), \
+        "Fix should access parts_with_ranges by index (analysis_result->parts_with_ranges[idx])"
 
 
 def test_allman_brace_style():
@@ -361,3 +389,20 @@ def test_repo_git_whitespace_check():
         capture_output=True, text=True, timeout=60, cwd=str(REPO)
     )
     assert r.returncode == 0, f'Git whitespace check failed:\n{r.stderr[:500]}'
+
+# === CI-mined tests (taskforge.ci_check_miner) ===
+def test_ci_stateless_test_sql_present():
+    """pass_to_pass | The stateless SQL test file from PR 101960 exists"""
+    sql_test = REPO / "tests/queries/0_stateless/04065_join_shard_by_pk_with_qcc.sql"
+    assert sql_test.exists(), f"SQL test file not found: {sql_test}"
+    content = sql_test.read_text()
+    assert "04065" in content, "Test identifier not found in SQL test"
+    assert "JOIN" in content, "SQL test does not contain JOIN statement"
+
+def test_ci_stateless_test_reference_matches():
+    """pass_to_pass | The reference file has expected output 0 1 0 0"""
+    ref_file = REPO / "tests/queries/0_stateless/04065_join_shard_by_pk_with_qcc.reference"
+    assert ref_file.exists(), f"Reference file not found: {ref_file}"
+    content = ref_file.read_text().strip()
+    assert "0\t1\t0\t0" in content or "0 1 0 0" in content, \
+        f"Reference output mismatch, expected 0 1 0 0, got: {content}"

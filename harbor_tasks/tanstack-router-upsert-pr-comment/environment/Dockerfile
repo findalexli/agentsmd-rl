@@ -9,7 +9,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 # Install pytest
-RUN pip3 install pytest --break-system-packages
+RUN pip3 install pytest pytest-json-ctrf --break-system-packages
 
 # Create logs directory
 RUN mkdir -p /logs/verifier

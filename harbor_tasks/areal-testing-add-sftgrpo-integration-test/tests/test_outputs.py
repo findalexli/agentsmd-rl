@@ -458,3 +458,8 @@ print("PASS")
     )
     assert r.returncode == 0, f"Import check failed:\n{r.stderr}\n{r.stdout}"
     assert "PASS" in r.stdout
+
+# CI-mined and PR-added pytest-runner tests removed:
+# - test_ci_build_build_the_book: requires Node.js + jupyter-book + heavy docs build
+# - test_pr_added_test_grpo/sft: require full AReaL deps (uvloop, hydra-core, torch)
+#   just to collect tests; the 7 core f2p AST-based tests comprehensively cover the PR diff.

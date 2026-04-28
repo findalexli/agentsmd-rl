@@ -16,8 +16,7 @@ checks:
 - id: auto_accept_toggle_in_settings
   type: fail_to_pass
   origin: pr_diff
-  description: settings-general.tsx must have settings-auto-accept-permissions data-action
-    with Switch
+  description: settings-general.tsx must have settings-auto-accept-permissions data-action with Switch
 - id: settings_uses_permission_context
   type: fail_to_pass
   origin: pr_diff
@@ -25,8 +24,7 @@ checks:
 - id: settings_toggle_handles_session_and_directory
   type: fail_to_pass
   origin: pr_diff
-  description: settings-general.tsx must handle both session-level and directory-level
-    permission toggling
+  description: settings-general.tsx must handle both session-level and directory-level permission toggling
 - id: prompt_toggle_accept_removed
   type: fail_to_pass
   origin: pr_diff
@@ -75,6 +73,30 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Full unit test suite passes
+- id: test_ci_build_tauri_prepare
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: build-tauri / Prepare'
+- id: test_ci_build_tauri_show_tauri_cli_version
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: build-tauri / Show tauri-cli version'
+- id: test_ci_build_electron_build
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: build-electron / Build'
+- id: test_ci_unit_run_unit_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: unit / Run unit tests'
+- id: test_ci_e2e_run_app_e2e_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: e2e / Run app e2e tests'
+- id: test_ci_typecheck_run_typecheck
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: typecheck / Run typecheck'
 rubric:
 - rule: Keep things in one function unless composable or reusable
   source:
@@ -98,88 +120,61 @@ rubric:
     commit: c2d2ca352252a922354c89bfbdb135cf1abfe1b6
 - rule: Modified files are correctly formatted with prettier
 - rule: Full unit test suite passes via bun test
-- rule: Use provided action helpers like `openSettings(page)` and `closeDialog(page,
-    dialog)` for common UI interactions in tests.
+- rule: Use provided action helpers like `openSettings(page)` and `closeDialog(page, dialog)` for common UI interactions in tests.
   source:
     path: packages/app/e2e/AGENTS.md
     lines: 43-46
-  evidence: The gold solution imports `openSettings` and `closeDialog` from `../actions`
-    and uses them to open the settings dialog, interact with the toggle, and close
-    the dialog, rather than writing raw Playwrig
+  evidence: The gold solution imports `openSettings` and `closeDialog` from `../actions` and uses them to open the settings dialog, interact with the toggle, and close the dialog, rather than writing raw Playwrig
   category: testing
 - rule: Use single word names by default for new locals, params, and helper functions.
   source:
     path: AGENTS.md
     lines: 24-30
-  evidence: The gold solution introduces new local variables using single-word names
-    such as `dialog`, `toggle`, `input`, and `checked`.
+  evidence: The gold solution introduces new local variables using single-word names such as `dialog`, `toggle`, `input`, and `checked`.
   category: naming
-- rule: 'Helper Functions: Actions (`actions.ts`): `openSettings(page)`, `closeDialog(page,
-    dialog)`'
+- rule: 'Helper Functions: Actions (`actions.ts`): `openSettings(page)`, `closeDialog(page, dialog)`'
   source:
     path: packages/app/e2e/AGENTS.md
     lines: 46-50
-  evidence: The gold solution imports and uses `openSettings` and `closeDialog` from
-    `../actions` to interact with the settings dialog instead of manually clicking
-    the settings button or writing raw Playwright lo
+  evidence: The gold solution imports and uses `openSettings` and `closeDialog` from `../actions` to interact with the settings dialog instead of manually clicking the settings button or writing raw Playwright lo
   category: testing
-- rule: Use helper functions from `actions.ts` like `openSettings(page)` and `closeDialog(page,
-    dialog)` for dialog interactions.
+- rule: Use helper functions from `actions.ts` like `openSettings(page)` and `closeDialog(page, dialog)` for dialog interactions.
   source:
     path: packages/app/e2e/AGENTS.md
     lines: 48-49
-  evidence: The gold solution imports and uses `openSettings(page)` and `closeDialog(page,
-    dialog)` in both e2e test files instead of manually writing locators to click
-    the settings icon or close button.
+  evidence: The gold solution imports and uses `openSettings(page)` and `closeDialog(page, dialog)` in both e2e test files instead of manually writing locators to click the settings icon or close button.
   category: testing
 - rule: Prefer `const` over `let`. Use ternaries or early returns instead of reassignment.
   source:
     path: AGENTS.md
     lines: 62-63
-  evidence: The gold solution uses `const dialog`, `const toggle`, `const input`,
-    and `const checked` in the e2e tests, avoiding `let` reassignments entirely.
+  evidence: The gold solution uses `const dialog`, `const toggle`, `const input`, and `const checked` in the e2e tests, avoiding `let` reassignments entirely.
   category: style
-- rule: Use predefined action helpers like `openSettings` and `closeDialog` for interacting
-    with common UI elements in tests.
+- rule: Use predefined action helpers like `openSettings` and `closeDialog` for interacting with common UI elements in tests.
   source:
     path: packages/app/e2e/AGENTS.md
     lines: 42-44
-  evidence: The gold solution imports and uses `openSettings(page)` and `closeDialog(page,
-    dialog)` in both `prompt-shell.spec.ts` and `session-composer-dock.spec.ts` instead
-    of manually writing Playwright locato
+  evidence: The gold solution imports and uses `openSettings(page)` and `closeDialog(page, dialog)` in both `prompt-shell.spec.ts` and `session-composer-dock.spec.ts` instead of manually writing Playwright locato
   category: testing
 - rule: Prefer single word names for variables and functions.
   source:
     path: AGENTS.md
     lines: 21-31
-  evidence: The gold solution introduces new local variables in the tests using short,
-    single-word names like `dialog`, `toggle`, and `input`.
+  evidence: The gold solution introduces new local variables in the tests using short, single-word names like `dialog`, `toggle`, and `input`.
   category: naming
 distractors:
 - rule: Use `agent-browser` for web automation.
   collision_type: meta_confusion
-  why_distracting: The rule instructs the use of `agent-browser` for 'web automation'.
-    An agent might get confused between its own tool usage (using agent-browser to
-    navigate the web during the task) and the objective of writing Playwright e2e
-    tests (which is also web automation), potentially trying to insert agent-browser
-    commands into the test files.
+  why_distracting: The rule instructs the use of `agent-browser` for 'web automation'. An agent might get confused between its own tool usage (using agent-browser to navigate the web during the task) and the objective of writing Playwright e2e tests (which is also web automation), potentially trying to insert agent-browser commands into the test files.
   severity: high
   source:
     path: packages/app/AGENTS.md
     lines: 16-23
 - rule: Always prefer `createStore` over multiple `createSignal` calls in SolidJS.
   collision_type: architecture_boundary
-  why_distracting: The rule mandates preferring `createStore` over `createSignal`.
-    An agent moving the toggle state to the settings page might attempt to refactor
-    the permission state management to use `createStore`, but the instructions explicitly
-    state to 'Read the current auto-accept state via the permission context'.
+  why_distracting: The rule mandates preferring `createStore` over `createSignal`. An agent moving the toggle state to the settings page might attempt to refactor the permission state management to use `createStore`, but the instructions explicitly state to 'Read the current auto-accept state via the permission context'.
   severity: medium
   source:
     path: packages/app/AGENTS.md
     lines: 10-11
-hierarchy_analysis: The agent must navigate a 3-level deep hierarchy. The root `AGENTS.md`
-  provides general TypeScript and naming conventions. The `packages/app/AGENTS.md`
-  provides SolidJS rules and a distracting meta-instruction about web automation.
-  Crucially, the agent must discover `packages/app/e2e/AGENTS.md` to find the specific
-  Playwright action helpers (`openSettings`, `closeDialog`) required to cleanly update
-  the e2e tests without hardcoding DOM interactions.
+hierarchy_analysis: The agent must navigate a 3-level deep hierarchy. The root `AGENTS.md` provides general TypeScript and naming conventions. The `packages/app/AGENTS.md` provides SolidJS rules and a distracting meta-instruction about web automation. Crucially, the agent must discover `packages/app/e2e/AGENTS.md` to find the specific Playwright action helpers (`openSettings`, `closeDialog`) required to cleanly update the e2e tests without hardcoding DOM interactions.

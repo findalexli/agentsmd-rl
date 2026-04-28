@@ -5,15 +5,10 @@ source:
   base_commit: 605d93d732c5ab752ae314ac47fdd6ad3abc11de
   merge_commit: fead0d342f112d51d7c6ba749a5da768c6e73269
 checks:
-- id: syntax_check
-  type: pass_to_pass
-  origin: static
-  description: Modified TypeScript files have balanced braces
 - id: command_names_renamed
   type: fail_to_pass
   origin: pr_diff
-  description: 'Session commands renamed: session-list -> list, session-close-all
-    -> close-all, session-kill-all -> kill-all'
+  description: 'Session commands renamed: session-list -> list, session-close-all -> close-all, session-kill-all -> kill-all'
 - id: category_renamed_to_browsers
   type: fail_to_pass
   origin: pr_diff
@@ -117,47 +112,32 @@ rubric:
     path: .claude/skills/playwright-mcp-dev/SKILL.md
     lines: 28-29
     commit: 605d93d732c5ab752ae314ac47fdd6ad3abc11de
-- rule: User-facing messages say Browser instead of Session in program.ts stop() and
-    related methods
+- rule: User-facing messages say Browser instead of Session in program.ts stop() and related methods
   source:
     path: packages/playwright/src/mcp/terminal/program.ts
     lines: 90-400
     commit: 605d93d732c5ab752ae314ac47fdd6ad3abc11de
-  reference: console.log(`Browser '${this.name}' is not open.`); console.log(`Browser
-    '${this.name}' closed.`);
+  reference: console.log(`Browser '${this.name}' is not open.`); console.log(`Browser '${this.name}' closed.`);
 - rule: Status markers use [open]/[closed] instead of [running]/[stopped]
   source:
     path: packages/playwright/src/mcp/terminal/program.ts
     lines: 740-760
     commit: 605d93d732c5ab752ae314ac47fdd6ad3abc11de
   reference: 'const statusMarker = canConnect ? ''[open]'' : ''[closed]'';`'
-- rule: When modifying CLI commands, update the category in command.ts and helpGenerator.ts,
-    register the command in commands.ts, and update the SKILL.md docs and references.
+- rule: When modifying CLI commands, update the category in command.ts and helpGenerator.ts, register the command in commands.ts, and update the SKILL.md docs and references.
   source:
     path: .claude/skills/playwright-mcp-dev/SKILL.md
     lines: 25-30
-  source_text: "- Add new CLI category for tool if needed:\n  - Add Category in `packages/playwright/src/mcp/terminal/command.ts`\n\
-    \  - Update doc generator `packages/playwright/src/mcp/terminal/helpGenerator.ts`\n\
-    - Register command in `packages/playwright/src/mcp/terminal/commands.ts`\n- Update\
-    \ skill file at `packages/playwright/src/skill/SKILL.md` and references if necessary\n\
-    \  in `packages/playwright/src/skill/references/`"
-  evidence: The diff renames the 'session' category to 'browsers' in command.ts, updates
-    categories in helpGenerator.ts, updates command registrations in commands.ts,
-    and modifies both packages/playwright/src/skill/SKILL.md and packages/playwright/src/skill/references/session-management.md
-    to match the new CLI semantics.
+  source_text: "- Add new CLI category for tool if needed:\n  - Add Category in `packages/playwright/src/mcp/terminal/command.ts`\n  - Update doc generator `packages/playwright/src/mcp/terminal/helpGenerator.ts`\n- Register command in `packages/playwright/src/mcp/terminal/commands.ts`\n- Update skill file at `packages/playwright/src/skill/SKILL.md` and references if necessary\n  in `packages/playwright/src/skill/references/`"
+  evidence: The diff renames the 'session' category to 'browsers' in command.ts, updates categories in helpGenerator.ts, updates command registrations in commands.ts, and modifies both packages/playwright/src/skill/SKILL.md and packages/playwright/src/skill/references/session-management.md to match the new CLI semantics.
   category: Architecture / File Locations
   verification: llm_judge
-- rule: Update the SKILL.md documentation file whenever adding or modifying commands
-    or tools.
+- rule: Update the SKILL.md documentation file whenever adding or modifying commands or tools.
   source:
     path: .claude/skills/playwright-mcp-dev/SKILL.md
     lines: 45-45
-  source_text: The skill file is located at `packages/playwright/src/skill/SKILL.md`.
-    It contains documentation for all available CLI commands and MCP tools. Update
-    it whenever you add new commands or tools.
-  evidence: The gold diff correctly updates packages/playwright/src/skill/SKILL.md
-    to reflect the renamed commands (list, close-all, kill-all) and the new '-b' flag
-    instead of '--session'.
+  source_text: The skill file is located at `packages/playwright/src/skill/SKILL.md`. It contains documentation for all available CLI commands and MCP tools. Update it whenever you add new commands or tools.
+  evidence: The gold diff correctly updates packages/playwright/src/skill/SKILL.md to reflect the renamed commands (list, close-all, kill-all) and the new '-b' flag instead of '--session'.
   category: Documentation / Conventions
   verification: llm_judge
 config_edits:
@@ -202,16 +182,11 @@ distractors:
   source:
     path: .claude/skills/playwright-mcp-dev/SKILL.md
     lines: 24-24
-  source_text: '- CLI commands are based on MCP tools. Implement the corresponding
-    MCP tool as per `Adding MCP Tools` section above, if needed.'
+  source_text: '- CLI commands are based on MCP tools. Implement the corresponding MCP tool as per `Adding MCP Tools` section above, if needed.'
   collision_type: architecture_boundary
-  why_distracting: The diff modifies CLI lifecycle commands for managing browser sessions.
-    An agent might see this rule and assume it needs to build corresponding MCP tools
-    for these commands. However, these specific daemon management commands are CLI-only
-    operations, and creating MCP tools for them would violate architectural boundaries.
+  why_distracting: The diff modifies CLI lifecycle commands for managing browser sessions. An agent might see this rule and assume it needs to build corresponding MCP tools for these commands. However, these specific daemon management commands are CLI-only operations, and creating MCP tools for them would violate architectural boundaries.
   severity: medium
-- rule: Create new tools in browser/tools/, register them in tools.ts, and add ToolCapability
-    in config.d.ts.
+- rule: Create new tools in browser/tools/, register them in tools.ts, and add ToolCapability in config.d.ts.
   source:
     path: .claude/skills/playwright-mcp-dev/SKILL.md
     lines: 9-11
@@ -221,8 +196,5 @@ distractors:
 
     - Add ToolCapability in `packages/playwright/src/mcp/config.d.ts`'
   collision_type: scope_ambiguity
-  why_distracting: Because the block 'Adding MCP Tools' is referenced in 'Adding commands',
-    an agent modifying CLI commands might wrongly think it should also interact with
-    the MCP tool registry files. This change is entirely contained within the CLI
-    terminal layer and does not involve MCP tool capabilities.
+  why_distracting: Because the block 'Adding MCP Tools' is referenced in 'Adding commands', an agent modifying CLI commands might wrongly think it should also interact with the MCP tool registry files. This change is entirely contained within the CLI terminal layer and does not involve MCP tool capabilities.
   severity: high

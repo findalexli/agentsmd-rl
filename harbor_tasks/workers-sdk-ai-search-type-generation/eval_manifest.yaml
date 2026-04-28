@@ -48,8 +48,7 @@ checks:
 - id: test_core_bindings_ai_search_namespace
   type: fail_to_pass
   origin: pr_diff
-  description: collectCoreBindings generates AiSearchNamespace type for ai_search_namespaces
-    bindings
+  description: collectCoreBindings generates AiSearchNamespace type for ai_search_namespaces bindings
 - id: test_core_bindings_ai_search_instance
   type: fail_to_pass
   origin: pr_diff
@@ -61,16 +60,17 @@ checks:
 - id: test_per_env_ai_search_instance
   type: fail_to_pass
   origin: pr_diff
-  description: collectCoreBindingsPerEnvironment generates AiSearchInstance for ai_search
-    bindings
+  description: collectCoreBindingsPerEnvironment generates AiSearchInstance for ai_search bindings
 - id: test_existing_bindings_preserved
   type: pass_to_pass
   origin: static
-  description: Existing binding type mappings (vpc_services -> Fetcher, etc.) remain
-    intact
+  description: Existing binding type mappings (vpc_services -> Fetcher, etc.) remain intact
+- id: test_ci_build_build
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: build / Build'
 rubric:
-- rule: No "any" type used for new AI Search binding type definitions — use specific
-    type names like AiSearchNamespace and AiSearchInstance
+- rule: No "any" type used for new AI Search binding type definitions — use specific type names like AiSearchNamespace and AiSearchInstance
   source:
     path: AGENTS.md
     lines: '92'
@@ -84,57 +84,44 @@ rubric:
   source:
     path: packages/wrangler/AGENTS.md
     lines: 38-38
-  evidence: The gold solution modifies the existing `packages/wrangler/src/__tests__/type-generation.test.ts`
-    file to update the expected types, adhering to the `.test.ts` naming convention.
+  evidence: The gold solution modifies the existing `packages/wrangler/src/__tests__/type-generation.test.ts` file to update the expected types, adhering to the `.test.ts` naming convention.
   category: testing
 - rule: Add/modify a CLI command in `packages/wrangler/src/`
   source:
     path: AGENTS.md
     lines: 54-55
-  evidence: The gold solution implements the type generation logic for the CLI command
-    within `packages/wrangler/src/type-generation/index.ts`.
+  evidence: The gold solution implements the type generation logic for the CLI command within `packages/wrangler/src/type-generation/index.ts`.
   category: architecture
 - rule: Add/modify a CLI command -> `packages/wrangler/src/`
   source:
     path: AGENTS.md
     lines: 54-55
-  evidence: The gold solution correctly targets `packages/wrangler/src/type-generation/index.ts`
-    for modifying the CLI's type generation behavior, aligning with the architectural
-    guidance.
+  evidence: The gold solution correctly targets `packages/wrangler/src/type-generation/index.ts` for modifying the CLI's type generation behavior, aligning with the architectural guidance.
   category: architecture
 - rule: Add unit-test coverage for package changes using Vitest.
   source:
     path: AGENTS.md
     lines: 119-119
   source_text: '- Unit tests with Vitest for all packages'
-  evidence: The diff updates `packages/wrangler/src/__tests__/type-generation.test.ts`
-    and adds the expected `AiSearchNamespace` and `AiSearchInstance` entries to multiple
-    inline snapshots at patch lines 46-72.
+  evidence: The diff updates `packages/wrangler/src/__tests__/type-generation.test.ts` and adds the expected `AiSearchNamespace` and `AiSearchInstance` entries to multiple inline snapshots at patch lines 46-72.
   category: testing
   verification: llm_judge
 - rule: Use a `minor` changeset for new features.
   source:
     path: AGENTS.md
     lines: 172-172
-  source_text: '- `patch`: bug fixes; `minor`: new features, deprecations, experimental
-    breaking changes; `major`: stable breaking changes only'
-  evidence: 'The new changeset declares `"wrangler": minor` at patch line 8, and the
-    description at lines 11-13 presents this as new AI Search type-generation support
-    rather than a bug fix.'
+  source_text: '- `patch`: bug fixes; `minor`: new features, deprecations, experimental breaking changes; `major`: stable breaking changes only'
+  evidence: 'The new changeset declares `"wrangler": minor` at patch line 8, and the description at lines 11-13 presents this as new AI Search type-generation support rather than a bug fix.'
   category: changeset
   verification: llm_judge
-- rule: Write changeset descriptions as a conventional commit or a capitalized direct
-    description.
+- rule: Write changeset descriptions as a conventional commit or a capitalized direct description.
   source:
     path: AGENTS.md
     lines: 166-167
-  source_text: 'The changeset descriptions can either use conventional commit prefixes
-    (e.g., "fix: remove unused option") or
+  source_text: 'The changeset descriptions can either use conventional commit prefixes (e.g., "fix: remove unused option") or
 
-    start with a capital letter and describe the change directly (e.g., "Remove unused
-    option" not").'
-  evidence: The changeset title on patch line 11 is `Add type generation for AI Search
-    bindings`, which starts with a capital letter and directly describes the change.
+    start with a capital letter and describe the change directly (e.g., "Remove unused option" not").'
+  evidence: The changeset title on patch line 11 is `Add type generation for AI Search bindings`, which starts with a capital letter and directly describes the change.
   category: changeset
   verification: llm_judge
 - rule: Use `wrangler.json`/JSONC examples in changesets, not `wrangler.toml`.
@@ -142,40 +129,30 @@ rubric:
     path: AGENTS.md
     lines: 174-174
   source_text: '- Config examples must use `wrangler.json` (JSONC), not `wrangler.toml`'
-  evidence: The new example block is explicitly labeled `// wrangler.json` and uses
-    JSON-style object syntax at patch lines 15-24.
+  evidence: The new example block is explicitly labeled `// wrangler.json` and uses JSON-style object syntax at patch lines 15-24.
   category: config_pattern
   verification: llm_judge
 - rule: Wrangler tests should use `.test.ts` filenames, not `.spec.ts`.
   source:
     path: packages/wrangler/AGENTS.md
     lines: 49-50
-  source_text: '- Never import `expect` from vitest — use test context `({ expect
-    }) => {}`
+  source_text: '- Never import `expect` from vitest — use test context `({ expect }) => {}`
 
     - Test files use `.test.ts` (not `.spec.ts`)'
-  evidence: The test updates are made in `packages/wrangler/src/__tests__/type-generation.test.ts`
-    (patch line 34), which follows Wrangler's `.test.ts` convention.
+  evidence: The test updates are made in `packages/wrangler/src/__tests__/type-generation.test.ts` (patch line 34), which follows Wrangler's `.test.ts` convention.
   category: naming
   verification: llm_judge
 distractors:
 - rule: Shared config types/validation -> `packages/workers-utils/src/config/`
   collision_type: scope_ambiguity
-  why_distracting: The monorepo guide points to `packages/workers-utils/src/config/validation.ts`
-    for shared config types and validation. However, the task instruction explicitly
-    states that the config parser and validator already support these binding types.
-    An agent might be distracted by the guide and attempt to modify the validation
-    logic, wasting effort and expanding the PR scope unnecessarily.
+  why_distracting: The monorepo guide points to `packages/workers-utils/src/config/validation.ts` for shared config types and validation. However, the task instruction explicitly states that the config parser and validator already support these binding types. An agent might be distracted by the guide and attempt to modify the validation logic, wasting effort and expanding the PR scope unnecessarily.
   severity: medium
   source:
     path: AGENTS.md
     lines: 58-59
 - rule: Never import `expect` from vitest — use test context `({ expect }) => {}`
   collision_type: scope_ambiguity
-  why_distracting: The agent might attempt to refactor the existing tests in `type-generation.test.ts`
-    to use the test context `({ expect }) => {}` instead of a global import. Since
-    the PR only requires updating the expected string output in existing tests, this
-    would cause unnecessary churn and distract from the core task.
+  why_distracting: The agent might attempt to refactor the existing tests in `type-generation.test.ts` to use the test context `({ expect }) => {}` instead of a global import. Since the PR only requires updating the expected string output in existing tests, this would cause unnecessary churn and distract from the core task.
   severity: low
   source:
     path: packages/wrangler/AGENTS.md
@@ -186,10 +163,7 @@ distractors:
     lines: 39-39
   source_text: '- Test files use `.spec.ts` (NOT `.test.ts`)'
   collision_type: scope_ambiguity
-  why_distracting: This is a monorepo-wide config file and it discusses test naming,
-    so it looks relevant when touching tests. But the gold diff is in `packages/wrangler`,
-    whose package guide uses `.test.ts`; following Miniflare's naming rule here would
-    push the change toward the wrong package convention.
+  why_distracting: This is a monorepo-wide config file and it discusses test naming, so it looks relevant when touching tests. But the gold diff is in `packages/wrangler`, whose package guide uses `.test.ts`; following Miniflare's naming rule here would push the change toward the wrong package convention.
   severity: medium
 - rule: Do not treat Miniflare's relaxed lint rules as if they applied to Wrangler.
   source:
@@ -198,47 +172,28 @@ distractors:
   source_text: '## Lint Status (Transitional)
 
 
-    - Many shared ESLint rules temporarily DISABLED: `curly`, `no-explicit-any`, `consistent-type-imports`,
-    `no-shadow`, `no-floating-promises`, others
+    - Many shared ESLint rules temporarily DISABLED: `curly`, `no-explicit-any`, `consistent-type-imports`, `no-shadow`, `no-floating-promises`, others
 
-    - Comment in config: "temporarily enabled while we transition Miniflare to use
-    the standard workers-sdk eslint config"
+    - Comment in config: "temporarily enabled while we transition Miniflare to use the standard workers-sdk eslint config"
 
     - `no-console: error` is on, except for `src/workers/` and `scripts/`'
   collision_type: architecture_boundary
-  why_distracting: An agent reading across package guides could incorrectly conclude
-    that braces and other shared lint rules are optional in this repo. The gold diff
-    is Wrangler code, not Miniflare, so those transitional exceptions do not apply.
+  why_distracting: An agent reading across package guides could incorrectly conclude that braces and other shared lint rules are optional in this repo. The gold diff is Wrangler code, not Miniflare, so those transitional exceptions do not apply.
   severity: medium
-- rule: Do not move this change into shared config validation just because the feature
-    is config-backed.
+- rule: Do not move this change into shared config validation just because the feature is config-backed.
   source:
     path: packages/workers-utils/AGENTS.md
     lines: 9-10
-  source_text: "- `src/config/` — Configuration types, validation, normalization\n\
-    \  - `validation.ts` — The config normalizer (large file). Central to all wrangler\
-    \ config processing."
+  source_text: "- `src/config/` — Configuration types, validation, normalization\n  - `validation.ts` — The config normalizer (large file). Central to all wrangler config processing."
   collision_type: architecture_boundary
-  why_distracting: AI Search bindings come from Wrangler config, so `workers-utils/src/config/validation.ts`
-    can look like the obvious place to edit. But the gold diff is only adding type-generation
-    support in Wrangler; changing central config normalization would broaden the scope
-    and risk unrelated config-processing regressions.
+  why_distracting: AI Search bindings come from Wrangler config, so `workers-utils/src/config/validation.ts` can look like the obvious place to edit. But the gold diff is only adding type-generation support in Wrangler; changing central config normalization would broaden the scope and risk unrelated config-processing regressions.
   severity: high
-- rule: Do not change Wrangler's CLI tree/entrypoint for a type-generation implementation
-    that does not alter command registration.
+- rule: Do not change Wrangler's CLI tree/entrypoint for a type-generation implementation that does not alter command registration.
   source:
     path: AGENTS.md
     lines: 70-70
-  source_text: '| Add/modify a CLI command                       | `packages/wrangler/src/`                       |
-    Commands registered in `src/index.ts` (2k+ line yargs tree)      |'
+  source_text: '| Add/modify a CLI command                       | `packages/wrangler/src/`                       | Commands registered in `src/index.ts` (2k+ line yargs tree)      |'
   collision_type: architecture_boundary
-  why_distracting: Because the user-facing command is `wrangler types`, an agent might
-    assume the implementation belongs in the CLI command tree. The gold diff correctly
-    avoids that and changes `src/type-generation/index.ts` instead, because the CLI
-    surface is unchanged and only the underlying type-generation behavior is extended.
+  why_distracting: Because the user-facing command is `wrangler types`, an agent might assume the implementation belongs in the CLI command tree. The gold diff correctly avoids that and changes `src/type-generation/index.ts` instead, because the CLI surface is unchanged and only the underlying type-generation behavior is extended.
   severity: medium
-hierarchy_analysis: The root `AGENTS.md` provides monorepo-wide architectural pointers,
-  while `packages/wrangler/AGENTS.md` provides Wrangler-specific constraints. The
-  agent must synthesize the root guide's pointer to `packages/wrangler/src/` for CLI
-  commands with the task's explicit constraint that config validation (which the root
-  guide says lives in `workers-utils`) is already complete.
+hierarchy_analysis: The root `AGENTS.md` provides monorepo-wide architectural pointers, while `packages/wrangler/AGENTS.md` provides Wrangler-specific constraints. The agent must synthesize the root guide's pointer to `packages/wrangler/src/` for CLI commands with the task's explicit constraint that config validation (which the root guide says lives in `workers-utils`) is already complete.

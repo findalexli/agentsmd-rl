@@ -130,3 +130,7 @@ def test_git_diff_only_touches_target_skill():
         if f != ".agents/skills/changelog-collect/SKILL.md"
     ]
     assert not unexpected, f"Unexpected files modified: {unexpected}"
+
+# === CI-mined tests (taskforge.ci_check_miner) ===
+# Dropped: test_ci_build_project_run_script (requires yarn, node, network)
+# Dropped: test_ci_test_image_generate_image_snapshots (requires puppeteer, Chromium)

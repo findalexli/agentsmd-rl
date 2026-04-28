@@ -28,22 +28,16 @@ The same silent exit happens for various other scanner failure modes.
 
 1. **Error visibility**: Every security scanner error path must print a descriptive error message to stderr before exiting. Currently some error variants produce output while others silently exit. The implementation must ensure all error paths are covered.
 
-2. **Error printing function**: Error messages must use an appropriate error output function from the `Output` module. Error printing for security scanner failures should be centralized in `install_with_manager.zig`.
+2. **Error printing function**: Error messages must use an appropriate error output function from the `Output` module (such as `Output.errGeneric`). Error printing for security scanner failures should be centralized in the install manager where errors are caught, rather than scattered across multiple files.
 
 3. **Error propagation**: When the security scanner returns an error result, the original error information should be preserved and propagated rather than being collapsed into a single generic error. The result handling should explicitly match all result variants.
 
-4. **Regression test**: Create a regression test at `test/regression/issue/28193.test.ts` that:
+4. **Regression test**: Create a regression test following the project's convention for issue-numbered test files that:
    - Imports `bunExe`, `bunEnv`, and `tempDir` from the `'harness'` module using the exact syntax `from "harness"`
    - Does NOT use `tmpdirSync` or `mkdtempSync` from Node.js
    - Contains at least one test case with `expect()` assertions
    - Has more than 5 lines of content
    - Follows the guideline that asserts stderr/stdout content before asserting exit code
-
-## Files to Investigate
-
-- `src/install/PackageManager/install_with_manager.zig` — security scanner error handling in the install flow
-- `src/install/PackageManager/security_scanner.zig` — security scanner implementation and error returns
-- `test/regression/issue/28193.test.ts` — regression test to create
 
 ## Code Style Requirements
 

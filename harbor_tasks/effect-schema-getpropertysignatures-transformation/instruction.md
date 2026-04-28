@@ -41,11 +41,11 @@ The fix should also handle the `{ as: "Option" }` and `{ nullable: true, default
 
 ## Where to look
 
-`packages/effect/src/SchemaAST.ts` defines several AST-walking helpers. Two of them — `getPropertyKeyIndexedAccess` and `getPropertyKeys` — share a common shape: a `switch` over `ast._tag` with cases for `TypeLiteral`, `Union`, `Suspend`, `Refinement`, etc., and a fallback `throw new Error(...Unsupported schema...)`.
+`packages/effect/src/SchemaAST.ts` defines several AST-walking helpers. Each follows the same pattern — a `switch` over `ast._tag` with cases for `TypeLiteral`, `Union`, `Suspend`, `Refinement`, and others, plus a fallback `throw new Error(...Unsupported schema...)`.
 
-`getPropertySignatures` is itself implemented (on the fallback path) as `getPropertyKeys(ast).map(name => getPropertyKeyIndexedAccess(ast, name))`. So if `getPropertyKeys` knows how to walk a given `_tag` but `getPropertyKeyIndexedAccess` does not, the first half succeeds and the second half throws — which is exactly what's happening here.
+The `Transformation` AST node (which `optionalWith` produces with options like `{ default }`, `{ as: "Option" }`, or `{ nullable: true }`) is handled by some of these helpers but not all of them. Look for asymmetry between the helpers that walk the AST.
 
-Compare the two helpers and bring them into agreement for the missing AST node tag. The fix should mirror the pattern used by the existing `Suspend` and `Refinement` arms (a one-line delegating `return`), not introduce a new helper.
+The crash happens because `getPropertySignatures` composes two such helpers, and one of them does not handle `Transformation` — so the first stage succeeds and the second stage throws.
 
 ## What to deliver
 

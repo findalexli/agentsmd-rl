@@ -460,3 +460,14 @@ def test_repo_precommit_whitespace():
         capture_output=True, text=True, timeout=120, cwd=REPO,
     )
     assert r.returncode == 0, f"Pre-commit whitespace check failed:\n{r.stdout}\n{r.stderr}"
+
+# === CI-mined tests (taskforge.ci_check_miner) ===
+def test_ci_install_test_set_up_python():
+    """pass_to_pass | CI job 'Install test' → step 'Set up Python'"""
+    r = subprocess.run(
+        ["python3", "--version"], cwd=REPO,
+        capture_output=True, text=True, timeout=30)
+    assert r.returncode == 0, (
+        f"CI step 'Set up Python' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+    assert "3.12" in r.stdout, f"Expected Python 3.12, got: {r.stdout}"

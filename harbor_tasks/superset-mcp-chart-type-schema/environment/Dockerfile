@@ -20,7 +20,6 @@ RUN git init /workspace/superset && \
 WORKDIR /workspace/superset
 
 # Install minimal Python dependencies needed for tests
-# We need pydantic for the schema validation and superset_core for MCP decorators
 RUN pip install --no-cache-dir \
     pydantic>=2.0 \
     pytest>=7.0 \
@@ -33,8 +32,8 @@ RUN pip install --no-cache-dir -e ./superset-core 2>/dev/null || \
 # Create logs directory for verifier
 RUN mkdir -p /logs/verifier
 
+# Install ruff for pass_to_pass lint tests
+RUN pip install --no-cache-dir ruff
+
 # Set working directory
 WORKDIR /workspace/superset
-
-# auto-installed (scaffold Change 2A retrofit 2026-04-24)
-RUN pip install --no-cache-dir --break-system-packages ruff 2>/dev/null || pip install --no-cache-dir ruff

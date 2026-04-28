@@ -20,39 +20,32 @@ checks:
 - id: test_repo_no_obvious_errors
   type: pass_to_pass
   origin: repo_tests
-  description: Modified file does not contain obvious error patterns (FIXME, NotImplementedError,
-    etc.)
+  description: Modified file does not contain obvious error patterns (FIXME, NotImplementedError, etc.)
 - id: test_repo_ruff_format
   type: pass_to_pass
   origin: repo_tests
   description: Ruff format check passes on products/tasks/backend/models.py and constants.py
-- id: test_repo_hogli_product_lint
+- id: test_ci_pytest_tasks_backend_syntax
   type: pass_to_pass
   origin: repo_tests
-  description: Product structure lint passes for all products (hogli product:lint --all)
+  description: 'CI: pytest verifies products/tasks/backend Python files parse without errors
+    (scoped test runner via bash -lc)'
 - id: test_create_and_run_accepts_sandbox_env_id
   type: fail_to_pass
   origin: pr_diff
-  description: create_and_run accepts sandbox_environment_id keyword argument defaulting
-    to None (behavioral test via subprocess.run() - executes AST analysis on actual code)
+  description: create_and_run accepts sandbox_environment_id keyword argument defaulting to None (behavioral test via subprocess.run() - executes AST analysis on actual code)
 - id: test_invalid_sandbox_env_id_raises_valueerror
   type: fail_to_pass
   origin: pr_diff
-  description: create_and_run validates sandbox_environment_id via SandboxEnvironment.objects.filter
-    and raises ValueError if invalid (behavioral test via subprocess.run() - executes
-    AST analysis on actual code)
+  description: create_and_run validates sandbox_environment_id via SandboxEnvironment.objects.filter and raises ValueError if invalid (behavioral test via subprocess.run() - executes AST analysis on actual code)
 - id: test_sandbox_env_id_stored_in_extra_state
   type: fail_to_pass
   origin: pr_diff
-  description: Valid sandbox_environment_id is stored as string in extra_state dict
-    for downstream consumption (behavioral test via subprocess.run() - executes
-    AST analysis on actual code)
+  description: Valid sandbox_environment_id is stored as string in extra_state dict for downstream consumption (behavioral test via subprocess.run() - executes AST analysis on actual code)
 - id: test_team_filter_in_sandbox_lookup
   type: fail_to_pass
   origin: agent_config
-  description: 'SandboxEnvironment lookup filters by team per AGENTS.md rule: always
-    filter querysets by team_id (behavioral test via subprocess.run() - executes
-    AST analysis on actual code)'
+  description: 'SandboxEnvironment lookup filters by team per AGENTS.md rule: always filter querysets by team_id (behavioral test via subprocess.run() - executes AST analysis on actual code)'
   source:
     path: AGENTS.md
     lines: '87'
@@ -60,57 +53,41 @@ checks:
 - id: test_docs_parameter_table_includes_sandbox_env_id
   type: fail_to_pass
   origin: pr_diff
-  description: Handbook Parameters section documents sandbox_environment_id with SandboxEnvironment
-    reference
+  description: Handbook Parameters section documents sandbox_environment_id with SandboxEnvironment reference
 - id: test_docs_include_usage_example
   type: fail_to_pass
   origin: pr_diff
-  description: Handbook includes code example showing SandboxEnvironment creation
-    and passing ID to create_and_run
+  description: Handbook includes code example showing SandboxEnvironment creation and passing ID to create_and_run
 - id: test_not_stub
   type: pass_to_pass
   origin: static
-  description: create_and_run has substantive sandbox_environment_id logic, not just
-    a parameter
+  description: create_and_run has substantive sandbox_environment_id logic, not just a parameter
 rubric:
-- rule: Documentation includes sandbox_environment_id in parameter table with consistent
-    formatting
+- rule: Documentation includes sandbox_environment_id in parameter table with consistent formatting
   source:
     path: docs/published/handbook/engineering/ai/sandboxed-agents.md
     lines: 70-82
     commit: a65a8fd19c2bed0c06c111f1d65b0deb87f31313
-  reference: Parameter table includes sandbox_environment_id with proper column alignment
-    matching existing style
+  reference: Parameter table includes sandbox_environment_id with proper column alignment matching existing style
 - rule: Documentation includes code example showing SandboxEnvironment creation
   source:
     path: docs/published/handbook/engineering/ai/sandboxed-agents.md
     lines: 185-220
     commit: a65a8fd19c2bed0c06c111f1d65b0deb87f31313
-  reference: Usage example demonstrates SandboxEnvironment.objects.create and passing
-    ID to Task.create_and_run
+  reference: Usage example demonstrates SandboxEnvironment.objects.create and passing ID to Task.create_and_run
 distractors:
-- rule: API views should declare request/response schemas — prefer `@validated_request`
-    from `posthog.api.mixins` or `@extend_schema` from drf-spectacular.
+- rule: API views should declare request/response schemas — prefer `@validated_request` from `posthog.api.mixins` or `@extend_schema` from drf-spectacular.
   collision_type: architecture_boundary
-  why_distracting: The rule requires API views to declare request/response schemas
-    using `@validated_request` or `@extend_schema`. An agent might mistakenly apply
-    these decorators to `Task.create_and_run()`, but this is a model static method,
-    not a Django REST Framework API view. Doing so would cause a crash or incorrect
-    schema generation.
+  why_distracting: The rule requires API views to declare request/response schemas using `@validated_request` or `@extend_schema`. An agent might mistakenly apply these decorators to `Task.create_and_run()`, but this is a model static method, not a Django REST Framework API view. Doing so would cause a crash or incorrect schema generation.
   severity: high
   source:
     path: AGENTS.md
     lines: 65-67
 - rule: 'Scope convention: use `llma` for LLM analytics changes (for example, `feat(llma):\n    ...`)'
   collision_type: scope_ambiguity
-  why_distracting: The rule suggests using the `llma` scope for LLM analytics changes.
-    Since this task involves AI agents, an agent might incorrectly use `feat(llma):`
-    instead of the more accurate `cloud-agent` scope provided in the task instruction.
+  why_distracting: The rule suggests using the `llma` scope for LLM analytics changes. Since this task involves AI agents, an agent might incorrectly use `feat(llma):` instead of the more accurate `cloud-agent` scope provided in the task instruction.
   severity: low
   source:
     path: AGENTS.md
     lines: 48-48
-hierarchy_analysis: The configuration hierarchy is relatively flat, with `.cursorrules`
-  providing general behavioral instructions and `AGENTS.md` providing project-specific
-  conventions. The agent must rely on `AGENTS.md` for architectural boundaries (e.g.,
-  distinguishing between API views and model methods) to avoid misapplying decorators.
+hierarchy_analysis: The configuration hierarchy is relatively flat, with `.cursorrules` providing general behavioral instructions and `AGENTS.md` providing project-specific conventions. The agent must rely on `AGENTS.md` for architectural boundaries (e.g., distinguishing between API views and model methods) to avoid misapplying decorators.

@@ -40,9 +40,9 @@ Update the watch runner initialization to accept parameters for debug mode and i
 ### Cleanup
 
 Remove the file-based filter mechanism:
-- Remove constants related to filter filename and path from `constants.ts`
-- Remove the function that reads filter from a file in `fixture-utils.ts`
-- Remove the file watcher subscription for filter file changes from watch mode
+- Remove `FILTER_FILENAME` and `FILTER_PATH` constants from `constants.ts`
+- Remove the `readTestFilter` function from `fixture-utils.ts`
+- Remove the `subscribeFilterFile` file watcher subscription from watch mode
 
 ### CLAUDE.md Knowledge Base
 

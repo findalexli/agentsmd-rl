@@ -13,6 +13,7 @@ Tests call into the real source via vitest so the agent's edit to
 from __future__ import annotations
 
 import os
+import re
 import subprocess
 import textwrap
 from pathlib import Path
@@ -153,8 +154,13 @@ def test_p2p_existing_getPropertySignatures_tests():
     r = _run_vitest("test/Schema/SchemaAST/getPropertySignatures.test.ts")
     combined = r.stdout + r.stderr
     assert r.returncode == 0, f"existing tests broke:\n{combined[-2000:]}"
-    # The existing file has 5 tests — make sure none were silently skipped.
-    assert "5 passed" in combined, f"expected 5 passing tests:\n{combined[-1500:]}"
+    # The existing file has 5 tests; use >= so the agent can add tests to
+    # this file (as the PR author did) without breaking the p2p check.
+    # Strip ANSI codes (vitest output is colorized even with CI=1).
+    clean = re.sub(r"\x1b\[[0-9;]*m", "", combined)
+    m = re.search(r"Tests\s+(\d+) passed", clean)
+    assert m, f"no test summary found:\n{combined[-1500:]}"
+    assert int(m.group(1)) >= 5, f"fewer than 5 tests ran:\n{combined[-1500:]}"
 
 
 def test_p2p_sibling_schemaast_tests():

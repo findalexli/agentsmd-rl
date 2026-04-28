@@ -8,11 +8,15 @@ Additionally, a TypeScript module augmentation file (`app/types/context.db.ts`) 
 
 ## Expected Behavior
 
-All database access should follow the same request context pattern used by `Session`, `FormData`, and other context values in this codebase. Route handlers and middleware should access the database through this standard API, not through a custom property assignment.
+All database access should follow the same request context pattern used by `Session`, `FormData`, and other context values in this codebase. Specifically, the `Database` symbol from `remix/data-table` should be used as the context key. Handlers and middleware should retrieve the database handle using `get(Database)`, and the database middleware should store it using `context.set(Database, db)`. No handler or middleware should destructure a `db` property from the context parameter.
 
-The `remix/data-table` package exports symbols that enable this pattern. The TypeScript augmentation adding a custom `db` property to `RequestContext` should be removed.
+The TypeScript module augmentation adding a custom `db` property to `RequestContext` (`app/types/context.db.ts`) should be removed, since the `Database` context key makes it unnecessary.
 
-The bookstore demo's README should accurately document the database context pattern used in the codebase.
+The bookstore demo's README should accurately document the `context.set(Database, db)` / `get(Database)` context pattern and should no longer reference the old `context.db` pattern for attaching the database handle to the request context.
+
+## Code Style Requirements
+
+This project enforces code style with ESLint (`pnpm lint`) and Prettier (`pnpm format:check`). All changes must pass both checks.
 
 ## Files to Inspect
 

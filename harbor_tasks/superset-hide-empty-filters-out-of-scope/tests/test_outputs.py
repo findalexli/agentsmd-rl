@@ -26,9 +26,12 @@ def _setup_oracle() -> None:
     shutil.copy(src, ORACLE_FILE)
 
 
-def _run_jest(test_path: str, timeout: int = JEST_TIMEOUT) -> dict:
+def _run_jest(test_path: str, timeout: int = JEST_TIMEOUT,
+              extra_args: list[str] | None = None) -> dict:
     """Run jest on `test_path`, return parsed JSON aggregate result."""
     cmd = ["npx", "jest", test_path, "--silent", "--json"]
+    if extra_args:
+        cmd.extend(extra_args)
     r = subprocess.run(
         cmd,
         cwd=FRONTEND,
@@ -117,4 +120,75 @@ def test_repo_filtercontrols_suite_passes() -> None:
     assert result.get("numPassedTests", 0) >= 12, (
         f"FilterControls: expected at least 12 passing tests, got "
         f"{result.get('numPassedTests')}."
+    )
+
+
+def test_ci_frontend_check_translations_lint() -> None:
+    """p2p | CI job 'frontend-check-translations' — translation build/lint."""
+    r = subprocess.run(
+        ["bash", "-lc", "npm run build-translation"],
+        cwd=FRONTEND,
+        capture_output=True, text=True, timeout=300,
+    )
+    assert r.returncode == 0, (
+        f"CI step 'build-translation' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+
+# --- PR-added fail_to_pass tests (run specific tests added by the gold patch) ---
+
+def test_pr_added_does_not_render() -> None:
+    """f2p | PR added test 'does not render ...' in FilterControls.test.tsx."""
+    result = _run_jest(
+        "src/dashboard/components/nativeFilters/FilterBar/FilterControls/FilterControls.test.tsx",
+        extra_args=["-t", r"all filters are in scope"],
+    )
+    failed = result.get("numFailedTests", -1)
+    if failed != 0:
+        details = "\n".join(_failed_test_summaries(result))
+        raise AssertionError(
+            f"PR-added test 'does not render' (FilterControls): "
+            f"{failed} failing.\n{details}"
+        )
+    assert result.get("numPassedTests", 0) >= 1, (
+        f"Expected at least 1 passing test matching 'all filters are in scope' "
+        f"in FilterControls.test.tsx, got {result.get('numPassedTests', 0)}."
+    )
+
+
+def test_pr_added_does_not_render_2() -> None:
+    """f2p | PR added test 'does not render ...' in FiltersDropdownContent.test.tsx."""
+    result = _run_jest(
+        "src/dashboard/components/nativeFilters/FilterBar/FiltersDropdownContent/FiltersDropdownContent.test.tsx",
+        extra_args=["-t", r"does not render"],
+    )
+    failed = result.get("numFailedTests", -1)
+    if failed != 0:
+        details = "\n".join(_failed_test_summaries(result))
+        raise AssertionError(
+            f"PR-added test 'does not render' (FiltersDropdownContent): "
+            f"{failed} failing.\n{details}"
+        )
+    assert result.get("numPassedTests", 0) >= 2, (
+        f"Expected at least 2 passing tests matching 'does not render' "
+        f"in FiltersDropdownContent.test.tsx, got {result.get('numPassedTests', 0)}."
+    )
+
+
+def test_pr_added_renders() -> None:
+    """f2p | PR added test 'renders ...' in FiltersDropdownContent.test.tsx."""
+    result = _run_jest(
+        "src/dashboard/components/nativeFilters/FilterBar/FiltersDropdownContent/FiltersDropdownContent.test.tsx",
+        extra_args=["-t", r"renders"],
+    )
+    failed = result.get("numFailedTests", -1)
+    if failed != 0:
+        details = "\n".join(_failed_test_summaries(result))
+        raise AssertionError(
+            f"PR-added test 'renders' (FiltersDropdownContent): "
+            f"{failed} failing.\n{details}"
+        )
+    assert result.get("numPassedTests", 0) >= 1, (
+        f"Expected at least 1 passing test matching 'renders' "
+        f"in FiltersDropdownContent.test.tsx, got {result.get('numPassedTests', 0)}."
     )

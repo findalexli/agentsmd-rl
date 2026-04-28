@@ -77,6 +77,10 @@ try {
   out.unknown_key_error = String(e?.message ?? e).slice(0, 300)
 }
 
+// After the migration, terminal_suspend.transform is removed so the field
+// is a plain ZodDefault, not a ZodEffects wrapper.
+out.terminal_suspend_is_zod_default = Keybinds.shape.terminal_suspend.constructor.name === "ZodDefault"
+
 console.log("PROBE_RESULT:" + JSON.stringify(out))
 """
 
@@ -196,7 +200,18 @@ def test_repo_effect_zod_walker_tests_pass():
     )
 
 
-# ---------------- fail_to_pass: behavioral diff that captures the PR ----------------
+# ---------------- fail_to_pass: behavioral diffs that capture the PR ----------------
+
+def test_terminal_suspend_no_transform():
+    """terminal_suspend must be a plain ZodDefault after the migration — the
+    base commit wraps it in ZodEffects via .transform() but the gold patch
+    removes that transform because tui.ts already forces the win32 override
+    before Keybinds.parse runs."""
+    r = _run_probe()
+    assert r.get("terminal_suspend_is_zod_default") is True, (
+        f"terminal_suspend should be ZodDefault but is not; probe={r}"
+    )
+
 
 def test_unknown_keybind_keys_do_not_throw():
     """Unknown keybind keys must not raise — KeybindOverride in tui-schema.ts is

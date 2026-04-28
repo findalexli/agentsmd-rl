@@ -2,7 +2,7 @@
 
 ## Problem
 
-Building Bun with a local WebKit clone (`-DWEBKIT_LOCAL=ON`) currently requires developers to manually configure and build JSC in separate steps before building Bun itself. The workflow documented in CONTRIBUTING.md involves running `bun run jsc:build:debug` followed by a manual `cmake --build vendor/WebKit/WebKitBuild/Debug --target jsc` command, plus deleting a generated header file each time. This is error-prone and confusing for contributors.
+Building Bun with a local WebKit clone (`-DWEBKIT_LOCAL=ON`) currently requires developers to manually configure and build JSC in separate steps before building Bun itself. The workflow documented in CONTRIBUTING.md involves running `bun run jsc:build:debug && rm vendor/WebKit/WebKitBuild/Debug/JavaScriptCore/DerivedSources/inspector/InspectorProtocolObjects.h` followed by a manual `cmake --build vendor/WebKit/WebKitBuild/Debug --target jsc` command. This is error-prone and confusing for contributors.
 
 Several related issues need to be addressed:
 
@@ -12,11 +12,11 @@ Several related issues need to be addressed:
 
 3. **vcpkg dependency for Windows ICU**: On Windows, the current code uses pre-installed vcpkg packages for ICU headers. This should be replaced with building ICU from the WebKit source tree so the build is self-contained.
 
-4. **Hardcoded ICU library paths on Linux**: For local builds on Linux, ICU libraries are linked via hardcoded paths that assume the prebuilt WebKit layout. Local builds should use the system's ICU installation via cmake's `find_package`.
+4. **Hardcoded ICU library paths on Linux**: For local builds on Linux, ICU libraries are linked via hardcoded paths that assume the prebuilt WebKit layout. Local builds should use the system's ICU installation via cmake's `find_package`. The build system references library paths through the `WEBKIT_LIB_PATH` cmake variable which is defined in `cmake/tools/SetupWebKit.cmake`.
 
 5. **Missing build ordering**: There is no build dependency ensuring JSC is compiled before Bun's C++ sources when using a local WebKit. This can cause build failures on clean builds.
 
-6. **Stale documentation**: Both `CONTRIBUTING.md` and `docs/project/contributing.mdx` describe the old multi-step manual process (including commands like `jsc:build:debug && rm ...` and `cmake --build vendor/WebKit/WebKitBuild/...`). They also contain a typo: "if you change make changes" should be "if you make changes".
+6. **Stale documentation**: Both `CONTRIBUTING.md` and `docs/project/contributing.mdx` describe the old multi-step manual process (including the command `jsc:build:debug && rm` and `cmake --build vendor/WebKit/WebKitBuild/...`). They also contain a typo: "if you change make changes" should be "if you make changes".
 
 ## Acceptance Criteria
 

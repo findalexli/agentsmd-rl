@@ -1,0 +1,87 @@
+version: '2.0'
+source:
+  repo: remix-run/remix
+  pr: 11027
+  base_commit: 87447287f87d29f394c71c1859d293f78b69cdca
+  merge_commit: 35f35e82b26381f7f402d5d75db3b60e5329fb6c
+task:
+  kind: code_fix
+checks:
+- id: test_trie_matcher_imported
+  type: fail_to_pass
+  origin: pr_diff
+  description: TrieMatcher is imported from @remix-run/route-pattern in both benchmark files
+- id: test_no_matchers_module_variable
+  type: fail_to_pass
+  origin: pr_diff
+  description: Old 'matchers' module-level array variable is removed
+- id: test_no_destructure_for_of_in_describe
+  type: fail_to_pass
+  origin: pr_diff
+  description: No for-of loop destructuring matcher inside describe() blocks
+- id: test_prettier_format
+  type: pass_to_pass
+  origin: repo_tests
+  description: Benchmark files pass Prettier format check
+- id: test_ci_build_route_pattern
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: build scoped to @remix-run/route-pattern'
+- id: test_ci_test_route_pattern
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: test scoped to @remix-run/route-pattern'
+- id: test_ci_typecheck_route_pattern
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: typecheck scoped to @remix-run/route-pattern'
+rubric:
+- rule: Do not use `for` loops or conditional statements (`if`, `switch`, etc.) to generate test cases within `describe()` blocks.
+  source:
+    path: AGENTS.md
+    lines: 34-36
+    commit: 87447287f87d29f394c71c1859d293f78b69cdca
+  evidence: Gold patch removes the `for (let { name, matcher } of matchers)` loop inside describe() blocks and replaces it with explicit bench() calls for each matcher type.
+  category: testing
+  verification: llm_judge
+- rule: Prefer `let` for locals, `const` only at module scope; never use `var`.
+  source:
+    path: AGENTS.md
+    lines: '25'
+    commit: 87447287f87d29f394c71c1859d293f78b69cdca
+  evidence: Gold patch uses `let` for all local variables including matcher instances and loop counters.
+  category: naming
+  verification: llm_judge
+- rule: Only use arrow functions as callbacks (e.g., route handlers, array methods) where preserving lexical `this` is beneficial or the syntax is more concise.
+  source:
+    path: AGENTS.md
+    lines: '26'
+    commit: 87447287f87d29f394c71c1859d293f78b69cdca
+  evidence: Gold patch uses arrow functions only as callbacks for bench(), .forEach(), and for-of loops.
+  category: style
+  verification: llm_judge
+- rule: 'Prettier (printWidth: 100, no semicolons, single quotes, spaces not tabs)'
+  source:
+    path: AGENTS.md
+    lines: '29'
+    commit: 87447287f87d29f394c71c1859d293f78b69cdca
+  evidence: Gold code passes Prettier format check with the repo's configuration.
+  category: style
+  verification: programmatic
+distractors:
+- rule: Tests run from source (no build required), using Node.js test runner
+  source:
+    path: AGENTS.md
+    lines: '20'
+    commit: 87447287f87d29f394c71c1859d293f78b69cdca
+  collision_type: architecture_boundary
+  why_distracting: This rule applies to test files using Node.js test runner; benchmark files use vitest bench and must remain as vitest benchmarks.
+  severity: medium
+- rule: Only add non-JSDoc comments when the code is doing something surprising or non-obvious
+  source:
+    path: AGENTS.md
+    lines: '32'
+    commit: 87447287f87d29f394c71c1859d293f78b69cdca
+  collision_type: meta_confusion
+  why_distracting: Adding comments to explain the benchmark structure fix would violate this rule; the code should be self-documenting.
+  severity: low

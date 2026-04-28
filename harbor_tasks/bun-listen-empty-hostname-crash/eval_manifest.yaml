@@ -81,70 +81,59 @@ checks:
     path: AGENTS.md
     lines: '99'
     commit: 73361607d70bd77041d0fc20e45a6dbe2373a677
+- id: test_pr_added_should_throw_on_empty_hostname_from_truthy_non_s
+  type: fail_to_pass
+  origin: pr_diff
+  description: PR added test 'should throw on empty hostname from truthy non-string value' in test/js/bun/net/socket.test.ts
+- id: test_pr_added_should_throw_on_empty_unix_path_from_truthy_non_
+  type: fail_to_pass
+  origin: pr_diff
+  description: PR added test 'should throw on empty unix path from truthy non-string value' in test/js/bun/net/socket.test.ts
 rubric:
-- rule: Code changes in src/bun.js/api/bun/socket/Handlers.zig and test/js/bun/net/socket.test.ts
-    follow repository conventions.
+- rule: Code changes in src/bun.js/api/bun/socket/Handlers.zig and test/js/bun/net/socket.test.ts follow repository conventions.
 - rule: 'Never use hardcoded port numbers. Always use `port: 0` to get a random port.'
   source:
     path: test/CLAUDE.md
     lines: 17-18
-  evidence: 'The test explicitly passes `port: 0` in the `Bun.listen` and `Bun.connect`
-    calls.'
+  evidence: 'The test explicitly passes `port: 0` in the `Bun.listen` and `Bun.connect` calls.'
   category: testing
-- rule: NEVER write tests that check for no "panic" or "uncaught exception" or similar
-    in the test output.
+- rule: NEVER write tests that check for no "panic" or "uncaught exception" or similar in the test output.
   source:
     path: CLAUDE.md
     lines: 86-87
-  evidence: The test asserts that a specific error is thrown (`expect(...).toThrow('Expected
-    a non-empty "hostname"')`) rather than checking process output for panics.
+  evidence: The test asserts that a specific error is thrown (`expect(...).toThrow('Expected a non-empty "hostname"')`) rather than checking process output for panics.
   category: testing
 - rule: 'Always use `port: 0` to get a random port. Never use hardcoded port numbers.'
   source:
     path: test/AGENTS.md
     lines: 16-17
-  evidence: 'The gold solution explicitly passes `port: 0` in the `Bun.listen` and
-    `Bun.connect` calls within the new tests.'
+  evidence: 'The gold solution explicitly passes `port: 0` in the `Bun.listen` and `Bun.connect` calls within the new tests.'
   category: testing
-- rule: If no valid issue number is provided, find the best existing file to modify
-    instead.
+- rule: If no valid issue number is provided, find the best existing file to modify instead.
   source:
     path: AGENTS.md
     lines: 27-29
-  evidence: The test is added to the existing `test/js/bun/net/socket.test.ts` file
-    rather than creating a new regression test file, as no issue number was provided.
+  evidence: The test is added to the existing `test/js/bun/net/socket.test.ts` file rather than creating a new regression test file, as no issue number was provided.
   category: testing
 - rule: 'Always use `port: 0`. Do not hardcode ports.'
   source:
     path: AGENTS.md
     lines: 82-82
-  evidence: 'The test calls `Bun.listen({ hostname: hostname as any, port: 0, socket
-    })`, explicitly using `port: 0` instead of a hardcoded port.'
+  evidence: 'The test calls `Bun.listen({ hostname: hostname as any, port: 0, socket })`, explicitly using `port: 0` instead of a hardcoded port.'
   category: testing
 distractors:
 - rule: When spawning Bun processes, use `bunExe` and `bunEnv` from `harness`.
   collision_type: scope_ambiguity
-  why_distracting: The bug report mentions a 'panic/crash', which might lead an agent
-    to think it needs to spawn a separate process using `Bun.spawn` to catch the crash.
-    However, the fix changes the crash to a synchronous JS exception, so a simple
-    `expect().toThrow()` in the same process is correct. Spawning a process would
-    overcomplicate the test and violate the rule against checking output for panics.
+  why_distracting: The bug report mentions a 'panic/crash', which might lead an agent to think it needs to spawn a separate process using `Bun.spawn` to catch the crash. However, the fix changes the crash to a synchronous JS exception, so a simple `expect().toThrow()` in the same process is correct. Spawning a process would overcomplicate the test and violate the rule against checking output for panics.
   severity: medium
   source:
     path: test/AGENTS.md
     lines: 40-58
-- rule: 'Prefer concurrent tests over sequential tests: When multiple tests in the
-    same file spawn processes or write files, make them concurrent'
+- rule: 'Prefer concurrent tests over sequential tests: When multiple tests in the same file spawn processes or write files, make them concurrent'
   collision_type: scope_ambiguity
-  why_distracting: The agent might try to use `it.concurrent` for the new tests. However,
-    the rule specifically applies when tests 'spawn processes or write files'. Since
-    these tests only check synchronous validation logic, concurrency is unnecessary.
+  why_distracting: The agent might try to use `it.concurrent` for the new tests. However, the rule specifically applies when tests 'spawn processes or write files'. Since these tests only check synchronous validation logic, concurrency is unnecessary.
   severity: low
   source:
     path: test/AGENTS.md
     lines: 21-22
-hierarchy_analysis: 'The repository uses a moderate hierarchy with `AGENTS.md` and
-  `CLAUDE.md` files at the root and within `src/` and `test/` directories. The rules
-  are consistent across levels, with the root providing general testing guidelines
-  (like `port: 0` and avoiding panic checks) and the `test/` level providing more
-  specific process-spawning guidelines.'
+hierarchy_analysis: 'The repository uses a moderate hierarchy with `AGENTS.md` and `CLAUDE.md` files at the root and within `src/` and `test/` directories. The rules are consistent across levels, with the root providing general testing guidelines (like `port: 0` and avoiding panic checks) and the `test/` level providing more specific process-spawning guidelines.'

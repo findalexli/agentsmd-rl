@@ -6,9 +6,15 @@ The `scripts/create-github-release.mjs` script has several fragility issues that
 
 ### 1. Fragile Git Commit Range Detection
 
-The current script uses a `git log` command with `-n 1` and `HEAD~1` to find the previous release commit. This is fragile because it limits results to a single commit and relies on a relative reference that doesn't reliably identify the actual previous release commit.
+The current script uses this git command to find the previous release:
 
-The script should instead retrieve **all** commits matching the "ci: changeset release" pattern (not limited to one), parse the output into an array by splitting on newlines and removing empty entries, and use the first two entries to identify the current and previous release commits. The git log range should be constructed from these identified commits rather than from `HEAD~1`. If only one release commit exists, the range should fall back to one commit before the current release.
+```
+git log --oneline --grep="ci: changeset release" -n 1 --format=%H HEAD~1
+```
+
+This is fragile because it uses `-n 1` to limit results to a single commit and `HEAD~1` as a relative reference that doesn't reliably identify the actual previous release commit.
+
+The script should instead retrieve **all** commits matching the "ci: changeset release" pattern (not limited to one), parse the output into an array by splitting on newlines (`.split('\n')`) and removing empty entries (`.filter(Boolean)`), and use the first two entries to identify the current and previous release commits. The git log range should be constructed from these identified commits rather than from `HEAD~1`. If only one release commit exists, the range should fall back to one commit before the current release.
 
 Since the script runs immediately after the "ci: changeset release" commit is pushed, HEAD is always the current release commit. The goal is to get commits between the previous release and the current one, excluding both release commits themselves.
 
@@ -16,11 +22,17 @@ Since the script runs immediately after the "ci: changeset release" commit is pu
 
 The script's handling of non-conventional commits (merge commits, etc.) uses manual index tracking with double `indexOf(' ')` calls and string slicing to extract the hash, email, and subject fields. This approach is brittle and hard to follow.
 
-It should be replaced with a cleaner approach: split each log line on spaces and extract the hash from the first element, the email from the second element, and the subject from the remaining elements joined back together with spaces. The `scope` field should remain `null` for non-conventional commits.
+It should be replaced with a cleaner approach: split each log line on spaces (`.split(' ')`) and extract the hash from the first element, the email from the second element, and the subject from the remaining elements joined back together with spaces. The `scope` field should remain `null` for non-conventional commits.
 
 ### 3. Incorrect --latest Flag Handling
 
-The `--latest` flag is always passed unconditionally to `gh release create`, but it should only apply to non-prerelease releases. The existing `prereleaseFlag` variable already handles the `--prerelease` flag conditionally — the `--latest` flag needs similar conditional treatment, where it is only included for normal releases. The unconditional `--latest` should be removed from the command.
+The `--latest` flag is always passed unconditionally to `gh release create`:
+
+```
+gh release create ... --notes-file ${tmpFile} --latest
+```
+
+It should only apply to non-prerelease releases. The existing `prereleaseFlag` variable already handles the `--prerelease` flag conditionally — the `--latest` flag needs similar conditional treatment, where it is only included for normal releases. The unconditional `--latest` should be removed from the command.
 
 ## Additional Requirements
 

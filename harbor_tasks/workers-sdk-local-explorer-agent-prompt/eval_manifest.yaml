@@ -7,101 +7,137 @@ source:
 task:
   kind: code_fix
 checks:
-- id: test_target_file_exists
+- id: test_module_exports_get_local_explorer_api_endpoint
   type: fail_to_pass
   origin: pr_diff
-  description: Agent created the agent-prompt.ts file at the expected path with at least one export.
-- id: test_endpoint_join_behavior
+  description: Agent-prompt module exports getLocalExplorerApiEndpoint function
+- id: test_module_exports_create_local_explorer_prompt
   type: fail_to_pass
   origin: pr_diff
-  description: getLocalExplorerApiEndpoint("http://localhost:8787","/cdn-cgi/explorer/api") returns the joined URL (vitest test from PR).
-- id: test_prompt_contains_required_phrases
+  description: Agent-prompt module exports createLocalExplorerPrompt function
+- id: test_module_exports_copy_text_to_clipboard
   type: fail_to_pass
   origin: pr_diff
-  description: createLocalExplorerPrompt produces text containing "API endpoint:" and "Fetch the OpenAPI schema from" substrings (vitest test from PR).
-- id: test_clipboard_calls_writetext
+  description: Agent-prompt module exports copyTextToClipboard function
+- id: test_get_local_explorer_api_endpoint_joins_origin_and_path
   type: fail_to_pass
   origin: pr_diff
-  description: copyTextToClipboard delegates to clipboard.writeText with the supplied text (vitest test from PR).
-- id: test_full_vitest_suite_passes
+  description: getLocalExplorerApiEndpoint concatenates origin and apiPath
+- id: test_create_local_explorer_prompt_fills_template
   type: fail_to_pass
   origin: pr_diff
-  description: Complete upstream vitest suite (all three PR-added tests) passes against the agent's implementation.
-- id: test_endpoint_join_varied_inputs
+  description: createLocalExplorerPrompt injects API endpoint into template
+- id: test_create_local_explorer_prompt_includes_service_list
   type: fail_to_pass
+  origin: pr_diff
+  description: Prompt template mentions KV, R2, D1, Durable Objects, Workflows, and OpenAPI schema
+- id: test_copy_text_to_clipboard_calls_write_text
+  type: fail_to_pass
+  origin: pr_diff
+  description: copyTextToClipboard calls clipboard.writeText with the provided text
+- id: test_template_has_no_placeholder_residue
+  type: fail_to_pass
+  origin: pr_diff
+  description: createLocalExplorerPrompt replaces all {{apiEndpoint}} placeholders
+- id: test_index_tsx_integrates_agent_prompt
+  type: fail_to_pass
+  origin: pr_diff
+  description: Homepage route imports agent-prompt utilities and renders prompt card
+- id: test_package_json_has_kumo_version_bump
+  type: fail_to_pass
+  origin: pr_diff
+  description: package.json has @cloudflare/kumo updated to ^1.18.0
+- id: test_repo_directory_structure_intact
+  type: pass_to_pass
   origin: static
-  description: Endpoint join is correct across multiple distinct origin/path combinations — guards against agents hardcoding the example URL.
-- id: test_prompt_substitutes_endpoint_dynamically
-  type: fail_to_pass
-  origin: static
-  description: Prompt text reflects the apiEndpoint argument, with no leftover {{apiEndpoint}} placeholder.
-- id: test_typescript_strict_compiles
-  type: fail_to_pass
-  origin: agent_config
-  description: Agent's file compiles under TypeScript strict mode (AGENTS.md mandates strict TS).
-  source:
-    path: AGENTS.md
-    lines: '90'
-    commit: 525a46bca7c9a8a57972ac152ab9c400df0bf186
-- id: test_existing_utils_unmodified
+  description: Base repo has expected directory structure
+- id: test_ci_build_build
   type: pass_to_pass
   origin: repo_tests
-  description: Agent did not modify pre-existing utility files (format.ts, sidebar-state.ts) in the same directory. Sha256 hashes pinned to base commit.
+  description: 'CI: build / Build'
+- id: test_ci_build_upload_packages
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: build / Upload packages'
+- id: test_ci_cleanup_test_projects_cleanup_e2e_test_projects
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: Cleanup Test Projects / Cleanup E2E test projects'
+- id: test_pr_added_builds_api_endpoint_from_origin_and_api_path
+  type: fail_to_pass
+  origin: pr_diff
+  description: PR added test 'builds api endpoint from origin and api path' in packages/local-explorer-ui/src/__tests__/utils/agent-prompt.test.ts
+- id: test_pr_added_generates_prompt_text_with_resolved_api_endpoint
+  type: fail_to_pass
+  origin: pr_diff
+  description: PR added test 'generates prompt text with resolved api endpoint' in packages/local-explorer-ui/src/__tests__/utils/agent-prompt.test.ts
+- id: test_pr_added_copies_prompt_text_to_clipboard
+  type: fail_to_pass
+  origin: pr_diff
+  description: PR added test 'copies prompt text to clipboard' in packages/local-explorer-ui/src/__tests__/utils/agent-prompt.test.ts
 rubric:
-- rule: No `any` type. The agent's `agent-prompt.ts` must not use the `any` keyword anywhere — properly type all parameters and return values.
+- rule: No floating promises - must be awaited or explicitly voided (@typescript-eslint/no-floating-promises)
   source:
     path: AGENTS.md
-    lines: '92'
+    lines: '58'
     commit: 525a46bca7c9a8a57972ac152ab9c400df0bf186
-  evidence: 'The solution types all parameters and return values explicitly (origin: string, apiPath: string, apiEndpoint: string, text: string, clipboard: Pick<Clipboard, ''writeText''>) without using any.'
-  category: style
+  evidence: The onClick handler uses `void copyPrompt()` to explicitly void the floating promise
+  category: correctness
   verification: programmatic
-- rule: No non-null assertion operator (`!`). The agent's `agent-prompt.ts` must use type narrowing instead of forcing a non-null assertion.
+- rule: 'Always use curly braces for control flow (curly: error)'
   source:
     path: AGENTS.md
-    lines: '93'
+    lines: '59'
     commit: 525a46bca7c9a8a57972ac152ab9c400df0bf186
-  evidence: The solution uses optional parameter defaults (clipboard = navigator.clipboard) instead of non-null assertions.
+  evidence: All if statements and try/catch blocks in the new code use curly braces
   category: style
   verification: programmatic
-- rule: Use `import type { X }` for type-only imports. If the file references DOM types like `Clipboard`, it must be a type-only reference (not a runtime import).
+- rule: Format with oxfmt - run `pnpm prettify` in the workspace root before committing
   source:
     path: AGENTS.md
-    lines: '91'
+    lines: '62'
     commit: 525a46bca7c9a8a57972ac152ab9c400df0bf186
-  evidence: The solution does not import any DOM types at runtime; Clipboard is used only as a type reference in the Pick utility type parameter.
+  evidence: Code uses tabs, double quotes, semicolons, trailing commas per oxfmt defaults
   category: style
-  verification: programmatic
-- rule: No floating promises — every Promise must be `await`ed or explicitly `void`ed. The clipboard's `writeText` call must be awaited.
+  verification: llm_judge
+- rule: Tabs (not spaces), double quotes, semicolons, trailing commas (es5)
   source:
     path: AGENTS.md
-    lines: '94'
+    lines: '66'
     commit: 525a46bca7c9a8a57972ac152ab9c400df0bf186
-  evidence: The copyTextToClipboard function awaits clipboard.writeText(text) and returns Promise<void>.
+  evidence: New utility file uses tabs for indentation, double quotes for strings, semicolons at line ends
   category: style
-  verification: programmatic
-- rule: Always use curly braces for control flow.
+  verification: llm_judge
+- rule: 'Import order enforced: builtins -> third-party -> parent -> sibling -> index -> types'
   source:
     path: AGENTS.md
-    lines: '95'
+    lines: '65'
     commit: 525a46bca7c9a8a57972ac152ab9c400df0bf186
-  evidence: The solution has no control flow statements beyond function bodies, satisfying the rule trivially.
+  evidence: Imports in index.tsx are organized with third-party imports first, then sibling imports
   category: style
-  verification: programmatic
-- rule: Format with tabs (not spaces), double quotes, semicolons. The file should follow the repository's oxfmt style.
-  source:
-    path: AGENTS.md
-    lines: 102-106
-    commit: 525a46bca7c9a8a57972ac152ab9c400df0bf186
-  evidence: The solution uses tabs for indentation, double quotes for strings, and semicolons at statement ends, matching the oxfmt style.
-  category: style
-  verification: programmatic
+  verification: llm_judge
 distractors:
-- rule: Prefix unused variables with `_`.
+- rule: All changes to published packages require a changeset (see below)
   source:
     path: AGENTS.md
-    lines: '97'
+    lines: '63'
+    commit: 525a46bca7c9a8a57972ac152ab9c400df0bf186
+  collision_type: scope_ambiguity
+  why_distracting: The gold patch includes changeset files but the agent might spend time crafting changeset content instead of implementing the feature
+  severity: medium
+- rule: Never commit without changesets for user-facing changes
+  source:
+    path: AGENTS.md
+    lines: '82'
+    commit: 525a46bca7c9a8a57972ac152ab9c400df0bf186
+  collision_type: scope_ambiguity
+  why_distracting: Changeset requirement is a process rule for the PR workflow, not part of the code implementation task
+  severity: medium
+- rule: Use `pnpm` - never use npm or yarn
+  source:
+    path: AGENTS.md
+    lines: '19'
     commit: 525a46bca7c9a8a57972ac152ab9c400df0bf186
   collision_type: rule_conflict
-  why_distracting: AGENT_PROMPT_TEMPLATE is a module-private constant that IS used by createLocalExplorerPrompt, but an agent scanning the code-style section may incorrectly prefix it with '_' as 'unused' since it is not exported, breaking the template reference.
-  severity: medium
+  why_distracting: pnpm is for package management but the task tests run with tsx without installing deps; agent might try pnpm install unnecessarily
+  severity: low

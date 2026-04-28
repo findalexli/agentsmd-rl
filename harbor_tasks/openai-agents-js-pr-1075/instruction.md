@@ -14,24 +14,21 @@ Both of these schema versions exist only on the current branch and have not been
 
 ## Specific changes required
 
-1. **Schema version constant** (`packages/agents-core/src/runState.ts`):
-   - `CURRENT_SCHEMA_VERSION` should be changed to `'1.8'` (currently `'1.9'`)
-   - The version 1.8 comment should be updated to include all pending changes
+The code changes center on `packages/agents-core/src/runState.ts`. Currently `CURRENT_SCHEMA_VERSION` is `'1.9'`, `SUPPORTED_SCHEMA_VERSIONS` includes `'1.8'` as a separate supported version, and `assertSchemaVersionSupportsToolSearch` treats both `'1.8'` and `'1.9'` as tool-search-capable schema versions.
 
-2. **Supported versions list** (`packages/agents-core/src/runState.ts`):
-   - Remove `'1.8'` from `SUPPORTED_SCHEMA_VERSIONS` (since it's now the CURRENT_SCHEMA_VERSION)
-   - Remove `'1.9'` entirely since it's being folded into 1.8
+After this change:
+- `CURRENT_SCHEMA_VERSION` should be `'1.8'`
+- `SUPPORTED_SCHEMA_VERSIONS` should not contain `'1.8'` as a separate entry (it is now the current version) and should not contain `'1.9'` at all
+- `assertSchemaVersionSupportsToolSearch` should accept only `'1.8'` and should reject `'1.9'`
+- The version history comment describing schema `1.8` should cover the full combined set of changes (tool search item variants, batched computer actions, and GA computer tool aliasing)
 
-3. **Assertion function** (`packages/agents-core/src/runState.ts`):
-   - The `assertSchemaVersionSupportsToolSearch` function should only accept `'1.8'`, not `'1.8'` or `'1.9'`
-
-4. **Documentation**:
-   - Update the implementation strategy guidance to clarify that unreleased post-tag formats can be rewritten directly when no supported snapshot consumer exists yet
-   - Add a changeset file under `.changeset/`
+Additionally:
+- Update the implementation strategy guidance to clarify that unreleased post-tag formats can be rewritten directly when no supported snapshot consumer exists yet
+- Add a changeset file under `.changeset/`
 
 ## How to validate
 
-Run `pnpm -F agents-core build` to verify the TypeScript compiles correctly.
+Run `pnpm -F agents-core build` to verify the TypeScript compiles correctly. Run `pnpm -F agents-core build-check` to verify type validation passes.
 
 The existing test suite (if any) should continue to pass.
 

@@ -109,3 +109,8 @@ def test_demo_import_uses_bullet_list():
         f"Demo 导入规范 section should remain a bullet list with several "
         f"items, found {len(bullets)} bullet lines."
     )
+
+# === CI-mined tests (taskforge.ci_check_miner) ===
+# Dropped: test_ci_build_project_run_script requires yarn+network (clones repo)
+# Dropped: test_ci_test_image_generate_image_snapshots requires node+puppeteer
+# Both are unavailable in this Docker image and unnecessary for markdown_authoring.

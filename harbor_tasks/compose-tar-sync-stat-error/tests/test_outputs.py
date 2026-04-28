@@ -438,3 +438,40 @@ def test_no_context_background_in_sync_tests() -> None:
         "tar_test.go must use t.Context() instead of context.TODO() "
         "(CLAUDE.md test convention)"
     )
+
+# === CI-mined tests (taskforge.ci_check_miner) ===
+def test_ci_build_and_test_unit_tests():
+    """pass_to_pass | CI job 'Build and test' → step 'Unit tests'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'make test'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Unit tests' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_build_and_test_build_binaries():
+    """pass_to_pass | CI job 'Build and test' → step 'Build binaries'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'make'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Build binaries' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_build_and_test_test_plugin_mode():
+    """pass_to_pass | CI job 'Build and test' → step 'Test plugin mode'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'make e2e-compose'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Test plugin mode' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_build_and_test_test_standalone_mode():
+    """pass_to_pass | CI job 'Build and test' → step 'Test standalone mode'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'make e2e-compose-standalone'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Test standalone mode' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")

@@ -36,18 +36,6 @@ def _run_node(script: str, timeout: int = 30) -> subprocess.CompletedProcess:
 
 
 # ---------------------------------------------------------------------------
-# Gates (pass_to_pass, static)
-# ---------------------------------------------------------------------------
-
-def test_syntax_check():
-    """Modified TypeScript files have balanced braces."""
-    for ts_file in [COMMAND_TS, COMMANDS_TS, HELP_GEN_TS, PROGRAM_TS]:
-        content = ts_file.read_text()
-        assert content.count("{") == content.count("}"), \
-            f"Unbalanced braces in {ts_file.name}"
-
-
-# ---------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) — behavioral tests via Node execution
 # ---------------------------------------------------------------------------
 

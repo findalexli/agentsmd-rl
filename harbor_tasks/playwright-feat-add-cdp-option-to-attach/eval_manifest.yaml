@@ -9,15 +9,14 @@ checks:
   type: fail_to_pass
   origin: pr_diff
   description: globalOptions array includes 'cdp' for CLI argument parsing
-- id: attach_schema_has_cdp_option
+- id: attach_command_schema_via_build
   type: fail_to_pass
   origin: pr_diff
   description: attach command zod schema declares cdp option
 - id: attach_conflict_detection
   type: fail_to_pass
   origin: pr_diff
-  description: attach command detects conflicting target + --cdp/--endpoint/--extension
-    args
+  description: attach command detects conflicting target + --cdp/--endpoint/--extension args
 - id: daemon_registers_cdp_flag
   type: fail_to_pass
   origin: pr_diff
@@ -58,10 +57,6 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: MCP config.ts has valid structure with CLIOptions type
-- id: repo_esbuild_tools_compile
-  type: pass_to_pass
-  origin: repo_tests
-  description: Tools TypeScript files compile with esbuild
 - id: repo_npm_install_and_eslint
   type: pass_to_pass
   origin: repo_tests
@@ -79,8 +74,7 @@ checks:
   origin: repo_tests
   description: Workspace packages are consistent
 rubric:
-- rule: SKILL.md documentation update is consistent with the existing command documentation
-    style
+- rule: SKILL.md documentation update is consistent with the existing command documentation style
   source:
     path: packages/playwright-core/src/tools/cli-client/skill/SKILL.md
     lines: 1-50
@@ -97,22 +91,16 @@ config_edits:
 distractors:
 - rule: docs/src/ API documentation — source of truth for public TypeScript types
   collision_type: scope_ambiguity
-  why_distracting: The rule states that docs/src/ is the source of truth for API documentation,
-    which might lead the agent to look for CLI documentation there instead of SKILL.md.
+  why_distracting: The rule states that docs/src/ is the source of truth for API documentation, which might lead the agent to look for CLI documentation there instead of SKILL.md.
   severity: medium
   source:
     path: CLAUDE.md
     lines: 30-32
 - rule: Import boundaries are enforced via DEPS.list files
   collision_type: scope_ambiguity
-  why_distracting: The agent might try to modify DEPS.list files when moving options
-    between commands, but this task only involves modifying existing CLI command files
-    and config.
+  why_distracting: The agent might try to modify DEPS.list files when moving options between commands, but this task only involves modifying existing CLI command files and config.
   severity: low
   source:
     path: CLAUDE.md
     lines: 75-76
-hierarchy_analysis: The task involves editing an agent instruction file (SKILL.md)
-  as part of the codebase, making it a meta-referential task. The CLAUDE.md file provides
-  general repository guidelines, but the specific instructions for this task override
-  the general documentation locations.
+hierarchy_analysis: The task involves editing an agent instruction file (SKILL.md) as part of the codebase, making it a meta-referential task. The CLAUDE.md file provides general repository guidelines, but the specific instructions for this task override the general documentation locations.

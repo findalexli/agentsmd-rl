@@ -271,26 +271,6 @@ def test_repo_component_signatures():
             assert has_return, f"Component {func_name} missing return statement"
 
 
-# [repo_tests] pass_to_pass — Actual CI commands using subprocess
-# ---------------------------------------------------------------------------
-
-BUN_INSTALL_SCRIPT = """
-export BUN_INSTALL="$HOME/.bun"
-export PATH="$BUN_INSTALL/bin:$PATH"
-if ! command -v bun &> /dev/null; then
-    curl -fsSL https://bun.sh/install 2>/dev/null | bash
-fi
-"""
-
-
-def _install_bun():
-    """Install bun if not already available."""
-    subprocess.run(
-        ["bash", "-c", BUN_INSTALL_SCRIPT],
-        capture_output=True, text=True, timeout=120, cwd=REPO,
-    )
-
-
 # [repo_tests] pass_to_pass — TypeScript typecheck using tsgo
 def test_repo_tsgo_typecheck():
     """TypeScript typecheck passes using repo's tsgo (pass_to_pass)."""
@@ -446,24 +426,30 @@ def test_incremental_reveal():
     src = _read_file()
     util = _util_section(src)
 
+    pacing_func = _find_pacing_func(util)
+    if not pacing_func:
+        assert False, "No pacing function found — cannot check incremental reveal"
+
+    body = pacing_func["body"]
+
     signals = 0
-    # 1. Substring extraction
-    if re.search(r"\.(substring|slice|substr)\s*\(", util):
+    # 1. Substring extraction inside the pacing function
+    if re.search(r"\.(substring|slice|substr)\s*\(", body):
         signals += 1
     # 2. Position tracking variable with assignment
     if re.search(
         r"\b(pos|position|cursor|idx|start|offset|shown|revealed|current)\b"
         r"\s*(\+=|=\s*\w+\s*+)",
-        util,
+        body,
     ):
         signals += 1
     # 3. Step/increment calculation with Math
-    has_math = bool(re.search(r"Math\.(min|ceil|floor|max)\s*\(", util))
-    has_step = bool(re.search(r"\b(step|increment|chunk|advance|stride)\b", util, re.I))
+    has_math = bool(re.search(r"Math\.(min|ceil|floor|max)\s*\(", body))
+    has_step = bool(re.search(r"\b(step|increment|chunk|advance|stride)\b", body, re.I))
     if has_math and has_step:
         signals += 1
     # 4. Advance loop
-    if re.search(r"for\s*\(\s*let\s+\w+\s*=\s*\w+\s*;\s*\w+\s*<", util):
+    if re.search(r"for\s*\(\s*let\s+\w+\s*=\s*\w+\s*;\s*\w+\s*<", body):
         signals += 1
 
     assert signals >= 2, \
@@ -650,3 +636,4 @@ def test_no_multiple_create_signals():
     count = len(re.findall(r"\bcreateSignal\s*\(", pacing_func["body"]))
     assert count <= 1, \
         f"Pacing function uses {count} createSignal calls; use createStore for multiple signals (packages/app/AGENTS.md:15)"
+

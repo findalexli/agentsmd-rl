@@ -15,7 +15,7 @@ AReaL contains two categories of resource management bugs that need to be fixed.
 
 ### Symptom
 
-The port availability checking logic in `areal/utils/network.py` leaks socket file descriptors. When ports are already in use (the common failure case), sockets are allocated but never properly released. Over time, under heavy port-scanning workloads, this exhausts the OS file descriptor limit.
+The port-checking utility logic in the network module leaks socket file descriptors. When ports are already in use (the common failure case), sockets are allocated but never properly released. Over time, under heavy port-scanning workloads, this exhausts the OS file descriptor limit.
 
 ### Required behavior
 
@@ -29,7 +29,7 @@ The port availability checking logic in `areal/utils/network.py` leaks socket fi
 
 ### Symptom
 
-The trainer classes in `areal/trainer/rl_trainer.py` and `areal/trainer/sft_trainer.py` implement context manager protocols. When an exception occurs inside a `with` block using these trainers, the original traceback is destroyed and replaced with one that points to the trainer's internal code. This makes debugging training failures very difficult because developers cannot see where the error actually originated.
+The trainer classes for reinforcement learning and for supervised fine-tuning implement context manager protocols. When an exception occurs inside a `with` block using these trainers, the original traceback is destroyed and replaced with one that points to the trainer's internal code. This makes debugging training failures very difficult because developers cannot see where the error actually originated.
 
 ### Required behavior
 
@@ -39,15 +39,7 @@ The trainer classes in `areal/trainer/rl_trainer.py` and `areal/trainer/sft_trai
 
 ---
 
-## Files that must be modified
-
-- `areal/utils/network.py`
-- `areal/trainer/rl_trainer.py`
-- `areal/trainer/sft_trainer.py`
-
----
-
-## Static checks (must also pass)
+## Code Style Requirements
 
 All modified files must:
 

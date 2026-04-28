@@ -1,145 +1,122 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "microsoft/playwright"
+  repo: microsoft/playwright
   pr: 39734
-  base_commit: "4df350b1c81b61ea471ff12767efd8e05f773377"
-  merge_commit: "61afb37f4e6af73ae536c7d05ee1a926328b6d80"
-
-# Track 1: Code correctness checks
+  base_commit: 4df350b1c81b61ea471ff12767efd8e05f773377
+  merge_commit: 61afb37f4e6af73ae536c7d05ee1a926328b6d80
 checks:
-  # Code behavior checks (fail_to_pass)
-  - id: minimist_ts_exists
-    type: fail_to_pass
-    origin: pr_diff
-    description: "minimist.ts vendored TypeScript implementation exists with proper exports"
-
-  - id: program_uses_vendored_minimist
-    type: fail_to_pass
-    origin: pr_diff
-    description: "program.ts imports from local ./minimist instead of requiring external package"
-
-  - id: session_uses_vendored_minimist
-    type: fail_to_pass
-    origin: pr_diff
-    description: "session.ts imports MinimistArgs type from local ./minimist"
-
-  - id: deps_list_updated
-    type: fail_to_pass
-    origin: pr_diff
-    description: "DEPS.list declares minimist.ts dependencies for program.ts and session.ts"
-
-  - id: types_minimist_dependency_removed
-    type: fail_to_pass
-    origin: pr_diff
-    description: "@types/minimist dev dependency removed from package.json"
-
-  - id: typescript_compiles
-    type: fail_to_pass
-    origin: pr_diff
-    description: "TypeScript compilation succeeds for modified cli-client files"
-
-  - id: boolean_option_with_equals_throws
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Vendored minimist throws error when boolean option passed with '=value'"
-
-  # Config edit checks (REQUIRED for agentmd-edit tasks)
-  - id: claude_md_updated_with_new_rule
-    type: fail_to_pass
-    origin: pr_diff
-    description: "CLAUDE.md updated with new commit message rule about 'Generated with'"
-
-  # Pass-to-pass tests (regression prevention)
-  - id: repo_lint_passes
-    type: pass_to_pass
-    origin: static
-    description: "TypeScript compilation does not introduce new errors"
-
-  - id: minimist_exports_correct_types
-    type: fail_to_pass
-    origin: pr_diff
-    description: "minimist.ts exports MinimistOptions, MinimistArgs, and minimist function"
-
-# Track 2: Config edits (gold reference)
+- id: minimist_ts_exists
+  type: fail_to_pass
+  origin: pr_diff
+  description: minimist.ts vendored TypeScript implementation exists with proper exports
+- id: program_uses_vendored_minimist
+  type: fail_to_pass
+  origin: pr_diff
+  description: program.ts imports from local ./minimist instead of requiring external package
+- id: session_uses_vendored_minimist
+  type: fail_to_pass
+  origin: pr_diff
+  description: session.ts imports MinimistArgs type from local ./minimist
+- id: deps_list_updated
+  type: fail_to_pass
+  origin: pr_diff
+  description: DEPS.list declares minimist.ts dependencies for program.ts and session.ts
+- id: types_minimist_dependency_removed
+  type: fail_to_pass
+  origin: pr_diff
+  description: '@types/minimist dev dependency removed from package.json'
+- id: typescript_compiles
+  type: pass_to_pass
+  origin: static
+  description: TypeScript compilation (tsc --noEmit --skipLibCheck) succeeds without new errors in cli-client files
+- id: boolean_option_with_equals_throws
+  type: fail_to_pass
+  origin: pr_diff
+  description: Vendored minimist throws error when boolean option passed with '=value'
+- id: claude_md_updated_with_new_rule
+  type: fail_to_pass
+  origin: pr_diff
+  description: CLAUDE.md updated with new commit message rule about 'Generated with'
+- id: repo_lint_passes
+  type: pass_to_pass
+  origin: static
+  description: TypeScript compilation does not introduce new errors
+- id: minimist_exports_correct_types
+  type: fail_to_pass
+  origin: pr_diff
+  description: minimist.ts exports MinimistOptions, MinimistArgs, and minimist function
+- id: test_ci_npm_build_passes
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: npm run build (playwright-core build including cli-client) succeeds'
 config_edits:
-  - path: "CLAUDE.md"
-    tier: 1
-    gold_added: "Never add \"Generated with\" in commit message."
-    gold_removed: ""
-
-# Track 3: Positive rubric - conventions the gold solution follows
+- path: CLAUDE.md
+  tier: 1
+  gold_added: Never add "Generated with" in commit message.
+  gold_removed: ''
 rubric:
-  - rule: "Import local modules using ES6 import syntax, not CommonJS require"
-    source:
-      path: "CLAUDE.md"
-      lines: "1-50"
-      commit: "4df350b1c81b61ea471ff12767efd8e05f773377"
-    evidence: "Gold uses 'import { minimist } from './minimist'' not 'require('minimist')'"
-    category: "code_style"
-    verification: programmatic
-
-  - rule: "Always update DEPS.list when adding new file dependencies"
-    source:
-      path: "CLAUDE.md"
-      lines: "75-90"
-      commit: "4df350b1c81b61ea471ff12767efd8e05f773377"
-    evidence: "Gold adds ./minimist.ts to [program.ts] and [session.ts] sections in DEPS.list"
-    category: "code_organization"
-    verification: programmatic
-
-  - rule: "Use explicit type imports with 'import type' for TypeScript types"
-    source:
-      path: "CLAUDE.md"
-      lines: "1-50"
-      commit: "4df350b1c81b61ea471ff12767efd8e05f773377"
-    evidence: "Gold uses 'import type { MinimistArgs } from ./minimist' in program.ts and session.ts"
-    category: "code_style"
-    verification: programmatic
-
-  - rule: "Follow existing commit message conventions when updating CLAUDE.md"
-    source:
-      path: "CLAUDE.md"
-      lines: "125-130"
-      commit: "4df350b1c81b61ea471ff12767efd8e05f773377"
-    evidence: "Gold adds new rule 'Never add \"Generated with\"' in same format as existing 'Never add Co-Authored-By' rule"
-    category: "documentation"
-    verification: llm_judge
-
-  - rule: "Remove external type packages when vendoring TypeScript implementations"
-    source:
-      path: "CLAUDE.md"
-      lines: "1-50"
-      commit: "4df350b1c81b61ea471ff12767efd8e05f773377"
-    evidence: "Gold removes @types/minimist from package.json when vendoring minimist as TypeScript"
-    category: "dependency_management"
-    verification: programmatic
-
-# Track 4: Distractors - conventions that could create collisions
+- rule: Import local modules using ES6 import syntax, not CommonJS require
+  source:
+    path: CLAUDE.md
+    lines: 1-50
+    commit: 4df350b1c81b61ea471ff12767efd8e05f773377
+  evidence: Gold uses 'import { minimist } from './minimist'' not 'require('minimist')'
+  category: code_style
+  verification: programmatic
+- rule: Always update DEPS.list when adding new file dependencies
+  source:
+    path: CLAUDE.md
+    lines: 75-90
+    commit: 4df350b1c81b61ea471ff12767efd8e05f773377
+  evidence: Gold adds ./minimist.ts to [program.ts] and [session.ts] sections in DEPS.list
+  category: code_organization
+  verification: programmatic
+- rule: Use explicit type imports with 'import type' for TypeScript types
+  source:
+    path: CLAUDE.md
+    lines: 1-50
+    commit: 4df350b1c81b61ea471ff12767efd8e05f773377
+  evidence: Gold uses 'import type { MinimistArgs } from ./minimist' in program.ts and session.ts
+  category: code_style
+  verification: programmatic
+- rule: Follow existing commit message conventions when updating CLAUDE.md
+  source:
+    path: CLAUDE.md
+    lines: 125-130
+    commit: 4df350b1c81b61ea471ff12767efd8e05f773377
+  evidence: Gold adds new rule 'Never add "Generated with"' in same format as existing 'Never add Co-Authored-By' rule
+  category: documentation
+  verification: llm_judge
+- rule: Remove external type packages when vendoring TypeScript implementations
+  source:
+    path: CLAUDE.md
+    lines: 1-50
+    commit: 4df350b1c81b61ea471ff12767efd8e05f773377
+  evidence: Gold removes @types/minimist from package.json when vendoring minimist as TypeScript
+  category: dependency_management
+  verification: programmatic
 distractors:
-  - rule: "Keep external dependencies for better maintainability"
-    source:
-      path: "CLAUDE.md"
-      lines: "75-90"
-      commit: "4df350b1c81b61ea471ff12767efd8e05f773377"
-    collision_type: "architecture_boundary"
-    why_distracting: "The PR specifically vendors minimist for better control and reduced dependencies, so keeping the external package would be wrong"
-    severity: medium
-
-  - rule: "Define types locally in each file that uses them"
-    source:
-      path: "CLAUDE.md"
-      lines: "1-50"
-      commit: "4df350b1c81b61ea471ff12767efd8e05f773377"
-    collision_type: "rule_conflict"
-    why_distracting: "PR shares MinimistArgs type across files from a single source - duplicating type definitions would be incorrect"
-    severity: medium
-
-  - rule: "Add all tool-generated content restrictions to CLAUDE.md"
-    source:
-      path: "CLAUDE.md"
-      lines: "125-130"
-      commit: "4df350b1c81b61ea471ff12767efd8e05f773377"
-    collision_type: "scope_ambiguity"
-    why_distracting: "The PR only adds the specific 'Generated with' rule observed in the PR, not a blanket ban on all tool-generated content"
-    severity: low
+- rule: Keep external dependencies for better maintainability
+  source:
+    path: CLAUDE.md
+    lines: 75-90
+    commit: 4df350b1c81b61ea471ff12767efd8e05f773377
+  collision_type: architecture_boundary
+  why_distracting: The PR specifically vendors minimist for better control and reduced dependencies, so keeping the external package would be wrong
+  severity: medium
+- rule: Define types locally in each file that uses them
+  source:
+    path: CLAUDE.md
+    lines: 1-50
+    commit: 4df350b1c81b61ea471ff12767efd8e05f773377
+  collision_type: rule_conflict
+  why_distracting: PR shares MinimistArgs type across files from a single source - duplicating type definitions would be incorrect
+  severity: medium
+- rule: Add all tool-generated content restrictions to CLAUDE.md
+  source:
+    path: CLAUDE.md
+    lines: 125-130
+    commit: 4df350b1c81b61ea471ff12767efd8e05f773377
+  collision_type: scope_ambiguity
+  why_distracting: The PR only adds the specific 'Generated with' rule observed in the PR, not a blanket ban on all tool-generated content
+  severity: low

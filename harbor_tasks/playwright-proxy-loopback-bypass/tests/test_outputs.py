@@ -165,3 +165,76 @@ def test_chromium_file_not_empty():
     content = chromium_ts.read_text()
     assert len(content) > 1000, "chromium.ts should not be empty/corrupted"
     assert "export class Chromium" in content, "Chromium class should be defined"
+
+# === CI-mined tests (taskforge.ci_check_miner) ===
+def test_ci_lint_snippets_npm():
+    """pass_to_pass | CI job 'Lint snippets' → step ''"""
+    r = subprocess.run(
+        ["bash", "-lc", 'npm ci'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step '' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_lint_snippets_pip():
+    """pass_to_pass | CI job 'Lint snippets' → step ''"""
+    r = subprocess.run(
+        ["bash", "-lc", 'pip install -r utils/doclint/linting-code-snippets/python/requirements.txt'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step '' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_lint_snippets_mvn():
+    """pass_to_pass | CI job 'Lint snippets' → step ''"""
+    r = subprocess.run(
+        ["bash", "-lc", 'mvn package'], cwd=os.path.join(REPO, 'utils/doclint/linting-code-snippets/java'),
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step '' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_lint_snippets_node():
+    """pass_to_pass | CI job 'Lint snippets' → step ''"""
+    r = subprocess.run(
+        ["bash", "-lc", 'node utils/doclint/linting-code-snippets/cli.js'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step '' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_docs___lint_npm():
+    """pass_to_pass | CI job 'docs & lint' → step ''"""
+    r = subprocess.run(
+        ["bash", "-lc", 'npm run build'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step '' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_docs___lint_npx():
+    """pass_to_pass | CI job 'docs & lint' → step ''"""
+    r = subprocess.run(
+        ["bash", "-lc", 'npx playwright install --with-deps'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step '' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_docs___lint_npm_2():
+    """pass_to_pass | CI job 'docs & lint' → step ''"""
+    r = subprocess.run(
+        ["bash", "-lc", 'npm run lint'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step '' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_docs___lint_audit_prod_npm_dependencies():
+    """pass_to_pass | CI job 'docs & lint' → step 'Audit prod NPM dependencies'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'node utils/check_audit.js'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Audit prod NPM dependencies' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")

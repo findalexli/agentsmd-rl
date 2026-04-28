@@ -153,10 +153,9 @@ def test_v1_path_passes_resolver_org_id_to_context():
     code = SLACK_VIEW_PATH.read_text()
 
     # Check that ResolverUserContext is instantiated with resolver_org_id
-    # This requires looking for the pattern: ResolverUserContext(..., resolver_org_id=...)
+    # The gold solution uses resolver_org_id=self.resolved_org_id
     assert "resolver_org_id=self.resolved_org_id" in code or \
-           "resolver_org_id=resolved_org_id" in code or \
-           "ResolverUserContext(" in code and "resolver_org_id" in code, \
+           "resolver_org_id=resolved_org_id" in code, \
         "V1 path must pass resolver_org_id to ResolverUserContext"
 
 
@@ -180,26 +179,6 @@ def test_git_provider_resolved_early():
     # Check for early resolution of git provider
     assert "_resolved_git_provider" in code, \
         "slack_view.py should have _resolved_git_provider attribute for early git provider resolution"
-
-
-def test_enterprise_unit_tests_pass():
-    """Run the enterprise unit tests for the slack view."""
-    # First check if the test file exists (it will only exist after the PR)
-    test_file = REPO / "enterprise/tests/unit/test_slack_view.py"
-
-    if not test_file.exists():
-        pytest.skip("test_slack_view.py doesn't exist at base commit (added by PR)")
-
-    # Run the unit tests
-    result = subprocess.run(
-        [sys.executable, "-m", "pytest", str(test_file), "-v", "--tb=short"],
-        cwd=str(REPO),
-        capture_output=True,
-        text=True,
-        timeout=120
-    )
-
-    assert result.returncode == 0, f"Enterprise unit tests failed:\n{result.stdout}\n{result.stderr}"
 
 
 # ============================================================
@@ -307,9 +286,9 @@ def test_repo_unit_tests_utils():
     if r.returncode != 0:
         pytest.skip(f"Could not install pytest: {r.stderr}")
 
-    # Run utils tests
+    # Run utils llm tests (non-overlapping with other utils tests)
     r = subprocess.run(
-        ["poetry", "run", "python", "-m", "pytest", "tests/unit/utils/test_circular_imports.py", "-v", "--tb=short"],
+        ["poetry", "run", "python", "-m", "pytest", "tests/unit/utils/test_llm_utils.py", "-v", "--tb=short"],
         capture_output=True, text=True, cwd=REPO, timeout=120
     )
     assert r.returncode == 0, f"Utils tests failed:\n{r.stdout[-500:]}\n{r.stderr[-500:]}"

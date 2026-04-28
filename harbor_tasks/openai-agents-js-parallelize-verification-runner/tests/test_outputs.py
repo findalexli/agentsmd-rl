@@ -210,6 +210,21 @@ def test_run_sh_delegates_to_node_runner():
     )
 
 
+def test_node_check_run_mjs():
+    """`node --check run.mjs` must exit 0 (valid ESM syntax)."""
+    r = subprocess.run(
+        ["node", "--check", str(RUN_MJS)],
+        capture_output=True,
+        text=True,
+        timeout=10,
+        cwd=str(REPO),
+    )
+    assert r.returncode == 0, (
+        f"node --check run.mjs must exit 0; got {r.returncode}, "
+        f"stderr={r.stderr!r}"
+    )
+
+
 # === pass-to-pass ===
 
 def test_run_sh_bash_syntax_valid():

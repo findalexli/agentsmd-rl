@@ -40,9 +40,13 @@ The fix must:
 - Uses the `internal/fs/streams` module and the `kWriteStreamFastPath` mechanism for fast-path writes
 - Exports the `getStdioWriteStream` function for creating stdio write streams
 
+## Code Style Requirements
+
+- **Oxlint**: The codebase uses oxlint for TypeScript/JavaScript linting. All changes must pass oxlint on the modified file and the `src/js/builtins/` directory.
+- **Prettier**: Prettier is used for code formatting. All changes must pass `prettier --check`.
+
 ## Technical Context
 
 The issue involves Bun's writable stream implementation. The codebase uses:
 - TypeScript files in `src/js/builtins/` with Bun's JavaScriptCore intrinsics (`$isPromise`, `.$call`, `.$apply`)
 - All `require()` calls must use string literals
-- Oxlint and Prettier are used for linting and formatting

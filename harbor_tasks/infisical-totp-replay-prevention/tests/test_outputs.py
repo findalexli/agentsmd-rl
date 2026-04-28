@@ -354,3 +354,67 @@ def test_p2p_repo_validate_string_unit_test():
         f"--- stdout ---\n{proc.stdout[-1500:]}\n"
         f"--- stderr ---\n{proc.stderr[-1500:]}"
     )
+
+# === CI-mined tests (taskforge.ci_check_miner) ===
+def test_ci_lint_run_lint_check():
+    """pass_to_pass | CI job 'Lint' → step 'Run lint check'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'npm run lint'], cwd=os.path.join(REPO, 'backend'),
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Run lint check' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_type_check_run_type_check():
+    """pass_to_pass | CI job 'Type Check' → step 'Run type check'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'npm run type:check'], cwd=os.path.join(REPO, 'backend'),
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Run type check' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_run_bdd_tests_run_bdd_tests():
+    """pass_to_pass | CI job 'Run BDD tests' → step 'Run bdd tests'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'npm run test:bdd'], cwd=os.path.join(REPO, 'backend'),
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Run bdd tests' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_run_integration_test_run_unit_test():
+    """pass_to_pass | CI job 'Run integration test' → step 'Run unit test'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'npm run test:unit'], cwd=os.path.join(REPO, 'backend'),
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Run unit test' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_run_integration_test_run_integration_test():
+    """pass_to_pass | CI job 'Run integration test' → step 'Run integration test'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'npm run test:e2e'], cwd=os.path.join(REPO, 'backend'),
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Run integration test' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_validate_db_schemas_apply_migrations():
+    """pass_to_pass | CI job 'Validate DB schemas' → step 'Apply migrations'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'npm run migration:latest-dev'], cwd=os.path.join(REPO, 'backend'),
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Apply migrations' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_validate_db_schemas_run_schema_generation():
+    """pass_to_pass | CI job 'Validate DB schemas' → step 'Run schema generation'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'npm run generate:schema'], cwd=os.path.join(REPO, 'backend'),
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Run schema generation' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")

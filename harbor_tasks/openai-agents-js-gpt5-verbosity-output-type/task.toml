@@ -1,0 +1,18 @@
+name = "openai-agents-js-gpt5-verbosity-output-type"
+
+[metadata]
+difficulty = "medium"
+tags = ["typescript", "openai", "bug-fix", "api-integration"]
+estimated_time_seconds = 600
+
+[description]
+short = "Fix a bug where responses API does not accept both outputType and verbosity parameter for gpt-5"
+long = """
+When using the OpenAI Agents JS SDK with GPT-5 and the Responses API,
+setting both an outputType and a verbosity parameter in providerData
+causes the verbosity to be silently dropped from the API request.
+The fix requires updating the response format construction to properly
+merge text configuration (including verbosity) with the output format,
+and ensuring providerData is correctly destructured so the text key
+does not leak to the wrong nesting level.
+"""

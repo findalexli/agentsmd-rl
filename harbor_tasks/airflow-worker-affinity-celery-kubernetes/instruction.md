@@ -24,10 +24,12 @@ The `workers.affinity` field should be deprecated and replaced with two new fiel
 
 ## Files to Modify
 
-- `chart/files/pod-template-file.kubernetes-helm-yaml` - template file used by KubernetesExecutor to create task pods
-- `chart/templates/NOTES.txt` - add deprecation warning for `workers.affinity`
-- `chart/values.schema.json` - add schema definitions for new fields
-- `chart/values.yaml` - add new fields under `workers.celery` and `workers.kubernetes`
+- The pod template file used by KubernetesExecutor to create task pods (located under `chart/files/`)
+- The Helm chart's post-install notes template (rendered after `helm install`)
+- The chart's JSON schema file for validating values (used by `helm lint`)
+- The chart's default values file that documents and provides initial values for all fields
+
+Note: when adding new fields, you must update both the values file and the schema together, otherwise schema validation will fail. The pod template and notes template also need updates to wire up the new fields and deprecation warnings.
 
 ## Testing
 

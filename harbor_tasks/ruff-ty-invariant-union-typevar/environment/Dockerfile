@@ -8,6 +8,9 @@ ENV DEBIAN_FRONTEND=noninteractive \
     CARGO_PROFILE_TEST_DEBUG=0 \
     CARGO_PROFILE_DEV_DEBUG=0
 
+# Make Rust toolchain available to login shells (bash -lc resets PATH on Debian).
+RUN echo 'export PATH="/usr/local/cargo/bin:$PATH"' > /etc/profile.d/rust.sh
+
 RUN apt-get update && apt-get install -y --no-install-recommends \
     git \
     ca-certificates \

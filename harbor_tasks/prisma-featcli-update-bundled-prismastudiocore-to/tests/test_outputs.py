@@ -16,19 +16,6 @@ STUDIO_TS = Path(REPO) / "packages" / "cli" / "src" / "Studio.ts"
 AGENTS_MD = Path(REPO) / "AGENTS.md"
 
 
-def _run_node(code: str, timeout: int = 30) -> subprocess.CompletedProcess:
-    """Execute JavaScript code via Node in the repo directory."""
-    script = Path(REPO) / "_eval_tmp.mjs"
-    script.write_text(code)
-    try:
-        return subprocess.run(
-            ["node", str(script)],
-            capture_output=True, text=True, timeout=timeout, cwd=REPO,
-        )
-    finally:
-        script.unlink(missing_ok=True)
-
-
 # ---------------------------------------------------------------------------
 # pass_to_pass (static) -- syntax / regression checks
 # ---------------------------------------------------------------------------

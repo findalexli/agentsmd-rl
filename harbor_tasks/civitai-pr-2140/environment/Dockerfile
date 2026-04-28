@@ -1,11 +1,14 @@
-FROM python:3.12-slim
+FROM node:20-slim
 
-# Install Node.js, pnpm, and git
-RUN apt-get update && apt-get install -y curl git && \
-    curl -fsSL https://deb.nodesource.com/setup_22.x | bash - && \
-    apt-get install -y nodejs && \
-    npm install -g pnpm@9 && \
-    rm -rf /var/lib/apt/lists/*
+# Install Python and git (needed for pytest and repo checkout)
+RUN apt-get update && apt-get install -y \
+    python3 \
+    python3-pip \
+    git \
+    && rm -rf /var/lib/apt/lists/*
+
+# Enable corepack and install pnpm matching CI version
+RUN corepack enable && corepack prepare pnpm@10.28.1 --activate
 
 WORKDIR /workspace
 
@@ -15,14 +18,13 @@ WORKDIR /workspace/civitai
 RUN git fetch --depth=1 origin 1ef47bec41ce9f6f4b0f7ee89921a0ca263ac7df && \
     git checkout 1ef47bec41ce9f6f4b0f7ee89921a0ca263ac7df
 
-# Install dependencies (only what's needed for tests)
+# Install dependencies
 RUN pnpm install --frozen-lockfile
 
-# Install pytest for test runner
-RUN python3 -m pip install pytest==8.3.4 pytest-timeout==2.3.1
+# Make pip usable (PEP 668 workaround for Docker)
+RUN python3 -m pip install --no-cache-dir --break-system-packages pytest==8.3.4 pytest-timeout==2.3.1
 
 # Create logs directory
 RUN mkdir -p /logs/verifier
 
-# Default command
 CMD ["bash"]

@@ -3,7 +3,7 @@ source:
   repo: anomalyco/opencode
   pr: 23216
   base_commit: 5181f9b4e141fc6c0c3c3d26169721af9e63ca51
-  merge_commit: 6d9ebfd79ede05a4b6d1397a50f465760b3d2460
+  merge_commit: 826fd3350ce8aa1a855956f956038fad7ecffb86
 task:
   kind: code_fix
 checks:
@@ -119,6 +119,10 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: provider.ts continues to load through bun's TypeScript loader after the PR's comment cleanup (regression guard on the file the PR also touches).
+- id: test_ci_smoke_bun_test
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'bun test smoke suite verifies the effect+zod toolchain is intact.'
 rubric:
 - rule: In `src/config`, follow the existing self-export pattern at the top of the file (for example `export * as ConfigAgent from "./agent"`) when adding a new config module.
   source:

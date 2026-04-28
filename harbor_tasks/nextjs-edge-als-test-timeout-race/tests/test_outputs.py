@@ -479,3 +479,22 @@ def _find_fixture(name: str) -> str | None:
         if p.exists():
             return str(p)
     return None
+
+# === CI-mined tests (taskforge.ci_check_miner) ===
+def test_ci_thank_you__build_pnpm():
+    """pass_to_pass | CI job 'thank you, build' → step ''"""
+    r = subprocess.run(
+        ["bash", "-lc", 'pnpm install'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step '' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_thank_you__build_pnpm_2():
+    """pass_to_pass | CI job 'thank you, build' → step ''"""
+    r = subprocess.run(
+        ["bash", "-lc", 'pnpm run build'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step '' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")

@@ -8,6 +8,8 @@ RUN apt-get update && \
         git curl ca-certificates build-essential tmux python3 python3-pip python3-venv && \
     rm -rf /var/lib/apt/lists/*
 
+RUN npm install -g pnpm@9
+
 # Clone repo at base commit (shallow for large monorepo)
 RUN git init /workspace/next.js && \
     cd /workspace/next.js && \

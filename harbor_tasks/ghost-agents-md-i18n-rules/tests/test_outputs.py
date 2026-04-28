@@ -83,12 +83,12 @@ def test_context_json_requirement_documented():
 
 def test_translate_workflow_command_documented():
     """The `yarn workspace @tryghost/i18n translate` command is documented."""
-    # Use subprocess grep — covers the harness `tests_have_subprocess` rubric.
     r = subprocess.run(
-        ["grep", "-F", "yarn workspace @tryghost/i18n translate", str(AGENTS)],
+        ["bash", "-lc", "grep -F 'yarn workspace @tryghost/i18n translate' AGENTS.md"],
         capture_output=True,
         text=True,
         timeout=30,
+        cwd=str(REPO),
     )
     assert r.returncode == 0, (
         "AGENTS.md must document the `yarn workspace @tryghost/i18n translate` command"

@@ -54,10 +54,24 @@ checks:
 config_edits:
 - path: .github/skills/issue-review.md
   tier: 1
-  gold_added: 'Step 1 now also extracts: labels, issue age, last activity date, and state_reason for closed issues. Step 2 reframed as ''Check for Closeable Issues'' with sub-categories 2a-2k (Spam or Junk, Reporter Confirmed Resolved, Already Fixed in a Prior Release, Duplicate, Not workers-sdk / Wrong Repo, Stale / No Response, Transient Platform Issue, User Error / Misunderstanding, Breaking Change (KEEP OPEN), Won''t Fix / By Design, Feature Superseded / Deprecated). Each closeable category specifies the appropriate state_reason (completed vs not_planned). Each category (except spam) includes comment templates. Wrong-Repo category has separate templates for runtime, framework, and account/billing issues. New Step 3: Check for Insufficient Information with comment template and label suggestions. Steps 4-5 renumbered accordingly. Expanded component-mapping table covering Workers + Assets, containers, workflows, workers-builds, python, workers for platforms, kv-asset-handler, types, node compat, and dashboard/API rows. Step 5 adds Version gap and Existing alternatives criteria. Output template Analysis bullet adds staleness and duplicate indicators. Suggested Comment lists six principles. Summary legend simplified from Yes|No|N/A to Yes|No.'
-  gold_removed: 'Old narrow ''Step 2: Check for Empty or Invalid Issues'' with only basic empty/spam/resolved/needs-more-info checks. Old merged STOP HERE step that combined closeable and needs-more-info gates. Old 9-row component table. Old Yes|No|N/A summary column legend.'
+  gold_added: 'Step 1 now also extracts: labels, issue age, last activity date, and state_reason for closed issues. Step 2
+    reframed as ''Check for Closeable Issues'' with sub-categories 2a-2k (Spam or Junk, Reporter Confirmed Resolved, Already
+    Fixed in a Prior Release, Duplicate, Not workers-sdk / Wrong Repo, Stale / No Response, Transient Platform Issue, User
+    Error / Misunderstanding, Breaking Change (KEEP OPEN), Won''t Fix / By Design, Feature Superseded / Deprecated). Each
+    closeable category specifies the appropriate state_reason (completed vs not_planned). Each category (except spam) includes
+    comment templates. Wrong-Repo category has separate templates for runtime, framework, and account/billing issues. New
+    Step 3: Check for Insufficient Information with comment template and label suggestions. Steps 4-5 renumbered accordingly.
+    Expanded component-mapping table covering Workers + Assets, containers, workflows, workers-builds, python, workers for
+    platforms, kv-asset-handler, types, node compat, and dashboard/API rows. Step 5 adds Version gap and Existing alternatives
+    criteria. Output template Analysis bullet adds staleness and duplicate indicators. Suggested Comment lists six principles.
+    Summary legend simplified from Yes|No|N/A to Yes|No.'
+  gold_removed: 'Old narrow ''Step 2: Check for Empty or Invalid Issues'' with only basic empty/spam/resolved/needs-more-info
+    checks. Old merged STOP HERE step that combined closeable and needs-more-info gates. Old 9-row component table. Old Yes|No|N/A
+    summary column legend.'
 rubric:
-- rule: Step 2 contains all eleven sub-categories (2a-2k) in the order specified in the instruction (Spam -> Resolved -> Already Fixed -> Duplicate -> Wrong Repo -> Stale -> Transient -> User Error -> Breaking Change -> Won't Fix -> Superseded). The agent must add ALL eleven; missing or out-of-order categories degrade the score.
+- rule: Step 2 contains all eleven sub-categories (2a-2k) in the order specified in the instruction (Spam -> Resolved -> Already
+    Fixed -> Duplicate -> Wrong Repo -> Stale -> Transient -> User Error -> Breaking Change -> Won't Fix -> Superseded). The
+    agent must add ALL eleven; missing or out-of-order categories degrade the score.
   source:
     path: .github/skills/issue-review.md
     lines: 35-50
@@ -65,39 +79,51 @@ rubric:
   evidence: 'Gold file contains all eleven sub-categories as #### 2a through #### 2k in the exact specified order.'
   category: architecture
   verification: llm_judge
-- rule: Each closeable category names the correct state_reason value (`completed` for resolved/transient/superseded; `not_planned` for spam/duplicate/wrong-repo/stale/user-error/wont-fix). Breaking Change is the only KEEP OPEN category.
+- rule: Each closeable category names the correct state_reason value (`completed` for resolved/transient/superseded; `not_planned`
+    for spam/duplicate/wrong-repo/stale/user-error/wont-fix). Breaking Change is the only KEEP OPEN category.
   source:
     path: .github/skills/issue-review.md
     lines: 35-50
     commit: 9c5ebf56291199eeaec43513732fd3fa7fbd502d
-  evidence: Gold file explicitly annotates each sub-category with the correct state_reason (completed or not_planned) and marks Breaking Change as KEEP OPEN.
+  evidence: Gold file explicitly annotates each sub-category with the correct state_reason (completed or not_planned) and
+    marks Breaking Change as KEEP OPEN.
   category: architecture
   verification: llm_judge
-- rule: Comment templates are written in the team's voice — non-dismissive, offer an escape hatch (e.g. 'feel free to open a new issue'), and link to the canonical PR/repo/docs where applicable. Spam category should NOT include a template (close silently).
+- rule: Comment templates are written in the team's voice — non-dismissive, offer an escape hatch (e.g. 'feel free to open
+    a new issue'), and link to the canonical PR/repo/docs where applicable. Spam category should NOT include a template (close
+    silently).
   source:
     path: .github/skills/issue-review.md
     lines: 137-141
     commit: 9c5ebf56291199eeaec43513732fd3fa7fbd502d
-  evidence: Gold file has comment templates for all categories except Spam; each template uses a helpful tone and includes an escape hatch.
+  evidence: Gold file has comment templates for all categories except Spam; each template uses a helpful tone and includes
+    an escape hatch.
   category: style
   verification: llm_judge
-- rule: The 'Not workers-sdk / Wrong Repo' category distinguishes runtime issues (workerd), framework issues (Nuxt/SvelteKit/Remix/Hono/React Router), upstream-tool issues (esbuild/Bun/Vite core), and account/billing issues — and provides a different template for each.
+- rule: The 'Not workers-sdk / Wrong Repo' category distinguishes runtime issues (workerd), framework issues (Nuxt/SvelteKit/Remix/Hono/React
+    Router), upstream-tool issues (esbuild/Bun/Vite core), and account/billing issues — and provides a different template
+    for each.
   source:
     path: .github/skills/issue-review.md
     lines: '40'
     commit: 9c5ebf56291199eeaec43513732fd3fa7fbd502d
-  evidence: Gold file has separate sub-sections and templates for runtime, framework, upstream-tool, and account/billing issues within the Not workers-sdk category.
+  evidence: Gold file has separate sub-sections and templates for runtime, framework, upstream-tool, and account/billing issues
+    within the Not workers-sdk category.
   category: architecture
   verification: llm_judge
-- rule: Once Step 3 (Insufficient Information) is inserted, the previously numbered Identify Component and Assess Reproducibility/Severity steps are correctly renumbered to Step 4 and Step 5. Cross-references inside the document remain consistent.
+- rule: Once Step 3 (Insufficient Information) is inserted, the previously numbered Identify Component and Assess Reproducibility/Severity
+    steps are correctly renumbered to Step 4 and Step 5. Cross-references inside the document remain consistent.
   source:
     path: .github/skills/issue-review.md
     lines: 52-84
     commit: 9c5ebf56291199eeaec43513732fd3fa7fbd502d
-  evidence: 'Gold file uses ### Step 3 for Insufficient Information, ### Step 4 for Identify Component, and ### Step 5 for Assess Reproducibility and Severity.'
+  evidence: 'Gold file uses ### Step 3 for Insufficient Information, ### Step 4 for Identify Component, and ### Step 5 for
+    Assess Reproducibility and Severity.'
   category: architecture
   verification: programmatic
-- rule: Expanded component table covers Workers + Assets, containers, workflows, workers-builds, python Workers, workers for platforms, kv-asset-handler, types, node compat / nodejs compat, and dashboard/API rows; existing rows are made more specific (e.g. `wrangler.json` alongside `wrangler.toml`, `_routes.json`/`_headers` for Pages); the runtime row points at cloudflare/workerd.
+- rule: Expanded component table covers Workers + Assets, containers, workflows, workers-builds, python Workers, workers for
+    platforms, kv-asset-handler, types, node compat / nodejs compat, and dashboard/API rows; existing rows are made more specific
+    (e.g. `wrangler.json` alongside `wrangler.toml`, `_routes.json`/`_headers` for Pages); the runtime row points at cloudflare/workerd.
   source:
     path: .github/skills/issue-review.md
     lines: 56-66
@@ -105,7 +131,8 @@ rubric:
   evidence: Gold file component table includes all listed new rows and updates existing rows as specified.
   category: architecture
   verification: llm_judge
-- rule: The Suggested Comment placeholder in the Output template lists the team's principles as nested bullets (escape hatch, link to PRs/docs, concise vs detailed, never dismissive, specific NEEDS-MORE-INFO questions, omit for spam).
+- rule: The Suggested Comment placeholder in the Output template lists the team's principles as nested bullets (escape hatch,
+    link to PRs/docs, concise vs detailed, never dismissive, specific NEEDS-MORE-INFO questions, omit for spam).
   source:
     path: .github/skills/issue-review.md
     lines: 137-141
@@ -113,12 +140,15 @@ rubric:
   evidence: Gold file Suggested Comment section includes nested bullet points listing all six principles.
   category: style
   verification: llm_judge
-- rule: 'Frontmatter (`name: github-issue-review`, description), the H1 heading `# GitHub Issue Triage Skill`, the `runs without bash or network access` note, the `data/<issue_number>/context.json` input description, and the tab-character requirement on the summary line are all preserved unchanged.'
+- rule: 'Frontmatter (`name: github-issue-review`, description), the H1 heading `# GitHub Issue Triage Skill`, the `runs without
+    bash or network access` note, the `data/<issue_number>/context.json` input description, and the tab-character requirement
+    on the summary line are all preserved unchanged.'
   source:
     path: .github/skills/issue-review.md
     lines: 1-14
     commit: 9c5ebf56291199eeaec43513732fd3fa7fbd502d
-  evidence: Gold file retains frontmatter, H1 heading, runtime note, context.json reference, and tab-character requirement unchanged.
+  evidence: Gold file retains frontmatter, H1 heading, runtime note, context.json reference, and tab-character requirement
+    unchanged.
   category: architecture
   verification: programmatic
 distractors:
@@ -128,7 +158,8 @@ distractors:
     lines: '18'
     commit: 9c5ebf56291199eeaec43513732fd3fa7fbd502d
   collision_type: rule_conflict
-  why_distracting: The early-stop instruction could cause the agent to skip the full 11-category closeable-issue triage after finding a single match, missing categories that should be checked first in order.
+  why_distracting: The early-stop instruction could cause the agent to skip the full 11-category closeable-issue triage after
+    finding a single match, missing categories that should be checked first in order.
   severity: high
 - rule: '### Step 2: Check for Empty or Invalid Issues'
   source:
@@ -136,13 +167,16 @@ distractors:
     lines: '35'
     commit: 9c5ebf56291199eeaec43513732fd3fa7fbd502d
   collision_type: scope_ambiguity
-  why_distracting: The old heading suggests a narrow scope (only empty/invalid) which contradicts the new broad 'Check for Closeable Issues' framing with 11 categories.
+  why_distracting: The old heading suggests a narrow scope (only empty/invalid) which contradicts the new broad 'Check for
+    Closeable Issues' framing with 11 categories.
   severity: medium
-- rule: If the issue describes Workers **runtime** behavior (e.g., fetch API quirks, V8 issues, compatibility flags) rather than **tooling** behavior, note that it may belong in a different repo.
+- rule: If the issue describes Workers **runtime** behavior (e.g., fetch API quirks, V8 issues, compatibility flags) rather
+    than **tooling** behavior, note that it may belong in a different repo.
   source:
     path: .github/skills/issue-review.md
     lines: '68'
     commit: 9c5ebf56291199eeaec43513732fd3fa7fbd502d
   collision_type: architecture_boundary
-  why_distracting: This vague 'may belong in a different repo' language conflicts with the new explicit Wrong Repo category that provides specific templates for runtime, framework, and account/support issues.
+  why_distracting: This vague 'may belong in a different repo' language conflicts with the new explicit Wrong Repo category
+    that provides specific templates for runtime, framework, and account/support issues.
   severity: medium

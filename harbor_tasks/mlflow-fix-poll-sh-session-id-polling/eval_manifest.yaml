@@ -52,13 +52,11 @@ checks:
 - id: skill_md_has_required_fields
   type: pass_to_pass
   origin: static
-  description: SKILL.md must have required frontmatter fields (name, description,
-    allowed-tools)
+  description: SKILL.md must have required frontmatter fields (name, description, allowed-tools)
 - id: poll_session_id_polling
   type: fail_to_pass
   origin: pr_diff
-  description: poll.sh accepts session_id as $1 and calls 'gh agent-task view' with
-    it
+  description: poll.sh accepts session_id as $1 and calls 'gh agent-task view' with it
 - id: poll_no_timeline_api
   type: fail_to_pass
   origin: pr_diff
@@ -71,29 +69,125 @@ checks:
   type: fail_to_pass
   origin: pr_diff
   description: SKILL.md documents session ID extraction for poll.sh
+- id: test_ci_lint_macos_run_pre_commit
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: lint-macos / Run pre-commit'
+- id: test_ci_lint_macos_test_clint
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: lint-macos / Test clint'
+- id: test_ci_lint_macos_check_function_signatures
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: lint-macos / Check function signatures'
+- id: test_ci_lint_macos_check_whitespace_only_changes
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: lint-macos / Check whitespace-only changes'
+- id: test_ci_lint_macos_check_uv_lock_changes
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: lint-macos / Check uv.lock changes'
+- id: test_ci_lint_macos_check_unused_media
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: lint-macos / Check unused media'
+- id: test_ci_lint_run_pre_commit
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: lint / Run pre-commit'
+- id: test_ci_lint_test_clint
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: lint / Test clint'
+- id: test_ci_lint_check_function_signatures
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: lint / Check function signatures'
+- id: test_ci_lint_check_whitespace_only_changes
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: lint / Check whitespace-only changes'
+- id: test_ci_lint_check_uv_lock_changes
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: lint / Check uv.lock changes'
+- id: test_ci_lint_check_unused_media
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: lint / Check unused media'
+- id: test_ci_unit_tests_run_fs2db_pytest_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: unit-tests / Run fs2db pytest tests'
+- id: test_ci_e2e_tests_generate_synthetic_data_for_mlflow_matri
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: e2e-tests / Generate synthetic data for MLflow ${{ matrix.mlflow-version }}'
+- id: test_ci_e2e_tests_run_migration_for_mlflow_matrix_mlflow_v
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: e2e-tests / Run migration for MLflow ${{ matrix.mlflow-version }}'
+- id: test_ci_build_build_ui
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: build / Build UI'
+- id: test_ci_build_build_distribution_files
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: build / Build distribution files'
+- id: test_ci_build_list_files_in_source_distribution
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: build / List files in source distribution'
+- id: test_ci_build_list_files_in_binary_distribution
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: build / List files in binary distribution'
+- id: test_ci_build_compare_files_in_source_and_binary_distr
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: build / Compare files in source and binary distributions'
+- id: test_ci_build_run_twine_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: build / Run twine check'
+- id: test_ci_build_test_installation_from_tarball
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: build / Test installation from tarball'
+- id: test_ci_build_test_installation_from_wheel
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: build / Test installation from wheel'
+- id: test_ci_build_test_installation_from_github
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: build / Test installation from GitHub'
+- id: test_ci_build_test_dev_install_skinny_sh
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: build / Test dev/install-skinny.sh'
 rubric:
 - rule: Only add comments that explain non-obvious logic or provide additional context
   source:
     path: .claude/skills/copilot/SKILL.md
     lines: 13-13
   category: documentation
-  reference: The gold solution adds comments in SKILL.md explaining the format of
-    the URL returned by `gh agent-task create` to justify the bash string manipulation
-    `session_id="${session_url##*/}"`.
+  reference: The gold solution adds comments in SKILL.md explaining the format of the URL returned by `gh agent-task create` to justify the bash string manipulation `session_id="${session_url##*/}"`.
 - rule: Assume the authors are referencing newer, valid resources
   source:
     path: .claude/skills/copilot/SKILL.md
     lines: 5-7
   category: tooling
-  reference: The gold solution adds `gh agent-task view` to the allowed-tools list
-    in SKILL.md, accepting the newly introduced command without questioning its existence.
+  reference: The gold solution adds `gh agent-task view` to the allowed-tools list in SKILL.md, accepting the newly introduced command without questioning its existence.
 config_edits:
 - path: .claude/skills/copilot/SKILL.md
   tier: 1
   gold_added: '- Bash(gh agent-task view:*)
 
-    Once Copilot starts working, extract the session ID from the output URL and poll
-    in the background until Copilot finishes:
+    Once Copilot starts working, extract the session ID from the output URL and poll in the background until Copilot finishes:
 
     # gh agent-task create returns a URL like:
 
@@ -107,22 +201,15 @@ config_edits:
     # Poll using session ID
 
     bash .claude/skills/copilot/poll.sh "$session_id" "<owner>/<repo>" <pr_number>'
-  gold_removed: 'Once Copilot starts working, poll in the background until Copilot
-    finishes:
+  gold_removed: 'Once Copilot starts working, poll in the background until Copilot finishes:
 
     bash .claude/skills/copilot/poll.sh <owner>/<repo> <pr_number>'
 distractors:
-- rule: New functionality in the tracking layer should be mirrored by workspace-aware
-    tests
+- rule: New functionality in the tracking layer should be mirrored by workspace-aware tests
   collision_type: scope_ambiguity
-  why_distracting: The agent might mistakenly believe that adding new polling functionality
-    requires adding workspace-aware tests, but this rule only applies to the MLflow
-    tracking layer, not to Claude skill bash scripts.
+  why_distracting: The agent might mistakenly believe that adding new polling functionality requires adding workspace-aware tests, but this rule only applies to the MLflow tracking layer, not to Claude skill bash scripts.
   severity: low
   source:
     path: CLAUDE.md
     lines: 16-17
-hierarchy_analysis: The repository uses a single `CLAUDE.md` file at the root. The
-  task requires editing the agent's own skill definition files (`SKILL.md` and `poll.sh`).
-  The agent must apply the general 'Knowledge Cutoff Note' from `CLAUDE.md` to accept
-  and use the unfamiliar `gh agent-task` commands specified in the issue description.
+hierarchy_analysis: The repository uses a single `CLAUDE.md` file at the root. The task requires editing the agent's own skill definition files (`SKILL.md` and `poll.sh`). The agent must apply the general 'Knowledge Cutoff Note' from `CLAUDE.md` to accept and use the unfamiliar `gh agent-task` commands specified in the issue description.

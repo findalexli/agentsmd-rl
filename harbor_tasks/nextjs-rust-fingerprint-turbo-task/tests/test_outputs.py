@@ -618,3 +618,4 @@ def test_package_json_fingerprint_script():
     assert "rust-fingerprint" in script_value, (
         f"rust-fingerprint script value unexpected: {script_value}"
     )
+

@@ -8,8 +8,7 @@ checks:
 - id: test_http_parser_rejects_conflicting_duplicate_content_length
   type: fail_to_pass
   origin: pr_diff
-  description: HttpParser rejects requests with conflicting Content-Length headers
-    with 400
+  description: HttpParser rejects requests with conflicting Content-Length headers with 400
 - id: test_http_parser_rejects_empty_content_length
   type: fail_to_pass
   origin: pr_diff
@@ -57,61 +56,40 @@ checks:
 - id: test_repo_http_smuggling_tests
   type: pass_to_pass
   origin: repo_tests
-  description: HTTP request smuggling tests pass (50 tests for Transfer-Encoding validation,
-    chunk size validation, pipelined request isolation)
+  description: HTTP request smuggling tests pass (50 tests for Transfer-Encoding validation, chunk size validation, pipelined request isolation)
+- id: test_pr_added_rejects_conflicting_duplicate_Content_Length_hea
+  type: fail_to_pass
+  origin: pr_diff
+  description: PR added test 'rejects conflicting duplicate Content-Length headers' in test/js/bun/http/request-smuggling.test.ts
+- id: test_pr_added_accepts_duplicate_Content_Length_headers_with_id
+  type: fail_to_pass
+  origin: pr_diff
+  description: PR added test 'accepts duplicate Content-Length headers with identical values' in test/js/bun/http/request-smuggling.test.ts
+- id: test_pr_added_rejects_empty_valued_Content_Length_followed_by_
+  type: fail_to_pass
+  origin: pr_diff
+  description: PR added test 'rejects empty-valued Content-Length followed by smuggled Content-Length' in test/js/bun/http/request-smuggling.test.ts
 rubric:
-- rule: Add documentation for the pr:comments script to CLAUDE.md explaining how to
-    read PR feedback
+- rule: Add documentation for the pr:comments script to CLAUDE.md explaining how to read PR feedback
   source:
     path: CLAUDE.md
     lines: 281-304
     commit: 196ed8a1bd4d5c9915e71816ce64a6a281eee23e
-  reference: '## Reading PR Feedback\n\n`gh pr view --comments` is fine for a quick
-    look at the Conversation tab, but it has a footgun worth knowing about: it only
-    returns issue-stream comments and silently omits review summaries and line-level
-    review comments. If a reviewer leaves an inline comment on a specific file line,
-    it will not show up — no error, no hint that anything is missing.\n\nWhen you
-    want the complete picture — especially when responding to a review or checking
-    whether anyone requested changes — use `bun run pr:comments`. It fetches all three
-    GitHub endpoints (`/issues/N/comments`, `/pulls/N/reviews`, `/pulls/N/comments`)
-    and prints them in one chronological listing, each labelled with its actual type
-    (issue comment, review verdict, line comment, reply, suggestion block).\n\n```bash\nbun
-    run pr:comments                    # current branch''s PR\nbun run pr:comments
-    28838              # by PR number\nbun run pr:comments ''#28838''           #
-    also works\nbun run pr:comments https://github.com/oven-sh/bun/pull/28838\n\n#
-    Machine-readable output for jq pipelines — one object per entry with\n# { when,
-    user, kind, location?, body, url?, resolved?, outdated? }.\n# resolved/outdated
-    come from GraphQL reviewThreads and are present only\n# on line comments / replies
-    whose thread state was successfully fetched\n# (omitted on issue comments, review
-    verdicts, and on GraphQL fetch\n# failure), so `resolved == false` unambiguously
-    means "confirmed open\n# thread". No header, no truncation. The PR is optional
-    here too\n# (defaults to the current branch''s PR).\nbun run pr:comments --json
-    | jq ''.[] | select(.user == "Jarred-Sumner")''\nbun run pr:comments --json |
-    jq ''[.[] | select(.resolved == false)]''   # still open\n```'
+  reference: '## Reading PR Feedback\n\n`gh pr view --comments` is fine for a quick look at the Conversation tab, but it has a footgun worth knowing about: it only returns issue-stream comments and silently omits review summaries and line-level review comments. If a reviewer leaves an inline comment on a specific file line, it will not show up — no error, no hint that anything is missing.\n\nWhen you want the complete picture — especially when responding to a review or checking whether anyone requested changes — use `bun run pr:comments`. It fetches all three GitHub endpoints (`/issues/N/comments`, `/pulls/N/reviews`, `/pulls/N/comments`) and prints them in one chronological listing, each labelled with its actual type (issue comment, review verdict, line comment, reply, suggestion block).\n\n```bash\nbun run pr:comments                    # current branch''s PR\nbun run pr:comments 28838              # by PR number\nbun run pr:comments ''#28838''           # also works\nbun run pr:comments https://github.com/oven-sh/bun/pull/28838\n\n# Machine-readable output for jq pipelines — one object per entry with\n# { when, user, kind, location?, body, url?, resolved?, outdated? }.\n# resolved/outdated come from GraphQL reviewThreads and are present only\n# on line comments / replies whose thread state was successfully fetched\n# (omitted on issue comments, review verdicts, and on GraphQL fetch\n# failure), so `resolved == false` unambiguously means "confirmed open\n# thread". No header, no truncation. The PR is optional here too\n# (defaults to the current branch''s PR).\nbun run pr:comments --json | jq ''.[] | select(.user == "Jarred-Sumner")''\nbun run pr:comments --json | jq ''[.[] | select(.resolved == false)]''   # still open\n```'
 - rule: Use port 0 for random ports in tests
   source:
     path: test/CLAUDE.md
     lines: 21-21
-  source_text: '- **Do not write flaky tests**. Unless explicitly asked, **never wait
-    for time to pass in tests**. Always wait for the condition to be met instead of
-    waiting for an arbitrary amount of time. **Never use hardcoded port numbers**.
-    Always use `port: 0` to get a random port.'
-  evidence: 'In `test/js/bun/http/request-smuggling.test.ts`, the developer uses `Bun.serve({
-    port: 0, ... })` across all three tests to request a random port rather than hardcoding
-    it.'
+  source_text: '- **Do not write flaky tests**. Unless explicitly asked, **never wait for time to pass in tests**. Always wait for the condition to be met instead of waiting for an arbitrary amount of time. **Never use hardcoded port numbers**. Always use `port: 0` to get a random port.'
+  evidence: 'In `test/js/bun/http/request-smuggling.test.ts`, the developer uses `Bun.serve({ port: 0, ... })` across all three tests to request a random port rather than hardcoding it.'
   category: A
   verification: llm_judge
 - rule: Await conditions instead of relying on timeouts or time passing
   source:
     path: test/CLAUDE.md
     lines: 21-21
-  source_text: '- **Do not write flaky tests**. Unless explicitly asked, **never wait
-    for time to pass in tests**. Always wait for the condition to be met instead of
-    waiting for an arbitrary amount of time. **Never use hardcoded port numbers**.
-    Always use `port: 0` to get a random port.'
-  evidence: In `test/js/bun/http/request-smuggling.test.ts`, the tests use `await
-    new Promise<void>((resolve, reject) => { client.on("data", ... resolve()) })`
-    to precisely await the response condition instead of relying on an arbitrary `setTimeout`.
+  source_text: '- **Do not write flaky tests**. Unless explicitly asked, **never wait for time to pass in tests**. Always wait for the condition to be met instead of waiting for an arbitrary amount of time. **Never use hardcoded port numbers**. Always use `port: 0` to get a random port.'
+  evidence: In `test/js/bun/http/request-smuggling.test.ts`, the tests use `await new Promise<void>((resolve, reject) => { client.on("data", ... resolve()) })` to precisely await the response condition instead of relying on an arbitrary `setTimeout`.
   category: A
   verification: llm_judge
 config_edits:
@@ -120,18 +98,10 @@ config_edits:
   gold_added: '## Reading PR Feedback
 
 
-    `gh pr view --comments` is fine for a quick look at the Conversation tab, but
-    it has a footgun worth knowing about: it only returns issue-stream comments and
-    silently omits review summaries and line-level review comments. If a reviewer
-    leaves an inline comment on a specific file line, it will not show up — no error,
-    no hint that anything is missing.
+    `gh pr view --comments` is fine for a quick look at the Conversation tab, but it has a footgun worth knowing about: it only returns issue-stream comments and silently omits review summaries and line-level review comments. If a reviewer leaves an inline comment on a specific file line, it will not show up — no error, no hint that anything is missing.
 
 
-    When you want the complete picture — especially when responding to a review or
-    checking whether anyone requested changes — use `bun run pr:comments`. It fetches
-    all three GitHub endpoints (`/issues/N/comments`, `/pulls/N/reviews`, `/pulls/N/comments`)
-    and prints them in one chronological listing, each labelled with its actual type
-    (issue comment, review verdict, line comment, reply, suggestion block).
+    When you want the complete picture — especially when responding to a review or checking whether anyone requested changes — use `bun run pr:comments`. It fetches all three GitHub endpoints (`/issues/N/comments`, `/pulls/N/reviews`, `/pulls/N/comments`) and prints them in one chronological listing, each labelled with its actual type (issue comment, review verdict, line comment, reply, suggestion block).
 
 
     ```bash
@@ -163,19 +133,14 @@ config_edits:
 
     bun run pr:comments --json | jq ''.[] | select(.user == "Jarred-Sumner")''
 
-    bun run pr:comments --json | jq ''[.[] | select(.resolved == false)]''   # still
-    open
+    bun run pr:comments --json | jq ''[.[] | select(.resolved == false)]''   # still open
 
     ```'
   gold_removed: ''
 distractors:
-- rule: If a test is for a specific numbered GitHub Issue, it should be placed in
-    test/regression/issue/${issueNumber}.test.ts. Ensure the issue number is REAL
-    and not a placeholder!
+- rule: If a test is for a specific numbered GitHub Issue, it should be placed in test/regression/issue/${issueNumber}.test.ts. Ensure the issue number is REAL and not a placeholder!
   collision_type: scope_ambiguity
-  why_distracting: The instruction mentions RFC 9112 and a specific bug, but no GitHub
-    issue number. An agent might try to create a regression test in `test/regression/issue/`
-    with a fake or placeholder issue number, which explicitly violates the rule.
+  why_distracting: The instruction mentions RFC 9112 and a specific bug, but no GitHub issue number. An agent might try to create a regression test in `test/regression/issue/` with a fake or placeholder issue number, which explicitly violates the rule.
   severity: high
   source:
     path: CLAUDE.md
@@ -186,21 +151,15 @@ distractors:
     lines: 56-56
   source_text: '**CRITICAL**: Use `.$call` and `.$apply`, never `.call` or `.apply`:'
   collision_type: scope_ambiguity
-  why_distracting: This rule strictly applies to JS Builtins (in `src/js/`) to prevent
-    tampering. The PR adds a CLI script (`pr-comments.ts`) and tests, where using
-    `.$call` would result in a ReferenceError because the `$` globals are not injected
-    outside the builtin bundler.
+  why_distracting: This rule strictly applies to JS Builtins (in `src/js/`) to prevent tampering. The PR adds a CLI script (`pr-comments.ts`) and tests, where using `.$call` would result in a ReferenceError because the `$` globals are not injected outside the builtin bundler.
   severity: high
 - rule: Use `itBundled()` for tests
   source:
     path: .claude/skills/writing-bundler-tests/SKILL.md
     lines: 32-32
-  source_text: Bundler tests use `itBundled()` from `test/bundler/expectBundled.ts`
-    to test Bun's bundler.
+  source_text: Bundler tests use `itBundled()` from `test/bundler/expectBundled.ts` to test Bun's bundler.
   collision_type: scope_ambiguity
-  why_distracting: The PR adds tests for the built-in HTTP server to `test/js/bun/http/request-smuggling.test.ts`.
-    An agent might mistakenly think `itBundled` is the standard testing method, which
-    would fail since these tests check native HTTP protocol parsing with `Bun.serve`.
+  why_distracting: The PR adds tests for the built-in HTTP server to `test/js/bun/http/request-smuggling.test.ts`. An agent might mistakenly think `itBundled` is the standard testing method, which would fail since these tests check native HTTP protocol parsing with `Bun.serve`.
   severity: high
 - rule: Create 3 C++ classes for JSC bindings
   source:
@@ -209,17 +168,13 @@ distractors:
   source_text: 'For publicly accessible Constructor and Prototype, create 3 classes:
 
 
-    1. **`class Foo : public JSC::DestructibleObject`** - if C++ fields exist; otherwise
-    use `JSC::constructEmptyObject` with `putDirectOffset`
+    1. **`class Foo : public JSC::DestructibleObject`** - if C++ fields exist; otherwise use `JSC::constructEmptyObject` with `putDirectOffset`
 
     2. **`class FooPrototype : public JSC::JSNonFinalObject`**
 
     3. **`class FooConstructor : public JSC::InternalFunction`**'
   collision_type: architecture_boundary
-  why_distracting: The PR modifies a C++ header (`packages/bun-uws/src/HttpParser.h`),
-    but this is part of the vendored uWebSockets fork which handles internal HTTP
-    parsing, not JavaScriptCore bindings. Trying to apply JSC macros or JSObject inheritance
-    here would break the HTTP stack.
+  why_distracting: The PR modifies a C++ header (`packages/bun-uws/src/HttpParser.h`), but this is part of the vendored uWebSockets fork which handles internal HTTP parsing, not JavaScriptCore bindings. Trying to apply JSC macros or JSObject inheritance here would break the HTTP stack.
   severity: high
 - rule: Create V8 handles using isolate->currentHandleScope()
   source:
@@ -229,28 +184,17 @@ distractors:
 
     - Use `isolate->currentHandleScope()->createLocal<T>()` to create handles'
   collision_type: architecture_boundary
-  why_distracting: Since the PR changes C++ code, an agent might incorrectly assume
-    it needs to wrap variables in V8 handle scopes. However, `bun-uws` is independent
-    of V8. Applying V8 handle scopes inside the HTTP parser would cause severe compilation
-    and architectural errors.
+  why_distracting: Since the PR changes C++ code, an agent might incorrectly assume it needs to wrap variables in V8 handle scopes. However, `bun-uws` is independent of V8. Applying V8 handle scopes inside the HTTP parser would cause severe compilation and architectural errors.
   severity: high
 - rule: Use bunExe and Bun.spawn in tests
   source:
     path: test/CLAUDE.md
     lines: 28-30
-  source_text: 'When spawning Bun processes, use `bunExe` and `bunEnv` from `harness`.
-    This ensures the same build of Bun is used to run the test and ensures debug logging
-    is silenced.
+  source_text: 'When spawning Bun processes, use `bunExe` and `bunEnv` from `harness`. This ensures the same build of Bun is used to run the test and ensures debug logging is silenced.
 
 
     ##### Use `-e` for single-file tests'
   collision_type: scope_ambiguity
-  why_distracting: The tests verify HTTP request smuggling. An agent might think it
-    needs to spawn a subprocess with `Bun.spawn` as indicated here, but the tests
-    run efficiently natively using `Bun.serve()` and `net.connect()` without needing
-    child processes. Spawning processes here would add unnecessary overhead.
+  why_distracting: The tests verify HTTP request smuggling. An agent might think it needs to spawn a subprocess with `Bun.spawn` as indicated here, but the tests run efficiently natively using `Bun.serve()` and `net.connect()` without needing child processes. Spawning processes here would add unnecessary overhead.
   severity: medium
-hierarchy_analysis: The repository contains duplicate config files (`AGENTS.md` and
-  `CLAUDE.md`) at both the root and `test/` directories. The agent must synthesize
-  the root-level test placement rules with the `test/`-level execution and style rules
-  (e.g., no hardcoded ports, using `bun:test`).
+hierarchy_analysis: The repository contains duplicate config files (`AGENTS.md` and `CLAUDE.md`) at both the root and `test/` directories. The agent must synthesize the root-level test placement rules with the `test/`-level execution and style rules (e.g., no hardcoded ports, using `bun:test`).

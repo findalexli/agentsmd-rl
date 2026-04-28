@@ -18,12 +18,11 @@ The endpoint should:
 - Validate any provided `variableId` using the `CustomId` validator
 - Pass all existing CI checks
 
-## Target File
+## Code Style Requirements
 
-The endpoint is implemented in:
-```
-src/Appwrite/Platform/Modules/Project/Http/Project/Variables/Create.php
-```
+- PHP files must follow PSR-12 formatting standards, enforced by Laravel Pint
+- PHPStan level 3 static analysis must pass on modified files
+- `composer validate --no-check-publish` must pass
 
 ## CI/CD Verification
 
@@ -35,6 +34,5 @@ After making changes, ensure these checks pass:
 
 ## Constraints
 
-- Do NOT modify the `action()` method - it already handles generated IDs correctly
-- Do NOT modify any existing validator logic
+- Endpoint handlers follow the Action pattern documented in AGENTS.md: `__construct()` defines parameters via `->param()`, `action()` handles request logic.
 - Maintain PSR-12 formatting standards

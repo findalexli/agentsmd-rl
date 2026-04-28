@@ -15,6 +15,8 @@ FIXTURES = Path("/tests/fixtures")
 FIXTURE_FILES = [
     "force-break-nontext-and-non-sensitive-sibling.html",
     "force-break-nontext-and-non-sensitive-sibling.html.snap",
+    "force-break-nontext-and-non-sensitive-sibling-2.html",
+    "force-break-nontext-and-non-sensitive-sibling-2.html.snap",
     "no-break-display-none.html",
     "no-break-display-none.html.snap",
 ]
@@ -98,6 +100,24 @@ def test_force_break_block_like_sibling_with_text(cargo_results: dict[str, str])
     )
 
 
+def test_force_break_block_like_sibling_with_text_variant(cargo_results: dict[str, str]) -> None:
+    """Second fail-to-pass: a different visible block-like element
+    (``<article>``) adjacent to text must also force parent multiline.
+
+    Input ``<div>before<article>middle</article>after</div>`` must
+    reformat to a four-line block; on the buggy base it stays on a
+    single line.
+    """
+    name = "formatter::html::html::whitespace::force_break_nontext_and_non_sensitive_sibling_2_html"
+    if name not in cargo_results:
+        pytest.fail(f"test {name} did not run; cargo_results keys: {sorted(cargo_results)[:10]} ...")
+    assert cargo_results[name] == "ok", (
+        f"{name} status={cargo_results[name]} (expected ok). "
+        f"On the buggy base commit the formatter does not break "
+        f"around a visible block-like <article> child; it should."
+    )
+
+
 # --- Pass-to-pass: regression guards on the same code-path ----------------
 
 
@@ -135,6 +155,7 @@ def test_no_other_spec_test_regressions(cargo_results: dict[str, str]) -> None:
     """
     new_test_ids = {
         "formatter::html::html::whitespace::force_break_nontext_and_non_sensitive_sibling_html",
+        "formatter::html::html::whitespace::force_break_nontext_and_non_sensitive_sibling_2_html",
         "formatter::html::html::whitespace::no_break_display_none_html",
     }
     failures = [

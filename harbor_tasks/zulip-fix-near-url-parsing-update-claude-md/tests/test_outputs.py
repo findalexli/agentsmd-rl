@@ -297,9 +297,6 @@ def test_repo_flake8():
 
 
 # [repo_tests] pass_to_pass
-
-
-# [repo_tests] pass_to_pass
 def test_script_dry_run_syntax():
     """Script dry-run shows proper argument handling without network (pass_to_pass)."""
     # Test that the script properly handles URL validation before network calls
@@ -311,3 +308,17 @@ def test_script_dry_run_syntax():
     # Exit code will be non-zero due to network/API failure, but no Python exceptions
     assert "Traceback" not in r.stderr, f"Script had unhandled exception:\n{r.stderr}"
     assert "Error:" in r.stderr or r.returncode != 0, "Should have expected error output"
+
+
+# [repo_tests] pass_to_pass
+def test_ci_bash_ruff_lint():
+    """CI-style lint: ruff check invoked through bash -lc (pass_to_pass)."""
+    subprocess.run(
+        [sys.executable, "-m", "pip", "install", "ruff", "-q"],
+        capture_output=True, timeout=60,
+    )
+    r = subprocess.run(
+        ["bash", "-lc", f"python3 -m ruff check '{FETCH_SCRIPT}'"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff CI lint (bash -lc) failed:\n{r.stdout[-500:]}"

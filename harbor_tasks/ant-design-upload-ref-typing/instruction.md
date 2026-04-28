@@ -98,4 +98,6 @@ The project enforces strict TypeScript with `strict: true`,
 `noUnusedParameters: true`. Your edit must keep `tsc --noEmit` clean for
 the files you touch (the project has one pre-existing tsc error in
 `components/watermark/useWatermark.ts` which is unrelated and not in
-scope for this task).
+scope for this task). The project also uses ESLint (`npx eslint`) and
+Biome (`npx biome lint`) for code style enforcement; your edits must
+not introduce new lint violations in any files you modify.

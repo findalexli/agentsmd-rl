@@ -10,7 +10,6 @@ Each test function maps 1:1 to a check in eval_manifest.yaml.
 import subprocess
 import sys
 import os
-from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 REPO = "/workspace/beam"
@@ -297,3 +296,13 @@ def test_pipeline_runs_successfully():
         )
         result = p.run()
         result.wait_until_finish()
+
+def test_ci_build_python_source_distributi_build_source():
+    """pass_to_pass | CI job 'Build python source distribution' → step 'Build source'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'pip install -U build && python -m build --sdist'], cwd=os.path.join(REPO, './sdks/python'),
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Build source' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+

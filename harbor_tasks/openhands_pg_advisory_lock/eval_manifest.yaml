@@ -25,33 +25,59 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Modified module can be imported successfully
+- id: test_ci_build_lint
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: build / Lint'
+- id: test_ci_build_typecheck
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: build / Typecheck'
+- id: test_ci_build_build_wheel
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: build / Build wheel'
+- id: test_ci_build_build_gradio_client_wheel
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: build / Build gradio_client wheel'
+- id: test_ci_hygiene_test_generate_skill
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: hygiene-test / Generate Skill'
+- id: test_ci_website_build_build_client
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: website-build / build client'
+- id: test_ci_website_build_build_packages
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: website-build / build packages'
+- id: test_ci_website_build_upload_docs_json_to_hf_dataset
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: website-build / Upload docs.json to HF dataset'
 rubric:
 - rule: Be consistent with the style of the surrounding code.
   source:
     path: AGENTS.md
     lines: 44-46
-  evidence: The patch maintains standard Python formatting, uses type hints, and keeps
-    the docstring format consistent with the surrounding code.
+  evidence: The patch maintains standard Python formatting, uses type hints, and keeps the docstring format consistent with the surrounding code.
   category: style
   verification: llm_judge
 distractors:
-- rule: Write comprehensive, behaviour-driven unit tests for Gradio frontend Svelte
-    components using Vitest browser mode, Playwright, and the @self/tootils test utilities.
+- rule: Write comprehensive, behaviour-driven unit tests for Gradio frontend Svelte components using Vitest browser mode, Playwright, and the @self/tootils test utilities.
   source:
     path: .claude/skills/frontend-unit-testing/SKILL.md
     lines: 1-3
   collision_type: scope_ambiguity
-  why_distracting: The agent might attempt to write frontend Svelte tests for the
-    filename sanitization logic, but the change is strictly in the Python client backend.
+  why_distracting: The agent might attempt to write frontend Svelte tests for the filename sanitization logic, but the change is strictly in the Python client backend.
   severity: medium
-- rule: Use Gradio core patterns like Interface, Blocks, and ChatInterface for building
-    interactive web UIs.
+- rule: Use Gradio core patterns like Interface, Blocks, and ChatInterface for building interactive web UIs.
   source:
     path: .claude/skills/gradio/SKILL.md
     lines: 20-38
   collision_type: architecture_boundary
-  why_distracting: The agent might try to implement the sanitization using Gradio
-    UI components or modify the UI layer, but this is a core utility function in the
-    client library.
+  why_distracting: The agent might try to implement the sanitization using Gradio UI components or modify the UI layer, but this is a core utility function in the client library.
   severity: low
 config_edits: []

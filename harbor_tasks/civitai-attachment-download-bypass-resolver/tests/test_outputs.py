@@ -297,3 +297,8 @@ def test_repo_vitest_stable_unit_tests():
         capture_output=True, text=True, timeout=120,
     )
     assert r.returncode == 0, f"Vitest unit tests failed:\n{r.stdout[-800:]}\n{r.stderr[-500:]}"
+
+# Note: Full-repo typecheck (pnpm run typecheck) is excluded because it requires
+# the private event-engine-common submodule which isn't available in Docker.
+# Per-file TypeScript parse checks (test_repo_ts_parse_*) cover syntax validation
+# on the files touched by this PR.

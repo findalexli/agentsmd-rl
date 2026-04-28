@@ -35,7 +35,8 @@ RUN pip install --no-cache-dir \
     pytest-xdist \
     pytest-timeout \
     pytest-cov \
-    ruff
+    ruff \
+    build
 
 # Clone matplotlib at a specific commit (shallow clone for speed)
 WORKDIR /workspace
@@ -43,10 +44,8 @@ RUN git clone --depth 100 --branch main https://github.com/matplotlib/matplotlib
 
 WORKDIR /workspace/matplotlib
 
-# Checkout a specific commit that serves as our base
-# This is a known good commit from the v3.9.x era
-RUN git checkout 9a0c728e6a5c4144bc641dd5e3b07a34e4c7e8f2 || \
-    git checkout $(git log --oneline -1 | awk '{print $1}')
+# Checkout the base commit for this task
+RUN git checkout ea362ab57e926a5c88a3b53636c1f8d669b2aa02
 
 # Install matplotlib in editable mode
 RUN pip install --no-build-isolation --editable ".[dev]" || \

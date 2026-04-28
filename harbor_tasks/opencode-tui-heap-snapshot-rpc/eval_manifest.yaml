@@ -56,20 +56,29 @@ checks:
 - id: app_accepts_onsnapshot_prop
   type: fail_to_pass
   origin: pr_diff
-  description: TUI App component accepts onSnapshot prop and passes it to heap snapshot
-    command
+  description: TUI App component accepts onSnapshot prop and passes it to heap snapshot command
 - id: changelog_command_updated
   type: fail_to_pass
   origin: pr_diff
-  description: .opencode/command/changelog.md has updated instructions with TUI/Desktop/Core/Misc
-    sections
+  description: .opencode/command/changelog.md has updated instructions with TUI/Desktop/Core/Misc sections
 - id: not_stub
   type: fail_to_pass
   origin: pr_diff
   description: RPC snapshot method has real implementation, not just a stub
+- id: test_ci_typecheck_run_typecheck
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: typecheck / Run typecheck'
+- id: test_ci_unit_run_unit_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: unit / Run unit tests'
+- id: test_ci_e2e_run_app_e2e_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: e2e / Run app e2e tests'
 rubric:
-- rule: Config update follows the structure and style of existing .opencode command
-    files
+- rule: Config update follows the structure and style of existing .opencode command files
   source:
     path: .opencode/command/changelog.md
     lines: 1-5
@@ -78,32 +87,25 @@ rubric:
   source:
     path: AGENTS.md
     lines: 60-67
-  evidence: In `packages/opencode/src/cli/cmd/tui/app.tsx`, the `App` component is
-    updated to accept a `props` object and accesses `props.onSnapshot` using dot notation
-    rather than destructuring the props.
+  evidence: In `packages/opencode/src/cli/cmd/tui/app.tsx`, the `App` component is updated to accept a `props` object and accesses `props.onSnapshot` using dot notation rather than destructuring the props.
   category: style
 - rule: Prefer single word names for variables and functions.
   source:
     path: AGENTS.md
     lines: 26-44
-  evidence: In `packages/opencode/src/cli/cmd/tui/thread.ts`, the variables storing
-    the snapshot file paths are named `tui` and `server` instead of multi-word names
-    like `tuiSnapshotPath` or `serverPath`.
+  evidence: In `packages/opencode/src/cli/cmd/tui/thread.ts`, the variables storing the snapshot file paths are named `tui` and `server` instead of multi-word names like `tuiSnapshotPath` or `serverPath`.
   category: naming
-- rule: Prefer single word variable names where possible. Use single word names by
-    default for new locals, params, and helper functions.
+- rule: Prefer single word variable names where possible. Use single word names by default for new locals, params, and helper functions.
   source:
     path: AGENTS.md
     lines: 18-32
-  evidence: The gold solution uses single-word variable names like `tui`, `server`,
-    `result`, and `files` instead of multi-word names like `tuiSnapshotPath` or `snapshotFiles`.
+  evidence: The gold solution uses single-word variable names like `tui`, `server`, `result`, and `files` instead of multi-word names like `tuiSnapshotPath` or `snapshotFiles`.
   category: naming
 - rule: Prefer `const` over `let`.
   source:
     path: AGENTS.md
     lines: 74-82
-  evidence: In `thread.ts` and `worker.ts`, the gold solution uses `const` for all
-    new variables (`tui`, `server`, `result`, `files`).
+  evidence: In `thread.ts` and `worker.ts`, the gold solution uses `const` for all new variables (`tui`, `server`, `result`, `files`).
   category: style
 config_edits:
 - path: .opencode/command/changelog.md
@@ -130,44 +132,27 @@ config_edits:
 
     go through each PR merged since the last tag
 
-    for each PR spawn a subagent to summarize what the PR was about. focus on user
-    facing changes. if it was entirely internal or code related you can ignore it.
-    also skip docs updates. each subagent should append its summary to UPCOMING_CHANGELOG.md
-    into the appropriate section.
+    for each PR spawn a subagent to summarize what the PR was about. focus on user facing changes. if it was entirely internal or code related you can ignore it. also skip docs updates. each subagent should append its summary to UPCOMING_CHANGELOG.md into the appropriate section.
 
-    once that is done, read UPCOMING_CHANGELOG.md and group it into sections for better
-    readability. make sure all PR references are preserved'
+    once that is done, read UPCOMING_CHANGELOG.md and group it into sections for better readability. make sure all PR references are preserved'
   gold_removed: 'go through each PR merged since the last tag
 
-    for each PR spawn a subagent to summarize what the PR was about. focus on user
-    facing changes. if it was entirely internal or code related you can ignore it.
-    also skip docs updates. each subagent should append its summary to UPCOMING_CHANGELOG.md
+    for each PR spawn a subagent to summarize what the PR was about. focus on user facing changes. if it was entirely internal or code related you can ignore it. also skip docs updates. each subagent should append its summary to UPCOMING_CHANGELOG.md
 
-    once that is done, read UPCOMING_CHANGELOG.md and group it into sections for better
-    readability. make sure all PR references are preserved'
+    once that is done, read UPCOMING_CHANGELOG.md and group it into sections for better readability. make sure all PR references are preserved'
 distractors:
 - rule: Use Effect.gen(function* () { ... }) for composition.
   collision_type: scope_ambiguity
-  why_distracting: The TUI RPC worker and thread use standard async/await and Promises.
-    Trying to effectify the new `snapshot` method using `Effect.gen` would break the
-    existing RPC interface or require unnecessary refactoring.
+  why_distracting: The TUI RPC worker and thread use standard async/await and Promises. Trying to effectify the new `snapshot` method using `Effect.gen` would break the existing RPC interface or require unnecessary refactoring.
   severity: high
   source:
     path: packages/opencode/AGENTS.md
     lines: 14-15
-- rule: Prefer FileSystem.FileSystem instead of raw fs/promises for effectful file
-    I/O.
+- rule: Prefer FileSystem.FileSystem instead of raw fs/promises for effectful file I/O.
   collision_type: architecture_boundary
-  why_distracting: The agent might try to use Effect's FileSystem to handle the file
-    writing, but `writeHeapSnapshot` from `node:v8` is a native API that writes directly
-    to disk and only accepts a string path. Wrapping it in FileSystem is unnecessary
-    and architecturally incorrect.
+  why_distracting: The agent might try to use Effect's FileSystem to handle the file writing, but `writeHeapSnapshot` from `node:v8` is a native API that writes directly to disk and only accepts a string path. Wrapping it in FileSystem is unnecessary and architecturally incorrect.
   severity: medium
   source:
     path: packages/opencode/AGENTS.md
     lines: 38-39
-hierarchy_analysis: The project has a root `AGENTS.md` and a package-specific `packages/opencode/AGENTS.md`.
-  The package-specific config introduces strict Effect rules. The agent must realize
-  that despite being in the `opencode` package, the specific TUI RPC code being edited
-  uses standard Promises, so the Effect rules should be ignored for this specific
-  scope.
+hierarchy_analysis: The project has a root `AGENTS.md` and a package-specific `packages/opencode/AGENTS.md`. The package-specific config introduces strict Effect rules. The agent must realize that despite being in the `opencode` package, the specific TUI RPC code being edited uses standard Promises, so the Effect rules should be ignored for this specific scope.

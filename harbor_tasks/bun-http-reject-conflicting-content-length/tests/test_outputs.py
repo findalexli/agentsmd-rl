@@ -422,3 +422,31 @@ def test_repo_http_smuggling_tests():
         capture_output=True, text=True, timeout=120, cwd=REPO,
     )
     assert r.returncode == 0, f"HTTP smuggling tests failed:\n{r.stderr[-500:]}"
+
+# === PR-added f2p tests (taskforge.test_patch_miner) ===
+def test_pr_added_rejects_conflicting_duplicate_Content_Length_hea():
+    """fail_to_pass | PR added test 'rejects conflicting duplicate Content-Length headers' in 'test/js/bun/http/request-smuggling.test.ts' (vitest_or_jest)"""
+    r = subprocess.run(
+        ["bash", "-lc", '(pnpm vitest run "test/js/bun/http/request-smuggling.test.ts" -t "rejects conflicting duplicate Content-Length headers" 2>&1 || npx vitest run "test/js/bun/http/request-smuggling.test.ts" -t "rejects conflicting duplicate Content-Length headers" 2>&1 || pnpm jest "test/js/bun/http/request-smuggling.test.ts" -t "rejects conflicting duplicate Content-Length headers" 2>&1 || npx jest "test/js/bun/http/request-smuggling.test.ts" -t "rejects conflicting duplicate Content-Length headers" 2>&1) | tail -50'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"PR-added test 'rejects conflicting duplicate Content-Length headers' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_pr_added_accepts_duplicate_Content_Length_headers_with_id():
+    """fail_to_pass | PR added test 'accepts duplicate Content-Length headers with identical values' in 'test/js/bun/http/request-smuggling.test.ts' (vitest_or_jest)"""
+    r = subprocess.run(
+        ["bash", "-lc", '(pnpm vitest run "test/js/bun/http/request-smuggling.test.ts" -t "accepts duplicate Content-Length headers with identical values" 2>&1 || npx vitest run "test/js/bun/http/request-smuggling.test.ts" -t "accepts duplicate Content-Length headers with identical values" 2>&1 || pnpm jest "test/js/bun/http/request-smuggling.test.ts" -t "accepts duplicate Content-Length headers with identical values" 2>&1 || npx jest "test/js/bun/http/request-smuggling.test.ts" -t "accepts duplicate Content-Length headers with identical values" 2>&1) | tail -50'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"PR-added test 'accepts duplicate Content-Length headers with identical values' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_pr_added_rejects_empty_valued_Content_Length_followed_by_():
+    """fail_to_pass | PR added test 'rejects empty-valued Content-Length followed by smuggled Content-Length' in 'test/js/bun/http/request-smuggling.test.ts' (vitest_or_jest)"""
+    r = subprocess.run(
+        ["bash", "-lc", '(pnpm vitest run "test/js/bun/http/request-smuggling.test.ts" -t "rejects empty-valued Content-Length followed by smuggled Content-Length" 2>&1 || npx vitest run "test/js/bun/http/request-smuggling.test.ts" -t "rejects empty-valued Content-Length followed by smuggled Content-Length" 2>&1 || pnpm jest "test/js/bun/http/request-smuggling.test.ts" -t "rejects empty-valued Content-Length followed by smuggled Content-Length" 2>&1 || npx jest "test/js/bun/http/request-smuggling.test.ts" -t "rejects empty-valued Content-Length followed by smuggled Content-Length" 2>&1) | tail -50'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"PR-added test 'rejects empty-valued Content-Length followed by smuggled Content-Length' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")

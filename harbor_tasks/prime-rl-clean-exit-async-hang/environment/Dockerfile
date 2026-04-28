@@ -14,8 +14,9 @@ RUN git init /workspace/prime-rl && \
     git fetch --depth=1 origin 27c35b1ce136c85c120b0486128316ae022b53a5 && \
     git checkout FETCH_HEAD
 
+# Install uv (matches CI: astral-sh/setup-uv@v5)
+RUN pip3 install --break-system-packages uv
+
 RUN mkdir -p /logs/verifier
 
 WORKDIR /workspace/prime-rl
-
-# No heavy deps needed — tests mock torch/wandb and call the decorator directly

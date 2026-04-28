@@ -17,8 +17,8 @@ The codebase provides a `literal()` function in the `@supabase/pg-meta/src/pg-fo
 - **`null`**: returns the SQL keyword `NULL` (unquoted)
 - **Numbers**: returns the plain numeric string without quotes — e.g., `42` becomes `42`
 
-## Constraints
+## Code Style Requirements
 
-- Modified TypeScript files must not contain `as any` type casts
-- The solution must pass TypeScript type checking (`pnpm run typecheck` in `apps/studio`)
-- The solution must pass linting (`pnpm run lint` in `apps/studio`)
+- The project uses ESLint with Prettier. All modified files must pass `pnpm run lint` in `apps/studio`.
+- Modified TypeScript files must not contain `as any` type casts.
+- The solution must pass TypeScript type checking (`pnpm run typecheck` in `apps/studio`).

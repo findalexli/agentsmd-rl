@@ -70,3 +70,6 @@ After modifying the build graph, run the build command twice after rebuilding a 
 Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
 
 - `prettier (JS/TS/JSON/Markdown formatter)`
+- `oxlint (TypeScript linter)` — for TypeScript build scripts
+- `markdownlint (Markdown linter)` — for CLAUDE.md documentation
+- `editorconfig-checker` — for file encoding, trailing whitespace, and final newline compliance

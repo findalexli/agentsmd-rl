@@ -618,3 +618,13 @@ def test_multi_node_rl_template_multiconnector_when_offload():
     assert "kv_offload" in content, "Multi-node RL template should check kv_offload flag"
     assert "MultiConnector" in content, "Multi-node RL template should use MultiConnector when offload enabled"
     assert "OffloadingConnector" in content, "Multi-node RL template should use OffloadingConnector"
+
+# === CI-mined tests (taskforge.ci_check_miner) ===
+def test_ci_unit_tests_run_tests():
+    """pass_to_pass | CI job 'Unit tests' → step 'Run tests'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'PYTEST_OUTPUT_DIR=/tmp/outputs uv run pytest tests/unit -m "not gpu"'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Run tests' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")

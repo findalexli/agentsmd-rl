@@ -149,3 +149,42 @@ def test_agents_md_intact():
     assert agents.is_file(), "AGENTS.md was removed"
     head = agents.read_text(encoding="utf-8").splitlines()[:1]
     assert head and head[0].strip().startswith("# AGENTS.md"), "AGENTS.md header changed"
+
+
+# === CI regression guards ===
+# The PR only touches .claude/skills/commit-msg/ so there are no code-level
+# test suites to run.  These pass_to_pass tests verify that files the task
+# must NOT touch are still present and intact.
+
+
+def test_copilot_instructions_intact():
+    """pass_to_pass | .github/copilot-instructions.md remains untouched."""
+    ci = REPO / ".github/copilot-instructions.md"
+    assert ci.is_file(), ".github/copilot-instructions.md was removed"
+    text = ci.read_text(encoding="utf-8")
+    assert "Ant Design Repository Copilot Instructions" in text, (
+        "copilot-instructions.md content was modified"
+    )
+
+
+def test_issue_reply_labels_intact():
+    """pass_to_pass | issue-reply references doc remains untouched."""
+    labels = REPO / ".claude/skills/issue-reply/references/labels-and-resources.md"
+    assert labels.is_file(), "labels-and-resources.md was removed"
+    text = labels.read_text(encoding="utf-8")
+    assert "标签" in text, "labels-and-resources.md content was modified"
+
+
+def test_git_remote_configured():
+    """pass_to_pass | git remote origin points at ant-design (analogous to CI trust check)."""
+    r = subprocess.run(
+        ["git", "remote", "get-url", "origin"],
+        cwd=str(REPO),
+        capture_output=True,
+        text=True,
+        timeout=30,
+    )
+    assert r.returncode == 0, f"git remote get-url failed: {r.stderr}"
+    assert "ant-design" in r.stdout, (
+        f"git remote origin is misconfigured: {r.stdout.strip()}"
+    )

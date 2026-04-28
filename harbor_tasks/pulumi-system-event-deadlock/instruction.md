@@ -35,15 +35,19 @@ within a fraction of a second.
 The deadlock is between two locks on the same `sync.RWMutex` held by the
 `ProgressDisplay`:
 
-- The system-event handler takes the **write** lock on the display's
-  event mutex while it appends to internal state and then asks the
-  renderer to draw the message.
+- The system-event handler calls `eventMutex.Lock()` (acquiring the
+  **write** lock on the display's event mutex) while it appends to
+  internal state and then asks the renderer to draw the message.
 - The message renderer's draw path eventually calls back into a method
   on the display that takes the **read** lock on that same event mutex.
 
-Because Go's `sync.RWMutex` does not allow a goroutine that holds the
-write lock to acquire the read lock (and because pending readers can
-also block once a writer is queued), the second acquisition deadlocks.
+Because the handler defers `display.eventMutex.Unlock()` at the top of
+the function, the write lock is still held when
+`display.renderer.systemMessage(payload)` is called, which — for the
+message renderer — eventually acquires the read lock. Go's
+`sync.RWMutex` does not allow a goroutine that holds the write lock
+to also acquire the read lock (and pending readers can block once a
+writer is queued), so the second acquisition deadlocks.
 
 History: this regression was introduced in PR #17019 and partially
 fixed in PR #19434, which addressed the equivalent case for
@@ -51,23 +55,14 @@ fixed in PR #19434, which addressed the equivalent case for
 
 ## What "fixed" means
 
-The system-event handler must **not** hold the write lock across the
-call into the renderer. It still needs the write lock for the
-operations that mutate display state (the call that ensures header /
-stack rows exist, and the append to the system-event payload buffer),
-but it must release the write lock **before** invoking the renderer.
-
 A solution is correct when:
 
 - Sending a system event into `ShowProgressEvents` running with a
   non-raw mock terminal completes promptly (the done channel closes,
   no deadlock).
 - The existing `pkg/backend/display` tests still pass.
-- The code in `handleSystemEvent` does not hold the event mutex's
-  write lock at the point the renderer is invoked. Concretely: a
-  single `defer display.eventMutex.Unlock()` placed at the top of the
-  function — before the renderer call — is the broken shape and will
-  be flagged.
+- The fix is minimal and does not introduce new abstractions or
+  refactor unrelated code.
 
 ## Where to look
 

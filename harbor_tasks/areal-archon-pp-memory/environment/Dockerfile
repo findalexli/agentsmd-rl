@@ -13,6 +13,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 RUN pip install \
         pytest==8.3.4 \
+        pytest-json-ctrf==0.4.1 \
         ruff==0.14.9
 
 WORKDIR /workspace

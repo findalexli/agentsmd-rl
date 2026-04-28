@@ -10,7 +10,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 RUN python3 -m venv /opt/venv \
-    && /opt/venv/bin/pip install --no-cache-dir pytest==8.3.4
+    && /opt/venv/bin/pip install --no-cache-dir pytest==8.3.4 pytest-json-ctrf==0.3.4
 
 ENV PATH="/opt/venv/bin:${PATH}"
 

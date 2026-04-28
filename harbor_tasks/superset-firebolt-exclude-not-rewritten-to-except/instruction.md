@@ -33,9 +33,8 @@ For the firebolt dialect:
 3. Pre-existing Firebolt behavior must continue to work — most importantly,
    `WHERE x NOT IN (...)` must still be parenthesized as `NOT (... IN ...)`
    (this is enforced by the existing `not_sql` override and must not regress).
-4. The Firebolt SQLGlot dialect (`Firebolt` class in
-   `superset/sql/dialects/firebolt.py`) must remain a valid sqlglot
-   `Dialect` subclass and continue to be discoverable via
+4. The Firebolt SQLGlot dialect (`Firebolt` class) must remain a valid
+   sqlglot `Dialect` subclass and continue to be discoverable via
    `sqlglot.parse_one(..., dialect="firebolt")`.
 
 ## Background

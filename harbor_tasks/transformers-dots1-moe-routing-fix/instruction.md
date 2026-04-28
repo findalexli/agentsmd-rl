@@ -55,6 +55,13 @@ model implementations using a *modular* mechanism:
 After your change, the modular file and the generated modeling file must
 remain consistent — the verifier runs the modular consistency check.
 
+## Code Style Requirements
+
+This repository enforces code style with `ruff` (configured in
+`pyproject.toml`). The dots1 model files must pass both `ruff check` (lint)
+and `ruff format --check` (formatting). If your edits introduce style issues,
+run `ruff check --fix` or `ruff format` to fix them.
+
 ## Files in scope
 
 * `src/transformers/models/dots1/modular_dots1.py`

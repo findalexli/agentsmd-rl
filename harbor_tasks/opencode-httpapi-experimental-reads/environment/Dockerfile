@@ -30,6 +30,6 @@ WORKDIR /workspace/opencode
 
 # Install workspace deps. This is a large monorepo; allow time.
 # --frozen-lockfile keeps versions deterministic.
-RUN bun install --frozen-lockfile 2>&1 | tail -50
+RUN bun install --frozen-lockfile
 
 RUN mkdir -p /logs/verifier

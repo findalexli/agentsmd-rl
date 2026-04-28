@@ -8,6 +8,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         git \
         ca-certificates \
         grep \
+        nodejs \
+        npm \
     && rm -rf /var/lib/apt/lists/*
 
 RUN pip install --no-cache-dir \
@@ -20,7 +22,9 @@ RUN git init /workspace/prql && \
     cd /workspace/prql && \
     git remote add origin https://github.com/PRQL/prql.git && \
     git fetch --depth=1 origin 4fd57b29a00b4643abdb07607de7e249d375b51a && \
-    git checkout FETCH_HEAD
+    git checkout FETCH_HEAD && \
+    cd grammars/prql-lezer && \
+    npm install
 
 RUN mkdir -p /logs/verifier
 

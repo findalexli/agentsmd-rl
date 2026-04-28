@@ -12,7 +12,7 @@ Open `CLAUDE.md` (at the repository root) and add **two new sibling sections**
 to the file. The sections must:
 
 - Use heading level `##` (top-level sub-section, matching the existing `##
-  文档规范`, `## PR 规范`, etc.).
+  文档规范`, `## PR 规范`, `## Changelog 规范`, etc.).
 - Be written in **Chinese**, matching the language and bullet-list style used
   throughout the rest of the file.
 - Use single-backtick inline code formatting for every path glob, file name,
@@ -41,7 +41,7 @@ covering each of the points below:
   `antd/lib/*`, `antd/locale/*`, `.dumi/*`, and `@@/*`.
 - **Forbidden forms.** Relative-path imports are not allowed for referencing
   component implementations, internal modules, methods, variables, or types.
-  Explicitly forbid the patterns `..`, `../xxx`, `../../xxx`, and `./xxx`,
+  Explicitly forbid the patterns `..`, `../xxx`, `../../xxx`, `./xxx`,
   including across-demo and across-directory reuse.
 - **Demo ↔ `.dumi` cross-imports.** Demo files and `.dumi` files must not
   reference each other via relative paths. If a small piece of logic must be

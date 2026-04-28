@@ -14,7 +14,7 @@ RUN git init /workspace/trigger.dev && \
     git remote add origin https://github.com/triggerdotdev/trigger.dev.git && \
     git fetch --depth=1 origin ad4daa3301f63354745cdcb8e911950d9fa5a93f && \
     git checkout ad4daa3301f63354745cdcb8e911950d9fa5a93f && \
-    git config user.email "agent@test" && \
+    git config user.email "dev@trigger.local" && \
     git config user.name "Agent"
 
 WORKDIR /workspace/trigger.dev

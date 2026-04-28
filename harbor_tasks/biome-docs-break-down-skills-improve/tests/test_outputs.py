@@ -164,17 +164,25 @@ print("OK")
 # ── Fail-to-pass tests ─────────────────────────────────────────────
 
 def test_justfile_recipe_runs():
-    """new-changeset-empty recipe must actually execute (behavioral check)."""
+    """new-changeset-empty recipe must exist and invoke pnpm changeset --empty."""
+    # Verify recipe is registered (fails on base where recipe doesn't exist)
     r = subprocess.run(
+        ["just", "--list"],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert "new-changeset-empty" in r.stdout, \
+        f"Recipe 'new-changeset-empty' not found in just --list: {r.stdout[:500]}"
+
+    # Verify the recipe actually invokes pnpm (may fail if pnpm not installed,
+    # but the recipe must at least attempt the right program)
+    r2 = subprocess.run(
         ["just", "new-changeset-empty"],
         capture_output=True, text=True, timeout=60, cwd=REPO,
     )
-    combined = r.stdout + r.stderr
-    # The recipe invokes `pnpm changeset --empty` which may fail if node_modules
-    # isn't installed, but the command must at least attempt the right program.
-    assert "pnpm" in combined or "changeset" in combined, \
-        f"Recipe did not invoke pnpm changeset. Output: {combined[:500]}"
-    print(f"OK: recipe executed (exit={r.returncode})")
+    combined = r2.stdout + r2.stderr
+    assert "pnpm" in combined.lower(), \
+        f"Recipe did not invoke pnpm. Output: {combined[:500]}"
+    print(f"OK: recipe listed and executed (exit={r2.returncode})")
 
 
 def test_justfile_new_changeset_empty_recipe():
@@ -445,3 +453,9 @@ if errors:
 print(f"OK: table has {len(table_skills)} skills, directory tree updated")
 """)
     assert r.returncode == 0, f"README skills check failed: {r.stderr}"
+
+# === CI-mined tests (taskforge.ci_check_miner) ===
+# Dropped: cargo fmt/check/test/clippy/udeps — all require Rust toolchain
+# (cargo: not found in slim image). These PR changes only touch .claude/skills/
+# markdown files + justfile — no Rust code changed, so full workspace cargo
+# commands are irrelevant and constitute unavailable infra.

@@ -32,11 +32,11 @@ When `--pgo-generate` is active on a Unix platform, the compiler must receive `-
 
 When `--pgo-use` is active on a Unix platform, the compiler must receive `-fprofile-use=<file>` along with warning suppression flags `-Wno-profile-instr-out-of-date`, `-Wno-profile-instr-unprofiled`, and `-Wno-backend-plugin`.
 
-These flags must be passed to both the compiler (compile-time) via `globalFlags` in `scripts/build/flags.ts` and to the linker (link-time) via `linkerFlags` in `scripts/build/flags.ts`.
+These flags must be passed both at compile-time (via the global compiler flags system) and at link-time (via the linker flags system).
 
 ### WebKit Build Integration
 
-When building WebKit locally, the PGO flags must be forwarded to WebKit's CMake configuration via `CMAKE_C_FLAGS` and `CMAKE_CXX_FLAGS`. This is done by calling `webkit.build()` from `scripts/build/deps/webkit.ts` with the resolved config.
+When building WebKit locally, the PGO flags must be forwarded to WebKit's CMake configuration via `CMAKE_C_FLAGS` and `CMAKE_CXX_FLAGS`. This is done by calling the WebKit dependency's build function with the resolved config.
 
 When `--pgo-use` is set, the warning suppression flags must also be included.
 
@@ -46,9 +46,13 @@ All PGO flags apply only on Unix platforms (Linux and macOS). On Windows, the fl
 
 ### Config Schema
 
-The resolved config object (returned by `resolveConfig()` from `scripts/build/config.ts`) must preserve the following properties when set:
+The resolved config object (returned by the configuration resolver) must preserve the following properties when set:
 - `pgoGenerate` — the directory path provided to `--pgo-generate`
 - `pgoUse` — the file path provided to `--pgo-use`
+
+## Code Style Requirements
+
+All modified TypeScript files must parse without syntax errors. The build system follows a flat configuration model with all derived values computed in a single configuration resolver function. See the build system architecture documentation (`scripts/build/CLAUDE.md`) for conventions on flag tables, dependency overrides, and configuration structure.
 
 ## Verification
 

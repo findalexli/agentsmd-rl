@@ -51,8 +51,6 @@ def _find_zig_function_body(content, fn_name):
                     brace_count -= l.count('}')
                     if brace_count <= 0:
                         break
-            # body_lines contains everything from function signature to closing brace
-            # Extract content between first { and last }
             full = "\n".join(body_lines)
             first_brace = full.index('{')
             last_brace = full.rindex('}')
@@ -82,49 +80,6 @@ def test_regression_test_file_created():
     assert has_temp_dir, "Test must use tempDir() for isolated test files"
 
 
-def test_regression_test_exercises_dynamic_import():
-    """Regression test must exercise dynamic import() of unknown node: modules.
-
-    The test verifies that require() of CJS files containing import("node:sqlite")
-    does NOT fail at load time - this is the core behavioral fix.
-    """
-    test_path = Path(REPO) / "test" / "regression" / "issue" / "25707.test.ts"
-
-    content = test_path.read_text()
-
-    has_dynamic_import = 'import("node:sqlite")' in content
-    has_require = "require(" in content
-    has_exit_code_check = "exitCode" in content or ".exited" in content
-    has_expectations = "expect(" in content
-
-    assert has_dynamic_import, \
-        "Test must exercise dynamic import of node:sqlite module"
-    assert has_require, \
-        "Test must use require() to load CJS file"
-    assert has_exit_code_check, \
-        "Test must verify exit code (load succeeded)"
-    assert has_expectations, \
-        "Test must have expect() assertions"
-
-
-def test_regression_test_verifies_error_at_runtime():
-    """Regression test must verify ERR_UNKNOWN_BUILTIN_MODULE is caught at runtime.
-
-    The fix defers the error to runtime - the test must verify this behavior.
-    """
-    test_path = Path(REPO) / "test" / "regression" / "issue" / "25707.test.ts"
-
-    content = test_path.read_text()
-
-    has_error_code = "ERR_UNKNOWN_BUILTIN_MODULE" in content
-    has_catch_block = "catch" in content
-
-    assert has_error_code, \
-        "Test must check for ERR_UNKNOWN_BUILTIN_MODULE error code"
-    assert has_catch_block, \
-        "Test must use try/catch to handle runtime error"
-
-
 def test_linker_defers_unknown_node_modules():
     """Linker must defer dynamic import() of unknown node: modules to runtime.
 
@@ -140,7 +95,6 @@ def test_linker_defers_unknown_node_modules():
     deferral_context = []
     for i, line in enumerate(lines):
         if ".require" in line and ("or" in line or "==" in line):
-            # Capture surrounding context
             start = max(0, i - 1)
             end = min(len(lines), i + 4)
             deferral_context = lines[start:end]
@@ -148,7 +102,6 @@ def test_linker_defers_unknown_node_modules():
 
     deferral_text = "\n".join(deferral_context)
 
-    # The fix should add .dynamic to the same condition as .require and .require_resolve
     has_require = ".require" in deferral_text
     has_require_resolve = ".require_resolve" in deferral_text
     has_dynamic_in_deferral = ".dynamic" in deferral_text
@@ -165,27 +118,19 @@ def test_linker_defers_unknown_node_modules():
 def test_logger_ensures_line_text_safety():
     """Logger must ensure line_text outlives arena-allocated source memory.
 
-    The fix changes the text_dupe parameter from false to true in addResolveError.
-    We verify the fix by checking that the function now passes 'true' for text duplication.
+    The fix changes the text_dupe parameter from false to true in addResolveError
+    so that line_text is duplicated and survives arena reset.
     """
     logger_path = Path(REPO) / "src" / "logger.zig"
     content = logger_path.read_text()
 
-    # Find the addResolveError function body
     function_body = _find_zig_function_body(content, "addResolveError")
 
     assert function_body, "Could not find addResolveError function body"
 
-    # Check for the key fix: the function body should call addResolveErrorWithLevel
-    # with 'true' for the text duplication parameter
-    # In the original: false is passed
-    # In the fix: true is passed
-
-    # Check for true being passed to addResolveErrorWithLevel
+    # The fix: text_dupe parameter changed from false to true
     has_true_param = "addResolveErrorWithLevel" in function_body and ", true, .err" in function_body
-
-    # Also check for comment about text duplication
-    has_comment_about_dup = ("dupe" in function_body or "outlives" in function_body)
+    has_comment_about_dup = "dupe" in function_body or "outlives" in function_body
 
     assert has_true_param or has_comment_about_dup, (
         "addResolveError should pass 'true' for text_dupe parameter or have a comment about duplicating line_text. "
@@ -196,8 +141,8 @@ def test_logger_ensures_line_text_safety():
 def test_credentials_uses_bun_strings_api():
     """credentials.zig must use bun.strings API instead of std.mem.
 
-    The fix replaces std.mem.indexOfAny with strings.indexOfAny in containsNewlineOrCR.
-    We verify the bug is fixed by checking the function no longer uses std.mem.
+    The fix replaces std.mem.indexOfAny with strings.indexOfAny in
+    containsNewlineOrCR. Verify the function no longer uses std.mem.
     """
     credentials_path = Path(REPO) / "src" / "s3" / "credentials.zig"
     content = credentials_path.read_text()
@@ -206,7 +151,6 @@ def test_credentials_uses_bun_strings_api():
 
     uses_std_mem = "std.mem.indexOfAny" in function_body
 
-    # After the fix, std.mem should NOT be used in this function
     assert not uses_std_mem, (
         "containsNewlineOrCR should NOT use std.mem.indexOfAny. "
         "The fix replaces std.mem with bun.strings for string operations."
@@ -217,6 +161,20 @@ def test_credentials_uses_bun_strings_api():
     assert uses_bun_strings, (
         "containsNewlineOrCR should use strings.indexOfAny (from bun.strings). "
         "Expected: strings.indexOfAny(value, \"\\r\\n\")."
+    )
+
+
+def test_credentials_has_strings_import():
+    """credentials.zig must import the strings module from bun.
+
+    The file uses bun.strings APIs throughout and should have the proper
+    import: const strings = bun.strings;
+    """
+    credentials_path = Path(REPO) / "src" / "s3" / "credentials.zig"
+    content = credentials_path.read_text()
+
+    assert "const strings = bun.strings" in content, (
+        "credentials.zig must import strings from bun.strings"
     )
 
 
@@ -238,8 +196,9 @@ def test_claude_md_has_required_sections():
 def test_claude_md_table_formatting():
     """CLAUDE.md 'Instead of / Use' table must be properly formatted.
 
-    The fix ensures the table has consistent column alignment with proper
-    separator lines.
+    The fix ensures the table has properly aligned columns with expanded
+    separator lines. The old compact format (|-----------|-----|) must be
+    replaced with the aligned format that has spaces and wider columns.
     """
     claude_path = Path(REPO) / "src" / "CLAUDE.md"
     content = claude_path.read_text()
@@ -249,21 +208,111 @@ def test_claude_md_table_formatting():
     table_rows = []
     in_table = False
     found_separator = False
+    separator_row = ""
 
     for line in lines:
-        if "| Instead of" in line or "Instead of |" in line:
+        if "| Instead of" in line:
             in_table = True
         if in_table:
             table_rows.append(line)
-            if "---" in line:
+            if "---" in line and line.strip().startswith("|"):
                 found_separator = True
+                separator_row = line
             if found_separator and not line.strip().startswith("|") and len(line.strip()) > 0:
                 break
 
-    assert len(table_rows) >= 3, "CLAUDE.md must have table header, separator, and at least one row"
-    assert found_separator, "CLAUDE.md table must have --- separator row"
+    assert len(table_rows) >= 3, (
+        "CLAUDE.md must have table header, separator, and at least one row. "
+        f"Found {len(table_rows)} table rows."
+    )
+    assert found_separator, "CLAUDE.md table must have --- separator row with pipe delimiters"
+
+    # The new format has spaces between pipes and dashes: | --- |
+    # The old compact format has no spaces: |---|
+    assert "| -" in separator_row, (
+        "CLAUDE.md table separator must use the expanded format with spaces "
+        "between pipes and dashes (e.g. | ------ | not |------|). "
+        f"Found separator: '{separator_row.strip()}'"
+    )
+
+    # The expanded separator should be significantly wider than the old format (~22 chars)
+    assert len(separator_row.strip()) > 40, (
+        f"CLAUDE.md table separator row must be wide (>40 chars). "
+        f"Found: {len(separator_row.strip())} chars in '{separator_row.strip()}'"
+    )
 
     for row in table_rows[2:]:
         if row.strip().startswith("|") and "---" not in row:
             parts = [p for p in row.split("|") if p.strip()]
             assert len(parts) >= 2, f"Table row must have at least 2 columns: {row}"
+
+
+def test_claude_md_whitespace_improvements():
+    """CLAUDE.md must have blank lines after section headers.
+
+    The fix adds blank lines after:
+    - "Key functions (all take `bun.FileDescriptor`, not `std.posix.fd_t`):"
+    - "Key methods:"
+    - "For pooled path buffers (avoids 64KB stack allocations on Windows):"
+    """
+    claude_path = Path(REPO) / "src" / "CLAUDE.md"
+    content = claude_path.read_text()
+    lines = content.split("\n")
+
+    headers_to_check = [
+        "Key functions (all take `bun.FileDescriptor`, not `std.posix.fd_t`):",
+        "Key methods:",
+        "For pooled path buffers (avoids 64KB stack allocations on Windows):",
+    ]
+
+    for header in headers_to_check:
+        found = False
+        for i, line in enumerate(lines):
+            if line.strip() == header:
+                found = True
+                # Next line should be blank (empty or whitespace-only)
+                next_line = lines[i + 1] if i + 1 < len(lines) else ""
+                assert next_line.strip() == "", (
+                    f"CLAUDE.md must have a blank line after '{header}'. "
+                    f"Found: '{next_line}'"
+                )
+                break
+        assert found, f"CLAUDE.md must contain section header: {header}"
+
+
+# === PR-added subprocess tests ===
+
+def test_pr_added_require_of_CJS_file_containing_dynamic_import_of():
+    """fail_to_pass | PR added test 'require() of CJS file containing dynamic import of non-existent node: module does not fail at load time' in 'test/regression/issue/25707.test.ts'"""
+    r = subprocess.run(
+        ["bash", "-lc",
+         "bun test ./test/regression/issue/25707.test.ts "
+         r"-t 'require\(\) of CJS file containing dynamic import of non-existent node: module does not fail at load time'"],
+        cwd=REPO, capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"PR-added test failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+
+def test_pr_added_require_of_CJS_file_with_bare_dynamic_import_of_():
+    """fail_to_pass | PR added test 'require() of CJS file with bare dynamic import of non-existent node: module does not fail at load time' in 'test/regression/issue/25707.test.ts'"""
+    r = subprocess.run(
+        ["bash", "-lc",
+         "bun test ./test/regression/issue/25707.test.ts "
+         r"-t 'require\(\) of CJS file with bare dynamic import of non-existent node: module does not fail at load time'"],
+        cwd=REPO, capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"PR-added test failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+
+def test_pr_added_dynamic_import_of_non_existent_node_module_in_CJ():
+    """fail_to_pass | PR added test 'dynamic import of non-existent node: module in CJS rejects at runtime with correct error' in 'test/regression/issue/25707.test.ts'"""
+    r = subprocess.run(
+        ["bash", "-lc",
+         "bun test ./test/regression/issue/25707.test.ts "
+         "-t 'dynamic import of non-existent node: module in CJS rejects at runtime with correct error'"],
+        cwd=REPO, capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"PR-added test failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")

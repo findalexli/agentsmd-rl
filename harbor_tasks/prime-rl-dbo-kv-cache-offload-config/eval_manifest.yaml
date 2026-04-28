@@ -12,8 +12,7 @@ checks:
 - id: kv_cache_offload_config_defaults
   type: fail_to_pass
   origin: pr_diff
-  description: KVCacheOffloadConfig exists with block_size=64 and cpu_bytes=1_000_000_000
-    defaults
+  description: KVCacheOffloadConfig exists with block_size=64 and cpu_bytes=1_000_000_000 defaults
 - id: enable_dbo_field_and_default
   type: fail_to_pass
   origin: pr_diff
@@ -25,13 +24,11 @@ checks:
 - id: disaggregated_kv_cache_offload_field
   type: fail_to_pass
   origin: pr_diff
-  description: DisaggregatedInferenceDeploymentConfig has kv_cache_offload field defaulting
-    to None
+  description: DisaggregatedInferenceDeploymentConfig has kv_cache_offload field defaulting to None
 - id: kv_cache_offload_custom_values
   type: fail_to_pass
   origin: pr_diff
-  description: KVCacheOffloadConfig accepts various valid block_size and cpu_bytes
-    combinations
+  description: KVCacheOffloadConfig accepts various valid block_size and cpu_bytes combinations
 - id: inference_entrypoint_passes_kv_offload_params
   type: fail_to_pass
   origin: pr_diff
@@ -107,8 +104,7 @@ checks:
 - id: pytest_unit_configs
   type: pass_to_pass
   origin: repo_tests
-  description: Repo's unit tests for configs pass (test_defaults, test_toml_partial_nested_override,
-    test_cli_overrides_defaults)
+  description: Repo's unit tests for configs pass (test_defaults, test_toml_partial_nested_override, test_cli_overrides_defaults)
 - id: ruff_check_combined
   type: pass_to_pass
   origin: repo_tests
@@ -121,66 +117,50 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: All repo TOML config files can be loaded by their config classes
+- id: test_ci_unit_tests_run_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: Unit tests / Run tests'
 rubric:
-- rule: 'Targeted comments: don''t explain your work process or reference old code.
-    Use targeted comments sparingly to clarify ambiguous logic.'
+- rule: 'Targeted comments: don''t explain your work process or reference old code. Use targeted comments sparingly to clarify ambiguous logic.'
   source:
     path: AGENTS.md
     lines: 4-5
-  evidence: The gold solution adds a clear, targeted docstring to `KVCacheOffloadConfig`
-    explaining the specific behavior for prefill vs decode nodes, without adding any
-    inline comments explaining the work proces
+  evidence: The gold solution adds a clear, targeted docstring to `KVCacheOffloadConfig` explaining the specific behavior for prefill vs decode nodes, without adding any inline comments explaining the work proces
   category: documentation
 - rule: 'Targeted comments: Use targeted comments sparingly to clarify ambiguous logic.'
   source:
     path: AGENTS.md
     lines: 5-6
-  evidence: The gold solution adds a detailed docstring to `KVCacheOffloadConfig`
-    explaining the specific connector logic (prefill nodes use MultiConnector, decode
-    nodes use NixlConnector only), clarifying the am
+  evidence: The gold solution adds a detailed docstring to `KVCacheOffloadConfig` explaining the specific connector logic (prefill nodes use MultiConnector, decode nodes use NixlConnector only), clarifying the am
   category: documentation
-- rule: Inference entrypoint uses InferenceConfig from src/prime_rl/configs/inference.py
-    and entrypoint src/prime_rl/entrypoints/inference.py
+- rule: Inference entrypoint uses InferenceConfig from src/prime_rl/configs/inference.py and entrypoint src/prime_rl/entrypoints/inference.py
   source:
     path: .claude/skills/entrypoints/SKILL.md
     lines: 46-47
-  evidence: The gold solution correctly modifies `InferenceConfig` in `src/prime_rl/configs/inference.py`
-    and updates the corresponding entrypoint `src/prime_rl/entrypoints/inference.py`
-    to pass the new config values to the template.
+  evidence: The gold solution correctly modifies `InferenceConfig` in `src/prime_rl/configs/inference.py` and updates the corresponding entrypoint `src/prime_rl/entrypoints/inference.py` to pass the new config values to the template.
   category: architecture
   verification: llm_judge
 distractors:
-- rule: 'Skills: You are responsible for keeping the skills up to date whenever you
-    or anyone else modifies the code.'
+- rule: 'Skills: You are responsible for keeping the skills up to date whenever you or anyone else modifies the code.'
   collision_type: meta_confusion
-  why_distracting: The agent might try to update `skills/config` or `skills/entrypoints`
-    to document the new `enable_dbo` and `kv_cache_offload` fields. However, skills
-    are meant for high-level workflow documentation, not exhaustive API/config field
-    references.
+  why_distracting: The agent might try to update `skills/config` or `skills/entrypoints` to document the new `enable_dbo` and `kv_cache_offload` fields. However, skills are meant for high-level workflow documentation, not exhaustive API/config field references.
   severity: medium
   source:
     path: AGENTS.md
     lines: 28-32
 - rule: 'Zen of Python: Flat is better than nested.'
   collision_type: rule_conflict
-  why_distracting: The agent might try to flatten the KV cache offload fields (`block_size`,
-    `cpu_bytes`) directly into `DisaggregatedInferenceDeploymentConfig` to avoid nesting,
-    which directly conflicts with the PR instruction to create a separate `KVCacheOffloadConfig`
-    pydantic model.
+  why_distracting: The agent might try to flatten the KV cache offload fields (`block_size`, `cpu_bytes`) directly into `DisaggregatedInferenceDeploymentConfig` to avoid nesting, which directly conflicts with the PR instruction to create a separate `KVCacheOffloadConfig` pydantic model.
   severity: high
   source:
     path: AGENTS.md
     lines: 11-11
-- rule: How the prime-rl config system works — TOML files, CLI, config composition,
-    and special patterns.
+- rule: How the prime-rl config system works — TOML files, CLI, config composition, and special patterns.
   source:
     path: .claude/skills/config/SKILL.md
     lines: 1-3
   collision_type: scope_ambiguity
-  why_distracting: The agent might try to update the example TOML configs in `examples/`
-    or `configs/debug/` to demonstrate the new fields, but the gold solution only
-    modifies the Python config definitions.
+  why_distracting: The agent might try to update the example TOML configs in `examples/` or `configs/debug/` to demonstrate the new fields, but the gold solution only modifies the Python config definitions.
   severity: medium
-hierarchy_analysis: The configuration is a flat, single-file setup (`AGENTS.md`) that
-  applies globally to all files in the repository. There are no hierarchical overrides
-  or deep config traversals required.
+hierarchy_analysis: The configuration is a flat, single-file setup (`AGENTS.md`) that applies globally to all files in the repository. There are no hierarchical overrides or deep config traversals required.

@@ -1,0 +1,148 @@
+version: "2.0"
+
+source:
+  repo: "cloudflare/workers-sdk"
+  pr: 13120
+  base_commit: "e200179d8dbdb36d716e5df9e981b3219c93d974"
+  merge_commit: "7673701c8dc523d1a9b69682b03b780979b5bf8f"
+
+task:
+  kind: code_fix
+
+checks:
+  - id: test_wrangler_jsonc_is_valid
+    type: pass_to_pass
+    origin: static
+    description: "wrangler.jsonc is valid JSONC"
+
+  - id: test_existing_durable_object_intact
+    type: pass_to_pass
+    origin: pr_diff
+    description: "MyDurableObject class still present after workflow addition"
+
+  - id: test_existing_fetch_handler_intact
+    type: pass_to_pass
+    origin: pr_diff
+    description: "Default export fetch handler still intact"
+
+  - id: test_typescript_typecheck
+    type: pass_to_pass
+    origin: repo_tests
+    description: "TypeScript type-checking (tsc --noEmit) passes on fixture source files"
+
+  - id: test_workflows_section_exists
+    type: fail_to_pass
+    origin: pr_diff
+    description: "wrangler.jsonc has workflows array with MY_WORKFLOW binding and MyWorkflow class_name"
+
+  - id: test_my_workflow_class_exists
+    type: fail_to_pass
+    origin: pr_diff
+    description: "MyWorkflow class exists and extends WorkflowEntrypoint"
+
+  - id: test_workflow_entrypoint_imported
+    type: fail_to_pass
+    origin: pr_diff
+    description: "WorkflowEntrypoint is imported from cloudflare:workers"
+
+  - id: test_workflow_type_imports_present
+    type: fail_to_pass
+    origin: agent_config
+    description: "Type-only import for WorkflowEvent and WorkflowStep using `import type` syntax"
+    source:
+      path: "AGENTS.md"
+      lines: "91"
+      commit: "e200179d8dbdb36d716e5df9e981b3219c93d974"
+
+  - id: test_my_workflow_type_in_dts
+    type: fail_to_pass
+    origin: pr_diff
+    description: "worker-configuration.d.ts has MY_WORKFLOW: Workflow<...> type in Env interface"
+
+  - id: test_workflow_run_method_exists
+    type: fail_to_pass
+    origin: pr_diff
+    description: "MyWorkflow class has run() method using step.do and step.sleep"
+
+rubric:
+  - rule: "Use `import type { X }` for type-only imports (`@typescript-eslint/consistent-type-imports`)"
+    source:
+      path: "AGENTS.md"
+      lines: "91"
+      commit: "e200179d8dbdb36d716e5df9e981b3219c93d974"
+    evidence: "Gold PR imports WorkflowEvent and WorkflowStep with `import type { WorkflowEvent, WorkflowStep }`"
+    category: "style"
+    verification: llm_judge
+
+  - rule: "TypeScript with strict mode"
+    source:
+      path: "AGENTS.md"
+      lines: "90"
+      commit: "e200179d8dbdb36d716e5df9e981b3219c93d974"
+    evidence: "Gold PR adds proper TypeScript types for WorkflowParams interface and MyWorkflow generic parameters"
+    category: "style"
+    verification: llm_judge
+
+  - rule: "No `any` (`@typescript-eslint/no-explicit-any`)"
+    source:
+      path: "AGENTS.md"
+      lines: "92"
+      commit: "e200179d8dbdb36d716e5df9e981b3219c93d974"
+    evidence: "Gold PR uses explicit types (WorkflowParams, Env, WorkflowEvent<WorkflowParams>) with no `any`"
+    category: "style"
+    verification: llm_judge
+
+  - rule: "No non-null assertions (`!`)"
+    source:
+      path: "AGENTS.md"
+      lines: "93"
+      commit: "e200179d8dbdb36d716e5df9e981b3219c93d974"
+    evidence: "Gold PR uses nullish coalescing (??) instead of non-null assertion for event.payload.name"
+    category: "style"
+    verification: llm_judge
+
+  - rule: "No floating promises - must be awaited or explicitly voided (`@typescript-eslint/no-floating-promises`)"
+    source:
+      path: "AGENTS.md"
+      lines: "94"
+      commit: "e200179d8dbdb36d716e5df9e981b3219c93d974"
+    evidence: "Gold PR awaits all step.do() and step.sleep() calls"
+    category: "style"
+    verification: llm_judge
+
+  - rule: "Prefix unused variables with `_`"
+    source:
+      path: "AGENTS.md"
+      lines: "97"
+      commit: "e200179d8dbdb36d716e5df9e981b3219c93d974"
+    evidence: "Gold PR's existing code uses `_request: Request` prefix for unused parameters - new code may also need this"
+    category: "naming"
+    verification: llm_judge
+
+distractors:
+  - rule: "All changes to published packages require a changeset (see below)"
+    source:
+      path: "AGENTS.md"
+      lines: "100"
+      commit: "e200179d8dbdb36d716e5df9e981b3219c93d974"
+    collision_type: scope_ambiguity
+    why_distracting: "Fixture directories are not published packages and do not require changesets - the PR was labeled 'no-changeset-required'"
+    severity: medium
+
+  - rule: "Use `node:` prefix for Node.js imports (`import/enforce-node-protocol-usage`)"
+    source:
+      path: "AGENTS.md"
+      lines: "96"
+      commit: "e200179d8dbdb36d716e5df9e981b3219c93d974"
+    collision_type: scope_ambiguity
+    why_distracting: "This rule applies to Node.js tooling code, not Workers runtime code that imports from cloudflare:workers"
+    severity: medium
+
+  - rule: "Format with oxfmt - run `pnpm prettify` in the workspace root before committing"
+    source:
+      path: "AGENTS.md"
+      lines: "99"
+      commit: "e200179d8dbdb36d716e5df9e981b3219c93d974"
+    collision_type: rule_conflict
+    why_distracting: "The agent cannot run pnpm/oxfmt in this environment - formatting is a process rule, not a code-correctness rule"
+    severity: low

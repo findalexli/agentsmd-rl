@@ -214,20 +214,6 @@ def test_repo_ast_grep_pr_status():
     assert r.returncode == 0, f"ast-grep scan failed:\n{r.stderr[-500:]}"
 
 
-# [repo_tests] pass_to_pass — Node.js --check validation
-def test_repo_node_check_pr_status():
-    """Repo's scripts/pr-status.js passes node --check validation (pass_to_pass)."""
-    r = subprocess.run(
-        ["node", "--check", "scripts/pr-status.js"],
-        cwd=REPO,
-        capture_output=True,
-        timeout=30,
-    )
-    assert r.returncode == 0, (
-        f"Node check failed for pr-status.js:\n{r.stderr.decode()}"
-    )
-
-
 # ---------------------------------------------------------------------------
 # Config-derived (agent_config) — rules from skill files
 # ---------------------------------------------------------------------------

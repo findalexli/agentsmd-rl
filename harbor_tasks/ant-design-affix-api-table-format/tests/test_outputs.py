@@ -62,6 +62,10 @@ def test_affix_en_table_has_version_and_global_config_columns():
         "| Property | Description | Type | Default | Version | [Global Config](/components/config-provider#component-config) |",
         AFFIX_EN,
     ), "components/affix/index.en-US.md still uses the 4-column header — convert to the standard 6-column format."
+    assert _grep(
+        "| offsetTop | Offset from the top of the viewport (in pixels) | number | 0 |  | × |",
+        AFFIX_EN,
+    ), "Affix EN offsetTop row missing the new Version and Global Config columns."
 
 
 def test_affix_zh_table_has_version_and_global_config_columns():
@@ -71,6 +75,10 @@ def test_affix_zh_table_has_version_and_global_config_columns():
         "| 参数 | 说明 | 类型 | 默认值 | 版本 | [全局配置](/components/config-provider-cn#component-config) |",
         AFFIX_ZH,
     ), "components/affix/index.zh-CN.md still uses the 4-column header — convert to the standard 6-column format."
+    assert _grep(
+        "| offsetTop | 距离窗口顶部达到指定偏移量后触发 | number | 0 |  | × |",
+        AFFIX_ZH,
+    ), "Affix ZH offsetTop row missing the new Version and Global Config columns."
 
 
 def test_cp_en_affix_uses_see_reference():
@@ -107,3 +115,8 @@ def test_p2p_cp_en_unchanged_neighbours_intact():
         "ConfigProvider EN alert row should be unchanged."
     assert _grep("| avatar | Set Avatar common props | { className?: string, style?: React.CSSProperties } | - | 5.7.0 |", CP_EN), \
         "ConfigProvider EN avatar row should be unchanged."
+
+# === CI-mined tests (taskforge.ci_check_miner) ===
+# test_ci_test_image_generate_image_snapshots: dropped — requires Node.js,
+# puppeteer, and full node_modules not available in the sparse-checkout Docker.
+# This is a markdown-only PR; image snapshot tests are irrelevant.

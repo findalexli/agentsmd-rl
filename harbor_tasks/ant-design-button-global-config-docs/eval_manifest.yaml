@@ -46,6 +46,30 @@ checks:
   type: fail_to_pass
   origin: pr_diff
   description: The verbose inline type signature on the ConfigProvider English `button` row is gone.
+- id: test_button_en_danger_row_preserved
+  type: pass_to_pass
+  origin: pr_diff
+  description: The `danger` row in the Button English API table is preserved unchanged.
+- id: test_config_provider_en_calendar_row_preserved
+  type: pass_to_pass
+  origin: pr_diff
+  description: The `calendar` row adjacent to `button` in the ConfigProvider English table is preserved unchanged.
+- id: test_claude_md_sentence_table_preserved
+  type: pass_to_pass
+  origin: agent_config
+  description: The Chinese sentence-format example row in CLAUDE.md 句式 table is preserved unchanged.
+  source:
+    lines: 121-126
+    commit: 62135b4b76d5a85b662d9f8b1fb57fcbbe4795d6
+    path: CLAUDE.md
+- id: test_config_provider_en_adjacent_components_intact
+  type: pass_to_pass
+  origin: agent_config
+  description: ConfigProvider English docs retain all adjacent component rows (avatar, badge, breadcrumb, calendar, card) after button row simplification.
+  source:
+    lines: 110-120
+    commit: 62135b4b76d5a85b662d9f8b1fb57fcbbe4795d6
+    path: components/config-provider/index.en-US.md
 config_edits:
 - description: In the "API 表格格式" example, replace the 5-column header with a 6-column header that adds `[Global Config](/components/config-provider#component-config)`, and update example body rows so each new column ends with `-`. Also normalize all `|---|---|...` separator rows in CLAUDE.md to the spaced `| --- | --- | ...` form.
   path: CLAUDE.md

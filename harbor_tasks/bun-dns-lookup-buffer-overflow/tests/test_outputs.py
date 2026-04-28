@@ -32,19 +32,16 @@ DNS_FILE = f"{REPO}/src/bun.js/api/bun/dns.zig"
 
 def _extract_lookup_fn_body(src):
     """Extract the body of pub fn lookup inside LibInfo struct.
-    
+
     The fix is applied to this specific function. By scoping tests to this
     function body, we prevent a stub from passing by adding patterns elsewhere.
     """
-    # Find pub fn lookup(this: *Resolver
     fn_start = src.find("pub fn lookup(this: *Resolver")
     if fn_start < 0:
         return None
-    # Find the { that starts the function body
     brace_start = src.find("{", fn_start)
     if brace_start < 0:
         return None
-    # Find matching }
     depth = 0
     i = brace_start
     while i < len(src):
@@ -186,34 +183,16 @@ def test_zig_ast_check():
 # -------------------------------------------------------------------------
 
 
-def test_code_compiles():
-    """The modified code must compile without errors (fail_to_pass).
-
-    Behavioral test: invokes the Zig compiler to verify the code is
-    syntactically and semantically correct. A stub that removes the
-    hostname processing would fail to link/compile.
-    """
-    returncode, stderr = _compile_with_zig()
-    assert returncode in [0, 1], (
-        f"zig ast-check failed unexpectedly (return code {returncode}):\n{stderr[-500:]}"
-    )
-    assert "error:" in stderr or returncode == 0, "zig ast-check produced no output"
-
-
 def test_no_fixed_buffer_used():
     """The vulnerable fixed 1024-byte buffer must be removed from lookup function (fail_to_pass).
 
     Scoped to LibInfo.lookup function body — a stub that removes the buffer
     but puts other code in the function still gets caught by the other tests.
-
-    A stub that adds stackFallback elsewhere (not in lookup) would not pass
-    test_dynamic_allocation_pattern which is also scoped.
     """
     src = Path(DNS_FILE).read_text()
     fn_body = _extract_lookup_fn_body(src)
     assert fn_body is not None, "LibInfo.lookup function body not found"
 
-    # Remove comments from function body for pattern matching
     fn_body_clean = re.sub(r"//.*", "", fn_body)
     fn_body_clean = re.sub(r"/\*[\s\S]*?\*/", "", fn_body_clean)
 
@@ -231,9 +210,6 @@ def test_dynamic_allocation_in_lookup():
 
     Scoped to LibInfo.lookup — verifies that the fix uses heap allocation
     (stackFallback, arena, alloc, dupeZ, etc.) within the lookup function.
-
-    Behavioral: a stub that calls stackFallback but not from within lookup()
-    would not be caught here because the pattern check is scoped.
     """
     src = Path(DNS_FILE).read_text()
     fn_body = _extract_lookup_fn_body(src)
@@ -273,9 +249,6 @@ def test_memory_cleanup_with_defer_in_lookup():
 
     Scoped to LibInfo.lookup function body — verifies defer-based cleanup
     is present within the lookup function itself.
-
-    Behavioral: a stub that adds defer in a different function (not lookup)
-    would not satisfy this test.
     """
     src = Path(DNS_FILE).read_text()
     fn_body = _extract_lookup_fn_body(src)
@@ -333,7 +306,7 @@ def test_allocation_and_cleanup_both_in_lookup():
 
 
 def test_zig_build_lib_check():
-    """Verify the modified file can be parsed with zig ast-check (fail_to_pass).
+    """Verify the modified file can be parsed with zig ast-check (pass_to_pass).
 
     Behavioral test: invokes the Zig compiler to catch stub implementations
     with syntax errors or type mismatches.

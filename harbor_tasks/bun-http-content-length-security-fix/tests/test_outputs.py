@@ -113,19 +113,22 @@ def test_httpparser_rejects_conflicting_content_length():
     """HttpParser.h must reject conflicting duplicate Content-Length headers.
 
     The fix should return HTTP 400 when it detects conflicting Content-Length values.
+    The base code has 2 occurrences of HTTP_PARSER_ERROR_INVALID_CONTENT_LENGTH
+    (the enum definition + one usage for parse errors). The gold fix adds two more
+    usages: one for empty values and one for conflicting duplicates.
     """
     http_parser = Path(REPO) / "packages" / "bun-uws" / "src" / "HttpParser.h"
     assert http_parser.exists(), "HttpParser.h must exist"
 
     content = http_parser.read_text()
 
-    has_http400_in_content_length_context = (
-        re.search(r'HTTP_PARSER_ERROR_INVALID_CONTENT_LENGTH', content) is not None
-    )
+    count = len(re.findall(r'HTTP_PARSER_ERROR_INVALID_CONTENT_LENGTH', content))
 
-    assert has_http400_in_content_length_context, (
-        "HttpParser.h must return HTTP 400 when it detects conflicting Content-Length headers. "
-        "The parser should reject ambiguous requests per RFC 9112 6.3."
+    assert count >= 3, (
+        f"HttpParser.h must reject conflicting duplicate Content-Length headers with "
+        f"HTTP_PARSER_ERROR_INVALID_CONTENT_LENGTH. Found only {count} occurrence(s), "
+        f"but need at least 3 (enum + 3 usages for empty/conflicting/parse-error). "
+        f"The parser should reject ambiguous requests per RFC 9112 6.3."
     )
 
 

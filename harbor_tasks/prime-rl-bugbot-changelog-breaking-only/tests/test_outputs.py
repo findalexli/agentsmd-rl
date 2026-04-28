@@ -109,3 +109,13 @@ def test_repo_git_state_clean_or_modified_only():
             f"unexpected modification to '{path}'; this task should only "
             f"modify {sorted(allowed)}. Full git status:\n{r.stdout}"
         )
+
+# === CI-mined tests (taskforge.ci_check_miner) ===
+def test_ci_unit_tests_run_tests():
+    """pass_to_pass | CI job 'Unit tests' → step 'Run tests'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'PYTEST_OUTPUT_DIR=/tmp/outputs uv run pytest tests/unit -m "not gpu"'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Run tests' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")

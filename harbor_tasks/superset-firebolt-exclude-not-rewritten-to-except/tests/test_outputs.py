@@ -1,13 +1,13 @@
 """Tests for the Firebolt SQLGlot dialect EXCLUDE / EXCEPT fix.
 
 The Firebolt Generator inherits from sqlglot.generator.Generator, whose default
-star-except keyword is ``EXCEPT``. Firebolt's SQL grammar uses ``EXCLUDE``
+star-except keyword is ``EXCEPT``. Firebolt SQL grammar uses ``EXCLUDE``
 (like DuckDB and Snowflake), so passing ``SELECT * EXCLUDE (col)`` through
 sqlglot with the firebolt dialect must round-trip with EXCLUDE preserved.
 
 The dialect file at superset/sql/dialects/firebolt.py imports only sqlglot,
 so we load it directly via importlib (bypassing the heavy ``superset``
-package __init__) — the metaclass on sqlglot's ``Dialect`` registers
+package __init__) — the metaclass on sqlglot ``Dialect`` registers
 ``firebolt`` as a known dialect on import.
 """
 from __future__ import annotations
@@ -105,7 +105,7 @@ def test_firebolt_module_loads_cleanly():
 
 
 def test_firebolt_dialect_is_registered_with_sqlglot():
-    """Loading the module must register 'firebolt' as a known sqlglot dialect."""
+    """Loading the module must register firebolt as a known sqlglot dialect."""
     import sqlglot
     from sqlglot.dialects.dialect import Dialect
 
@@ -126,4 +126,26 @@ def test_firebolt_python_module_compiles():
     )
     assert r.returncode == 0, (
         f"Failed to compile {FIREBOLT_PATH}:\nstdout={r.stdout}\nstderr={r.stderr}"
+    )
+
+
+# ---------------------------------------------------------------------------
+# CI/CD scoped regression test: run the existing Firebolt dialect unit tests
+# via pytest as a pass_to_pass guard.
+# ---------------------------------------------------------------------------
+
+
+def test_ci_firebolt_dialect_unit_tests():
+    """pass_to_pass | Run the Firebolt dialect unit test suite via pytest (scoped regression)."""
+    r = subprocess.run(
+        ["bash", "-lc",
+         "pip install -e . >/dev/null 2>&1 && python -m pytest tests/unit_tests/sql/dialects/firebolt_tests.py -v --tb=short --noconftest"],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=600,
+    )
+    assert r.returncode == 0, (
+        f"Firebolt dialect unit tests failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-2000:]}\nstderr: {r.stderr[-2000:]}"
     )

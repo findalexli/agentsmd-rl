@@ -811,3 +811,4 @@ def test_repo_ast_parse_logging():
         capture_output=True, text=True, timeout=30, cwd=REPO,
     )
     assert r.returncode == 0, f"AST parse failed for logging.py:\n{r.stderr}"
+

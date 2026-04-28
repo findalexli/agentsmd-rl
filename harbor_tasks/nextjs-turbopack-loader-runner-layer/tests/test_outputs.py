@@ -10,6 +10,7 @@ from pathlib import Path
 REPO = "/workspace/next.js"
 TARGET = Path(REPO) / "turbopack/crates/turbopack/src/lib.rs"
 MOD_FILE = Path(REPO) / "turbopack/crates/turbopack/src/module_options/mod.rs"
+BASE = "b6ff1f6079694da08af88cec5cac7381e22cea10"
 
 
 def _run_py(code, args=None, timeout=30):
@@ -102,7 +103,7 @@ def test_repo_git_ls_files():
 
 
 def test_repo_git_log():
-    r = subprocess.run(["git", "log", "--oneline", "-1"], capture_output=True, text=True, timeout=60, cwd=REPO)
+    r = subprocess.run(["git", "log", "--oneline", "-10"], capture_output=True, text=True, timeout=60, cwd=REPO)
     assert r.returncode == 0
     assert "b6ff1f6" in r.stdout or "Fix adapter outputs" in r.stdout
 
@@ -270,11 +271,10 @@ def test_repo_turbopack_cargo_toml_exists():
 def test_repo_turbopack_use_loaders_in_base():
     """The old turbopack_use_loaders layer name exists at base commit (pass_to_pass)."""
     r = subprocess.run(
-        ["git", "show", "HEAD:turbopack/crates/turbopack/src/lib.rs"],
+        ["git", "show", f"{BASE}:turbopack/crates/turbopack/src/lib.rs"],
         capture_output=True, text=True, timeout=60, cwd=REPO
     )
     assert r.returncode == 0, f"Failed to show lib.rs: {r.stderr}"
-    # At the base commit, the OLD buggy name should exist
     assert "turbopack_use_loaders" in r.stdout, "turbopack_use_loaders must exist at base commit"
 
 
@@ -350,3 +350,12 @@ def test_repo_webpack_loaders_in_base():
     # This test documents what we find - git grep returns 0 if found, 1 if not found
     # Both are valid outcomes at base commit, we just want to document the state
     assert r.returncode in [0, 1], f"git grep failed unexpectedly: {r.stderr}"
+
+
+def test_rustfmt_check():
+    """rustfmt --check passes on the modified file (pass_to_pass)."""
+    r = subprocess.run(
+        ["rustfmt", "--check", str(TARGET)],
+        capture_output=True, text=True, timeout=60, cwd=REPO
+    )
+    assert r.returncode == 0, f"rustfmt check failed: {r.stderr}"

@@ -338,3 +338,22 @@ def test_p2p_team_models_helpers():
         f"--- stdout ---\n{r.stdout[-2000:]}\n"
         f"--- stderr ---\n{r.stderr[-1000:]}"
     )
+
+# === CI-mined tests (taskforge.ci_check_miner) ===
+def test_ci_test_generate_prisma_client():
+    """pass_to_pass | CI job 'test' → step 'Generate Prisma client'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'poetry run pip install nodejs-wheel-binaries==24.13.1\npoetry run prisma generate --schema litellm/proxy/schema.prisma'], cwd=REPO,
+        capture_output=True, text=True, timeout=900)
+    assert r.returncode == 0, (
+        f"CI step 'Generate Prisma client' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_test_run_tests_matrix_test_group_name():
+    """pass_to_pass | CI job 'test' → step 'Run tests - ${{ matrix.test-group.name }}'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'poetry run pytest ${{ matrix.test-group.path }} \\\n  --tb=short -vv \\\n  --maxfail=10 \\\n  -n ${{ matrix.test-group.workers }} \\\n  --reruns ${{ matrix.test-group.reruns }} \\\n  --reruns-delay 1 \\\n  --dist=loadscope \\\n  --durations=20 \\\n  --cov=litellm \\\n  --cov-report=xml:coverage-${{ matrix.test-group.name }}.xml \\\n  --cov-config=pyproject.toml'], cwd=REPO,
+        capture_output=True, text=True, timeout=900)
+    assert r.returncode == 0, (
+        f"CI step 'Run tests - ${{ matrix.test-group.name }}' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")

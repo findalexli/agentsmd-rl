@@ -29,7 +29,7 @@ the empty string cannot be used as a separator
 the separators argument cannot be empty
 ```
 
-## Style guidelines
+## Code Style Requirements
 
 When modifying the C++ code:
 - Use Allman-style braces (opening brace on a new line)

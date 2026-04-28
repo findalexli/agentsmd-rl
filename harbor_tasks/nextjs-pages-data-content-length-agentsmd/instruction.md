@@ -20,7 +20,7 @@ The response body for Pages Router data requests and ISR fallback responses must
 1. The `isNextDataRequest` code path (around line 740 in the buggy code)
 2. The ISR fallback path that uses `previousCacheEntry.value.html` (around line 526 in the buggy code)
 
-For both paths, verify that the response body is in the correct form that enables header generation. Run `test_string_render_result_enables_headers` in the test suite to confirm the fix is correct.
+For both paths, verify that the response body is in the correct form that enables header generation.
 
 ## AGENTS.md Documentation Update
 

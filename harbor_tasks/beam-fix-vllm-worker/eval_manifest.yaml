@@ -68,8 +68,7 @@ checks:
 - id: test_parse_args_accepts_gpu_memory_utilization_flag
   type: fail_to_pass
   origin: pr_diff
-  description: parse_known_args accepts --vllm_gpu_memory_utilization and parses it
-    as float
+  description: parse_known_args accepts --vllm_gpu_memory_utilization and parses it as float
 - id: test_parse_args_provides_sensible_defaults
   type: fail_to_pass
   origin: pr_diff
@@ -91,8 +90,7 @@ checks:
   origin: pr_diff
   description: README.md documents GPU memory constraints and vLLM tuning flags
 rubric:
-- rule: Documentation update is consistent with the tone and format of the existing
-    README
+- rule: Documentation update is consistent with the tone and format of the existing README
   source:
     path: sdks/python/apache_beam/examples/inference/README.md
     lines: 1-50
@@ -102,13 +100,11 @@ rubric:
     path: sdks/python/apache_beam/examples/inference/README.md
     lines: 933-937
     commit: f7bdf517ccb9d7ff9a1a71f6850ceeaa3f4085ef
-  reference: 'On GPUs with about 16GiB of memory (for example NVIDIA T4), vLLM''s
-    defaults can fail
+  reference: 'On GPUs with about 16GiB of memory (for example NVIDIA T4), vLLM''s defaults can fail
 
     during engine startup with CUDA out of memory. The example therefore passes conservative
 
-    ``--max-num-seqs`` and ``--gpu-memory-utilization`` values by default (overridable
-    with
+    ``--max-num-seqs`` and ``--gpu-memory-utilization`` values by default (overridable with
 
     ``--vllm_max_num_seqs`` and ``--vllm_gpu_memory_utilization``) via
 
@@ -116,13 +112,11 @@ rubric:
 config_edits:
 - path: sdks/python/apache_beam/examples/inference/README.md
   tier: 2
-  gold_added: 'On GPUs with about 16GiB of memory (for example NVIDIA T4), vLLM''s
-    defaults can fail
+  gold_added: 'On GPUs with about 16GiB of memory (for example NVIDIA T4), vLLM''s defaults can fail
 
     during engine startup with CUDA out of memory. The example therefore passes conservative
 
-    ``--max-num-seqs`` and ``--gpu-memory-utilization`` values by default (overridable
-    with
+    ``--max-num-seqs`` and ``--gpu-memory-utilization`` values by default (overridable with
 
     ``--vllm_max_num_seqs`` and ``--vllm_gpu_memory_utilization``) via
 
@@ -135,10 +129,7 @@ distractors:
     lines: 76-76
   source_text: Integration tests have filenames ending in `IT.java` and use `TestPipeline`.
   collision_type: scope_ambiguity
-  why_distracting: This sounds like a repository-wide testing convention, but it is
-    explicitly scoped to Java development. The gold diff only changes Python and Markdown
-    files under `sdks/python/...`; following the Java naming/pattern here would send
-    an agent toward the wrong language, wrong test harness, and wrong file locations.
+  why_distracting: This sounds like a repository-wide testing convention, but it is explicitly scoped to Java development. The gold diff only changes Python and Markdown files under `sdks/python/...`; following the Java naming/pattern here would send an agent toward the wrong language, wrong test harness, and wrong file locations.
   severity: medium
 - rule: Use `--requirements_file=requirements.txt` or custom containers.
   source:
@@ -148,9 +139,5 @@ distractors:
 
     Use `--requirements_file=requirements.txt` or custom containers.'
   collision_type: scope_ambiguity
-  why_distracting: The vLLM example already lives in an environment-heavy area, so
-    packaging guidance looks relevant. But the bug described by the gold diff is CUDA
-    OOM during vLLM engine startup on ~16GiB GPUs, not missing Python dependencies.
-    Switching focus to requirements files or container packaging would leave the needed
-    `max-num-seqs` / `gpu-memory-utilization` defaults unfixed.
+  why_distracting: The vLLM example already lives in an environment-heavy area, so packaging guidance looks relevant. But the bug described by the gold diff is CUDA OOM during vLLM engine startup on ~16GiB GPUs, not missing Python dependencies. Switching focus to requirements files or container packaging would leave the needed `max-num-seqs` / `gpu-memory-utilization` defaults unfixed.
   severity: medium

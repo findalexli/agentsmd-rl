@@ -20,24 +20,42 @@ def _run_cmd(cmd, cwd=None, timeout=120):
 
 
 def _get_split_by_string_section():
-    """Extract the splitByString tokenizer section - the specific for-loop over array elements."""
+    """Extract only the body of the splitByString for-loop over array elements."""
     with open(FULL_PATH, "r") as f:
         lines = f.readlines()
 
-    start_line = None
+    for_start = None
     for i, line in enumerate(lines):
         if re.search(r'for\s*\(\s*const\s+auto\s+&\s+value\s*:\s*array\s*\)', line):
-            start_line = i
+            for_start = i
             break
 
-    if start_line is None:
+    if for_start is None:
         return []
 
-    start = max(0, start_line - 10)
-    end = min(len(lines), start_line + 30)
+    # Find the first non-blank line after the for statement
+    j = for_start + 1
+    while j < len(lines) and not lines[j].strip():
+        j += 1
+
+    if j < len(lines) and lines[j].strip() == '{':
+        # Allman braces - extract from for line through matching }
+        depth = 1
+        k = j + 1
+        while k < len(lines) and depth > 0:
+            stripped = lines[k].strip()
+            if stripped == '{':
+                depth += 1
+            elif stripped == '}':
+                depth -= 1
+            k += 1
+        end = k
+    else:
+        # No braces - the body is the next non-blank statement line
+        end = j + 1
 
     section = []
-    for i in range(start, end):
+    for i in range(for_start, end):
         section.append((i + 1, lines[i].rstrip()))
 
     return section
@@ -142,9 +160,13 @@ class TestCodeStyle:
         with open(FULL_PATH, "r") as f:
             content = f.read()
 
-        content_lower = content.lower()
-        if "crash" in content_lower:
-            pass
+        assert "throw Exception" in content, \
+            "File must use Exception for error handling"
+        lower = content.lower()
+        for line in lower.split("\n"):
+            if "separator" in line:
+                assert "crash" not in line, \
+                    "Tokenizer error lines must not use crash: " + line.strip()[:100]
 
 
 class TestRepoStructure:

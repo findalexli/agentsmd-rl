@@ -8,8 +8,7 @@ checks:
 - id: syntax_check
   type: pass_to_pass
   origin: static
-  description: Modified files (network.py, rl_trainer.py, sft_trainer.py) parse without
-    errors
+  description: Modified files (network.py, rl_trainer.py, sft_trainer.py) parse without errors
 - id: tcp_socket_closed_on_bind_failure
   type: fail_to_pass
   origin: pr_diff
@@ -25,13 +24,11 @@ checks:
 - id: rl_exit_does_not_reraise
   type: fail_to_pass
   origin: pr_diff
-  description: RLTrainer.__exit__ returns falsy instead of re-raising with 'raise
-    exc_value'
+  description: RLTrainer.__exit__ returns falsy instead of re-raising with 'raise exc_value'
 - id: sft_exit_does_not_reraise
   type: fail_to_pass
   origin: pr_diff
-  description: SFTTrainer.__exit__ returns falsy instead of re-raising with 'raise
-    exc_value'
+  description: SFTTrainer.__exit__ returns falsy instead of re-raising with 'raise exc_value'
 - id: rl_exit_calls_close
   type: pass_to_pass
   origin: pr_diff
@@ -75,8 +72,7 @@ checks:
 - id: repo_trainer_exit_ast
   type: pass_to_pass
   origin: repo_tests
-  description: Trainer __exit__ methods have correct AST structure (subprocess-based
-    CI test)
+  description: Trainer __exit__ methods have correct AST structure (subprocess-based CI test)
 - id: repo_eof_newline
   type: pass_to_pass
   origin: static
@@ -85,25 +81,24 @@ checks:
   type: pass_to_pass
   origin: static
   description: Modified files have no trailing whitespace (pre-commit style check)
+- id: test_ci_install_test_verify_wheel_artifact
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: Install test / Verify wheel artifact'
 rubric:
 - rule: Follow existing code patterns in the same module.
   source:
     path: AGENTS.md
     lines: 24-25
-  evidence: The gold solution fixes the bugs using standard Python constructs (adding
-    a `finally` block and returning `False` in `__exit__`) without introducing new
-    dependencies, wildcard imports, or deviating from the existing module structure.
+  evidence: The gold solution fixes the bugs using standard Python constructs (adding a `finally` block and returning `False` in `__exit__`) without introducing new dependencies, wildcard imports, or deviating from the existing module structure.
   category: style
   verification: llm_judge
-- rule: Avoid improper context manager usage (e.g., manually re-raising exceptions
-    in __exit__)
+- rule: Avoid improper context manager usage (e.g., manually re-raising exceptions in __exit__)
   source:
     path: .claude/data/review-pr-templates.md
     lines: '167'
   source_text: '- Improper context manager usage'
-  evidence: In `areal/trainer/rl_trainer.py` and `sft_trainer.py`, the `__exit__`
-    method is fixed to `return False` instead of doing `raise exc_value`, which properly
-    aligns with Python's native exception propagation for context managers.
+  evidence: In `areal/trainer/rl_trainer.py` and `sft_trainer.py`, the `__exit__` method is fixed to `return False` instead of doing `raise exc_value`, which properly aligns with Python's native exception propagation for context managers.
   category: error_handling
   verification: llm_judge
 - rule: Prevent resource leaks (unclosed network connections)
@@ -111,39 +106,28 @@ rubric:
     path: .claude/agents/simple-code-reviewer.md
     lines: '46'
   source_text: '- **Resource leaks**: Unclosed files, connections, GPU memory'
-  evidence: In `areal/utils/network.py`, `sock.close()` is relocated to a `finally:`
-    block, preventing a socket leak when `sock.bind()` raises an `OSError`.
+  evidence: In `areal/utils/network.py`, `sock.close()` is relocated to a `finally:` block, preventing a socket leak when `sock.bind()` raises an `OSError`.
   category: resource_management
   verification: llm_judge
 - rule: Proper exception handling (no return in finally)
   source:
     path: .claude/data/review-pr-templates.md
     lines: '150'
-  source_text: '- Improper exception handling (swallowing exceptions, wrong exception
-    type, return in finally)'
-  evidence: When adding the `finally:` block in `areal/utils/network.py`, the gold
-    diff carefully leaves the `return False` in the `except OSError:` block and only
-    uses `finally:` for `sock.close()`, directly adhering to the warning against returning
-    in finally blocks.
+  source_text: '- Improper exception handling (swallowing exceptions, wrong exception type, return in finally)'
+  evidence: When adding the `finally:` block in `areal/utils/network.py`, the gold diff carefully leaves the `return False` in the `except OSError:` block and only uses `finally:` for `sock.close()`, directly adhering to the warning against returning in finally blocks.
   category: error_handling
   verification: llm_judge
 distractors:
 - rule: Add tests for new functionality.
   collision_type: scope_ambiguity
-  why_distracting: The agent might interpret the bug fixes as requiring new unit tests
-    to prevent regressions, leading to unnecessary test file creation that is out
-    of scope for this specific PR.
+  why_distracting: The agent might interpret the bug fixes as requiring new unit tests to prevent regressions, leading to unnecessary test file creation that is out of scope for this specific PR.
   severity: medium
   source:
     path: AGENTS.md
     lines: 31-31
-- rule: 'Logging: areal.utils.logging.getLogger(name) with PascalCase names... Per-rank
-    format: [{Component} Rank {N}].'
+- rule: 'Logging: areal.utils.logging.getLogger(name) with PascalCase names... Per-rank format: [{Component} Rank {N}].'
   collision_type: scope_ambiguity
-  why_distracting: The agent sees an existing `logger.error` statement in the `__exit__`
-    methods being modified and might attempt to refactor it to strictly follow the
-    `[{Component} Rank {N}]` format specified in the config, expanding the PR scope
-    unnecessarily.
+  why_distracting: The agent sees an existing `logger.error` statement in the `__exit__` methods being modified and might attempt to refactor it to strictly follow the `[{Component} Rank {N}]` format specified in the config, expanding the PR scope unnecessarily.
   severity: low
   source:
     path: AGENTS.md
@@ -154,24 +138,14 @@ distractors:
     lines: '175'
   source_text: '1. **Handle exceptions**: Return 0.0 on error, don''t raise'
   collision_type: scope_ambiguity
-  why_distracting: This rule is specific to reward functions. An agent might mistakenly
-    apply this to the context manager's `__exit__` in `rl_trainer.py` and `sft_trainer.py`
-    by returning `0.0` instead of `False`, violating Python conventions for context
-    managers.
+  why_distracting: This rule is specific to reward functions. An agent might mistakenly apply this to the context manager's `__exit__` in `rl_trainer.py` and `sft_trainer.py` by returning `0.0` instead of `False`, violating Python conventions for context managers.
   severity: high
 - rule: Use find_free_ports() for port allocation
   source:
     path: .claude/agents/launcher-scheduler-expert.md
     lines: '109'
-  source_text: '- Use `areal.utils.network.find_free_ports()` for port allocation
-    -> not static port'
+  source_text: '- Use `areal.utils.network.find_free_ports()` for port allocation -> not static port'
   collision_type: architecture_boundary
-  why_distracting: 'This rule instructs consumers (e.g., launchers/schedulers) on
-    how to dynamically get ports. The gold diff edits `areal/utils/network.py` itself,
-    which is the infrastructure providing these utilities. An agent might incorrectly
-    try to alter `is_port_free(port: int)` to use `find_free_ports()`, breaking the
-    boundary.'
+  why_distracting: 'This rule instructs consumers (e.g., launchers/schedulers) on how to dynamically get ports. The gold diff edits `areal/utils/network.py` itself, which is the infrastructure providing these utilities. An agent might incorrectly try to alter `is_port_free(port: int)` to use `find_free_ports()`, breaking the boundary.'
   severity: medium
-hierarchy_analysis: The repository uses two root-level configuration files (`AGENTS.md`
-  and `CLAUDE.md`) that contain overlapping general guidelines. There is no deep hierarchy
-  or overriding behavior required.
+hierarchy_analysis: The repository uses two root-level configuration files (`AGENTS.md` and `CLAUDE.md`) that contain overlapping general guidelines. There is no deep hierarchy or overriding behavior required.

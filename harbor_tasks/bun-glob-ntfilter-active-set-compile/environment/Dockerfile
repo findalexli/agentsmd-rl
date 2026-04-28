@@ -1,8 +1,13 @@
 FROM node:22-slim
 
 RUN rm -rf /var/lib/apt/lists/* && apt-get update && apt-get install -y \
-    git curl ca-certificates build-essential tmux python3 \
+    git curl ca-certificates build-essential tmux python3 xz-utils \
     && rm -rf /var/lib/apt/lists/*
+
+# Install zig for ast-check verification
+RUN curl -fsSL https://ziglang.org/download/0.13.0/zig-linux-x86_64-0.13.0.tar.xz | \
+    tar -xJ -C /usr/local && \
+    ln -s /usr/local/zig-linux-x86_64-0.13.0/zig /usr/local/bin/zig
 
 RUN git init /workspace/bun && \
     cd /workspace/bun && \

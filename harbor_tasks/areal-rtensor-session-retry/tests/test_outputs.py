@@ -323,14 +323,14 @@ def test_fetch_and_delete_use_session_method():
                     elif item.name == "delete":
                         delete_src = ast.get_source_segment(src, item)
 
-            # Verify fetch uses a session method (not bare ClientSession())
+            # Verify fetch does not use bare aiohttp.ClientSession()
             if fetch_src:
-                assert "aiohttp.ClientSession()" not in fetch_src or "session" in fetch_src.lower(), (
+                assert "aiohttp.ClientSession()" not in fetch_src, (
                     "fetch() should use a session creation method, not bare aiohttp.ClientSession()"
                 )
-            # Verify delete uses a session method (not bare ClientSession())
+            # Verify delete does not use bare aiohttp.ClientSession()
             if delete_src:
-                assert "aiohttp.ClientSession()" not in delete_src or "session" in delete_src.lower(), (
+                assert "aiohttp.ClientSession()" not in delete_src, (
                     "delete() should use a session creation method, not bare aiohttp.ClientSession()"
                 )
             return
@@ -444,3 +444,4 @@ def test_no_hardcoded_endpoints():
         for m in matches:
             if "{" not in stripped:
                 raise AssertionError(f"Hardcoded endpoint at line {i}: {m}")
+

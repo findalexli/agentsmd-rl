@@ -244,3 +244,58 @@ def test_drizzle_snake_case():
     assert "access_token" in content
     assert "refresh_token" in content
     assert "token_expiry" in content
+
+# === CI-mined tests (taskforge.ci_check_miner) ===
+def test_ci_typecheck_run_typecheck():
+    """pass_to_pass | CI job 'typecheck' → step 'Run typecheck'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'bun typecheck'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Run typecheck' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_unit_run_unit_tests():
+    """pass_to_pass | CI job 'unit' → step 'Run unit tests'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'bun turbo test'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Run unit tests' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_e2e_run_app_e2e_tests():
+    """pass_to_pass | CI job 'e2e' → step 'Run app e2e tests'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'bun --cwd packages/app test:e2e:local'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Run app e2e tests' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_build_tauri_prepare():
+    """pass_to_pass | CI job 'build-tauri' → step 'Prepare'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'bun ./scripts/prepare.ts'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Prepare' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_build_tauri_show_tauri_cli_version():
+    """pass_to_pass | CI job 'build-tauri' → step 'Show tauri-cli version'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'cargo tauri --version'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Show tauri-cli version' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_build_electron_build():
+    """pass_to_pass | CI job 'build-electron' → step 'Build'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'bun run build'], cwd=os.path.join(REPO, 'packages/desktop-electron'),
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Build' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")

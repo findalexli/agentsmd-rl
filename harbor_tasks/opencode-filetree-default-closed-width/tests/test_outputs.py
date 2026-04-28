@@ -101,11 +101,32 @@ def test_repo_pytest_transforms():
 # Fail-to-pass gates (these would test the actual fix)
 # ---------------------------------------------------------------------------
 
-def test_fix_claude_md_created():
-    """CLAUDE.md was created with task guidance (fail_to_pass)."""
+def test_fix_claude_md_exists():
+    """CLAUDE.md file was created in the repo root (fail_to_pass)."""
     claude_md = Path(REPO) / "CLAUDE.md"
     assert claude_md.exists(), "CLAUDE.md should exist after the fix is applied"
 
+
+def test_fix_claude_md_guidance():
+    """CLAUDE.md contains Agg backend guidance (fail_to_pass)."""
+    claude_md = Path(REPO) / "CLAUDE.md"
+    assert claude_md.exists(), "CLAUDE.md must exist first"
+
     content = claude_md.read_text()
-    assert "Task-specific guidance" in content, "CLAUDE.md should contain task guidance"
-    assert "Agg backend" in content, "CLAUDE.md should mention Agg backend for tests"
+    assert "Task-specific guidance" in content, (
+        "CLAUDE.md should have a 'Task-specific guidance' heading")
+    assert "Agg backend" in content, (
+        "CLAUDE.md should mention using the Agg backend for tests")
+
+# === CI-mined tests (taskforge.ci_check_miner) ===
+def test_ci_build_sdist_build_sdist():
+    """pass_to_pass | CI job 'Build sdist' → step 'Build sdist'"""
+    import os
+    env = os.environ.copy()
+    env["GITHUB_OUTPUT"] = "/dev/null"
+    r = subprocess.run(
+        ["bash", "-lc", 'python -m build --sdist && python ci/export_sdist_name.py'],
+        cwd=REPO, capture_output=True, text=True, timeout=300, env=env)
+    assert r.returncode == 0, (
+        f"CI step 'Build sdist' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")

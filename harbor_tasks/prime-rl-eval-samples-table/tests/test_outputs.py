@@ -421,3 +421,4 @@ def test_no_unnecessary_try_except_in_new_methods():
                         assert try_count <= 1, (
                             f"{cls_name}.log_eval_samples has {try_count} try/except blocks (excessive)"
                         )
+

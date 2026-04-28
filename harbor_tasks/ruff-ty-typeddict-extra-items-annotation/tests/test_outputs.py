@@ -177,3 +177,112 @@ def test_readonly_extra_items_accepted():
     assert "invalid-type-form" not in output, (
         f"Unexpected invalid-type-form error for valid extra_items:\n{output}"
     )
+
+# === CI-mined tests (taskforge.ci_check_miner) ===
+def test_ci_test_scripts_python():
+    """pass_to_pass | CI job 'test scripts' → step ''"""
+    r = subprocess.run(
+        ["bash", "-lc", 'python crates/ruff_python_ast/generate.py'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step '' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_test_scripts_python_2():
+    """pass_to_pass | CI job 'test scripts' → step ''"""
+    r = subprocess.run(
+        ["bash", "-lc", 'python crates/ruff_python_formatter/generate.py'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step '' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_test_scripts_scripts_add_rule_py():
+    """pass_to_pass | CI job 'test scripts' → step ''"""
+    r = subprocess.run(
+        ["bash", "-lc", './scripts/add_rule.py --name DoTheThing --prefix F --code 999 --linter pyflakes'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step '' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_test_scripts_cargo():
+    """pass_to_pass | CI job 'test scripts' → step ''"""
+    r = subprocess.run(
+        ["bash", "-lc", 'cargo check'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step '' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_test_scripts_scripts_add_plugin_py():
+    """pass_to_pass | CI job 'test scripts' → step ''"""
+    r = subprocess.run(
+        ["bash", "-lc", './scripts/add_plugin.py test --url https://pypi.org/project/-test/0.1.0/ --prefix TST && ./scripts/add_rule.py --name FirstRule --prefix TST --code 001 --linter test'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step '' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_test_scripts_uv():
+    """pass_to_pass | CI job 'test scripts' → step ''"""
+    r = subprocess.run(
+        ["bash", "-lc", 'uv run --directory=./python/py-fuzzer mypy'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step '' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_test_scripts_uv_2():
+    """pass_to_pass | CI job 'test scripts' → step ''"""
+    r = subprocess.run(
+        ["bash", "-lc", 'uv run --directory=./python/py-fuzzer ruff format --check'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step '' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_test_scripts_uv_3():
+    """pass_to_pass | CI job 'test scripts' → step ''"""
+    r = subprocess.run(
+        ["bash", "-lc", 'uv run --directory=./python/py-fuzzer ruff check'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step '' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_benchmarks_instrumented_ty_build_benchmarks():
+    """pass_to_pass | CI job 'benchmarks instrumented ty' → step 'Build benchmarks'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'cargo codspeed build -m simulation -m memory --features "codspeed,ty_instrumented" --profile profiling --no-default-features -p ruff_benchmark --bench ty'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Build benchmarks' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_cargo_test_ty_mdtests_github_annotations():
+    """pass_to_pass | CI job 'cargo test' → step 'ty mdtests (GitHub annotations)'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'cargo test -p ty_python_semantic --test mdtest'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'ty mdtests (GitHub annotations)' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_cargo_test_run_tests():
+    """pass_to_pass | CI job 'cargo test' → step 'Run tests'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'cargo insta test --all-features --unreferenced reject --test-runner nextest'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Run tests' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_cargo_test_dogfood_ty_on_py_fuzzer():
+    """pass_to_pass | CI job 'cargo test' → step 'Dogfood ty on py-fuzzer'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'uv run --project=./python/py-fuzzer cargo run -p ty check --project=./python/py-fuzzer'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Dogfood ty on py-fuzzer' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")

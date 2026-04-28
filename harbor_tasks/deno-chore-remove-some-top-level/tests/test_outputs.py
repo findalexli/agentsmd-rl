@@ -376,3 +376,4 @@ def test_cargo_lock_updated():
     manifest_path = bench_util_pkg.get("manifest_path", "")
     assert "tests/bench_util" in manifest_path, \
         f"deno_bench_util manifest_path not at tests/bench_util: {manifest_path}"
+

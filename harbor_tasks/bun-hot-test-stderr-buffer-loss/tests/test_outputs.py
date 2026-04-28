@@ -346,7 +346,7 @@ def test_repo_format():
 
 def test_repo_oxlint():
     subprocess.run(
-        ["npm", "install", "-g", "oxlint"],
+        ["npm", "install", "-g", "oxlint@0.15.12"],
         capture_output=True, text=True, timeout=120,
     )
     r = subprocess.run(

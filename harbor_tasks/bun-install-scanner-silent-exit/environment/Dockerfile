@@ -6,8 +6,8 @@ RUN apt-get -o Acquire::Check-Valid-Until=false -o Acquire::AllowInsecureReposit
     git curl ca-certificates build-essential tmux python3 \
     && rm -rf /var/lib/apt/lists/*
 
-# Install bun for running JS tests
-RUN curl -fsSL https://bun.sh/install | bash
+# Install bun for running JS tests (pinned version)
+RUN curl -fsSL https://bun.sh/install | bash -s "bun-v1.3.13"
 ENV PATH="/root/.bun/bin:${PATH}"
 
 # Clone bun repo at the base commit (before the fix)

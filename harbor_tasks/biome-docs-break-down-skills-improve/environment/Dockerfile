@@ -5,7 +5,7 @@ ENV LANG=C.UTF-8
 
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
-        git curl ca-certificates tmux && \
+        git curl ca-certificates tmux just && \
     rm -rf /var/lib/apt/lists/*
 
 # Shallow clone biome at base commit (large Rust monorepo — only need config files + justfile)

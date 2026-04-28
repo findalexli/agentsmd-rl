@@ -128,3 +128,4 @@ def test_types_ts_declares_label_tokens():
         assert f"{t}?" in iface_block or f"{t}:" in iface_block, (
             f"Token {t} not declared in SupersetSpecificTokens interface"
         )
+

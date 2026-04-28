@@ -18,12 +18,11 @@ RUN git init /workspace/transformers && \
     git fetch --depth=1 origin c17877c2ad39f8f736d5ea8a34f98e562843fc83 && \
     git checkout FETCH_HEAD
 
-# Install minimal deps (agent fills in specifics)
-RUN pip install --no-cache-dir numpy 2>/dev/null || true
+# Install transformers in editable mode (core + minimal deps)
+RUN pip install --no-cache-dir -e /workspace/transformers 2>&1 | tail -3
 
-RUN pip install --no-cache-dir ruff 2>/dev/null || true
-
-ENV PYTHONPATH="/workspace/transformers"
+# Install test tooling (xdist needed for conftest.py plugin compat)
+RUN pip install --no-cache-dir ruff pytest pytest-json-ctrf pytest-xdist 2>&1 | tail -3
 
 RUN git config --global user.email "agent@test.com" && \
     git config --global user.name "Test Agent"

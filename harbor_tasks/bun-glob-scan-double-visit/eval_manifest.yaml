@@ -37,18 +37,26 @@ checks:
   origin: repo_tests
   description: Repo's glob-sources script passes (validates Bun Glob API scanning 2000+
     source files for CMake)
+- id: double_visit_fixed
+  type: pass_to_pass
+  origin: pr_diff
+  description: Basic glob scan on a directory tree returns no duplicate entries (simple
+    **/*.txt pattern)
 - id: workitem_tracks_multiple_indices
-  type: fail_to_pass
+  type: pass_to_pass
   origin: pr_diff
-  description: WorkItem must use a multi-index structure instead of single u32 idx
+  description: Glob scan on a/**/b tree returns no duplicate entries (exercises multi-index
+    tracking)
 - id: double_push_eliminated
-  type: fail_to_pass
+  type: pass_to_pass
   origin: pr_diff
-  description: workbuf.append count reduced from 11 (no paired pushes for same dir)
+  description: Glob scan on **/{b,d} tree returns no duplicate entries (no paired pushes
+    for same dir)
 - id: pattern_matching_iterates_active_indices
-  type: fail_to_pass
+  type: pass_to_pass
   origin: pr_diff
-  description: matchPatternDir/File called inside iteration over active index set
+  description: Glob scan on **/{x,y,p,q}/**/file.txt returns no duplicate entries (active
+    index iteration)
 - id: both_match_functions_present
   type: pass_to_pass
   origin: pr_diff

@@ -142,3 +142,42 @@ def test_existing_unit_tests_unrelated_pass():
     assert r.returncode == 0, (
         f"Existing tests failed:\nSTDOUT:\n{r.stdout[-1500:]}\n\nSTDERR:\n{r.stderr[-1500:]}"
     )
+
+# === PR-added f2p tests (taskforge.test_patch_miner) ===
+# These tests exercise the tests added in the PR to convergence_test.go.
+# On the base commit those test functions don't exist yet, so `go test -run`
+# returns 0 with "[no tests to run]" in stdout — we catch that below so the
+# test fails on base (real f2p) and passes on gold.
+def test_pr_added_TestRuntimeAPIVersionCachesNegotiation():
+    """fail_to_pass | PR added test 'TestRuntimeAPIVersionCachesNegotiation' in 'pkg/compose/convergence_test.go' (go_test)"""
+    _remove_extra_test()
+    r = subprocess.run(
+        ["go", "test", "-count=1", "-run", "^TestRuntimeAPIVersionCachesNegotiation$",
+         "-timeout", "120s", PKG],
+        cwd=REPO, capture_output=True, text=True, timeout=300, env=GO_ENV,
+    )
+    assert r.returncode == 0, (
+        f"go test exited non-zero for 'TestRuntimeAPIVersionCachesNegotiation' "
+        f"(returncode={r.returncode}):\nstdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+    assert "[no tests to run]" not in r.stdout, (
+        "TestRuntimeAPIVersionCachesNegotiation was not found — the PR test "
+        "was not added to convergence_test.go.\nstdout: " + r.stdout[-1000:])
+    assert "FAIL" not in r.stdout, (
+        "TestRuntimeAPIVersionCachesNegotiation failed:\nstdout: " + r.stdout[-1500:])
+
+def test_pr_added_TestRuntimeAPIVersionRetriesOnTransientError():
+    """fail_to_pass | PR added test 'TestRuntimeAPIVersionRetriesOnTransientError' in 'pkg/compose/convergence_test.go' (go_test)"""
+    _remove_extra_test()
+    r = subprocess.run(
+        ["go", "test", "-count=1", "-run", "^TestRuntimeAPIVersionRetriesOnTransientError$",
+         "-timeout", "120s", PKG],
+        cwd=REPO, capture_output=True, text=True, timeout=300, env=GO_ENV,
+    )
+    assert r.returncode == 0, (
+        f"go test exited non-zero for 'TestRuntimeAPIVersionRetriesOnTransientError' "
+        f"(returncode={r.returncode}):\nstdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+    assert "[no tests to run]" not in r.stdout, (
+        "TestRuntimeAPIVersionRetriesOnTransientError was not found — the PR test "
+        "was not added to convergence_test.go.\nstdout: " + r.stdout[-1000:])
+    assert "FAIL" not in r.stdout, (
+        "TestRuntimeAPIVersionRetriesOnTransientError failed:\nstdout: " + r.stdout[-1500:])

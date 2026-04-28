@@ -10,9 +10,9 @@ MCP tools can return image outputs using `mimeType` as the field name for the me
 
 The issue manifests in two code paths:
 
-1. **Core tool execution** (`packages/agents-core/src/runner/toolExecution.ts`): The `normalizeStructuredToolOutput` function checks `mediaType` on tool output objects but ignores `mimeType`. The `convertStructuredToolOutputToInputItem` function has the same gap for nested image objects.
+1. **Core tool execution**: The `normalizeStructuredToolOutput` function checks `mediaType` on tool output objects but ignores `mimeType`. The `convertStructuredToolOutputToInputItem` function has the same gap for nested image objects.
 
-2. **OpenAI Responses adapter** (`packages/agents-openai/src/openaiResponsesModel.ts`): The `convertLegacyToolOutputContent` function uses `getImageInlineMediaType` which only checks `mediaType`, missing `mimeType`. Additionally, when image data is extracted from a top-level `data` field (not inside a nested `image` object), the raw base64 is assigned directly without formatting it into a data URL, even when a top-level mimeType is available.
+2. **OpenAI Responses adapter**: The `convertLegacyToolOutputContent` function uses `getImageInlineMediaType` which only checks `mediaType`, missing `mimeType`. Additionally, when image data is extracted from a top-level `data` field (not inside a nested `image` object), the raw base64 is assigned directly without formatting it into a data URL, even when a top-level mimeType is available.
 
 ## Expected behavior
 
@@ -27,10 +27,9 @@ This must work for both:
 - Top-level format: `{ type: "image", data: "<base64>", mimeType: "image/png" }`
 - Nested format: `{ type: "image", image: { data: "<base64>", mimeType: "image/gif" } }`
 
-## Files to investigate
+## Code Style Requirements
 
-- `packages/agents-core/src/runner/toolExecution.ts` — core tool output normalization
-- `packages/agents-openai/src/openaiResponsesModel.ts` — OpenAI Responses adapter
+This project uses ESLint for code style enforcement. Run `pnpm lint` to verify your changes meet the project's style rules. The lint check must pass for all changed files.
 
 ## Testing
 

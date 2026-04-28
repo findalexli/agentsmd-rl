@@ -36,4 +36,5 @@ Don't forget to:
 
 Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
 
+- `ruff (linter)`
 - `typos (spell-check)`

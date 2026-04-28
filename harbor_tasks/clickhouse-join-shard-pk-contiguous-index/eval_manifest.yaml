@@ -1,25 +1,23 @@
 version: '2.0'
 checks:
-- id: test_fix_contiguous_index_renumbering
+- id: test_buggy_range_for_removed
   type: fail_to_pass
   origin: pr_diff
-  description: 'Fix renumbers part_index_in_query contiguously using local_idx instead
-    of
-
-    preserving gaps from filterPartsByQueryConditionCache. Verifies the specific
-
-    pattern: part_index_in_query = added_parts + local_idx
-
-    '
-- id: test_fix_comment_explains_issue
+  description: 'Buggy range-for over parts_with_ranges removed. The original code
+    uses range-based iteration which preserves original part_index_in_query values
+    that may have gaps after filterPartsByQueryConditionCache drops parts.'
+- id: test_contiguous_part_index_handling
   type: fail_to_pass
   origin: pr_diff
-  description: 'Fix includes explanatory comment about why contiguous renumbering
-    is needed
-
-    and the interaction with filterPartsByQueryConditionCache
-
-    '
+  description: 'Fix uses indexed access to parts_with_ranges for contiguous
+    part_index_in_query assignment. Verifies analysis_result->parts_with_ranges[idx]
+    pattern and contiguous assignment formula part_index_in_query = base + counter.'
+- id: test_qcc_interaction_comment
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'Fix includes a comment describing the interaction with
+    filterPartsByQueryConditionCache to explain why contiguous renumbering is
+    necessary when the query condition cache drops parts.'
 - id: test_target_file_exists
   type: pass_to_pass
   origin: repo_tests
@@ -36,6 +34,7 @@ checks:
   type: fail_to_pass
   origin: pr_diff
   description: Fix correctly accesses analysis_result->parts_with_ranges by index
+    rather than range-for iteration
 - id: test_allman_brace_style
   type: pass_to_pass
   origin: agent_config
@@ -66,7 +65,7 @@ checks:
 - id: test_no_duplicate_includes_in_target
   type: pass_to_pass
   origin: static
-  description: Target file has no duplicate
+  description: Target file has no duplicate #include statements
 - id: test_repo_ci_scripts_compile
   type: pass_to_pass
   origin: repo_tests
@@ -107,15 +106,19 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Git whitespace check passes (pass_to_pass)
+- id: test_ci_stateless_test_sql_present
+  type: pass_to_pass
+  origin: pr_diff
+  description: The stateless SQL test file from PR 101960 exists and contains JOIN
+    statement
+- id: test_ci_stateless_test_reference_matches
+  type: pass_to_pass
+  origin: pr_diff
+  description: The reference file has expected output 0 1 0 0 matching the SQL test
 rubric:
 - rule: Use Allman-style braces (opening brace on new line) per CLAUDE.md
 - rule: Avoid raw pointers where ownership is unclear per copilot-instructions.md
 - rule: Explain complex logic with comments per copilot-instructions.md
-- rule: 'Use local_idx for loop counter (matching fix pattern), not arbitrary names.
-
-    Per copilot-instructions.md: avoid magic constants and unclear variable names.
-
-    '
 source:
   repo: ClickHouse/ClickHouse
   pr: 101960

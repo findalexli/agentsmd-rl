@@ -27,4 +27,6 @@ All four of the following files contain the bug and must be corrected consistent
 
 Note: `modular_mistral4.py` imports `get_llama_4_attn_scale` from `ministral3.modeling_ministral3` rather than defining its own copy, so the scaling function fix only needs to be applied where it is defined. However, the `forward()` method in all four files must be updated.
 
-The repo CI checks (modeling structure, doctest list, dummies, ruff lint and format) must continue to pass on these files after the fix.
+## Code Style Requirements
+
+All code must pass **ruff** lint (`ruff check`) and format (`ruff format --check`) checks. The repo CI checks (modeling structure, doctest list, dummies, ruff lint and format) must continue to pass on these files after the fix.

@@ -53,22 +53,74 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: No MLflow typos in .claude directory
+- id: test_ci_build_create_artifacts_directory
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: build / Create artifacts directory'
+- id: test_ci_build_build_python_packages
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: build / Build Python packages'
+- id: test_ci_build_build_r_package
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: build / Build R package'
+- id: test_ci_build_build_java_packages
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: build / Build Java packages'
+- id: test_ci_check_external_links_run_external_links_checker
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: check-external-links / Run external links checker'
+- id: test_ci_e2e_tests_generate_synthetic_data_for_mlflow_matri
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: e2e-tests / Generate synthetic data for MLflow ${{ matrix.mlflow-version }}'
+- id: test_ci_e2e_tests_run_migration_for_mlflow_matrix_mlflow_v
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: e2e-tests / Run migration for MLflow ${{ matrix.mlflow-version }}'
+- id: test_ci_unit_tests_run_fs2db_pytest_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: unit-tests / Run fs2db pytest tests'
+- id: test_ci_lint_run_pre_commit
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: lint / Run pre-commit'
+- id: test_ci_lint_test_clint
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: lint / Test clint'
+- id: test_ci_lint_check_function_signatures
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: lint / Check function signatures'
+- id: test_ci_lint_check_whitespace_only_changes
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: lint / Check whitespace-only changes'
+- id: test_ci_lint_check_uv_lock_changes
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: lint / Check uv.lock changes'
+- id: test_ci_lint_check_unused_media
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: lint / Check unused media'
 rubric:
 - rule: Only add comments that explain non-obvious logic or provide additional context
   source:
     path: CLAUDE.md
     lines: 13-14
   category: documentation
-  evidence: 'The approve.sh script includes a comment explaining the non-obvious workaround:
-    "The /approve API fails with ''not a fork pull request''. Use /rerun instead."'
-- rule: Document skill usage with a markdown heading and a bash code block demonstrating
-    the command
+  evidence: 'The approve.sh script includes a comment explaining the non-obvious workaround: "The /approve API fails with ''not a fork pull request''. Use /rerun instead."'
+- rule: Document skill usage with a markdown heading and a bash code block demonstrating the command
   source:
     path: .claude/skills/copilot/SKILL.md
     lines: 18-22
-  evidence: The gold solution updates SKILL.md by adding a new section '## Approving
-    workflows' with a bash code block, exactly matching the formatting of the existing
-    '## Polling for completion' section.
+  evidence: The gold solution updates SKILL.md by adding a new section '## Approving workflows' with a bash code block, exactly matching the formatting of the existing '## Polling for completion' section.
   category: documentation
   verification: llm_judge
 config_edits:
@@ -94,31 +146,20 @@ distractors:
     path: CLAUDE.md
     lines: 28-35
   collision_type: scope_ambiguity
-  why_distracting: The agent might try to start the MLflow dev server to test its
-    changes, but this task is purely about creating a standalone bash script for GitHub
-    API interactions. Starting the dev server would waste time and resources.
+  why_distracting: The agent might try to start the MLflow dev server to test its changes, but this task is purely about creating a standalone bash script for GitHub API interactions. Starting the dev server would waste time and resources.
   severity: medium
 - rule: Testing (uv run pytest tests/)
   source:
     path: CLAUDE.md
     lines: 74-85
   collision_type: architecture_boundary
-  why_distracting: The agent might attempt to write Python tests using pytest for
-    the new bash script, which is outside the scope of the task and the established
-    pattern for these Claude skill scripts.
+  why_distracting: The agent might attempt to write Python tests using pytest for the new bash script, which is outside the scope of the task and the established pattern for these Claude skill scripts.
   severity: medium
 - rule: Analyze failed GitHub Action jobs for a pull request
   source:
     path: .claude/skills/analyze-ci/SKILL.md
     lines: 1-2
   collision_type: scope_ambiguity
-  why_distracting: The analyze-ci skill deals with GitHub Action jobs, which might
-    lead the agent to integrate the rerun logic there or use its conventions, but
-    the task explicitly requires adding the script to the copilot skill.
+  why_distracting: The analyze-ci skill deals with GitHub Action jobs, which might lead the agent to integrate the rerun logic there or use its conventions, but the task explicitly requires adding the script to the copilot skill.
   severity: low
-hierarchy_analysis: The repository has a single root-level CLAUDE.md file that is
-  heavily focused on Python development, MLflow architecture, and local dev servers.
-  Since this task involves writing a bash script for GitHub API interactions within
-  the `.claude/skills` directory, most of the root config is irrelevant. The agent
-  must rely primarily on the explicit task instructions and the patterns established
-  in the sibling `poll.sh` file rather than the Python-centric repository guidelines.
+hierarchy_analysis: The repository has a single root-level CLAUDE.md file that is heavily focused on Python development, MLflow architecture, and local dev servers. Since this task involves writing a bash script for GitHub API interactions within the `.claude/skills` directory, most of the root config is irrelevant. The agent must rely primarily on the explicit task instructions and the patterns established in the sibling `poll.sh` file rather than the Python-centric repository guidelines.

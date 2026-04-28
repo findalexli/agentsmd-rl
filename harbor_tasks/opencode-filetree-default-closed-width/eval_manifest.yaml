@@ -39,10 +39,18 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Repo transforms module tests pass
-- id: test_fix_claude_md_created
+- id: test_fix_claude_md_exists
   type: fail_to_pass
   origin: pr_diff
-  description: CLAUDE.md was created with task guidance
+  description: CLAUDE.md file was created in the repo root
+- id: test_fix_claude_md_guidance
+  type: fail_to_pass
+  origin: pr_diff
+  description: CLAUDE.md contains Agg backend guidance
+- id: test_ci_build_sdist_build_sdist
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: Build sdist / Build sdist'
 config_edits:
 - path: CLAUDE.md
   tier: 1

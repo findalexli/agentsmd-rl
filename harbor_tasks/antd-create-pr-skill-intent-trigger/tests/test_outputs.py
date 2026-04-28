@@ -190,3 +190,7 @@ def test_skill_md_basic_structure_preserved():
     assert "## 基本规则" in text, "## 基本规则 section missing"
     assert "## 执行步骤" in text, "## 执行步骤 section missing"
     assert "## 写法要求" in text, "## 写法要求 section missing"
+
+# === CI-mined tests (taskforge.ci_check_miner) ===
+# Dropped: test_ci_build_zip_builds requires Node.js + scripts not available
+# in the sparse checkout (only .agents + .github are present).

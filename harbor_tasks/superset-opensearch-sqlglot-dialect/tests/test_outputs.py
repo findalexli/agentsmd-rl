@@ -287,7 +287,7 @@ def test_existing_parse_py_mappings_intact():
 
 
 # ---------------------------------------------------------------------------
-# Pass-to-pass: licence header & ruff / mypy if available
+# Pass-to-pass: licence header & py_compile
 # ---------------------------------------------------------------------------
 def test_new_dialect_file_has_asf_header():
     """AGENTS.md & CLAUDE.md require ASF licence headers on new source files."""
@@ -315,3 +315,54 @@ def test_repo_dialect_file_compiles():
         timeout=30,
     )
     assert r.returncode == 0, f"py_compile failed:\n{r.stderr}"
+
+
+# ---------------------------------------------------------------------------
+# Fail-to-pass: subprocess test with real test runner (pytest)
+# ---------------------------------------------------------------------------
+def test_ci_sql_dialect_pytest():
+    """Run OpenSearch dialect tests through pytest (real test runner).
+
+    Writes a temporary test file that imports the OpenSearch dialect and
+    verifies round-trip behaviour, then runs ``python -m pytest`` on it.
+    On the base commit the import fails (no OpenSearch module), so pytest
+    exits non-zero. After the fix, both tests pass.
+    """
+    import tempfile
+
+    test_code = r'''
+import sqlglot
+from superset.sql.dialects.opensearch import OpenSearch
+
+
+def test_double_quoted_identifier_roundtrip():
+    sql = 'SELECT "AvgTicketPrice" FROM "flights"'
+    ast = sqlglot.parse_one(sql, OpenSearch)
+    out = OpenSearch().generate(expression=ast, pretty=True)
+    expected = 'SELECT\n  "AvgTicketPrice"\nFROM "flights"'
+    assert out == expected, f"got {out!r}"
+
+
+def test_single_quoted_string_preserved():
+    sql = "SELECT * FROM flights WHERE Carrier = 'Kibana Airlines'"
+    ast = sqlglot.parse_one(sql, OpenSearch)
+    out = OpenSearch().generate(expression=ast, pretty=True)
+    assert "Kibana Airlines" in out
+    assert "'Kibana Airlines'" in out
+'''
+    tmp = REPO / "_test_opensearch_dialect.py"
+    tmp.write_text(test_code)
+    try:
+        r = subprocess.run(
+            ["bash", "-lc", f"python -m pytest {tmp} -v --tb=short"],
+            cwd=REPO,
+            capture_output=True,
+            text=True,
+            timeout=60,
+        )
+        assert r.returncode == 0, (
+            f"pytest on OpenSearch dialect failed (returncode={r.returncode}):\n"
+            f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}"
+        )
+    finally:
+        tmp.unlink(missing_ok=True)

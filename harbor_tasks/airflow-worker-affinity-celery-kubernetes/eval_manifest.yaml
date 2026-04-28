@@ -1,13 +1,21 @@
 checks:
-- id: test_kubernetes_affinity_in_pod_template
+- id: test_kubernetes_affinity_applied_to_pod_template
   type: fail_to_pass
   origin: pr_diff
   description: workers.kubernetes.affinity is properly applied to pod template file
-- id: test_celery_affinity_in_worker_deployment
+- id: test_celery_affinity_applied_to_worker_deployment
+  type: pass_to_pass
+  origin: pr_diff
+  description: workers.celery.affinity is properly applied to worker deployment (merge mechanism already supports it)
+- id: test_precedence_new_fields_over_deprecated
   type: fail_to_pass
   origin: pr_diff
-  description: workers.celery.affinity is properly applied to worker deployment
-- id: test_deprecated_workers_affinity_deprecation_warning
+  description: New fields take precedence over deprecated workers.affinity
+- id: test_backwards_compatibility_deprecated_affinity
+  type: pass_to_pass
+  origin: pr_diff
+  description: workers.affinity backwards compatibility is maintained
+- id: test_deprecation_warning_in_notes
   type: fail_to_pass
   origin: pr_diff
   description: NOTES.txt includes deprecation warning when workers.affinity is used
@@ -19,10 +27,6 @@ checks:
   type: fail_to_pass
   origin: pr_diff
   description: values.schema.json includes workers.kubernetes.affinity definition
-- id: test_deprecated_affinity_backwards_compatibility
-  type: fail_to_pass
-  origin: pr_diff
-  description: workers.affinity backwards compatibility is maintained
 - id: test_helm_lint
   type: pass_to_pass
   origin: repo_tests
@@ -67,6 +71,14 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Repo helm CeleryKubernetes executor tests pass
+- id: test_pr_added_test_workers_affinity
+  type: pass_to_pass
+  origin: pr_diff
+  description: PR-added repo test 'test_workers_affinity' still passes (regression guard)
+- id: test_pr_added_test_affinity
+  type: pass_to_pass
+  origin: pr_diff
+  description: PR-added repo test 'test_affinity' still passes (regression guard)
 rubric:
 - rule: Use @pytest.mark.parametrize for multiple similar inputs
   source:
@@ -76,55 +88,40 @@ rubric:
   source:
     path: CLAUDE.md
     lines: '125'
-- rule: Always format and check Python files with ruff immediately after writing or
-    editing
+- rule: Always format and check Python files with ruff immediately after writing or editing
   source:
     path: CLAUDE.md
     lines: 95-96
 - rule: Helm chart changes must include updates to values.schema.json
 - rule: Deprecated fields should show deprecation warnings in NOTES.txt
 - rule: New affinity fields should take precedence over old deprecated field
-- rule: 'Run specific Helm test type: `breeze testing helm-tests --use-xdist --test-type
-    <type>`'
+- rule: 'Run specific Helm test type: `breeze testing helm-tests --use-xdist --test-type <type>`'
   source:
     path: CLAUDE.md
     lines: 25-27
-  evidence: 'The gold solution modifies tests in `helm-tests/tests/helm_tests/airflow_aux/`
-    and `helm-tests/tests/helm_tests/airflow_core/`, which align perfectly with the
-    specific Helm test types (`airflow_aux`, '
+  evidence: 'The gold solution modifies tests in `helm-tests/tests/helm_tests/airflow_aux/` and `helm-tests/tests/helm_tests/airflow_core/`, which align perfectly with the specific Helm test types (`airflow_aux`, '
   category: testing
 distractors:
 - rule: 'Run a test file: `uv run --project <PROJECT> pytest path/to/test.py -xvs`'
   collision_type: scope_ambiguity
-  why_distracting: The general instruction for running tests suggests using `uv run
-    --project <PROJECT> pytest`, which an agent might try to use for the helm-tests.
-    However, Helm tests have a dedicated command (`breeze testing helm-tests`) that
-    must be used instead.
+  why_distracting: The general instruction for running tests suggests using `uv run --project <PROJECT> pytest`, which an agent might try to use for the helm-tests. However, Helm tests have a dedicated command (`breeze testing helm-tests`) that must be used instead.
   severity: medium
   source:
     path: AGENTS.md
     lines: 14-16
-- rule: 'If uv tests fail with missing system dependencies, run the tests with breeze:
-    `breeze run pytest <tests> -xvs`'
+- rule: 'If uv tests fail with missing system dependencies, run the tests with breeze: `breeze run pytest <tests> -xvs`'
   collision_type: scope_ambiguity
-  why_distracting: The fallback instruction for failing `uv` tests suggests using
-    `breeze run pytest <tests>`, which could mislead the agent when trying to run
-    Helm tests that require the specific `breeze testing helm-tests` command.
+  why_distracting: The fallback instruction for failing `uv` tests suggests using `breeze run pytest <tests>`, which could mislead the agent when trying to run Helm tests that require the specific `breeze testing helm-tests` command.
   severity: medium
   source:
     path: AGENTS.md
     lines: '17'
-- rule: Translation work falls into one of two categories depending on whether the
-    target locale already exists. Check if a directory for the locale exists under
-    airflow-core/src/airflow/ui/public/i18n/locales/<locale>/
+- rule: Translation work falls into one of two categories depending on whether the target locale already exists. Check if a directory for the locale exists under airflow-core/src/airflow/ui/public/i18n/locales/<locale>/
   source:
     path: .github/skills/airflow-translations/SKILL.md
     lines: 10-15
   collision_type: scope_ambiguity
-  why_distracting: The task involves adding a user-facing deprecation warning to the
-    Helm chart's NOTES.txt and values.schema.json. An agent might mistakenly attempt
-    to apply this translation skill to localize these messages, but Helm chart notes
-    are not part of the UI translation system.
+  why_distracting: The task involves adding a user-facing deprecation warning to the Helm chart's NOTES.txt and values.schema.json. An agent might mistakenly attempt to apply this translation skill to localize these messages, but Helm chart notes are not part of the UI translation system.
   severity: medium
 - rule: '- **Run Helm tests in paral'
   source:
@@ -132,15 +129,9 @@ distractors:
     lines: 27-27
   source_text: '- **Run Helm tests in paral'
   collision_type: scope_ambiguity
-  why_distracting: The agent might think it needs to run or add Helm tests for this
-    change because it modifies Helm chart files, but the gold diff only updates the
-    Helm chart templates, schema, and documentation without adding or modifying any
-    tests.
+  why_distracting: The agent might think it needs to run or add Helm tests for this change because it modifies Helm chart files, but the gold diff only updates the Helm chart templates, schema, and documentation without adding or modifying any tests.
   severity: medium
-hierarchy_analysis: AGENTS.md and CLAUDE.md are identical and provide flat, repository-wide
-  instructions. The instructions focus heavily on Python development and testing,
-  with specific commands for Helm tests that override the general `uv run pytest`
-  commands.
+hierarchy_analysis: AGENTS.md and CLAUDE.md are identical and provide flat, repository-wide instructions. The instructions focus heavily on Python development and testing, with specific commands for Helm tests that override the general `uv run pytest` commands.
 version: '2.0'
 source:
   repo: apache/airflow

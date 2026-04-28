@@ -24,8 +24,8 @@ def _node_eval(script: str, timeout: int = 60) -> subprocess.CompletedProcess:
     )
 
 
-def test_kill_all_command_registered():
-    """killAll command must be declared and registered in commands.ts (verified via TypeScript AST)."""
+def test_kill_all_command_declared():
+    """killAll command must be declared in commands.ts with correct name, description, and category."""
     r = _node_eval("""
 const ts = require('typescript');
 const fs = require('fs');
@@ -34,13 +34,10 @@ const sf = ts.createSourceFile('commands.ts', source, ts.ScriptTarget.Latest, tr
 
 let foundDecl = false;
 let declProps = {};
-let foundInArray = false;
 
 function visit(node) {
-    // Find: const killAll = declareCommand({ ... })
     if (ts.isVariableDeclaration(node) && node.name.getText(sf) === 'killAll') {
         foundDecl = true;
-        // Extract properties from the object literal argument
         if (node.initializer && ts.isCallExpression(node.initializer)) {
             const arg = node.initializer.arguments[0];
             if (arg && ts.isObjectLiteralExpression(arg)) {
@@ -55,7 +52,39 @@ function visit(node) {
             }
         }
     }
-    // Find killAll in the commandsArray
+    ts.forEachChild(node, visit);
+}
+visit(sf);
+
+const result = { foundDecl, declProps };
+console.log(JSON.stringify(result));
+
+if (!foundDecl) { console.error('killAll variable declaration not found'); process.exit(1); }
+if (declProps.name !== 'kill-all') { console.error('Expected name kill-all, got: ' + declProps.name); process.exit(1); }
+if (declProps.category !== 'session') { console.error('Expected category session, got: ' + declProps.category); process.exit(1); }
+if (!declProps.description || !declProps.description.includes('Forcefully kill all daemon processes')) {
+    console.error('Description mismatch: ' + declProps.description); process.exit(1);
+}
+console.log('PASS');
+""")
+    assert r.returncode == 0, f"AST check failed:\n{r.stdout}\n{r.stderr}"
+    data = json.loads(r.stdout.strip().split("\n")[0])
+    assert data["foundDecl"], "killAll declaration not found in AST"
+    assert data["declProps"]["name"] == "kill-all"
+    assert data["declProps"]["category"] == "session"
+
+
+def test_kill_all_in_commands_array():
+    """killAll must be included in the commandsArray for CLI registration."""
+    r = _node_eval("""
+const ts = require('typescript');
+const fs = require('fs');
+const source = fs.readFileSync('packages/playwright/src/mcp/terminal/commands.ts', 'utf-8');
+const sf = ts.createSourceFile('commands.ts', source, ts.ScriptTarget.Latest, true);
+
+let foundInArray = false;
+
+function visit(node) {
     if (ts.isArrayLiteralExpression(node)) {
         for (const elem of node.elements) {
             if (ts.isIdentifier(elem) && elem.text === 'killAll') {
@@ -67,24 +96,13 @@ function visit(node) {
 }
 visit(sf);
 
-const result = { foundDecl, declProps, foundInArray };
-console.log(JSON.stringify(result));
-
-if (!foundDecl) { console.error('killAll variable declaration not found'); process.exit(1); }
-if (declProps.name !== 'kill-all') { console.error('Expected name kill-all, got: ' + declProps.name); process.exit(1); }
-if (declProps.category !== 'session') { console.error('Expected category session, got: ' + declProps.category); process.exit(1); }
-if (!declProps.description || !declProps.description.includes('Forcefully kill all daemon processes')) {
-    console.error('Description mismatch: ' + declProps.description); process.exit(1);
-}
+console.log(JSON.stringify({ foundInArray }));
 if (!foundInArray) { console.error('killAll not found in commandsArray'); process.exit(1); }
 console.log('PASS');
 """)
     assert r.returncode == 0, f"AST check failed:\n{r.stdout}\n{r.stderr}"
     data = json.loads(r.stdout.strip().split("\n")[0])
-    assert data["foundDecl"], "killAll declaration not found in AST"
     assert data["foundInArray"], "killAll not in commandsArray"
-    assert data["declProps"]["name"] == "kill-all"
-    assert data["declProps"]["category"] == "session"
 
 
 def test_kill_all_implemented_in_program():

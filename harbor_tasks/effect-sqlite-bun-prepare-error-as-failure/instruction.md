@@ -68,8 +68,8 @@ shape is already in place. The wrapper class and its message strings
 ## Code Style Requirements
 
 The repo's CI runs the TypeScript typechecker (`tsc -b` / `pnpm check`) and
-treats it as a hard gate — your changes must typecheck cleanly. Per
-`AGENTS.md`:
+ESLint (`pnpm lint`) — both are hard gates and your changes must
+typecheck and lint cleanly. Per `AGENTS.md`:
 
 - "Zero Tolerance for Errors: All automated checks must pass."
 - "Reduce comments: Avoid comments unless absolutely required to explain

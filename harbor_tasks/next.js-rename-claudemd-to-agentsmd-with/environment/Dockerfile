@@ -12,14 +12,20 @@ RUN apt-get update && \
 # Create python symlink for convenience
 RUN ln -sf /usr/bin/python3 /usr/bin/python
 
-# Clone repo at base commit (use --depth for faster clone)
+# Clone repo at base commit
 RUN git init /workspace/next.js && \
     cd /workspace/next.js && \
     git remote add origin https://github.com/vercel/next.js.git && \
-    git fetch --depth=1 origin c5b19eb7f5cf48dffa1b8bf87cd089f079fb031a && \
+    git fetch --depth=10 origin c5b19eb7f5cf48dffa1b8bf87cd089f079fb031a && \
     git checkout FETCH_HEAD && \
     git config user.email "agent@test" && \
     git config user.name "Agent"
+
+# Enable corepack for pnpm
+RUN corepack enable
+
+# Install alex for .alexignore verification
+RUN npm install -g alex
 
 WORKDIR /workspace/next.js
 

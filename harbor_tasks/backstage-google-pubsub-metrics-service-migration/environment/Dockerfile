@@ -26,7 +26,7 @@ RUN git init /workspace/backstage && \
     cd /workspace/backstage && \
     git remote add origin https://github.com/backstage/backstage.git && \
     git fetch --depth=1 origin 98d9a75dc2966be209bfea336a482a2266c3267d && \
-    git checkout FETCH_HEAD \
+    git checkout FETCH_HEAD && \
     git config user.email "task@local" && \
     git config user.name "task"
 

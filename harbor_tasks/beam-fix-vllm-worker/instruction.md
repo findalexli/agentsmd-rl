@@ -38,4 +38,7 @@ The example currently creates `VLLMCompletionsModelHandler` and `VLLMChatModelHa
 
 Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
 
-- `pylint (Python linter)`
+- `flake8` (Python syntax/error checker)
+- `pycodestyle` (PEP 8 style guide checker)
+- `yapf` (Python code formatter)
+- `pylint` (Python static analysis linter)

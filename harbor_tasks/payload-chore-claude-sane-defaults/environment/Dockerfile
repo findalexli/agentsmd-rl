@@ -2,11 +2,16 @@ FROM node:22-slim
 
 ENV DEBIAN_FRONTEND=noninteractive
 ENV LANG=C.UTF-8
+ENV PNPM_HOME=/usr/local/share/pnpm
+ENV PATH=/usr/local/share/pnpm:$PATH
 
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
         git curl ca-certificates build-essential tmux jq python3 python3-pip python3-venv && \
     rm -rf /var/lib/apt/lists/*
+
+# Install pnpm via corepack
+RUN corepack enable && corepack prepare pnpm@9.7.1 --activate
 
 # Clone repo at base commit (large monorepo — use depth limit)
 RUN git init /workspace/payload && \
@@ -18,6 +23,9 @@ RUN git init /workspace/payload && \
     git config user.name "Agent"
 
 WORKDIR /workspace/payload
+
+# Install dependencies (required for CI lint test)
+RUN pnpm install --frozen-lockfile
 
 # Verifier output directory (Harbor bind-mounts this)
 RUN mkdir -p /logs/verifier

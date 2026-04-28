@@ -38,6 +38,6 @@ WORKDIR /workspace/uv
 # Pre-warm cargo cache by building uv-distribution-types tests once.
 # This downloads & compiles all transitive deps so later `cargo test`
 # during NOP / GOLD validation is fast.
-RUN cargo build --package uv-distribution-types --tests --quiet 2>&1 | tail -40
+RUN cargo build --package uv-distribution-types --tests --quiet
 
 WORKDIR /workspace

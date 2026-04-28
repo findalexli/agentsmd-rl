@@ -5,8 +5,8 @@ when coin reservations are disabled in the protocol configuration.
 """
 
 import subprocess
-import sys
 import re
+import os
 
 REPO = "/workspace/sui"
 TARGET_FILE = "crates/sui-json-rpc/src/authority_state.rs"
@@ -84,37 +84,6 @@ def test_get_owned_coins_has_protocol_gating():
         "Must return empty HashMap when coin_reservations_enabled is false"
 
 
-def test_clippy_passes():
-    """Verify code passes clippy lints (pass_to_pass)."""
-    # Run clippy on just the sui-json-rpc crate
-    # Use --package instead of -p as xclippy may have different arg handling
-    result = subprocess.run(
-        ["cargo", "clippy", "--package", "sui-json-rpc", "--", "-D", "warnings"],
-        cwd=REPO,
-        capture_output=True,
-        text=True,
-        timeout=600
-    )
-    # Note: clippy warnings are OK, but errors should fail
-    # Return code 0 means no errors
-    assert result.returncode == 0, f"cargo clippy failed:\n{result.stderr[-1000:]}"
-
-
-def test_git_checks():
-    """Verify git repo checks pass (pass_to_pass).
-
-    This runs the repo's standard git checks script used in CI.
-    """
-    result = subprocess.run(
-        ["bash", "scripts/git-checks.sh"],
-        cwd=REPO,
-        capture_output=True,
-        text=True,
-        timeout=60
-    )
-    assert result.returncode == 0, f"git-checks.sh failed:\n{result.stderr[-500:]}\n{result.stdout[-500:]}"
-
-
 def test_cargo_fmt():
     """Verify code formatting passes (pass_to_pass).
 
@@ -143,3 +112,18 @@ def test_cargo_clippy_package():
         timeout=600
     )
     assert result.returncode == 0, f"cargo clippy failed:\n{result.stderr[-1000:]}"
+
+
+def test_git_checks():
+    """Verify git repo checks pass (pass_to_pass).
+
+    This runs the repo's standard git checks script used in CI.
+    """
+    result = subprocess.run(
+        ["bash", "scripts/git-checks.sh"],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=60
+    )
+    assert result.returncode == 0, f"git-checks.sh failed:\n{result.stderr[-500:]}\n{result.stdout[-500:]}"

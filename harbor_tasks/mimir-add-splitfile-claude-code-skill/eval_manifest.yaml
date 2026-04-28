@@ -65,15 +65,61 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: All shell scripts in tools/ have valid bash syntax
+- id: test_ci_test_warm_go_build_cache
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: test / Warm Go build cache'
+- id: test_ci_test_print_go_build_cache_size
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: test / Print Go build cache size'
+- id: test_ci_lint_jsonnet_run_git_config
+  type: fail_to_pass
+  origin: repo_tests
+  description: 'CI: lint-jsonnet / Run Git Config'
+- id: test_ci_lint_jsonnet_symlink_expected_path_to_workspace
+  type: fail_to_pass
+  origin: repo_tests
+  description: 'CI: lint-jsonnet / Symlink Expected Path to Workspace'
+- id: test_ci_lint_jsonnet_lint
+  type: fail_to_pass
+  origin: repo_tests
+  description: 'CI: lint-jsonnet / Lint'
+- id: test_ci_lint_jsonnet_check_vendor_directory
+  type: fail_to_pass
+  origin: repo_tests
+  description: 'CI: lint-jsonnet / Check Vendor Directory'
+- id: test_ci_lint_jsonnet_check_protos
+  type: fail_to_pass
+  origin: repo_tests
+  description: 'CI: lint-jsonnet / Check Protos'
+- id: test_ci_lint_jsonnet_check_generated_documentation
+  type: fail_to_pass
+  origin: repo_tests
+  description: 'CI: lint-jsonnet / Check Generated Documentation'
+- id: test_ci_lint_jsonnet_check_reference_help_documentation
+  type: fail_to_pass
+  origin: repo_tests
+  description: 'CI: lint-jsonnet / Check Reference Help Documentation'
+- id: test_ci_lint_jsonnet_check_white_noise
+  type: fail_to_pass
+  origin: repo_tests
+  description: 'CI: lint-jsonnet / Check White Noise'
+- id: test_ci_lint_jsonnet_check_license_header
+  type: fail_to_pass
+  origin: repo_tests
+  description: 'CI: lint-jsonnet / Check License Header'
+- id: test_ci_lint_jsonnet_check_docker_compose_yaml
+  type: fail_to_pass
+  origin: repo_tests
+  description: 'CI: lint-jsonnet / Check Docker-Compose YAML'
 rubric:
-- rule: The SKILL.md should follow the same frontmatter format as other Claude skills
-    (name, description, argument-hint fields)
+- rule: The SKILL.md should follow the same frontmatter format as other Claude skills (name, description, argument-hint fields)
   source:
     path: .claude/skills/split-file/SKILL.md
     lines: 1-5
     commit: 915dc42e42b4b3bf1a5350090469eb77470adb91
-- rule: The verify tool should use idiomatic Go style consistent with the rest of
-    the Mimir codebase (goimports grouping, comment style)
+- rule: The verify tool should use idiomatic Go style consistent with the rest of the Mimir codebase (goimports grouping, comment style)
   source:
     path: CLAUDE.md
     lines: 35-50
@@ -108,18 +154,13 @@ rubric:
   source:
     path: CLAUDE.md
     lines: 32-33
-  evidence: The generated SKILL.md explicitly instructs the user/agent to run `goimports
-    -local <module_path> -w` to fix imports after splitting files, adhering to the
-    project's tooling choice.
+  evidence: The generated SKILL.md explicitly instructs the user/agent to run `goimports -local <module_path> -w` to fix imports after splitting files, adhering to the project's tooling choice.
   category: tooling
-- rule: Use goimports with the -local parameter to format Go files and sort imports
-    into standard, 3rd party, and internal groups.
+- rule: Use goimports with the -local parameter to format Go files and sort imports into standard, 3rd party, and internal groups.
   source:
     path: CLAUDE.md
     lines: 38-45
-  evidence: The gold solution's SKILL.md explicitly includes a step to run `goimports
-    -local <module_path> -w` to fix imports after splitting files, reflecting the
-    project's specific tooling requirements for impo
+  evidence: The gold solution's SKILL.md explicitly includes a step to run `goimports -local <module_path> -w` to fix imports after splitting files, reflecting the project's specific tooling requirements for impo
   category: tooling
 config_edits:
 - path: .claude/skills/split-file/SKILL.md
@@ -128,9 +169,7 @@ config_edits:
 
     name: split-file
 
-    description: Split a large Go file into smaller focused files while preserving
-    git history. Use when a file is too large and needs to be broken into logical
-    modules.
+    description: Split a large Go file into smaller focused files while preserving git history. Use when a file is too large and needs to be broken into logical modules.
 
     argument-hint: [filepath]
 
@@ -140,25 +179,19 @@ config_edits:
     # Split a Go file into multiple files preserving git history
 
 
-    Split the file at `$ARGUMENTS` into multiple smaller files, grouped by logical
-    concern, while preserving `git log --follow` history for each new file.
+    Split the file at `$ARGUMENTS` into multiple smaller files, grouped by logical concern, while preserving `git log --follow` history for each new file.
 
 
     ## Phase 1: Analyze
 
 
-    1. Read the file and catalog every function, method, type, const block, and var
-    block with their line numbers.
+    1. Read the file and catalog every function, method, type, const block, and var block with their line numbers.
 
-    2. Group them into logical categories (e.g., push path, query path, TSDB lifecycle,
-    HTTP handlers, etc.).
+    2. Group them into logical categories (e.g., push path, query path, TSDB lifecycle, HTTP handlers, etc.).
 
-    3. Check existing files in the same package to understand naming conventions and
-    avoid conflicts.
+    3. Check existing files in the same package to understand naming conventions and avoid conflicts.
 
-    4. Propose the split to the user: list each new file, what goes in it, and approximate
-    line count. Keep the original file for initialization, config, types, and lifecycle.
-    Aim for at least 4 files.
+    4. Propose the split to the user: list each new file, what goes in it, and approximate line count. Keep the original file for initialization, config, types, and lifecycle. Aim for at least 4 files.
 
     5. Wait for user approval before proceeding.
 
@@ -174,49 +207,33 @@ config_edits:
 
     ```bash
 
-    # 1. Create temp branch from current branch git checkout -b temp-split-SUFFIX
-    $CURRENT_BRANCH
+    # 1. Create temp branch from current branch git checkout -b temp-split-SUFFIX $CURRENT_BRANCH
 
 
-    # 2. Rename original to new filename git mv path/to/original.go path/to/new_file.go
-    git commit -m "temp: rename original.go to new_file.go"
+    # 2. Rename original to new filename git mv path/to/original.go path/to/new_file.go git commit -m "temp: rename original.go to new_file.go"
 
 
     # 3. Go back to working branch git checkout $CURRENT_BRANCH
 
 
-    # 4. Rename original to a temp name (creates rename/rename conflict) git mv path/to/original.go
-    path/to/original_main_temp.go git commit -m "temp: rename original.go to original_main_temp.go"
+    # 4. Rename original to a temp name (creates rename/rename conflict) git mv path/to/original.go path/to/original_main_temp.go git commit -m "temp: rename original.go to original_main_temp.go"
 
 
-    # 5. Merge — this triggers a CONFLICT (rename/rename), which is what we want git
-    merge temp-split-SUFFIX --no-commit git checkout --ours path/to/original_main_temp.go
-    git checkout --theirs path/to/new_file.go git add path/to/original_main_temp.go
-    path/to/new_file.go git rm --cached path/to/original.go 2>/d'
+    # 5. Merge — this triggers a CONFLICT (rename/rename), which is what we want git merge temp-split-SUFFIX --no-commit git checkout --ours path/to/original_main_temp.go git checkout --theirs path/to/new_file.go git add path/to/original_main_temp.go path/to/new_file.go git rm --cached path/to/original.go 2>/d'
   gold_removed: ''
 distractors:
-- rule: Include a CHANGELOG message if users of Grafana Mimir need to hear about what
-    you did.
+- rule: Include a CHANGELOG message if users of Grafana Mimir need to hear about what you did.
   collision_type: scope_ambiguity
-  why_distracting: The rule requires a CHANGELOG message for user-facing changes.
-    An agent might try to add a changelog entry for the new CLI tool and Claude skill,
-    but these are internal developer tools, not Grafana Mimir features.
+  why_distracting: The rule requires a CHANGELOG message for user-facing changes. An agent might try to add a changelog entry for the new CLI tool and Claude skill, but these are internal developer tools, not Grafana Mimir features.
   severity: medium
   source:
     path: CLAUDE.md
     lines: 21-21
-- rule: If you have made any changes to flags or config, run `make reference-help
-    doc` and commit the changed files to update the config file documentation.
+- rule: If you have made any changes to flags or config, run `make reference-help doc` and commit the changed files to update the config file documentation.
   collision_type: scope_ambiguity
-  why_distracting: The rule asks to run `make reference-help doc` if flags or config
-    are changed. The agent is creating a new CLI tool with a usage message, so it
-    might attempt to run this make target to update documentation. However, this tool
-    is an internal script, not a Mimir binary flag.
+  why_distracting: The rule asks to run `make reference-help doc` if flags or config are changed. The agent is creating a new CLI tool with a usage message, so it might attempt to run this make target to update documentation. However, this tool is an internal script, not a Mimir binary flag.
   severity: medium
   source:
     path: CLAUDE.md
     lines: 22-22
-hierarchy_analysis: 'The configuration is flat, with identical rules in AGENTS.md
-  and CLAUDE.md. The primary challenge is scope resolution: applying general repository
-  rules (like changelogs and doc generation) appropriately to internal developer tooling
-  versus main project code.'
+hierarchy_analysis: 'The configuration is flat, with identical rules in AGENTS.md and CLAUDE.md. The primary challenge is scope resolution: applying general repository rules (like changelogs and doc generation) appropriately to internal developer tooling versus main project code.'

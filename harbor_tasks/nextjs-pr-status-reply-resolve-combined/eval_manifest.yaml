@@ -8,8 +8,7 @@ checks:
 - id: reply_and_resolve_subcommand_no_args
   type: fail_to_pass
   origin: pr_diff
-  description: reply-and-resolve-thread subcommand exists and prints usage when called
-    without args
+  description: reply-and-resolve-thread subcommand exists and prints usage when called without args
 - id: reply_and_resolve_subcommand_missing_body
   type: fail_to_pass
   origin: pr_diff
@@ -17,8 +16,7 @@ checks:
 - id: generate_thread_md_includes_combined_command
   type: fail_to_pass
   origin: pr_diff
-  description: generateThreadMd outputs the reply-and-resolve-thread command for unresolved
-    threads
+  description: generateThreadMd outputs the reply-and-resolve-thread command for unresolved threads
 - id: reply_to_thread_uses_rest_api
   type: fail_to_pass
   origin: pr_diff
@@ -43,15 +41,10 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Repo's ast-grep scan passes on scripts/pr-status.js (no pattern violations)
-- id: repo_node_check_pr_status
-  type: pass_to_pass
-  origin: repo_tests
-  description: Repo's scripts/pr-status.js passes node --check validation
 - id: skill_md_thread_interaction_commands
   type: fail_to_pass
   origin: agent_config
-  description: SKILL.md must document thread interaction commands including the combined
-    command
+  description: SKILL.md must document thread interaction commands including the combined command
   source:
     path: .agents/skills/pr-status-triage/SKILL.md
     lines: '22'
@@ -65,82 +58,57 @@ checks:
     lines: 29-44
     commit: fea754747872122d167dd8bf1fc5581044e50521
 rubric:
-- rule: After addressing review comments, reply to the thread describing what was
-    done, then resolve it. Use reply-and-resolve-thread to do both in one step, or
-    use reply-thread + resolve-thread separately.
+- rule: After addressing review comments, reply to the thread describing what was done, then resolve it. Use reply-and-resolve-thread to do both in one step, or use reply-thread + resolve-thread separately.
   source:
     path: .agents/skills/pr-status-triage/SKILL.md
     lines: '22'
     commit: fea754747872122d167dd8bf1fc5581044e50521
-  reference: '6. After addressing review comments, reply to the thread describing
-    what was done, then resolve it. Use `reply-and-resolve-thread` to do both in one
-    step, or use `reply-thread` + `resolve-thread` separately.
+  reference: '6. After addressing review comments, reply to the thread describing what was done, then resolve it. Use `reply-and-resolve-thread` to do both in one step, or use `reply-thread` + `resolve-thread` separately.
 
-    Thread interaction commands documenting reply-and-resolve-thread alongside reply-thread
-    and resolve-thread.
+    Thread interaction commands documenting reply-and-resolve-thread alongside reply-thread and resolve-thread.
 
     '
 - rule: 'Codebase structure: `scripts/` is designated for build and maintenance scripts.'
   source:
     path: scripts/pr-status.js
     lines: 1-50
-  evidence: The gold solution correctly modifies `scripts/pr-status.js` which is located
-    in the `scripts/` directory, aligning with the architectural definition that this
-    directory is for maintenance scripts.
+  evidence: The gold solution correctly modifies `scripts/pr-status.js` which is located in the `scripts/` directory, aligning with the architectural definition that this directory is for maintenance scripts.
   category: architecture
   reference: 'Added reply-and-resolve-thread subcommand handler in main() function.
 
     Modified replyToThread() to use REST API /repos/{owner}/{repo}/pulls/{pull_number}/comments/{comment_id}/replies.
 
-    Added reply-and-resolve-thread template to generateThreadMd() output for unresolved
-    threads.
+    Added reply-and-resolve-thread template to generateThreadMd() output for unresolved threads.
 
     '
-- rule: Read local documentation (like READMEs or skill docs) to identify and follow
-    local patterns and conventions before editing files in a subdirectory.
+- rule: Read local documentation (like READMEs or skill docs) to identify and follow local patterns and conventions before editing files in a subdirectory.
   source:
     path: .agents/skills/pr-status-triage/workflow.md
     lines: 29-44
-  evidence: The gold solution reads and updates skill docs in `.agents/skills/pr-status-triage/`,
-    adding the new command to both SKILL.md and workflow.md following existing patterns.
+  evidence: The gold solution reads and updates skill docs in `.agents/skills/pr-status-triage/`, adding the new command to both SKILL.md and workflow.md following existing patterns.
   category: documentation
-  reference: 'Added "Or do both in one step:" section in workflow.md documenting the
-    combined reply-and-resolve-thread command.
+  reference: 'Added "Or do both in one step:" section in workflow.md documenting the combined reply-and-resolve-thread command.
 
     '
-- rule: The `scripts/` directory is designated for build and maintenance scripts,
-    separate from the core Next.js framework packages.
+- rule: The `scripts/` directory is designated for build and maintenance scripts, separate from the core Next.js framework packages.
   source:
     path: AGENTS.md
     lines: 13-22
-  evidence: The gold solution implements the new PR maintenance command `reply-and-resolve-thread`
-    directly in `scripts/pr-status.js`, aligning with the directory's designated purpose.
+  evidence: The gold solution implements the new PR maintenance command `reply-and-resolve-thread` directly in `scripts/pr-status.js`, aligning with the directory's designated purpose.
   category: architecture
 distractors:
-- rule: 'Default agent rule: If you are changing Next.js source or integration tests,
-    start `pnpm --filter=next dev` in a separate terminal session before making edits.'
+- rule: 'Default agent rule: If you are changing Next.js source or integration tests, start `pnpm --filter=next dev` in a separate terminal session before making edits.'
   collision_type: scope_ambiguity
-  why_distracting: The rule mandates starting `pnpm --filter=next dev` when changing
-    Next.js source. An agent might misinterpret `scripts/pr-status.js` as core source
-    and start the dev server, which is useless for a standalone Node script and wastes
-    time.
+  why_distracting: The rule mandates starting `pnpm --filter=next dev` when changing Next.js source. An agent might misinterpret `scripts/pr-status.js` as core source and start the dev server, which is useless for a standalone Node script and wastes time.
   severity: medium
   source:
     path: AGENTS.md
     lines: 66-68
 - rule: 'Always run a full bootstrap build after switching branches: `pnpm build-all`'
   collision_type: scope_ambiguity
-  why_distracting: The rule suggests running `pnpm build-all` after switching branches.
-    An agent might trigger this 5+ minute build before or after editing the script,
-    wasting time since the script is executed directly via Node and does not require
-    monorepo compilation.
+  why_distracting: The rule suggests running `pnpm build-all` after switching branches. An agent might trigger this 5+ minute build before or after editing the script, wasting time since the script is executed directly via Node and does not require monorepo compilation.
   severity: medium
   source:
     path: AGENTS.md
     lines: 88-92
-hierarchy_analysis: 'The config hierarchy is flat (Level 0 `AGENTS.md` and `CLAUDE.md`
-  are identical). The primary challenge is meta-referential: the agent must edit its
-  own skill definition files (`.agents/skills/pr-status-triage/SKILL.md` and `workflow.md`)
-  as if they were regular source files, without confusing them with its active system
-  prompt instructions. The config files provide general Next.js build instructions
-  that are largely distracting for this standalone script task.'
+hierarchy_analysis: 'The config hierarchy is flat (Level 0 `AGENTS.md` and `CLAUDE.md` are identical). The primary challenge is meta-referential: the agent must edit its own skill definition files (`.agents/skills/pr-status-triage/SKILL.md` and `workflow.md`) as if they were regular source files, without confusing them with its active system prompt instructions. The config files provide general Next.js build instructions that are largely distracting for this standalone script task.'

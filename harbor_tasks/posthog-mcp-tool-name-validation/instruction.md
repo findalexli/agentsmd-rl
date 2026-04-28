@@ -16,21 +16,21 @@ The following must be implemented to enforce consistent tool naming across the M
 
 Export validation constants from `services/mcp/scripts/yaml-config-schema.ts`:
 
-- A constant for the tool name pattern that validates lowercase kebab-case tool names. Valid names contain only lowercase letters, digits, and hyphens. They must not start or end with a hyphen.
+- A constant named `TOOL_NAME_PATTERN` for validating lowercase kebab-case tool names. Valid names contain only lowercase letters, digits, and hyphens. They must not start or end with a hyphen.
   - Must accept: `cohorts-create`, `feature-flags-list`, `a`, `a1`, `dashboard-get`
   - Must reject: `-leading`, `trailing-`, `UPPERCASE`, `has space`, `under_score`
 
-- A constant for the feature name pattern that validates lowercase snake_case feature identifiers. Valid identifiers contain only lowercase letters, digits, and underscores, and must start with a letter (not a digit or underscore).
+- A constant named `FEATURE_NAME_PATTERN` for validating lowercase snake_case feature identifiers. Valid identifiers contain only lowercase letters, digits, and underscores, and must start with a letter (not a digit or underscore).
   - Must accept: `error_tracking`, `feature_flags`, `surveys`, `a`
   - Must reject: `_leading`, `1starts_with_digit`, `UPPER`, `kebab-case`
 
-- A length constant set to `52` (based on Cursor's 60-character combined limit for server name + tool name, minus 7 characters for "posthog" + separator).
+- A length constant named `MAX_TOOL_NAME_LENGTH` set to `52` (based on Cursor's 60-character combined limit for server name + tool name, minus 7 characters for "posthog" + separator).
 
 ### 2. Zod Schema Validation
 
-The schema in `services/mcp/scripts/yaml-config-schema.ts` must validate:
-- Tool name record keys using pattern validation that enforces the kebab-case constraints above
-- The `feature` field using pattern validation that enforces the snake_case constraints above
+The `CategoryConfigSchema` schema in `services/mcp/scripts/yaml-config-schema.ts` must validate:
+- Tool name record keys using `.regex(TOOL_NAME_PATTERN, ...)` pattern validation that enforces the kebab-case constraints above
+- The `feature` field using `.regex(FEATURE_NAME_PATTERN, ...)` pattern validation that enforces the snake_case constraints above
 
 ### 3. Lint Script Updates
 

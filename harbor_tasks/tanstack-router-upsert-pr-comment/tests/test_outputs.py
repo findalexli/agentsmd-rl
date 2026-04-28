@@ -159,14 +159,70 @@ try {
 def test_githubRequest_structure():
     """F2P: githubRequest function makes proper API calls with correct headers."""
     with open(SCRIPT_PATH, "r") as f:
-        content = f.read()
+        code = f.read()
 
-    assert "async function githubRequest" in content, "githubRequest function not found"
-    assert "Authorization" in content, "Authorization header not found"
-    assert "Bearer" in content, "Bearer token format not found"
-    assert "application/vnd.github+json" in content, "GitHub API accept header not found"
-    assert "User-Agent" in content, "User-Agent header not found"
-    assert "fetch(" in content, "fetch call not found"
+    code = code.replace("#!/usr/bin/env node", "")
+    idx = code.rfind("main()")
+    if idx > 0:
+        code = code[:idx].rstrip()
+
+    test_harness = code + r'''
+const capturedCalls = [];
+globalThis.fetch = async function(url, options) {
+    capturedCalls.push({ url, options });
+    return {
+        ok: true,
+        status: 200,
+        statusText: 'OK',
+        json: async () => ({}),
+        text: async () => '{}',
+    };
+};
+
+async function runTest() {
+    try {
+        await githubRequest({
+            apiUrl: 'https://test.example.com',
+            token: 'test-token',
+            method: 'POST',
+            endpoint: '/repos/o/r/issues/1/comments',
+            body: { body: 'test' },
+        });
+
+        const call = capturedCalls[0];
+        if (!call) { console.error("FAIL: no request made"); process.exit(1); }
+        if (call.options.headers.Authorization !== 'Bearer test-token') { console.error("FAIL: wrong auth"); process.exit(1); }
+        if (call.options.headers.Accept !== 'application/vnd.github+json') { console.error("FAIL: wrong accept"); process.exit(1); }
+        if (!call.options.headers['User-Agent']) { console.error("FAIL: missing user-agent"); process.exit(1); }
+        if (call.options.method !== 'POST') { console.error("FAIL: wrong method"); process.exit(1); }
+        if (call.url !== 'https://test.example.com/repos/o/r/issues/1/comments') { console.error("FAIL: wrong url, got " + call.url); process.exit(1); }
+
+        console.log("PASS");
+        process.exit(0);
+    } catch (e) {
+        console.error("FAIL:", e.message);
+        process.exit(1);
+    }
+}
+runTest();
+'''
+
+    harness_path = "/tmp/githubRequest_test.mjs"
+    with open(harness_path, "w") as f:
+        f.write(test_harness)
+
+    try:
+        result = subprocess.run(
+            ["node", harness_path],
+            capture_output=True,
+            text=True,
+            timeout=30,
+        )
+        assert result.returncode == 0, f"githubRequest test failed: {result.stderr}"
+        assert "PASS" in result.stdout, f"Expected PASS: {result.stdout}"
+    finally:
+        if os.path.exists(harness_path):
+            os.unlink(harness_path)
 
 
 def test_marker_logic_works():
@@ -174,26 +230,128 @@ def test_marker_logic_works():
     with open(SCRIPT_PATH, "r") as f:
         code = f.read()
 
-    assert "DEFAULT_MARKER" in code or "marker" in code, "Marker constant not found"
-    assert "includes(args.marker)" in code or "rawBody.includes" in code, "Marker inclusion check not found"
-    
-    marker_logic_present = (
-        "rawBody.includes(args.marker)" in code or
-        "includes(args.marker)" in code
-    )
-    assert marker_logic_present, "Marker conditional logic not found"
+    code = code.replace("#!/usr/bin/env node", "")
+    idx = code.rfind("main()")
+    if idx > 0:
+        code = code[:idx].rstrip()
+
+    body_path = "/tmp/test_body_no_marker.txt"
+    with open(body_path, "w") as f:
+        f.write("Bundle-size report content here.\n")
+
+    test_harness = code + f'''
+const capturedRequests = [];
+globalThis.fetch = async function(url, options) {{
+    capturedRequests.push({{ url, options }});
+    if (url.includes("/comments?per_page=")) {{
+        return {{ ok: true, status: 200, json: async () => [], text: async () => '[]' }};
+    }}
+    return {{ ok: true, status: 201, json: async () => ({{ id: 99 }}), text: async () => '{"id":99}' }};
+}};
+
+process.argv = ["node", "test", "--pr", "1", "--body-file", "{body_path}", "--repo", "test/r", "--token", "t"];
+
+main().then(() => {{
+    const postRequest = capturedRequests.find(r => r.options && r.options.method === 'POST');
+    if (!postRequest) {{ console.error("FAIL: no POST request"); process.exit(1); }}
+    const sentBody = JSON.parse(postRequest.options.body).body;
+    if (!sentBody.startsWith('<!-- bundle-size-benchmark -->')) {{ console.error("FAIL: marker not prepended"); process.exit(1); }}
+    if (!sentBody.includes("Bundle-size report content here.")) {{ console.error("FAIL: original body not found"); process.exit(1); }}
+    console.log("PASS");
+    process.exit(0);
+}}).catch((e) => {{
+    console.error("FAIL:", e.message);
+    process.exit(1);
+}});
+'''
+
+    harness_path = "/tmp/marker_test.mjs"
+    with open(harness_path, "w") as f:
+        f.write(test_harness)
+
+    try:
+        result = subprocess.run(
+            ["node", harness_path],
+            capture_output=True,
+            text=True,
+            timeout=30,
+        )
+        assert result.returncode == 0, f"Marker test failed: {result.stderr}"
+        assert "PASS" in result.stdout, f"Expected PASS: {result.stdout}"
+    finally:
+        if os.path.exists(harness_path):
+            os.unlink(harness_path)
 
 
 def test_listIssueComments_pagination():
     """F2P: listIssueComments handles pagination correctly."""
     with open(SCRIPT_PATH, "r") as f:
-        content = f.read()
+        code = f.read()
 
-    assert "async function listIssueComments" in content, "listIssueComments function not found"
-    assert "let page = 1" in content or "page = 1" in content, "Page counter not found"
-    assert "per_page" in content, "per_page parameter not found"
-    assert "page++" in content or "page += 1" in content, "Page increment not found"
-    assert "break" in content, "Loop break not found"
+    code = code.replace("#!/usr/bin/env node", "")
+    idx = code.rfind("main()")
+    if idx > 0:
+        code = code[:idx].rstrip()
+
+    test_harness = code + r'''
+let pageRequests = [];
+globalThis.fetch = async function(url, options) {
+    pageRequests.push(url);
+    const pageMatch = url.match(/[&?]page=(\d+)/);
+    const page = pageMatch ? parseInt(pageMatch[1]) : 1;
+
+    const items = page <= 2 ? Array(100).fill({id: page}) : Array(50).fill({id: page});
+    return {
+        ok: true,
+        status: 200,
+        json: async () => items,
+        text: async () => JSON.stringify(items),
+    };
+};
+
+async function runTest() {
+    try {
+        const result = await listIssueComments({
+            apiUrl: 'https://test.example.com',
+            token: 'test-token',
+            repo: 'owner/repo',
+            pr: 123,
+        });
+
+        if (pageRequests.length !== 3) {
+            console.error("FAIL: expected 3 page requests, got", pageRequests.length);
+            process.exit(1);
+        }
+        if (result.length !== 250) {
+            console.error("FAIL: expected 250 items, got", result.length);
+            process.exit(1);
+        }
+        console.log("PASS");
+        process.exit(0);
+    } catch (e) {
+        console.error("FAIL:", e.message);
+        process.exit(1);
+    }
+}
+runTest();
+'''
+
+    harness_path = "/tmp/pagination_test.mjs"
+    with open(harness_path, "w") as f:
+        f.write(test_harness)
+
+    try:
+        result = subprocess.run(
+            ["node", harness_path],
+            capture_output=True,
+            text=True,
+            timeout=30,
+        )
+        assert result.returncode == 0, f"Pagination test failed: {result.stderr}"
+        assert "PASS" in result.stdout, f"Expected PASS: {result.stdout}"
+    finally:
+        if os.path.exists(harness_path):
+            os.unlink(harness_path)
 
 
 def test_repo_benchmarks_node_syntax():

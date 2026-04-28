@@ -135,6 +135,17 @@ def test_node_syntax_check():
     assert proc.returncode == 0, f"syntax error:\n{proc.stderr}"
 
 
+def test_eslint_passes():
+    """ESLint reports zero errors on the target script."""
+    proc = subprocess.run(
+        ["bash", "-lc", f"cd {REPO} && npx eslint --no-warn-ignored {SCRIPT}"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+    )
+    assert proc.returncode == 0, f"ESLint failed:\n{proc.stderr}"
+
+
 # ---------------------------------------------------------------------------
 # Fail-to-pass: patch bumps must select the LOWEST X.Y.x milestone, not the
 # newest. The script sorts milestones major-then-minor descending, so the

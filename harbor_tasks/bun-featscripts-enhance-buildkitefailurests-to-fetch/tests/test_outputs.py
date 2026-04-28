@@ -71,16 +71,6 @@ def test_help_documents_input_types():
 
 
 # ---------------------------------------------------------------------------
-# Fail-to-pass (config_edit) - CLAUDE.md documentation update
-# ---------------------------------------------------------------------------
-
-# [config_edit] fail_to_pass
-
-
-# [config_edit] fail_to_pass
-
-
-# ---------------------------------------------------------------------------
 # Pass-to-pass (repo_tests) - existing functionality preserved
 # ---------------------------------------------------------------------------
 

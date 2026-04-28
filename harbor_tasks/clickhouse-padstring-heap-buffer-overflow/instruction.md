@@ -10,28 +10,41 @@ SELECT leftPad('x', 100, 'abcdefghijklmnopq');
 SELECT rightPadUTF8('x', 50, 'абвгдежзиклмнопрс');
 ```
 
-The crash occurs in the `PaddingChars` class when the padding string is used with
-`writeSlice`, which internally calls `memcpySmallAllowReadWriteOverflow15`. This
-routine reads up to 15 bytes beyond the end of the source buffer. The pad string
-is currently stored as a `String` (`std::string`), which does not provide any extra
-read padding beyond its allocated size.
+## Root Cause
 
-## Task
+The crash occurs in the `PaddingChars` class defined in the padString source file.
 
-Fix the heap-buffer-overflow by changing the pad string storage in the
-`PaddingChars` class to a buffer type that provides at least 15 extra bytes of
-read padding. ClickHouse's `PaddedPODArray` type is designed for exactly this
-purpose. Adapt all code that interacts with the pad string member to be compatible
-with the new storage type (e.g. `writeSlice` calls should not need
-`reinterpret_cast` since the data pointer type will already match).
+The class stores the padding string in a `String` member (`pad_string`), which is
+`std::string`. When `writeSlice` calls `memcpySmallAllowReadWriteOverflow15`,
+this routine reads up to 15 bytes beyond the end of the source buffer. `String`
+(`std::string`) does not provide any extra read padding beyond its allocated size,
+causing out-of-bounds reads.
 
-Additionally, improve the code quality:
-- Replace manual argument validation logic with ClickHouse's standard argument
-  validation helpers instead of manual type-checking throws
-- Use debug assertions for conditions that are already guaranteed by prior
-  validation rather than runtime exceptions
-- Ensure error messages accurately reflect the accepted argument types (both
-  `String` and `FixedString` are valid for the first argument)
+Additionally, the `writeSlice` calls use `reinterpret_cast` on `pad_string.data()`.
+
+## Issues to Address
+
+Beyond the heap-buffer-overflow, the following problems exist in the same source file:
+
+1. The argument validation logic uses manual type-checking throws with the
+   `NUMBER_OF_ARGUMENTS_DOESNT_MATCH` error code. ClickHouse has standard helpers
+   for function argument validation that should be used instead.
+
+2. The error message for the first argument does not mention all accepted types.
+   It should state "must be a String or FixedString" instead of only mentioning
+   one type.
+
+3. There is a redundant runtime check that throws `must be a constant string` for
+   the third argument. This condition is already guaranteed by prior validation,
+   so a debug assertion is more appropriate.
+
+## Code Style Requirements
+
+All changes must follow ClickHouse's code style:
+- Use `size()` for containers that support it (not `length()`)
+- Use digit separators in large numeric literals (e.g. `1'000'000`)
+- Constructor initializer lists should have one member per line
+- Include necessary headers for any new types used
 
 ## Testing
 

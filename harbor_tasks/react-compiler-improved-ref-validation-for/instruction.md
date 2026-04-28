@@ -2,46 +2,36 @@
 
 ## Problem
 
-The React Compiler's `ValidateNoRefAccessInRender` validation pass reports "ref access in render" errors for some function calls that are safe. For example, React Native's `PanResponder.create()` freezes its config argument and doesn't call callbacks during render, yet the compiler still flags ref access in callbacks passed to such functions. The result is false positive errors for safe patterns.
+The React Compiler validation pass that prevents ref access during render reports false positive errors for some function calls that are safe. For example, React Native provides a `PanResponder` API whose `PanResponder.create()` method freezes its configuration argument and does not invoke callbacks during render. However, passing callbacks that access refs to `PanResponder.create()` still triggers "ref access in render" errors.
 
-The existing test fixture `error.validate-mutate-ref-arg-in-render` uses `console.log(ref.current)` which doesn't properly test mutating ref access — it should use `mutate(ref.current)` from the shared runtime.
+The existing test fixture for validating mutate-ref-arg-in-render uses `console.log(ref.current)` which does not properly test mutating ref access — it should use the `mutate()` function from the shared runtime instead.
 
 ## Expected Behavior
 
-The validation should correctly distinguish safe from unsafe function calls based on what aliasing effects the function is known to have on its operands:
-- Functions that freeze their input (like `PanResponder.create`) should allow ref access in callbacks passed to them
-- Functions that mutate their input should use stricter validation
+The validation should distinguish safe from unsafe function calls by consulting the function known aliasing effects on its operands:
 
-The fix should handle functions with known aliasing effects without breaking existing validation for hooks, JSX children, or the `mergeRefs` pattern.
+- Functions that **freeze** their input (like `PanResponder.create`) should allow ref access in callbacks passed to them — the operand is frozen and the callback is never invoked during render.
+- Functions that **mutate** their input should continue to use stricter validation.
 
-## Files to Modify
+In the aliasing effects system:
+- The `Freeze` effect indicates a function that freezes its operand, making ref access in callbacks safe.
+- The `ImmutableCapture` effect represents capturing a value immutably. When `ImmutableCapture` co-occurs with `Freeze` on the same operand (as in `PanResponder.create` known signature), the operand is safely frozen. When `ImmutableCapture` appears alone (as in downgraded defaults for already-frozen operands), the function is unknown and ref access should still be flagged.
+- The `Create` effect describes creating a new value, where the returned value kind should be `Frozen` for freeze-returning functions.
+- The compiler should avoid reporting duplicate errors for the same ref access operand.
 
-**ValidateNoRefAccessInRender.ts** — Add a new branch in the validation logic that handles non-hook function calls by examining their aliasing effects. When a function has known effects like Freeze, use that information to determine whether ref access in callbacks is safe.
+The existing validation branches must remain intact: the `isRefLValue` check for the `mergeRefs` pattern, and the `interpolatedAsJsx` check for JSX child ref handling. The three validation functions (`validateNoDirectRefValueAccess`, `validateNoRefPassedToFunction`, `validateNoRefValueAccess`) must all still be called.
 
-**error.validate-mutate-ref-arg-in-render.js** — Update to use `mutate(ref.current)` instead of `console.log(ref.current)` to properly test mutating ref access.
+The shared runtime, which provides test scaffolding used by the compiler fixture system, must gain a `PanResponder` object whose `create` method returns its input argument (modeling the freeze behavior). The shared runtime must continue to export the existing `typedMutate` function and `typedLog` as its default export.
 
-**shared-runtime.ts** — Add a `PanResponder` object with a `create` method that returns its input argument (modeling React Native's freeze behavior).
+The associated type provider must include a `PanResponder` type definition with the aliasing effects described above: `Freeze`, `ImmutableCapture`, `Create`, and return kind `Frozen`.
 
-**shared-runtime-type-provider.ts** — Add a `PanResponder` type definition with aliasing effects that reflect freeze semantics (config is frozen, and the returned object is also frozen).
+A new compiler fixture demonstrating the `PanResponder.create` pattern with ref access in a callback must be added, using `useRef` to create a ref and passing a callback that accesses the ref to `PanResponder.create`. The fixture must import from `shared-runtime` and have a corresponding expected-output file.
 
-**panresponder-ref-in-callback.js** — Add a new test fixture demonstrating the PanResponder pattern with ref access in a callback, plus a corresponding `.expect.md` file.
+The `error.validate-mutate-ref-arg-in-render` fixture must be updated to import `mutate` from `shared-runtime` and call `mutate(ref.current)` instead of the current `console.log(ref.current)`.
 
-**compiler/CLAUDE.md** — Document the lint and prettier commands for the compiler:
-- `yarn workspace babel-plugin-react-compiler lint`
-- `yarn prettier-all`
+The compiler documentation (the CLAUDE.md file inside the compiler directory) must be updated to include both the lint command and the prettier formatting command.
 
-## Verification Criteria
+## Code Style Requirements
 
-**ValidateNoRefAccessInRender.ts** must handle non-hook function calls by examining their known aliasing effects. The implementation should recognize when ImmutableCapture co-occurs with Freeze (indicating a known-safe freezing function like PanResponder.create) and apply direct-ref validation in that case. Use a deduplication mechanism to avoid reporting duplicate errors for the same ref access.
-
-The existing validation branches must remain intact: the `isRefLValue` check for the mergeRefs pattern and the `interpolatedAsJsx` check for JSX child ref handling.
-
-**shared-runtime.ts** must continue to export `typedMutate` and `typedLog` as default, and also export a `PanResponder` object with a `create` method that returns its input argument.
-
-**shared-runtime-type-provider.ts** must include a `PanResponder` type definition with aliasing effects including `Freeze`, `Create`, and `ImmutableCapture`. The return value kind should be `Frozen`.
-
-**error.validate-mutate-ref-arg-in-render.js** fixture must import `mutate` from `shared-runtime` and call `mutate(ref.current)` instead of `console.log(ref.current)`.
-
-**panresponder-ref-in-callback.js** fixture must import `PanResponder` and `Stringify` from `shared-runtime`, call `PanResponder.create` with a callback that accesses a ref, and have a corresponding `.expect.md` file.
-
-**compiler/CLAUDE.md** must document both the lint command and the prettier command.
+- **Lint**: Run `yarn workspace babel-plugin-react-compiler lint` to check code style. Lint must pass with zero errors.
+- **Formatting**: Run `yarn prettier-all` from the repository root directory to format all files before committing.

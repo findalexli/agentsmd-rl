@@ -36,3 +36,8 @@ The implementation of ReadableStream consumption spans these files:
 - `src/js/builtins/ReadableStream.ts` — contains the `readableStreamToArray`, `readableStreamToText`, `readableStreamToArrayBuffer`, and `readableStreamToBytes` functions
 - `src/js/builtins/ReadableStreamInternals.ts` — contains `onCloseDirectStream`, `onFlushDirectStream`, and `readableStreamToArrayBufferDirect`
 - `src/bun.js/bindings/webcore/ReadableStream.cpp` — contains C++ wrappers `readableStreamToText`, `readableStreamToFormData`, `readableStreamToJSON`, and `readableStreamToBlob`
+
+## Code Style Requirements
+
+- TypeScript type-checking must pass (`tsc --noEmit`).
+- The repo's ban-words test (`test/internal/ban-words.test.ts`) must pass; it forbids bare `.call()`/`.apply()`, dynamic `require()`, `== undefined`/`!= undefined`, bare `.jsBoolean()`, and `std.debug.*` in builtins.

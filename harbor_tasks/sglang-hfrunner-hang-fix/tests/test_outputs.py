@@ -48,16 +48,24 @@ def _extract_forward_body():
     raise RuntimeError("HFRunner.forward() not found in source")
 
 
-def _run_forward_test(script: str, timeout: int = 25) -> subprocess.CompletedProcess:
+def _run_forward_test(script: str, timeout: int = 10) -> subprocess.CompletedProcess:
     """Write script to temp file and run it, returning the CompletedProcess."""
     test_file = Path("/tmp/_pytest_forward_test.py")
     test_file.write_text(script)
-    return subprocess.run(
-        [sys.executable, str(test_file)],
-        timeout=timeout,
-        capture_output=True,
-        text=True,
-    )
+    try:
+        return subprocess.run(
+            [sys.executable, str(test_file)],
+            timeout=timeout,
+            capture_output=True,
+            text=True,
+        )
+    except subprocess.TimeoutExpired:
+        return subprocess.CompletedProcess(
+            args=[sys.executable, str(test_file)],
+            returncode=-1,
+            stdout="",
+            stderr="Process timed out (hang detected)",
+        )
 
 
 MOCK_PREAMBLE = (
@@ -93,10 +101,12 @@ MOCK_PREAMBLE = (
     "        if self._get_count > 3:\n"
     "            print('FAIL: infinite loop detected')\n"
     "            sys.exit(1)\n"
-    "        actual_timeout = 2 if timeout is None else timeout\n"
     "        if not self._data:\n"
     "            import time\n"
-    "            time.sleep(actual_timeout)\n"
+    "            if timeout is None:\n"
+    "                time.sleep(3600)  # Real Queue.get() blocks forever\n"
+    "            else:\n"
+    "                time.sleep(timeout)\n"
     "            raise queue_mod.Empty()\n"
     "        return self._data.pop(0)\n"
     "    def empty(self):\n"
@@ -205,7 +215,7 @@ def test_no_hang_on_dead_process():
         print(f"FAIL: took {elapsed:.1f}s (likely hanging)")
         sys.exit(1)
     """)
-    result = _run_forward_test(script, timeout=20)
+    result = _run_forward_test(script, timeout=15)
     assert result.returncode == 0, (
         f"Hang detection test failed (timeout or slow):\n{result.stdout}\n{result.stderr}"
     )

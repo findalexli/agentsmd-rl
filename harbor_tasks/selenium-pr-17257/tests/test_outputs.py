@@ -1,162 +1,186 @@
 """
-Tests for Selenium PR #17257: OSGi Resource Loading Fix
+Tests for Selenium PR #17257: OSGi Resource Loading Fix.
 
-Structural tests that verify:
-1. The new resourceAsString(Class<?>, String) method exists
-2. The old method is deprecated and delegates to new
-3. Caller classes are updated to use the new method
-4. Basic Java syntax is valid
+Behavioral tests (subprocess.run with javac/java) verify:
+1. The class-aware resource loading API compiles and works at runtime
+2. Read.java itself compiles cleanly (pass-to-pass regression guard)
+
+Structural tests verify callers have been updated to use class-aware loading.
 """
 
 import re
+import subprocess
 from pathlib import Path
 
 REPO = "/workspace/selenium"
 
 
 # =============================================================================
-# FAIL_TO_PASS: Core structural tests - verify code patterns
+# FAIL_TO_PASS: Behavioral - class-aware API exists and works
 # =============================================================================
 
-def test_new_method_signature_exists():
+def test_class_aware_method_compiles_and_loads():
     """
-    Verify Read.java has the new resourceAsString(Class<?>, String) method.
-    (fail_to_pass) - This method doesn't exist in the base commit.
-    """
-    read_java = Path(REPO) / "java/src/org/openqa/selenium/io/Read.java"
-    content = read_java.read_text()
+    Verify the class-aware resource loading API compiles and loads resources.
 
-    # Check for the new method signature
-    pattern = r'public\s+static\s+String\s+resourceAsString\s*\(\s*Class<\?>\s+\w+\s*,\s*String\s+\w+\s*\)'
-    match = re.search(pattern, content)
-    assert match is not None, (
-        "Read.java must have method signature: "
-        "public static String resourceAsString(Class<?> resourceOwner, String resource)"
+    On base: a harness calling resourceAsString with a class parameter
+    fails to compile because only the single-argument method exists.
+    On gold: the harness compiles, runs, and successfully loads a resource.
+    """
+    # Compile Read.java
+    r = subprocess.run(
+        ["bash", "-lc",
+         "cd /workspace/selenium && "
+         "javac -d /tmp/cls1 java/src/org/openqa/selenium/io/Read.java 2>&1"],
+        capture_output=True, text=True, timeout=30,
+    )
+    assert r.returncode == 0, f"Read.java compilation failed: {r.stderr}"
+
+    # Create a test resource on the classpath
+    resource_dir = Path("/tmp/cls1/org/openqa/selenium/remote")
+    resource_dir.mkdir(parents=True, exist_ok=True)
+    (resource_dir / "test_resource.js").write_text(
+        "function testHelper() { return 'class-aware-loaded'; }\n"
+    )
+
+    # Write a harness that uses class-aware resource loading
+    harness = (
+        "import org.openqa.selenium.io.Read;\n"
+        "public class ClassAwareHarness {\n"
+        "    public static void main(String[] args) throws Exception {\n"
+        '        String result = Read.resourceAsString('
+        "ClassAwareHarness.class, args[0]);\n"
+        "        if (result == null || result.isEmpty()) {\n"
+        '            throw new RuntimeException("Resource was empty");\n'
+        "        }\n"
+        '        if (!result.contains("testHelper")) {\n'
+        '            throw new RuntimeException('
+        '"Missing expected content, got: " + result.substring(0, Math.min(80, result.length())));\n'
+        "        }\n"
+        '        System.out.println("CLASS_AWARE_OK");\n'
+        "    }\n"
+        "}\n"
+    )
+    Path("/tmp/ClassAwareHarness.java").write_text(harness)
+
+    # Compile harness against Read.class + resource directory
+    r = subprocess.run(
+        ["bash", "-lc",
+         "javac -cp /tmp/cls1 -d /tmp/cls1 /tmp/ClassAwareHarness.java 2>&1"],
+        capture_output=True, text=True, timeout=30,
+    )
+    assert r.returncode == 0, (
+        f"Harness compilation failed - class-aware resourceAsString may be missing. "
+        f"stderr: {r.stderr}"
+    )
+
+    # Run the harness
+    r = subprocess.run(
+        ["bash", "-lc",
+         "cd /workspace/selenium && "
+         "java -cp /tmp/cls1 ClassAwareHarness "
+         "/org/openqa/selenium/remote/test_resource.js 2>&1"],
+        capture_output=True, text=True, timeout=30,
+    )
+    assert r.returncode == 0, f"Resource loading failed: {r.stderr}\n{r.stdout}"
+    assert "CLASS_AWARE_OK" in r.stdout, (
+        "Class-aware resource loading did not produce expected output"
     )
 
 
-def test_old_method_deprecated():
+# =============================================================================
+# FAIL_TO_PASS: Structural - callers updated to use class-aware loading
+# =============================================================================
+
+def test_callers_use_class_aware_loading():
     """
-    Verify the old resourceAsString(String) method is marked @Deprecated.
-    (fail_to_pass) - The old method is not deprecated in the base commit.
-    """
-    read_java = Path(REPO) / "java/src/org/openqa/selenium/io/Read.java"
-    content = read_java.read_text()
+    Verify all caller classes have been updated to use class-aware
+    resource loading (two-argument form with a class or getClass()).
 
-    # Look for @Deprecated annotation before resourceAsString(String resource)
-    pattern = r'@Deprecated[^}]*?public\s+static\s+String\s+resourceAsString\s*\(\s*String\s+\w+\s*\)'
-    match = re.search(pattern, content, re.DOTALL)
-    assert match is not None, (
-        "The old resourceAsString(String) method must be annotated with @Deprecated"
-    )
-
-
-def test_old_method_delegates_to_new():
-    """
-    Verify the old method delegates to the new method with Read.class.
-    (fail_to_pass) - In base commit, old method directly calls getResourceAsStream.
-    """
-    read_java = Path(REPO) / "java/src/org/openqa/selenium/io/Read.java"
-    content = read_java.read_text()
-
-    # The old method should now contain: return resourceAsString(Read.class, resource);
-    pattern = r'public\s+static\s+String\s+resourceAsString\s*\(\s*String\s+\w+\s*\)\s*\{[^}]*resourceAsString\s*\(\s*Read\.class'
-    match = re.search(pattern, content, re.DOTALL)
-    assert match is not None, (
-        "The old resourceAsString(String) method must delegate to resourceAsString(Read.class, resource)"
-    )
-
-
-def test_cdp_event_types_uses_class_parameter():
-    """
-    Verify CdpEventTypes.java uses the new two-argument resourceAsString method.
-    (fail_to_pass) - In base commit, it uses the single-argument version.
+    On base: callers use single-argument resourceAsString.
+    On gold: callers specify a class to use for classloader resolution.
     """
     cdp_file = Path(REPO) / "java/src/org/openqa/selenium/devtools/events/CdpEventTypes.java"
-    content = cdp_file.read_text()
-
-    # Check that it uses resourceAsString with CdpEventTypes.class as first argument
-    pattern = r'Read\.resourceAsString\s*\(\s*CdpEventTypes\.class\s*,'
-    match = re.search(pattern, content)
-    assert match is not None, (
-        "CdpEventTypes.java must call Read.resourceAsString with CdpEventTypes.class as first argument"
-    )
-
-
-def test_remote_script_uses_class_parameter():
-    """
-    Verify RemoteScript.java uses the new two-argument resourceAsString method.
-    (fail_to_pass) - In base commit, it uses the single-argument version.
-    """
-    remote_script = Path(REPO) / "java/src/org/openqa/selenium/remote/RemoteScript.java"
-    content = remote_script.read_text()
-
-    # Check that it uses resourceAsString with getClass() as first argument
-    pattern = r'Read\.resourceAsString\s*\(\s*getClass\(\)\s*,'
-    match = re.search(pattern, content)
-    assert match is not None, (
-        "RemoteScript.java must call Read.resourceAsString with getClass() as first argument"
-    )
-
-
-def test_w3c_codec_uses_class_parameter():
-    """
-    Verify W3CHttpCommandCodec.java uses the new two-argument resourceAsString method.
-    (fail_to_pass) - In base commit, it uses the single-argument version.
-    """
+    remote_file = Path(REPO) / "java/src/org/openqa/selenium/remote/RemoteScript.java"
     codec_file = Path(REPO) / "java/src/org/openqa/selenium/remote/codec/w3c/W3CHttpCommandCodec.java"
-    content = codec_file.read_text()
-
-    # Check that it uses resourceAsString with getClass() as first argument
-    pattern = r'resourceAsString\s*\(\s*getClass\(\)\s*,'
-    match = re.search(pattern, content)
-    assert match is not None, (
-        "W3CHttpCommandCodec.java must call resourceAsString with getClass() as first argument"
-    )
-
-
-def test_read_test_updated():
-    """
-    Verify ReadTest.java uses the new two-argument resourceAsString method.
-    (fail_to_pass) - In base commit, test uses single-argument version.
-    """
     test_file = Path(REPO) / "java/test/org/openqa/selenium/io/ReadTest.java"
-    content = test_file.read_text()
 
-    # Check that test calls Read.resourceAsString(Read.class, "...")
-    pattern = r'Read\.resourceAsString\s*\(\s*Read\.class\s*,'
-    match = re.search(pattern, content)
-    assert match is not None, (
-        "ReadTest.java must call Read.resourceAsString with Read.class as first argument"
-    )
+    # CdpEventTypes must use CdpEventTypes.class as first argument
+    cdp_content = cdp_file.read_text()
+    assert re.search(
+        r'Read\.resourceAsString\s*\(\s*CdpEventTypes\.class\s*,', cdp_content
+    ), "CdpEventTypes.java must pass CdpEventTypes.class to resourceAsString"
+
+    # RemoteScript must use getClass() as first argument
+    remote_content = remote_file.read_text()
+    assert re.search(
+        r'Read\.resourceAsString\s*\(\s*getClass\(\)\s*,', remote_content
+    ), "RemoteScript.java must pass getClass() to resourceAsString"
+
+    # W3CHttpCommandCodec must use getClass() as first argument
+    codec_content = codec_file.read_text()
+    assert re.search(
+        r'resourceAsString\s*\(\s*getClass\(\)\s*,', codec_content
+    ), "W3CHttpCommandCodec.java must pass getClass() to resourceAsString"
+
+    # ReadTest must use Read.class as first argument
+    test_content = test_file.read_text()
+    assert re.search(
+        r'Read\.resourceAsString\s*\(\s*Read\.class\s*,', test_content
+    ), "ReadTest.java must pass Read.class to resourceAsString"
 
 
 # =============================================================================
-# PASS_TO_PASS: Syntax validation - must pass before and after fix
+# PASS_TO_PASS: Behavioral - basic compilation regression guard
 # =============================================================================
 
-def test_java_syntax_valid():
+def test_read_java_compiles():
     """
-    Verify Read.java has valid Java syntax by checking basic structure.
-    (pass_to_pass) - Should pass both before and after fix.
+    Verify Read.java compiles without errors. This must pass on both
+    the base and gold commits - the fix must not break compilation.
+    """
+    r = subprocess.run(
+        ["bash", "-lc",
+         "cd /workspace/selenium && "
+         "javac -d /tmp/cls_ptp1 java/src/org/openqa/selenium/io/Read.java 2>&1"],
+        capture_output=True, text=True, timeout=30,
+    )
+    assert r.returncode == 0, f"Read.java had compilation errors: {r.stderr}"
+
+
+# =============================================================================
+# PASS_TO_PASS: Structural - basic syntax validity
+# =============================================================================
+
+def test_java_files_syntax_valid():
+    """
+    Verify basic Java syntax validity (brace balance, declarations)
+    for key files. Must pass both before and after the fix.
     """
     read_java = Path(REPO) / "java/src/org/openqa/selenium/io/Read.java"
-    content = read_java.read_text()
-
-    # Basic syntax checks
-    assert "package org.openqa.selenium.io;" in content, "Package declaration missing"
-    assert "public class Read" in content or "public final class Read" in content, "Class declaration missing"
-    assert content.count("{") == content.count("}"), "Mismatched braces in Read.java"
-
-
-def test_cdp_event_types_syntax_valid():
-    """
-    Verify CdpEventTypes.java has valid Java syntax.
-    (pass_to_pass) - Should pass both before and after fix.
-    """
     cdp_file = Path(REPO) / "java/src/org/openqa/selenium/devtools/events/CdpEventTypes.java"
-    content = cdp_file.read_text()
 
-    assert "package org.openqa.selenium.devtools.events;" in content, "Package declaration missing"
-    assert "class CdpEventTypes" in content, "Class declaration missing"
-    assert content.count("{") == content.count("}"), "Mismatched braces"
+    for path in [read_java, cdp_file]:
+        content = path.read_text()
+        assert content.count("{") == content.count("}"), (
+            f"Mismatched braces in {path.name}"
+        )
+        assert "class " in content, f"Class declaration missing in {path.name}"
+
+    # Read.java specific: must have its package and class declarations
+    read_content = read_java.read_text()
+    assert "package org.openqa.selenium.io;" in read_content, (
+        "Read.java missing package declaration"
+    )
+    assert "public class Read" in read_content or "public final class Read" in read_content, (
+        "Read.java missing class declaration"
+    )
+
+    # CdpEventTypes.java specific: must have its package and class declarations
+    cdp_content = cdp_file.read_text()
+    assert "package org.openqa.selenium.devtools.events;" in cdp_content, (
+        "CdpEventTypes.java missing package declaration"
+    )
+    assert "class CdpEventTypes" in cdp_content, (
+        "CdpEventTypes.java missing class declaration"
+    )

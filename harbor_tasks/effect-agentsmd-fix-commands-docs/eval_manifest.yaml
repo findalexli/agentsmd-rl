@@ -8,8 +8,7 @@ checks:
 - id: agentsmd_test_run_command
   type: fail_to_pass
   origin: pr_diff
-  description: AGENTS.md specifies 'pnpm test run' (with required 'run' subcommand)
-    for running tests
+  description: AGENTS.md specifies 'pnpm test run' (with required 'run' subcommand) for running tests
 - id: agentsmd_tsx_scratchpad
   type: fail_to_pass
   origin: pr_diff
@@ -17,8 +16,7 @@ checks:
 - id: agentsmd_v4_learning_section
   type: fail_to_pass
   origin: pr_diff
-  description: AGENTS.md includes section about learning effect v4 with .repos/effect-v4
-    path
+  description: AGENTS.md includes section about learning effect v4 with .repos/effect-v4 path
 - id: eslint_ignores_repos
   type: fail_to_pass
   origin: pr_diff
@@ -26,8 +24,7 @@ checks:
 - id: eslint_formatted_correctly
   type: fail_to_pass
   origin: pr_diff
-  description: eslint.config.mjs has proper formatting (selector on its own line,
-    single-line packageNames)
+  description: eslint.config.mjs has proper formatting (selector on its own line, single-line packageNames)
 - id: sql_tsconfig_outdir
   type: fail_to_pass
   origin: pr_diff
@@ -43,33 +40,27 @@ checks:
 - id: ai_aierror_jsdoc_import_patterns
   type: fail_to_pass
   origin: pr_diff
-  description: AiError.ts JSDoc uses 'effect/Effect' and 'effect/Option' imports with
-    proper return types
+  description: AiError.ts JSDoc uses 'effect/Effect' and 'effect/Option' imports with proper return types
 - id: ai_embeddingmodel_jsdoc_import_pattern
   type: fail_to_pass
   origin: pr_diff
-  description: EmbeddingModel.ts JSDoc uses 'effect/Effect' import and EmbeddingModel.EmbeddingModel
-    service access
+  description: EmbeddingModel.ts JSDoc uses 'effect/Effect' import and EmbeddingModel.EmbeddingModel service access
 - id: ai_languagemodel_jsdoc_import_pattern
   type: fail_to_pass
   origin: pr_diff
-  description: LanguageModel.ts JSDoc uses 'effect/Effect' import and LanguageModel.LanguageModel
-    service access
+  description: LanguageModel.ts JSDoc uses 'effect/Effect' import and LanguageModel.LanguageModel service access
 - id: ai_telemetry_jsdoc_updated
   type: fail_to_pass
   origin: pr_diff
-  description: Telemetry.ts JSDoc uses 'effect/Effect' import and options.response.length
-    (not options.model)
+  description: Telemetry.ts JSDoc uses 'effect/Effect' import and options.response.length (not options.model)
 - id: agentsmd_core_sections_intact
   type: pass_to_pass
   origin: static
-  description: AGENTS.md retains core Development Workflow, Code Style, and Testing
-    sections
+  description: AGENTS.md retains core Development Workflow, Code Style, and Testing sections
 - id: eslint_standard_ignores
   type: pass_to_pass
   origin: static
-  description: eslint.config.mjs still includes standard ignore patterns (dist, build,
-    docs, md)
+  description: eslint.config.mjs still includes standard ignore patterns (dist, build, docs, md)
 - id: gitignore_repos_added
   type: pass_to_pass
   origin: static
@@ -130,9 +121,44 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Repo codegen command passes (pnpm codegen)
+- id: test_ci_build_pnpm
+  type: fail_to_pass
+  origin: repo_tests
+  description: 'CI: Build / '
+- id: test_ci_test_test
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: Test / Test'
+- id: test_ci_test_test
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: Test / Test'
+- id: test_ci_lint_pnpm
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: Lint / '
+- id: test_ci_lint_pnpm
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: Lint / '
+- id: test_ci_lint_pnpm
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: Lint / '
+- id: test_ci_lint_check_for_codegen_changes
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: Lint / Check for codegen changes'
+- id: test_ci_lint_pnpm_2
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: Lint / '
+- id: test_ci_lint_pnpm_3
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: Lint / '
 rubric:
-- rule: Code must not import from barrel packages ('effect', '@effect/platform', '@effect/sql');
-    use specific module paths like 'effect/Effect' instead
+- rule: Code must not import from barrel packages ('effect', '@effect/platform', '@effect/sql'); use specific module paths like 'effect/Effect' instead
   source:
     path: eslint.config.mjs
     lines: 144-155
@@ -146,24 +172,19 @@ rubric:
   source:
     path: AGENTS.md
     lines: 19-19
-  evidence: 'The gold solution includes formatting changes in `eslint.config.mjs`
-    (such as collapsing the `packageNames` array into a single line and wrapping the
-    `selector` string), which demonstrates that `pnpm '
+  evidence: 'The gold solution includes formatting changes in `eslint.config.mjs` (such as collapsing the `packageNames` array into a single line and wrapping the `selector` string), which demonstrates that `pnpm '
   category: tooling
 - rule: 'Conciseness: Keep code and any wording concise and to the point.'
   source:
     path: AGENTS.md
     lines: '14'
-  evidence: The added documentation for effect v4 in `AGENTS.md` is extremely brief
-    and direct, without unnecessary elaboration.
+  evidence: The added documentation for effect v4 in `AGENTS.md` is extremely brief and direct, without unnecessary elaboration.
   category: documentation
-- rule: 'Reduce comments: Avoid comments unless absolutely required... Comments in
-    jsdocs are acceptable.'
+- rule: 'Reduce comments: Avoid comments unless absolutely required... Comments in jsdocs are acceptable.'
   source:
     path: AGENTS.md
     lines: 15-16
-  evidence: The gold solution updates the `@example` blocks in `packages/ai/ai/src/AiError.ts`
-    to fix import paths rather than deleting the comments entirely.
+  evidence: The gold solution updates the `@example` blocks in `packages/ai/ai/src/AiError.ts` to fix import paths rather than deleting the comments entirely.
   category: documentation
 config_edits:
 - path: AGENTS.md
@@ -188,25 +209,16 @@ config_edits:
 distractors:
 - rule: 'Always run tests after making changes: `pnpm test <test_file.ts>`'
   collision_type: meta_confusion
-  why_distracting: The agent's own instruction file tells it to use `pnpm test <test_file.ts>`
-    to run tests. However, the PR prompt explicitly states this command is broken.
-    The agent must ignore its loaded instruction and fix the instruction itself rather
-    than trying to use it.
+  why_distracting: The agent's own instruction file tells it to use `pnpm test <test_file.ts>` to run tests. However, the PR prompt explicitly states this command is broken. The agent must ignore its loaded instruction and fix the instruction itself rather than trying to use it.
   severity: high
   source:
     path: AGENTS.md
     lines: 19-20
 - rule: run the file with `node scratchpad/your-file.ts`
   collision_type: meta_confusion
-  why_distracting: The agent is instructed by its config to use `node scratchpad/your-file.ts`
-    for testing code. If the agent tries to use this to verify its changes, it will
-    fail because `node` cannot run TypeScript files. The agent must recognize this
-    rule as the bug to be fixed.
+  why_distracting: The agent is instructed by its config to use `node scratchpad/your-file.ts` for testing code. If the agent tries to use this to verify its changes, it will fail because `node` cannot run TypeScript files. The agent must recognize this rule as the bug to be fixed.
   severity: high
   source:
     path: AGENTS.md
     lines: 41-43
-hierarchy_analysis: The config file `AGENTS.md` is both the source of agent instructions
-  and the target file to be edited. The agent must navigate the meta-level conflict
-  of having its own operational instructions be the subject of the bug report, requiring
-  it to selectively ignore and rewrite the rules it is supposed to follow.
+hierarchy_analysis: The config file `AGENTS.md` is both the source of agent instructions and the target file to be edited. The agent must navigate the meta-level conflict of having its own operational instructions be the subject of the bug report, requiring it to selectively ignore and rewrite the rules it is supposed to follow.

@@ -24,7 +24,8 @@ def _(x: bool):
 ```
 
 Running `target/debug/ty check <file.py>` produces a diagnostic at the
-`error[panic]` severity, with the panic message:
+`error[panic]` severity; the output contains the text `panicked at`.
+The panic message is:
 
 ```
 ``Callable` type annotations cannot be overloaded`

@@ -30,4 +30,6 @@ RUN pnpm --filter @prisma/client-runtime-utils build
 # Note: @prisma/sqlcommenter is not in the render-query.ts import chain, so we skip it.
 # Its build fails at the base commit due to a tsc type-checking issue unrelated to this task.
 
+RUN pip3 install --break-system-packages pytest-json-ctrf
+
 RUN mkdir -p /logs/verifier

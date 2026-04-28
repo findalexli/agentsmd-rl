@@ -195,3 +195,76 @@ def test_testing_codegen_skill_updated():
     assert has_quick_test, "Must document quick testing"
     assert has_qt_cmd, "Must reference quick test command"
     assert has_html_parser, "Must reference biome_html_parser"
+
+# === CI-mined tests (taskforge.ci_check_miner) ===
+def test_ci_validate_rules_documentation_run_rules_check():
+    """pass_to_pass | CI job 'Validate rules documentation' → step 'Run rules check'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'cargo run -p rules_check'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Run rules check' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_test_node_js_api_build_main_binary():
+    """pass_to_pass | CI job 'Test Node.js API' → step 'Build main binary'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'cargo build -p biome_cli --release'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Build main binary' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_test_node_js_api_build_typescript_code():
+    """pass_to_pass | CI job 'Test Node.js API' → step 'Build TypeScript code'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'pnpm --filter @biomejs/backend-jsonrpc i && pnpm --filter @biomejs/backend-jsonrpc run build && pnpm --filter @biomejs/js-api run build:wasm-bundler-dev && pnpm --filter @biomejs/js-api run build:wasm-node-dev && pnpm --filter @biomejs/js-api run build:wasm-web-dev && pnpm --filter @biomejs/js-api i && pnpm --filter @biomejs/js-api run build'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Build TypeScript code' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_test_node_js_api_run_js_tests():
+    """pass_to_pass | CI job 'Test Node.js API' → step 'Run JS tests'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'pnpm --filter @biomejs/backend-jsonrpc run test:ci && pnpm --filter @biomejs/js-api run test:ci'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Run JS tests' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_lint_project_run_clippy():
+    """pass_to_pass | CI job 'Lint project' → step 'Run clippy'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'cargo lint'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Run clippy' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_test_run_tests():
+    """pass_to_pass | CI job 'Test' → step 'Run tests'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'cargo test --workspace --features=js_plugin'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Run tests' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_check_dependencies_detect_unused_dependencies_using_udeps():
+    """pass_to_pass | CI job 'Check Dependencies' → step 'Detect unused dependencies using udeps'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'cargo +nightly udeps --all-targets'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Detect unused dependencies using udeps' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_build__biomejs_wasm_web_build_wasm_module_for_the_web():
+    """pass_to_pass | CI job 'Build @biomejs/wasm-web' → step 'Build WASM module for the web'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'just build-wasm-web'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Build WASM module for the web' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")

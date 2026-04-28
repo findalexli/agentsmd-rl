@@ -14,13 +14,15 @@ In stress tests with `ignore_drop_queries_probability` enabled:
 
 ## Requirements
 
-The fix must be implemented in `src/Interpreters/InterpreterDropQuery.cpp`.
+The fix must be implemented in `src/Interpreters/InterpreterDropQuery.cpp`, in the code path that handles `DROP TABLE` statements.
 
-Before the existing check for `ignore_drop_queries_probability`, the code must determine whether the table being dropped is a refreshable materialized view. Use `dynamic_cast<StorageMaterializedView *>` on the table and call `isRefreshable()` to make this determination.
+Before the existing check for `ignore_drop_queries_probability`, the code must determine whether the table being dropped is a refreshable materialized view. If the table is a refreshable materialized view, the `DROP TABLE` statement must NOT be converted to `TRUNCATE TABLE` — the DROP must proceed normally so the periodic refresh task is properly stopped.
 
-If the table is a refreshable materialized view, the `DROP TABLE` statement must NOT be converted to `TRUNCATE TABLE`. The `ignore_drop_queries_probability` condition must be guarded with a negated check (e.g., `!is_refreshable_view`) so that refreshable views bypass the DROP-to-TRUNCATE conversion.
+Relevant ClickHouse source references to consult:
+- Refreshable materialized view storage: https://github.com/ClickHouse/ClickHouse/blob/master/src/Storages/StorageMaterializedView.h
+- DROP query interpreter: https://github.com/ClickHouse/ClickHouse/blob/master/src/Interpreters/InterpreterDropQuery.cpp
 
-Include a comment explaining why refreshable views need special handling — specifically, that `TRUNCATE` does not stop the periodic refresh task, which would leave orphaned views consuming background pool threads.
+Include a comment in the code explaining why refreshable views need special handling — specifically, that `TRUNCATE` does not stop the periodic refresh task, which would leave orphaned views consuming background pool threads.
 
 ## Agent Configuration Rules
 

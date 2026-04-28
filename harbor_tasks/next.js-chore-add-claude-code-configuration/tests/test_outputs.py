@@ -101,6 +101,48 @@ def test_claude_md_has_testing_commands():
 
 
 # ---------------------------------------------------------------------------
+# Fail-to-pass (static) — anti-stub and structural checks
+# ---------------------------------------------------------------------------
+
+# [static] fail_to_pass
+def test_claude_md_not_empty():
+    """CLAUDE.md is not empty or stub."""
+    claude_md = Path(f"{REPO}/CLAUDE.md")
+    assert claude_md.exists(), "CLAUDE.md does not exist"
+
+    content = claude_md.read_text().strip()
+    assert len(content) > 1000, "CLAUDE.md is too short/empty (likely stub)"
+    # Should have multiple sections
+    assert content.count("## ") >= 3, "CLAUDE.md missing expected sections"
+
+
+# [static] fail_to_pass
+def test_ci_failures_md_not_empty():
+    """.claude/commands/ci-failures.md is not empty or stub."""
+    ci_failures = Path(f"{REPO}/.claude/commands/ci-failures.md")
+    assert ci_failures.exists(), ".claude/commands/ci-failures.md does not exist"
+
+    content = ci_failures.read_text().strip()
+    assert len(content) > 2000, "ci-failures.md is too short/empty (likely stub)"
+    # Should have multiple sections with commands
+    assert "```bash" in content, "ci-failures.md missing bash code blocks"
+    assert content.count("```") >= 4, "ci-failures.md missing expected code blocks"
+
+
+# [static] fail_to_pass
+def test_claude_directory_structure_correct():
+    """.claude/ directory exists with correct structure."""
+    claude_dir = Path(f"{REPO}/.claude")
+    commands_dir = Path(f"{REPO}/.claude/commands")
+
+    assert claude_dir.exists(), ".claude/ directory does not exist"
+    assert commands_dir.exists(), ".claude/commands/ directory does not exist"
+
+    # Verify the expected file is there
+    assert (commands_dir / "ci-failures.md").exists(), "ci-failures.md not in commands/"
+
+
+# ---------------------------------------------------------------------------
 # Pass-to-pass (repo_tests) — real CI commands that should pass on base commit
 # ---------------------------------------------------------------------------
 
@@ -135,43 +177,11 @@ def test_repo_alex_lint():
     assert r.returncode == 0, f"Alex lint failed:\n{r.stderr[-500:]}"
 
 
-# ---------------------------------------------------------------------------
-# Pass-to-pass (static) — anti-stub and structural checks
-# ---------------------------------------------------------------------------
-
-# [static] pass_to_pass
-def test_claude_md_not_empty():
-    """CLAUDE.md is not empty or stub."""
-    claude_md = Path(f"{REPO}/CLAUDE.md")
-    assert claude_md.exists(), "CLAUDE.md does not exist"
-
-    content = claude_md.read_text().strip()
-    assert len(content) > 1000, "CLAUDE.md is too short/empty (likely stub)"
-    # Should have multiple sections
-    assert content.count("## ") >= 3, "CLAUDE.md missing expected sections"
-
-
-# [static] pass_to_pass
-def test_ci_failures_md_not_empty():
-    """.claude/commands/ci-failures.md is not empty or stub."""
-    ci_failures = Path(f"{REPO}/.claude/commands/ci-failures.md")
-    assert ci_failures.exists(), ".claude/commands/ci-failures.md does not exist"
-
-    content = ci_failures.read_text().strip()
-    assert len(content) > 2000, "ci-failures.md is too short/empty (likely stub)"
-    # Should have multiple sections with commands
-    assert "```bash" in content, "ci-failures.md missing bash code blocks"
-    assert content.count("```") >= 4, "ci-failures.md missing expected code blocks"
-
-
-# [static] pass_to_pass
-def test_claude_directory_structure_correct():
-    """.claude/ directory exists with correct structure."""
-    claude_dir = Path(f"{REPO}/.claude")
-    commands_dir = Path(f"{REPO}/.claude/commands")
-
-    assert claude_dir.exists(), ".claude/ directory does not exist"
-    assert commands_dir.exists(), ".claude/commands/ directory does not exist"
-
-    # Verify the expected file is there
-    assert (commands_dir / "ci-failures.md").exists(), "ci-failures.md not in commands/"
+# [repo_tests] pass_to_pass
+def test_repo_prettier_check_bash():
+    """Repo formatting passes prettier check via bash -lc."""
+    r = subprocess.run(
+        ["bash", "-lc", "npx prettier --check package.json pnpm-workspace.yaml"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Prettier check via bash failed:\n{r.stderr[-500:]}"

@@ -202,3 +202,40 @@ def test_eslint_openrouter_src():
         f"eslint failed on openrouter src.\n"
         f"stdout:\n{proc.stdout[-1500:]}\n\nstderr:\n{proc.stderr[-1500:]}"
     )
+
+# === CI-mined tests (taskforge.ci_check_miner) ===
+def test_ci_build_pnpm():
+    """pass_to_pass | CI job 'Build' → step ''"""
+    r = subprocess.run(
+        ["bash", "-lc", 'pnpm docgen'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step '' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_lint_pnpm():
+    """pass_to_pass | CI job 'Lint' → step ''"""
+    r = subprocess.run(
+        ["bash", "-lc", 'pnpm circular'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step '' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_lint_pnpm_2():
+    """pass_to_pass | CI job 'Lint' → step ''"""
+    r = subprocess.run(
+        ["bash", "-lc", 'pnpm lint'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step '' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_lint_pnpm_3():
+    """pass_to_pass | CI job 'Lint' → step ''"""
+    r = subprocess.run(
+        ["bash", "-lc", 'pnpm codegen'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step '' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")

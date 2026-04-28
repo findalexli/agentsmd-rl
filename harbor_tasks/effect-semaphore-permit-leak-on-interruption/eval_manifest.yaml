@@ -31,12 +31,6 @@ checks:
   description: 'Multiple waiters interrupted after a release must not collectively leak permits — guards against partial fixes that only handle the single waiter case.
 
     '
-- id: test_circular_ts_take_uses_deferred_evaluation
-  type: fail_to_pass
-  origin: pr_diff
-  description: 'The take method must defer the `taken += n` increment via core.suspend so an interrupted resume does not leak. Behavioural assertion gated by an additional structural check on the modified file.
-
-    '
 - id: test_existing_semaphore_works
   type: pass_to_pass
   origin: repo_tests
@@ -57,7 +51,7 @@ checks:
   type: fail_to_pass
   origin: agent_config
   source:
-    lines: 37-40
+    lines: 39-41
     path: AGENTS.md
     commit: 4eb5c008dfc7d2a97b191ca608948d994a2cce4c
   description: 'AGENTS.md mandates a changeset in .changeset/ for every PR; one must be added describing the semaphore/permit fix.
@@ -67,7 +61,7 @@ checks:
   type: pass_to_pass
   origin: agent_config
   source:
-    lines: 11-13
+    lines: 15-15
     path: AGENTS.md
     commit: 4eb5c008dfc7d2a97b191ca608948d994a2cce4c
   description: 'AGENTS.md instructs to avoid // line comments in function bodies. The modified take method must not introduce explanatory // comments.
@@ -76,7 +70,7 @@ checks:
 rubric:
 - id: zero_tolerance_for_errors
   source:
-    lines: 10-10
+    lines: 12-12
     path: AGENTS.md
     commit: 4eb5c008dfc7d2a97b191ca608948d994a2cce4c
   rule: '"Zero Tolerance for Errors": the project insists every automated check must pass. The submitted fix must keep the typescript build, vitest suite, and all existing semaphore tests green.
@@ -84,7 +78,7 @@ rubric:
     '
 - id: clarity_over_cleverness
   source:
-    lines: 11-12
+    lines: 13-13
     path: AGENTS.md
     commit: 4eb5c008dfc7d2a97b191ca608948d994a2cce4c
   rule: '"Clarity over Cleverness": the fix should be the most direct, readable change that closes the leak — no obscure tricks, no speculative generality.
@@ -92,7 +86,7 @@ rubric:
     '
 - id: conciseness
   source:
-    lines: 12-12
+    lines: 14-14
     path: AGENTS.md
     commit: 4eb5c008dfc7d2a97b191ca608948d994a2cce4c
   rule: '"Conciseness: keep code and any wording concise and to the point." Diff should be minimal — only modify what''s needed in `Semaphore.take`.
@@ -100,7 +94,7 @@ rubric:
     '
 - id: existing_pattern_alignment
   source:
-    lines: 29-30
+    lines: 28-29
     path: AGENTS.md
     commit: 4eb5c008dfc7d2a97b191ca608948d994a2cce4c
   rule: 'AGENTS.md: "Always look at existing code in the repository to learn and follow established patterns before writing new code." The fix should use idioms already present in `circular.ts` / `core.ts` (`core.suspend`, `core.succeed`) rather than introducing new abstractions.

@@ -8,7 +8,7 @@ The `DagVersionSelect` component in the Airflow UI (`airflow-core/src/airflow/ui
 
 When a user navigates to a specific DagRun, the version dropdown should only show the DAG versions that are associated with that particular run. When no DagRun is selected, all versions should be shown as they are today.
 
-The component should determine which DagRun (if any) is currently selected based on the URL/route parameters, fetch the corresponding DagRun data from the API, and use the version information from that response to filter the dropdown options.
+The dropdown options should reflect the versions that belong to the currently selected DagRun. If the user has not selected any specific run, the dropdown should continue to display all available versions for the DAG.
 
 ## Current Behavior
 

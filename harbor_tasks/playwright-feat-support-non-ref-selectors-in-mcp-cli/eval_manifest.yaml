@@ -12,33 +12,27 @@ checks:
 - id: asref_function_classifies_inputs
   type: fail_to_pass
   origin: pr_diff
-  description: 'CLI classification helper correctly distinguishes refs (e15, f1e2) from selectors
-    (#main, role=button) by calling parseCommand on actual CLI commands'
+  description: CLI classification helper correctly distinguishes refs (e15, f1e2) from selectors (#main, role=button) by calling parseCommand on actual CLI commands
 - id: cli_commands_use_target_param
   type: fail_to_pass
   origin: pr_diff
-  description: CLI click/fill/hover/select/check/uncheck route selectors correctly
-    through parseCommand behavioral tests
+  description: CLI click/fill/hover/select/check/uncheck route selectors correctly through parseCommand behavioral tests
 - id: drag_uses_start_end_element
   type: fail_to_pass
   origin: pr_diff
-  description: Drag command maps inputs to startRef/startSelector/endRef/endSelector
-    via parseCommand behavioral tests
+  description: Drag command maps inputs to startRef/startSelector/endRef/endSelector via parseCommand behavioral tests
 - id: tab_reflocator_accepts_selector
   type: fail_to_pass
   origin: pr_diff
-  description: Tab.refLocator and refLocators accept optional selector parameter for
-    CSS/role selectors
+  description: Tab.refLocator and refLocators accept optional selector parameter for CSS/role selectors
 - id: tool_schemas_include_selector
   type: fail_to_pass
   origin: pr_diff
-  description: MCP tool schemas (snapshot, evaluate, verify, form, screenshot) include
-    optional selector field validated via Zod safeParse
+  description: MCP tool schemas (snapshot, evaluate, verify, form, screenshot) include optional selector field validated via Zod safeParse
 - id: filtered_tools_strips_selector
   type: fail_to_pass
   origin: pr_diff
-  description: filteredTools() omits selector/startSelector/endSelector from MCP tool
-    schemas
+  description: filteredTools() omits selector/startSelector/endSelector from MCP tool schemas
 - id: skill_md_documents_selector_targeting
   type: fail_to_pass
   origin: agent_config
@@ -58,8 +52,7 @@ checks:
 - id: ref_pattern_still_works
   type: pass_to_pass
   origin: static
-  description: 'Classification preserves existing ref-based behavior (ref patterns
-    produce correct toolParams)'
+  description: Classification preserves existing ref-based behavior (ref patterns produce correct toolParams)
 - id: repo_check_deps
   type: pass_to_pass
   origin: repo_tests
@@ -84,6 +77,46 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Repo builds successfully (npm run build)
+- id: test_ci_docs___lint_npm
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: docs & lint / '
+- id: test_ci_docs___lint_npm
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: docs & lint / '
+- id: test_ci_docs___lint_npx
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: docs & lint / '
+- id: test_ci_docs___lint_npm
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: docs & lint / '
+- id: test_ci_docs___lint_audit_prod_npm_dependencies
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: docs & lint / Audit prod NPM dependencies'
+- id: test_ci_lint_snippets_pip
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: Lint snippets / '
+- id: test_ci_lint_snippets_mvn
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: Lint snippets / '
+- id: test_ci_lint_snippets_node
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: Lint snippets / '
+- id: test_ci_docs___lint_npm_2
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: docs & lint / '
+- id: test_ci_docs___lint_npm_3
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: docs & lint / '
 rubric:
 - rule: SKILL.md is updated with selector targeting documentation
   source:
@@ -98,58 +131,31 @@ rubric:
   source:
     path: .claude/skills/playwright-dev/mcp-dev.md
     lines: 32-41
-  source_text: "  schema: {\n    name: 'browser_my_tool',       // MCP tool name (browser_\
-    \ prefix)\n    title: 'My Tool',              // Human-readable title\n    description:\
-    \ 'Does something', // Description shown to LLM\n    inputSchema: z.object({\n\
-    \      ref: z.string().describe('Element reference from snapshot'),\n      value:\
-    \ z.string().optional().describe('Optional value'),\n    }),\n    type: 'action',\
-    \  // 'input' | 'assertion' | 'action' | 'readOnly'\n  },"
-  evidence: 'The gold diff correctly modifies tool schemas in multiple tools like
-    evaluate.ts and form.ts following the inputSchema pattern (e.g. extending it to
-    z.object({ ref: ..., selector: z.string().optional().describe(''...'') })).'
+  source_text: "  schema: {\n    name: 'browser_my_tool',       // MCP tool name (browser_ prefix)\n    title: 'My Tool',              // Human-readable title\n    description: 'Does something', // Description shown to LLM\n    inputSchema: z.object({\n      ref: z.string().describe('Element reference from snapshot'),\n      value: z.string().optional().describe('Optional value'),\n    }),\n    type: 'action',  // 'input' | 'assertion' | 'action' | 'readOnly'\n  },"
+  evidence: 'The gold diff correctly modifies tool schemas in multiple tools like evaluate.ts and form.ts following the inputSchema pattern (e.g. extending it to z.object({ ref: ..., selector: z.string().optional().describe(''...'') })).'
   category: schema_definition
   verification: llm_judge
 - rule: Command Declaration Pattern
   source:
     path: .claude/skills/playwright-dev/mcp-dev.md
     lines: 207-236
-  source_text: "const myCommand = declareCommand({\n  name: 'my-command',        \
-    \   // CLI command name (kebab-case)\n  description: 'Does something', // Shown\
-    \ in help\n  category: 'core',             // Category for help grouping\n\n \
-    \ // Positional arguments (ordered, parsed from CLI positional args)\n  args:\
-    \ z.object({\n    url: z.string().describe('The URL to navigate to'),\n    ref:\
-    \ z.string().optional().describe('Optional element reference'),\n  }),\n\n  //\
-    \ Named options (parsed from --flag or --flag=value)\n  options: z.object({\n\
-    \    submit: z.boolean().optional().describe('Whether to submit'),\n    filename:\
-    \ z.string().optional().describe('Output filename'),\n  }),\n\n  // MCP tool name\
-    \ — string or function for dynamic routing\n  toolName: 'browser_my_tool',\n \
-    \ // OR dynamic:\n  // toolName: ({ submit }) => submit ? 'browser_submit' : 'browser_type',\n\
-    \n  // Map CLI args/options to MCP tool params\n  toolParams: ({ url, ref, submit,\
-    \ filename }) => ({\n    url,\n    ref,\n    submit,\n    filename,\n  }),\n});"
-  evidence: The gold diff strictly follows this structure when modifying commands
-    in commands.ts, keeping args, toolName, and updating toolParams mappings cleanly
-    (e.g. the drag command mapping startElement/endElement to the complex params object
-    using the asRef helper).
+  source_text: "const myCommand = declareCommand({\n  name: 'my-command',           // CLI command name (kebab-case)\n  description: 'Does something', // Shown in help\n  category: 'core',             // Category for help grouping\n\n  // Positional arguments (ordered, parsed from CLI positional args)\n  args: z.object({\n    url: z.string().describe('The URL to navigate to'),\n    ref: z.string().optional().describe('Optional element reference'),\n  }),\n\n  // Named options (parsed from --flag or --flag=value)\n  options: z.object({\n    submit: z.boolean().optional().describe('Whether to submit'),\n    filename: z.string().optional().describe('Output filename'),\n  }),\n\n  // MCP tool name — string or function for dynamic routing\n  toolName: 'browser_my_tool',\n  // OR dynamic:\n  // toolName: ({ submit }) => submit ? 'browser_submit' : 'browser_type',\n\n  // Map CLI args/options to MCP tool params\n  toolParams: ({ url, ref, submit, filename }) => ({\n    url,\n    ref,\n    submit,\n    filename,\n  }),\n});"
+  evidence: The gold diff strictly follows this structure when modifying commands in commands.ts, keeping args, toolName, and updating toolParams mappings cleanly (e.g. the drag command mapping startElement/endElement to the complex params object using the asRef helper).
   category: command_declaration
   verification: llm_judge
 - rule: Update SKILL File
   source:
     path: .claude/skills/playwright-dev/mcp-dev.md
     lines: 278-278
-  source_text: Update `packages/playwright/src/skill/SKILL.md` with the new command
-    documentation.
-  evidence: The gold diff modifies packages/playwright-core/src/skill/SKILL.md to
-    explain how to target elements using the newly added CSS and role selector capabilities.
+  source_text: Update `packages/playwright/src/skill/SKILL.md` with the new command documentation.
+  evidence: The gold diff modifies packages/playwright-core/src/skill/SKILL.md to explain how to target elements using the newly added CSS and role selector capabilities.
   category: documentation
   verification: llm_judge
 config_edits: []
 distractors:
 - rule: docs/src/ API documentation — source of truth for public TypeScript types
   collision_type: scope_ambiguity
-  why_distracting: The config states that `docs/src/` is the source of truth for API
-    documentation. An agent might mistakenly try to document the new CLI/MCP selector
-    feature in the public API docs, but this is an internal tool feature and the instruction
-    explicitly requests updating the agent's own `SKILL.md` file.
+  why_distracting: The config states that `docs/src/` is the source of truth for API documentation. An agent might mistakenly try to document the new CLI/MCP selector feature in the public API docs, but this is an internal tool feature and the instruction explicitly requests updating the agent's own `SKILL.md` file.
   severity: medium
   source:
     path: CLAUDE.md
@@ -158,13 +164,9 @@ distractors:
   source:
     path: .claude/skills/playwright-dev/api.md
     lines: 7-7
-  source_text: Define (or update) API in `docs/src/api/class-xxx.md`. For the new
-    methods, params and options use the version from package.json (without `-next`).
+  source_text: Define (or update) API in `docs/src/api/class-xxx.md`. For the new methods, params and options use the version from package.json (without `-next`).
   collision_type: scope_ambiguity
-  why_distracting: An agent working on adding a selector option to MCP tools might
-    mistake it for a public API change and attempt to update the Playwright docs in
-    docs/src/api/class-xxx.md. However, MCP tools are an internal CLI capability,
-    not part of the public Playwright class API.
+  why_distracting: An agent working on adding a selector option to MCP tools might mistake it for a public API change and attempt to update the Playwright docs in docs/src/api/class-xxx.md. However, MCP tools are an internal CLI capability, not part of the public Playwright class API.
   severity: medium
 - rule: Implement Client API
   source:
@@ -172,24 +174,14 @@ distractors:
     lines: 71-71
   source_text: Implement the new API in `packages/playwright-core/src/client/xxx.ts`.
   collision_type: architecture_boundary
-  why_distracting: The agent might assume modifying tool arguments requires modifying
-    the Node.js client SDK in packages/playwright-core/src/client. However, MCP tools
-    run atop the Playwright library and operate without needing changes to core client
-    interfaces.
+  why_distracting: The agent might assume modifying tool arguments requires modifying the Node.js client SDK in packages/playwright-core/src/client. However, MCP tools run atop the Playwright library and operate without needing changes to core client interfaces.
   severity: high
 - rule: Define Protocol Channel
   source:
     path: .claude/skills/playwright-dev/api.md
     lines: 100-100
-  source_text: Define (or update) channel for the API in `packages/protocol/src/protocol.yml`
-    as needed.
+  source_text: Define (or update) channel for the API in `packages/protocol/src/protocol.yml` as needed.
   collision_type: architecture_boundary
-  why_distracting: Since arguments flow from the CLI to the daemon, an agent might
-    incorrectly believe it needs to update the core RPC protocol in protocol.yml.
-    But MCP tools communicate via MCP over standard streams or WebSockets using JSON-RPC,
-    completely separate from Playwright's internal page/context protocol.
+  why_distracting: Since arguments flow from the CLI to the daemon, an agent might incorrectly believe it needs to update the core RPC protocol in protocol.yml. But MCP tools communicate via MCP over standard streams or WebSockets using JSON-RPC, completely separate from Playwright's internal page/context protocol.
   severity: high
-hierarchy_analysis: The configuration consists of a single root CLAUDE.md file. The
-  primary challenge is not hierarchy resolution, but rather distinguishing between
-  public documentation rules in the config and the explicit instruction to update
-  the agent's internal skill documentation.
+hierarchy_analysis: The configuration consists of a single root CLAUDE.md file. The primary challenge is not hierarchy resolution, but rather distinguishing between public documentation rules in the config and the explicit instruction to update the agent's internal skill documentation.

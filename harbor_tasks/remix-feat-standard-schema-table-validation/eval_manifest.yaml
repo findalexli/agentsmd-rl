@@ -24,13 +24,11 @@ checks:
 - id: agents_md_cross_package_rule
   type: fail_to_pass
   origin: pr_diff
-  description: AGENTS.md documents the cross-package boundaries rule about avoiding
-    re-exports
+  description: AGENTS.md documents the cross-package boundaries rule about avoiding re-exports
 - id: readme_documents_data_validation
   type: fail_to_pass
   origin: pr_diff
-  description: packages/data-table/README.md documents data validation and Standard
-    Schema compatibility
+  description: packages/data-table/README.md documents data validation and Standard Schema compatibility
 - id: existing_table_tests_pass
   type: pass_to_pass
   origin: repo_tests
@@ -42,8 +40,7 @@ checks:
 - id: not_stub
   type: fail_to_pass
   origin: static
-  description: Table validate rejects non-objects, arrays, and reports all unknown
-    columns
+  description: Table validate rejects non-objects, arrays, and reports all unknown columns
 - id: test_repo_type_safety_tests_pass
   type: pass_to_pass
   origin: repo_tests
@@ -92,67 +89,81 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Data-schema TypeScript typecheck passes
+- id: test_ci_build_build_packages
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: build / Build packages'
+- id: test_ci_test_run_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: test / Run tests'
+- id: test_ci_mysql_integration_run_mysql_integration_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: MySQL Integration / Run mysql integration tests'
+- id: test_ci_unit_and_build_run_data_table_package_checks
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: Unit and Build / Run data-table package checks'
+- id: test_ci_sqlite_integration_build_sqlite_native_module
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: SQLite Integration / Build sqlite native module'
+- id: test_ci_sqlite_integration_run_sqlite_adapter_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: SQLite Integration / Run sqlite adapter tests'
+- id: test_ci_postgres_integration_run_postgres_integration_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: Postgres Integration / Run postgres integration tests'
+- id: test_ci_check_lint
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: check / Lint'
+- id: test_ci_check_typecheck
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: check / Typecheck'
+- id: test_ci_check_check_change_files
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: check / Check change files'
+- id: test_ci_format_format
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: format / Format'
+- id: test_pr_added_is_standard_schema_compatible_with_create_style_
+  type: fail_to_pass
+  origin: pr_diff
+  description: PR added test 'is standard-schema compatible with create-style validation semantics' in packages/data-table/src/lib/table.test.ts
 rubric:
-- rule: Config updates should be consistent with the style of existing AGENTS.md and
-    README.md content
+- rule: Config updates should be consistent with the style of existing AGENTS.md and README.md content
   source:
     path: AGENTS.md
     lines: 1-5
     commit: 89db125c56d3b0d637a283ac9122c6cb8f5542c3
-- rule: 'Adding changes: Create `packages/*/.changes/[major|minor|patch].short-description.md`
-    files.'
+- rule: 'Adding changes: Create `packages/*/.changes/[major|minor|patch].short-description.md` files.'
   source:
     path: AGENTS.md
     lines: 38-39
-  evidence: The gold solution creates `packages/data-table/.changes/minor.table-standard-schema.md`
-    to document the new Standard Schema compatibility and validation behavior.
+  evidence: The gold solution creates `packages/data-table/.changes/minor.table-standard-schema.md` to document the new Standard Schema compatibility and validation behavior.
   category: tooling
-- rule: Create `packages/*/.changes/[major|minor|patch].short-description.md` files
-    when adding changes.
+- rule: Create `packages/*/.changes/[major|minor|patch].short-description.md` files when adding changes.
   source:
     path: AGENTS.md
     lines: 40-41
-  evidence: The gold solution creates a new change file at `packages/data-table/.changes/minor.table-standard-schema.md`
-    to document the Standard Schema compatibility changes.
+  evidence: The gold solution creates a new change file at `packages/data-table/.changes/minor.table-standard-schema.md` to document the Standard Schema compatibility changes.
   category: tooling
 config_edits:
 - path: AGENTS.md
   tier: 1
-  gold_added: '- **Cross-package boundaries**: Avoid re-exporting APIs/types from
-    other packages. Consumers should import from the owning package directly. Reuse
-    shared concepts from sibling packages internally instead of creating bespoke duplicate
-    implementations.'
+  gold_added: '- **Cross-package boundaries**: Avoid re-exporting APIs/types from other packages. Consumers should import from the owning package directly. Reuse shared concepts from sibling packages internally instead of creating bespoke duplicate implementations.'
   gold_removed: ''
 - path: packages/data-table/README.md
   tier: 2
-  gold_added: "- [**Query Builder**](#query-builder) for expressive joins, aggregates,\
-    \ eager loading, and scoped writes\n- [**CRUD Helpers**](#crud-helpers) for common\
-    \ create/read/update/delete flows (`find`, `create`, `update`, `delete`)\nBoth\
-    \ APIs are type-safe and validate values using your [remix/data-schema](https://github.com/remix-run/remix/tree/main/packages/data-schema)\
-    \ definitions.\n## Query Builder\nUse `db.query(table)` when you need joins, custom\
-    \ shape selection, eager loading, or aggregate logic.\n## CRUD Helpers\n`data-table`\
-    \ provides helpers for common create/read/update/delete operations. Use these\
-    \ helpers for common operations without building a full query chain.\n### Read\
-    \ operations\n- `createMany` -> `WriteResult` by default, rows when `returnRows:\
-    \ true` (not supported in MySQL because it doesn't support `RETURNING`)\n### Data\
-    \ Validation\n\nFor write operations, data validation happens before SQL is executed\
-    \ so invalid data does not get written to the database.\n\n`data-table` treats\
-    \ each column schema as both:\n\n- a runtime validator (is this input valid?)\n\
-    - a parser (what normalized value should be written?)\n\nIf you're familiar with\
-    \ Zod, this is the same idea: schema-first validation where values are checked\
-    \ and parsed before use. In `data-table`, that parsing runs automatically on writes\
-    \ (`create`, `createMany`, `update`, `upsert`) so only schema-valid values are\
-    \ sent to the database. Invalid values and unknown columns fail fast before a\
-    \ write is attempted.\n\nTables are also [Standard Schema](https://standardschema.dev/)-compatible,\
-    \ so you can run the same validation explicitly with `remix/data-schema` before\
-    \ writing:\n\n```ts\nimport { parseSafe } from 'remix/data-schema'\n\nlet result\
-    \ = parseSafe(users, {\n  id: 'u_004',\n  email: 'new@example.com',\n  role: 'customer',\n\
-    })\n\nif (!result.success) {\n  // Handle validation issues\n}\n```\n\nValidation\
-    \ semantics match `create()`/`update()` input behavior:\n\n- Partial objects are\
-    \ allowed\n- Unknown columns fail validation\n- Provided column values are parsed\
-    \ through each column schema"
-  gold_removed: '- **Query Builder API** for expressive joins, aggregates, eager loading,
-    and scoped writes
+  gold_added: "- [**Query Builder**](#query-builder) for expressive joins, aggregates, eager loading, and scoped writes\n- [**CRUD Helpers**](#crud-helpers) for common create/read/update/delete flows (`find`, `create`, `update`, `delete`)\nBoth APIs are type-safe and validate values using your [remix/data-schema](https://github.com/remix-run/remix/tree/main/packages/data-schema) definitions.\n## Query Builder\nUse `db.query(table)` when you need joins, custom shape selection, eager loading, or aggregate logic.\n## CRUD Helpers\n`data-table` provides helpers for common create/read/update/delete operations. Use these helpers for common operations without building a full query chain.\n### Read operations\n- `createMany` -> `WriteResult` by default, rows when `returnRows: true` (not supported in MySQL because it doesn't support `RETURNING`)\n### Data Validation\n\nFor write operations, data validation happens before SQL is executed so invalid data does not get written to the database.\n\n`data-table` treats each column schema as both:\n\n- a runtime validator (is this input valid?)\n- a parser (what normalized value should be written?)\n\nIf you're familiar with Zod, this is the same idea: schema-first validation where values are checked and parsed before use. In `data-table`, that parsing runs automatically on writes (`create`, `createMany`, `update`, `upsert`) so only schema-valid values are sent to the database. Invalid values and unknown columns fail fast before a write is attempted.\n\nTables are also [Standard Schema](https://standardschema.dev/)-compatible, so you can run the same validation explicitly with `remix/data-schema` before writing:\n\n```ts\nimport { parseSafe } from 'remix/data-schema'\n\nlet result = parseSafe(users, {\n  id: 'u_004',\n  email: 'new@example.com',\n  role: 'customer',\n})\n\nif (!result.success) {\n  // Handle validation issues\n}\n```\n\nValidation semantics match `create()`/`update()` input behavior:\n\n- Partial objects are allowed\n- Unknown columns fail validation\n- Provided column values are parsed through each column schema"
+  gold_removed: '- **Query Builder API** for expressive joins, aggregates, eager loading, and scoped writes
 
     - **Database Helper API** for common CRUD flows (`find`, `create`, `update`, `delete`)
 
@@ -160,8 +171,7 @@ config_edits:
 
     ## Query Builder API
 
-    Use `db.query(Table)` when you need joins, custom shape selection, eager loading,
-    or aggregate logic.
+    Use `db.query(Table)` when you need joins, custom shape selection, eager loading, or aggregate logic.
 
     ## Database Helper API (High-Level CRUD)
 
@@ -169,23 +179,13 @@ config_edits:
 
     ### Read helpers
 
-    - `createMany` -> `WriteResult` by default, rows when `returnRows: true` (RETURNING
-    adapters only)'
+    - `createMany` -> `WriteResult` by default, rows when `returnRows: true` (RETURNING adapters only)'
 distractors:
-- rule: All `exports` in `package.json` have a dedicated file in `src` that defines
-    the public API by re-exporting from within `src/lib`
+- rule: All `exports` in `package.json` have a dedicated file in `src` that defines the public API by re-exporting from within `src/lib`
   collision_type: rule_conflict
-  why_distracting: The existing rule mandates re-exporting from `src/lib` to define
-    the public API. The task requires removing the `DataSchema` re-export because
-    it originates from a different package. An agent might misinterpret the existing
-    rule as requiring all exposed types to be re-exported locally, conflicting with
-    the new cross-package boundary rule it is supposed to implement.
+  why_distracting: The existing rule mandates re-exporting from `src/lib` to define the public API. The task requires removing the `DataSchema` re-export because it originates from a different package. An agent might misinterpret the existing rule as requiring all exposed types to be re-exported locally, conflicting with the new cross-package boundary rule it is supposed to implement.
   severity: high
   source:
     path: AGENTS.md
     lines: 18-19
-hierarchy_analysis: 'The configuration is a flat single file (`AGENTS.md`), but the
-  task introduces a meta-referential dynamic: the agent must modify the config file
-  itself to codify a new architectural rule. The agent must synthesize the new rule
-  from the PR instructions and place it logically among the existing architecture
-  guidelines.'
+hierarchy_analysis: 'The configuration is a flat single file (`AGENTS.md`), but the task introduces a meta-referential dynamic: the agent must modify the config file itself to codify a new architectural rule. The agent must synthesize the new rule from the PR instructions and place it logically among the existing architecture guidelines.'

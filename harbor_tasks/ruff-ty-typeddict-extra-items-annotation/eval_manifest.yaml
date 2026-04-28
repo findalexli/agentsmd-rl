@@ -28,8 +28,7 @@ checks:
 - id: not_required_rejected_in_extra_items
   type: fail_to_pass
   origin: pr_diff
-  description: ty reports invalid-type-form when NotRequired is used in TypedDict
-    extra_items
+  description: ty reports invalid-type-form when NotRequired is used in TypedDict extra_items
 - id: classvar_rejected_in_extra_items
   type: fail_to_pass
   origin: pr_diff
@@ -41,16 +40,78 @@ checks:
 - id: readonly_extra_items_accepted
   type: pass_to_pass
   origin: pr_diff
-  description: ty does not report invalid-type-form for ReadOnly or plain types in
-    extra_items
+  description: ty does not report invalid-type-form for ReadOnly or plain types in extra_items
+- id: test_ci_test_scripts_python
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: test scripts / '
+- id: test_ci_test_scripts_python
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: test scripts / '
+- id: test_ci_test_scripts_scripts_add_rule_py
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: test scripts / '
+- id: test_ci_test_scripts_cargo
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: test scripts / '
+- id: test_ci_test_scripts_scripts_add_plugin_py
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: test scripts / '
+- id: test_ci_test_scripts_uv
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: test scripts / '
+- id: test_ci_test_scripts_uv
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: test scripts / '
+- id: test_ci_test_scripts_uv
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: test scripts / '
+- id: test_ci_benchmarks_instrumented_ty_build_benchmarks
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: benchmarks instrumented ty / Build benchmarks'
+- id: test_ci_cargo_build_build_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: cargo build / Build tests'
+- id: test_ci_cargo_test_ty_mdtests_github_annotations
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: cargo test / ty mdtests (GitHub annotations)'
+- id: test_ci_cargo_test_run_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: cargo test / Run tests'
+- id: test_ci_test_scripts_python_2
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: test scripts / '
+- id: test_ci_test_scripts_uv_2
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: test scripts / '
+- id: test_ci_test_scripts_uv_3
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: test scripts / '
+- id: test_ci_cargo_test_dogfood_ty_on_py_fuzzer
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: cargo test / Dogfood ty on py-fuzzer'
 rubric:
 - rule: Rust imports should always go at the top of the file, never locally in functions.
   source:
     path: AGENTS.md
     lines: '76'
     commit: a617c54b0708a8c1eb850cc3b2a5caee21137a28
-- rule: Prefer let chains (`if let` combined with `&&`) over nested `if let` statements
-    to reduce indentation and improve readability.
+- rule: Prefer let chains (`if let` combined with `&&`) over nested `if let` statements to reduce indentation and improve readability.
   source:
     path: AGENTS.md
     lines: '80'
@@ -60,51 +121,36 @@ rubric:
     path: AGENTS.md
     lines: '75'
     commit: a617c54b0708a8c1eb850cc3b2a5caee21137a28
-- rule: Avoid writing significant amounts of new code. Look for existing utilities
-    first.
+- rule: Avoid writing significant amounts of new code. Look for existing utilities first.
   source:
     path: AGENTS.md
     lines: '78'
     commit: a617c54b0708a8c1eb850cc3b2a5caee21137a28
-- rule: Look to see if your tests could go in an existing file before adding a new
-    file for your tests.
+- rule: Look to see if your tests could go in an existing file before adding a new file for your tests.
   source:
     path: AGENTS.md
     lines: 66-66
-  evidence: The gold solution adds new test cases for `extra_items` to the existing
-    `crates/ty_python_semantic/resources/mdtest/typed_dict.md` file rather than creating
-    a new test file.
+  evidence: The gold solution adds new test cases for `extra_items` to the existing `crates/ty_python_semantic/resources/mdtest/typed_dict.md` file rather than creating a new test file.
   category: testing
-- rule: All changes must be tested. If you're not testing your changes, you're not
-    done.
+- rule: All changes must be tested. If you're not testing your changes, you're not done.
   source:
     path: AGENTS.md
     lines: 65-65
-  evidence: The gold solution includes extensive mdtest additions in `typed_dict.md`
-    to verify the new `extra_items` inference behavior, including invalid qualifiers
-    and forward references.
+  evidence: The gold solution includes extensive mdtest additions in `typed_dict.md` to verify the new `extra_items` inference behavior, including invalid qualifiers and forward references.
   category: testing
 distractors:
-- rule: If asked to reproduce changes in the ty ecosystem, use this script to clone
-    the project... uv run scripts/setup_primer_project.py
+- rule: If asked to reproduce changes in the ty ecosystem, use this script to clone the project... uv run scripts/setup_primer_project.py
   collision_type: scope_ambiguity
-  why_distracting: The instruction mentions a bug in the `ty` type checker. The agent
-    might misinterpret this as a need to 'reproduce changes in the ty ecosystem' and
-    waste time running the primer project script, which is unnecessary since the bug
-    is well-defined and reproducible via standard mdtests.
+  why_distracting: The instruction mentions a bug in the `ty` type checker. The agent might misinterpret this as a need to 'reproduce changes in the ty ecosystem' and waste time running the primer project script, which is unnecessary since the bug is well-defined and reproducible via standard mdtests.
   severity: medium
   source:
     path: AGENTS.md
     lines: 41-45
-- rule: Avoid writing significant amounts of new code. This is often a sign that we're
-    missing an existing method or mechanism that could help solve the problem.
+- rule: Avoid writing significant amounts of new code. This is often a sign that we're missing an existing method or mechanism that could help solve the problem.
   collision_type: rule_conflict
-  why_distracting: The agent might try to avoid writing the necessary new logic for
-    annotation inference and qualifier validation, attempting instead to hack the
-    existing regular expression inference to save lines of code.
+  why_distracting: The agent might try to avoid writing the necessary new logic for annotation inference and qualifier validation, attempting instead to hack the existing regular expression inference to save lines of code.
   severity: low
   source:
     path: AGENTS.md
     lines: 61-62
-hierarchy_analysis: The configuration is flat, with CLAUDE.md simply pointing to AGENTS.md.
-  The rules are general repository guidelines rather than specific architectural constraints.
+hierarchy_analysis: The configuration is flat, with CLAUDE.md simply pointing to AGENTS.md. The rules are general repository guidelines rather than specific architectural constraints.

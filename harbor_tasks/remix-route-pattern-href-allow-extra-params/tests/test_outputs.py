@@ -147,3 +147,23 @@ def test_href_ts_modified():
     assert pre_fix_signature not in src, (
         "href.ts still contains the original strict HrefParams definition unchanged"
     )
+
+# CI-mined pass_to_pass: format and lint at the monorepo level validates that the
+# fix conforms to repo-wide code-style rules.
+def test_ci_format_format():
+    """pass_to_pass | CI job 'format' → step 'Format'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'pnpm format'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Format' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_check_lint():
+    """pass_to_pass | CI job 'check' → step 'Lint'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'pnpm lint'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Lint' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")

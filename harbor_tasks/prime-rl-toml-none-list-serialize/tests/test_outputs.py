@@ -27,19 +27,26 @@ def _run_py(code: str, timeout: int = 30) -> subprocess.CompletedProcess:
 
 
 def _load_config_functions():
-    """Extract target functions from config.py and exec them.
+    """Extract all top-level functions from config.py and exec them.
 
     Used by pass_to_pass tests that don't need subprocess isolation.
+    Extracting every function ensures helpers are available even if the
+    fix refactors into a shared inner function. Imports are executed
+    first so type annotations resolve.
     """
     src = CONFIG_PY.read_text()
     tree = ast.parse(src)
 
+    import_sources = []
     func_sources = []
     for node in ast.iter_child_nodes(tree):
-        if isinstance(node, ast.FunctionDef) and node.name in TARGET_FUNCS:
+        if isinstance(node, (ast.Import, ast.ImportFrom)):
+            import_sources.append(ast.get_source_segment(src, node))
+        elif isinstance(node, ast.FunctionDef):
             func_sources.append(ast.get_source_segment(src, node))
 
     namespace = {}
+    exec("\n".join(import_sources), namespace)
     exec("\n\n".join(func_sources), namespace)
     return namespace
 
@@ -331,3 +338,16 @@ def test_repo_imports_check():
         capture_output=True, text=True, timeout=60, cwd=REPO,
     )
     assert r.returncode == 0, f"Ruff import check failed:\n{r.stderr}\n{r.stdout}"
+
+# === CI-mined tests (taskforge.ci_check_miner) ===
+def test_ci_unit_tests_run_tests():
+    """pass_to_pass | Scoped CI-style: pytest imports and inspects config module"""
+    r = subprocess.run(
+        ["bash", "-lc",
+         'cd /workspace/prime-rl && python3 -m pytest --pyargs prime_rl.utils.config --doctest-modules -v 2>&1;'
+         'R=$?; [ $R -eq 0 ] || [ $R -eq 5 ] || exit $R; echo "CI_PASS"'],
+        cwd=REPO, capture_output=True, text=True, timeout=120)
+    assert r.returncode == 0, (
+        f"CI test failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+    assert "CI_PASS" in r.stdout, "CI marker not found in output"

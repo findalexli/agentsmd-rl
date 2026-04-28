@@ -1,0 +1,115 @@
+version: '2.0'
+source:
+  repo: remix-run/remix
+  pr: 11072
+  base_commit: 0d96010ac7180893364f308a1b1f7768eed09458
+  merge_commit: 62a140d113aaa80d50e999cd37b0c0da844bfbdc
+task:
+  kind: code_fix
+checks:
+- id: test_context_router_accessible
+  type: fail_to_pass
+  origin: pr_diff
+  description: context.router is set on the request context during router.fetch()
+- id: test_context_router_throws
+  type: fail_to_pass
+  origin: pr_diff
+  description: Accessing context.router when not set via fetch() throws an error
+- id: test_existing_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Existing fetch-router test suite passes
+- id: test_typecheck
+  type: pass_to_pass
+  origin: repo_tests
+  description: TypeScript type checking passes for fetch-router package
+- id: test_ci_check_lint
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: check / Lint'
+- id: test_ci_check_typecheck
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: check / Typecheck'
+- id: test_ci_check_check_change_files
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: check / Check change files'
+- id: test_ci_format_format
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: format / Format'
+- id: test_ci_build_build_packages
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: build / Build packages'
+- id: test_ci_test_run_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: test / Run tests'
+rubric:
+- rule: 'Imports: Always use `import type { X }` for types (separate from value imports); use `export type { X }` for type exports; include `.ts` extensions'
+  source:
+    path: AGENTS.md
+    lines: '26'
+    commit: 0d96010ac7180893364f308a1b1f7768eed09458
+  evidence: Gold adds `import type { Router } from './router.ts'` using separate type import
+  category: style
+  verification: semantic_diff
+- rule: 'Variables: Prefer `let` for locals, `const` only at module scope; never use `var`'
+  source:
+    path: AGENTS.md
+    lines: '27'
+    commit: 0d96010ac7180893364f308a1b1f7768eed09458
+  evidence: 'Gold declares `let router: Router = {` at function scope instead of returning an object literal directly'
+  category: style
+  verification: semantic_diff
+- rule: 'Classes: Use native fields (omit `public`), `#private` for private members (no TypeScript accessibility modifiers)'
+  source:
+    path: AGENTS.md
+    lines: '31'
+    commit: 0d96010ac7180893364f308a1b1f7768eed09458
+  evidence: Gold adds `#router` as a private field using the `#` syntax
+  category: naming
+  verification: semantic_diff
+- rule: 'Cross-package boundaries: Avoid re-exporting APIs/types from other packages. Consumers should import from the owning package directly.'
+  source:
+    path: AGENTS.md
+    lines: '19'
+    commit: 0d96010ac7180893364f308a1b1f7768eed09458
+  evidence: Gold imports Router type directly from './router.ts' within the same package rather than re-exporting from another package
+  category: architecture
+  verification: semantic_diff
+- rule: 'Formatting: Prettier (printWidth: 100, no semicolons, single quotes, spaces not tabs)'
+  source:
+    path: AGENTS.md
+    lines: '29'
+    commit: 0d96010ac7180893364f308a1b1f7768eed09458
+  evidence: Gold patch follows Prettier formatting conventions
+  category: style
+  verification: llm_judge
+distractors:
+- rule: 'No loops or conditionals in test suites: Do not use `for` loops or conditional statements (`if`, `switch`, etc.) to generate test cases within `describe()` blocks.'
+  source:
+    path: AGENTS.md
+    lines: '36'
+    commit: 0d96010ac7180893364f308a1b1f7768eed09458
+  collision_type: scope_ambiguity
+  why_distracting: This rule governs test file structure, not the production code being modified. An agent might wrongly avoid conditionals in the router source code.
+  severity: low
+- rule: All demo servers should use port 44100 for consistency across the monorepo
+  source:
+    path: AGENTS.md
+    lines: '41'
+    commit: 0d96010ac7180893364f308a1b1f7768eed09458
+  collision_type: scope_ambiguity
+  why_distracting: This rule applies to demo servers, not to the router/fetch-router package being modified.
+  severity: low
+- rule: 'Adding changes: Create `packages/*/.changes/[major|minor|patch].short-description.md` files.'
+  source:
+    path: AGENTS.md
+    lines: '46'
+    commit: 0d96010ac7180893364f308a1b1f7768eed09458
+  collision_type: scope_ambiguity
+  why_distracting: The changeset file is already included in the gold patch; an agent does not need to create it separately.
+  severity: low

@@ -12,8 +12,7 @@ checks:
 - id: test_multiple_fixture_executes_correctly
   type: fail_to_pass
   origin: pr_diff
-  description: Multiple ALS fixture file exists and returns {id, nestedId} with nested
-    ALS
+  description: Multiple ALS fixture file exists and returns {id, nestedId} with nested ALS
 - id: test_no_per_test_instance_creation
   type: fail_to_pass
   origin: pr_diff
@@ -65,8 +64,7 @@ checks:
 - id: test_not_stub
   type: pass_to_pass
   origin: static
-  description: Test file has real structure with describe/it/expect and 15+ meaningful
-    lines
+  description: Test file has real structure with describe/it/expect and 15+ meaningful lines
 - id: test_test_file_valid_syntax
   type: pass_to_pass
   origin: pr_diff
@@ -115,44 +113,42 @@ checks:
   type: pass_to_pass
   origin: pr_diff
   description: Repo test file does not use CommonJS require/module.exports
+- id: test_ci_thank_you__build_pnpm
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: thank you, build / '
+- id: test_ci_thank_you__build_set_preview_version
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: thank you, build / Set preview version'
+- id: test_ci_thank_you__build_pnpm
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: thank you, build / '
+- id: test_ci_thank_you__build_pnpm_2
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: thank you, build / '
 rubric:
 - rule: 'Codebase structure: test/ - All test suites'
   source:
     path: CLAUDE.md
     lines: 11-20
-  evidence: The gold solution places the new fixture files (`single.js` and `multiple.js`)
-    inside the `test/e2e/edge-async-local-storage/pages/api/` directory, respecting
-    the repository structure where all test s
+  evidence: The gold solution places the new fixture files (`single.js` and `multiple.js`) inside the `test/e2e/edge-async-local-storage/pages/api/` directory, respecting the repository structure where all test s
   category: architecture
 distractors:
-- rule: 'Run tests fast (no isolation, no packing): NEXT_SKIP_ISOLATE=1 NEXT_TEST_MODE=<dev|start>
-    pnpm testheadless test/path/to/test.ts'
+- rule: 'Run tests fast (no isolation, no packing): NEXT_SKIP_ISOLATE=1 NEXT_TEST_MODE=<dev|start> pnpm testheadless test/path/to/test.ts'
   collision_type: would_cause_bug
-  why_distracting: The issue explicitly states the test is flaky in 'deploy mode'
-    due to deployment step timeouts. The rule instructs developers to run tests with
-    `NEXT_SKIP_ISOLATE=1` and `NEXT_TEST_MODE=<dev|start>`, which skips packing/isolation
-    and runs in dev/start mode instead of deploy mode. Following this testing instruction
-    would prevent the agent from reproducing the specific deploy mode timeout and
-    race condition.
+  why_distracting: The issue explicitly states the test is flaky in 'deploy mode' due to deployment step timeouts. The rule instructs developers to run tests with `NEXT_SKIP_ISOLATE=1` and `NEXT_TEST_MODE=<dev|start>`, which skips packing/isolation and runs in dev/start mode instead of deploy mode. Following this testing instruction would prevent the agent from reproducing the specific deploy mode timeout and race condition.
   severity: high
   source:
     path: CLAUDE.md
     lines: 75-80
-- rule: If you are changing Next.js source or integration tests, start `pnpm --filter=next
-    dev` in a separate terminal session before making edits
+- rule: If you are changing Next.js source or integration tests, start `pnpm --filter=next dev` in a separate terminal session before making edits
   collision_type: scope_ambiguity
-  why_distracting: The rule mandates starting `pnpm --filter=next dev` in a separate
-    terminal when changing Next.js source or integration tests. However, this PR only
-    modifies an e2e test file and its fixtures, not the Next.js framework source code.
-    Running the dev server in the background is unnecessary overhead and irrelevant
-    for fixing an e2e test setup issue.
+  why_distracting: The rule mandates starting `pnpm --filter=next dev` in a separate terminal when changing Next.js source or integration tests. However, this PR only modifies an e2e test file and its fixtures, not the Next.js framework source code. Running the dev server in the background is unnecessary overhead and irrelevant for fixing an e2e test setup issue.
   severity: medium
   source:
     path: CLAUDE.md
     lines: 65-70
-hierarchy_analysis: '`CLAUDE.md` and `AGENTS.md` are identical symlinked files containing
-  general repository guidelines. The guidelines heavily optimize for fast local development
-  of the Next.js core framework (e.g., skipping isolation, running dev servers). However,
-  these optimizations conflict with the specific needs of this PR, which requires
-  debugging an e2e test in ''deploy mode'' where isolation and deployment steps are
-  the root cause of the flakiness.'
+hierarchy_analysis: '`CLAUDE.md` and `AGENTS.md` are identical symlinked files containing general repository guidelines. The guidelines heavily optimize for fast local development of the Next.js core framework (e.g., skipping isolation, running dev servers). However, these optimizations conflict with the specific needs of this PR, which requires debugging an e2e test in ''deploy mode'' where isolation and deployment steps are the root cause of the flakiness.'

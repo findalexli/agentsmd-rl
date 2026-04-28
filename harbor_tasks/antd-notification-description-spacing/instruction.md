@@ -27,4 +27,5 @@ When `notification.open()` is called with only a `description` and no `title`, t
 
 Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
 
-- `eslint (JS/TS linter)`
+- `eslint`
+- `biome lint`

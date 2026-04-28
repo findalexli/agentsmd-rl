@@ -61,6 +61,34 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Repo-wide linting passes
+- id: test_ci_vite_plugin_e2e_bump_package_versions
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: Vite Plugin E2E / Bump package versions'
+- id: test_ci_vite_plugin_e2e_run_vite_plugin_e2e_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: Vite Plugin E2E / Run Vite plugin E2E tests'
+- id: test_ci_local_explorer_ui_e2e_build_wrangler
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: Local Explorer UI E2E / Build wrangler'
+- id: test_ci_local_explorer_ui_e2e_run_local_explorer_ui_e2e_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: Local Explorer UI E2E / Run Local Explorer UI E2E tests'
+- id: test_ci_wrangler_e2e_run_wrangler_e2e_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: Wrangler E2E / Run Wrangler E2E tests'
+- id: test_ci_wrangler_e2e_run_getplatformproxy_remote_bindings_e2e
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: Wrangler E2E / Run getPlatformProxy() remote-bindings e2e tests'
+- id: test_ci_tests_run_tests_tools_only
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: Tests / Run tests (tools only)'
 rubric:
 - rule: AGENTS.md is updated and maintains consistent style
   source:
@@ -68,8 +96,7 @@ rubric:
     lines: 1-25
     commit: 0de69890c8503bb67e391e7ad5578c7001b7798e
 - rule: AGENTS.md documents Node.js version requirements
-  reference: packages/create-cloudflare/AGENTS.md documents the Node.js version requirement
-    from engines.node
+  reference: packages/create-cloudflare/AGENTS.md documents the Node.js version requirement from engines.node
 - rule: AGENTS.md documents the bin/c3.js entry point
   source:
     path: packages/create-cloudflare/AGENTS.md
@@ -95,64 +122,44 @@ rubric:
     path: AGENTS.md
     lines: 112-115
     commit: 0de69890c8503bb67e391e7ad5578c7001b7798e
-- rule: esbuild bundles `src/cli.ts` as CJS → `dist/cli.js` and it serves as the main
-    export
+- rule: esbuild bundles `src/cli.ts` as CJS → `dist/cli.js` and it serves as the main export
   source:
     path: packages/create-cloudflare/AGENTS.md
     lines: 15-16
-  evidence: The gold solution creates a shim that requires `dist/cli.js` and updates
-    the documentation to clarify that `main` and `exports["."]` still point to `dist/cli.js`,
-    preserving it as the bundled CJS entr
+  evidence: The gold solution creates a shim that requires `dist/cli.js` and updates the documentation to clarify that `main` and `exports["."]` still point to `dist/cli.js`, preserving it as the bundled CJS entr
   category: architecture
 - rule: esbuild bundles src/cli.ts as CJS → dist/cli.js
   source:
     path: packages/create-cloudflare/AGENTS.md
     lines: 10-10
-  evidence: The gold solution creates bin/c3.js as a CommonJS script (using require)
-    to load the CJS bundle dist/cli.js, respecting the existing CJS build architecture.
+  evidence: The gold solution creates bin/c3.js as a CommonJS script (using require) to load the CJS bundle dist/cli.js, respecting the existing CJS build architecture.
   category: architecture
 - rule: packages/create-cloudflare/ - Project scaffolding CLI (C3)
   source:
     path: AGENTS.md
     lines: 26-26
-  evidence: The agent names the new bin shim `bin/c3.js`, utilizing the C3 abbreviation
-    established in the root architecture overview.
+  evidence: The agent names the new bin shim `bin/c3.js`, utilizing the C3 abbreviation established in the root architecture overview.
   category: naming
 distractors:
 - rule: 'no-console: error — use project''s logging utilities'
   collision_type: would_cause_bug
-  why_distracting: The agent might try to import the project's logging utilities to
-    print the version error. However, importing those utilities would load the CLI
-    bundle containing Node 20+ syntax, causing the exact syntax error the shim is
-    meant to prevent.
+  why_distracting: The agent might try to import the project's logging utilities to print the version error. However, importing those utilities would load the CLI bundle containing Node 20+ syntax, causing the exact syntax error the shim is meant to prevent.
   severity: high
   source:
     path: packages/create-cloudflare/AGENTS.md
     lines: 16-16
 - rule: No separate bin shim — the built output IS the bin
   collision_type: meta_confusion
-  why_distracting: The config explicitly forbids a separate bin shim, which directly
-    conflicts with the PR instruction. The agent must realize the instruction represents
-    an architectural change and override this rule by updating the AGENTS.md file
-    itself.
+  why_distracting: The config explicitly forbids a separate bin shim, which directly conflicts with the PR instruction. The agent must realize the instruction represents an architectural change and override this rule by updating the AGENTS.md file itself.
   severity: high
   source:
     path: packages/create-cloudflare/AGENTS.md
     lines: 13-13
 - rule: 'Single entry: src/cli.ts serves as CLI, library export, and bin target.'
   collision_type: architecture_boundary
-  why_distracting: The agent might attempt to place the version check inside `src/cli.ts`
-    to maintain the single entry point architecture. This would fail because `src/cli.ts`
-    is bundled and its modern syntax would crash older Node versions before the check
-    could execute.
+  why_distracting: The agent might attempt to place the version check inside `src/cli.ts` to maintain the single entry point architecture. This would fail because `src/cli.ts` is bundled and its modern syntax would crash older Node versions before the check could execute.
   severity: high
   source:
     path: packages/create-cloudflare/AGENTS.md
     lines: 4-4
-hierarchy_analysis: This task features a profound meta-referential conflict. The local
-  `packages/create-cloudflare/AGENTS.md` explicitly documents an architecture (single
-  entry point, no bin shim) that the PR instruction asks to change. The agent must
-  not only ignore the existing architectural constraints but also actively rewrite
-  the `AGENTS.md` file to document the new architecture. Furthermore, the agent must
-  selectively ignore the `no-console` rule because the new bin shim sits outside the
-  main architecture boundary and cannot safely import project utilities.
+hierarchy_analysis: This task features a profound meta-referential conflict. The local `packages/create-cloudflare/AGENTS.md` explicitly documents an architecture (single entry point, no bin shim) that the PR instruction asks to change. The agent must not only ignore the existing architectural constraints but also actively rewrite the `AGENTS.md` file to document the new architecture. Furthermore, the agent must selectively ignore the `no-console` rule because the new bin shim sits outside the main architecture boundary and cannot safely import project utilities.

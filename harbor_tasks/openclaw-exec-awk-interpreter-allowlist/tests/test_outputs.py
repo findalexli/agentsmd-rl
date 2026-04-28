@@ -289,3 +289,122 @@ def test_repo_no_conflict_markers():
         capture_output=True, text=True, timeout=60, cwd=REPO,
     )
     assert r.returncode == 0, f"Conflict markers check failed:\n{r.stderr[-500:]}"
+
+# === CI-mined tests (taskforge.ci_check_miner) ===
+def test_ci_build_bun_artifacts_build_a2ui_bundle():
+    """pass_to_pass | CI job 'build-bun-artifacts' → step 'Build A2UI bundle'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'pnpm canvas:a2ui:bundle'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Build A2UI bundle' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_check_additional_check_types_and_lint_and_oxfmt():
+    """pass_to_pass | CI job 'check-additional' → step 'Check types and lint and oxfmt'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'pnpm check'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Check types and lint and oxfmt' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_check_additional_strict_ts_build_smoke():
+    """pass_to_pass | CI job 'check-additional' → step 'Strict TS build smoke'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'pnpm build:strict-smoke'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Strict TS build smoke' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_check_run_matrix_task_matrix_runtime():
+    """pass_to_pass | CI job 'check' → step 'Run ${{ matrix.task }} (${{ matrix.runtime }})'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'pnpm test:extensions && pnpm build && pnpm test:contracts && pnpm protocol:check'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Run ${{ matrix.task }} (${{ matrix.runtime }})' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_build_artifacts_build_dist():
+    """pass_to_pass | CI job 'build-artifacts' → step 'Build dist'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'pnpm build'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Build dist' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_build_artifacts_build_control_ui():
+    """pass_to_pass | CI job 'build-artifacts' → step 'Build Control UI'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'pnpm ui:build'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Build Control UI' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_build_smoke_smoke_test_cli_launcher_help():
+    """pass_to_pass | CI job 'build-smoke' → step 'Smoke test CLI launcher help'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'node openclaw.mjs --help'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Smoke test CLI launcher help' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_build_smoke_smoke_test_cli_launcher_status_json():
+    """pass_to_pass | CI job 'build-smoke' → step 'Smoke test CLI launcher status json'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'node openclaw.mjs status --json --timeout 1'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Smoke test CLI launcher status json' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_build_smoke_smoke_test_built_bundled_plugin_singleto():
+    """pass_to_pass | CI job 'build-smoke' → step 'Smoke test built bundled plugin singleton'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'pnpm test:build:singleton'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Smoke test built bundled plugin singleton' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_build_smoke_check_cli_startup_memory():
+    """pass_to_pass | CI job 'build-smoke' → step 'Check CLI startup memory'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'pnpm test:startup:memory'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Check CLI startup memory' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+# === PR-added f2p tests (taskforge.test_patch_miner) ===
+def test_pr_added_does_not_persist_interpreter_like_executables_fo():
+    """fail_to_pass | PR added test 'does not persist interpreter-like executables for allow-always' in 'src/infra/exec-approvals-allow-always.test.ts' (vitest_or_jest)"""
+    r = subprocess.run(
+        ["bash", "-lc", '(pnpm vitest run "src/infra/exec-approvals-allow-always.test.ts" -t "does not persist interpreter-like executables for allow-always" 2>&1 || npx vitest run "src/infra/exec-approvals-allow-always.test.ts" -t "does not persist interpreter-like executables for allow-always" 2>&1 || pnpm jest "src/infra/exec-approvals-allow-always.test.ts" -t "does not persist interpreter-like executables for allow-always" 2>&1 || npx jest "src/infra/exec-approvals-allow-always.test.ts" -t "does not persist interpreter-like executables for allow-always" 2>&1) | tail -50'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"PR-added test 'does not persist interpreter-like executables for allow-always' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_pr_added_prevents_allow_always_bypass_for_awk_interpreter():
+    """fail_to_pass | PR added test 'prevents allow-always bypass for awk interpreters' in 'src/infra/exec-approvals-allow-always.test.ts' (vitest_or_jest)"""
+    r = subprocess.run(
+        ["bash", "-lc", '(pnpm vitest run "src/infra/exec-approvals-allow-always.test.ts" -t "prevents allow-always bypass for awk interpreters" 2>&1 || npx vitest run "src/infra/exec-approvals-allow-always.test.ts" -t "prevents allow-always bypass for awk interpreters" 2>&1 || pnpm jest "src/infra/exec-approvals-allow-always.test.ts" -t "prevents allow-always bypass for awk interpreters" 2>&1 || npx jest "src/infra/exec-approvals-allow-always.test.ts" -t "prevents allow-always bypass for awk interpreters" 2>&1) | tail -50'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"PR-added test 'prevents allow-always bypass for awk interpreters' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_pr_added_prevents_allow_always_bypass_for_shell_carried_a():
+    """fail_to_pass | PR added test 'prevents allow-always bypass for shell-carried awk interpreters' in 'src/infra/exec-approvals-allow-always.test.ts' (vitest_or_jest)"""
+    r = subprocess.run(
+        ["bash", "-lc", '(pnpm vitest run "src/infra/exec-approvals-allow-always.test.ts" -t "prevents allow-always bypass for shell-carried awk interpreters" 2>&1 || npx vitest run "src/infra/exec-approvals-allow-always.test.ts" -t "prevents allow-always bypass for shell-carried awk interpreters" 2>&1 || pnpm jest "src/infra/exec-approvals-allow-always.test.ts" -t "prevents allow-always bypass for shell-carried awk interpreters" 2>&1 || npx jest "src/infra/exec-approvals-allow-always.test.ts" -t "prevents allow-always bypass for shell-carried awk interpreters" 2>&1) | tail -50'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"PR-added test 'prevents allow-always bypass for shell-carried awk interpreters' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")

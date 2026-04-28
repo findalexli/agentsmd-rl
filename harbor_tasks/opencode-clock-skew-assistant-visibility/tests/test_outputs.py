@@ -10,6 +10,7 @@ breaks at the next `user`, so it loses that assistant.
 """
 
 import json
+import os
 import re
 import shutil
 import subprocess
@@ -151,3 +152,25 @@ def test_negative_index_returns_empty():
     messages = [user, a1]
     ids = _run(messages, user, -1)
     assert ids == [], ids
+
+
+# === CI-mined tests (scoped to affected package) ===
+
+def test_ci_typecheck_run_typecheck():
+    """pass_to_pass | CI job 'typecheck' → step 'Run typecheck', scoped to packages/ui"""
+    r = subprocess.run(
+        ["bash", "-lc", 'bun --cwd packages/ui typecheck'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Run typecheck' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+
+def test_ci_unit_run_unit_tests():
+    """pass_to_pass | CI job 'unit' → step 'Run unit tests', scoped to packages/app (depends on @opencode-ai/ui)"""
+    r = subprocess.run(
+        ["bash", "-lc", 'bun --cwd packages/app test:ci'], cwd=REPO,
+        capture_output=True, text=True, timeout=600)
+    assert r.returncode == 0, (
+        f"CI step 'Run unit tests' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")

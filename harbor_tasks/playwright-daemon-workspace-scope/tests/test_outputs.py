@@ -320,3 +320,22 @@ def test_session_management_md_config_path():
         "session-management.md must reference .playwright/ directory for config"
     assert "playwright-cli.json" not in content, \
         "session-management.md still references old playwright-cli.json config path"
+
+# === CI-mined tests (taskforge.ci_check_miner) ===
+def test_ci_build_playwright_driver_npm():
+    """pass_to_pass | CI job 'build-playwright-driver' → step ''"""
+    r = subprocess.run(
+        ["bash", "-lc", 'npm ci'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step '' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_build_playwright_driver_npm_2():
+    """pass_to_pass | CI job 'build-playwright-driver' → step ''"""
+    r = subprocess.run(
+        ["bash", "-lc", 'npm run build'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step '' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")

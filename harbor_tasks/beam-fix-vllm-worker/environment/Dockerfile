@@ -22,4 +22,4 @@ RUN git init /workspace/beam && \
 WORKDIR /workspace/beam
 
 # auto-installed (scaffold Change 2A retrofit 2026-04-24)
-RUN pip install --no-cache-dir --break-system-packages flake8 pycodestyle pylint 2>/dev/null || pip install --no-cache-dir flake8 pycodestyle pylint
+RUN pip install --no-cache-dir --break-system-packages flake8 pycodestyle pylint yapf 2>/dev/null || pip install --no-cache-dir flake8 pycodestyle pylint yapf

@@ -234,16 +234,6 @@ def test_non_file_object_still_dict():
     assert "filepath" not in result, (
         f"Non-file schema must not contain 'filepath', got: {result!r}"
     )
-"""
-Additional Pass-to-Pass tests for gradio-filepath-api-display task.
-These are supplementary tests covering more of the repo's CI checks.
-"""
-
-import subprocess
-import sys
-from pathlib import Path
-
-REPO = "/workspace/gradio"
 
 
 # [repo_tests] pass_to_pass — more comprehensive utils unit tests
@@ -420,3 +410,76 @@ print("All python_type_to_json_schema tests passed!")
         capture_output=True, text=True, timeout=120, cwd=REPO,
     )
     assert r.returncode == 0, f"python_type_to_json_schema tests failed:\n{r.stdout}\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass — run core behavioral tests via pytest (real test runner)
+def test_pytest_runner_filepath_behavior():
+    """Run fail-to-pass behavioral tests via pytest (real test runner, bash -lc)."""
+    import tempfile
+    import os
+
+    test_content = '''
+import sys
+sys.path.insert(0, "/workspace/gradio/client/python")
+from gradio_client.utils import _json_schema_to_python_type
+
+FILE_DATA_SCHEMA = {
+    "type": "object",
+    "properties": {
+        "path": {"anyOf": [{"type": "string"}, {"type": "null"}], "default": None},
+        "url": {"anyOf": [{"type": "string"}, {"type": "null"}], "default": None},
+        "meta": {"$ref": "#/$defs/Meta", "default": {"_type": "gradio.FileData"}},
+    },
+    "$defs": {
+        "Meta": {
+            "type": "object",
+            "properties": {"_type": {"const": "gradio.FileData", "title": " Type"}},
+            "required": ["_type"],
+            "title": "Meta",
+        }
+    },
+    "title": "FileData",
+}
+
+IMAGE_DATA_SCHEMA = {
+    "type": "object",
+    "properties": {
+        "path": {"anyOf": [{"type": "string"}, {"type": "null"}], "default": None},
+        "meta": {"type": "object", "default": {"_type": "gradio.FileData"}},
+    },
+    "title": "ImageData",
+}
+
+PLAIN_OBJECT_SCHEMA = {
+    "type": "object",
+    "properties": {"name": {"type": "string"}, "value": {"type": "number"}},
+}
+
+def test_file_schema_returns_filepath():
+    result = _json_schema_to_python_type(FILE_DATA_SCHEMA, FILE_DATA_SCHEMA.get("$defs"))
+    assert result == "filepath", f"Expected 'filepath', got: {result!r}"
+
+def test_image_like_schema_returns_filepath():
+    result = _json_schema_to_python_type(IMAGE_DATA_SCHEMA, IMAGE_DATA_SCHEMA.get("$defs"))
+    assert result == "filepath", f"Expected 'filepath', got: {result!r}"
+
+def test_non_file_object_still_dict():
+    result = _json_schema_to_python_type(PLAIN_OBJECT_SCHEMA, PLAIN_OBJECT_SCHEMA.get("$defs"))
+    assert result.startswith("dict("), f"Expected dict(...), got: {result!r}"
+    assert "name" in result
+    assert "filepath" not in result
+'''
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".py", delete=False) as f:
+        f.write(test_content)
+        tmp_path = f.name
+    try:
+        r = subprocess.run(
+            ["bash", "-lc", f"python -m pytest {tmp_path} -v"],
+            capture_output=True, text=True, timeout=120, cwd=REPO,
+        )
+        assert r.returncode == 0, (
+            f"Pytest runner tests failed (returncode={r.returncode}):\n"
+            f"stdout: {r.stdout[-2000:]}\nstderr: {r.stderr[-2000:]}"
+        )
+    finally:
+        os.unlink(tmp_path)

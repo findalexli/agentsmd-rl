@@ -609,3 +609,4 @@ def test_repo_nbstripout():
         if r.returncode != 0:
             errors.append(f"{nb_path}: notebook outputs not stripped")
     assert not errors, f"Notebook output stripping issues:\n" + "\n".join(errors)
+

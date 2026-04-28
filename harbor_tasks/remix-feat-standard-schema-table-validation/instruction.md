@@ -30,6 +30,15 @@ After the fix:
 
 6. **Write-path consistency**: Database write helpers (`create`, `update`, etc.) must use the same validation semantics as the Standard Schema `validate` function described above.
 
+## Code Style Requirements
+
+This project enforces code style via:
+
+- **ESLint**: Run `pnpm lint` from the workspace root. TypeScript source files must pass the repo's ESLint rules without errors.
+- **Prettier**: Run `pnpm format` (or `pnpm format:check` to verify) from the workspace root. All modified files must be formatted with the repo's Prettier configuration.
+
+Ensure your changes pass both linters before considering the task complete.
+
 ## Documentation Updates
 
 Update the following documentation:

@@ -362,3 +362,13 @@ def _extract_brace_block(src: str) -> str:
             if depth == 0:
                 return src[brace_start:i + 1]
     return src[brace_start:]
+
+# === CI-mined tests (taskforge.ci_check_miner) ===
+def test_ci_tsc():
+    """pass_to_pass | TypeScript type-check (tsc) on the monorepo"""
+    r = subprocess.run(
+        ["bash", "-lc", "npm run tsc"], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"tsc type-check failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")

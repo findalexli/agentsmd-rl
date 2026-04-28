@@ -5,9 +5,6 @@ PR:   8292
 
 All checks must pass for reward = 1. Any failure = reward 0.
 Each test function maps 1:1 to a check in eval_manifest.yaml.
-
-FIXED: tests now use node execution for behavioral verification, and
-test_independent_filter_container no longer requires exact -8 margin value.
 """
 
 import subprocess
@@ -29,7 +26,6 @@ def _run_node(script: str, timeout: int = 30) -> subprocess.CompletedProcess:
     )
 
 
-
 @pytest.fixture(scope="session", autouse=True)
 def run_biome_format():
     """Run biome format to fix any formatting issues before tests."""
@@ -43,14 +39,14 @@ def run_biome_format():
         capture_output=True, text=True, timeout=120, cwd=REPO,
     )
 
+
 # ---------------------------------------------------------------------------
 # Gates (pass_to_pass, static) - syntax / compilation checks
 # ---------------------------------------------------------------------------
 
 
-# [static] pass_to_pass
 def test_syntax_check():
-    """HistoryView.tsx is readable and has valid JSX structure."""
+    """pass_to_pass | HistoryView.tsx has valid JSX structure with balanced tags."""
     content = Path(HISTORY_VIEW).read_text()
     assert len(content) > 100, "File is unexpectedly empty or tiny"
     assert content.count("<VSCodeRadioGroup") == content.count(
@@ -64,14 +60,8 @@ def test_syntax_check():
 # ---------------------------------------------------------------------------
 
 
-# [pr_diff] fail_to_pass
 def test_filters_outside_radio_group():
-    """Workspace and Favorites filters must be outside VSCodeRadioGroup.
-
-    Before the fix, both were inside VSCodeRadioGroup, making them mutually
-    exclusive with sort options (radio button behavior). After the fix, they
-    appear after the closing </VSCodeRadioGroup> tag.
-    """
+    """fail_to_pass | Workspace and Favorites filters are outside VSCodeRadioGroup."""
     result = _run_node(
         """
 const fs = require('fs');
@@ -114,14 +104,8 @@ console.log('OK: both filters are outside VSCodeRadioGroup');
     assert result.returncode == 0, f"Filter structure check failed: {result.stdout}"
 
 
-# [pr_diff] fail_to_pass
 def test_independent_filter_container():
-    """Workspace and Favorites must be in a separate div container.
-
-    The fix wraps them in a flex div outside VSCodeRadioGroup, allowing
-    independent toggling while maintaining visual continuity. The container
-    uses flex layout with a negative top margin for alignment.
-    """
+    """fail_to_pass | Workspace and Favorites are in a separate flex div container."""
     result = _run_node(
         """
 const fs = require('fs');
@@ -142,7 +126,7 @@ if (containerStart < 0) {
 }
 
 const containerLine = lines[containerStart];
-const marginMatch = containerLine.match(/marginTop:\\s*(-?\\d+)/);
+const marginMatch = containerLine.match(/marginTop:\s*(-?\d+)/);
 if (!marginMatch) {
     console.log('FAIL: marginTop not found');
     process.exit(1);
@@ -178,9 +162,8 @@ console.log('OK: filters in flex container with negative margin');
     assert result.returncode == 0, f"Container check failed: {result.stdout}"
 
 
-# [pr_diff] fail_to_pass
 def test_claude_md_documents_package_json():
-    """CLAUDE.md must document checking package.json for available scripts."""
+    """fail_to_pass | CLAUDE.md documents checking package.json for available scripts."""
     content = Path(CLAUDE_MD).read_text()
     assert "package.json" in content
     assert "npm run compile" in content
@@ -192,9 +175,8 @@ def test_claude_md_documents_package_json():
 # ---------------------------------------------------------------------------
 
 
-# [repo_tests] pass_to_pass
 def test_repo_biome_lint():
-    """Repo Biome linting passes."""
+    """pass_to_pass | Repo Biome linting passes on src/ and webview-ui/src/."""
     subprocess.run(["npm", "ci"], capture_output=True, text=True, timeout=180, cwd=REPO)
     r = subprocess.run(
         ["npx", "biome", "lint", "--no-errors-on-unmatched",
@@ -205,9 +187,8 @@ def test_repo_biome_lint():
     assert r.returncode == 0, f"Biome lint failed: {r.stderr[-500:]}"
 
 
-# [repo_tests] pass_to_pass
 def test_repo_biome_format():
-    """Repo Biome format check passes."""
+    """pass_to_pass | Repo Biome format check passes on src/ and webview-ui/src/."""
     r = subprocess.run(
         ["npx", "biome", "format", "--no-errors-on-unmatched",
          "--files-ignore-unknown=true", "--diagnostic-level=error",
@@ -217,9 +198,8 @@ def test_repo_biome_format():
     assert r.returncode == 0, f"Biome format check failed: {r.stderr[-500:]}"
 
 
-# [repo_tests] pass_to_pass
 def test_repo_protos():
-    """Proto generation succeeds."""
+    """pass_to_pass | Proto generation succeeds (npm run protos)."""
     r = subprocess.run(
         ["npm", "run", "protos"],
         capture_output=True, text=True, timeout=120, cwd=REPO,
@@ -227,9 +207,8 @@ def test_repo_protos():
     assert r.returncode == 0, f"Proto generation failed: {r.stderr[-500:]}"
 
 
-# [repo_tests] pass_to_pass
 def test_repo_compile_tests():
-    """Test compilation succeeds."""
+    """pass_to_pass | Test compilation succeeds (npm run compile-tests)."""
     r = subprocess.run(
         ["npm", "run", "compile-tests"],
         capture_output=True, text=True, timeout=120, cwd=REPO,
@@ -237,9 +216,8 @@ def test_repo_compile_tests():
     assert r.returncode == 0, f"Test compilation failed: {r.stderr[-500:]}"
 
 
-# [repo_tests] pass_to_pass
 def test_repo_proto_lint():
-    """Proto linting passes."""
+    """pass_to_pass | Proto files linting passes (npm run lint:proto)."""
     r = subprocess.run(
         ["npm", "run", "lint:proto"],
         capture_output=True, text=True, timeout=120, cwd=REPO,
@@ -247,14 +225,23 @@ def test_repo_proto_lint():
     assert r.returncode == 0, f"Proto lint failed: {r.stderr[-500:]}"
 
 
+def test_repo_biome_format_full():
+    """pass_to_pass | Biome format check on all source files passes."""
+    r = subprocess.run(
+        ["npx", "biome", "format", "--no-errors-on-unmatched",
+         "--files-ignore-unknown=true", "--diagnostic-level=error"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Biome full format check failed: {r.stderr[-500:]}"
+
+
 # ---------------------------------------------------------------------------
 # Regression checks
 # ---------------------------------------------------------------------------
 
 
-# [pr_diff] pass_to_pass
 def test_sort_options_in_radio_group():
-    """Sort options remain in VSCodeRadioGroup."""
+    """pass_to_pass | Sort options (Newest, Oldest, Most Relevant) remain in VSCodeRadioGroup."""
     result = _run_node(
         """
 const fs = require('fs');

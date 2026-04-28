@@ -37,10 +37,6 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Repo's TypeScript tooling setup compiles
-- id: test_repo_ts_circular_deps_check
-  type: pass_to_pass
-  origin: repo_tests
-  description: Repo has no circular TypeScript dependencies
 - id: test_repo_pullapprove_verify
   type: pass_to_pass
   origin: repo_tests
@@ -65,24 +61,16 @@ rubric:
 distractors:
 - rule: Use `pnpm bazel test //target` to run tests.
   collision_type: meta_confusion
-  why_distracting: The agent is editing its own instruction file. It might read the
-    instruction to run bazel tests and think it needs to execute them to verify its
-    edits, confusing the content of the file it's editing with instructions for its
-    current session.
+  why_distracting: The agent is editing its own instruction file. It might read the instruction to run bazel tests and think it needs to execute them to verify its edits, confusing the content of the file it's editing with instructions for its current session.
   severity: high
   source:
     path: AGENTS.md
     lines: 6-7
 - rule: Use the `gh` CLI (GitHub CLI) for creating and managing pull requests.
   collision_type: meta_confusion
-  why_distracting: The agent might read the instruction to use the `gh` CLI to create
-    a PR and attempt to execute it, confusing the text it is supposed to modify with
-    instructions it should follow for the current task.
+  why_distracting: The agent might read the instruction to use the `gh` CLI to create a PR and attempt to execute it, confusing the text it is supposed to modify with instructions it should follow for the current task.
   severity: high
   source:
     path: AGENTS.md
     lines: 14-15
-hierarchy_analysis: The agent must edit the very file (`AGENTS.md`) that provides
-  its instructions. There is no deep hierarchy, but the meta-referential nature of
-  the task requires the agent to distinguish between instructions for the current
-  task and instructions contained within the file it is editing.
+hierarchy_analysis: The agent must edit the very file (`AGENTS.md`) that provides its instructions. There is no deep hierarchy, but the meta-referential nature of the task requires the agent to distinguish between instructions for the current task and instructions contained within the file it is editing.

@@ -38,4 +38,5 @@ The `scripts/buildkite-failures.ts` script shows BuildKite CI failures for the b
 
 Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
 
-- `prettier (JS/TS/JSON/Markdown formatter)`
+- `prettier` (JS/TS/JSON/Markdown formatter)
+- `oxlint` (JavaScript/TypeScript linter)

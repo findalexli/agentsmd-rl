@@ -273,3 +273,12 @@ def test_repo_prettier():
     )
     assert r.returncode == 0, f"Prettier check failed:\n{r.stderr[-500:] if r.stderr else r.stdout[-500:]}"
 
+# === CI-mined tests (taskforge.ci_check_miner) ===
+def test_ci_test_run_tests():
+    """pass_to_pass | CI job 'test' → step 'Run Tests'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'pnpm run test:ci'], cwd=os.path.join(REPO, './apps/studio'),
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Run Tests' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")

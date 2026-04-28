@@ -81,10 +81,10 @@ def test_discriminator_extraction():
         timeout=180,
         cwd=REPO,
     )
-    # Build outcome is informational; some Docker environments lack full
-    # restore dependencies, so we log but don't hard-fail on build alone.
+    # Build requires bazel (not available in Docker), so we log but don't
+    # hard-fail. The ValueTextEquals assertion above already discriminates.
     if r.returncode != 0:
-        print(f"dotnet build info (non-fatal): {r.stderr[-300:]}")
+        print(f"dotnet build info (non-fatal, bazel unavailable): {r.stderr[-300:]}")
 
 
 def test_reader_advancement_has_comments():

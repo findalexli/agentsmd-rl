@@ -1,95 +1,39 @@
 checks:
-  - id: test_onrendered_returns_null_no_script_tag
-    description: Verify OnRendered uses useLayoutEffect and returns null
+  - id: test_ssr_scripts_without_sentinel
+    description: Verify SSR scripts output no longer contains the sentinel script tag
     type: fail_to_pass
     source:
       path: agent_config
-      lines: ''
+      lines: '' 
     origin: pr_diff
-  - id: test_onrendered_emits_event_via_effect
-    description: Verify onRendered event is still emitted correctly
+  - id: test_match_tsx_no_script_suppress
+    description: Verify OnRendered no longer renders a script tag with suppressHydrationWarning
     type: fail_to_pass
     source:
       path: agent_config
-      lines: ''
+      lines: '' 
     origin: pr_diff
-  - id: test_ssr_output_no_sentinel_script
-    description: Verify expected SSR HTML output was updated
-    type: fail_to_pass
-    source:
-      path: upstream_test
-      lines: ''
-    origin: pr_diff
-  - id: test_typescript_types_correct
-    description: Verify OnRendered accepts resetKey prop and imports
-    type: fail_to_pass
-    source:
-      path: agent_config
-      lines: ''
-    origin: pr_diff
-  - id: test_build_succeeds
-    description: Verify the package builds without errors
-    type: fail_to_pass
-    source:
-      path: agent_config
-      lines: ''
-    origin: pr_diff
-  - id: test_unit_tests_pass
-    description: Verify Scripts.test.tsx passes
-    type: fail_to_pass
-    source:
-      path: upstream_test
-      lines: ''
-    origin: pr_diff
-  - id: test_solid_router_consistency
+  - id: test_solid_comment_updated
     description: Verify solid-router Match.tsx comment was updated
     type: fail_to_pass
     source:
-      path: upstream
-      lines: ''
+      path: agent_config
+      lines: '' 
     origin: pr_diff
-  - id: test_p2p_repo_eslint
-    description: Repo's ESLint check passes on both base and gold
+  - id: test_build_succeeds
+    description: Verify the package builds without errors on both base and gold
     type: pass_to_pass
     origin: repo_tests
-  - id: test_p2p_repo_typescript
-    description: Repo's TypeScript typecheck passes on both base and gold
+  - id: test_eslint_passes
+    description: Verify ESLint passes on both base and gold
     type: pass_to_pass
     origin: repo_tests
-  - id: test_p2p_repo_unit_tests_ssr
-    description: Repo's SSR-related unit tests pass on both base and gold
+  - id: test_typescript_passes
+    description: Verify TypeScript type-check passes on both base and gold
     type: pass_to_pass
     origin: repo_tests
-  - id: test_p2p_repo_unit_tests_matches
-    description: Repo's Match component unit tests pass on both base and gold
-    type: pass_to_pass
-    origin: repo_tests
-  - id: test_p2p_repo_build
-    description: Repo's build verification passes on both base and gold
-    type: pass_to_pass
-    origin: repo_tests
-  - id: test_p2p_repo_unit_tests_router
-    description: Repo's Router unit tests pass on both base and gold
-    type: pass_to_pass
-    origin: repo_tests
-  - id: test_p2p_repo_unit_tests_link
-    description: Repo's Link component unit tests pass on both base and gold
-    type: pass_to_pass
-    origin: repo_tests
-  - id: test_p2p_repo_unit_tests_navigate
-    description: Repo's navigate unit tests pass on both base and gold
-    type: pass_to_pass
-    origin: repo_tests
-  - id: test_p2p_repo_unit_tests_redirect
-    description: Repo's redirect unit tests pass on both base and gold
-    type: pass_to_pass
-    origin: repo_tests
-  - id: test_p2p_solid_router_eslint
-    description: Repo's solid-router ESLint check passes on both base and gold
-    type: pass_to_pass
-    origin: repo_tests
-  - id: test_p2p_solid_router_unit_tests
-    description: Repo's solid-router unit tests pass on both base and gold
+  - id: test_solid_router_eslint_passes
+    description: Verify solid-router ESLint passes on both base and gold
     type: pass_to_pass
     origin: repo_tests
 rubric:
@@ -139,7 +83,7 @@ distractors:
       if they fail'
     collision_type: scope_ambiguity
     why_distracting: The agent might try to run the global `pnpm test:unit` or `pnpm
-      test:types` commands as instructed by the 'Critical' rule, which could take excessive
+      test:types` commands as instructed by the Critical rule, which could take excessive
       time or fail on unrelated packages in the monorepo, instead of using the granular
       Nx commands recommended later in the file.
     severity: medium
@@ -147,7 +91,7 @@ distractors:
       path: AGENTS.md
       lines: 48-48
 hierarchy_analysis: The AGENTS.md file provides a flat but extensive set of rules.
-  The primary tension is between the general 'run all tests' directive and the highly
+  The primary tension is between the general run all tests directive and the highly
   specific Nx granular testing commands. The agent must prioritize the granular Nx
   commands to efficiently verify the fix in the monorepo.
 version: '2.0'
@@ -155,4 +99,4 @@ source:
   repo: TanStack/router.git
   pr: 0
   base_commit: 0e0a2817c30011829a4fefbb7d3bdef1e710d3ef
-  merge_commit: ''
+  merge_commit: '' 

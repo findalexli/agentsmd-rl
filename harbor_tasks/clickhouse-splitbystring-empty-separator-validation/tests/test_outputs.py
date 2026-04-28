@@ -535,6 +535,29 @@ def test_repo_no_utf8_bom():
     )
 
 
+def test_repo_no_trailing_whitespace_crlf():
+    """
+    Pass-to-pass: No CRLF line endings detected via file command.
+
+    Uses the system file(1) command to check the source file type.
+    CRLF-terminated files are reported differently by file(1).
+    """
+    result = subprocess.run(
+        ["file", SOURCE_FILE],
+        capture_output=True,
+        text=True,
+        timeout=30,
+        cwd=REPO,
+    )
+
+    output = result.stdout
+    has_crlf = "CRLF" in output or "with CR" in output
+
+    assert not has_crlf, (
+        f"CRLF line endings detected in {SOURCE_FILE}: {output}"
+    )
+
+
 def test_repo_clang_syntax_only():
     """
     Pass-to-pass: C++ syntax check using clang-15 -fsyntax-only.
@@ -550,7 +573,6 @@ def test_repo_clang_syntax_only():
         "-std=c++20",
         "-I", f"{REPO}/src",
         "-I", f"{REPO}/base",
-        "-fsyntax-only",
         SOURCE_FILE,
     ]
 

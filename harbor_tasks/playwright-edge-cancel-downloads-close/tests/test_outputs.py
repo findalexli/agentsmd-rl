@@ -262,3 +262,5 @@ def test_cancel_method_public_naming():
     assert ".cancel()" in cr_src, (
         "cancel() is not called from crBrowser.ts — cross-file usage expected"
     )
+
+

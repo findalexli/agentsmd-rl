@@ -219,3 +219,140 @@ def test_repo_agent_tools_engine_tests():
         capture_output=True, text=True, timeout=600, cwd=REPO,
     )
     assert r.returncode == 0, f"AgentToolsEngine tests failed: {r.stdout[-500:]}"
+
+# === CI-mined tests (taskforge.ci_check_miner) ===
+def test_ci_build_desktop_app_build_artifact_on_macos():
+    """pass_to_pass | CI job 'Build Desktop App' → step 'Build artifact on macOS'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'npm run desktop:package:app'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Build artifact on macOS' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_code_quality_check_lint():
+    """pass_to_pass | CI job 'Code quality check' → step 'Lint'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'bun run lint'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Lint' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_test_web_app_run_database_migrations():
+    """pass_to_pass | CI job 'Test Web App' → step 'Run database migrations'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'bun run db:migrate'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Run database migrations' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_test_web_app_build_application():
+    """pass_to_pass | CI job 'Test Web App' → step 'Build application'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'bun run build'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Build application' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_test_web_app_run_e2e_tests():
+    """pass_to_pass | CI job 'Test Web App' → step 'Run E2E tests'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'bun run e2e'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Run E2E tests' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+# === PR-added f2p tests (taskforge.test_patch_miner) ===
+def test_pr_added_should_disable_LocalSystem_when_no_device_contex():
+    """fail_to_pass | PR added test 'should disable LocalSystem when no device context is provided' in 'src/server/modules/Mecha/AgentToolsEngine/__tests__/index.test.ts' (vitest_or_jest)"""
+    r = subprocess.run(
+        ["bash", "-lc", '(pnpm vitest run "src/server/modules/Mecha/AgentToolsEngine/__tests__/index.test.ts" -t "should disable LocalSystem when no device context is provided" 2>&1 || npx vitest run "src/server/modules/Mecha/AgentToolsEngine/__tests__/index.test.ts" -t "should disable LocalSystem when no device context is provided" 2>&1 || pnpm jest "src/server/modules/Mecha/AgentToolsEngine/__tests__/index.test.ts" -t "should disable LocalSystem when no device context is provided" 2>&1 || npx jest "src/server/modules/Mecha/AgentToolsEngine/__tests__/index.test.ts" -t "should disable LocalSystem when no device context is provided" 2>&1) | tail -50'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"PR-added test 'should disable LocalSystem when no device context is provided' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_pr_added_should_enable_LocalSystem_when_gateway_configure():
+    """fail_to_pass | PR added test 'should enable LocalSystem when gateway configured, device online AND auto-activated' in 'src/server/modules/Mecha/AgentToolsEngine/__tests__/index.test.ts' (vitest_or_jest)"""
+    r = subprocess.run(
+        ["bash", "-lc", '(pnpm vitest run "src/server/modules/Mecha/AgentToolsEngine/__tests__/index.test.ts" -t "should enable LocalSystem when gateway configured, device online AND auto-activated" 2>&1 || npx vitest run "src/server/modules/Mecha/AgentToolsEngine/__tests__/index.test.ts" -t "should enable LocalSystem when gateway configured, device online AND auto-activated" 2>&1 || pnpm jest "src/server/modules/Mecha/AgentToolsEngine/__tests__/index.test.ts" -t "should enable LocalSystem when gateway configured, device online AND auto-activated" 2>&1 || npx jest "src/server/modules/Mecha/AgentToolsEngine/__tests__/index.test.ts" -t "should enable LocalSystem when gateway configured, device online AND auto-activated" 2>&1) | tail -50'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"PR-added test 'should enable LocalSystem when gateway configured, device online AND auto-activated' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_pr_added_should_disable_LocalSystem_when_device_online_bu():
+    """fail_to_pass | PR added test 'should disable LocalSystem when device online but NOT auto-activated' in 'src/server/modules/Mecha/AgentToolsEngine/__tests__/index.test.ts' (vitest_or_jest)"""
+    r = subprocess.run(
+        ["bash", "-lc", '(pnpm vitest run "src/server/modules/Mecha/AgentToolsEngine/__tests__/index.test.ts" -t "should disable LocalSystem when device online but NOT auto-activated" 2>&1 || npx vitest run "src/server/modules/Mecha/AgentToolsEngine/__tests__/index.test.ts" -t "should disable LocalSystem when device online but NOT auto-activated" 2>&1 || pnpm jest "src/server/modules/Mecha/AgentToolsEngine/__tests__/index.test.ts" -t "should disable LocalSystem when device online but NOT auto-activated" 2>&1 || npx jest "src/server/modules/Mecha/AgentToolsEngine/__tests__/index.test.ts" -t "should disable LocalSystem when device online but NOT auto-activated" 2>&1) | tail -50'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"PR-added test 'should disable LocalSystem when device online but NOT auto-activated' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_pr_added_should_disable_LocalSystem_when_gateway_configur():
+    """fail_to_pass | PR added test 'should disable LocalSystem when gateway configured but device offline' in 'src/server/modules/Mecha/AgentToolsEngine/__tests__/index.test.ts' (vitest_or_jest)"""
+    r = subprocess.run(
+        ["bash", "-lc", '(pnpm vitest run "src/server/modules/Mecha/AgentToolsEngine/__tests__/index.test.ts" -t "should disable LocalSystem when gateway configured but device offline" 2>&1 || npx vitest run "src/server/modules/Mecha/AgentToolsEngine/__tests__/index.test.ts" -t "should disable LocalSystem when gateway configured but device offline" 2>&1 || pnpm jest "src/server/modules/Mecha/AgentToolsEngine/__tests__/index.test.ts" -t "should disable LocalSystem when gateway configured but device offline" 2>&1 || npx jest "src/server/modules/Mecha/AgentToolsEngine/__tests__/index.test.ts" -t "should disable LocalSystem when gateway configured but device offline" 2>&1) | tail -50'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"PR-added test 'should disable LocalSystem when gateway configured but device offline' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_pr_added_should_disable_LocalSystem_when_runtimeMode_is_e():
+    """fail_to_pass | PR added test 'should disable LocalSystem when runtimeMode is explicitly set to cloud' in 'src/server/modules/Mecha/AgentToolsEngine/__tests__/index.test.ts' (vitest_or_jest)"""
+    r = subprocess.run(
+        ["bash", "-lc", '(pnpm vitest run "src/server/modules/Mecha/AgentToolsEngine/__tests__/index.test.ts" -t "should disable LocalSystem when runtimeMode is explicitly set to cloud" 2>&1 || npx vitest run "src/server/modules/Mecha/AgentToolsEngine/__tests__/index.test.ts" -t "should disable LocalSystem when runtimeMode is explicitly set to cloud" 2>&1 || pnpm jest "src/server/modules/Mecha/AgentToolsEngine/__tests__/index.test.ts" -t "should disable LocalSystem when runtimeMode is explicitly set to cloud" 2>&1 || npx jest "src/server/modules/Mecha/AgentToolsEngine/__tests__/index.test.ts" -t "should disable LocalSystem when runtimeMode is explicitly set to cloud" 2>&1) | tail -50'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"PR-added test 'should disable LocalSystem when runtimeMode is explicitly set to cloud' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_pr_added_should_enable_RemoteDevice_when_gateway_configur():
+    """fail_to_pass | PR added test 'should enable RemoteDevice when gateway configured and no device auto-activated' in 'src/server/modules/Mecha/AgentToolsEngine/__tests__/index.test.ts' (vitest_or_jest)"""
+    r = subprocess.run(
+        ["bash", "-lc", '(pnpm vitest run "src/server/modules/Mecha/AgentToolsEngine/__tests__/index.test.ts" -t "should enable RemoteDevice when gateway configured and no device auto-activated" 2>&1 || npx vitest run "src/server/modules/Mecha/AgentToolsEngine/__tests__/index.test.ts" -t "should enable RemoteDevice when gateway configured and no device auto-activated" 2>&1 || pnpm jest "src/server/modules/Mecha/AgentToolsEngine/__tests__/index.test.ts" -t "should enable RemoteDevice when gateway configured and no device auto-activated" 2>&1 || npx jest "src/server/modules/Mecha/AgentToolsEngine/__tests__/index.test.ts" -t "should enable RemoteDevice when gateway configured and no device auto-activated" 2>&1) | tail -50'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"PR-added test 'should enable RemoteDevice when gateway configured and no device auto-activated' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_pr_added_should_disable_RemoteDevice_when_gateway_not_con():
+    """fail_to_pass | PR added test 'should disable RemoteDevice when gateway not configured' in 'src/server/modules/Mecha/AgentToolsEngine/__tests__/index.test.ts' (vitest_or_jest)"""
+    r = subprocess.run(
+        ["bash", "-lc", '(pnpm vitest run "src/server/modules/Mecha/AgentToolsEngine/__tests__/index.test.ts" -t "should disable RemoteDevice when gateway not configured" 2>&1 || npx vitest run "src/server/modules/Mecha/AgentToolsEngine/__tests__/index.test.ts" -t "should disable RemoteDevice when gateway not configured" 2>&1 || pnpm jest "src/server/modules/Mecha/AgentToolsEngine/__tests__/index.test.ts" -t "should disable RemoteDevice when gateway not configured" 2>&1 || npx jest "src/server/modules/Mecha/AgentToolsEngine/__tests__/index.test.ts" -t "should disable RemoteDevice when gateway not configured" 2>&1) | tail -50'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"PR-added test 'should disable RemoteDevice when gateway not configured' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_pr_added_should_disable_RemoteDevice_when_device_is_alrea():
+    """fail_to_pass | PR added test 'should disable RemoteDevice when device is already auto-activated' in 'src/server/modules/Mecha/AgentToolsEngine/__tests__/index.test.ts' (vitest_or_jest)"""
+    r = subprocess.run(
+        ["bash", "-lc", '(pnpm vitest run "src/server/modules/Mecha/AgentToolsEngine/__tests__/index.test.ts" -t "should disable RemoteDevice when device is already auto-activated" 2>&1 || npx vitest run "src/server/modules/Mecha/AgentToolsEngine/__tests__/index.test.ts" -t "should disable RemoteDevice when device is already auto-activated" 2>&1 || pnpm jest "src/server/modules/Mecha/AgentToolsEngine/__tests__/index.test.ts" -t "should disable RemoteDevice when device is already auto-activated" 2>&1 || npx jest "src/server/modules/Mecha/AgentToolsEngine/__tests__/index.test.ts" -t "should disable RemoteDevice when device is already auto-activated" 2>&1) | tail -50'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"PR-added test 'should disable RemoteDevice when device is already auto-activated' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_pr_added_should_enable_only_RemoteDevice_not_LocalSystem_():
+    """fail_to_pass | PR added test 'should enable only RemoteDevice (not LocalSystem) when device online but not auto-activated' in 'src/server/modules/Mecha/AgentToolsEngine/__tests__/index.test.ts' (vitest_or_jest)"""
+    r = subprocess.run(
+        ["bash", "-lc", '(pnpm vitest run "src/server/modules/Mecha/AgentToolsEngine/__tests__/index.test.ts" -t "should enable only RemoteDevice (not LocalSystem) when device online but not auto-activated" 2>&1 || npx vitest run "src/server/modules/Mecha/AgentToolsEngine/__tests__/index.test.ts" -t "should enable only RemoteDevice (not LocalSystem) when device online but not auto-activated" 2>&1 || pnpm jest "src/server/modules/Mecha/AgentToolsEngine/__tests__/index.test.ts" -t "should enable only RemoteDevice (not LocalSystem) when device online but not auto-activated" 2>&1 || npx jest "src/server/modules/Mecha/AgentToolsEngine/__tests__/index.test.ts" -t "should enable only RemoteDevice (not LocalSystem) when device online but not auto-activated" 2>&1) | tail -50'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"PR-added test 'should enable only RemoteDevice (not LocalSystem) when device online but not auto-activated' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_pr_added_should_enable_only_LocalSystem_not_RemoteDevice_():
+    """fail_to_pass | PR added test 'should enable only LocalSystem (not RemoteDevice) when device auto-activated' in 'src/server/modules/Mecha/AgentToolsEngine/__tests__/index.test.ts' (vitest_or_jest)"""
+    r = subprocess.run(
+        ["bash", "-lc", '(pnpm vitest run "src/server/modules/Mecha/AgentToolsEngine/__tests__/index.test.ts" -t "should enable only LocalSystem (not RemoteDevice) when device auto-activated" 2>&1 || npx vitest run "src/server/modules/Mecha/AgentToolsEngine/__tests__/index.test.ts" -t "should enable only LocalSystem (not RemoteDevice) when device auto-activated" 2>&1 || pnpm jest "src/server/modules/Mecha/AgentToolsEngine/__tests__/index.test.ts" -t "should enable only LocalSystem (not RemoteDevice) when device auto-activated" 2>&1 || npx jest "src/server/modules/Mecha/AgentToolsEngine/__tests__/index.test.ts" -t "should enable only LocalSystem (not RemoteDevice) when device auto-activated" 2>&1) | tail -50'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"PR-added test 'should enable only LocalSystem (not RemoteDevice) when device auto-activated' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")

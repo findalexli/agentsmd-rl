@@ -14,7 +14,7 @@ import os
 REPO = "/workspace/ant-design"
 NOTIFICATION_DIR = REPO + "/components/notification"
 
-_EVAL_TEST_CODE = r"""
+_EVAL_DOM_TEST_CODE = r"""
 import React from 'react';
 import { render } from '../../../tests/utils';
 import PurePanel from '../PurePanel';
@@ -28,10 +28,9 @@ jest.mock('react-dom', () => {
   return realReactDOM;
 });
 
-describe('Description-only notification', () => {
+describe('Description-only notification DOM structure', () => {
   it('title element is not rendered when title is absent', () => {
     const { container } = render(<PurePanel description="Test description" />);
-    // When title is not provided, the title div must not appear in the DOM
     const titleEl = container.querySelector('[class*="notice-title"]');
     expect(titleEl).toBeFalsy();
   });
@@ -40,20 +39,8 @@ describe('Description-only notification', () => {
     const { container } = render(<PurePanel description="Test description" />);
     const alertEl = container.querySelector('[role="alert"]');
     expect(alertEl).toBeTruthy();
-    // With no title element, description should be the first element child
     const firstChild = alertEl!.firstElementChild;
     expect(firstChild!.className).toMatch(/description/);
-  });
-
-  it('generated CSS includes inline-end spacing for first-child description', () => {
-    render(<PurePanel description="Test description" />);
-    const allCSS = Array.from(document.querySelectorAll('style'))
-      .map(s => s.textContent || '')
-      .join('');
-    // The CSS must include a rule that provides margin-inline-end spacing when
-    // description is the first child (i.e., no title is present).
-    const hasSpacing = /(first-child|only-child|first-of-type)[\s\S]*?margin-inline-end/.test(allCSS);
-    expect(hasSpacing).toBe(true);
   });
 
   it('title IS rendered when title prop is provided', () => {
@@ -67,15 +54,41 @@ describe('Description-only notification', () => {
 });
 """
 
+_EVAL_CSS_TEST_CODE = r"""
+import React from 'react';
+import { render } from '../../../tests/utils';
+import PurePanel from '../PurePanel';
 
-def _run_eval_jest():
-    """Write a temporary jest test, run it, and return the result."""
+jest.mock('react-dom', () => {
+  const realReactDOM = jest.requireActual('react-dom');
+  if (realReactDOM.version.startsWith('19')) {
+    const realReactDOMClient = jest.requireActual('react-dom/client');
+    realReactDOM.createRoot = realReactDOMClient.createRoot;
+  }
+  return realReactDOM;
+});
+
+describe('Description-only notification CSS', () => {
+  it('generated CSS includes inline-end spacing for first-child description', () => {
+    render(<PurePanel description="Test description" />);
+    const allCSS = Array.from(document.querySelectorAll('style'))
+      .map(s => s.textContent || '')
+      .join('');
+    const hasSpacing = /(first-child|only-child|first-of-type)[\s\S]*?margin-inline-end/.test(allCSS);
+    expect(hasSpacing).toBe(true);
+  });
+});
+"""
+
+
+def _run_injected_jest(test_code, test_name):
+    """Write a temporary jest test file, run it, and clean up."""
     test_file = os.path.join(
-        NOTIFICATION_DIR, "__tests__", "_eval_behavior.test.tsx"
+        NOTIFICATION_DIR, "__tests__", f"_eval_{test_name}.test.tsx"
     )
     try:
         with open(test_file, "w") as f:
-            f.write(_EVAL_TEST_CODE)
+            f.write(test_code)
         subprocess.run(
             ["npm", "run", "version"],
             cwd=REPO, capture_output=True, text=True, timeout=60,
@@ -83,7 +96,7 @@ def _run_eval_jest():
         return subprocess.run(
             [
                 "npx", "jest", "--config", ".jest.js",
-                "--testPathPatterns=notification/__tests__/_eval_behavior",
+                f"--testPathPatterns=notification/__tests__/_eval_{test_name}",
                 "--maxWorkers=1", "--no-cache",
             ],
             cwd=REPO, capture_output=True, text=True, timeout=120,
@@ -93,23 +106,29 @@ def _run_eval_jest():
             os.unlink(test_file)
 
 
-def test_description_only_notification_behavior():
-    """When no title is provided, the title element should not render,
-    description should be first child, and CSS should add inline-end spacing."""
-    r = _run_eval_jest()
+def test_description_only_dom_structure():
+    """f2p: When title absent, title div must not appear and description
+    must be first child. When title IS provided, title still renders normally."""
+    r = _run_injected_jest(_EVAL_DOM_TEST_CODE, "dom")
     assert r.returncode == 0, (
-        "Behavioral test failed — description-only notification should: "
-        "(1) not render the title element, "
-        "(2) have description as first child, "
-        "(3) include inline-end spacing CSS for first-child description.\n"
+        "DOM structure test failed:\n"
+        f"stdout: {r.stdout[-2000:]}\nstderr: {r.stderr[-2000:]}"
+    )
+
+
+def test_description_only_css_inline_spacing():
+    """f2p: CSS must include margin-inline-end spacing for first-child description."""
+    r = _run_injected_jest(_EVAL_CSS_TEST_CODE, "css")
+    assert r.returncode == 0, (
+        "CSS spacing test failed:\n"
         f"stdout: {r.stdout[-2000:]}\nstderr: {r.stderr[-2000:]}"
     )
 
 
 def test_notification_unit_tests():
     r = subprocess.run([
-        "npm", "test", "--", "components/notification",
-    ], cwd=REPO, capture_output=True, text=True, timeout=300)
+        "bash", "-lc", "cd /workspace/ant-design && npm test -- components/notification"
+    ], capture_output=True, text=True, timeout=300)
     assert r.returncode == 0, f"Tests failed: {r.stderr[-2000:]} {r.stdout[-2000:]}"
 
 

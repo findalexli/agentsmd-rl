@@ -102,12 +102,11 @@ class TestMcpCoreDocstring:
 
 
 # ==============================================================================
-# Behavioral tests for features (pass on both NOP and GOLD since already correct)
-# These exercise the code by importing and calling it, not grepping source text.
+# Pass-to-pass tests: regression guards that must pass on both base and gold code
 # ==============================================================================
 
 
-class TestDatabaseFilterCreatedBy:
+class TestDatabaseFilterColumns:
     """Verify DatabaseFilter accepts created_by_fk and changed_by_fk columns."""
 
     def test_database_filter_includes_created_by_fk(self):
@@ -138,8 +137,8 @@ class TestDatabaseFilterCreatedBy:
             "DatabaseFilter.col description should document created_by_fk usage"
 
 
-class TestListDatabasesRequestValidators:
-    """Verify ListDatabasesRequest parses JSON strings via field validators."""
+class TestListDatabasesRequestParsing:
+    """Verify ListDatabasesRequest parses JSON strings for filters and columns."""
 
     def test_parse_filters_validator_exists(self):
         """ListDatabasesRequest should parse a JSON string of filters into objects."""
@@ -174,7 +173,7 @@ class TestListDatabasesRequestValidators:
         assert req.filters[0].opr == "eq"
 
 
-class TestDuplicateDefaultColumnsRemoved:
+class TestDuplicateDefaultColumns:
     """Verify list_databases uses shared DATABASE_DEFAULT_COLUMNS (no local duplicate)."""
 
     def test_no_local_default_database_columns_definition(self):
@@ -205,7 +204,7 @@ class TestDuplicateDefaultColumnsRemoved:
             "DATABASE_DEFAULT_COLUMNS should contain strings"
 
 
-class TestAppInstructionsUpdated:
+class TestAppInstructions:
     """Verify app.py instructions include database-related guidance."""
 
     def _get_instructions(self):
@@ -247,8 +246,8 @@ class TestAppInstructionsUpdated:
 # ==============================================================================
 
 
-class TestRepoPassToPass:
-    """Pass-to-pass tests using repository's own test/lint commands."""
+class TestSyntaxAndImports:
+    """Pass-to-pass tests for syntax validity and import resolution."""
 
     def test_database_schemas_syntax(self):
         """Database schemas.py should be syntactically valid Python."""
@@ -290,7 +289,7 @@ class TestRepoPassToPass:
             f"app.py has syntax errors: {result.stderr}"
 
     def test_imports_resolve(self):
-        """Key imports should be resolvable."""
+        """Key imports from schema_utils should be resolvable."""
         result = subprocess.run(
             [sys.executable, "-c",
              "from superset.mcp_service.utils.schema_utils import parse_json_or_list, parse_json_or_model_list"],
@@ -299,12 +298,41 @@ class TestRepoPassToPass:
             timeout=60,
             cwd=REPO
         )
-        if result.returncode != 0:
-            assert "parse_json_or_list" not in result.stderr or "No module named" in result.stderr, \
-                f"Import failed unexpectedly: {result.stderr}"
+        assert result.returncode == 0, \
+            f"Key schema_utils imports failed:\n{result.stderr[-500:]}"
+
+    def test_database_schemas_imports(self):
+        """Database schemas module imports should be resolvable."""
+        result = subprocess.run(
+            [sys.executable, "-c",
+             "from superset.mcp_service.database.schemas import DatabaseFilter, DatabaseInfo, DatabaseList, ListDatabasesRequest"],
+            capture_output=True,
+            text=True,
+            timeout=60,
+            cwd=REPO,
+        )
+        assert result.returncode == 0, \
+            f"Database schemas imports failed:\n{result.stderr[-500:]}"
+
+    def test_database_test_file_syntax(self):
+        """Database test file should be syntactically valid Python."""
+        test_path = REPO / "tests" / "unit_tests" / "mcp_service" / "database" / "tool" / "test_database_tools.py"
+
+        result = subprocess.run(
+            [sys.executable, "-m", "py_compile", str(test_path)],
+            capture_output=True,
+            text=True,
+            timeout=60,
+        )
+        assert result.returncode == 0, \
+            f"test_database_tools.py has syntax errors: {result.stderr}"
+
+
+class TestRuffLinting:
+    """Pass-to-pass tests for ruff linter on affected modules."""
 
     def test_repo_ruff_database_module(self):
-        """Repo's ruff linter passes on database module (pass_to_pass)."""
+        """Repo's ruff linter passes on database module."""
         subprocess.run(
             ["pip", "install", "-q", "ruff"],
             capture_output=True,
@@ -323,7 +351,7 @@ class TestRepoPassToPass:
             f"Ruff linting failed on database module:\n{result.stdout[-500:]}{result.stderr[-500:]}"
 
     def test_repo_ruff_mcp_app(self):
-        """Repo's ruff linter passes on mcp_service app.py (pass_to_pass)."""
+        """Repo's ruff linter passes on mcp_service app.py."""
         subprocess.run(
             ["pip", "install", "-q", "ruff"],
             capture_output=True,
@@ -342,7 +370,7 @@ class TestRepoPassToPass:
             f"Ruff linting failed on app.py:\n{result.stdout[-500:]}{result.stderr[-500:]}"
 
     def test_repo_ruff_mcp_tests(self):
-        """Repo's ruff linter passes on MCP unit tests (pass_to_pass)."""
+        """Repo's ruff linter passes on MCP unit tests."""
         subprocess.run(
             ["pip", "install", "-q", "ruff"],
             capture_output=True,
@@ -359,32 +387,6 @@ class TestRepoPassToPass:
         )
         assert result.returncode == 0, \
             f"Ruff linting failed on MCP tests:\n{result.stdout[-500:]}{result.stderr[-500:]}"
-
-    def test_database_schemas_imports(self):
-        """Database schemas module imports should be resolvable (pass_to_pass)."""
-        result = subprocess.run(
-            [sys.executable, "-c",
-             "from superset.mcp_service.database.schemas import DatabaseFilter, DatabaseInfo, DatabaseList, ListDatabasesRequest"],
-            capture_output=True,
-            text=True,
-            timeout=60,
-            cwd=REPO,
-        )
-        assert result.returncode == 0, \
-            f"Database schemas imports failed:\n{result.stderr[-500:]}"
-
-    def test_database_test_file_syntax(self):
-        """Database test file should be syntactically valid Python (pass_to_pass)."""
-        test_path = REPO / "tests" / "unit_tests" / "mcp_service" / "database" / "tool" / "test_database_tools.py"
-
-        result = subprocess.run(
-            [sys.executable, "-m", "py_compile", str(test_path)],
-            capture_output=True,
-            text=True,
-            timeout=60,
-        )
-        assert result.returncode == 0, \
-            f"test_database_tools.py has syntax errors: {result.stderr}"
 
 
 if __name__ == "__main__":

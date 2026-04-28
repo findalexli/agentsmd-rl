@@ -5,51 +5,51 @@ source:
   base_commit: 28af8184fb00a0e9bc778c3defdec39bbe7e8839
   merge_commit: b3d7942fbaedda791668d7fe42eaaa323ed7a089
 checks:
-- id: test_repo_imports
+- id: repo_imports
   type: pass_to_pass
   origin: repo_tests
   description: Repo's main transformers package imports without error
-- id: test_repo_ruff_check
+- id: repo_ruff_check
   type: pass_to_pass
   origin: repo_tests
   description: Repo's ruff check passes on base commit
-- id: test_repo_ruff_format
+- id: repo_ruff_format
   type: pass_to_pass
   origin: repo_tests
   description: Repo's ruff format check passes on base commit
-- id: test_makefile_style_target_exists
+- id: makefile_style_target_exists
   type: pass_to_pass
   origin: repo_tests
   description: Makefile has 'style' target and dry-run succeeds
-- id: test_makefile_typing_target_exists
+- id: makefile_typing_target_exists
   type: pass_to_pass
   origin: repo_tests
   description: Makefile has 'typing' target and dry-run succeeds
-- id: test_makefile_check_repo_target_exists
+- id: makefile_check_repo_target_exists
   type: pass_to_pass
   origin: repo_tests
   description: Makefile has 'check-repo' target and dry-run succeeds
-- id: test_makefile_fix_repo_target_exists
+- id: makefile_fix_repo_target_exists
   type: pass_to_pass
   origin: repo_tests
   description: Makefile has 'fix-repo' target and dry-run succeeds
-- id: test_utils_scripts_syntax
+- id: utils_scripts_syntax
   type: pass_to_pass
   origin: repo_tests
   description: Utility scripts compile without syntax errors
-- id: test_repo_setup_py_syntax
+- id: repo_setup_py_syntax
   type: pass_to_pass
   origin: repo_tests
   description: setup.py compiles without syntax errors
-- id: test_repo_conftest_syntax
+- id: repo_conftest_syntax
   type: pass_to_pass
   origin: repo_tests
   description: conftest.py compiles without syntax errors
-- id: test_utils_check_dummies_runs
+- id: utils_check_dummies_runs
   type: pass_to_pass
   origin: repo_tests
   description: utils/check_dummies.py runs without error (CI command)
-- id: test_utils_custom_init_isort_runs
+- id: utils_custom_init_isort_runs
   type: pass_to_pass
   origin: repo_tests
   description: utils/custom_init_isort.py --check_only runs without error (CI command)
@@ -67,19 +67,19 @@ checks:
   origin: pr_diff
   description: checkers.py rejects unknown checker names with non-zero exit and Unknown
     message
-- id: makefile_check_code_quality
+- id: makefile_check_code_quality_target
   type: fail_to_pass
   origin: pr_diff
   description: make check-code-quality target exists and invokes checkers.py
-- id: makefile_check_repository_consistency
+- id: makefile_check_repository_consistency_target
   type: fail_to_pass
   origin: pr_diff
   description: make check-repository-consistency target exists and invokes checkers.py
-- id: makefile_check_repo_keep_going
+- id: checkers_keep_going_accepted
   type: fail_to_pass
   origin: pr_diff
   description: make check-repo invokes checkers.py with --keep-going
-- id: makefile_fix_repo_fix
+- id: checkers_fix_mode_accepted
   type: fail_to_pass
   origin: pr_diff
   description: make fix-repo invokes checkers.py with --fix

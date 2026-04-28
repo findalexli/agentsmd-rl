@@ -239,3 +239,14 @@ def test_unrelated_template_test_still_passes():
         f"Pre-existing test regressed:\n"
         f"STDOUT:\n{r.stdout[-2000:]}\n\nSTDERR:\n{r.stderr[-2000:]}"
     )
+
+# === PR-added f2p tests (taskforge.test_patch_miner) ===
+def test_pr_added_TestTemplateSelectionFirstMediaTypeSuffix():
+    """fail_to_pass | PR added test 'TestTemplateSelectionFirstMediaTypeSuffix' in 'hugolib/template_test.go' (go_test)"""
+    r = _run_go_test("TestTemplateSelectionFirstMediaTypeSuffix", timeout=300)
+    assert r.returncode == 0, (
+        f"PR-added test 'TestTemplateSelectionFirstMediaTypeSuffix' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+    assert "no tests to run" not in r.stdout, (
+        "TestTemplateSelectionFirstMediaTypeSuffix was not found — the fix must add this test.\n"
+        f"stdout: {r.stdout[-1500:]}")

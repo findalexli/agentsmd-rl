@@ -35,8 +35,8 @@ policy.
 
 `DriverService` must continue to satisfy the `IDisposable` contract its
 existing callers depend on, but it must no longer name `ICommandServer` in
-its base/inheritance list. Replacing the inherited interface with a direct
-`IDisposable` declaration is the minimal change that preserves callers.
+its base/inheritance list. The class must still declare `IDisposable`
+directly so that the `Dispose` contract its callers rely on remains intact.
 
 When `ICommandServer` is removed from the inheritance list, `DriverService`
 no longer transitively pulls types out of the `OpenQA.Selenium.Remote`

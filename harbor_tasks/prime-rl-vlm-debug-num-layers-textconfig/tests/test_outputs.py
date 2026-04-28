@@ -369,11 +369,11 @@ def test_repo_ruff_format():
     assert r.returncode == 0, f"Ruff format check failed:\n{r.stdout}\n{r.stderr}"
 
 
-# [repo_tests] pass_to_pass — Python syntax check via py_compile
+# [repo_tests] pass_to_pass — Python syntax check via py_compile (bash -lc to match CI runner style)
 def test_repo_model_py_compiles():
     """Repo's model.py must compile without syntax errors (pass_to_pass)."""
     r = subprocess.run(
-        ["python3", "-m", "py_compile", "src/prime_rl/trainer/model.py"],
+        ["bash", "-lc", "python3 -m py_compile src/prime_rl/trainer/model.py"],
         capture_output=True, text=True, timeout=30, cwd=REPO,
     )
     assert r.returncode == 0, f"Python compilation failed:\n{r.stderr}"
@@ -390,3 +390,5 @@ def test_repo_trainer_py_compiles():
             capture_output=True, text=True, timeout=30, cwd=REPO,
         )
         assert r.returncode == 0, f"Python compilation failed for {file_path}:\n{r.stderr}"
+
+

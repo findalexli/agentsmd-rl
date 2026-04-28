@@ -33,4 +33,4 @@ When handling 409 responses:
 
 ## What to Look For
 
-The fix involves the `ShapeStream` class in `packages/typescript-client/src/client.ts`. The buggy handle-construction pattern appends `-next` to handles when the server 409 response lacks a header — this pattern must be removed and replaced with a cache-busting approach.
+Look at how the `ShapeStream` class processes 409 `must-refetch` responses. The buggy behavior fabricates new handles by appending `-next` when the server's 409 response lacks a handle header — this is what causes the problems described above.

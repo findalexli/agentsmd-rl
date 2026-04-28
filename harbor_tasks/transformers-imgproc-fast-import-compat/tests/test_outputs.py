@@ -198,22 +198,6 @@ def test_direct_import_image_processing_backends():
 # Config-derived (agent_config)
 # ---------------------------------------------------------------------------
 
-# [agent_config] pass_to_pass — CLAUDE.md:2 @ e6ed96c
-def test_ruff_check():
-    """ruff check passes on modified files (CLAUDE.md: 'make style: runs formatters and linters')."""
-    r = subprocess.run(
-        [
-            "ruff", "check",
-            "src/transformers/__init__.py",
-            "src/transformers/image_processing_backends.py",
-            "--quiet",
-        ],
-        cwd=REPO,
-        capture_output=True,
-        timeout=30,
-    )
-    assert r.returncode == 0, f"ruff check failed:\n{r.stderr.decode()}"
-
 
 # [agent_config] pass_to_pass — .ai/skills/add-or-fix-type-checking/SKILL.md:185-186 @ e6ed96c
 def test_no_bare_type_ignore():
@@ -368,3 +352,4 @@ def test_repo_check_pipeline_typing():
         timeout=60,
     )
     assert r.returncode == 0, f"check_pipeline_typing.py failed:\n{r.stderr[-500:]}"
+

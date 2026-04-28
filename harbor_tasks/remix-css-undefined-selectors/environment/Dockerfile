@@ -23,6 +23,10 @@ RUN git clone --filter=blob:none https://github.com/remix-run/remix.git /workspa
     && git config user.email "task@example.com" \
     && git config user.name "Task"
 
+RUN npm install -g pnpm@10.26.0 \
+    && cd /workspace/remix \
+    && pnpm install --frozen-lockfile
+
 RUN mkdir -p /logs/verifier
 
 WORKDIR /workspace/remix

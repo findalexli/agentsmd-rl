@@ -265,3 +265,22 @@ def test_script_executable(tmp_path):
     # Non-zero exit is fine (the script emits warnings, not errors).
     # We only care that it didn't blow up with a fatal interpreter error.
     assert "syntax error" not in (res.stderr or "").lower(), res.stderr
+
+# === CI-derived test (Style check workflow) ===
+def test_ci_style_check_runs_various_checks():
+    """pass_to_pass | CI job 'Style check' runs various_checks.sh against the repo.
+
+    Mirrors what the MergeQueueCI workflow does: execute the style-check
+    script and confirm it completes. The script may emit findings (non-zero
+    exit is fine) but must not crash with a shell syntax or interpreter error.
+    """
+    r = subprocess.run(
+        ["bash", "-lc", "bash ci/jobs/scripts/check_style/various_checks.sh"],
+        cwd=REPO, capture_output=True, text=True, timeout=120,
+    )
+    assert "syntax error" not in (r.stderr or "").lower(), (
+        f"Style check crashed with syntax error:\n{r.stderr}"
+    )
+    assert "command not found" not in (r.stderr or "").lower(), (
+        f"Style check referenced missing command:\n{r.stderr}"
+    )

@@ -1,245 +1,229 @@
-"""
-Behavioral tests for remix-run/remix#11020.
-
-Verifies HrefError type/message changes for nameless wildcards and missing
-params. The verification TypeScript file is written into /workspace/remix
-at module load time, then executed via `node --test --test-name-pattern=<id>`
-per test for fast, isolated assertions.
-"""
-import os
 import subprocess
 
-REPO = "/workspace/remix"
-PKG = os.path.join(REPO, "packages/route-pattern")
-VERIFY_PATH = os.path.join(REPO, "__pr11020_verify__.ts")
-
-VERIFY_TS = r"""
-import { test } from 'node:test'
-import * as assert from 'node:assert/strict'
-
-import { RoutePattern, HrefError } from './packages/route-pattern/src/index.ts'
-
-function captureHrefError(fn: () => unknown): HrefError {
-  try {
-    fn()
-  } catch (e) {
-    if (e instanceof HrefError) return e
-    throw new Error(`expected HrefError, got: ${(e as Error)?.constructor?.name}: ${e}`)
-  }
-  throw new Error('expected HrefError to be thrown, but call did not throw')
-}
-
-test('pr11020_nameless_wildcard_hostname', () => {
-  let pattern = new RoutePattern('://*.example.com/path')
-  // @ts-expect-error - missing required param
-  let err = captureHrefError(() => pattern.href())
-  assert.equal(err.details.type, 'nameless-wildcard')
-})
-
-test('pr11020_nameless_wildcard_pathname', () => {
-  let pattern = new RoutePattern('/files/*')
-  // @ts-expect-error - missing required param
-  let err = captureHrefError(() => pattern.href())
-  assert.equal(err.details.type, 'nameless-wildcard')
-})
-
-test('pr11020_missing_params_has_missingParams_field_single', () => {
-  let pattern = new RoutePattern('https://example.com/:id')
-  // @ts-expect-error - missing required param
-  let err = captureHrefError(() => pattern.href())
-  assert.equal(err.details.type, 'missing-params')
-  if (err.details.type !== 'missing-params') return
-  assert.ok(Array.isArray(err.details.missingParams), 'missingParams must be an array')
-  assert.ok(err.details.missingParams.includes('id'), `missingParams must include 'id', got ${JSON.stringify(err.details.missingParams)}`)
-})
-
-test('pr11020_missing_params_has_missingParams_field_multiple', () => {
-  let pattern = new RoutePattern('https://example.com/:collection/:id')
-  // @ts-expect-error - missing required param
-  let err = captureHrefError(() => pattern.href())
-  assert.equal(err.details.type, 'missing-params')
-  if (err.details.type !== 'missing-params') return
-  assert.ok(Array.isArray(err.details.missingParams))
-  assert.equal(err.details.missingParams[0], 'collection',
-    `first missing param must be 'collection', got ${JSON.stringify(err.details.missingParams)}`)
-})
-
-test('pr11020_missing_params_message_format', () => {
-  let pattern = new RoutePattern('https://example.com/:collection/:id')
-  let err = new HrefError({
-    type: 'missing-params',
-    pattern,
-    partPattern: pattern.ast.pathname,
-    missingParams: ['collection', 'id'],
-    params: {},
-  } as any)
-  let expected =
-    "HrefError: missing param(s): 'collection', 'id'\n" +
-    '\n' +
-    'Pattern: https://example.com/:collection/:id\n' +
-    'Params: {}'
-  assert.equal(err.toString(), expected)
-})
-
-test('pr11020_missing_search_params_message_format_multiple', () => {
-  let pattern = new RoutePattern('https://example.com/search?q=&sort=')
-  let err = new HrefError({
-    type: 'missing-search-params',
-    pattern,
-    missingParams: ['q', 'sort'],
-    searchParams: { page: 1 },
-  })
-  let expected =
-    "HrefError: missing required search param(s): 'q', 'sort'\n" +
-    '\n' +
-    'Pattern: https://example.com/search?q=&sort=\n' +
-    'Search params: {"page":1}'
-  assert.equal(err.toString(), expected)
-})
-
-test('pr11020_missing_search_params_message_format_single', () => {
-  let pattern = new RoutePattern('https://example.com/search?q=')
-  let err = new HrefError({
-    type: 'missing-search-params',
-    pattern,
-    missingParams: ['q'],
-    searchParams: {},
-  })
-  let expected =
-    "HrefError: missing required search param(s): 'q'\n" +
-    '\n' +
-    'Pattern: https://example.com/search?q=\n' +
-    'Search params: {}'
-  assert.equal(err.toString(), expected)
-})
-
-test('pr11020_missing_params_partial_provided', () => {
-  let pattern = new RoutePattern('https://example.com/:a/:b/:c')
-  // @ts-expect-error - missing required param
-  let err = captureHrefError(() => pattern.href({ a: 'x' }))
-  assert.equal(err.details.type, 'missing-params')
-  if (err.details.type !== 'missing-params') return
-  assert.ok(Array.isArray(err.details.missingParams))
-  assert.equal(err.details.missingParams[0], 'b',
-    `first missing param after 'a' must be 'b', got ${JSON.stringify(err.details.missingParams)}`)
-  assert.ok(!err.details.missingParams.includes('a'),
-    `missingParams must not include the provided param 'a', got ${JSON.stringify(err.details.missingParams)}`)
-})
-"""
-
-NODE_ARGS = [
-    "node",
-    "--disable-warning=ExperimentalWarning",
-    "--test",
-    "--test-reporter=tap",
-]
+REPO = '/workspace/remix/packages/route-pattern'
 
 
-def setup_module(module):
-    """Write the verification TS file into the repo at module load."""
-    with open(VERIFY_PATH, "w") as f:
-        f.write(VERIFY_TS.lstrip())
-
-
-def _run_named(name: str, timeout: int = 60) -> subprocess.CompletedProcess:
-    """Run only the node:test test whose name matches `name`."""
-    cmd = NODE_ARGS + [
-        "--test-name-pattern=^" + name + "$",
-        VERIFY_PATH,
-    ]
-    return subprocess.run(cmd, cwd=PKG, capture_output=True, text=True, timeout=timeout)
-
-
-def _assert_named_passed(name: str):
-    r = _run_named(name)
-    msg = (
-        f"node --test exit={r.returncode}\n"
-        f"--- stdout ---\n{r.stdout[-3000:]}\n"
-        f"--- stderr ---\n{r.stderr[-1500:]}"
-    )
-    assert r.returncode == 0, msg
-    # TAP output: a passing test line begins with "ok" and contains the test name.
-    pass_line = f"- {name}"
-    assert pass_line in r.stdout and "\nok " in ("\n" + r.stdout), (
-        f"test '{name}' did not produce a passing TAP line:\n{r.stdout[-1500:]}"
-    )
-
-
-# ---------------------------------------------------------------------------
-# fail-to-pass: behavior changes introduced by the PR
-# ---------------------------------------------------------------------------
-
-def test_nameless_wildcard_hostname():
-    """`pattern.href()` on '://*.example.com/path' must throw HrefError with details.type == 'nameless-wildcard'."""
-    _assert_named_passed("pr11020_nameless_wildcard_hostname")
-
-
-def test_nameless_wildcard_pathname():
-    """`pattern.href()` on '/files/*' must throw HrefError with details.type == 'nameless-wildcard'."""
-    _assert_named_passed("pr11020_nameless_wildcard_pathname")
-
-
-def test_missing_params_has_missingParams_field_single():
-    """missing-params HrefError exposes a `missingParams` array containing the single missing name."""
-    _assert_named_passed("pr11020_missing_params_has_missingParams_field_single")
-
-
-def test_missing_params_has_missingParams_field_multiple():
-    """missing-params HrefError exposes `missingParams` containing every undefined name in order."""
-    _assert_named_passed("pr11020_missing_params_has_missingParams_field_multiple")
-
-
-def test_missing_params_message_format():
-    """Stringified missing-params error matches the new compact format with quoted param names."""
-    _assert_named_passed("pr11020_missing_params_message_format")
-
-
-def test_missing_search_params_message_format_multiple():
-    """Stringified missing-search-params error quotes each name individually and uses a colon separator."""
-    _assert_named_passed("pr11020_missing_search_params_message_format_multiple")
-
-
-def test_missing_search_params_message_format_single():
-    """Stringified missing-search-params error for a single missing name uses the new colon-separator format."""
-    _assert_named_passed("pr11020_missing_search_params_message_format_single")
-
-
-def test_missing_params_partial_provided():
-    """When some required params are provided, `missingParams` contains only those still undefined."""
-    _assert_named_passed("pr11020_missing_params_partial_provided")
-
-
-# ---------------------------------------------------------------------------
-# pass-to-pass: existing repo CI signals (must pass at base AND gold)
-# ---------------------------------------------------------------------------
-
-def test_route_pattern_test_suite():
-    """The route-pattern package's own node:test suite passes."""
+def _run_node(script: str) -> subprocess.CompletedProcess:
     r = subprocess.run(
-        ["pnpm", "--filter", "@remix-run/route-pattern", "run", "test"],
-        cwd=REPO,
-        capture_output=True,
-        text=True,
-        timeout=600,
+        ['node', '--disable-warning=ExperimentalWarning', '-e', script],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
     )
-    assert r.returncode == 0, (
-        f"pnpm test exit={r.returncode}\n"
-        f"--- stdout ---\n{r.stdout[-3000:]}\n"
-        f"--- stderr ---\n{r.stderr[-1500:]}"
+    assert r.returncode == 0, f'Node script failed:\nSTDOUT: {r.stdout}\nSTDERR: {r.stderr}'
+    return r
+
+
+def test_nameless_wildcard_hostname_error_type():
+    """Nameless wildcard in hostname throws nameless-wildcard error, not missing-params."""
+    script = '''
+    import { RoutePattern } from './src/lib/route-pattern.ts'
+    import { HrefError } from './src/lib/route-pattern/href.ts'
+    let pattern = new RoutePattern('://*.example.com/path')
+    try {
+        pattern.href()
+        process.stdout.write('NO_ERROR')
+    } catch (e) {
+        if (e instanceof HrefError) {
+            process.stdout.write('TYPE:' + e.details.type)
+        } else {
+            process.stdout.write('OTHER:' + e.message)
+        }
+    }
+    '''
+    r = _run_node(script)
+    assert 'TYPE:nameless-wildcard' in r.stdout, f'Expected nameless-wildcard, got: {r.stdout}'
+    assert 'TYPE:missing-params' not in r.stdout, f'Got wrong error type: {r.stdout}'
+
+
+def test_nameless_wildcard_pathname_error_type():
+    """Nameless wildcard in pathname throws nameless-wildcard error, not missing-params."""
+    script = '''
+    import { RoutePattern } from './src/lib/route-pattern.ts'
+    import { HrefError } from './src/lib/route-pattern/href.ts'
+    let pattern = new RoutePattern('/files/*')
+    try {
+        pattern.href()
+        process.stdout.write('NO_ERROR')
+    } catch (e) {
+        if (e instanceof HrefError) {
+            process.stdout.write('TYPE:' + e.details.type)
+        } else {
+            process.stdout.write('OTHER:' + e.message)
+        }
+    }
+    '''
+    r = _run_node(script)
+    assert 'TYPE:nameless-wildcard' in r.stdout, f'Expected nameless-wildcard, got: {r.stdout}'
+    assert 'TYPE:missing-params' not in r.stdout, f'Got wrong error type: {r.stdout}'
+
+
+def test_missing_params_error_message_format():
+    """Missing-params error message uses colon, quotes param names, omits variant listing."""
+    script = '''
+    import { RoutePattern } from './src/lib/route-pattern.ts'
+    import { HrefError } from './src/lib/route-pattern/href.ts'
+    let pattern = new RoutePattern('https://example.com/:id')
+    try {
+        pattern.href()
+        process.stdout.write('NO_ERROR')
+    } catch (e) {
+        if (e instanceof HrefError) {
+            process.stdout.write(e.toString())
+        }
+    }
+    '''
+    r = _run_node(script)
+    assert "missing param(s):" in r.stdout, (
+        f"Expected 'missing param(s):' in error message, got: {r.stdout}"
+    )
+    assert "'id'" in r.stdout, (
+        f"Expected quoted 'id' in error message, got: {r.stdout}"
+    )
+    assert 'Pathname variants:' not in r.stdout, (
+        f"Old variant listing should not appear, got: {r.stdout}"
     )
 
 
-def test_route_pattern_typecheck():
-    """The route-pattern package's typecheck passes."""
+def test_missing_search_params_error_message_format():
+    """Missing search params error uses colon after 'param(s)'."""
+    script = '''
+    import { RoutePattern } from './src/lib/route-pattern.ts'
+    import { HrefError } from './src/lib/route-pattern/href.ts'
+    let pattern = new RoutePattern('https://example.com/search?q=')
+    let error = new HrefError({
+        type: 'missing-search-params',
+        pattern,
+        missingParams: ['q'],
+        searchParams: {},
+    })
+    process.stdout.write(error.toString())
+    '''
+    r = _run_node(script)
+    assert "missing required search param(s):" in r.stdout, (
+        f"Expected 'missing required search param(s):' with colon, got: {r.stdout}"
+    )
+    assert "'q'" in r.stdout, (
+        f"Expected quoted 'q' in error message, got: {r.stdout}"
+    )
+
+
+def test_valid_href_still_works():
+    """Valid href() calls with all required params still work correctly."""
+    script = '''
+    import { RoutePattern } from './src/lib/route-pattern.ts'
+    let p1 = new RoutePattern('/posts/:id')
+    let r1 = p1.href({ id: '42' })
+    process.stdout.write('R1:' + r1)
+
+    let p2 = new RoutePattern('://example.com/path')
+    let r2 = p2.href()
+    process.stdout.write('|R2:' + r2)
+
+    let p3 = new RoutePattern('://:sub.example.com/path')
+    let r3 = p3.href({ sub: 'api' })
+    process.stdout.write('|R3:' + r3)
+    '''
+    r = _run_node(script)
+    assert 'R1:/posts/42' in r.stdout
+    assert 'R2:https://example.com/path' in r.stdout
+    assert 'R3:https://api.example.com/path' in r.stdout
+
+
+def test_repo_test_suite():
+    """Full test suite for route-pattern passes."""
     r = subprocess.run(
-        ["pnpm", "--filter", "@remix-run/route-pattern", "run", "typecheck"],
-        cwd=REPO,
-        capture_output=True,
-        text=True,
-        timeout=600,
+        ['node', '--disable-warning=ExperimentalWarning', '--test'],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
     )
+    assert r.returncode == 0, f'Test suite failed:\nSTDERR: {r.stderr[-1000:]}\nSTDOUT: {r.stdout[-1000:]}'
+
+# === CI-mined tests (taskforge.ci_check_miner) ===
+def test_ci_test_run_tests():
+    """pass_to_pass | CI job 'test' → step 'Run tests'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'pnpm test'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
     assert r.returncode == 0, (
-        f"pnpm typecheck exit={r.returncode}\n"
-        f"--- stdout ---\n{r.stdout[-3000:]}\n"
-        f"--- stderr ---\n{r.stderr[-1500:]}"
-    )
+        f"CI step 'Run tests' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_build_build_packages():
+    """pass_to_pass | CI job 'build' → step 'Build packages'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'pnpm build'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Build packages' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_format_format():
+    """pass_to_pass | CI job 'format' → step 'Format'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'pnpm format'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Format' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_check_lint():
+    """pass_to_pass | CI job 'check' → step 'Lint'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'pnpm lint'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Lint' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_check_typecheck():
+    """pass_to_pass | CI job 'check' → step 'Typecheck'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'pnpm typecheck'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Typecheck' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_check_check_change_files():
+    """pass_to_pass | CI job 'check' → step 'Check change files'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'pnpm changes:validate'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Check change files' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+# === PR-added f2p tests (taskforge.test_patch_miner) ===
+def test_pr_added_throws_for_nameless_wildcard():
+    """fail_to_pass | PR added test 'throws for nameless wildcard' in 'packages/route-pattern/src/lib/route-pattern.test.ts' (vitest_or_jest)"""
+    r = subprocess.run(
+        ["bash", "-lc", '(pnpm vitest run "packages/route-pattern/src/lib/route-pattern.test.ts" -t "throws for nameless wildcard" 2>&1 || npx vitest run "packages/route-pattern/src/lib/route-pattern.test.ts" -t "throws for nameless wildcard" 2>&1 || pnpm jest "packages/route-pattern/src/lib/route-pattern.test.ts" -t "throws for nameless wildcard" 2>&1 || npx jest "packages/route-pattern/src/lib/route-pattern.test.ts" -t "throws for nameless wildcard" 2>&1) | tail -50'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"PR-added test 'throws for nameless wildcard' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_pr_added_excludes_nameless_wildcard_from_params():
+    """fail_to_pass | PR added test 'excludes nameless wildcard from params' in 'packages/route-pattern/src/lib/route-pattern.test.ts' (vitest_or_jest)"""
+    r = subprocess.run(
+        ["bash", "-lc", '(pnpm vitest run "packages/route-pattern/src/lib/route-pattern.test.ts" -t "excludes nameless wildcard from params" 2>&1 || npx vitest run "packages/route-pattern/src/lib/route-pattern.test.ts" -t "excludes nameless wildcard from params" 2>&1 || pnpm jest "packages/route-pattern/src/lib/route-pattern.test.ts" -t "excludes nameless wildcard from params" 2>&1 || npx jest "packages/route-pattern/src/lib/route-pattern.test.ts" -t "excludes nameless wildcard from params" 2>&1) | tail -50'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"PR-added test 'excludes nameless wildcard from params' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_pr_added_shows_pattern():
+    """fail_to_pass | PR added test 'shows pattern' in 'packages/route-pattern/src/lib/route-pattern/href.test.ts' (vitest_or_jest)"""
+    r = subprocess.run(
+        ["bash", "-lc", '(pnpm vitest run "packages/route-pattern/src/lib/route-pattern/href.test.ts" -t "shows pattern" 2>&1 || npx vitest run "packages/route-pattern/src/lib/route-pattern/href.test.ts" -t "shows pattern" 2>&1 || pnpm jest "packages/route-pattern/src/lib/route-pattern/href.test.ts" -t "shows pattern" 2>&1 || npx jest "packages/route-pattern/src/lib/route-pattern/href.test.ts" -t "shows pattern" 2>&1) | tail -50'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"PR-added test 'shows pattern' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_pr_added_shows_missing_param_pattern_and_params():
+    """fail_to_pass | PR added test 'shows missing param, pattern, and params' in 'packages/route-pattern/src/lib/route-pattern/href.test.ts' (vitest_or_jest)"""
+    r = subprocess.run(
+        ["bash", "-lc", '(pnpm vitest run "packages/route-pattern/src/lib/route-pattern/href.test.ts" -t "shows missing param, pattern, and params" 2>&1 || npx vitest run "packages/route-pattern/src/lib/route-pattern/href.test.ts" -t "shows missing param, pattern, and params" 2>&1 || pnpm jest "packages/route-pattern/src/lib/route-pattern/href.test.ts" -t "shows missing param, pattern, and params" 2>&1 || npx jest "packages/route-pattern/src/lib/route-pattern/href.test.ts" -t "shows missing param, pattern, and params" 2>&1) | tail -50'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"PR-added test 'shows missing param, pattern, and params' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")

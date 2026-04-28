@@ -348,3 +348,23 @@ console.log('PASS');
 """)
     assert r.returncode == 0, f"CLAUDE.md project docs missing: {r.stderr}"
     assert "PASS" in r.stdout
+
+# === CI-mined tests (taskforge.ci_check_miner) ===
+def test_ci_test_playground_npx():
+    """pass_to_pass | CI job 'Test playground' → step ''"""
+    r = subprocess.run(
+        ["bash", "-lc", 'npx playwright install --with-deps chromium'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step '' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_test_eslint_plugin_react_hooks_scripts_react_compiler_build_compiler_sh():
+    """pass_to_pass | CI job 'Test eslint-plugin-react-hooks' → step ''"""
+    r = subprocess.run(
+        ["bash", "-lc", './scripts/react-compiler/build-compiler.sh && ./scripts/react-compiler/link-compiler.sh'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step '' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+

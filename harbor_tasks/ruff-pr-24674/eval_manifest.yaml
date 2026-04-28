@@ -1,0 +1,131 @@
+version: '2.0'
+source:
+  repo: astral-sh/ruff
+  pr: 24674
+  base_commit: d3ef4e210d72fac3f1b6a5c59f483648904c12ed
+  merge_commit: af09f2e2cd28157b740132df972db29e8f6980ce
+task:
+  kind: code_fix
+checks:
+- id: test_is_standard_method_exists
+  type: fail_to_pass
+  origin: pr_diff
+  description: Parameters::is_standard() exists and correctly identifies standard parameter lists
+- id: test_crate_compiles
+  type: pass_to_pass
+  origin: repo_tests
+  description: The ty_python_semantic crate compiles without errors
+- id: test_todo_types
+  type: pass_to_pass
+  origin: repo_tests
+  description: Existing todo_types unit test passes
+- id: test_ci_test_scripts_python
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: test scripts / '
+- id: test_ci_test_scripts_python
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: test scripts / '
+- id: test_ci_test_scripts_scripts_add_rule_py
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: test scripts / '
+- id: test_ci_test_scripts_cargo
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: test scripts / '
+- id: test_ci_test_scripts_scripts_add_plugin_py
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: test scripts / '
+- id: test_ci_test_scripts_uv
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: test scripts / '
+- id: test_ci_test_scripts_uv
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: test scripts / '
+- id: test_ci_test_scripts_uv
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: test scripts / '
+- id: test_ci_cargo_test_ty_mdtests_github_annotations
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: cargo test / ty mdtests (GitHub annotations)'
+- id: test_ci_cargo_test_run_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: cargo test / Run tests'
+- id: test_ci_cargo_test_run_doctests
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: cargo test / Run doctests'
+- id: test_ci_cargo_test_dogfood_ty_on_py_fuzzer
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: cargo test / Dogfood ty on py-fuzzer'
+- id: test_ci_test_scripts_python_2
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: test scripts / '
+- id: test_ci_test_scripts_uv_2
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: test scripts / '
+- id: test_ci_test_scripts_uv_3
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: test scripts / '
+rubric:
+- rule: All changes must be tested. If you're not testing your changes, you're not done.
+  source:
+    path: AGENTS.md
+    lines: '72'
+    commit: d3ef4e210d72fac3f1b6a5c59f483648904c12ed
+  evidence: The PR adds mdtest fixtures that test the fast-path optimization with various overloaded callable arities.
+  category: testing
+  verification: llm_judge
+- rule: Follow existing code style. Check neighboring files for patterns.
+  source:
+    path: AGENTS.md
+    lines: '74'
+    commit: d3ef4e210d72fac3f1b6a5c59f483648904c12ed
+  evidence: The new is_standard() method follows the pattern of existing const fn methods on Parameters (is_gradual, is_top) that use matches! macros.
+  category: style
+  verification: llm_judge
+- rule: Use comments purposefully. Don't use comments to narrate code, but do use them to explain invariants and why something unusual was done a particular way.
+  source:
+    path: AGENTS.md
+    lines: '82'
+    commit: d3ef4e210d72fac3f1b6a5c59f483648904c12ed
+  evidence: 'The fast path includes a comment explaining the invariant: the full comparison below reaches the same result but only after expensive work for large overload sets.'
+  category: documentation
+  verification: llm_judge
+- rule: Try hard to avoid patterns that require `panic!`, `unreachable!`, or `.unwrap()`. Instead, try to encode those constraints in the type system.
+  source:
+    path: AGENTS.md
+    lines: '79'
+    commit: d3ef4e210d72fac3f1b6a5c59f483648904c12ed
+  evidence: The new fast-path code uses pattern matching (if let) and Option combinators instead of unwrap or panic.
+  category: safety
+  verification: llm_judge
+distractors:
+- rule: Avoid writing significant amounts of new code. This is often a sign that we're missing an existing method or mechanism that could help solve the problem. Look for existing utilities first.
+  source:
+    path: AGENTS.md
+    lines: '78'
+    commit: d3ef4e210d72fac3f1b6a5c59f483648904c12ed
+  collision_type: rule_conflict
+  why_distracting: This rule could discourage adding the new is_standard() method, but the method is genuinely needed. No existing utility serves this purpose.
+  severity: medium
+- rule: Prefer let chains (`if let` combined with `&&`) over nested `if let` statements to reduce indentation and improve readability. At the end of a task, always check your work to see if you missed opportunities to use `let` chains.
+  source:
+    path: AGENTS.md
+    lines: '80'
+    commit: d3ef4e210d72fac3f1b6a5c59f483648904c12ed
+  collision_type: meta_confusion
+  why_distracting: The fast-path code already uses if-&&-let patterns naturally. An agent might waste time looking for additional let-chain opportunities that don't exist.
+  severity: low

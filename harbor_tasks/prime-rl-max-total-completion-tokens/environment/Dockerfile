@@ -8,6 +8,7 @@ ENV DEBIAN_FRONTEND=noninteractive \
 RUN apt-get update && apt-get install -y --no-install-recommends \
         git \
         ca-certificates \
+        procps \
     && rm -rf /var/lib/apt/lists/*
 
 RUN pip install \
@@ -17,6 +18,7 @@ RUN pip install \
         pytest-json-report==1.5.0 \
         numpy==2.2.6 \
         pandas==2.2.3 \
+        uv \
         git+https://github.com/samsja/pydantic_config.git@73c1d84
 
 WORKDIR /workspace

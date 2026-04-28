@@ -79,3 +79,7 @@ def test_git_repo_intact():
         timeout=30,
     )
     assert r.returncode == 0, f"git status failed:\n{r.stderr}"
+
+# === CI-mined tests (taskforge.ci_check_miner) ===
+# Both CI-mined tests dropped: they require yarn/node toolchains and test
+# the entire ant-design build pipeline (irrelevant to markdown authoring).

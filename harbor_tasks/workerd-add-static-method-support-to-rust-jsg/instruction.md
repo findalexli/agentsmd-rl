@@ -40,4 +40,4 @@ After implementing the code changes, update the relevant documentation to reflec
 
 Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
 
-- `cargo fmt (Rust formatter)`
+- `cargo fmt (Rust formatter)` — the project's Rust formatting configuration lives in `src/rust/rustfmt.toml` (which defines `group_imports` and `imports_granularity` settings)

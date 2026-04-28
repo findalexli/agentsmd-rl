@@ -1,4 +1,4 @@
-version: '2.0'
+version: "2.0"
 source:
   repo: apache/superset
   pr: 38742
@@ -10,7 +10,7 @@ checks:
 - id: test_firebolt_exclude_single_column_with_alias
   type: fail_to_pass
   origin: pr_diff
-  description: '`SELECT g.* EXCLUDE (col) FROM t g` round-trips with EXCLUDE preserved and EXCEPT absent.'
+  description: "`SELECT g.* EXCLUDE (col) FROM t g` round-trips with EXCLUDE preserved and EXCEPT absent."
 - id: test_firebolt_exclude_multiple_columns
   type: fail_to_pass
   origin: pr_diff
@@ -22,11 +22,11 @@ checks:
 - id: test_firebolt_not_in_parenthesized
   type: pass_to_pass
   origin: pr_diff
-  description: 'Pre-existing Firebolt behavior: `WHERE x NOT IN (...)` is parenthesized.'
+  description: "Pre-existing Firebolt behavior: `WHERE x NOT IN (...)` is parenthesized."
 - id: test_firebolt_basic_select_parses
   type: pass_to_pass
   origin: pr_diff
-  description: 'Pre-existing: a basic SELECT formats without errors.'
+  description: "Pre-existing: a basic SELECT formats without errors."
 - id: test_firebolt_module_loads_cleanly
   type: pass_to_pass
   origin: pr_diff
@@ -39,12 +39,16 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: The dialect file is syntactically valid Python (proxy for compile-step/lint-stage).
+- id: test_ci_firebolt_dialect_unit_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: "CI: Run pytest on the existing Firebolt dialect unit test suite (scoped regression)."
 config_edits: []
 rubric:
 - rule: New files require ASF license headers - When creating new code files, include the standard Apache Software Foundation license header
   source:
     path: AGENTS.md
-    lines: '91'
+    lines: "91"
     commit: 01aa4d32816bdd9beffd0b22c53861145fcc42bb
   evidence: The gold patch modifies an existing file (firebolt.py) rather than creating new files; no new license header is needed.
   category: style
@@ -52,15 +56,15 @@ rubric:
 - rule: Type hints required for all new code
   source:
     path: AGENTS.md
-    lines: '85'
+    lines: "85"
     commit: 01aa4d32816bdd9beffd0b22c53861145fcc42bb
   evidence: The gold patch adds a class-level string constant (not a function/method), so it does not introduce untyped code.
   category: style
   verification: programmatic
-- rule: Avoid time-specific language - Don't use words like "now", "currently", "today" in code comments as they become outdated
+- rule: Avoid time-specific language - Do not use words like "now", "currently", "today" in code comments as they become outdated
   source:
     path: AGENTS.md
-    lines: '95'
+    lines: "95"
     commit: 01aa4d32816bdd9beffd0b22c53861145fcc42bb
   evidence: The gold patch adds no comments at all, so no time-specific language is introduced.
   category: style
@@ -68,7 +72,7 @@ rubric:
 - rule: These migrations are actively happening - avoid deprecated patterns
   source:
     path: AGENTS.md
-    lines: '28'
+    lines: "28"
     commit: 01aa4d32816bdd9beffd0b22c53861145fcc42bb
   evidence: The gold patch changes exactly one line in one file (firebolt.py) with no incidental refactors or changes to unrelated dialects.
   category: architecture
@@ -76,7 +80,7 @@ rubric:
 - rule: pytest for testing
   source:
     path: AGENTS.md
-    lines: '88'
+    lines: "88"
     commit: 01aa4d32816bdd9beffd0b22c53861145fcc42bb
   evidence: The gold patch is a source fix only; it does not create test files.
   category: testing

@@ -6,13 +6,13 @@ When tracing einops operations through `torch.compile`, Dynamo produces excessiv
 
 ## Expected Behavior
 
-Compiled einops operations should execute without producing `lru_cache` warnings. The function `_allow_in_graph_einops` in `torch/_dynamo/decorators.py` is responsible for registering einops functions via `allow_in_graph` so that Dynamo treats them as opaque and does not attempt to trace into them.
+Compiled einops operations should execute without producing `lru_cache` warnings. The function `_allow_in_graph_einops` is responsible for registering einops functions via `allow_in_graph` so that Dynamo treats them as opaque and does not attempt to trace into them.
 
 However, `allow_in_graph` is never actually called for einops functions, and the warning spam persists.
 
 ## Requirements
 
-The function `_allow_in_graph_einops` in `torch/_dynamo/decorators.py` must:
+The function `_allow_in_graph_einops` must:
 
 1. Import the `einops` module
 2. Call `allow_in_graph` on einops functions so Dynamo handles them correctly
@@ -27,4 +27,4 @@ Calling `torch.compile` on code that uses einops operations (such as `rearrange`
 
 Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
 
-- `ruff format and ruff check`
+- `ruff check` (error-level rules: E9, F63, F7, F82)

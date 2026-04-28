@@ -93,14 +93,37 @@ checks:
     path: AGENTS.md
     lines: 84-86
     commit: 03d71153a72581d83df72d69c30586a41ba71665
+- id: test_ci_install_test_set_up_python
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: Install test / Set up Python'
+- id: test_ci_install_test_verify_package_import
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: Install test / Verify package import'
+- id: test_ci_install_test_verify_core_modules_are_importable
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: Install test / Verify core modules are importable'
+- id: test_ci_install_test_build_wheel
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: Install test / Build wheel'
+- id: test_ci_install_test_verify_wheel_artifact
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: Install test / Verify wheel artifact'
+- id: test_ci_build_build_the_book
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: build / Build the book'
 rubric:
 - rule: Follow existing code patterns in the same module
   source:
     path: CLAUDE.md
     lines: '71'
     commit: 03d71153a72581d83df72d69c30586a41ba71665
-- rule: Prefer composition over inheritance -- keep hierarchies <= 2 levels; prefer
-    delegation
+- rule: Prefer composition over inheritance -- keep hierarchies <= 2 levels; prefer delegation
   source:
     path: AGENTS.md
     lines: '75'
@@ -110,8 +133,7 @@ rubric:
     path: AGENTS.md
     lines: 159-160
     commit: 03d71153a72581d83df72d69c30586a41ba71665
-- rule: 'Backward compat: add fields with defaults; deprecate before removing; avoid
-    type changes'
+- rule: 'Backward compat: add fields with defaults; deprecate before removing; avoid type changes'
   source:
     path: AGENTS.md
     lines: 157-158
@@ -120,48 +142,33 @@ rubric:
   source:
     path: AGENTS.md
     lines: '26'
-  evidence: 'The gold solution calls `super().__post_init__()` at the end of the overridden
-    `__post_init__` methods in `PPOActorConfig` and `EvalGenerationConfig` to ensure
-    parent class validations are preserved, '
+  evidence: 'The gold solution calls `super().__post_init__()` at the end of the overridden `__post_init__` methods in `PPOActorConfig` and `EvalGenerationConfig` to ensure parent class validations are preserved, '
   category: architecture
 - rule: Add tests for new functionality.
   source:
     path: AGENTS.md
     lines: '27'
-  evidence: The gold solution modifies `tests/test_adv_norm_config.py` and `tests/test_prox_approx.py`
-    to align the test suite with the new validation timing (failing at config instantiation
-    rather than downstrea
+  evidence: The gold solution modifies `tests/test_adv_norm_config.py` and `tests/test_prox_approx.py` to align the test suite with the new validation timing (failing at config instantiation rather than downstrea
   category: testing
-- rule: Use `__post_init__` for validation in config dataclasses and raise `ValueError`
-    with a clear message.
+- rule: Use `__post_init__` for validation in config dataclasses and raise `ValueError` with a clear message.
   source:
     path: .claude/rules/api-config.md
     lines: 37-43
-  source_text: "- Use `__post_init__` for validation\n- Raise `ValueError` with clear\
-    \ message:\n  ```python\n  def __post_init__(self):\n      if self.batch_size\
-    \ <= 0:\n          raise ValueError(f\"batch_size must be positive, got {self.batch_size}\"\
-    )\n  ```"
-  evidence: The diff moves validation logic from `Normalization.__init__` into `NormConfig.__post_init__`
-    and adds `__post_init__` to `BaseExperimentConfig`, raising `ValueError` with
-    clear, formatted messages when constraints are violated.
+  source_text: "- Use `__post_init__` for validation\n- Raise `ValueError` with clear message:\n  ```python\n  def __post_init__(self):\n      if self.batch_size <= 0:\n          raise ValueError(f\"batch_size must be positive, got {self.batch_size}\")\n  ```"
+  evidence: The diff moves validation logic from `Normalization.__init__` into `NormConfig.__post_init__` and adds `__post_init__` to `BaseExperimentConfig`, raising `ValueError` with clear, formatted messages when constraints are violated.
   category: architecture
   verification: llm_judge
 distractors:
 - rule: 'Ask first before: Modifying config structures in `areal/api/cli_args.py`.'
   collision_type: rule_conflict
-  why_distracting: The user explicitly instructed the agent to add validation to dataclasses
-    in `areal/api/cli_args.py`. Following this rule and pausing to ask for permission
-    would waste a turn and ignore the direct instruction.
+  why_distracting: The user explicitly instructed the agent to add validation to dataclasses in `areal/api/cli_args.py`. Following this rule and pausing to ask for permission would waste a turn and ignore the direct instruction.
   severity: high
   source:
     path: AGENTS.md
     lines: 32-34
 - rule: Composition over inheritance -- keep hierarchies <= 2 levels; prefer delegation.
   collision_type: architecture_boundary
-  why_distracting: The agent might attempt to refactor the existing inheritance hierarchy
-    of `PPOActorConfig` or `EvalGenerationConfig` into composition while adding the
-    `__post_init__` methods, which is out of scope and would break existing downstream
-    code.
+  why_distracting: The agent might attempt to refactor the existing inheritance hierarchy of `PPOActorConfig` or `EvalGenerationConfig` into composition while adding the `__post_init__` methods, which is out of scope and would break existing downstream code.
   severity: medium
   source:
     path: AGENTS.md
@@ -170,33 +177,16 @@ distractors:
   source:
     path: .claude/rules/code-style.md
     lines: 7-11
-  source_text: "- **Prefer composition over inheritance**: Avoid deep class hierarchies\n\
-    \  - Good: `Engine` holds a `Checkpointer` instance\n  - Avoid: `CheckpointableEngine(Engine)`\
-    \ →\n    `FSDPCheckpointableEngine(CheckpointableEngine)`\n- Keep inheritance\
-    \ shallow (≤2 levels when possible)"
+  source_text: "- **Prefer composition over inheritance**: Avoid deep class hierarchies\n  - Good: `Engine` holds a `Checkpointer` instance\n  - Avoid: `CheckpointableEngine(Engine)` →\n    `FSDPCheckpointableEngine(CheckpointableEngine)`\n- Keep inheritance shallow (≤2 levels when possible)"
   collision_type: architecture_boundary
-  why_distracting: The AI might see the inheritance in `SFTConfig(BaseExperimentConfig)`
-    or the use of `super().__post_init__()` and attempt to refactor the configuration
-    dataclasses to use composition instead of inheritance. However, configuration
-    dataclasses often rely on inheritance to compose CLI arguments, and changing this
-    would break the argument parsing architecture.
+  why_distracting: The AI might see the inheritance in `SFTConfig(BaseExperimentConfig)` or the use of `super().__post_init__()` and attempt to refactor the configuration dataclasses to use composition instead of inheritance. However, configuration dataclasses often rely on inheritance to compose CLI arguments, and changing this would break the argument parsing architecture.
   severity: high
 - rule: 'Log levels: ERROR for failures'
   source:
     path: .claude/rules/code-style.md
     lines: 22-26
-  source_text: "- Log levels:\n  - DEBUG: Detailed tracing (avoid in hot paths)\n\
-    \  - INFO: Milestones (training start, checkpoint saved)\n  - WARNING: Recoverable\
-    \ issues\n  - ERROR: Failures requiring attention"
+  source_text: "- Log levels:\n  - DEBUG: Detailed tracing (avoid in hot paths)\n  - INFO: Milestones (training start, checkpoint saved)\n  - WARNING: Recoverable issues\n  - ERROR: Failures requiring attention"
   collision_type: would_cause_bug
-  why_distracting: The AI might see the validation failures (e.g., invalid mean_level)
-    and decide to use the custom logger to log an ERROR instead of raising a `ValueError`.
-    For configuration validation, raising an exception is the correct behavior to
-    halt execution; logging an error and continuing would cause a bug by allowing
-    invalid configurations to pass.
+  why_distracting: The AI might see the validation failures (e.g., invalid mean_level) and decide to use the custom logger to log an ERROR instead of raising a `ValueError`. For configuration validation, raising an exception is the correct behavior to halt execution; logging an error and continuing would cause a bug by allowing invalid configurations to pass.
   severity: medium
-hierarchy_analysis: Both `CLAUDE.md` and `AGENTS.md` contain the strict rule to 'Ask
-  first' before modifying `areal/api/cli_args.py`. However, the specific task instructions
-  explicitly command the agent to modify this exact file. The agent must recognize
-  that explicit prompt instructions supersede the 'Ask first' guidelines in the repository's
-  agent instructions.
+hierarchy_analysis: Both `CLAUDE.md` and `AGENTS.md` contain the strict rule to 'Ask first' before modifying `areal/api/cli_args.py`. However, the specific task instructions explicitly command the agent to modify this exact file. The agent must recognize that explicit prompt instructions supersede the 'Ask first' guidelines in the repository's agent instructions.

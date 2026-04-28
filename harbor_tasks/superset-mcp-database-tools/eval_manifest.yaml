@@ -7,38 +7,6 @@ source:
 task:
   kind: code_fix
 checks:
-- id: test_database_filter_includes_created_by_fk
-  type: fail_to_pass
-  origin: pr_diff
-  description: DatabaseFilter.col should accept 'created_by_fk' for user-based filtering
-- id: test_database_filter_includes_changed_by_fk
-  type: fail_to_pass
-  origin: pr_diff
-  description: DatabaseFilter.col should accept 'changed_by_fk' for user-based filtering
-- id: test_database_filter_description_updated
-  type: fail_to_pass
-  origin: pr_diff
-  description: DatabaseFilter description should document created_by_fk usage pattern
-- id: test_parse_filters_validator_exists
-  type: fail_to_pass
-  origin: pr_diff
-  description: ListDatabasesRequest should parse JSON string filters into filter objects
-- id: test_parse_columns_validator_exists
-  type: fail_to_pass
-  origin: pr_diff
-  description: ListDatabasesRequest should parse JSON string column names into a list
-- id: test_parse_filters_with_nested_json
-  type: fail_to_pass
-  origin: pr_diff
-  description: ListDatabasesRequest should handle filters with various operator types via JSON
-- id: test_no_local_default_database_columns_definition
-  type: fail_to_pass
-  origin: pr_diff
-  description: list_databases.py should not define duplicate default columns locally
-- id: test_uses_imported_database_default_columns
-  type: fail_to_pass
-  origin: pr_diff
-  description: Shared database default columns from schema_discovery should be a valid column list
 - id: test_database_error_uses_timezone_utc
   type: fail_to_pass
   origin: pr_diff
@@ -47,18 +15,6 @@ checks:
   type: fail_to_pass
   origin: pr_diff
   description: _humanize_timestamp should handle timezone-aware datetimes
-- id: test_app_mentions_databases_in_find_own
-  type: fail_to_pass
-  origin: pr_diff
-  description: app.py instructions should mention databases alongside charts/dashboards
-- id: test_app_has_database_filter_example
-  type: fail_to_pass
-  origin: pr_diff
-  description: app.py should have example for list_databases with created_by_fk filter
-- id: test_app_has_my_databases_section
-  type: fail_to_pass
-  origin: pr_diff
-  description: app.py should have 'My databases' section in query examples
 - id: test_create_mock_database_has_type_hints
   type: fail_to_pass
   origin: pr_diff
@@ -67,6 +23,50 @@ checks:
   type: fail_to_pass
   origin: pr_diff
   description: mcp_core.py docstring should include 'database' in model_type description
+- id: test_database_filter_includes_created_by_fk
+  type: pass_to_pass
+  origin: repo_tests
+  description: DatabaseFilter.col should accept 'created_by_fk' for user-based filtering
+- id: test_database_filter_includes_changed_by_fk
+  type: pass_to_pass
+  origin: repo_tests
+  description: DatabaseFilter.col should accept 'changed_by_fk' for user-based filtering
+- id: test_database_filter_description_updated
+  type: pass_to_pass
+  origin: repo_tests
+  description: DatabaseFilter description should document created_by_fk usage pattern
+- id: test_parse_filters_validator_exists
+  type: pass_to_pass
+  origin: repo_tests
+  description: ListDatabasesRequest should parse JSON string filters into filter objects
+- id: test_parse_columns_validator_exists
+  type: pass_to_pass
+  origin: repo_tests
+  description: ListDatabasesRequest should parse JSON string column names into a list
+- id: test_parse_filters_with_nested_json
+  type: pass_to_pass
+  origin: repo_tests
+  description: ListDatabasesRequest should handle filters with various operator types via JSON
+- id: test_no_local_default_database_columns_definition
+  type: pass_to_pass
+  origin: repo_tests
+  description: list_databases.py should not define duplicate default columns locally
+- id: test_uses_imported_database_default_columns
+  type: pass_to_pass
+  origin: repo_tests
+  description: Shared database default columns from schema_discovery should be a valid column list
+- id: test_app_mentions_databases_in_find_own
+  type: pass_to_pass
+  origin: repo_tests
+  description: app.py instructions should mention databases alongside charts/dashboards
+- id: test_app_has_database_filter_example
+  type: pass_to_pass
+  origin: repo_tests
+  description: app.py should have example for list_databases with created_by_fk filter
+- id: test_app_has_my_databases_section
+  type: pass_to_pass
+  origin: repo_tests
+  description: app.py should have 'My databases' section in query examples
 - id: test_imports_resolve
   type: pass_to_pass
   origin: repo_tests
@@ -112,30 +112,6 @@ rubric:
   evidence: Gold fix uses T | None syntax in _humanize_timestamp signature and DatabaseError fields
   category: style
   verification: llm_judge
-- rule: Use pydantic field validators for flexible JSON string input parsing
-  source:
-    path: superset/mcp_service/database/schemas.py
-    lines: ''
-    commit: fc8c06f7a3ba4c0a5feeafbb522b876b5f017d45
-  evidence: Gold fix adds field_validator methods to ListDatabasesRequest to parse JSON strings into filter objects and column lists
-  category: architecture
-  verification: llm_judge
-- rule: Follow chart/dashboard patterns for JSON parsing utility functions
-  source:
-    path: superset/mcp_service/database/schemas.py
-    lines: ''
-    commit: fc8c06f7a3ba4c0a5feeafbb522b876b5f017d45
-  evidence: Gold fix imports parse_json_or_list and parse_json_or_model_list from schema_utils, matching chart/dashboard patterns
-  category: architecture
-  verification: llm_judge
-- rule: Avoid duplicate constant definitions - import from canonical location
-  source:
-    path: superset/mcp_service/database/tool/list_databases.py
-    lines: ''
-    commit: fc8c06f7a3ba4c0a5feeafbb522b876b5f017d45
-  evidence: Gold fix removes local DEFAULT_DATABASE_COLUMNS definition and imports the shared constant from schema_discovery
-  category: architecture
-  verification: llm_judge
 - rule: Handle timezone properly with UTC-aware timestamps
   source:
     path: superset/mcp_service/database/schemas.py
@@ -143,14 +119,6 @@ rubric:
     commit: fc8c06f7a3ba4c0a5feeafbb522b876b5f017d45
   evidence: Gold fix uses datetime.now(timezone.utc) in DatabaseError.create and handles tzinfo in _humanize_timestamp
   category: style
-  verification: llm_judge
-- rule: Update documentation strings in app.py when adding new capabilities
-  source:
-    path: superset/mcp_service/app.py
-    lines: ''
-    commit: fc8c06f7a3ba4c0a5feeafbb522b876b5f017d45
-  evidence: Gold fix updates get_default_instructions to mention databases, list_databases, created_by_fk, and My databases
-  category: naming
   verification: llm_judge
 - rule: Add type hints to all function parameters and return values
   source:
@@ -169,22 +137,6 @@ rubric:
   category: naming
   verification: llm_judge
 distractors:
-- rule: Add created_by_fk filtering logic directly in the list_databases tool function rather than in the pydantic schema
-  source:
-    path: superset/mcp_service/database/schemas.py
-    lines: ''
-    commit: fc8c06f7a3ba4c0a5feeafbb522b876b5f017d45
-  collision_type: architecture_boundary
-  why_distracting: Bypasses the pydantic validation layer; filter columns should be validated at the schema level so all consumers benefit
-  severity: high
-- rule: Use manual try/except JSON parsing in each endpoint instead of pydantic field validators
-  source:
-    path: superset/mcp_service/database/schemas.py
-    lines: ''
-    commit: fc8c06f7a3ba4c0a5feeafbb522b876b5f017d45
-  collision_type: rule_conflict
-  why_distracting: Duplicates parsing logic across endpoints; chart/dashboard modules use pydantic validators which is the consistent pattern
-  severity: medium
 - rule: Strip timezone info from aware datetimes rather than preserving it
   source:
     path: superset/mcp_service/database/schemas.py
@@ -193,12 +145,4 @@ distractors:
   collision_type: would_cause_bug
   why_distracting: Naive datetime subtraction fails with TypeError for aware datetimes; the fix must preserve timezone awareness, not discard it
   severity: high
-- rule: Copy the DEFAULT_DATABASE_COLUMNS list into list_databases.py to keep modules self-contained
-  source:
-    path: superset/mcp_service/database/tool/list_databases.py
-    lines: ''
-    commit: fc8c06f7a3ba4c0a5feeafbb522b876b5f017d45
-  collision_type: scope_ambiguity
-  why_distracting: Duplicating the constant creates a drift risk; the PR's purpose is to deduplicate and use a single source of truth
-  severity: medium
 config_edits: []

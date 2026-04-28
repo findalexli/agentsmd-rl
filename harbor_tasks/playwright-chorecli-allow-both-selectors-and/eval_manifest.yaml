@@ -12,8 +12,7 @@ checks:
 - id: tab_converts_selector_through_parser
   type: fail_to_pass
   origin: pr_diff
-  description: tab.ts converts selector input through locatorOrSelectorAsSelector
-    with testIdAttribute
+  description: tab.ts converts selector input through locatorOrSelectorAsSelector with testIdAttribute
 - id: tab_checks_element_via_query_selector
   type: fail_to_pass
   origin: pr_diff
@@ -25,8 +24,7 @@ checks:
 - id: tab_locator_parser_integration
   type: fail_to_pass
   origin: pr_diff
-  description: tab.ts imports locatorOrSelectorAsSelector and the parser correctly
-    handles locator inputs
+  description: tab.ts imports locatorOrSelectorAsSelector and the parser correctly handles locator inputs
 - id: skill_md_documents_locator_syntax
   type: fail_to_pass
   origin: agent_config
@@ -63,9 +61,16 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Locator parser unit tests pass - verifies isomorphic module works
+- id: test_ci_build_playwright_driver_npm
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: build-playwright-driver / npm ci'
+- id: test_ci_build_playwright_driver_npm_2
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: build-playwright-driver / npm run build'
 rubric:
-- rule: SKILL.md update is consistent with the style of the existing documentation
-    sections
+- rule: SKILL.md update is consistent with the style of the existing documentation sections
   source:
     path: packages/playwright-core/src/tools/cli-client/skill/SKILL.md
     lines: 1-10
@@ -89,18 +94,13 @@ rubric:
   source:
     path: CLAUDE.md
     lines: 68-70
-  evidence: The gold solution imports `locatorOrSelectorAsSelector` using a relative
-    path `../../utils/isomorphic/locatorParser` within the `playwright-core` package,
-    adhering to the strict import boundaries enfo
+  evidence: The gold solution imports `locatorOrSelectorAsSelector` using a relative path `../../utils/isomorphic/locatorParser` within the `playwright-core` package, adhering to the strict import boundaries enfo
   category: architecture
-- rule: playwright-core is the browser automation engine containing client, server,
-    dispatchers, and protocol
+- rule: playwright-core is the browser automation engine containing client, server, dispatchers, and protocol
   source:
     path: CLAUDE.md
     lines: 3-5
-  evidence: The gold solution modifies `packages/playwright-core/src/tools/backend/tab.ts`,
-    which aligns with the config defining `playwright-core` as the package responsible
-    for the browser automation engine, in
+  evidence: The gold solution modifies `packages/playwright-core/src/tools/backend/tab.ts`, which aligns with the config defining `playwright-core` as the package responsible for the browser automation engine, in
   category: architecture
 config_edits:
 - path: packages/playwright-core/src/tools/cli-client/skill/SKILL.md
@@ -114,8 +114,7 @@ config_edits:
     # test id
 
     playwright-cli click "getByTestId(''submit-button'')"'
-  gold_removed: 'You can also use css or role selectors, for example when explicitly
-    asked for it.
+  gold_removed: 'You can also use css or role selectors, for example when explicitly asked for it.
 
     # role selector
 
@@ -127,23 +126,16 @@ config_edits:
 distractors:
 - rule: docs/src/ API documentation — source of truth for public TypeScript types
   collision_type: scope_ambiguity
-  why_distracting: The agent might try to update the main Playwright API documentation
-    in `docs/src/` to reflect the new CLI locator support, but the instruction specifically
-    requests updating the CLI's `SKILL.md` file.
+  why_distracting: The agent might try to update the main Playwright API documentation in `docs/src/` to reflect the new CLI locator support, but the instruction specifically requests updating the CLI's `SKILL.md` file.
   severity: medium
   source:
     path: CLAUDE.md
     lines: 38-42
-- rule: 'Decision rule: Does the test need browser/browserType/context → tests/library/.
-    Just needs page + server → tests/page/.'
+- rule: 'Decision rule: Does the test need browser/browserType/context → tests/library/. Just needs page + server → tests/page/.'
   collision_type: scope_ambiguity
-  why_distracting: The agent might spend time writing tests for the new locator syntax
-    in `tests/page/` or `tests/library/`, but the instruction only asks to fix the
-    code and update `SKILL.md`.
+  why_distracting: The agent might spend time writing tests for the new locator syntax in `tests/page/` or `tests/library/`, but the instruction only asks to fix the code and update `SKILL.md`.
   severity: low
   source:
     path: CLAUDE.md
     lines: 75-85
-hierarchy_analysis: The repository uses a flat single-file config (`CLAUDE.md`) for
-  general guidelines. The task primarily relies on the explicit instructions provided
-  in the prompt rather than deep config rules.
+hierarchy_analysis: The repository uses a flat single-file config (`CLAUDE.md`) for general guidelines. The task primarily relies on the explicit instructions provided in the prompt rather than deep config rules.

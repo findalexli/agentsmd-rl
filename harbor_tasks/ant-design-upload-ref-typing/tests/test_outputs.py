@@ -113,3 +113,45 @@ def test_no_new_tsc_errors_outside_known_baseline():
         "Unexpected tsc errors introduced outside the known baseline:\n"
         + "\n".join(unexpected[:30])
     )
+
+
+# === CI-mined tests ===
+
+def test_ci_lint_eslint_changed_files():
+    """pass_to_pass | CI: lint / eslint on files touched by the fix.
+
+    The gold patch changes components/upload/index.tsx and tests/utils.tsx.
+    Both files must pass eslint cleanly on base and after the fix.
+    """
+    r = subprocess.run(
+        ["bash", "-lc", "npx eslint components/upload/index.tsx tests/utils.tsx"],
+        cwd=str(REPO),
+        capture_output=True,
+        text=True,
+        timeout=120,
+        env=TSC_ENV,
+    )
+    assert r.returncode == 0, (
+        f"eslint must pass on the files touched by the fix. "
+        f"returncode={r.returncode}\nstdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}"
+    )
+
+
+def test_ci_lint_biome_changed_files():
+    """pass_to_pass | CI: lint / biome lint on files touched by the fix.
+
+    The gold patch changes components/upload/index.tsx and tests/utils.tsx.
+    Both files must pass biome lint cleanly on base and after the fix.
+    """
+    r = subprocess.run(
+        ["bash", "-lc", "npx biome lint components/upload/index.tsx tests/utils.tsx"],
+        cwd=str(REPO),
+        capture_output=True,
+        text=True,
+        timeout=120,
+        env=TSC_ENV,
+    )
+    assert r.returncode == 0, (
+        f"biome lint must pass on the files touched by the fix. "
+        f"returncode={r.returncode}\nstdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}"
+    )

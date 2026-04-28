@@ -12,8 +12,7 @@ checks:
 - id: not_stub
   type: pass_to_pass
   origin: static
-  description: get_llama_4_attn_scale in both modeling files has real computation
-    (not a stub)
+  description: get_llama_4_attn_scale in both modeling files has real computation (not a stub)
 - id: repo_imports
   type: pass_to_pass
   origin: repo_tests
@@ -21,18 +20,15 @@ checks:
 - id: repo_ci_imports
   type: pass_to_pass
   origin: repo_tests
-  description: 'CI-style import check: verify all affected modeling modules can be
-    imported via subprocess'
+  description: 'CI-style import check: verify all affected modeling modules can be imported via subprocess'
 - id: repo_function_existence
   type: pass_to_pass
   origin: repo_tests
-  description: 'AST check via subprocess: get_llama_4_attn_scale exists in all expected
-    modeling files'
+  description: 'AST check via subprocess: get_llama_4_attn_scale exists in all expected modeling files'
 - id: repo_mistral4_modular_import
   type: pass_to_pass
   origin: repo_tests
-  description: Verify modular_mistral4.py correctly imports get_llama_4_attn_scale
-    from ministral3 via subprocess
+  description: Verify modular_mistral4.py correctly imports get_llama_4_attn_scale from ministral3 via subprocess
 - id: repo_ruff_check
   type: pass_to_pass
   origin: repo_tests
@@ -40,8 +36,7 @@ checks:
 - id: repo_ruff_format
   type: pass_to_pass
   origin: repo_tests
-  description: Ruff format check passes on modified ministral3 and mistral4 model
-    files
+  description: Ruff format check passes on modified ministral3 and mistral4 model files
 - id: repo_all_files_syntax
   type: pass_to_pass
   origin: repo_tests
@@ -69,28 +64,23 @@ checks:
 - id: ministral3_modeling_scale_shape
   type: fail_to_pass
   origin: pr_diff
-  description: get_llama_4_attn_scale in ministral3/modeling returns 4D tensor (B,1,S,1)
-    for varied input shapes
+  description: get_llama_4_attn_scale in ministral3/modeling returns 4D tensor (B,1,S,1) for varied input shapes
 - id: mistral4_modeling_scale_shape
   type: fail_to_pass
   origin: pr_diff
-  description: get_llama_4_attn_scale in mistral4/modeling returns 4D tensor (B,1,S,1)
-    for varied input shapes
+  description: get_llama_4_attn_scale in mistral4/modeling returns 4D tensor (B,1,S,1) for varied input shapes
 - id: scaling_formula_values
   type: fail_to_pass
   origin: pr_diff
-  description: Scaling formula 1+beta*log(1+floor(pos/max_pos)) matches expected values
-    at 5 diverse positions
+  description: Scaling formula 1+beta*log(1+floor(pos/max_pos)) matches expected values at 5 diverse positions
 - id: per_batch_scaling_differs
   type: fail_to_pass
   origin: pr_diff
-  description: Different position_ids per batch item produce different scaling values
-    and correct 4D shape
+  description: Different position_ids per batch item produce different scaling values and correct 4D shape
 - id: ministral3_modular_scale_shape
   type: fail_to_pass
   origin: agent_config
-  description: get_llama_4_attn_scale in modular_ministral3.py is also fixed to return
-    4D tensor
+  description: get_llama_4_attn_scale in modular_ministral3.py is also fixed to return 4D tensor
   source:
     path: .ai/AGENTS.md
     lines: '66'
@@ -98,8 +88,7 @@ checks:
 - id: mistral4_modular_scale_shape
   type: fail_to_pass
   origin: agent_config
-  description: get_llama_4_attn_scale in modular_mistral4.py is also fixed to return
-    4D tensor
+  description: get_llama_4_attn_scale in modular_mistral4.py is also fixed to return 4D tensor
   source:
     path: .ai/AGENTS.md
     lines: '66'
@@ -107,8 +96,7 @@ checks:
 - id: ministral3_modular_no_absolute_positions
   type: fail_to_pass
   origin: agent_config
-  description: Ministral3 modular forward() no longer computes absolute_positions
-    from cache; uses position_ids directly
+  description: Ministral3 modular forward() no longer computes absolute_positions from cache; uses position_ids directly
   source:
     path: .ai/AGENTS.md
     lines: '66'
@@ -116,41 +104,31 @@ checks:
 - id: mistral4_modular_no_absolute_positions
   type: fail_to_pass
   origin: agent_config
-  description: Mistral4 modular forward() no longer computes absolute_positions from
-    cache; uses position_ids directly
+  description: Mistral4 modular forward() no longer computes absolute_positions from cache; uses position_ids directly
   source:
     path: .ai/AGENTS.md
     lines: '66'
     commit: e94695e574f969ba5eeb8e442a7fb1e9f72ff37f
+- id: repo_pytest_rope_utils
+  type: pass_to_pass
+  origin: repo_tests
+  description: Run pytest on rope_utils tests — regression guard for position encoding utilities
 rubric:
-- rule: The gold solution must modify both modular source files (modular_ministral3.py,
-    modular_mistral4.py) and their corresponding modeling files (modeling_ministral3.py,
-    modeling_mistral4.py) to properly follow the transformers modular architecture.
-  reference: "EDIT: modular_ministral3.py and modular_mistral4.py (the modular source files)
-    AND modeling_ministral3.py and modeling_mistral4.py (the generated files). The fix
-    changes get_llama_4_attn_scale to return 4D tensor and updates forward() to use
-    position_ids instead of absolute_positions."
+- rule: The gold solution must modify both modular source files (modular_ministral3.py, modular_mistral4.py) and their corresponding modeling files (modeling_ministral3.py, modeling_mistral4.py) to properly follow the transformers modular architecture.
+  reference: 'EDIT: modular_ministral3.py and modular_mistral4.py (the modular source files) AND modeling_ministral3.py and modeling_mistral4.py (the generated files). The fix changes get_llama_4_attn_scale to return 4D tensor and updates forward() to use position_ids instead of absolute_positions.'
 distractors:
-- rule: 'Accountability for AI-assisted patches: Pure code-agent PRs are not allowed,
-    and fail-closed behavior requires stopping if coordination evidence is missing.'
+- rule: 'Accountability for AI-assisted patches: Pure code-agent PRs are not allowed, and fail-closed behavior requires stopping if coordination evidence is missing.'
   collision_type: meta_confusion
-  why_distracting: The instructions mandate fail-closed behavior, requiring human
-    validation, issue coordination, and explicit approval before proceeding. An agent
-    might refuse to write the code fix, claiming it needs human interaction or issue
-    links first.
+  why_distracting: The instructions mandate fail-closed behavior, requiring human validation, issue coordination, and explicit approval before proceeding. An agent might refuse to write the code fix, claiming it needs human interaction or issue links first.
   severity: high
   source:
     path: AGENTS.md
     lines: 48-61
 - rule: Mandatory duplicate-work checks using GitHub CLI before proposing a PR.
   collision_type: meta_confusion
-  why_distracting: The agent might attempt to run `gh issue view` or `gh pr list`
-    to check for duplicate work before writing code, which could fail in an isolated
-    evaluation sandbox or waste execution time.
+  why_distracting: The agent might attempt to run `gh issue view` or `gh pr list` to check for duplicate work before writing code, which could fail in an isolated evaluation sandbox or waste execution time.
   severity: medium
   source:
     path: AGENTS.md
     lines: 33-41
-hierarchy_analysis: The configuration is flat, with identical rules provided in both
-  `AGENTS.md` and `CLAUDE.md` at the repository root. The agent must apply the architectural
-  rules regarding modular models to correctly implement the fix.
+hierarchy_analysis: The configuration is flat, with identical rules provided in both `AGENTS.md` and `CLAUDE.md` at the repository root. The agent must apply the architectural rules regarding modular models to correctly implement the fix.

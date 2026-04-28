@@ -73,29 +73,41 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Repo build passes
+- id: test_ci_format_format
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: format / Format'
+- id: test_ci_build_build_packages
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: build / Build packages'
+- id: test_ci_check_lint
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: check / Lint'
+- id: test_ci_check_typecheck
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: check / Typecheck'
+- id: test_ci_check_check_change_files
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: check / Check change files'
 rubric:
-- rule: 'TypeScript: Strict mode, ESNext target, NodeNext modules, NodeNext resolution,
-    verbatimModuleSyntax'
+- rule: 'TypeScript: Strict mode, ESNext target, NodeNext modules, NodeNext resolution, verbatimModuleSyntax'
   source:
     path: skills/supersede-pr/tsconfig.json
-  reference: '{"compilerOptions": {"allowJs": false, "module": "NodeNext", "moduleResolution":
-    "NodeNext", "noEmit": true, "strict": true, "target": "ESNext", "verbatimModuleSyntax":
-    true}, "include": ["scripts/**/*.ts"]}'
+  reference: '{"compilerOptions": {"allowJs": false, "module": "NodeNext", "moduleResolution": "NodeNext", "noEmit": true, "strict": true, "target": "ESNext", "verbatimModuleSyntax": true}, "include": ["scripts/**/*.ts"]}'
   category: tooling
-- rule: 'Variables: Prefer `let` for locals, `const` only at module scope; never use
-    `var`'
+- rule: 'Variables: Prefer `let` for locals, `const` only at module scope; never use `var`'
   source:
     path: skills/supersede-pr/scripts/close_superseded_pr.ts
-  reference: The script uses `let` for local variables like `let parsed = parseArgs(...)`,
-    `let repo = ...`, and reserves `const` for module-level declarations. No `var`
-    declarations are used.
+  reference: The script uses `let` for local variables like `let parsed = parseArgs(...)`, `let repo = ...`, and reserves `const` for module-level declarations. No `var` declarations are used.
   category: style
 config_edits:
 - path: AGENTS.md
   tier: 1
-  gold_added: '- **One-off scripts**: Write one-off scripts in this repo as TypeScript
-    and make them executable natively with modern Node.js (for example, executable
-    `.ts` files)
+  gold_added: '- **One-off scripts**: Write one-off scripts in this repo as TypeScript and make them executable natively with modern Node.js (for example, executable `.ts` files)
 
 
     ## Skills
@@ -107,42 +119,13 @@ config_edits:
     ### Available skills
 
 
-    - **supersede-pr**: Replace one GitHub PR with another and explicitly close the
-    superseded PR (instead of relying on `Closes #...` keywords). (file: `./skills/supersede-pr/SKILL.md`)
+    - **supersede-pr**: Replace one GitHub PR with another and explicitly close the superseded PR (instead of relying on `Closes #...` keywords). (file: `./skills/supersede-pr/SKILL.md`)
 
-    - **make-pr**: Create GitHub pull requests with clear context, issue/feature bullets,
-    and required usage examples for new or changed APIs. (file: `./skills/make-pr/SKILL.md`)'
+    - **make-pr**: Create GitHub pull requests with clear context, issue/feature bullets, and required usage examples for new or changed APIs. (file: `./skills/make-pr/SKILL.md`)'
   gold_removed: ''
 - path: skills/make-pr/SKILL.md
   tier: 1
-  gold_added: "---\nname: make-pr\ndescription: Create GitHub pull requests with clear,\
-    \ reviewer-friendly descriptions. Use when asked to open or prepare a PR, especially\
-    \ when the PR needs strong context, related links, and feature usage examples.\
-    \ This skill enforces concise PR structure, avoids redundant sections like validation/testing,\
-    \ and creates the PR with gh CLI.\n---\n\n# Make PR\n\n## Overview\n\nUse this\
-    \ skill to draft and open a PR with consistent, high-signal writing.\nKeep headings\
-    \ sparse and focus on the problem/feature explanation, context links, and practical\
-    \ code examples.\n\n## Workflow\n\n1. Gather context from branch diff and related\
-    \ work.\n- Capture what changed, why it changed, and who it affects.\n- Find related\
-    \ issues/PRs and include links when relevant.\n\n1. Draft the PR body with minimal\
-    \ structure.\n- Start with 1-2 short introductory paragraphs.\n- In those intro\
-    \ paragraphs, include clear bullets describing:\n  - the feature and/or issue\
-    \ addressed\n  - key behavior/API changes\n  - expected impact\n- If the change\
-    \ is extensive, expand to up to 3-4 paragraphs and include background context\
-    \ with related links.\n\n1. Add required usage examples for feature work.\n- If\
-    \ the PR introduces a new feature, include a comprehensive usage snippet.\n- If\
-    \ it replaces or improves an older approach, include before/after examples.\n\n\
-    1. Exclude redundant sections.\n- Do not include `Validation`, `Testing`, or other\
-    \ process sections that are already implicit in PR workflow.\n- Do not add boilerplate\
-    \ sections that do not help review.\n\n1. Create the PR.\n- Save the body to a\
-    \ temporary file and run:\n```bash\ngh pr create --base main --head <branch> --title\
-    \ \"<title>\" --body-file <file>\n```\n\n## Body Template\n\nUse this as a base\
-    \ and fill with concrete repo-specific details:\n\n```md\n<One or two short intro\
-    \ paragraphs explaining the change and why it matters.>\n\n- <Feature/issue addressed>\n\
-    - <What changed in behavior or API>\n- <Why this is needed now>\n\n<Optional additional\
-    \ context paragraph(s), up to 3-4 total for large changes, including links to\
-    \ related PRs/issues.>\n\n```ts\n// New feature usage example\n```\n\n```ts\n\
-    // Before\n```\n\n```ts\n// After\n```\n```"
+  gold_added: "---\nname: make-pr\ndescription: Create GitHub pull requests with clear, reviewer-friendly descriptions. Use when asked to open or prepare a PR, especially when the PR needs strong context, related links, and feature usage examples. This skill enforces concise PR structure, avoids redundant sections like validation/testing, and creates the PR with gh CLI.\n---\n\n# Make PR\n\n## Overview\n\nUse this skill to draft and open a PR with consistent, high-signal writing.\nKeep headings sparse and focus on the problem/feature explanation, context links, and practical code examples.\n\n## Workflow\n\n1. Gather context from branch diff and related work.\n- Capture what changed, why it changed, and who it affects.\n- Find related issues/PRs and include links when relevant.\n\n1. Draft the PR body with minimal structure.\n- Start with 1-2 short introductory paragraphs.\n- In those intro paragraphs, include clear bullets describing:\n  - the feature and/or issue addressed\n  - key behavior/API changes\n  - expected impact\n- If the change is extensive, expand to up to 3-4 paragraphs and include background context with related links.\n\n1. Add required usage examples for feature work.\n- If the PR introduces a new feature, include a comprehensive usage snippet.\n- If it replaces or improves an older approach, include before/after examples.\n\n1. Exclude redundant sections.\n- Do not include `Validation`, `Testing`, or other process sections that are already implicit in PR workflow.\n- Do not add boilerplate sections that do not help review.\n\n1. Create the PR.\n- Save the body to a temporary file and run:\n```bash\ngh pr create --base main --head <branch> --title \"<title>\" --body-file <file>\n```\n\n## Body Template\n\nUse this as a base and fill with concrete repo-specific details:\n\n```md\n<One or two short intro paragraphs explaining the change and why it matters.>\n\n- <Feature/issue addressed>\n- <What changed in behavior or API>\n- <Why this is needed now>\n\n<Optional additional context paragraph(s), up to 3-4 total for large changes, including links to related PRs/issues.>\n\n```ts\n// New feature usage example\n```\n\n```ts\n// Before\n```\n\n```ts\n// After\n```\n```"
   gold_removed: ''
 - path: skills/supersede-pr/SKILL.md
   tier: 1
@@ -150,11 +133,7 @@ config_edits:
 
     name: supersede-pr
 
-    description: Safely replace one GitHub pull request with another. Use when a user
-    says a PR supersedes/replaces an older PR, asks to auto-close a superseded PR,
-    or needs guaranteed closure behavior after merge. This skill explicitly closes
-    the superseded PR with gh CLI and verifies final PR states instead of relying
-    on closing keywords.
+    description: Safely replace one GitHub pull request with another. Use when a user says a PR supersedes/replaces an older PR, asks to auto-close a superseded PR, or needs guaranteed closure behavior after merge. This skill explicitly closes the superseded PR with gh CLI and verifies final PR states instead of relying on closing keywords.
 
     ---
 
@@ -167,8 +146,7 @@ config_edits:
 
     Use this skill to handle PR supersession end-to-end.
 
-    Do not rely on `Closes #<number>` to close another PR. GitHub closing keywords
-    close issues, not pull requests.
+    Do not rely on `Closes #<number>` to close another PR. GitHub closing keywords close issues, not pull requests.
 
 
     ## Workflow
@@ -178,8 +156,7 @@ config_edits:
 
     - Capture `old_pr` (the superseded PR) and `new_pr` (the replacement PR).
 
-    - Resolve the repo with `gh repo view --json nameWithOwner -q .nameWithOwner`
-    when not provided.
+    - Resolve the repo with `gh repo view --json nameWithOwner -q .nameWithOwner` when not provided.
 
 
     1. Create or update the replacement PR first.
@@ -248,37 +225,25 @@ config_edits:
     - `scripts/close_superseded_pr.ts`'
   gold_removed: ''
 distractors:
-- rule: 'Philosophy: Web standards-first, runtime-agnostic (Node.js, Bun, Deno, Cloudflare
-    Workers). Use Web Streams API, Uint8Array, Web Crypto API, Blob/File instead of
-    Node.js APIs'
+- rule: 'Philosophy: Web standards-first, runtime-agnostic (Node.js, Bun, Deno, Cloudflare Workers). Use Web Streams API, Uint8Array, Web Crypto API, Blob/File instead of Node.js APIs'
   collision_type: scope_ambiguity
-  why_distracting: The rule forbids Node.js APIs in favor of Web standards, but the
-    requested script is a repo tooling script that needs to execute the `gh` CLI (likely
-    via `child_process`). Applying this framework-level rule to a tooling script would
-    make it impossible to build.
+  why_distracting: The rule forbids Node.js APIs in favor of Web standards, but the requested script is a repo tooling script that needs to execute the `gh` CLI (likely via `child_process`). Applying this framework-level rule to a tooling script would make it impossible to build.
   severity: high
   source:
     path: AGENTS.md
     lines: 20-21
 - rule: 'Adding changes: Create `packages/*/.changes/[major|minor|patch]`'
   collision_type: scope_ambiguity
-  why_distracting: The rule requires creating a changeset for changes, but this PR
-    only adds repo-level tooling and skills, not package updates. Creating a changeset
-    would be incorrect.
+  why_distracting: The rule requires creating a changeset for changes, but this PR only adds repo-level tooling and skills, not package updates. Creating a changeset would be incorrect.
   severity: medium
   source:
     path: AGENTS.md
     lines: 43-44
 - rule: 'Monorepo: pnpm workspace with packages in `packages/` directory'
   collision_type: architecture_boundary
-  why_distracting: The rule states packages are in the `packages/` directory, which
-    might lead the agent to create the `supersede-pr` skill inside `packages/` instead
-    of the requested root `skills/` directory.
+  why_distracting: The rule states packages are in the `packages/` directory, which might lead the agent to create the `supersede-pr` skill inside `packages/` instead of the requested root `skills/` directory.
   severity: medium
   source:
     path: AGENTS.md
     lines: 16-17
-hierarchy_analysis: 'The task is meta-referential: the agent must modify the root
-  `AGENTS.md` file to add new instructions. It must also avoid applying framework-specific
-  architecture rules (like avoiding Node.js APIs) to the repo tooling scripts it is
-  creating.'
+hierarchy_analysis: 'The task is meta-referential: the agent must modify the root `AGENTS.md` file to add new instructions. It must also avoid applying framework-specific architecture rules (like avoiding Node.js APIs) to the repo tooling scripts it is creating.'

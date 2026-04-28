@@ -6,7 +6,7 @@ The CLI-hosted Studio (`packages/cli/src/Studio.ts`) was built against `@prisma/
 
 ### 1. Transaction procedure causes 500 error
 
-Studio 0.27.3 sends BFF requests with `procedure: "transaction"` for atomic multi-row saves. The CLI's BFF handler returns a 500 error with message "Unknown procedure" because this procedure is not recognized. The executor provides a method that accepts a queries array and returns an `[error, results]` tuple — similar pattern to the existing `executor.execute()` call for query procedures. The handler should check whether the executor supports this transaction capability (similar to how `sql-lint` checks for `executor.lintSql`), and if the response tuple contains an error, respond with a serialized error via the same error serialization function used elsewhere in the BFF handler.
+Studio 0.27.3 sends BFF requests with `procedure: "transaction"` for atomic multi-row saves. The CLI's BFF handler returns a 500 error with message "Unknown procedure" because this procedure is not recognized. The executor provides an `executeTransaction` method that accepts a queries array and returns an `[error, results]` tuple — similar pattern to the existing `executor.execute()` call for query procedures. The handler should check whether the executor supports this transaction capability (similar to how `sql-lint` checks for `executor.lintSql`), and if the response tuple contains an error, respond with a serialized error via the same error serialization function used elsewhere in the BFF handler.
 
 The transaction procedure check in the handler should use the string comparison pattern `procedure === 'transaction'` (single quotes around the string literal).
 

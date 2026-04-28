@@ -43,6 +43,10 @@ Create a new skill file at `skills/installation/SKILL.md` that covers all of the
 
 The skill is read by other agents — write it so a future agent landing on this file can pick the right install command without reading any other source.
 
+## Code Style Requirements
+
+This project uses `ruff` for linting and formatting, configured via `pyproject.toml`. The CI runs `ruff check --config=pyproject.toml` on every PR.
+
 ## Project conventions
 
 - Follow the AGENTS.md guidance: terse, no try/except where unnecessary, no narrative comments. The skill itself is documentation; keep its language tight.

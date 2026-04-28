@@ -453,3 +453,50 @@ def test_repo_layout_intact():
     (pass_to_pass: same before and after)."""
     assert PLUGIN.is_dir(), f"missing plugin dir {PLUGIN}"
     assert INDEX_TSX.exists(), f"missing {INDEX_TSX}"
+
+# === CI-mined tests (taskforge.ci_check_miner) ===
+def test_ci_build_yarn_typecheck():
+    """pass_to_pass | CI job 'build' → step 'yarn typecheck'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'yarn typecheck'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'yarn typecheck' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_build_yarn_build():
+    """pass_to_pass | CI job 'build' → step 'yarn build'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'yarn build'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'yarn build' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+# === PR-added f2p tests (taskforge.test_patch_miner) ===
+def test_pr_added_getLeafColumnIds_flattens_grouped_column_defs_in():
+    """fail_to_pass | PR added test 'getLeafColumnIds flattens grouped column defs in visual order' in 'superset-frontend/plugins/plugin-chart-ag-grid-table/src/utils/reconcileColumnState.test.ts' (vitest_or_jest)"""
+    r = subprocess.run(
+        ["bash", "-lc", '(pnpm vitest run "superset-frontend/plugins/plugin-chart-ag-grid-table/src/utils/reconcileColumnState.test.ts" -t "getLeafColumnIds flattens grouped column defs in visual order" 2>&1 || npx vitest run "superset-frontend/plugins/plugin-chart-ag-grid-table/src/utils/reconcileColumnState.test.ts" -t "getLeafColumnIds flattens grouped column defs in visual order" 2>&1 || pnpm jest "superset-frontend/plugins/plugin-chart-ag-grid-table/src/utils/reconcileColumnState.test.ts" -t "getLeafColumnIds flattens grouped column defs in visual order" 2>&1 || npx jest "superset-frontend/plugins/plugin-chart-ag-grid-table/src/utils/reconcileColumnState.test.ts" -t "getLeafColumnIds flattens grouped column defs in visual order" 2>&1) | tail -50'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"PR-added test 'getLeafColumnIds flattens grouped column defs in visual order' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_pr_added_preserves_saved_order_when_the_current_column_se():
+    """fail_to_pass | PR added test 'preserves saved order when the current column set is unchanged' in 'superset-frontend/plugins/plugin-chart-ag-grid-table/src/utils/reconcileColumnState.test.ts' (vitest_or_jest)"""
+    r = subprocess.run(
+        ["bash", "-lc", '(pnpm vitest run "superset-frontend/plugins/plugin-chart-ag-grid-table/src/utils/reconcileColumnState.test.ts" -t "preserves saved order when the current column set is unchanged" 2>&1 || npx vitest run "superset-frontend/plugins/plugin-chart-ag-grid-table/src/utils/reconcileColumnState.test.ts" -t "preserves saved order when the current column set is unchanged" 2>&1 || pnpm jest "superset-frontend/plugins/plugin-chart-ag-grid-table/src/utils/reconcileColumnState.test.ts" -t "preserves saved order when the current column set is unchanged" 2>&1 || npx jest "superset-frontend/plugins/plugin-chart-ag-grid-table/src/utils/reconcileColumnState.test.ts" -t "preserves saved order when the current column set is unchanged" 2>&1) | tail -50'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"PR-added test 'preserves saved order when the current column set is unchanged' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_pr_added_drops_stale_order_when_a_dynamic_group_by_swaps_():
+    """fail_to_pass | PR added test 'drops stale order when a dynamic group by swaps the dimension column' in 'superset-frontend/plugins/plugin-chart-ag-grid-table/src/utils/reconcileColumnState.test.ts' (vitest_or_jest)"""
+    r = subprocess.run(
+        ["bash", "-lc", '(pnpm vitest run "superset-frontend/plugins/plugin-chart-ag-grid-table/src/utils/reconcileColumnState.test.ts" -t "drops stale order when a dynamic group by swaps the dimension column" 2>&1 || npx vitest run "superset-frontend/plugins/plugin-chart-ag-grid-table/src/utils/reconcileColumnState.test.ts" -t "drops stale order when a dynamic group by swaps the dimension column" 2>&1 || pnpm jest "superset-frontend/plugins/plugin-chart-ag-grid-table/src/utils/reconcileColumnState.test.ts" -t "drops stale order when a dynamic group by swaps the dimension column" 2>&1 || npx jest "superset-frontend/plugins/plugin-chart-ag-grid-table/src/utils/reconcileColumnState.test.ts" -t "drops stale order when a dynamic group by swaps the dimension column" 2>&1) | tail -50'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"PR-added test 'drops stale order when a dynamic group by swaps the dimension column' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")

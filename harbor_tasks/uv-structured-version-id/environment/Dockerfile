@@ -1,4 +1,4 @@
-FROM rust:1-slim
+FROM rust:1.95.0-slim-bookworm
 
 ENV DEBIAN_FRONTEND=noninteractive
 ENV LANG=C.UTF-8

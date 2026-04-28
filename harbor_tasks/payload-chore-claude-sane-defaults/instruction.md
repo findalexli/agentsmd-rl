@@ -4,6 +4,14 @@
 
 The Payload CMS repository (a pnpm monorepo using Turbo) is missing Claude Code integration. Files edited by Claude Code aren't auto-formatted, every common command triggers a permission prompt, and `CLAUDE.md` has gaps and inconsistencies.
 
+## Code Style Requirements
+
+This repository uses the following code quality tools. Your changes must satisfy these tools:
+
+- **Prettier** (`prettier`): Formats markdown, JSON, YAML, JavaScript, and TypeScript files. Run `npx prettier --check <file>` to verify formatting or `npx prettier --write <file>` to auto-format.
+- **ESLint** (`eslint`): Lints JavaScript and TypeScript files. Run via the monorepo's `pnpm lint` command or directly with `eslint <file>`.
+- **sort-package-json**: Sorts `package.json` fields into a canonical order.
+
 ## What needs to be fixed
 
 ### 1. No post-edit formatting hook

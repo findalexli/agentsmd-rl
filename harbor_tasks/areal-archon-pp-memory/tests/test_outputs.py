@@ -319,3 +319,4 @@ def test_ruff_format_check_passes_on_pr_files():
     assert r.returncode == 0, (
         f"ruff format --check failed:\nstdout:\n{r.stdout}\nstderr:\n{r.stderr}"
     )
+

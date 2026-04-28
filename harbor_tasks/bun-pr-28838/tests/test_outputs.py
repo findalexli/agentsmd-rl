@@ -264,12 +264,43 @@ int main() {
 
 
 def test_http_parser_has_rfc_reference():
-    """HttpParser.h must reference RFC 9110 or RFC 9112 for Content-Length handling."""
+    """HttpParser.h must reference RFC 9110 or RFC 9112 in Content-Length handling code.
+
+    Checks the extracted content-length validation section (between the
+    original request-smuggling comment and contentLengthStringLen) for an
+    RFC reference. This ensures the RFC mention is in the new code, not
+    just in pre-existing comments elsewhere in the file.
+    """
     content = _read_file(HTTP_PARSER_PATH)
     assert content, "HttpParser.h not found"
 
-    assert "RFC 9112" in content or "RFC 9110" in content, (
-        "HttpParser.h must reference RFC 9112 or RFC 9110 in comments "
+    # Extract the content-length handling section using the same landmarks
+    # as test_http_parser_content_length_behavior.
+    start_marker = "ought to be handled as an error"
+    start_idx = content.find(start_marker)
+    assert start_idx != -1, (
+        "Could not find request-smuggling comment landmark in HttpParser.h."
+    )
+
+    comment_end = content.find("*/", start_idx)
+    assert comment_end != -1, "Malformed comment block in HttpParser.h"
+    code_start = comment_end + 2
+
+    end_marker = "contentLengthStringLen"
+    end_idx = content.find(end_marker, code_start)
+    assert end_idx != -1, (
+        "Could not find contentLengthStringLen landmark in HttpParser.h."
+    )
+
+    line_start = content.rfind('\n', code_start, end_idx)
+    if line_start == -1:
+        line_start = code_start
+
+    validation_code = content[code_start:line_start].strip()
+
+    assert "RFC" in validation_code, (
+        "The Content-Length validation code must reference RFC 9110 or RFC 9112 "
+        "in a comment. The new handling code should cite the relevant RFC "
         "per instruction requirement #8."
     )
 
@@ -467,6 +498,29 @@ def test_package_json_has_pr_comments_script():
     assert "pr-comments" in script_value or "pr_comments" in script_value, (
         f"pr:comments script should reference pr-comments.ts, got: {script_value}"
     )
+
+
+def test_existing_package_json_scripts_unchanged():
+    """Regression: existing ci:* and watch scripts must remain intact in package.json.
+
+    The gold fix adds a pr:comments entry but must not corrupt or remove
+    any existing script entries. This passes on both base and gold.
+    """
+    content = _read_file(PACKAGE_JSON_PATH)
+    assert content, "package.json not found"
+
+    try:
+        data = json.loads(content)
+    except json.JSONDecodeError:
+        assert False, "package.json is not valid JSON"
+
+    scripts = data.get("scripts", {})
+    assert "ci:errors" in scripts, "Missing existing ci:errors script"
+    assert "ci:logs" in scripts, "Missing existing ci:logs script"
+    assert "ci:watch" in scripts, "Missing existing ci:watch script"
+    assert "watch" in scripts, "Missing existing watch script"
+    assert "bd" in scripts, "Missing existing bd script"
+    assert "build" in scripts, "Missing existing build script"
 
 
 if __name__ == "__main__":

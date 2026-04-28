@@ -25,6 +25,7 @@ SCRIPT = f"{REPO}/scripts/repair-sdist-cargo-lock.py"
 # [pr_diff] fail_to_pass
 def test_rejects_non_tarfile():
     """Script must exit with non-zero status when given a non-tarball file."""
+    assert os.path.exists(SCRIPT), f"Script not found at {SCRIPT}"
     with tempfile.NamedTemporaryFile(suffix=".tar.gz") as f:
         f.write(b"this is not a real tarball at all")
         f.flush()
@@ -35,11 +36,15 @@ def test_rejects_non_tarfile():
         assert r.returncode != 0, (
             "Script should fail on non-tarball input but exited 0"
         )
+        assert "not a valid tar" in r.stderr.decode(), (
+            f"Expected 'not a valid tar' in stderr, got: {r.stderr.decode()}"
+        )
 
 
 # [pr_diff] fail_to_pass
 def test_rejects_missing_cargo_lock():
     """Script must exit with non-zero status when sdist has no Cargo.lock."""
+    assert os.path.exists(SCRIPT), f"Script not found at {SCRIPT}"
     with tempfile.TemporaryDirectory() as tmpdir:
         pkg_dir = os.path.join(tmpdir, "fake_pkg-0.1.0")
         os.makedirs(os.path.join(pkg_dir, "src"))
@@ -59,11 +64,15 @@ def test_rejects_missing_cargo_lock():
         assert r.returncode != 0, (
             "Script should fail when Cargo.lock is missing but exited 0"
         )
+        assert "no Cargo.lock found" in r.stderr.decode(), (
+            f"Expected 'no Cargo.lock found' in stderr, got: {r.stderr.decode()}"
+        )
 
 
 # [pr_diff] fail_to_pass
 def test_rejects_multi_toplevel():
     """Script must error when tarball has multiple top-level directories."""
+    assert os.path.exists(SCRIPT), f"Script not found at {SCRIPT}"
     with tempfile.TemporaryDirectory() as tmpdir:
         for name in ("dir_alpha", "dir_beta"):
             os.makedirs(os.path.join(tmpdir, name))
@@ -81,11 +90,15 @@ def test_rejects_multi_toplevel():
         assert r.returncode != 0, (
             "Script should fail on tarball with multiple top-level dirs"
         )
+        assert "expected one top-level directory" in r.stderr.decode(), (
+            f"Expected 'expected one top-level directory' in stderr, got: {r.stderr.decode()}"
+        )
 
 
 # [pr_diff] fail_to_pass
 def test_repairs_and_repacks_sdist():
     """Script prunes stale entries from Cargo.lock and repacks the tarball."""
+    assert os.path.exists(SCRIPT), f"Script not found at {SCRIPT}"
     with tempfile.TemporaryDirectory() as tmpdir:
         # Create a minimal Cargo project
         pkg_dir = os.path.join(tmpdir, "test_crate-0.1.0")
@@ -140,6 +153,7 @@ def test_repairs_and_repacks_sdist():
 # [pr_diff] fail_to_pass
 def test_cli_argument_parsing():
     """Script provides a proper CLI with --help."""
+    assert os.path.exists(SCRIPT), f"Script not found at {SCRIPT}"
     r = subprocess.run(
         ["python3", SCRIPT, "--help"],
         capture_output=True, timeout=10,
@@ -158,8 +172,20 @@ def test_cli_argument_parsing():
 # [agent_config] fail_to_pass — AGENTS.md:16 @ c5977cc4ae4cd1cf8b97c7193e927f7b2a9c4e87
 def test_top_level_imports():
     """All imports in the repair script must be at module level (AGENTS.md line 16)."""
+    assert os.path.exists(SCRIPT), f"Script not found at {SCRIPT}"
     source = Path(SCRIPT).read_text()
+    assert len(source.strip()) > 0, "Script file is empty"
     tree = ast.parse(source)
+
+    top_level_imports = []
+    for node in ast.iter_child_nodes(tree):
+        if isinstance(node, (ast.Import, ast.ImportFrom)):
+            top_level_imports.append(node)
+
+    assert len(top_level_imports) > 0, (
+        "Script must have at least one top-level import statement "
+        "(AGENTS.md requires top-level imports)"
+    )
 
     for node in ast.walk(tree):
         if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):

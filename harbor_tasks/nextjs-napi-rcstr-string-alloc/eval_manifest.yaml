@@ -16,8 +16,7 @@ checks:
 - id: napi_issue_fields_rcstr
   type: fail_to_pass
   origin: pr_diff
-  description: NapiIssue.file_path and .documentation_link use RcStr; severity/stage
-    remain String
+  description: NapiIssue.file_path and .documentation_link use RcStr; severity/stage remain String
 - id: napi_additional_issue_source_description_rcstr
   type: fail_to_pass
   origin: pr_diff
@@ -33,23 +32,19 @@ checks:
 - id: napi_route_pathname_rcstr
   type: fail_to_pass
   origin: pr_diff
-  description: NapiRoute.pathname uses RcStr, from_route accepts RcStr, caller uses
-    .clone()
+  description: NapiRoute.pathname uses RcStr, from_route accepts RcStr, caller uses .clone()
 - id: from_impls_avoid_allocation
   type: fail_to_pass
   origin: pr_diff
-  description: From impls for NapiIssue, NapiDiagnostic, NapiSource avoid allocating
-    conversions
+  description: From impls for NapiIssue, NapiDiagnostic, NapiSource avoid allocating conversions
 - id: napi_bindings_compile
   type: fail_to_pass
   origin: pr_diff
-  description: Modified next-napi-bindings crate compiles after RcStr changes (behavioral
-    check)
+  description: Modified next-napi-bindings crate compiles after RcStr changes (behavioral check)
 - id: helper_structs_preserved
   type: pass_to_pass
   origin: pr_diff
-  description: Helper structs NapiIssueSource, NapiSourcePos, NapiIssueSourceRange
-    still exist
+  description: Helper structs NapiIssueSource, NapiSourcePos, NapiIssueSourceRange still exist
 - id: rcstr_import_sorted
   type: fail_to_pass
   origin: agent_config
@@ -102,28 +97,59 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Cargo.toml for next-napi-bindings is valid TOML with expected structure
+- id: test_ci_thank_you__build_pnpm
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: thank you, build / '
+- id: test_ci_thank_you__build_set_preview_version
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: thank you, build / Set preview version'
+- id: test_ci_thank_you__build_pnpm
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: thank you, build / '
+- id: test_ci_build_wasm_pnpm
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: build-wasm / '
+- id: test_ci_build_wasm_set_preview_version
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: build-wasm / Set preview version'
+- id: test_ci_build_wasm_pnpm
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: build-wasm / '
+- id: test_ci_build_pnpm
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: build / '
+- id: test_ci_build_set_preview_version
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: build / Set preview version'
+- id: test_ci_build_pnpm
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: build / '
+- id: test_ci_thank_you__build_pnpm_2
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: thank you, build / '
 rubric:
 - rule: Rust code changes follow cargo fmt conventions with ASCII sort order for imports
-  reference: The gold solution adds `use turbo_rcstr::RcStr;` imports in ASCII sort order
-    (uppercase R before lowercase t) in endpoint.rs (between `use tracing` and `use turbo_tasks`)
-    and utils.rs (between `use serde` and `use turbo_tasks`), matching cargo fmt conventions.
+  reference: The gold solution adds `use turbo_rcstr::RcStr;` imports in ASCII sort order (uppercase R before lowercase t) in endpoint.rs (between `use tracing` and `use turbo_tasks`) and utils.rs (between `use serde` and `use turbo_tasks`), matching cargo fmt conventions.
   source:
     path: crates/next-napi-bindings/src/next_api/endpoint.rs
-    lines: "23"
+    lines: '23'
     commit: d84e3bb56ecfdd9ff6ab5ee479e85be2780b8ba9
 distractors:
-- rule: Start `pnpm --filter=next dev` in a separate terminal session before making
-    edits to Next.js source.
+- rule: Start `pnpm --filter=next dev` in a separate terminal session before making edits to Next.js source.
   collision_type: scope_ambiguity
-  why_distracting: The rule instructs starting the Next.js dev server for iterative
-    development. However, this task involves refactoring Rust NAPI bindings where
-    running the JS dev server is unnecessary and could distract the agent with background
-    process management.
+  why_distracting: The rule instructs starting the Next.js dev server for iterative development. However, this task involves refactoring Rust NAPI bindings where running the JS dev server is unnecessary and could distract the agent with background process management.
   severity: low
   source:
     path: AGENTS.md
     lines: 72-76
-hierarchy_analysis: The config hierarchy consists of a single level with identical
-  symlinked files (`AGENTS.md` and `CLAUDE.md`). The rules are generic monorepo guidelines
-  (build commands, dev server instructions) that do not specifically guide or conflict
-  with the Rust NAPI refactoring task.
+hierarchy_analysis: The config hierarchy consists of a single level with identical symlinked files (`AGENTS.md` and `CLAUDE.md`). The rules are generic monorepo guidelines (build commands, dev server instructions) that do not specifically guide or conflict with the Rust NAPI refactoring task.

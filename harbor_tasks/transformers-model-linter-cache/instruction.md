@@ -48,6 +48,10 @@ Update the following files to reference `make typing` instead of `make style` fo
 
 Add an entry to `.gitignore` that excludes the model linter cache file. The entry should match a `.json` file containing `"cache"` in its name, or reference `check_modeling_structure` and `"cache"`.
 
+## Code Style Requirements
+
+- **ruff**: The modified `utils/check_modeling_structure.py` must pass `ruff check` and `ruff format --check`. Use `ruff` for all formatting and linting. No bare `# type: ignore` comments (always specify the error code, e.g. `# type: ignore[attr-defined]`).
+
 ## Relevant Files
 
 - `utils/check_modeling_structure.py` — the model structure linter (main changes)

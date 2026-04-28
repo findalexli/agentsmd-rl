@@ -69,23 +69,24 @@ unchanged. In particular, a plain final-class subclass like
 ## Where to look
 
 The panic originates from the per-base lint loop inside
-`check_static_class_definitions` (`crates/ty_python_semantic/src/types/infer/builder/post_inference/static_class.rs`).
+`check_static_class_definitions` (in the static class inference builder).
 The loop iterates over the class's *expanded* bases list (which unpacks
 fixed-length starred tuples), but the diagnostic source span is fetched
 by indexing back into the un-expanded `class_node.bases()` AST list with
 the same loop index. When a starred tuple has been unpacked, the two
 lists have different lengths, and the index is out of bounds.
 
-A previous, closely related panic in this file's MRO error reporting
-arms (`StaticMroErrorKind::DuplicateBases` / `InvalidBases`) has already
-been fixed in this codebase. Reading how those arms now obtain a source
-span for an entry of the *expanded* base list is a useful starting
-point — the right shape of fix exists elsewhere in the same file.
+A previous, closely related panic in the MRO error reporting arms of
+the same function (`StaticMroErrorKind::DuplicateBases` / `InvalidBases`)
+has already been fixed in this codebase. Reading how those arms now
+obtain a source span for an entry of the *expanded* base list is a
+useful starting point — the right shape of fix exists elsewhere in the
+same function.
 
 ## Testing
 
-The repository's mdtest suite covers per-base diagnostics in
-`crates/ty_python_semantic/resources/mdtest/mro.md`. Add coverage for the
+The repository's mdtest suite covers per-base diagnostics in the MRO
+diagnostics test file. Add coverage for the
 starred-tuple cases above to that file (under a sensible new section) so
 that the mdtest framework asserts the diagnostics are emitted without a
 panic. Per AGENTS.md:

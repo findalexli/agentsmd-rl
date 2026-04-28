@@ -594,21 +594,25 @@ def test_repo_bindings_dir_structure():
 
 # [pr_diff] fail_to_pass
 def test_fix_prevents_crash_on_invalid_domurl():
-    """The fix must contain a control-flow guard to handle exceptions.
+    """The fix must guard jsCast by checking throwScope for pending exceptions.
 
     Without the fix, accessing server.url with an invalid URL causes a segfault.
-    With the fix, a control-flow guard prevents reaching jsCast on an invalid
-    value, allowing the error to propagate gracefully.
+    The guard between toJSNewlyCreated and jsCast must reference throwScope
+    (the JSC exception scope variable) to properly detect and propagate
+    exceptions from DOMURL creation failures.
     """
-    # Verify the guard exists by checking control flow can diverge
     region = _extract_func_region()
     after = _between_tojs_and_jscast(region)
 
-    # The guard must have proper JSC exception-handling structure
     after_stripped = after.strip()
     assert after_stripped, "No statements between toJSNewlyCreated and jsCast"
     assert _guard_has_proper_structure(after_stripped), (
         "Guard lacks proper JSC exception-handling structure."
+    )
+    # Guard must reference throwScope — the JSC binding exception scope variable
+    assert "throwScope" in after_stripped, (
+        "Guard does not reference throwScope. "
+        "The guard must use the throwScope variable to detect pending exceptions."
     )
 
 

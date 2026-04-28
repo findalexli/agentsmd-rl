@@ -9,6 +9,7 @@ Each test function maps 1:1 to a check in eval_manifest.yaml.
 
 import subprocess
 import json
+import os
 import re
 from pathlib import Path
 
@@ -447,3 +448,25 @@ def test_repo_syntax_skill_discovery():
         capture_output=True, text=True, timeout=30, cwd=REPO,
     )
     assert r.returncode == 0, f"Syntax check failed:\n{r.stderr}"
+
+# === CI-mined tests (taskforge.ci_check_miner) ===
+
+# [repo_tests] pass_to_pass — scoped to opencode package (the only package touched by the PR)
+def test_ci_unit_run_unit_tests():
+    """pass_to_pass | CI job 'unit' → step 'Run unit tests' (scoped to packages/opencode)"""
+    r = subprocess.run(
+        ["bash", "-lc", "bun --cwd packages/opencode test test/skill/ test/tool/skill.test.ts"], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"Unit tests failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-2000:]}\nstderr: {r.stderr[-2000:]}")
+
+# [repo_tests] pass_to_pass
+def test_ci_typecheck_run_typecheck():
+    """pass_to_pass | CI job 'typecheck' → step 'Run typecheck'"""
+    r = subprocess.run(
+        ["bash", "-lc", "bun typecheck"], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"Typecheck failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-2000:]}\nstderr: {r.stderr[-2000:]}")

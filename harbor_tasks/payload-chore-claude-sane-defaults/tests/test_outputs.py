@@ -332,3 +332,13 @@ def test_repo_turbo_json_valid():
     data = json.loads(turbo_json.read_text())
     assert isinstance(data, dict), "turbo.json must be an object"
     assert "tasks" in data or "pipeline" in data, "turbo.json must have tasks or pipeline"
+
+# === CI-mined tests (taskforge.ci_check_miner) ===
+def test_ci_lint_lint():
+    """pass_to_pass | CI job 'lint' → scoped lint on translations package"""
+    r = subprocess.run(
+        ["bash", "-lc", 'pnpm lint --filter=@payloadcms/translations -- --quiet'],
+        cwd=REPO, capture_output=True, text=True, timeout=120)
+    assert r.returncode == 0, (
+        f"CI step 'Lint' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")

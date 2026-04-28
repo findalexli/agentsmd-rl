@@ -16,7 +16,7 @@ The `createTable()` function in `packages/data-table/src/lib/table.ts` produces 
 
 1. Table objects returned by `createTable()` should work with `parseSafe()` / `parse()` from `remix/data-schema`. This means the table object must implement the Standard Schema interface (see https://standardschema.dev/ for the spec). In practice, this requires a `~standard` property containing at least a `version` field (integer) and a `validate` function.
 
-2. The validation semantics must be consistent between the write path and the Standard Schema `validate` method: partial objects (omitting non-required columns) should be accepted by both; unknown columns (columns not defined in the table's schema) should be rejected by both; provided values should be parsed through the column schemas in both paths.
+2. The validation semantics must be consistent between the write path and the Standard Schema `validate` method: partial objects (omitting non-required columns) should be accepted by both; unknown columns (columns not defined in the table's schema) should be rejected by both; provided values should be parsed through the column schemas in both paths. The shared validation between these two paths should be available through a `validatePartialRow` function exported from `table.ts`.
 
 3. The `timestampSchema()` helper in `table.ts` should use `createSchema` from `@remix-run/data-schema` rather than manually constructing the Standard Schema object structure by hand. This keeps the helper aligned with how other column schemas are built.
 
@@ -25,6 +25,10 @@ The `createTable()` function in `packages/data-table/src/lib/table.ts` produces 
 5. After making code changes, update the following documentation:
    - **AGENTS.md**: Add a guideline about cross-package boundaries. The rule should state that re-exporting types from other packages should be avoided, and that types should be imported directly from the owning package.
    - **packages/data-table/README.md**: Document Standard Schema compatibility. Explain that `parseSafe` / `parse` from `remix/data-schema` can be used with table objects. Explain that partial objects are accepted (non-required columns may be omitted) and that unknown columns are rejected.
+
+## Code Style Requirements
+
+This project uses ESLint for linting and Prettier for formatting. Run `pnpm lint` to check for lint errors and `pnpm format:check` to verify formatting before submitting any changes.
 
 ## File Locations
 

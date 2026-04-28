@@ -1,13 +1,10 @@
 """Verifier for OpenHands PR #14013: hide All toggle in SaaS LLM settings."""
-import json
 import os
 import subprocess
 from pathlib import Path
 
 REPO = Path("/workspace/OpenHands")
 FRONTEND = REPO / "frontend"
-SDK_SECTION = FRONTEND / "src/components/features/settings/sdk-settings/sdk-section-page.tsx"
-LLM_ROUTE = FRONTEND / "src/routes/llm-settings.tsx"
 
 
 def _run(cmd, cwd=FRONTEND, timeout=900, env_extra=None):
@@ -69,9 +66,9 @@ def test_f2p_saas_keeps_advanced_hides_all():
     )
 
 
-# ---------- p2p (pass-to-pass): repo CI keeps working ----------
+# ---------- f2p: whole test files must pass (new tests pass + no regressions) ----------
 
-def test_p2p_full_llm_settings_test_file():
+def test_f2p_full_llm_settings_test_file():
     """Whole llm-settings.test.tsx passes (repo's existing route tests must not regress)."""
     r = _run([
         "npx", "vitest", "run",
@@ -84,7 +81,7 @@ def test_p2p_full_llm_settings_test_file():
     )
 
 
-def test_p2p_full_sdk_section_page_test_file():
+def test_f2p_full_sdk_section_page_test_file():
     """Whole sdk-section-page.test.tsx passes (repo's existing component tests must not regress)."""
     r = _run([
         "npx", "vitest", "run",
@@ -96,6 +93,8 @@ def test_p2p_full_sdk_section_page_test_file():
         f"STDERR (tail):\n{r.stderr[-1500:]}"
     )
 
+
+# ---------- p2p (pass-to-pass): regression guard ----------
 
 def test_p2p_build():
     """The repo's frontend build (`npm run build`) succeeds — required by AGENTS.md."""

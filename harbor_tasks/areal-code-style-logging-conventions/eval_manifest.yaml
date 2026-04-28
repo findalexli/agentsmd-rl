@@ -1,0 +1,76 @@
+version: '2.0'
+source:
+  repo: inclusionAI/AReaL
+  pr: 908
+  base_commit: dbc49386907b05222af70cc19a3b1dbf434e1c32
+  merge_commit: e82dcbf4c8590d793ea8123cfd3a99eedbd1d4fa
+task:
+  kind: markdown_authoring
+checks:
+- id: test_per_rank_logger_convention
+  type: fail_to_pass
+  origin: static
+  description: Per-rank logger format convention present in code-style.md
+- id: test_register_new_loggers_instruction
+  type: fail_to_pass
+  origin: static
+  description: Register new loggers instruction present in code-style.md
+- id: test_color_scheme_table
+  type: fail_to_pass
+  origin: static
+  description: Color Scheme table present in code-style.md
+- id: test_color_scheme_includes_purple_for_rl
+  type: fail_to_pass
+  origin: static
+  description: Purple row for RL-specific loggers in Color Scheme table
+- id: test_existing_logging_convention_preserved
+  type: pass_to_pass
+  origin: static
+  description: Existing PascalCase naming convention preserved in code-style.md
+config_edits:
+- path: .claude/rules/code-style.md
+  tier: 1
+  gold_added: "- For per-rank loggers: `[{Component} Rank {N}]` (e.g., `[FSDPEngine Rank 0]`)\n- Register new loggers in `areal/utils/logging.py` (`LOGGER_COLORS_EXACT` or\n  `LOGGER_PATTERNS`)\n- Test colors: `python -m areal.utils.logging`\n\n**Color Scheme:**\n\n| Color      | Category                               | Examples                           |\n| ---------- | -------------------------------------- | ---------------------------------- |\n| blue       | Infrastructure (Schedulers, Launchers) | `LocalScheduler`, `RayLauncher`    |\n| white      | Orchestration (Controllers, RPC)       | `TrainController`, `SGLangWrapper` |\n| purple     | RL-specific (Workflows, Rewards)       | `RLVRWorkflow`, `GSM8KReward`      |\n| green      | Data/Metrics (Stats, Dataset)          | `StatsLogger`, `RLTrainer`         |\n| cyan       | Compute backends (Engines, Platforms)  | `FSDPEngine`, `CUDAPlatform`       |\n| yellow/red | Warning/Error levels (override)        | Any logger at WARNING+             |"
+  gold_removed: ''
+rubric:
+- rule: Use `areal.utils.logging.getLogger(name)` with PascalCase descriptive name, NOT `print` or stdlib `logging`
+  source:
+    path: .claude/rules/code-style.md
+    lines: '11'
+    commit: dbc49386907b05222af70cc19a3b1dbf434e1c32
+  evidence: Gold diff extends the existing Logging section with per-rank logger format convention and color scheme table, following the existing PascalCase naming convention
+  category: naming
+  verification: semantic_diff
+- rule: When adding a new logger, register it in `areal/utils/logging.py` under `LOGGER_COLORS_EXACT` or `LOGGER_PATTERNS` to ensure consistent coloring.
+  source:
+    path: CONTRIBUTING.md
+    lines: '172'
+    commit: dbc49386907b05222af70cc19a3b1dbf434e1c32
+  evidence: Gold diff adds a corresponding instruction in code-style.md to register new loggers in areal/utils/logging.py, preserving this rule after it was removed from CONTRIBUTING.md
+  category: architecture
+  verification: semantic_diff
+- rule: Follow existing code patterns in the same module
+  source:
+    path: CLAUDE.md
+    lines: '35'
+    commit: dbc49386907b05222af70cc19a3b1dbf434e1c32
+  evidence: 'Gold diff extends the Logging section of code-style.md following the existing format: bullet-point rules followed by concrete examples'
+  category: style
+  verification: semantic_diff
+distractors:
+- rule: Use the [PR template](.github/PULL_REQUEST_TEMPLATE.md) and complete the checklist
+  source:
+    path: CONTRIBUTING.md
+    lines: '136'
+    commit: dbc49386907b05222af70cc19a3b1dbf434e1c32
+  collision_type: rule_conflict
+  why_distracting: This rule was removed from CONTRIBUTING.md by the gold diff; agents reading the base CONTRIBUTING.md may follow obsolete PR process rules
+  severity: medium
+- rule: Let AI review first before requesting human reviewers
+  source:
+    path: CONTRIBUTING.md
+    lines: '140'
+    commit: dbc49386907b05222af70cc19a3b1dbf434e1c32
+  collision_type: rule_conflict
+  why_distracting: This PR review process rule was removed from CONTRIBUTING.md; following it produces work inconsistent with the simplified contributing guide
+  severity: medium

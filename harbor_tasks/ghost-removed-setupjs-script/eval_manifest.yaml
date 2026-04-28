@@ -8,7 +8,7 @@ checks:
 - id: test_repo_git_valid
   type: pass_to_pass
   origin: repo_tests
-  description: Repo has valid git structure and HEAD commit
+  description: Repo has valid git structure and HEAD at expected commit
 - id: test_repo_gitmodules_valid
   type: pass_to_pass
   origin: repo_tests
@@ -105,52 +105,42 @@ checks:
   type: fail_to_pass
   origin: pr_diff
   description: docs/README.md must use yarn reset:data instead of knex-migrator
+- id: test_node_package_parseable
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: Node.js validates package.json is parseable'
 rubric:
-- rule: docs/README.md setup section must use concise description "Install dependencies
-    and initialize submodules" instead of the verbose multi-line comment
+- rule: docs/README.md setup section must use concise description "Install dependencies and initialize submodules" instead of the verbose multi-line comment
   source:
     path: docs/README.md
     lines: 30-35
     commit: c1e86e6dd150e7ab1a226cfce8f73bc4ee441787
-  evidence: The gold solution updates docs/README.md to replace the verbose setup
-    description with "Install dependencies and initialize submodules"
-- rule: docs/README.md yarn dev description must mention frontend dev servers in addition
-    to Docker backend services
+  evidence: The gold solution updates docs/README.md to replace the verbose setup description with "Install dependencies and initialize submodules"
+- rule: docs/README.md yarn dev description must mention frontend dev servers in addition to Docker backend services
   source:
     path: docs/README.md
     lines: 38-42
     commit: c1e86e6dd150e7ab1a226cfce8f73bc4ee441787
-  evidence: The gold solution updates docs/README.md to describe yarn dev as "Start
-    development (runs Docker backend services + frontend dev servers)"
-- rule: docs/README.md troubleshooting section must use "yarn reset:data" instead
-    of "yarn knex-migrator reset" and "yarn knex-migrator init"
+  evidence: The gold solution updates docs/README.md to describe yarn dev as "Start development (runs Docker backend services + frontend dev servers)"
+- rule: docs/README.md troubleshooting section must use "yarn reset:data" instead of "yarn knex-migrator reset" and "yarn knex-migrator init"
   source:
     path: docs/README.md
     lines: 53-62
     commit: c1e86e6dd150e7ab1a226cfce8f73bc4ee441787
-  evidence: The gold solution replaces the obsolete knex-migrator commands with "yarn
-    reset:data" in docs/README.md
+  evidence: The gold solution replaces the obsolete knex-migrator commands with "yarn reset:data" in docs/README.md
 distractors:
 - rule: '`yarn knex-migrator migrate` runs database migrations.'
   collision_type: scope_ambiguity
-  why_distracting: The agent might see `yarn knex-migrator migrate` and assume it
-    should replace the old `knex-migrator` commands with this one, but the prompt
-    specifically asks for the database reset command, which is `yarn reset:data`.
+  why_distracting: The agent might see `yarn knex-migrator migrate` and assume it should replace the old `knex-migrator` commands with this one, but the prompt specifically asks for the database reset command, which is `yarn reset:data`.
   severity: medium
   source:
     path: AGENTS.md
     lines: '64'
-- rule: Create a database migration to add a table, add columns to an existing table,
-    add a setting, or otherwise change the schema of Ghost's MySQL database.
+- rule: Create a database migration to add a table, add columns to an existing table, add a setting, or otherwise change the schema of Ghost's MySQL database.
   source:
     path: .claude/skills/create-database-migration/SKILL.md
     lines: 1-5
   collision_type: scope_ambiguity
-  why_distracting: The task mentions that the old setup initialized the database and
-    used manual knex-migrator commands. An agent might mistakenly activate this skill
-    and attempt to modify database schemas or migration files instead of just updating
-    the documentation and removing the obsolete script.
+  why_distracting: The task mentions that the old setup initialized the database and used manual knex-migrator commands. An agent might mistakenly activate this skill and attempt to modify database schemas or migration files instead of just updating the documentation and removing the obsolete script.
   severity: low
-hierarchy_analysis: The repository contains identical `AGENTS.md` and `CLAUDE.md`
-  files at the root level. They serve as the source of truth for the current development
-  workflow commands, which the agent must reference to correctly update the documentation.
+hierarchy_analysis: The repository contains identical `AGENTS.md` and `CLAUDE.md` files at the root level. They serve as the source of truth for the current development workflow commands, which the agent must reference to correctly update the documentation.

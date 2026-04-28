@@ -412,3 +412,185 @@ def test_repo_test_types():
         ["npm", "run", "test-types"], capture_output=True, text=True, timeout=300, cwd=REPO,
     )
     assert r.returncode == 0, f"Test types check failed:\n{r.stderr[-1000:]}"
+
+# === CI-mined tests (taskforge.ci_check_miner) ===
+def test_ci_build_playwright_driver_npm():
+    """pass_to_pass | CI job 'build-playwright-driver' → step ''"""
+    r = subprocess.run(
+        ["bash", "-lc", 'npm ci'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step '' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_build_playwright_driver_npm_2():
+    """pass_to_pass | CI job 'build-playwright-driver' → step ''"""
+    r = subprocess.run(
+        ["bash", "-lc", 'npm run build'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step '' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_lint_snippets_pip():
+    """pass_to_pass | CI job 'Lint snippets' → step ''"""
+    r = subprocess.run(
+        ["bash", "-lc", 'pip install -r utils/doclint/linting-code-snippets/python/requirements.txt'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step '' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_lint_snippets_mvn():
+    """pass_to_pass | CI job 'Lint snippets' → step ''"""
+    r = subprocess.run(
+        ["bash", "-lc", 'mvn package'], cwd=os.path.join(REPO, 'utils/doclint/linting-code-snippets/java'),
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step '' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_lint_snippets_node():
+    """pass_to_pass | CI job 'Lint snippets' → step ''"""
+    r = subprocess.run(
+        ["bash", "-lc", 'node utils/doclint/linting-code-snippets/cli.js'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step '' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_docs___lint_npx():
+    """pass_to_pass | CI job 'docs & lint' → step ''"""
+    r = subprocess.run(
+        ["bash", "-lc", 'npx playwright install --with-deps'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step '' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_docs___lint_npm():
+    """pass_to_pass | CI job 'docs & lint' → step ''"""
+    r = subprocess.run(
+        ["bash", "-lc", 'npm run lint'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step '' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_docs___lint_audit_prod_npm_dependencies():
+    """pass_to_pass | CI job 'docs & lint' → step 'Audit prod NPM dependencies'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'node utils/check_audit.js'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Audit prod NPM dependencies' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+# === PR-added f2p tests (taskforge.test_patch_miner) ===
+def test_pr_added_route_list_shows_no_routes_when_empty():
+    """fail_to_pass | PR added test 'route-list shows no routes when empty' in 'tests/mcp/cli-route.spec.ts' (vitest_or_jest)"""
+    r = subprocess.run(
+        ["bash", "-lc", '(pnpm vitest run "tests/mcp/cli-route.spec.ts" -t "route-list shows no routes when empty" 2>&1 || npx vitest run "tests/mcp/cli-route.spec.ts" -t "route-list shows no routes when empty" 2>&1 || pnpm jest "tests/mcp/cli-route.spec.ts" -t "route-list shows no routes when empty" 2>&1 || npx jest "tests/mcp/cli-route.spec.ts" -t "route-list shows no routes when empty" 2>&1) | tail -50'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"PR-added test 'route-list shows no routes when empty' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_pr_added_route_adds_a_mock_and_route_list_shows_it():
+    """fail_to_pass | PR added test 'route adds a mock and route-list shows it' in 'tests/mcp/cli-route.spec.ts' (vitest_or_jest)"""
+    r = subprocess.run(
+        ["bash", "-lc", '(pnpm vitest run "tests/mcp/cli-route.spec.ts" -t "route adds a mock and route-list shows it" 2>&1 || npx vitest run "tests/mcp/cli-route.spec.ts" -t "route adds a mock and route-list shows it" 2>&1 || pnpm jest "tests/mcp/cli-route.spec.ts" -t "route adds a mock and route-list shows it" 2>&1 || npx jest "tests/mcp/cli-route.spec.ts" -t "route adds a mock and route-list shows it" 2>&1) | tail -50'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"PR-added test 'route adds a mock and route-list shows it' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_pr_added_route_with_content_type():
+    """fail_to_pass | PR added test 'route with content-type' in 'tests/mcp/cli-route.spec.ts' (vitest_or_jest)"""
+    r = subprocess.run(
+        ["bash", "-lc", '(pnpm vitest run "tests/mcp/cli-route.spec.ts" -t "route with content-type" 2>&1 || npx vitest run "tests/mcp/cli-route.spec.ts" -t "route with content-type" 2>&1 || pnpm jest "tests/mcp/cli-route.spec.ts" -t "route with content-type" 2>&1 || npx jest "tests/mcp/cli-route.spec.ts" -t "route with content-type" 2>&1) | tail -50'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"PR-added test 'route with content-type' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_pr_added_route_with_header():
+    """fail_to_pass | PR added test 'route with header' in 'tests/mcp/cli-route.spec.ts' (vitest_or_jest)"""
+    r = subprocess.run(
+        ["bash", "-lc", '(pnpm vitest run "tests/mcp/cli-route.spec.ts" -t "route with header" 2>&1 || npx vitest run "tests/mcp/cli-route.spec.ts" -t "route with header" 2>&1 || pnpm jest "tests/mcp/cli-route.spec.ts" -t "route with header" 2>&1 || npx jest "tests/mcp/cli-route.spec.ts" -t "route with header" 2>&1) | tail -50'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"PR-added test 'route with header' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_pr_added_unroute_removes_specific_route():
+    """fail_to_pass | PR added test 'unroute removes specific route' in 'tests/mcp/cli-route.spec.ts' (vitest_or_jest)"""
+    r = subprocess.run(
+        ["bash", "-lc", '(pnpm vitest run "tests/mcp/cli-route.spec.ts" -t "unroute removes specific route" 2>&1 || npx vitest run "tests/mcp/cli-route.spec.ts" -t "unroute removes specific route" 2>&1 || pnpm jest "tests/mcp/cli-route.spec.ts" -t "unroute removes specific route" 2>&1 || npx jest "tests/mcp/cli-route.spec.ts" -t "unroute removes specific route" 2>&1) | tail -50'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"PR-added test 'unroute removes specific route' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_pr_added_unroute_removes_all_routes():
+    """fail_to_pass | PR added test 'unroute removes all routes' in 'tests/mcp/cli-route.spec.ts' (vitest_or_jest)"""
+    r = subprocess.run(
+        ["bash", "-lc", '(pnpm vitest run "tests/mcp/cli-route.spec.ts" -t "unroute removes all routes" 2>&1 || npx vitest run "tests/mcp/cli-route.spec.ts" -t "unroute removes all routes" 2>&1 || pnpm jest "tests/mcp/cli-route.spec.ts" -t "unroute removes all routes" 2>&1 || npx jest "tests/mcp/cli-route.spec.ts" -t "unroute removes all routes" 2>&1) | tail -50'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"PR-added test 'unroute removes all routes' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_pr_added_browser_route_mocks_response_with_JSON_body():
+    """fail_to_pass | PR added test 'browser_route mocks response with JSON body' in 'tests/mcp/route.spec.ts' (vitest_or_jest)"""
+    r = subprocess.run(
+        ["bash", "-lc", '(pnpm vitest run "tests/mcp/route.spec.ts" -t "browser_route mocks response with JSON body" 2>&1 || npx vitest run "tests/mcp/route.spec.ts" -t "browser_route mocks response with JSON body" 2>&1 || pnpm jest "tests/mcp/route.spec.ts" -t "browser_route mocks response with JSON body" 2>&1 || npx jest "tests/mcp/route.spec.ts" -t "browser_route mocks response with JSON body" 2>&1) | tail -50'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"PR-added test 'browser_route mocks response with JSON body' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_pr_added_browser_route_mocks_response_with_custom_status():
+    """fail_to_pass | PR added test 'browser_route mocks response with custom status' in 'tests/mcp/route.spec.ts' (vitest_or_jest)"""
+    r = subprocess.run(
+        ["bash", "-lc", '(pnpm vitest run "tests/mcp/route.spec.ts" -t "browser_route mocks response with custom status" 2>&1 || npx vitest run "tests/mcp/route.spec.ts" -t "browser_route mocks response with custom status" 2>&1 || pnpm jest "tests/mcp/route.spec.ts" -t "browser_route mocks response with custom status" 2>&1 || npx jest "tests/mcp/route.spec.ts" -t "browser_route mocks response with custom status" 2>&1) | tail -50'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"PR-added test 'browser_route mocks response with custom status' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_pr_added_browser_route_modifies_request_headers():
+    """fail_to_pass | PR added test 'browser_route modifies request headers' in 'tests/mcp/route.spec.ts' (vitest_or_jest)"""
+    r = subprocess.run(
+        ["bash", "-lc", '(pnpm vitest run "tests/mcp/route.spec.ts" -t "browser_route modifies request headers" 2>&1 || npx vitest run "tests/mcp/route.spec.ts" -t "browser_route modifies request headers" 2>&1 || pnpm jest "tests/mcp/route.spec.ts" -t "browser_route modifies request headers" 2>&1 || npx jest "tests/mcp/route.spec.ts" -t "browser_route modifies request headers" 2>&1) | tail -50'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"PR-added test 'browser_route modifies request headers' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_pr_added_browser_route_list_shows_active_routes():
+    """fail_to_pass | PR added test 'browser_route_list shows active routes' in 'tests/mcp/route.spec.ts' (vitest_or_jest)"""
+    r = subprocess.run(
+        ["bash", "-lc", '(pnpm vitest run "tests/mcp/route.spec.ts" -t "browser_route_list shows active routes" 2>&1 || npx vitest run "tests/mcp/route.spec.ts" -t "browser_route_list shows active routes" 2>&1 || pnpm jest "tests/mcp/route.spec.ts" -t "browser_route_list shows active routes" 2>&1 || npx jest "tests/mcp/route.spec.ts" -t "browser_route_list shows active routes" 2>&1) | tail -50'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"PR-added test 'browser_route_list shows active routes' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_pr_added_browser_unroute_removes_specific_route():
+    """fail_to_pass | PR added test 'browser_unroute removes specific route' in 'tests/mcp/route.spec.ts' (vitest_or_jest)"""
+    r = subprocess.run(
+        ["bash", "-lc", '(pnpm vitest run "tests/mcp/route.spec.ts" -t "browser_unroute removes specific route" 2>&1 || npx vitest run "tests/mcp/route.spec.ts" -t "browser_unroute removes specific route" 2>&1 || pnpm jest "tests/mcp/route.spec.ts" -t "browser_unroute removes specific route" 2>&1 || npx jest "tests/mcp/route.spec.ts" -t "browser_unroute removes specific route" 2>&1) | tail -50'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"PR-added test 'browser_unroute removes specific route' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_pr_added_browser_unroute_removes_all_routes():
+    """fail_to_pass | PR added test 'browser_unroute removes all routes' in 'tests/mcp/route.spec.ts' (vitest_or_jest)"""
+    r = subprocess.run(
+        ["bash", "-lc", '(pnpm vitest run "tests/mcp/route.spec.ts" -t "browser_unroute removes all routes" 2>&1 || npx vitest run "tests/mcp/route.spec.ts" -t "browser_unroute removes all routes" 2>&1 || pnpm jest "tests/mcp/route.spec.ts" -t "browser_unroute removes all routes" 2>&1 || npx jest "tests/mcp/route.spec.ts" -t "browser_unroute removes all routes" 2>&1) | tail -50'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"PR-added test 'browser_unroute removes all routes' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")

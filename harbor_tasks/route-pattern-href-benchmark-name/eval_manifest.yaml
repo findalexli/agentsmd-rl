@@ -1,0 +1,103 @@
+version: '2.0'
+source:
+  repo: remix-run/remix
+  pr: 11019
+  base_commit: a2245eab8257758f5e323a5a4e3c89386568e3bb
+  merge_commit: 96c3f0c095dc8de98543af55df0b9400656f961b
+task:
+  kind: code_fix
+checks:
+- id: test_bench_name_is_git_derived
+  type: fail_to_pass
+  origin: pr_diff
+  description: Benchmark name is computed from git branch/commit info, not hardcoded 'bench'
+- id: test_benchmark_names_are_git_derived
+  type: fail_to_pass
+  origin: pr_diff
+  description: Running vitest bench produces git-derived benchmark names (not literal 'bench') in output summary
+- id: test_package_typecheck
+  type: pass_to_pass
+  origin: repo_tests
+  description: TypeScript type-check passes for the route-pattern package
+- id: test_format_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Prettier formatting check passes
+- id: test_ci_build_build_packages
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: build / Build packages'
+- id: test_ci_check_lint
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: check / Lint'
+- id: test_ci_check_typecheck
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: check / Typecheck'
+- id: test_ci_check_check_change_files
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: check / Check change files'
+- id: test_ci_test_run_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: test / Run tests (scoped to affected package)'
+rubric:
+- rule: 'Imports: Always use import type { X } for types (separate from value imports); use export type { X } for type exports; include .ts extensions'
+  source:
+    path: AGENTS.md
+    lines: '16'
+    commit: a2245eab8257758f5e323a5a4e3c89386568e3bb
+  evidence: Gold diff imports execSync as a value import (correct, it's a value), separate from existing vitest value imports
+  category: style
+  verification: llm_judge
+- rule: 'Variables: Prefer let for locals, const only at module scope; never use var'
+  source:
+    path: AGENTS.md
+    lines: '17'
+    commit: a2245eab8257758f5e323a5a4e3c89386568e3bb
+  evidence: Gold diff uses let for local variables (branch, shortCommit) inside getBenchName
+  category: style
+  verification: llm_judge
+- rule: 'Functions: Use regular function declarations/expressions by default. Only use arrow functions as callbacks (e.g., route handlers, array methods) where preserving lexical this is beneficial or the syntax is more concise'
+  source:
+    path: AGENTS.md
+    lines: '18'
+    commit: a2245eab8257758f5e323a5a4e3c89386568e3bb
+  evidence: Gold diff uses a regular function declaration for getBenchName, not an arrow function
+  category: style
+  verification: llm_judge
+- rule: 'Formatting: Prettier (printWidth: 100, no semicolons, single quotes, spaces not tabs)'
+  source:
+    path: AGENTS.md
+    lines: '22'
+    commit: a2245eab8257758f5e323a5a4e3c89386568e3bb
+  evidence: Gold diff uses no semicolons, single quotes, consistent with prettier config
+  category: style
+  verification: programmatic
+- rule: 'Comments: Only add non-JSDoc comments when the code is doing something surprising or non-obvious'
+  source:
+    path: AGENTS.md
+    lines: '26'
+    commit: a2245eab8257758f5e323a5a4e3c89386568e3bb
+  evidence: Gold diff adds a JSDoc comment for getBenchName explaining return format and fallback, which is appropriate for a public-ish utility
+  category: documentation
+  verification: llm_judge
+distractors:
+- rule: 'Imports: Always use import type { X } for types (separate from value imports); use export type { X } for type exports; include .ts extensions'
+  source:
+    path: AGENTS.md
+    lines: '16'
+    commit: a2245eab8257758f5e323a5a4e3c89386568e3bb
+  collision_type: scope_ambiguity
+  why_distracting: execSync is a value import, not a type — applying 'always use import type' here would be wrong
+  severity: medium
+- rule: Use descriptive lowercase names for type parameters (e.g., source, method, pattern) instead of single uppercase letters like T, P, or K
+  source:
+    path: AGENTS.md
+    lines: '24'
+    commit: a2245eab8257758f5e323a5a4e3c89386568e3bb
+  collision_type: scope_ambiguity
+  why_distracting: This function has no type parameters — this rule does not apply to the diff
+  severity: low

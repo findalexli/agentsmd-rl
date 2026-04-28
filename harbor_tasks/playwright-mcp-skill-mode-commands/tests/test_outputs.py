@@ -784,3 +784,131 @@ def test_build_script_copies_md():
     assert "terminal" in content and "*.md" in content, (
         "build.js must copy terminal/*.md files to lib output"
     )
+
+# === CI-mined tests (taskforge.ci_check_miner) ===
+def test_ci_docs___lint_npm():
+    """pass_to_pass | CI job 'docs & lint' → step ''"""
+    r = subprocess.run(
+        ["bash", "-lc", 'npm ci'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step '' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_docs___lint_npm_2():
+    """pass_to_pass | CI job 'docs & lint' → step ''"""
+    r = subprocess.run(
+        ["bash", "-lc", 'npm run build'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step '' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_docs___lint_npx():
+    """pass_to_pass | CI job 'docs & lint' → step ''"""
+    r = subprocess.run(
+        ["bash", "-lc", 'npx playwright install --with-deps'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step '' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_docs___lint_npm_3():
+    """pass_to_pass | CI job 'docs & lint' → step ''"""
+    r = subprocess.run(
+        ["bash", "-lc", 'npm run lint'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step '' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_docs___lint_audit_prod_npm_dependencies():
+    """pass_to_pass | CI job 'docs & lint' → step 'Audit prod NPM dependencies'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'node utils/check_audit.js'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Audit prod NPM dependencies' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_lint_snippets_pip():
+    """pass_to_pass | CI job 'Lint snippets' → step ''"""
+    r = subprocess.run(
+        ["bash", "-lc", 'pip install -r utils/doclint/linting-code-snippets/python/requirements.txt'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step '' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_lint_snippets_mvn():
+    """pass_to_pass | CI job 'Lint snippets' → step ''"""
+    r = subprocess.run(
+        ["bash", "-lc", 'mvn package'], cwd=os.path.join(REPO, 'utils/doclint/linting-code-snippets/java'),
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step '' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_lint_snippets_node():
+    """pass_to_pass | CI job 'Lint snippets' → step ''"""
+    r = subprocess.run(
+        ["bash", "-lc", 'node utils/doclint/linting-code-snippets/cli.js'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step '' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+# === PR-added f2p tests (taskforge.test_patch_miner) ===
+def test_pr_added_eval_no_arrow():
+    """fail_to_pass | PR added test 'eval no arrow' in 'tests/mcp/cli.spec.ts' (vitest_or_jest)"""
+    r = subprocess.run(
+        ["bash", "-lc", '(pnpm vitest run "tests/mcp/cli.spec.ts" -t "eval no arrow" 2>&1 || npx vitest run "tests/mcp/cli.spec.ts" -t "eval no arrow" 2>&1 || pnpm jest "tests/mcp/cli.spec.ts" -t "eval no arrow" 2>&1 || npx jest "tests/mcp/cli.spec.ts" -t "eval no arrow" 2>&1) | tail -50'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"PR-added test 'eval no arrow' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_pr_added_press():
+    """fail_to_pass | PR added test 'press' in 'tests/mcp/cli.spec.ts' (vitest_or_jest)"""
+    r = subprocess.run(
+        ["bash", "-lc", '(pnpm vitest run "tests/mcp/cli.spec.ts" -t "press" 2>&1 || npx vitest run "tests/mcp/cli.spec.ts" -t "press" 2>&1 || pnpm jest "tests/mcp/cli.spec.ts" -t "press" 2>&1 || npx jest "tests/mcp/cli.spec.ts" -t "press" 2>&1) | tail -50'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"PR-added test 'press' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_pr_added_keydown_keyup():
+    """fail_to_pass | PR added test 'keydown keyup' in 'tests/mcp/cli.spec.ts' (vitest_or_jest)"""
+    r = subprocess.run(
+        ["bash", "-lc", '(pnpm vitest run "tests/mcp/cli.spec.ts" -t "keydown keyup" 2>&1 || npx vitest run "tests/mcp/cli.spec.ts" -t "keydown keyup" 2>&1 || pnpm jest "tests/mcp/cli.spec.ts" -t "keydown keyup" 2>&1 || npx jest "tests/mcp/cli.spec.ts" -t "keydown keyup" 2>&1) | tail -50'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"PR-added test 'keydown keyup' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_pr_added_mousemove():
+    """fail_to_pass | PR added test 'mousemove' in 'tests/mcp/cli.spec.ts' (vitest_or_jest)"""
+    r = subprocess.run(
+        ["bash", "-lc", '(pnpm vitest run "tests/mcp/cli.spec.ts" -t "mousemove" 2>&1 || npx vitest run "tests/mcp/cli.spec.ts" -t "mousemove" 2>&1 || pnpm jest "tests/mcp/cli.spec.ts" -t "mousemove" 2>&1 || npx jest "tests/mcp/cli.spec.ts" -t "mousemove" 2>&1) | tail -50'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"PR-added test 'mousemove' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_pr_added_mousedown_mouseup():
+    """fail_to_pass | PR added test 'mousedown mouseup' in 'tests/mcp/cli.spec.ts' (vitest_or_jest)"""
+    r = subprocess.run(
+        ["bash", "-lc", '(pnpm vitest run "tests/mcp/cli.spec.ts" -t "mousedown mouseup" 2>&1 || npx vitest run "tests/mcp/cli.spec.ts" -t "mousedown mouseup" 2>&1 || pnpm jest "tests/mcp/cli.spec.ts" -t "mousedown mouseup" 2>&1 || npx jest "tests/mcp/cli.spec.ts" -t "mousedown mouseup" 2>&1) | tail -50'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"PR-added test 'mousedown mouseup' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_pr_added_mousewheel():
+    """fail_to_pass | PR added test 'mousewheel' in 'tests/mcp/cli.spec.ts' (vitest_or_jest)"""
+    r = subprocess.run(
+        ["bash", "-lc", '(pnpm vitest run "tests/mcp/cli.spec.ts" -t "mousewheel" 2>&1 || npx vitest run "tests/mcp/cli.spec.ts" -t "mousewheel" 2>&1 || pnpm jest "tests/mcp/cli.spec.ts" -t "mousewheel" 2>&1 || npx jest "tests/mcp/cli.spec.ts" -t "mousewheel" 2>&1) | tail -50'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"PR-added test 'mousewheel' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")

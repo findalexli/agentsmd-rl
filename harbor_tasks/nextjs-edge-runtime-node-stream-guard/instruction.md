@@ -21,12 +21,13 @@ In the edge branch, the behavior depends on the operation:
 
 ### Error codes
 
-The project's error registry `packages/next/errors.json` uses a JSON schema that maps numeric string keys to error message strings: `{ "<code>": "<message>", ... }`. It must be updated with edge-runtime-specific error messages:
+The project's error registry `packages/next/errors.json` uses a JSON schema that maps numeric string keys to error message strings: `{ "<code>": "<message>", ... }`. It must be updated with edge-runtime-specific error messages. The following exact error messages must be registered in `errors.json`:
 
-- At least **3** error messages containing the text "edge runtime"
-- At least **1** of those must mention `Readable`, `stream`, or `webToReadable`
+- `"webToReadable cannot be used in the edge runtime"`
+- `"Node.js Readable cannot be teed in the edge runtime"`
+- `"Node.js Readable cannot be converted to a web stream in the edge runtime"`
 
-New error codes should follow the existing sequential numbering pattern.
+These messages describe the incompatibility when node:stream-dependent operations are invoked in the edge runtime. New error codes should follow the existing sequential numbering pattern (the highest existing code is `1147`).
 
 ## Code Style Requirements
 

@@ -108,3 +108,13 @@ def test_skill_keeps_yaml_frontmatter_structure():
         "frontmatter must keep `name: effect`"
     assert re.search(r"^\s*description:\s*\S", fm, re.MULTILINE), \
         "frontmatter must keep a non-empty `description:`"
+
+# === CI-mined tests (taskforge.ci_check_miner) ===
+def test_ci_typecheck_run_typecheck():
+    """pass_to_pass | CI job 'typecheck' → step 'Run typecheck'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'bun typecheck'], cwd=REPO,
+        capture_output=True, text=True, timeout=600)
+    assert r.returncode == 0, (
+        f"CI step 'Run typecheck' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")

@@ -12,7 +12,7 @@ RUN git init /workspace && \
     git checkout FETCH_HEAD
 
 # No heavy deps needed — tests only exercise pure Python config logic
-ENV PYTHONPATH="/workspace/src:${PYTHONPATH}"
+ENV PYTHONPATH=/workspace/src
 RUN mkdir -p /logs/verifier
 
 WORKDIR /workspace

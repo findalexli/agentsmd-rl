@@ -109,7 +109,7 @@ def _assert_pattern_passes(pattern: str) -> None:
         f"--- stderr (tail) ---\n{r.stderr[-1000:]}"
     )
     # Defensive: ensure at least one test actually ran (-t with no match passes by default).
-    assert "1 passed" in out or "(1 test)" in out or " passed (" in out, (
+    assert "Tests  1 passed" in out or " 1 passed" in out, (
         f"vitest pattern {pattern!r} matched zero tests.\n{out[-1500:]}"
     )
 

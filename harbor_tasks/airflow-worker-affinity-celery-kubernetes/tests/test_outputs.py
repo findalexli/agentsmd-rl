@@ -568,3 +568,22 @@ def test_repo_helm_tests_celery_kubernetes_executor():
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
+
+# === PR-added f2p tests (taskforge.test_patch_miner) ===
+def test_pr_added_test_workers_affinity():
+    """fail_to_pass | PR added test 'test_workers_affinity' in 'helm-tests/tests/helm_tests/airflow_aux/test_pod_template_file.py' (pytest)"""
+    r = subprocess.run(
+        ["bash", "-lc", 'python3 -m pytest -x --no-header -p no:cacheprovider "helm-tests/tests/helm_tests/airflow_aux/test_pod_template_file.py::test_workers_affinity" 2>&1 | tail -50'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"PR-added test 'test_workers_affinity' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_pr_added_test_affinity():
+    """fail_to_pass | PR added test 'test_affinity' in 'helm-tests/tests/helm_tests/airflow_core/test_worker.py' (pytest)"""
+    r = subprocess.run(
+        ["bash", "-lc", 'python3 -m pytest -x --no-header -p no:cacheprovider "helm-tests/tests/helm_tests/airflow_core/test_worker.py::test_affinity" 2>&1 | tail -50'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"PR-added test 'test_affinity' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")

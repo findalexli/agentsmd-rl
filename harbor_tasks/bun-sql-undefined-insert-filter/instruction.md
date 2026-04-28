@@ -20,16 +20,13 @@ The `sql()` template tag helper in Bun's SQL module treats `undefined` values as
 
 ## Implementation Requirements
 
-The solution must add a shared column-filtering helper to `src/js/internal/sql/shared.ts`. This helper should:
+The solution must add a shared column-filtering helper to the SQL shared utilities module. This helper should:
 - Accept the column list, the items being inserted, and an escape function
 - Inspect ALL items when determining which columns have defined values (for bulk inserts)
 - Return an object with two properties: an array of column names that have at least one defined value, and a SQL fragment for the column list
 - Generate SQL column list as a parenthesized, comma-separated list ending with ` VALUES`
 
-All three SQL adapters must be updated to use this shared helper:
-- `src/js/internal/sql/sqlite.ts`
-- `src/js/internal/sql/mysql.ts`
-- `src/js/internal/sql/postgres.ts`
+All three SQL adapter implementations (SQLite, MySQL, PostgreSQL) must be updated to use this shared helper.
 
 Each adapter must:
 - Import the shared function using a `require()` call to `"internal/sql/shared"`
@@ -39,7 +36,7 @@ Each adapter must:
 
 ## Documentation Requirement
 
-The file `test/CLAUDE.md` must include guidance recommending `.toEqual` for asserting on nested or complex object equality. The documentation must:
+The test documentation (`CLAUDE.md` in the test directory) must include guidance recommending `.toEqual` for asserting on nested or complex object equality. The documentation must:
 - Mention `.toEqual` for comparing nested or complex objects
 - Include the word "Nested" (capital N) or phrase "complex object" or "object equality"
 - Show a usage example containing the text `toEqual(`

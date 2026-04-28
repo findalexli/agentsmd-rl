@@ -61,10 +61,10 @@ After migration, `packages/opencode/src/config/config.ts` must:
 ## Cleanup in `provider.ts`
 
 `packages/opencode/src/config/provider.ts` currently carries a stale
-explanatory comment block immediately above the `PositiveInt` definition that
-references the `ZodOverride` walker. That comment is no longer accurate after
-recent walker changes and should be removed (the `PositiveInt` definition
-itself stays unchanged).
+explanatory comment block (beginning with `"Positive integer: emits JSON Schema"`)
+immediately above the `PositiveInt` definition that references the effect-zod
+walker. That comment is no longer accurate after recent walker changes and
+should be removed (the `PositiveInt` definition itself stays unchanged).
 
 ## Behavior to preserve
 

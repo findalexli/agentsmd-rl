@@ -8,51 +8,35 @@ checks:
 - id: syntax_check
   type: pass_to_pass
   origin: static
-  description: Modified files (__init__.py, image_processing_backends.py) parse without
-    errors
+  description: Modified files (__init__.py, image_processing_backends.py) parse without errors
 - id: base_image_processor_fast_importable
   type: fail_to_pass
   origin: pr_diff
-  description: BaseImageProcessorFast importable from legacy image_processing_utils_fast
-    path and resolves to TorchvisionBackend
+  description: BaseImageProcessorFast importable from legacy image_processing_utils_fast path and resolves to TorchvisionBackend
 - id: divide_to_patches_importable
   type: fail_to_pass
   origin: pr_diff
-  description: divide_to_patches importable from legacy image_processing_utils_fast
-    path and is the same function as image_transforms.divide_to_patches
+  description: divide_to_patches importable from legacy image_processing_utils_fast path and is the same function as image_transforms.divide_to_patches
 - id: divide_to_patches_callable_via_alias
   type: fail_to_pass
   origin: pr_diff
-  description: divide_to_patches imported via alias actually works with real PIL images
-    of multiple sizes
+  description: divide_to_patches imported via alias actually works with real PIL images of multiple sizes
 - id: alias_registered_in_sys_modules
   type: fail_to_pass
   origin: pr_diff
-  description: image_processing_utils_fast alias module registered in sys.modules
-    after import transformers, with __file__ directly set in __dict__
+  description: image_processing_utils_fast alias module registered in sys.modules after import transformers, with __file__ directly set in __dict__
 - id: inspect_no_circular_import
   type: fail_to_pass
   origin: pr_diff
-  description: inspect operations on alias module do not trigger circular import;
-    hasattr(__file__) returns True without invoking __getattr__
+  description: inspect operations on alias module do not trigger circular import; hasattr(__file__) returns True without invoking __getattr__
 - id: tokenization_aliases_still_work
   type: pass_to_pass
   origin: pr_diff
-  description: Existing tokenization_utils_fast and tokenization_utils aliases still
-    registered in sys.modules
+  description: Existing tokenization_utils_fast and tokenization_utils aliases still registered in sys.modules
 - id: direct_import_image_processing_backends
   type: pass_to_pass
   origin: pr_diff
-  description: Direct import of TorchvisionBackend from image_processing_backends
-    still works
-- id: ruff_check
-  type: pass_to_pass
-  origin: agent_config
-  description: ruff check passes on modified files
-  source:
-    path: CLAUDE.md
-    lines: '2'
-    commit: e6ed96c7e93a6408a151e3177793212b02b8bb53
+  description: Direct import of TorchvisionBackend from image_processing_backends still works
 - id: no_bare_type_ignore
   type: pass_to_pass
   origin: agent_config
@@ -64,8 +48,7 @@ checks:
 - id: not_stub
   type: pass_to_pass
   origin: static
-  description: __init__.py contains 'image_processing_utils_fast' as a string literal
-    in AST (not just a comment or stub)
+  description: __init__.py contains 'image_processing_utils_fast' as a string literal in AST (not just a comment or stub)
 - id: repo_ruff_check_modified_files
   type: pass_to_pass
   origin: repo_tests
@@ -115,55 +98,40 @@ checks:
   origin: repo_tests
   description: Repo's check_pipeline_typing.py utility passes
 rubric:
-- rule: Module aliases for backward compatibility should be registered in sys.modules
-    with __file__ explicitly set to avoid triggering circular imports via inspect
-    operations.
+- rule: Module aliases for backward compatibility should be registered in sys.modules with __file__ explicitly set to avoid triggering circular imports via inspect operations.
   source:
     path: CLAUDE.md
     lines: 36-40
     commit: e6ed96c7e93a6408a151e3177793212b02b8bb53
-- rule: 'When re-exporting functions or classes for backward compatibility, use #
-    noqa: F401 with a comment explaining the purpose.'
+- rule: 'When re-exporting functions or classes for backward compatibility, use # noqa: F401 with a comment explaining the purpose.'
   source:
     path: CLAUDE.md
     lines: '2'
     commit: e6ed96c7e93a6408a151e3177793212b02b8bb53
-- rule: 'Always add specific error codes to # type: ignore comments (e.g., # type:
-    ignore[call-arg]), never use bare # type: ignore.'
+- rule: 'Always add specific error codes to # type: ignore comments (e.g., # type: ignore[call-arg]), never use bare # type: ignore.'
   source:
     path: .ai/skills/add-or-fix-type-checking/SKILL.md
     lines: 180-186
     commit: e6ed96c7e93a6408a151e3177793212b02b8bb53
-- rule: '`make style`: runs formatters and linters (ruff), necessary to pass code
-    style checks'
+- rule: '`make style`: runs formatters and linters (ruff), necessary to pass code style checks'
   source:
     path: CLAUDE.md
     lines: 2-2
-  evidence: 'The gold solution adds `# noqa: F401` to the `divide_to_patches` import
-    in `image_processing_backends.py` to prevent the ruff linter from removing it
-    as an unused import, ensuring the code will pass t'
+  evidence: 'The gold solution adds `# noqa: F401` to the `divide_to_patches` import in `image_processing_backends.py` to prevent the ruff linter from removing it as an unused import, ensuring the code will pass t'
   category: tooling
 distractors:
-- rule: 'Fail-closed behavior for agents: If coordination evidence cannot be found,
-    do not proceed to PR-ready output.'
+- rule: 'Fail-closed behavior for agents: If coordination evidence cannot be found, do not proceed to PR-ready output.'
   collision_type: meta_confusion
-  why_distracting: The agent might refuse to generate the patch entirely, citing the
-    fail-closed behavior and lack of coordination evidence or issue links in the prompt.
+  why_distracting: The agent might refuse to generate the patch entirely, citing the fail-closed behavior and lack of coordination evidence or issue links in the prompt.
   severity: high
   source:
     path: AGENTS.md
     lines: 48-51
-- rule: 'Copies and Modular Models: mark classes or functions with `# Copied from
-    ...` to manage code duplication.'
+- rule: 'Copies and Modular Models: mark classes or functions with `# Copied from ...` to manage code duplication.'
   collision_type: scope_ambiguity
-  why_distracting: The agent might try to duplicate the code for `divide_to_patches`
-    or `TorchvisionBackend` and use `# Copied from` comments, rather than using Python
-    imports and module aliases. This rule specifically applies to `src/transformers/models/`
-    but an agent might misapply it globally.
+  why_distracting: The agent might try to duplicate the code for `divide_to_patches` or `TorchvisionBackend` and use `# Copied from` comments, rather than using Python imports and module aliases. This rule specifically applies to `src/transformers/models/` but an agent might misapply it globally.
   severity: medium
   source:
     path: AGENTS.md
     lines: 55-58
-hierarchy_analysis: The config hierarchy is flat, consisting of two identical root-level
-  files (`AGENTS.md` and `CLAUDE.md`). The rules are generic repository contribution
-  guidelines rather than specific architectural constraints for the files being edited.
+hierarchy_analysis: The config hierarchy is flat, consisting of two identical root-level files (`AGENTS.md` and `CLAUDE.md`). The rules are generic repository contribution guidelines rather than specific architectural constraints for the files being edited.

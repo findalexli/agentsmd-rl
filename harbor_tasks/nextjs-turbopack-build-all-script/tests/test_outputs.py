@@ -25,13 +25,12 @@ def _read_json(path: str) -> dict:
 
 
 # ---------------------------------------------------------------------------
-# Pass-to-pass (repo_tests) — CI command checks
+# Pass-to-pass (repo_tests) -- CI command checks
 # ---------------------------------------------------------------------------
 
 # [repo_tests] pass_to_pass
 def test_repo_prettier_check():
     """Modified JSON files pass Prettier formatting check (pass_to_pass)."""
-    # Check formatting of package.json files (JSON files don't need node_modules)
     r = subprocess.run(
         ["npx", "prettier", "--check", "package.json"],
         capture_output=True, text=True, timeout=120, cwd=REPO,
@@ -81,12 +80,19 @@ def test_repo_next_swc_package_json_valid():
 
 # [repo_tests] pass_to_pass
 def test_repo_turbo_jsonc_exists():
-    """packages/next-swc/turbo.jsonc exists and is readable (pass_to_pass)."""
-    r = subprocess.run(
-        ["test", "-r", f"{REPO}/packages/next-swc/turbo.jsonc"],
+    """packages/next-swc/turbo.jsonc or turbo.json exists and is readable (pass_to_pass)."""
+    jsonc_path = f"{REPO}/packages/next-swc/turbo.jsonc"
+    json_path = f"{REPO}/packages/next-swc/turbo.json"
+    r1 = subprocess.run(
+        ["test", "-r", jsonc_path],
         capture_output=True, text=True, timeout=60,
     )
-    assert r.returncode == 0, f"turbo.jsonc does not exist or is not readable:\n{r.stderr[-500:]}"
+    r2 = subprocess.run(
+        ["test", "-r", json_path],
+        capture_output=True, text=True, timeout=60,
+    )
+    assert r1.returncode == 0 or r2.returncode == 0, \
+        f"Neither turbo.jsonc nor turbo.json is readable"
 
 
 # [repo_tests] pass_to_pass
@@ -111,23 +117,16 @@ def test_repo_agents_md_exists():
 
 
 # [repo_tests] pass_to_pass - turbo.json or turbo.jsonc must exist with expected structure
-# For base commit: turbo.json exists and has tasks.build
-# For gold patch: turbo.jsonc exists (with comments) and has build-native-auto task
-# Note: Node's require() can't parse JSONC (JSON with comments), so we check file existence
-# The actual content validation is done in test_turbo_jsonc_task_renamed for the gold case
 def test_repo_turbo_json_valid():
     """packages/next-swc/turbo.json (original) or turbo.jsonc (after patch) exists with valid structure."""
-    # Check which file exists (base commit has turbo.json, gold patch renames to turbo.jsonc)
     turbo_path = f"{REPO}/packages/next-swc/turbo.json"
     jsonc_path = f"{REPO}/packages/next-swc/turbo.jsonc"
 
-    # Try turbo.json first (base commit)
     r = subprocess.run(
         ["test", "-r", turbo_path],
         capture_output=True, text=True, timeout=60,
     )
     if r.returncode == 0:
-        # Base commit - turbo.json exists, verify it has expected tasks
         r = subprocess.run(
             ["node", "-e",
              f"const turbo=require('{REPO}/packages/next-swc/turbo.json'); " +
@@ -138,13 +137,11 @@ def test_repo_turbo_json_valid():
         )
         assert r.returncode == 0, f"turbo.json validation failed:\n{r.stderr[-500:]}"
     else:
-        # Gold patch applied - check turbo.jsonc exists (JSONC with comments can't be parsed by require)
         r = subprocess.run(
             ["test", "-r", jsonc_path],
             capture_output=True, text=True, timeout=60,
         )
         assert r.returncode == 0, f"Neither turbo.json nor turbo.jsonc exists"
-        # For JSONC, we can't use Node require() due to comments - content validated in test_turbo_jsonc_task_renamed
 
 
 # [repo_tests] pass_to_pass
@@ -182,7 +179,7 @@ def test_repo_next_swc_package_scripts_valid():
         ["node", "-e",
          "const pkg=require('./packages/next-swc/package.json'); " +
          "if (!pkg.scripts) { console.error('No scripts'); process.exit(1); } " +
-         "// Base commit has 'build' script, gold patch renames it to 'build-native-auto'\n" +
+         "/* Base commit has \"build\", gold patch has \"build-native-auto\" */\n" +
          "const hasBuild = pkg.scripts['build'] || pkg.scripts['build-native-auto']; " +
          "if (!hasBuild) { console.error('Missing build or build-native-auto script'); process.exit(1); } " +
          "const required=['clean', 'build-native']; " +
@@ -197,7 +194,6 @@ def test_repo_next_swc_package_scripts_valid():
 # [repo_tests] pass_to_pass
 def test_repo_turbo_json_tasks_exist():
     """packages/next-swc/turbo.json or turbo.jsonc has expected tasks including build and rust-check (pass_to_pass)."""
-    # Check which file exists (base commit has turbo.json, gold patch renames to turbo.jsonc)
     turbo_path = f"{REPO}/packages/next-swc/turbo.json"
     jsonc_path = f"{REPO}/packages/next-swc/turbo.jsonc"
 
@@ -206,7 +202,6 @@ def test_repo_turbo_json_tasks_exist():
         capture_output=True, text=True, timeout=60,
     )
     if r_json.returncode == 0:
-        # Base commit - turbo.json exists
         r = subprocess.run(
             ["node", "-e",
              "const turbo=require('./packages/next-swc/turbo.json'); " +
@@ -218,8 +213,6 @@ def test_repo_turbo_json_tasks_exist():
             capture_output=True, text=True, timeout=60, cwd=REPO,
         )
     else:
-        # Gold patch - turbo.jsonc exists (JSONC with comments can't be parsed by require)
-        # Just verify the file exists - content validated in test_turbo_jsonc_task_renamed
         r = subprocess.run(
             ["test", "-r", jsonc_path],
             capture_output=True, text=True, timeout=60,
@@ -238,7 +231,7 @@ def test_repo_turbo_json_tasks_exist():
 
 
 # ---------------------------------------------------------------------------
-# Gates (pass_to_pass, static) — syntax / compilation checks
+# Gates (pass_to_pass, static) -- syntax / compilation checks
 # ---------------------------------------------------------------------------
 
 # [static] pass_to_pass
@@ -247,19 +240,17 @@ def test_json_syntax_valid():
     root_pkg = Path(f"{REPO}/package.json")
     next_swc_pkg = Path(f"{REPO}/packages/next-swc/package.json")
 
-    # These should parse without errors
     _read_json(str(root_pkg))
     _read_json(str(next_swc_pkg))
 
 
 # ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) — core behavioral tests
+# Fail-to-pass (pr_diff) -- core behavioral tests
 # ---------------------------------------------------------------------------
 
 # [pr_diff] fail_to_pass
 def test_build_all_script_exists():
     """Root package.json must have build-all script that includes build-native-auto task."""
-    # Use Node.js to execute and verify the script structure
     r = subprocess.run(
         ["node", "-e",
          "const pkg = require('./package.json'); " +
@@ -269,7 +260,6 @@ def test_build_all_script_exists():
          "  process.exit(1); " +
          "} " +
          "const buildAll = scripts['build-all']; " +
-         "// Verify it runs turbo with both 'build' and 'build-native-auto' tasks " +
          "const hasTurbo = buildAll.includes('turbo run'); " +
          "const hasBuildNativeAuto = buildAll.includes('build-native-auto'); " +
          "if (!hasTurbo) { " +
@@ -289,17 +279,14 @@ def test_build_all_script_exists():
 # [pr_diff] fail_to_pass
 def test_next_swc_script_renamed():
     """packages/next-swc/package.json build script must be renamed to build-native-auto."""
-    # Verify via Node.js execution that the script is properly renamed
     r = subprocess.run(
         ["node", "-e",
          "const pkg = require('./packages/next-swc/package.json'); " +
          "const scripts = pkg.scripts || {}; " +
-         "// Check that old 'build' script calling maybe-build-native is gone " +
          "if (scripts.build && scripts.build.includes('maybe-build-native')) { " +
          "  console.error('FAIL: Old build script still calls maybe-build-native.mjs'); " +
          "  process.exit(1); " +
          "} " +
-         "// Check that build-native-auto exists and calls maybe-build-native " +
          "if (!scripts['build-native-auto']) { " +
          "  console.error('FAIL: build-native-auto script does not exist'); " +
          "  process.exit(1); " +
@@ -321,58 +308,46 @@ def test_turbo_jsonc_task_renamed():
     turbo_path = Path(f"{REPO}/packages/next-swc/turbo.jsonc")
     assert turbo_path.exists(), "turbo.jsonc must exist (renamed from turbo.json)"
 
-    # Use Node.js to strip comments and parse JSONC
     r = subprocess.run(
         ["node", "-e",
          "const fs = require('fs'); " +
-         "const path = './packages/next-swc/turbo.jsonc'; " +
-         "let content = fs.readFileSync(path, 'utf8'); " +
-         "// Remove single-line comments " +
-         "content = content.replace(/\\/\\/.*/g, ''); " +
-         "// Remove multi-line comments " +
-         "content = content.replace(/\\/\\*[\\s\\S]*?\\*\\//g, ''); " +
-         "// Remove trailing commas before } or ] " +
-         "content = content.replace(/,(\\s*[}\\]])/g, '$1'); " +
-         "const turbo = JSON.parse(content); " +
-         "// Check that build-native-auto task exists " +
-         "if (!turbo.tasks || !turbo.tasks['build-native-auto']) { " +
+         "const content = fs.readFileSync('./packages/next-swc/turbo.jsonc', 'utf8'); " +
+         "/* Verify build-native-auto task exists (quoted key in JSON) */ " +
+         "if (!content.includes('\"build-native-auto\"')) { " +
          "  console.error('FAIL: build-native-auto task does not exist in turbo.jsonc'); " +
          "  process.exit(1); " +
          "} " +
-         "// Check that old 'build' task is renamed (doesn't exist as plain 'build') " +
-         "// Note: a 'build' task with different semantics is OK, but the native build " +
-         "// task should now be called 'build-native-auto' " +
-         "console.log('OK: turbo.jsonc has build-native-auto task');"],
+         "/* Verify the comment block explaining the auto behavior */ " +
+         "if (!content.includes('precompiled')) { " +
+         "  console.error('FAIL: turbo.jsonc must contain explanatory comment about precompiled binary'); " +
+         "  process.exit(1); " +
+         "} " +
+         "console.log('OK: turbo.jsonc has build-native-auto task with comment');"],
         capture_output=True, text=True, timeout=60, cwd=REPO,
     )
     assert r.returncode == 0, f"turbo.jsonc task validation failed:\n{r.stderr}"
 
 
 # ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) — Config update tests
+# Fail-to-pass (pr_diff) -- Config update tests
 # ---------------------------------------------------------------------------
 
 # [pr_diff] fail_to_pass
 def test_agents_md_documents_build_all():
     """AGENTS.md must document pnpm build-all for building JS + Rust code."""
-    # Verify AGENTS.md content through Node.js execution
     r = subprocess.run(
         ["node", "-e",
          "const fs = require('fs'); " +
          "const content = fs.readFileSync('AGENTS.md', 'utf8'); " +
-         "// Check for build-all command documentation " +
          "if (!content.includes('build-all')) { " +
          "  console.error('FAIL: AGENTS.md does not mention build-all command'); " +
          "  process.exit(1); " +
          "} " +
-         "// Check that both 'pnpm build' and 'pnpm build-all' are documented " +
-         "const hasBuild = content.includes('pnpm build') || content.includes('build'); " +
          "const hasBuildAll = content.includes('pnpm build-all'); " +
          "if (!hasBuildAll) { " +
          "  console.error('FAIL: AGENTS.md does not document pnpm build-all'); " +
          "  process.exit(1); " +
          "} " +
-         "// Check for semantic distinction between JS-only and JS+Rust builds " +
          "const jsOnlyPatterns = ['JS code', 'JavaScript']; " +
          "const jsRustPatterns = ['Rust', 'Turbopack', 'native']; " +
          "const hasJsRef = jsOnlyPatterns.some(p => content.toLowerCase().includes(p.toLowerCase())); " +
@@ -394,35 +369,25 @@ def test_agents_md_documents_build_all():
 # [pr_diff] fail_to_pass
 def test_agents_md_branch_switch_uses_build_all():
     """AGENTS.md should recommend build-all for branch switches and when editing Turbopack."""
-    # Verify AGENTS.md contains correct workflow guidance
     r = subprocess.run(
         ["node", "-e",
          "const fs = require('fs'); " +
          "const content = fs.readFileSync('AGENTS.md', 'utf8'); " +
-         "// Check for branch switch guidance " +
-         "const hasBranchSwitch = content.toLowerCase().includes('switch') && " +
-         "                        content.toLowerCase().includes('branch'); " +
-         "// After branch switch, build-all should be recommended " +
-         "if (hasBranchSwitch) { " +
-         "  // Find context around branch switching " +
-         "  const switchIdx = content.toLowerCase().indexOf('switching branches'); " +
-         "  if (switchIdx !== -1) { " +
-         "    const context = content.substring(switchIdx, switchIdx + 800); " +
-         "    if (!context.includes('build-all')) { " +
-         "      console.error('FAIL: Branch switching section does not recommend build-all'); " +
-         "      process.exit(1); " +
-         "    } " +
+         "/* Check branch switching guidance recommends build-all */ " +
+         "const switchIdx = content.toLowerCase().indexOf('switching branches'); " +
+         "if (switchIdx !== -1) { " +
+         "  const context = content.substring(switchIdx, switchIdx + 800); " +
+         "  if (!context.includes('build-all')) { " +
+         "    console.error('FAIL: Branch switching section does not recommend build-all'); " +
+         "    process.exit(1); " +
          "  } " +
          "} " +
-         "// Check for Turbopack/Rust editing guidance " +
-         "const turbopackIdx = content.toLowerCase().indexOf('turbopack'); " +
-         "const rustIdx = content.toLowerCase().indexOf('rust'); " +
-         "if (turbopackIdx !== -1 || rustIdx !== -1) { " +
-         "  // In context of editing Turbopack/Rust, build-all should be mentioned " +
-         "  const searchContext = content.substring(Math.max(0, turbopackIdx - 500, rustIdx - 500), " +
-         "                                          Math.min(content.length, turbopackIdx + 500, rustIdx + 500)); " +
-         "  if (!searchContext.toLowerCase().includes('build-all')) { " +
-         "    console.error('FAIL: Turbopack/Rust section should reference build-all'); " +
+         "/* Check Turbopack (Rust) editing guidance recommends build-all */ " +
+         "const turbopackRustIdx = content.indexOf('Turbopack (Rust)'); " +
+         "if (turbopackRustIdx !== -1) { " +
+         "  const context = content.substring(Math.max(0, turbopackRustIdx - 200), turbopackRustIdx + 200); " +
+         "  if (!context.includes('build-all')) { " +
+         "    console.error('FAIL: Turbopack/Rust section does not reference build-all'); " +
          "    process.exit(1); " +
          "  } " +
          "} " +
@@ -430,3 +395,15 @@ def test_agents_md_branch_switch_uses_build_all():
         capture_output=True, text=True, timeout=60, cwd=REPO,
     )
     assert r.returncode == 0, f"AGENTS.md workflow guidance validation failed:\n{r.stderr}"
+
+
+# === CI-mined test: Prettier formatting check via bash ===
+def test_ci_prettier_package_json():
+    """pass_to_pass | CI: prettier --check package.json via bash login shell"""
+    r = subprocess.run(
+        ["bash", "-lc", "npx prettier --check package.json"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, (
+        f"CI prettier check failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")

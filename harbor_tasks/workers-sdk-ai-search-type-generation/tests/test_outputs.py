@@ -137,13 +137,6 @@ def test_repo_wrangler_lint():
 def test_repo_wrangler_format():
     """Repo's oxfmt check for wrangler passes (pass_to_pass)."""
     _install_pnpm_and_deps()
-    # First format the code to fix any pre-existing formatting issues
-    subprocess.run(
-        ["npx", "oxfmt", "--write"],
-        cwd=f"{REPO}/packages/wrangler", capture_output=True, text=True, timeout=120,
-    )
-    # Check formatting, excluding wrangler-dist (build artifacts)
-    # oxfmt doesn't have a built-in ignore pattern, so we check specific paths
     r = subprocess.run(
         ["npx", "oxfmt", "--check", "src", "scripts", "bin"],
         cwd=f"{REPO}/packages/wrangler", capture_output=True, text=True, timeout=120,
@@ -411,3 +404,13 @@ console.log('PASS: existing bindings preserved');
     assert r.returncode == 0, (
         f"Existing bindings broken:\n{r.stderr.decode()}"
     )
+
+# === CI-mined tests (taskforge.ci_check_miner) ===
+def test_ci_build_build():
+    """pass_to_pass | CI job 'build' → step 'Build'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'pnpm build --filter="./packages/*"'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Build' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")

@@ -9,7 +9,7 @@ checks:
   type: pass_to_pass
   origin: static
   description: Both modified files exist and have substantial content
-- id: max_output_tokens_in_hook_params
+- id: max_output_tokens_in_hook_output
   type: fail_to_pass
   origin: pr_diff
   description: maxOutputTokens included in Plugin.trigger('chat.params') output object
@@ -24,13 +24,11 @@ checks:
 - id: max_output_tokens_computed_before_hook
   type: fail_to_pass
   origin: pr_diff
-  description: maxOutputTokens is computed before Plugin.trigger('chat.params'), not
-    after
+  description: maxOutputTokens is computed before Plugin.trigger('chat.params'), not after
 - id: hook_preserves_existing_params
   type: pass_to_pass
   origin: repo_tests
-  description: chat.params hook output type still includes temperature, topP, topK,
-    options
+  description: chat.params hook output type still includes temperature, topP, topK, options
 - id: stream_text_still_passes_core_params
   type: pass_to_pass
   origin: static
@@ -47,6 +45,10 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: LLM session tests pass
+- id: ci_typecheck_run_typecheck
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: typecheck / Run typecheck (bun run typecheck at root)'
 rubric:
 - rule: Avoid using the `any` type
   source:
@@ -54,45 +56,32 @@ rubric:
 - rule: Prefer `const` over `let`. Use ternaries or early returns instead of reassignment.
   source:
     path: AGENTS.md
-- rule: Rely on type inference when possible; avoid explicit type annotations or interfaces
-    unless necessary for exports or clarity
+- rule: Rely on type inference when possible; avoid explicit type annotations or interfaces unless necessary for exports or clarity
   source:
     path: AGENTS.md
 - rule: Avoid unnecessary destructuring. Use dot notation to preserve context.
   source:
     path: AGENTS.md
 distractors:
-- rule: Use single word names by default for new locals, params, and helper functions.
-    Multi-word names are allowed only when a single word would be unclear or ambiguous.
+- rule: Use single word names by default for new locals, params, and helper functions. Multi-word names are allowed only when a single word would be unclear or ambiguous.
   collision_type: rule_conflict
-  why_distracting: The agent might try to rename `maxOutputTokens` to a single word
-    like `tokens` or `limit` to satisfy the strict naming rule, but this would break
-    the API contract as `maxOutputTokens` is a standard parameter name expected by
-    the LLM provider.
+  why_distracting: The agent might try to rename `maxOutputTokens` to a single word like `tokens` or `limit` to satisfy the strict naming rule, but this would break the API contract as `maxOutputTokens` is a standard parameter name expected by the LLM provider.
   severity: high
   source:
     path: AGENTS.md
     lines: 26-34
 - rule: Use Effect.gen(function* () { ... }) for composition.
   collision_type: architecture_boundary
-  why_distracting: The agent might attempt to rewrite the `LLM` streaming logic to
-    use `Effect.gen` since it's modifying a file in `packages/opencode`, but this
-    is an existing Promise-based function and a full Effect migration is out of scope.
+  why_distracting: The agent might attempt to rewrite the `LLM` streaming logic to use `Effect.gen` since it's modifying a file in `packages/opencode`, but this is an existing Promise-based function and a full Effect migration is out of scope.
   severity: medium
   source:
     path: packages/opencode/AGENTS.md
     lines: 14-15
 - rule: Avoid using the `any` type
   collision_type: scope_ambiguity
-  why_distracting: 'The `chat.params` hook output type includes `options: Record<string,
-    any>`. The agent might try to replace `any` with `unknown` or a specific type,
-    which is out of scope and could break plugin compatibility.'
+  why_distracting: 'The `chat.params` hook output type includes `options: Record<string, any>`. The agent might try to replace `any` with `unknown` or a specific type, which is out of scope and could break plugin compatibility.'
   severity: low
   source:
     path: AGENTS.md
     lines: 11-12
-hierarchy_analysis: The root `AGENTS.md` provides general style and naming rules,
-  while `packages/opencode/AGENTS.md` introduces Effect-specific architectural rules.
-  The agent must apply the root style rules (like const/ternary) while ignoring the
-  distracting Effect rules in the package-level config, as the target file is not
-  yet migrated to Effect.
+hierarchy_analysis: The root `AGENTS.md` provides general style and naming rules, while `packages/opencode/AGENTS.md` introduces Effect-specific architectural rules. The agent must apply the root style rules (like const/ternary) while ignoring the distracting Effect rules in the package-level config, as the target file is not yet migrated to Effect.

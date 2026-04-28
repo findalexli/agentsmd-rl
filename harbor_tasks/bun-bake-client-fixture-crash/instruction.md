@@ -21,7 +21,7 @@ The client fixture has several error handling gaps that cause intermittent crash
 ## Relevant Files
 
 - `test/bake/client-fixture.mjs` — The client fixture script (main file to fix)
-- `test/bake/bake-harness.ts` — The test harness `Client` class constructor (around line 817)
+- `test/bake/bake-harness.ts` — The test harness `Client` class constructor
 
 ## Expected Behavior
 

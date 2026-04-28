@@ -65,7 +65,7 @@ these three patterns:
 2. **Inline-dict splat** — `foo(..., **{"trust_remote_code": ...})`,
    where the splatted value is an `ast.Dict` whose keys are constants and one
    of the constant keys equals `"trust_remote_code"`.
-3. **`dict(...)` constructor splat** — `foo(..., **dict(trust_remote_code=...))`,
+3. **`dict(...)` constructor splat (dict constructor case)** — `foo(..., **dict(trust_remote_code=...))`,
    where the splatted value is a `Call` whose `func` is the `Name` `dict` and
    one of its keyword names is `trust_remote_code`.
 

@@ -5,7 +5,7 @@ source:
   base_commit: def0e3aabfa112ada22ece9297501c52471d34bd
   merge_commit: 9a7733ed83bce9cc1264454ddc7335fdcfb0c1eb
 checks:
-- id: agents_md_has_rebuild_section
+- id: test_agents_md_has_rebuild_section
   type: pass_to_pass
   origin: static
   description: AGENTS.md retains the 'Rebuilding Before Running Tests' section
@@ -26,41 +26,42 @@ checks:
   origin: static
   description: packages/next-swc/turbo.json is valid JSON
 - id: test_repo_maybe_build_native_syntax_p2p
-  type: pass_to_pass
+  type: fail_to_pass
   origin: repo_tests
   description: packages/next-swc/maybe-build-native.mjs has valid syntax
 - id: test_repo_build_wasm_syntax
   type: pass_to_pass
   origin: repo_tests
   description: scripts/build-wasm.cjs has valid syntax
-- id: maybe_build_native_skips_in_ci
+- id: test_maybe_build_native_skips_in_ci
   type: fail_to_pass
   origin: pr_diff
   description: maybe-build-native.mjs exits cleanly with skip message when CI=1
-- id: maybe_build_native_has_rust_detection
+- id: test_maybe_build_native_runs_without_ci
   type: fail_to_pass
   origin: pr_diff
-  description: maybe-build-native.mjs contains hasRustChanges and getVersionBumpCommit
-    logic
-- id: package_json_build_script
+  description: maybe-build-native.mjs runs without crashing when CI is not set
+- id: test_maybe_build_native_has_rust_detection
+  type: fail_to_pass
+  origin: pr_diff
+  description: maybe-build-native.mjs defines hasRustChanges and getVersionBumpCommit functions
+- id: test_package_json_build_script
   type: fail_to_pass
   origin: pr_diff
   description: packages/next-swc/package.json has build script pointing to maybe-build-native
-- id: turbo_json_build_task
+- id: test_turbo_json_build_task
   type: fail_to_pass
   origin: pr_diff
-  description: packages/next-swc/turbo.json defines build task with Rust inputs and
-    CI env
-- id: build_native_uses_stdin_prettier
+  description: packages/next-swc/turbo.json defines build task with Rust inputs and CI env
+- id: test_build_native_prettier_pipeline
   type: fail_to_pass
   origin: pr_diff
   description: scripts/build-native.ts uses prettier --stdin-filepath instead of --write
-- id: agents_md_simplified_rebuild
+- id: test_agents_md_simplified_rebuild
   type: fail_to_pass
   origin: pr_diff
-  description: AGENTS.md replaces separate Rust/both build commands with unified
-    pnpm build
-- id: maybe_build_native_syntax
+  description: AGENTS.md replaces separate Rust/both build commands with unified pnpm build
+- id: test_maybe_build_native_syntax
   type: fail_to_pass
   origin: pr_diff
   description: maybe-build-native.mjs exists and is syntactically valid JavaScript
@@ -93,39 +94,35 @@ checks:
   origin: repo_tests
   description: scripts/validate-externals-doc.js passes prettier formatting check
 - id: test_repo_prettier_maybe_build_native
-  type: pass_to_pass
+  type: fail_to_pass
   origin: repo_tests
   description: packages/next-swc/maybe-build-native.mjs passes prettier formatting check
 - id: test_repo_prettier_agents_md
   type: pass_to_pass
   origin: repo_tests
   description: AGENTS.md passes prettier formatting check
+- id: test_ci_prettier_next_swc
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI lint: prettier check on next-swc package files'
 rubric:
-- rule: Update AGENTS.md to simplify build instructions and unify Rust/Turbopack changes
-    under `pnpm build`, editing only AGENTS.md (not CLAUDE.md which is a symlink)
+- rule: Update AGENTS.md to simplify build instructions and unify Rust/Turbopack changes under `pnpm build`, editing only AGENTS.md (not CLAUDE.md which is a symlink)
   source:
     path: AGENTS.md
     lines: 367-369
   category: tooling
-  evidence: The gold solution updates AGENTS.md to replace separate 'pnpm swc-build-native'
-    and 'pnpm turbo build build-native' commands with a single 'pnpm build' instruction
-    for Rust/Turbopack changes. This follows the repo convention where CLAUDE.md is
-    a symlink to AGENTS.md (edit only AGENTS.md). The change aligns with the packages/next-swc/
-    directory structure for SWC native bindings.
+  evidence: The gold solution updates AGENTS.md to replace separate 'pnpm swc-build-native' and 'pnpm turbo build build-native' commands with a single 'pnpm build' instruction for Rust/Turbopack changes. This follows the repo convention where CLAUDE.md is a symlink to AGENTS.md (edit only AGENTS.md). The change aligns with the packages/next-swc/ directory structure for SWC native bindings.
 - rule: pnpm build builds everything
   source:
     path: AGENTS.md
     lines: 61-62
-  evidence: 'The gold solution wires the native build into the `build` task for `@next/swc`
-    and updates `AGENTS.md` to instruct developers to use `pnpm build` for Rust/Turbopack
-    edits, aligning with the principle '
+  evidence: 'The gold solution wires the native build into the `build` task for `@next/swc` and updates `AGENTS.md` to instruct developers to use `pnpm build` for Rust/Turbopack edits, aligning with the principle '
   category: architecture
 - rule: packages/next-swc/ contains Native Rust bindings (SWC transforms)
   source:
     path: AGENTS.md
     lines: 38-39
-  evidence: The gold solution places the `maybe-build-native.mjs` script in `packages/next-swc/`
-    and wires it into the turborepo pipeline for `@next/swc`.
+  evidence: The gold solution places the `maybe-build-native.mjs` script in `packages/next-swc/` and wires it into the turborepo pipeline for `@next/swc`.
   category: architecture
 config_edits:
 - path: AGENTS.md
@@ -137,27 +134,16 @@ config_edits:
 distractors:
 - rule: Edited Turbopack (Rust)? → pnpm swc-build-native
   collision_type: meta_confusion
-  why_distracting: The agent is instructed by the config to use `pnpm swc-build-native`
-    when editing Rust, but the task explicitly requires automating this so developers
-    (and agents) no longer need to run it manually. The agent must modify this very
-    rule rather than just following it.
+  why_distracting: The agent is instructed by the config to use `pnpm swc-build-native` when editing Rust, but the task explicitly requires automating this so developers (and agents) no longer need to run it manually. The agent must modify this very rule rather than just following it.
   severity: high
   source:
     path: AGENTS.md
     lines: 367-371
-- rule: 'Default agent rule: start pnpm --filter=next dev in a separate terminal session
-    before making edits'
+- rule: 'Default agent rule: start pnpm --filter=next dev in a separate terminal session before making edits'
   collision_type: scope_ambiguity
-  why_distracting: The agent might try to run the dev server as a background process,
-    but this task is about modifying the build pipeline (`pnpm build`) and native
-    binary compilation, which requires testing the build commands directly, not the
-    dev server.
+  why_distracting: The agent might try to run the dev server as a background process, but this task is about modifying the build pipeline (`pnpm build`) and native binary compilation, which requires testing the build commands directly, not the dev server.
   severity: medium
   source:
     path: AGENTS.md
     lines: 72-73
-hierarchy_analysis: The config hierarchy is flat (only `AGENTS.md` and its symlink
-  `CLAUDE.md`), but it presents a unique meta-referential challenge because the agent
-  must edit the file that provides its own instructions. The agent must understand
-  that the instructions in `AGENTS.md` are the target of the refactor, not immutable
-  laws for this specific PR.
+hierarchy_analysis: The config hierarchy is flat (only `AGENTS.md` and its symlink `CLAUDE.md`), but it presents a unique meta-referential challenge because the agent must edit the file that provides its own instructions. The agent must understand that the instructions in `AGENTS.md` are the target of the refactor, not immutable laws for this specific PR.

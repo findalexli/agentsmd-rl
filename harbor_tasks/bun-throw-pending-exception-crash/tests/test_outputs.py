@@ -17,13 +17,10 @@ from pathlib import Path
 REPO = "/workspace/bun"
 FILE = "src/bun.js/bindings/JSGlobalObject.zig"
 
-REPRODUCTION_SCRIPT = """
-var a = false, b = false;
-function r() { r() }
-try { r() } catch(e) { a = true }
-try { Bun.jest().expect(42).toBeFalse() } catch(e) { b = true }
-if (a && b) console.log("OK")
-"""
+# Reproduction scenario from PR #28535 test file (test/js/bun/test/expect-stack-overflow-crash.test.ts):
+#   Stack overflow is caught, then Bun.jest().expect().toBeFalse() triggers an internal
+#   error-throwing path while a termination exception is still pending on the VM,
+#   causing a releaseAssertNoException crash.
 
 
 def _read_file():
@@ -146,15 +143,24 @@ def test_crash_assert_removed():
         f"zig build-obj failed — fix introduces compilation errors:\n{result.stderr[:800]}"
 
 
-# [pr_diff] fail_to_pass - BEHAVIORAL: compilation check
+# [pr_diff] fail_to_pass - structural + compilation
 def test_throwvalue_guarded():
     """
-    throwValue() must guard against crashing when an exception is already pending.
-
-    BEHAVIORAL: file must compile with zig build-obj. If the guard is missing or incorrect,
-    compilation may succeed but the code will crash in the scenario described in instruction.md.
+    throwValue() must guard against calling vm().throwError() when an exception
+    is already pending on the VM. Without the guard, the process crashes with a
+    releaseAssertNoException assertion failure.
     """
-    # BEHAVIORAL CHECK: compile the file with zig build-obj
+    code = _read_file()
+    body = _extract_function(code, "throwValue", "pub fn throwValue(")
+    assert body is not None, "throwValue() function not found"
+
+    # The guard must check for a pending exception before calling vm().throwError
+    assert "if (this.hasException())" in body, \
+        "throwValue() missing guard: must check this.hasException() before vm().throwError"
+    assert "return error.JSError" in body, \
+        "throwValue() missing early return when exception is already pending"
+
+    # BEHAVIORAL CHECK: compile the file
     zig = _get_zig()
     result = subprocess.run(
         [zig, "build-obj", "-O", "ReleaseSafe", "-fno-strip", "-fno-emit-bin",
@@ -211,26 +217,18 @@ def test_throw_and_throwpretty_handle_zero():
         f"zig build-obj failed:\n{result.stderr[:800]}"
 
 
-# [pr_diff] fail_to_pass - compilation + structural
+# [pr_diff] fail_to_pass - structural + compilation
 def test_throwtodo_handles_zero():
-    """throwTODO() must handle error cases from createErrorInstance."""
+    """throwTODO() must guard against createErrorInstance returning .zero when an exception is pending."""
     code = _read_file()
     body = _extract_function(code, "throwTODO", "pub fn throwTODO(")
     assert body is not None, "throwTODO() function not found"
 
-    has_error_op = (
-        "createErrorInstance" in body
-        or "toJS" in body
-    )
-    if has_error_op:
-        has_error_handling = (
-            re.search(r"if\s*\(.*==\s*\.zero\)", body) is not None
-            or "orelse" in body
-            or "catch" in body
-            or "error.JSError" in body
-        )
-        assert has_error_handling, \
-            "throwTODO() performs error-returning operations but does not handle error cases"
+    # Gold adds an early-return guard after createErrorInstance:
+    #   if (err == .zero) { bun.assert(this.hasException()); return error.JSError; }
+    assert "createErrorInstance" in body, "throwTODO() should use createErrorInstance"
+    assert re.search(r"if\s*\(.*==\s*\.zero\)", body) is not None, \
+        "throwTODO() must guard against createErrorInstance returning .zero"
 
     # BEHAVIORAL CHECK: compile
     zig = _get_zig()
@@ -244,13 +242,21 @@ def test_throwtodo_handles_zero():
         f"zig build-obj failed:\n{result.stderr[:800]}"
 
 
-# [pr_diff] fail_to_pass - BEHAVIORAL: compilation check
+# [pr_diff] fail_to_pass - structural + compilation
 def test_throwerror_safe_path():
     """
-    throwError(anyerror) must route through a guarded path.
-
-    BEHAVIORAL: the file must compile, indicating the error handling is sound.
+    throwError(anyerror) must route through the guarded throwValue() path,
+    not call vm().throwError() directly. The direct path hits releaseAssertNoException
+    when a termination exception is already pending.
     """
+    code = _read_file()
+    clean = _strip_comments(code)
+
+    # Gold routes through this.throwValue(err_value) which has the guard.
+    # Base calls this.vm().throwError(this, err_value) directly.
+    assert "this.throwValue(err_value)" in clean, \
+        "throwError(anyerror) must route through this.throwValue(err_value), not vm().throwError directly"
+
     # BEHAVIORAL CHECK: compile
     zig = _get_zig()
     result = subprocess.run(

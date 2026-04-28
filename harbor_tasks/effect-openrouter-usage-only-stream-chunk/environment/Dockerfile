@@ -10,9 +10,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         && rm -rf /var/lib/apt/lists/*
 
 RUN python3 -m pip install --break-system-packages --no-cache-dir \
-        pytest==8.3.4
+        pytest==8.3.4 \
+        pytest-json-ctrf==0.4.1
 
-RUN npm install -g pnpm@10.17.1
+RUN npm install -g pnpm@10.17.1 tsx
 
 WORKDIR /workspace
 

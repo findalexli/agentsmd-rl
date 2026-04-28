@@ -14,6 +14,7 @@ Add a large file detection check to the shell script in `ci/jobs/scripts/check_s
 4. Prints a warning for each violation containing:
    - The filename
    - The phrase "is larger than 5 MB"
+   - The phrase "Large files should not be committed to git"
    - The phrase "download them at test time or build from source"
 5. Works correctly on both GNU/Linux and BSD/macOS systems
 

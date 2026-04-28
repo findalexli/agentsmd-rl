@@ -28,9 +28,9 @@ ENV CI=1
 ENV PNPM_HOME=/root/.local/share/pnpm
 ENV PATH=$PNPM_HOME:$PATH
 
-RUN pnpm install --frozen-lockfile --prefer-offline
+RUN pnpm install
 
-RUN CI=1 pnpm build
+RUN CI=1 pnpm build:ci
 
 RUN mkdir -p /logs/verifier
 

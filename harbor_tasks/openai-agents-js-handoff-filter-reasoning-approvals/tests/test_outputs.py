@@ -61,30 +61,34 @@ def test_removeAllTools_filters_reasoning_and_approval_items():
     """
     _ensure_regression_test_installed()
     rel = REGRESSION_DEST.relative_to(REPO).as_posix()
-    r = _run(
-        [
-            "pnpm",
-            "exec",
-            "vitest",
-            "run",
-            "--project",
-            "@openai/agents-core",
-            rel,
-        ],
-        timeout=600,
-    )
-    combined = (r.stdout or "") + "\n" + (r.stderr or "")
-    assert r.returncode == 0, (
-        "vitest regression run failed (code "
-        f"{r.returncode}).\n----- stdout (tail) -----\n"
-        f"{(r.stdout or '')[-3000:]}\n----- stderr (tail) -----\n"
-        f"{(r.stderr or '')[-1500:]}"
-    )
-    # Sanity check: vitest actually executed our regression file.
-    assert "handoffFilters.regression.test.ts" in combined, (
-        "vitest output did not reference the regression test file:\n"
-        + combined[-1500:]
-    )
+    try:
+        r = _run(
+            [
+                "pnpm",
+                "exec",
+                "vitest",
+                "run",
+                "--project",
+                "@openai/agents-core",
+                rel,
+            ],
+            timeout=600,
+        )
+        combined = (r.stdout or "") + "\n" + (r.stderr or "")
+        assert r.returncode == 0, (
+            "vitest regression run failed (code "
+            f"{r.returncode}).\n----- stdout (tail) -----\n"
+            f"{(r.stdout or '')[-3000:]}\n----- stderr (tail) -----\n"
+            f"{(r.stderr or '')[-1500:]}"
+        )
+        # Sanity check: vitest actually executed our regression file.
+        assert "handoffFilters.regression.test.ts" in combined, (
+            "vitest output did not reference the regression test file:\n"
+            + combined[-1500:]
+        )
+    finally:
+        if REGRESSION_DEST.exists():
+            REGRESSION_DEST.unlink()
 
 
 # ---------------------------------------------------------------------------
@@ -126,3 +130,40 @@ def test_repo_agents_core_typecheck():
         f"{r.returncode}).\nstdout tail:\n{(r.stdout or '')[-2000:]}\n"
         f"stderr tail:\n{(r.stderr or '')[-1000:]}"
     )
+
+# === CI-mined tests (taskforge.ci_check_miner) ===
+def test_ci_test_check_generated_declarations():
+    """pass_to_pass | CI job 'test' → step 'Check generated declarations'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'pnpm -r -F "@openai/*" dist:check'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Check generated declarations' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_test_run_linter():
+    """pass_to_pass | CI job 'test' → step 'Run linter'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'pnpm lint'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Run linter' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_test_type_check_docs_scripts():
+    """pass_to_pass | CI job 'test' → step 'Type-check docs scripts'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'pnpm docs:scripts:check'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Type-check docs scripts' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_test_run_tests():
+    """pass_to_pass | CI job 'test' → step 'Run tests', scoped to agents-core"""
+    r = subprocess.run(
+        ["bash", "-lc", 'pnpm -F @openai/agents-core test'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Run tests' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")

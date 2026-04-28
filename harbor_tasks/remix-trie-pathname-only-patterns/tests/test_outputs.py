@@ -207,21 +207,68 @@ def test_existing_array_matcher_tests_pass():
 def test_no_var_declarations_in_trie():
     """AGENTS.md (root): 'never use var'. trie.ts must not introduce var declarations."""
     src = TRIE_TS.read_text()
-    # match a "var " token at a statement position (not inside a string/comment heuristic — naive but sufficient for this file)
     import re
     for m in re.finditer(r"(?m)^\s*var\s+\w", src):
         pytest.fail(f"trie.ts contains a `var` declaration: {m.group(0)!r}")
 
 
 def test_no_typescript_accessibility_modifiers_in_trie():
-    """AGENTS.md (root): 'Classes: Use native fields (omit `public`), `#private` for private members (no TypeScript accessibility modifiers)'."""
+    """AGENTS.md (root): no TypeScript accessibility modifiers on class members."""
     src = TRIE_TS.read_text()
     import re
     for kw in ("public", "private", "protected"):
-        # disallow as a leading TS access modifier on a class member; allow `#private` (a comment/string is unlikely in this file with these tokens)
         pattern = r"(?m)^\s+" + kw + r"\s+\w"
         m = re.search(pattern, src)
         if m:
             pytest.fail(f"trie.ts uses TypeScript accessibility modifier `{kw}`: {m.group(0)!r}")
 
 
+# === CI-mined tests (scoped to affected package) ===
+def test_ci_check_lint():
+    """pass_to_pass | CI job 'check' -> step 'Lint'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'pnpm lint'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Lint' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+
+def test_ci_check_typecheck():
+    """pass_to_pass | CI job 'check' -> step 'Typecheck'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'pnpm --filter @remix-run/route-pattern typecheck'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Typecheck' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+
+def test_ci_check_check_change_files():
+    """pass_to_pass | CI job 'check' -> step 'Check change files'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'pnpm changes:validate'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Check change files' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+
+def test_ci_build_build_packages():
+    """pass_to_pass | CI job 'build' -> step 'Build packages'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'pnpm --filter @remix-run/route-pattern build'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Build packages' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+
+def test_ci_test_run_tests():
+    """pass_to_pass | CI job 'test' -> step 'Run tests'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'pnpm --filter @remix-run/route-pattern test'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Run tests' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")

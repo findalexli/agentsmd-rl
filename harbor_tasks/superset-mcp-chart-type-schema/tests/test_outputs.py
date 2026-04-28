@@ -6,6 +6,7 @@ These tests verify that the get_chart_type_schema MCP tool is properly implement
 """
 
 import ast
+import json
 import os
 import re
 import subprocess
@@ -513,3 +514,127 @@ class TestRepoPythonSyntax:
             cwd=REPO,
         )
         assert result.returncode == 0, f"Python syntax error in app.py:\n{result.stderr[-500:]}"
+
+# === Behavioral f2p tests: load module via importlib with mocks ===
+
+_LOADER_SCRIPT = r"""
+import json, sys, types
+from unittest.mock import MagicMock
+
+def mock_tool(*args, **kwargs):
+    def decorator(func):
+        return func
+    if args and callable(args[0]):
+        return args[0]
+    return decorator
+
+# Mock superset_core
+sc = types.ModuleType("superset_core"); sc.__path__ = []
+sys.modules["superset_core"] = sc
+sc_mcp = types.ModuleType("superset_core.mcp")
+sys.modules["superset_core.mcp"] = sc_mcp
+sc_dec = types.ModuleType("superset_core.mcp.decorators")
+sc_dec.tool = mock_tool; sc_dec.ToolAnnotations = MagicMock
+sys.modules["superset_core.mcp.decorators"] = sc_dec
+
+# Mock schema classes (simple pydantic models for TypeAdapter)
+from pydantic import BaseModel
+class XYChartConfig(BaseModel): x: dict = {}; y: list = []; kind: str = ""
+class TableChartConfig(BaseModel): columns: list = []
+class PieChartConfig(BaseModel): dimension: dict = {}; metric: dict = {}
+class PivotTableChartConfig(BaseModel): rows: list = []; metrics: list = []; columns: list = []
+class MixedTimeseriesChartConfig(BaseModel): x: dict = {}; y: list = []; y_secondary: list = []; time_grain: str = ""
+class HandlebarsChartConfig(BaseModel): query_mode: str = ""; columns: list = []; handlebars_template: str = ""
+class BigNumberChartConfig(BaseModel): metric: dict = {}
+
+# Mock superset package chain
+sys.modules["superset"] = types.ModuleType("superset")
+sys.modules["superset"].__path__ = []
+sys.modules["superset.mcp_service"] = types.ModuleType("superset.mcp_service")
+sys.modules["superset.mcp_service.chart"] = types.ModuleType("superset.mcp_service.chart")
+schemas = types.ModuleType("superset.mcp_service.chart.schemas")
+for cls in [XYChartConfig, TableChartConfig, PieChartConfig, PivotTableChartConfig,
+            MixedTimeseriesChartConfig, HandlebarsChartConfig, BigNumberChartConfig]:
+    setattr(schemas, cls.__name__, cls)
+sys.modules["superset.mcp_service.chart.schemas"] = schemas
+
+import importlib.util, os
+spec = importlib.util.spec_from_file_location("gcts", os.environ["MODULE_PATH"])
+mod = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(mod)
+
+action = os.environ["GCTS_ACTION"]
+if action == "valid":
+    r = mod._get_chart_type_schema_impl(os.environ["GCTS_CHART_TYPE"])
+    print(json.dumps({"keys": sorted(r.keys()), "chart_type": r.get("chart_type"),
+                      "has_schema": isinstance(r.get("schema"), dict),
+                      "has_examples": "examples" in r}))
+elif action == "invalid":
+    r = mod._get_chart_type_schema_impl(os.environ["GCTS_CHART_TYPE"])
+    print(json.dumps({"keys": sorted(r.keys()), "has_error": "error" in r,
+                      "has_valid_types": "valid_chart_types" in r,
+                      "has_hint": "hint" in r}))
+elif action == "no_examples":
+    r = mod._get_chart_type_schema_impl(os.environ["GCTS_CHART_TYPE"], include_examples=False)
+    print(json.dumps({"keys": sorted(r.keys()), "has_schema": "schema" in r,
+                      "no_examples": "examples" not in r}))
+elif action == "all_types":
+    print(json.dumps({"adapter_count": len(mod._CHART_TYPE_ADAPTERS),
+                      "valid_count": len(mod.VALID_CHART_TYPES)}))
+"""
+
+
+def _run_loader(action, chart_type="", timeout=60):
+    """Run the mock-based module loader with the given action."""
+    import os
+    env = os.environ.copy()
+    env["GCTS_ACTION"] = action
+    env["GCTS_CHART_TYPE"] = chart_type
+    env["MODULE_PATH"] = MODULE_PATH
+    result = subprocess.run(
+        [sys.executable, "-c", _LOADER_SCRIPT],
+        capture_output=True, text=True, timeout=timeout,
+        cwd=REPO, env=env,
+    )
+    if result.returncode != 0:
+        return None, result.stderr[-1000:]
+    try:
+        return json.loads(result.stdout.strip().split("\n")[-1]), None
+    except (json.JSONDecodeError, IndexError):
+        return None, result.stdout[-500:] + "\n" + result.stderr[-500:]
+
+
+def test_behavioral_valid_chart_type_returns_schema():
+    """fail_to_pass: _get_chart_type_schema_impl returns schema + examples for valid chart type."""
+    data, err = _run_loader("valid", "xy")
+    assert data is not None, f"Module load failed:\n{err}"
+    assert "chart_type" in data["keys"], f"Missing chart_type in keys: {data['keys']}"
+    assert "schema" in data["keys"], f"Missing schema in keys: {data['keys']}"
+    assert "examples" in data["keys"], f"Missing examples in keys: {data['keys']}"
+    assert data["chart_type"] == "xy"
+    assert data["has_schema"] is True
+
+
+def test_behavioral_invalid_chart_type_returns_error():
+    """fail_to_pass: _get_chart_type_schema_impl returns error for unknown chart type."""
+    data, err = _run_loader("invalid", "nonexistent")
+    assert data is not None, f"Module load failed:\n{err}"
+    assert data["has_error"] is True, f"Expected error for unknown type, got: {data}"
+    assert data["has_valid_types"] is True
+    assert data["has_hint"] is True
+
+
+def test_behavioral_include_examples_false_omits_examples():
+    """fail_to_pass: include_examples=False omits the examples key."""
+    data, err = _run_loader("no_examples", "pie")
+    assert data is not None, f"Module load failed:\n{err}"
+    assert data["has_schema"] is True
+    assert data["no_examples"] is True, f"Examples should be omitted, got keys: {data['keys']}"
+
+
+def test_behavioral_all_seven_chart_types_registered():
+    """fail_to_pass: all 7 chart types are registered in _CHART_TYPE_ADAPTERS."""
+    data, err = _run_loader("all_types")
+    assert data is not None, f"Module load failed:\n{err}"
+    assert data["adapter_count"] == 7, f"Expected 7 adapters, got {data['adapter_count']}"
+    assert data["valid_count"] == 7, f"Expected 7 valid types, got {data['valid_count']}"

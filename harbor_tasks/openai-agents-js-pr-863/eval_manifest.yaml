@@ -1,0 +1,111 @@
+version: '2.0'
+source:
+  repo: openai/openai-agents-js
+  pr: 863
+  base_commit: f0ad7065c8ec8c532bf702d1912b7d42ee17b141
+  merge_commit: fc276a76b266bdaca0269e7ad347c88e403fa908
+task:
+  kind: code_fix
+checks:
+- id: test_patch_selects_lowest_milestone
+  type: fail_to_pass
+  origin: pr_diff
+  description: Patch bump selects lowest (oldest) open milestone, not newest
+- id: test_patch_selects_lowest_two_milestones
+  type: fail_to_pass
+  origin: pr_diff
+  description: Patch bump selects lowest with exactly two open milestones
+- id: test_minor_selects_second_newest
+  type: pass_to_pass
+  origin: pr_diff
+  description: Minor bump selects second-newest milestone (unchanged behavior)
+- id: test_minor_falls_back_to_only_milestone
+  type: pass_to_pass
+  origin: repo_tests
+  description: Minor bump falls back to only milestone when just one exists
+- id: test_none_skips_assignment
+  type: pass_to_pass
+  origin: repo_tests
+  description: None bump type skips milestone assignment entirely
+- id: test_parse_milestone_title
+  type: pass_to_pass
+  origin: repo_tests
+  description: parseMilestoneTitle parses X.Y.x titles and rejects invalid ones
+- id: test_repo_lint
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo linting passes
+- id: test_ci_build_run_build
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: build / Run build'
+- id: test_ci_test_check_generated_declarations
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: test / Check generated declarations'
+- id: test_ci_test_run_linter
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: test / Run linter'
+- id: test_ci_test_type_check_docs_scripts
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: test / Type-check docs scripts'
+- id: test_ci_test_compile_examples
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: test / Compile examples'
+- id: test_ci_test_run_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: test / Run tests'
+rubric:
+- rule: Follow ESLint rules (`eslint.config.mjs`), no unused imports, adhere to Prettier.
+  source:
+    path: AGENTS.md
+    lines: '181'
+    commit: f0ad7065c8ec8c532bf702d1912b7d42ee17b141
+  evidence: Gold fix uses clean variable declarations with consistent formatting that passes lint
+  category: style
+  verification: llm_judge
+- rule: Comments must end with a period.
+  source:
+    path: AGENTS.md
+    lines: '127'
+    commit: f0ad7065c8ec8c532bf702d1912b7d42ee17b141
+  evidence: Gold fix adds no new comments, so no period violations
+  category: style
+  verification: llm_judge
+- rule: Run `pnpm lint` and fix all errors locally.
+  source:
+    path: AGENTS.md
+    lines: '182'
+    commit: f0ad7065c8ec8c532bf702d1912b7d42ee17b141
+  evidence: Gold fix passes repo lint checks
+  category: testing
+  verification: programmatic
+- rule: 'Keep the script lightweight: it should only gather context and emit the prompt.'
+  source:
+    path: .codex/skills/changeset-validation/SKILL.md
+    lines: '41'
+    commit: f0ad7065c8ec8c532bf702d1912b7d42ee17b141
+  evidence: Gold fix adds minimal lines, keeping the script focused on its purpose
+  category: architecture
+  verification: llm_judge
+distractors:
+- rule: When editing GitHub Actions workflows, always web-search for the latest stable major versions of official actions (e.g., `actions/checkout`, `actions/setup-node`) before updating version pins.
+  source:
+    path: AGENTS.md
+    lines: '249'
+    commit: f0ad7065c8ec8c532bf702d1912b7d42ee17b141
+  collision_type: scope_ambiguity
+  why_distracting: PR is about a script fix, not a workflow edit, but the `ci:` commit prefix could misdirect agent toward workflow changes
+  severity: medium
+- rule: Keep the prompt file as the single source of validation rules.
+  source:
+    path: .codex/skills/changeset-validation/SKILL.md
+    lines: '40'
+    commit: f0ad7065c8ec8c532bf702d1912b7d42ee17b141
+  collision_type: scope_ambiguity
+  why_distracting: Agent might erroneously edit the prompt file instead of the milestone script when both live in the same skill directory
+  severity: medium

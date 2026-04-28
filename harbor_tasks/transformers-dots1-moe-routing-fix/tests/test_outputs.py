@@ -173,3 +173,28 @@ def test_modular_dots1_in_sync_with_modeling_dots1():
             f"--- stderr (tail) ---\n{r.stderr[-2000:]}"
         )
         raise AssertionError(msg)
+
+# === CI-mined tests (ruff lint + format checks sourced from repo CI) ===
+def test_ci_ruff_check_on_dots1():
+    """pass_to_pass | ruff lint check passes on dots1 modular + modeling files."""
+    mod_file = "src/transformers/models/dots1/modular_dots1.py"
+    gen_file = "src/transformers/models/dots1/modeling_dots1.py"
+    r = subprocess.run(
+        ["ruff", "check", mod_file, gen_file],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, (
+        f"ruff check failed on dots1 files (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_ruff_format_check_on_dots1():
+    """pass_to_pass | ruff format --check passes on dots1 modular + modeling files."""
+    mod_file = "src/transformers/models/dots1/modular_dots1.py"
+    gen_file = "src/transformers/models/dots1/modeling_dots1.py"
+    r = subprocess.run(
+        ["ruff", "format", "--check", mod_file, gen_file],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, (
+        f"ruff format --check failed on dots1 files (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")

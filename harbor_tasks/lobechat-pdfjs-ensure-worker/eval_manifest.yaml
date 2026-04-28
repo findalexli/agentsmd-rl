@@ -12,8 +12,7 @@ checks:
 - id: old_worker_files_removed
   type: fail_to_pass
   origin: pr_diff
-  description: Unreliable side-effect worker files (worker.ts, pdf.worker.ts) are
-    deleted
+  description: Unreliable side-effect worker files (worker.ts, pdf.worker.ts) are deleted
 - id: pdf_viewer_imports_unified
   type: fail_to_pass
   origin: pr_diff
@@ -21,13 +20,11 @@ checks:
 - id: pdf_preview_imports_unified
   type: fail_to_pass
   origin: pr_diff
-  description: SharePdf/PdfPreview imports from unified @/libs/pdfjs, not react-pdf
-    directly
+  description: SharePdf/PdfPreview imports from unified @/libs/pdfjs, not react-pdf directly
 - id: claude_md_linear_section_updated
   type: fail_to_pass
   origin: pr_diff
-  description: CLAUDE.md Linear Issue Management section restructured with trigger
-    conditions and workflow
+  description: CLAUDE.md Linear Issue Management section restructured with trigger conditions and workflow
 - id: pdf_viewers_still_use_document
   type: pass_to_pass
   origin: static
@@ -64,35 +61,67 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Service layer tests pass (vitest run src/services)
+- id: test_ci_test_app_run_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: Test App / Run tests'
+- id: test_ci_test_packages_test_packages_with_coverage
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: Test Packages / Test packages with coverage'
+- id: test_ci_test_packages_upload_coverage_to_codecov
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: Test Packages / Upload coverage to Codecov'
+- id: test_ci_test_desktop_app_typecheck_desktop
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: Test Desktop App / Typecheck Desktop'
+- id: test_ci_test_desktop_app_test_desktop_client
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: Test Desktop App / Test Desktop Client'
+- id: test_ci_test_database_lint
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: Test Database / Lint'
+- id: test_ci_test_database_test_client_db
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: Test Database / Test Client DB'
+- id: test_ci_test_database_test_coverage
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: Test Database / Test Coverage'
+- id: test_ci_build_desktop_next_bundle_enable_corepack
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: Build desktop Next bundle / Enable Corepack'
+- id: test_ci_build_desktop_next_bundle_build_desktop_next_js_bundle
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: Build desktop Next bundle / Build desktop Next.js bundle'
 rubric:
-- rule: 'CLAUDE.md updates: Linear Issue Management section should be restructured
-    with explicit trigger conditions and numbered workflow steps'
+- rule: 'CLAUDE.md updates: Linear Issue Management section should be restructured with explicit trigger conditions and numbered workflow steps'
   source:
     path: CLAUDE.md
     lines: 61-79
-  evidence: The gold solution restructures the Linear Issue Management section with
-    clear **Trigger conditions** (bullet list) and **Workflow:** (numbered steps 1-2-3),
-    replacing the old paragraph-style description.
+  evidence: The gold solution restructures the Linear Issue Management section with clear **Trigger conditions** (bullet list) and **Workflow:** (numbered steps 1-2-3), replacing the old paragraph-style description.
   category: documentation
 - rule: Third-party integrations belong in src/libs
   source:
     path: .cursor/rules/project-structure.mdc
     lines: '141'
   source_text: '- Third-party Integrations: `src/libs` — analytics, oidc etc.'
-  evidence: The gold diff extracts the `react-pdf` dependency usage and encapsulates
-    it in a newly created wrapper file at `src/libs/pdfjs/index.tsx`, correctly isolating
-    the third-party integration from UI feature components.
+  evidence: The gold diff extracts the `react-pdf` dependency usage and encapsulates it in a newly created wrapper file at `src/libs/pdfjs/index.tsx`, correctly isolating the third-party integration from UI feature components.
   category: architecture
   verification: llm_judge
 - rule: Keep 'type' for utility types, 'interface' for object shapes
   source:
     path: .cursor/rules/typescript.mdc
     lines: '14'
-  source_text: '- prefer `interface` over `type` for object shapes (e.g., React component
-    props). Keep `type` for unions, intersections, and utility types.'
-  evidence: The diff defines `export type DocumentProps = ComponentProps<typeof PdfDocument>;`.
-    It correctly uses `type` here rather than `interface` because `ComponentProps`
-    is a TypeScript utility type.
+  source_text: '- prefer `interface` over `type` for object shapes (e.g., React component props). Keep `type` for unions, intersections, and utility types.'
+  evidence: The diff defines `export type DocumentProps = ComponentProps<typeof PdfDocument>;`. It correctly uses `type` here rather than `interface` because `ComponentProps` is a TypeScript utility type.
   category: typing
   verification: llm_judge
 - rule: Use semantically meaningful variables
@@ -100,9 +129,7 @@ rubric:
     path: .cursor/rules/typescript.mdc
     lines: '30'
   source_text: '- Use semantically meaningful variable, function, and class names.'
-  evidence: 'The diff renames the unused mapping parameter `el` to `_` in `Array.from({
-    length: numPages }, (_, index) => {`. The underscore is the semantically meaningful
-    standard convention for an ignored variable.'
+  evidence: 'The diff renames the unused mapping parameter `el` to `_` in `Array.from({ length: numPages }, (_, index) => {`. The underscore is the semantically meaningful standard convention for an ignored variable.'
   category: naming
   verification: llm_judge
 config_edits:
@@ -123,8 +150,7 @@ config_edits:
     **Workflow:**
 
 
-    1. Use `ToolSearch` to confirm `linear-server` MCP exists (search `linear` or
-    `mcp__linear-server__`)
+    1. Use `ToolSearch` to confirm `linear-server` MCP exists (search `linear` or `mcp__linear-server__`)
 
     2. If found, read `.cursor/rules/linear.mdc` and follow the workflow
 
@@ -133,29 +159,20 @@ config_edits:
 
     ClaudeCode may not inject MCP tools until they are discovered/used.\
 
-    Before applying Linear workflows, **use tool search** to confirm `linear-server`
-    exists (e.g. search `linear` / `mcp__linear-server__`). If not found, treat it
-    as not installed.\
+    Before applying Linear workflows, **use tool search** to confirm `linear-server` exists (e.g. search `linear` / `mcp__linear-server__`). If not found, treat it as not installed.\
 
     Then read `@.cursor/rules/linear.mdc` when working with Linear issues.'
 distractors:
-- rule: Before applying Linear workflows, use tool search to confirm linear-server
-    exists
+- rule: Before applying Linear workflows, use tool search to confirm linear-server exists
   collision_type: meta_confusion
-  why_distracting: The file contains instructions to 'use tool search to confirm linear-server
-    exists' and 'read @.cursor/rules/linear.mdc'. An agent might interpret this as
-    an instruction to execute during the current task, rather than text to be rewritten
-    as documentation.
+  why_distracting: The file contains instructions to 'use tool search to confirm linear-server exists' and 'read @.cursor/rules/linear.mdc'. An agent might interpret this as an instruction to execute during the current task, rather than text to be rewritten as documentation.
   severity: high
   source:
     path: CLAUDE.md
     lines: 64-68
-- rule: Follow [Linear rules in CLAUDE.md](CLAUDE.md#linear-issue-management-ignore-if-not-installed-linear-mcp)
-    when working with Linear issues.
+- rule: Follow [Linear rules in CLAUDE.md](CLAUDE.md#linear-issue-management-ignore-if-not-installed-linear-mcp) when working with Linear issues.
   collision_type: scope_ambiguity
-  why_distracting: AGENTS.md contains a markdown link to the specific heading in CLAUDE.md
-    that is being changed. The agent might try to update AGENTS.md to keep the link
-    intact, but the instructions only requested updating CLAUDE.md.
+  why_distracting: AGENTS.md contains a markdown link to the specific heading in CLAUDE.md that is being changed. The agent might try to update AGENTS.md to keep the link intact, but the instructions only requested updating CLAUDE.md.
   severity: medium
   source:
     path: AGENTS.md
@@ -164,13 +181,9 @@ distractors:
   source:
     path: .cursor/rules/react.mdc
     lines: '11'
-  source_text: '- Component selection priority: src/components > installed component
-    packages > lobe-ui > antd'
+  source_text: '- Component selection priority: src/components > installed component packages > lobe-ui > antd'
   collision_type: architecture_boundary
-  why_distracting: Since `react-pdf` is an installed component package, an agent might
-    incorrectly prioritize importing its components directly in `src/features/...`
-    (as was previously done) rather than abstracting them behind a new `src/libs`
-    integration module.
+  why_distracting: Since `react-pdf` is an installed component package, an agent might incorrectly prioritize importing its components directly in `src/features/...` (as was previously done) rather than abstracting them behind a new `src/libs` integration module.
   severity: medium
 - rule: Defer Non-Critical Third-Party Libraries
   source:
@@ -181,13 +194,6 @@ distractors:
 
     **Impact: MEDIUM (loads after hydration)**'
   collision_type: would_cause_bug
-  why_distracting: An agent might attempt to use Next.js `next/dynamic` to lazy-load
-    the heavy `react-pdf` library to optimize bundle size. However, PDF.js relies
-    on a specific global worker assignment. Dynamically importing it without the static
-    worker initialization wrapper would break PDF rendering entirely.
+  why_distracting: An agent might attempt to use Next.js `next/dynamic` to lazy-load the heavy `react-pdf` library to optimize bundle size. However, PDF.js relies on a specific global worker assignment. Dynamically importing it without the static worker initialization wrapper would break PDF rendering entirely.
   severity: high
-hierarchy_analysis: The workspace has two root-level configuration files (`AGENTS.md`
-  and `CLAUDE.md`). The task requires the agent to modify `CLAUDE.md` itself, which
-  is a meta-referential action. The agent must distinguish between the rules it should
-  follow to complete the task and the rules it is supposed to rewrite as part of the
-  task.
+hierarchy_analysis: The workspace has two root-level configuration files (`AGENTS.md` and `CLAUDE.md`). The task requires the agent to modify `CLAUDE.md` itself, which is a meta-referential action. The agent must distinguish between the rules it should follow to complete the task and the rules it is supposed to rewrite as part of the task.

@@ -44,16 +44,16 @@ checks:
   description: Invalid strict_host_key_checking values raise ValueError
   origin: pr_diff
 - id: test_strict_host_key_checking_accepts_valid_yes
-  type: fail_to_pass
-  description: Valid 'yes' strict_host_key_checking is accepted
+  type: pass_to_pass
+  description: Valid 'yes' strict_host_key_checking is accepted (regression guard)
   origin: pr_diff
 - id: test_strict_host_key_checking_accepts_valid_no
-  type: fail_to_pass
-  description: Valid 'no' strict_host_key_checking is accepted
+  type: pass_to_pass
+  description: Valid 'no' strict_host_key_checking is accepted (regression guard)
   origin: pr_diff
 - id: test_strict_host_key_checking_accepts_valid_accept_new
-  type: fail_to_pass
-  description: Valid 'accept-new' strict_host_key_checking is accepted
+  type: pass_to_pass
+  description: Valid 'accept-new' strict_host_key_checking is accepted (regression guard)
   origin: pr_diff
 - id: test_url_encoding_of_username_and_token_https
   type: fail_to_pass
@@ -68,12 +68,12 @@ checks:
   description: str.replace only replaces first occurrence of protocol
   origin: pr_diff
 - id: test_local_path_expanded
-  type: fail_to_pass
-  description: Local paths are expanded through os.path.expanduser
+  type: pass_to_pass
+  description: Local paths are expanded through os.path.expanduser (regression guard)
   origin: pr_diff
 - id: test_url_with_tilde_in_middle_unchanged
-  type: fail_to_pass
-  description: URLs with tilde in middle are not mangled
+  type: pass_to_pass
+  description: URLs with tilde in middle are not mangled (regression guard)
   origin: pr_diff
 - id: test_proxy_command_formatting
   type: fail_to_pass
@@ -96,51 +96,37 @@ rubric:
   source:
     path: AGENTS.md
     lines: 42-42
-  evidence: The gold solution correctly modifies the Git provider code in `providers/git/src/airflow/providers/git/hooks/git.py`,
-    adhering to the monorepo structure where providers are isolated in the `providers/
+  evidence: The gold solution correctly modifies the Git provider code in `providers/git/src/airflow/providers/git/hooks/git.py`, adhering to the monorepo structure where providers are isolated in the `providers/
   category: architecture
 - rule: 'Building blocks: Hooks, Operators, Sensors, Transfers.'
   source:
     path: providers/AGENTS.md
     lines: 8-9
-  evidence: The gold solution modifies a file in the `hooks/` directory (`providers/git/src/airflow/providers/git/hooks/git.py`),
-    aligning with the defined provider structure building blocks.
+  evidence: The gold solution modifies a file in the `hooks/` directory (`providers/git/src/airflow/providers/git/hooks/git.py`), aligning with the defined provider structure building blocks.
   category: architecture
 distractors:
 - rule: Keep provider.yaml metadata, docs, and tests in sync.
   collision_type: scope_ambiguity
-  why_distracting: The rule instructs to keep provider.yaml, docs, and tests in sync.
-    An agent might waste time trying to write tests for the new validation or update
-    documentation, whereas the gold solution strictly implements the security patches
-    requested without touching tests or docs.
+  why_distracting: The rule instructs to keep provider.yaml, docs, and tests in sync. An agent might waste time trying to write tests for the new validation or update documentation, whereas the gold solution strictly implements the security patches requested without touching tests or docs.
   severity: medium
   source:
     path: providers/AGENTS.md
     lines: 12-13
 - rule: Tests live alongside the provider — mirror source paths in test directories.
   collision_type: scope_ambiguity
-  why_distracting: The rule mandates that tests live alongside the provider and mirror
-    source paths. An agent might try to create or modify tests for the new security
-    validations (e.g., testing the ValueError for strict_host_key_checking), but the
-    gold solution only patches the source code.
+  why_distracting: The rule mandates that tests live alongside the provider and mirror source paths. An agent might try to create or modify tests for the new security validations (e.g., testing the ValueError for strict_host_key_checking), but the gold solution only patches the source code.
   severity: medium
   source:
     path: providers/AGENTS.md
     lines: 14-15
-- rule: When adding a translation, some configuration files need to be updated before
-    translation work can begin.
+- rule: When adding a translation, some configuration files need to be updated before translation work can begin.
   source:
     path: .github/skills/airflow-translations/SKILL.md
     lines: 14-15
   collision_type: architecture_boundary
-  why_distracting: The agent is adding a new error message ('Invalid strict_host_key_checking
-    value') and might mistakenly attempt to add it to the UI translation files, which
-    is incorrect for backend provider exceptions.
+  why_distracting: The agent is adding a new error message ('Invalid strict_host_key_checking value') and might mistakenly attempt to add it to the UI translation files, which is incorrect for backend provider exceptions.
   severity: low
-hierarchy_analysis: The hierarchy consists of root-level AGENTS.md/CLAUDE.md and provider-level
-  AGENTS.md. The provider-level config adds specific instructions for provider packages,
-  but neither level contains rules directly applicable to the specific security fixes
-  required in this task.
+hierarchy_analysis: The hierarchy consists of root-level AGENTS.md/CLAUDE.md and provider-level AGENTS.md. The provider-level config adds specific instructions for provider packages, but neither level contains rules directly applicable to the specific security fixes required in this task.
 version: '2.0'
 source:
   repo: apache/airflow

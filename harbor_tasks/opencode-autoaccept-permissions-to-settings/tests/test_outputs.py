@@ -1,12 +1,3 @@
-"""
-Task: opencode-autoaccept-permissions-to-settings
-Repo: anomalyco/opencode @ c2d2ca352252a922354c89bfbdb135cf1abfe1b6
-PR:   #21308
-
-All checks must pass for reward = 1. Any failure = reward 0.
-Each test function maps 1:1 to a check in eval_manifest.yaml.
-"""
-
 import subprocess
 from pathlib import Path
 
@@ -322,3 +313,13 @@ def test_repo_unit_tests():
         capture_output=True, text=True, timeout=180, cwd=PACKAGES_APP,
     )
     assert r.returncode == 0, f"Unit tests failed:\n{r.stderr[-500:] if r.stderr else r.stdout[-500:]}"
+
+# [repo_tests] pass_to_pass — CI typecheck (bun typecheck at repo root)
+def test_ci_typecheck_run_typecheck():
+    """pass_to_pass | CI job 'typecheck' → step 'Run typecheck'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'bun typecheck'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Run typecheck' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")

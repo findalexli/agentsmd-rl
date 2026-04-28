@@ -46,7 +46,7 @@ def test_claude_md_newline_rule():
     content = _read(CLAUDE_MD)
     assert "所有文件必须以换行符结尾" in content, (
         "CLAUDE.md is missing the newline-EOF rule. "
-        "Expected the literal phrase '所有文件必须以换行符结尾' in the "
+        "Expected the literal phrase 所有文件必须以换行符结尾 in the "
         "core conventions section."
     )
     assert "final-newline" in content, (
@@ -100,7 +100,6 @@ def test_mcp_zh_doc_created():
 def test_llms_en_aggregated_files_table():
     """English LLMs.txt guide must list the new aggregated files."""
     content = _read(LLMS_EN)
-    # The new aggregated-files section adds three additional resources.
     assert "llms-full-cn.txt" in content, (
         "llms.en-US.md must list the Chinese full-documentation aggregate "
         "file (llms-full-cn.txt)."
@@ -149,3 +148,9 @@ def test_all_changed_files_end_with_newline():
             f"{path.relative_to(REPO)} does not end with a newline, "
             f"violating the project's final-newline rule."
         )
+
+# === CI-mined tests (taskforge.ci_check_miner) ===
+# Dropped: test_ci_build_project_run_script (requires yarn/node toolchain)
+# Dropped: test_ci_test_image_generate_image_snapshots (requires node/puppeteer)
+# These CI jobs are irrelevant for a markdown_authoring task — the PR only
+# touches documentation files, not build artifacts or visual snapshots.

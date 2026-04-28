@@ -15,7 +15,7 @@ REPO = "/workspace/ruff"
 
 
 # ---------------------------------------------------------------------------
-# Fail-to-pass — gate (script must exist and be valid)
+# Fail-to-pass -- gate (script must exist and be valid)
 # ---------------------------------------------------------------------------
 
 # [static] fail_to_pass
@@ -30,7 +30,7 @@ def test_script_syntax():
 
 
 # ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) — core behavioral tests
+# Fail-to-pass (pr_diff) -- core behavioral tests
 # ---------------------------------------------------------------------------
 
 # [pr_diff] fail_to_pass
@@ -117,7 +117,7 @@ def test_pyproject_uv_sources():
 
 
 # ---------------------------------------------------------------------------
-# Config/documentation update tests (agentmd-edit) — fail_to_pass
+# Config/documentation update tests (agentmd-edit) -- fail_to_pass
 # ---------------------------------------------------------------------------
 
 # [pr_diff] fail_to_pass
@@ -139,7 +139,7 @@ def test_claude_md_shows_usage_command():
 
 
 # ---------------------------------------------------------------------------
-# Pass-to-pass (static) — regression checks
+# Pass-to-pass (static) -- regression checks
 # ---------------------------------------------------------------------------
 
 # [static] pass_to_pass
@@ -171,7 +171,7 @@ def test_script_not_stub():
 
 
 # ---------------------------------------------------------------------------
-# Pass-to-pass — repo CI/CD checks (p2p enrichment)
+# Pass-to-pass -- repo CI/CD checks (p2p enrichment)
 # ---------------------------------------------------------------------------
 
 # [repo_tests] pass_to_pass

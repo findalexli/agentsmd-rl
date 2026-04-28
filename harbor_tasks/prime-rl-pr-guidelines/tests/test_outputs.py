@@ -80,3 +80,13 @@ def test_existing_branch_prefixes_preserved():
     text = _read_agents_md()
     for prefix in ("feat/", "fix/", "chore/"):
         assert prefix in text, f"Expected branch prefix '{prefix}' to remain documented"
+
+# === CI-mined tests (taskforge.ci_check_miner) ===
+def test_ci_unit_tests_run_unit_tests():
+    """pass_to_pass | CI job 'Unit tests' → step 'Run unit tests'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'uv run pytest tests/unit -m gpu'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Run unit tests' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")

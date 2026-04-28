@@ -63,8 +63,7 @@ checks:
 - id: test_get_default_aws_endpoint_url_function_structure
   type: fail_to_pass
   origin: pr_diff
-  description: _get_default_aws_endpoint_url function handles secure and insecure
-    properly
+  description: _get_default_aws_endpoint_url function handles secure and insecure properly
 - id: test_get_default_aws_endpoint_url_returns_none_when_no_env
   type: fail_to_pass
   origin: pr_diff
@@ -97,100 +96,102 @@ checks:
   type: fail_to_pass
   origin: pr_diff
   description: endpoint_url field is not required (has default)
+- id: test_ci_build_openhands_ui_build_package
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: Build openhands-ui / Build package'
+- id: test_ci_check_package_versions_check_for_any_rev_fields_in_pyproject_to
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: check-package-versions / Check for any ''rev'' fields in pyproject.toml'
+- id: test_ci_fe_e2e_tests_run_playwright_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: FE E2E Tests / Run Playwright tests'
+- id: test_ci_lint_frontend_lint_typescript_compilation_and_translat
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: Lint frontend / Lint, TypeScript compilation, and translation checks'
+- id: test_ci_fe_unit_tests_run_typescript_compilation
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: FE Unit Tests / Run TypeScript compilation'
+- id: test_ci_fe_unit_tests_run_tests_and_collect_coverage
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: FE Unit Tests / Run tests and collect coverage'
+- id: test_ci_python_tests_on_linux_build_environment
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: Python Tests on Linux / Build Environment'
 rubric:
-- rule: Follow existing code style and patterns in the target file. Type annotations
-    should use modern Python syntax (e.g., str | None).
+- rule: Follow existing code style and patterns in the target file. Type annotations should use modern Python syntax (e.g., str | None).
   source:
     path: AGENTS.md
     lines: 76-80
     commit: c9b2ce2fb9c61313d80643a489f81728bb9f5b09
-- rule: Use Pydantic Field with default_factory for configuration fields that depend
-    on environment variables or dynamic defaults.
+- rule: Use Pydantic Field with default_factory for configuration fields that depend on environment variables or dynamic defaults.
   source:
     path: AGENTS.md
     lines: 76-80
     commit: c9b2ce2fb9c61313d80643a489f81728bb9f5b09
-- rule: Ensure lint errors (like Ruff formatting issues) are fixed before pushing
-    changes.
+- rule: Ensure lint errors (like Ruff formatting issues) are fixed before pushing changes.
   source:
     path: AGENTS.md
     lines: 17-28
-  evidence: The gold solution explicitly runs `ruff format` on the modified file to
-    ensure there are no formatting issues before finishing.
+  evidence: The gold solution explicitly runs `ruff format` on the modified file to ensure there are no formatting issues before finishing.
   category: tooling
 - rule: Backend code for the V1 application server is located in `openhands/app_server/`.
   source:
     path: AGENTS.md
     lines: 58-60
-  evidence: The gold solution correctly targets and modifies `openhands/app_server/event/aws_event_service.py`,
-    adhering to the backend directory structure.
+  evidence: The gold solution correctly targets and modifies `openhands/app_server/event/aws_event_service.py`, adhering to the backend directory structure.
   category: architecture
 - rule: Fix Ruff formatting issues and run linting for backend changes before pushing.
   source:
     path: AGENTS.md
     lines: 15-25
-  evidence: The gold solution explicitly installs and runs `ruff format` on the target
-    file to ensure proper formatting, adhering to the requirement to fix Ruff formatting
-    issues before pushing changes.
+  evidence: The gold solution explicitly installs and runs `ruff format` on the target file to ensure proper formatting, adhering to the requirement to fix Ruff formatting issues before pushing changes.
   category: tooling
-- rule: Fix any lint errors or simple test errors, including Ruff formatting issues,
-    before pushing changes.
+- rule: Fix any lint errors or simple test errors, including Ruff formatting issues, before pushing changes.
   source:
     path: AGENTS.md
     lines: 22-33
-  evidence: The gold solution explicitly installs and runs `ruff format` on the target
-    file to ensure proper formatting, complying with the requirement to fix Ruff formatting
-    issues.
+  evidence: The gold solution explicitly installs and runs `ruff format` on the target file to ensure proper formatting, complying with the requirement to fix Ruff formatting issues.
   category: tooling
-- rule: Run pre-commit hooks or linters (like ruff) on modified backend files to ensure
-    no lint errors remain.
+- rule: Run pre-commit hooks or linters (like ruff) on modified backend files to ensure no lint errors remain.
   source:
     path: AGENTS.md
     lines: 17-20
-  evidence: The gold solution explicitly runs `ruff format` on the modified target
-    file to ensure proper formatting, complying with the requirement to fix lint errors
-    before pushing.
+  evidence: The gold solution explicitly runs `ruff format` on the modified target file to ensure proper formatting, complying with the requirement to fix lint errors before pushing.
   category: tooling
-- rule: Backend application server code is located in the `openhands/app_server/`
-    directory.
+- rule: Backend application server code is located in the `openhands/app_server/` directory.
   source:
     path: AGENTS.md
     lines: 65-67
-  evidence: The gold solution correctly targets the `openhands/app_server/event/aws_event_service.py`
-    file, which aligns with the documented location of the V1 application server.
+  evidence: The gold solution correctly targets the `openhands/app_server/event/aws_event_service.py` file, which aligns with the documented location of the V1 application server.
   category: architecture
 distractors:
-- rule: Store design documents, debugging notes, or temporary artifacts in a `.pr/`
-    directory.
+- rule: Store design documents, debugging notes, or temporary artifacts in a `.pr/` directory.
   collision_type: scope_ambiguity
-  why_distracting: The agent might interpret this bug fix as a 'debugging session'
-    or 'complex refactoring' and create a `.pr/analysis.md` or `.pr/design.md` file
-    to document the S3 endpoint logic. This is unnecessary for a straightforward,
-    well-specified bug fix and wastes effort.
+  why_distracting: The agent might interpret this bug fix as a 'debugging session' or 'complex refactoring' and create a `.pr/analysis.md` or `.pr/design.md` file to document the S3 endpoint logic. This is unnecessary for a straightforward, well-specified bug fix and wastes effort.
   severity: low
   source:
     path: AGENTS.md
     lines: 38-45
 - rule: Run `make build` to set up the entire repo including frontend and backend.
   collision_type: scope_ambiguity
-  why_distracting: The agent might attempt to run `make build` to set up the repository
-    before making changes, which is time-consuming and explicitly discouraged unless
-    requested by the user.
+  why_distracting: The agent might attempt to run `make build` to set up the repository before making changes, which is time-consuming and explicitly discouraged unless requested by the user.
   severity: low
   source:
     path: AGENTS.md
     lines: 6-8
-- rule: Use cross-repo-testing skill when deploying a feature branch to staging or
-    testing cross-repo features.
+- rule: Use cross-repo-testing skill when deploying a feature branch to staging or testing cross-repo features.
   source:
     path: .agents/skills/cross-repo-testing/SKILL.md
     lines: 1-3
   collision_type: scope_ambiguity
-  why_distracting: The issue mentions 'custom S3/Minio endpoint URLs for feature branches'.
-    An agent might mistakenly activate this skill to 'deploy a feature branch to staging'
-    or perform cross-repo testing, but this task only requires a local code fix in
-    the backend.
+  why_distracting: The issue mentions 'custom S3/Minio endpoint URLs for feature branches'. An agent might mistakenly activate this skill to 'deploy a feature branch to staging' or perform cross-repo testing, but this task only requires a local code fix in the backend.
   severity: medium
-hierarchy_analysis: The configuration consists of a single, flat `AGENTS.md` file
-  at the root level. There are no hierarchical conflicts or overrides to navigate.
+hierarchy_analysis: The configuration consists of a single, flat `AGENTS.md` file at the root level. There are no hierarchical conflicts or overrides to navigate.
 version: '2.0'

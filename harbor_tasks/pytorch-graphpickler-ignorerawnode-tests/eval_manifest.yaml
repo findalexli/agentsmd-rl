@@ -28,8 +28,7 @@ checks:
 - id: test_p2p_repo_has_main_run_tests
   type: pass_to_pass
   origin: repo_tests
-  description: Repo test file must have if __name__ == __main__ run_tests() pattern
-    (CI linting gate)
+  description: Repo test file must have if __name__ == __main__ run_tests() pattern (CI linting gate)
 - id: has_ignore_raw_node_tests
   type: fail_to_pass
   origin: pr_diff
@@ -49,8 +48,7 @@ checks:
 - id: not_stub
   type: pass_to_pass
   origin: static
-  description: Agent has >=2 test methods with real assertions and at least one pickler
-    call
+  description: Agent has >=2 test methods with real assertions and at least one pickler call
 - id: uses_pytorch_test_class
   type: fail_to_pass
   origin: agent_config
@@ -83,44 +81,54 @@ checks:
     path: .claude/skills/pr-review/review-checklist.md
     lines: '60'
     commit: e931ab4802816cec55aa5a25b51f27cb941c924e
+- id: test_ci_test_collect_env_run_collect_env_py_nonretryable
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: Test collect_env / Run collect_env.py (nonretryable)'
+- id: test_ci_test__run_test_py__is_usable_w_run_run_test_py_nonretryable
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: Test `run_test.py` is usable without boto3 / Run run_test.py (nonretryable)'
+- id: test_ci_doc_redirects_check_doc_redirects_check_nonretryable
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: doc-redirects-check / Doc redirects check (nonretryable)'
+- id: test_pr_added_test_raw_node_in_meta_raises_by_default
+  type: fail_to_pass
+  origin: pr_diff
+  description: PR added test 'test_raw_node_in_meta_raises_by_default' in test/fx/test_graph_pickler.py
+- id: test_pr_added_test_raw_node_in_meta_with_ignore_raw_node
+  type: fail_to_pass
+  origin: pr_diff
+  description: PR added test 'test_raw_node_in_meta_with_ignore_raw_node' in test/fx/test_graph_pickler.py
 distractors:
 - rule: Use `torch._dynamo.config.patch` for temporarily changing config.
   collision_type: architecture_boundary
-  why_distracting: The task involves setting `ignore_raw_node=True` on `GraphPickler.Options`.
-    An agent might confuse this with a global configuration and attempt to use `torch._dynamo.config.patch(ignore_raw_node=True)`
-    instead of instantiating and passing the `Options` object to `dumps()`.
+  why_distracting: The task involves setting `ignore_raw_node=True` on `GraphPickler.Options`. An agent might confuse this with a global configuration and attempt to use `torch._dynamo.config.patch(ignore_raw_node=True)` instead of instantiating and passing the `Options` object to `dumps()`.
   severity: high
   source:
     path: CLAUDE.md
     lines: 67-86
-- rule: When you are working on a bug, first create a standalone file that reproduces
-    the bug and verify it fails in the expected way.
+- rule: When you are working on a bug, first create a standalone file that reproduces the bug and verify it fails in the expected way.
   collision_type: scope_ambiguity
-  why_distracting: The task is to add missing test coverage for an existing feature,
-    not to fix a bug. An agent might waste time creating a standalone reproduction
-    file before modifying the test suite.
+  why_distracting: The task is to add missing test coverage for an existing feature, not to fix a bug. An agent might waste time creating a standalone reproduction file before modifying the test suite.
   severity: medium
   source:
     path: AGENTS.md
     lines: 3-6
-hierarchy_analysis: The configuration is flat, with both `AGENTS.md` and `CLAUDE.md`
-  at the root level. The agent must synthesize testing guidelines from `CLAUDE.md`
-  while avoiding the bug-reproduction workflow in `AGENTS.md`.
+hierarchy_analysis: The configuration is flat, with both `AGENTS.md` and `CLAUDE.md` at the root level. The agent must synthesize testing guidelines from `CLAUDE.md` while avoiding the bug-reproduction workflow in `AGENTS.md`.
 rubric:
-- rule: 'Use our test class and test runner: `from torch.testing._internal.common_utils
-    import run_tests, TestCase`'
+- rule: 'Use our test class and test runner: `from torch.testing._internal.common_utils import run_tests, TestCase`'
   source:
     path: CLAUDE.md
     lines: 16-24
-  evidence: The gold solution defines `class TestIgnoreRawNode(TestCase):` which inherits
-    from the required `TestCase` class.
+  evidence: The gold solution defines `class TestIgnoreRawNode(TestCase):` which inherits from the required `TestCase` class.
   category: testing
   verification: llm_judge
 - rule: Minimize comments; be concise; code should be self-explanatory and self-documenting.
   source:
     path: CLAUDE.md
     lines: 53-64
-  evidence: The gold solution uses concise docstrings and minimal comments, only explaining
-    the non-obvious injection of the raw node into metadata.
+  evidence: The gold solution uses concise docstrings and minimal comments, only explaining the non-obvious injection of the raw node into metadata.
   category: style
   verification: llm_judge

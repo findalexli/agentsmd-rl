@@ -155,3 +155,4 @@ def test_input_section_references_context_json():
     assert "context.json" in text, (
         "The skill must still describe its input as a pre-fetched context.json"
     )
+

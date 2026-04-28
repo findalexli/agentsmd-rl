@@ -141,9 +141,15 @@ console.log("PASS")
 
 def test_write_path_uses_shared_validator():
     src = Path(DATABASE_TS).read_text()
-    # Check for import of validatePartialRow from ./table (handles multi-line imports)
-    assert "validatePartialRow" in src and "from './table.ts'" in src, (
-        "database.ts must import validatePartialRow from './table.ts'"
+    # Check that validatePartialRow is imported from ./table.ts (not just defined locally)
+    # Use findall since there may be multiple import blocks from ./table.ts
+    imports = re.findall(
+        r"import\s*\{(.*?)\}\s*from\s+'\.\/table\.ts'",
+        src, re.DOTALL,
+    )
+    assert imports, "database.ts must import from ./table.ts"
+    assert any("validatePartialRow" in imp for imp in imports), (
+        "database.ts must import validatePartialRow from ./table.ts"
     )
     # Check for function call
     assert re.search(
@@ -153,11 +159,9 @@ def test_write_path_uses_shared_validator():
 
 def test_dataschema_type_removed_from_exports():
     src = Path(INDEX_TS).read_text()
-    export_lines = [line for line in src.splitlines() if "export" in line]
-    for line in export_lines:
-        assert "DataSchema" not in line, (
-            "DataSchema must not be re-exported from index.ts"
-        )
+    assert "DataSchema" not in src, (
+        "DataSchema must not appear in index.ts (re-export removed)"
+    )
 
 
 def test_timestamp_schema_uses_create_schema():
@@ -276,3 +280,87 @@ def test_repo_data_schema_unit_tests():
         capture_output=True, text=True, timeout=120,
     )
     assert r.returncode == 0, f"Data-schema unit tests failed:\n{r.stderr[-500:]}"
+
+# === CI-mined tests (taskforge.ci_check_miner) ===
+def test_ci_build_build_packages():
+    """pass_to_pass | CI job 'build' -> step 'Build packages'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'pnpm build'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Build packages' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+
+def test_ci_mysql_integration_run_mysql_integration_tests():
+    """pass_to_pass | CI job 'MySQL Integration' -> step 'Run mysql integration tests'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'pnpm --filter @remix-run/data-table-mysql run test'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Run mysql integration tests' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+
+def test_ci_sqlite_integration_build_sqlite_native_module():
+    """pass_to_pass | CI job 'SQLite Integration' -> step 'Build sqlite native module'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'pnpm rebuild better-sqlite3'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Build sqlite native module' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_sqlite_integration_run_sqlite_adapter_tests():
+    """pass_to_pass | CI job 'SQLite Integration' -> step 'Run sqlite adapter tests'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'pnpm --filter @remix-run/data-table-sqlite run test'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Run sqlite adapter tests' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_postgres_integration_run_postgres_integration_tests():
+    """pass_to_pass | CI job 'Postgres Integration' -> step 'Run postgres integration tests'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'pnpm --filter @remix-run/data-table-postgres run test'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Run postgres integration tests' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_check_lint():
+    """pass_to_pass | CI job 'check' -> step 'Lint'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'pnpm lint'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Lint' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_check_typecheck():
+    """pass_to_pass | CI job 'check' -> step 'Typecheck'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'pnpm typecheck'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Typecheck' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_check_check_change_files():
+    """pass_to_pass | CI job 'check' -> step 'Check change files'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'pnpm changes:validate'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Check change files' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_format_format():
+    """pass_to_pass | CI job 'format' -> step 'Format'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'pnpm format'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Format' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")

@@ -41,19 +41,37 @@ checks:
   type: fail_to_pass
   origin: pr_diff
   description: AGENTS.md has naming enforcement section with mandatory rules
+- id: test_ci_unit_run_unit_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: unit / Run unit tests'
+- id: test_ci_e2e_run_app_e2e_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: e2e / Run app e2e tests'
+- id: test_ci_build_tauri_prepare
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: build-tauri / Prepare'
+- id: test_ci_build_tauri_show_tauri_cli_version
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: build-tauri / Show tauri-cli version'
+- id: test_ci_typecheck_run_typecheck
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: typecheck / Run typecheck'
 rubric:
 - rule: Code changes must use single-word variable and function names where possible
   source:
     path: AGENTS.md
     lines: 14,20-21
     commit: 2a0be8316be7ae6ec78f5d221851fc1cc0cdddb2
-- rule: Prefer single word names for variables and functions. Only use multiple words
-    if necessary.
+- rule: Prefer single word names for variables and functions. Only use multiple words if necessary.
   source:
     path: AGENTS.md
     lines: 19-21
-  evidence: The gold solution renames multi-word variables to single words to comply
-    with the naming conventions.
+  evidence: The gold solution renames multi-word variables to single words to comply with the naming conventions.
   category: naming
 config_edits:
 - path: AGENTS.md
@@ -63,28 +81,23 @@ config_edits:
 distractors:
 - rule: Keep things in one function unless composable or reusable
   collision_type: rule_conflict
-  why_distracting: The rule advises keeping things in one function, but the task requires
-    extracting inline IIFEs into separate helper functions.
+  why_distracting: The rule advises keeping things in one function, but the task requires extracting inline IIFEs into separate helper functions.
   severity: high
   source:
     path: AGENTS.md
     lines: 11-11
 - rule: Avoid `try`/`catch` where possible
   collision_type: rule_conflict
-  why_distracting: The rule advises avoiding try/catch, but the task requires using
-    a try/finally block to ensure shutdown runs.
+  why_distracting: The rule advises avoiding try/catch, but the task requires using a try/finally block to ensure shutdown runs.
   severity: high
   source:
     path: AGENTS.md
     lines: 12-12
 - rule: Reduce total variable count by inlining when a value is only used once.
   collision_type: rule_conflict
-  why_distracting: The rule advises inlining values used only once, which contradicts
-    extracting inline IIFEs into named helper functions.
+  why_distracting: The rule advises inlining values used only once, which contradicts extracting inline IIFEs into named helper functions.
   severity: medium
   source:
     path: AGENTS.md
     lines: 31-31
-hierarchy_analysis: The repository uses a flat single-file config (AGENTS.md). The
-  agent must carefully weigh the task instructions against the config rules, as the
-  task explicitly overrides several general style guidelines.
+hierarchy_analysis: The repository uses a flat single-file config (AGENTS.md). The agent must carefully weigh the task instructions against the config rules, as the task explicitly overrides several general style guidelines.

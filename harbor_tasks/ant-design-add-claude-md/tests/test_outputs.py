@@ -102,15 +102,21 @@ def test_repo_agents_md_unchanged():
 
 
 def test_repo_clone_intact():
-    """Pass-to-pass: repo clone is at the expected base commit and clean enough to read."""
+    """Pass-to-pass: base commit is an ancestor of HEAD (no destructive git ops)."""
+    base = "2129ad4461103ec0bbe025cfd8bd26bf4e8b780b"
     r = subprocess.run(
-        ["git", "rev-parse", "HEAD"],
+        ["git", "merge-base", "--is-ancestor", base, "HEAD"],
         cwd=REPO,
         capture_output=True,
         text=True,
         timeout=30,
     )
-    assert r.returncode == 0, f"git rev-parse failed: {r.stderr}"
-    assert r.stdout.strip() == "2129ad4461103ec0bbe025cfd8bd26bf4e8b780b", (
-        f"Repo HEAD is not at the expected base commit: {r.stdout!r}"
+    assert r.returncode == 0, (
+        f"Base commit {base[:12]} is not an ancestor of HEAD."
+        f" The repo may have been corrupted."
     )
+
+# === CI-mined tests (taskforge.ci_check_miner) ===
+# Dropped: test_ci_build_project_run_script (requires yarn + network to clone ant-design-examples)
+# Dropped: test_ci_test_image_generate_image_snapshots (requires node + puppeteer + network)
+# Both are pass_to_pass tests irrelevant to a markdown_authoring task.

@@ -4,16 +4,20 @@
 
 The Dashboard PropertiesModal currently only applies CSS changes when the user clicks "Save" or "Apply". Users want to see CSS changes reflected on the dashboard in real-time as they type in the CSS editor, with a debounce to avoid excessive re-renders. Additionally, when users click "Cancel", any previewed CSS changes should be reverted to the original value from when the modal opened.
 
+## Code Style Requirements
+
+All code must pass ESLint, oxlint (`npm run lint:full`), custom rules (`npm run check:custom-rules`), and TypeScript (`npm run type`). The project's AGENTS.md forbids explicit `any` types.
+
 ## Requirements
 
 1. **Live CSS Preview with Debounce**: As users type in the CSS editor, changes should be reflected on the dashboard after a 500ms debounce period. The CSS change should be dispatched to Redux so the dashboard updates immediately.
 
    Implementation must include:
-   - A `useRef` named `originalCss` with type `string | null` to store the original CSS value when the modal opens
-   - A `useRef` named `cssDebounceTimer` with type `ReturnType<typeof setTimeout> | null` to manage the debounce timer
-   - A `useCallback` named `handleCustomCssChange` that implements the debounce logic
-   - The debounce timer must be set with `setTimeout` using a 500ms delay
-   - The CSS must be dispatched using `dashboardInfoChanged({ css })` imported from `src/dashboard/actions/dashboardInfo`
+   - A `useRef` named `originalCss` with type `string | null`
+   - A `useRef` named `cssDebounceTimer` with type `ReturnType<typeof setTimeout> | null`
+   - A `useCallback` named `handleCustomCssChange` with debounce logic
+   - The debounce timer must use `setTimeout` with a 500ms delay
+   - Dispatch via `dashboardInfoChanged({ css })` imported from `src/dashboard/actions/dashboardInfo`
 
 2. **Cancel Reverts Changes**: When the user clicks "Cancel", any pending debounce timers must be cleared and the original CSS value (from when the modal opened) must be restored by dispatching it to Redux.
 

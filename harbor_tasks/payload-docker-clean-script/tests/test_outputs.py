@@ -240,3 +240,76 @@ def test_not_stub():
     assert re.search(r'exec(Sync)?\s*\(', content), (
         "Script should actually execute docker commands via exec/execSync"
     )
+
+# === CI-mined tests (taskforge.ci_check_miner) ===
+def test_ci_lint_lint_typescript_javascript():
+    """pass_to_pass | CI job 'lint' → step 'Lint TypeScript/JavaScript'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'pnpm lint -- --quiet'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Lint TypeScript/JavaScript' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_lint_lint_scss():
+    """pass_to_pass | CI job 'lint' → step 'Lint SCSS'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'pnpm run lint:scss'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Lint SCSS' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_build_pnpm():
+    """pass_to_pass | CI job 'build' → step ''"""
+    r = subprocess.run(
+        ["bash", "-lc", 'pnpm run build:all'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step '' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_tests_types_types_tests():
+    """pass_to_pass | CI job 'tests-types' → step 'Types Tests'"""
+    r = subprocess.run(
+        ["bash", "-lc", "pnpm test:types --target '>=5.7'"], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Types Tests' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_tests_unit_unit_tests():
+    """pass_to_pass | CI job 'tests-unit' → step 'Unit Tests'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'pnpm test:unit'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Unit Tests' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_tests_type_generation_generate_payload_types():
+    """pass_to_pass | CI job 'tests-type-generation' → step 'Generate Payload Types'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'pnpm dev:generate-types fields'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Generate Payload Types' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_tests_type_generation_generate_graphql_schema_file():
+    """pass_to_pass | CI job 'tests-type-generation' → step 'Generate GraphQL schema file'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'pnpm dev:generate-graphql-schema graphql-schema-gen'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Generate GraphQL schema file' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_e2e_prep_prepare_prod_test_environment():
+    """pass_to_pass | CI job 'E2E Prep' → step 'Prepare prod test environment'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'pnpm prepare-run-test-against-prod:ci'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Prepare prod test environment' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")

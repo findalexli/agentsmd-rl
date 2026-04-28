@@ -1,0 +1,77 @@
+version: "2.0"
+
+source:
+  repo: "cloudflare/workers-sdk"
+  pr: 13160
+  base_commit: "4ca7cc6afb7a7cbf0e42580801654803b406b1e0"
+  merge_commit: "05f4443aa581d3f9095e2b1479672557d27e0603"
+
+task:
+  kind: code_fix
+
+checks:
+  - id: test_existing_ai_tests_pass
+    type: pass_to_pass
+    origin: repo_tests
+    description: Existing AI fetcher vitest tests pass
+
+  - id: test_403_auth_error_logging
+    type: fail_to_pass
+    origin: pr_diff
+    description: 403 with auth error code 1031 triggers user-friendly error message logging
+
+rubric:
+  - rule: "`console.*` in wrangler → use the `logger` singleton"
+    source:
+      path: "AGENTS.md"
+      lines: "176"
+      commit: "4ca7cc6afb7a7cbf0e42580801654803b406b1e0"
+    evidence: "The fix imports `{ logger }` from '../logger' and calls `logger.error()` instead of using `console.error()`"
+    category: "style"
+    verification: llm_judge
+
+  - rule: "**`expect` must come from test context** — never `import { expect } from \"vitest\"`: Use destructured test context: `it(\"name\", ({ expect }) => { ... })`"
+    source:
+      path: "AGENTS.md"
+      lines: "78"
+      commit: "4ca7cc6afb7a7cbf0e42580801654803b406b1e0"
+    evidence: "The added test cases use destructured test context `({ expect })` rather than importing expect from vitest"
+    category: "testing"
+    verification: llm_judge
+
+  - rule: "Every change to package code requires a changeset or it will not trigger a release"
+    source:
+      path: "AGENTS.md"
+      lines: "143"
+      commit: "4ca7cc6afb7a7cbf0e42580801654803b406b1e0"
+    evidence: "A changeset file .changeset/ai-auth-error-message.md is included with the fix, describing the change as a wrangler patch"
+    category: "process"
+    verification: llm_judge
+
+  - rule: "Never commit without changesets for user-facing changes"
+    source:
+      path: "AGENTS.md"
+      lines: "60"
+      commit: "4ca7cc6afb7a7cbf0e42580801654803b406b1e0"
+    evidence: "A changeset is included describing the user-facing behavioral change"
+    category: "process"
+    verification: llm_judge
+
+distractors:
+  - rule: "Use `console.error()` directly for error logging in wrangler"
+    source:
+      path: "AGENTS.md"
+      lines: "176"
+      commit: "4ca7cc6afb7a7cbf0e42580801654803b406b1e0"
+    collision_type: would_cause_bug
+    why_distracting: "AGENTS.md explicitly forbids console.* in wrangler; this contradicts the logger singleton rule and the fix must use logger.error not console.error"
+    severity: high
+
+  - rule: "Import `expect` from vitest at the top of test files"
+    source:
+      path: "AGENTS.md"
+      lines: "78"
+      commit: "4ca7cc6afb7a7cbf0e42580801654803b406b1e0"
+    collision_type: would_cause_bug
+    why_distracting: "AGENTS.md forbids importing expect from vitest; must use destructured test context"
+    severity: high

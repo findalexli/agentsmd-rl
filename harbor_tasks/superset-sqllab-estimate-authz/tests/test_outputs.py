@@ -160,8 +160,7 @@ def test_run_blocks_unauthorized_user_before_engine_call(
 
 
 # ---------------------------------------------------------------------------
-# Pass-to-pass: existing repo unit tests in the same SQL-Lab command tree
-# remain green (regression guard).
+# Pass-to-pass: existing repo unit tests — regression guards
 # ---------------------------------------------------------------------------
 
 
@@ -207,3 +206,5 @@ def test_repo_dataframe_utils_unit_tests_still_pass() -> None:
         f"--- stdout ---\n{r.stdout[-1500:]}\n"
         f"--- stderr ---\n{r.stderr[-500:]}"
     )
+
+

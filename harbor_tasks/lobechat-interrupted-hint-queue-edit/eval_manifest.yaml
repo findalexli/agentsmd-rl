@@ -12,13 +12,11 @@ checks:
 - id: interrupted_computation_logic
   type: fail_to_pass
   origin: pr_diff
-  description: isInterrupted is true when latest runtime op is cancelled, false when
-    running or completed
+  description: isInterrupted is true when latest runtime op is cancelled, false when running or completed
 - id: complete_operation_preserves_cancelled
   type: fail_to_pass
   origin: pr_diff
-  description: completeOperation preserves cancelled status instead of overwriting
-    with completed
+  description: completeOperation preserves cancelled status instead of overwriting with completed
 - id: operation_state_has_interrupted
   type: fail_to_pass
   origin: pr_diff
@@ -26,8 +24,7 @@ checks:
 - id: interrupted_selector_exists
   type: fail_to_pass
   origin: pr_diff
-  description: isMessageInterrupted selector is defined and exported from messageState
-    selectors
+  description: isMessageInterrupted selector is defined and exported from messageState selectors
 - id: interrupted_hint_component
   type: fail_to_pass
   origin: pr_diff
@@ -39,13 +36,11 @@ checks:
 - id: locale_interrupted_keys
   type: fail_to_pass
   origin: pr_diff
-  description: Locale files (default, en-US, zh-CN) contain interrupted and interruptedHint
-    keys
+  description: Locale files (default, en-US, zh-CN) contain interrupted and interruptedHint keys
 - id: skill_md_screen_recording
   type: fail_to_pass
   origin: pr_diff
-  description: electron-testing SKILL.md documents Screen Recording feature with ffmpeg
-    and agent-browser
+  description: electron-testing SKILL.md documents Screen Recording feature with ffmpeg and agent-browser
 - id: recording_script_exists
   type: fail_to_pass
   origin: pr_diff
@@ -53,13 +48,11 @@ checks:
 - id: existing_message_state_selectors
   type: pass_to_pass
   origin: static
-  description: Existing message state selectors (editing, generating, loading, etc.)
-    are unchanged
+  description: Existing message state selectors (editing, generating, loading, etc.) are unchanged
 - id: not_stub
   type: pass_to_pass
   origin: static
-  description: isInterrupted computation uses real logic with reverse/find/cancelled
-    check
+  description: isInterrupted computation uses real logic with reverse/find/cancelled check
 - id: test_repo_lint_modified_files
   type: pass_to_pass
   origin: repo_tests
@@ -104,6 +97,26 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Cancel functionality tests in streamingExecutor pass
+- id: test_ci_code_quality_check_lint
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: Code quality check / Lint'
+- id: test_ci_test_desktop_app_typecheck_desktop
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: Test Desktop App / Typecheck Desktop'
+- id: test_ci_test_desktop_app_test_desktop_client
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: Test Desktop App / Test Desktop Client'
+- id: test_ci_test_packages_test_packages_with_coverage
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: Test Packages / Test packages with coverage'
+- id: test_ci_test_packages_upload_coverage_to_codecov
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: Test Packages / Upload coverage to Codecov'
 rubric:
 - rule: 'New i18n keys follow the flat key naming convention: {feature}.{context}.{action|status}'
   source:
@@ -120,137 +133,84 @@ rubric:
     path: .agents/skills/react/SKILL.md
     lines: '9'
     commit: 9c08fa5cdf2116e041b63255be3e498f1ae8d1e3
-- rule: Business components by domain should be placed in `src/features/`, including
-    layout chunks, hooks, and domain-specific UI.
+- rule: Business components by domain should be placed in `src/features/`, including layout chunks, hooks, and domain-specific UI.
   source:
     path: CLAUDE.md
     lines: 32-35
-  evidence: The gold solution implements the new `InterruptedHint` component and modifies
-    `QueueTray` entirely within `src/features/Conversation/`, keeping business logic
-    and UI in the features directory rather t
+  evidence: The gold solution implements the new `InterruptedHint` component and modifies `QueueTray` entirely within `src/features/Conversation/`, keeping business logic and UI in the features directory rather t
   category: architecture
 - rule: 'i18n Keys: Add to `src/locales/default/namespace.ts`.'
   source:
     path: AGENTS.md
     lines: 58-59
-  evidence: The gold solution adds the new translation keys for the interrupted hint
-    and queue edit button to `src/locales/default/chat.ts`.
+  evidence: The gold solution adds the new translation keys for the interrupted hint and queue edit button to `src/locales/default/chat.ts`.
   category: naming
 - rule: 'TypeScript: Prefer interfaces over types for object shapes.'
   source:
     path: AGENTS.md
     lines: 42-43
-  evidence: The gold solution modifies `src/features/Conversation/types/operation.ts`
-    which defines the `MessageOperationState` interface, maintaining it as an interface
-    rather than refactoring to a type when add
+  evidence: The gold solution modifies `src/features/Conversation/types/operation.ts` which defines the `MessageOperationState` interface, maintaining it as an interface rather than refactoring to a type when add
   category: style
 - rule: i18n keys should be added to src/locales/default/namespace.ts
   source:
     path: AGENTS.md
     lines: 64-67
-  evidence: The gold solution adds the new translation keys for the interrupted hint
-    and queue edit button to src/locales/default/chat.ts.
+  evidence: The gold solution adds the new translation keys for the interrupted hint and queue edit button to src/locales/default/chat.ts.
   category: architecture
 - rule: Business components by domain go in src/features/
   source:
     path: CLAUDE.md
     lines: 41-44
-  evidence: The gold solution places the new InterruptedHint component inside src/features/Conversation/Messages/Assistant/components/,
-    adhering to the domain-based feature structure.
+  evidence: The gold solution places the new InterruptedHint component inside src/features/Conversation/Messages/Assistant/components/, adhering to the domain-based feature structure.
   category: architecture
 - rule: All AI development skills are available in .agents/skills/ directory
   source:
     path: AGENTS.md
     lines: 78-80
-  evidence: The gold solution updates the .agents/skills/electron-testing/SKILL.md
-    file and adds the record-electron-demo.sh script to the same directory.
+  evidence: The gold solution updates the .agents/skills/electron-testing/SKILL.md file and adds the record-electron-demo.sh script to the same directory.
   category: documentation
-- rule: Add i18n keys to `src/locales/default/namespace.ts` and translate `locales/zh-CN/namespace.json`
-    for preview.
+- rule: Add i18n keys to `src/locales/default/namespace.ts` and translate `locales/zh-CN/namespace.json` for preview.
   source:
     path: AGENTS.md
     lines: 68-71
-  evidence: The gold solution adds new translation keys to `src/locales/default/chat.ts`
-    and `locales/zh-CN/chat.json`.
+  evidence: The gold solution adds new translation keys to `src/locales/default/chat.ts` and `locales/zh-CN/chat.json`.
   category: tooling
-- rule: Place business components and domain-specific UI in `src/features/`, keeping
-    `src/routes/` thin.
+- rule: Place business components and domain-specific UI in `src/features/`, keeping `src/routes/` thin.
   source:
     path: CLAUDE.md
     lines: 45-48
-  evidence: The gold solution places the `InterruptedHint` component in `src/features/Conversation/Messages/Assistant/components/`
-    rather than in `src/routes/`.
+  evidence: The gold solution places the `InterruptedHint` component in `src/features/Conversation/Messages/Assistant/components/` rather than in `src/routes/`.
   category: architecture
 - rule: 'Keys: Add to `src/locales/default/namespace.ts` and do not run `pnpm i18n`'
   source:
     path: AGENTS.md
     lines: 63-66
-  evidence: The gold solution adds the new i18n keys for the interrupted hint to `src/locales/default/chat.ts`
-    and manually updates the preview locales without running the automated i18n script.
+  evidence: The gold solution adds the new i18n keys for the interrupted hint to `src/locales/default/chat.ts` and manually updates the preview locales without running the automated i18n script.
   category: tooling
 - rule: '`src/features/` holds business components by domain'
   source:
     path: CLAUDE.md
     lines: 41-43
-  evidence: The gold solution places the new `InterruptedHint.tsx` component inside
-    `src/features/Conversation/Messages/Assistant/components/`, adhering to the domain-based
-    feature structure.
+  evidence: The gold solution places the new `InterruptedHint.tsx` component inside `src/features/Conversation/Messages/Assistant/components/`, adhering to the domain-based feature structure.
   category: architecture
 config_edits:
 - path: .agents/skills/electron-testing/SKILL.md
   tier: 1
-  gold_added: "## Screen Recording\n\nRecord automated demos by combining `ffmpeg`\
-    \ screen capture with `agent-browser` automation. The script `.agents/skills/electron-testing/record-electron-demo.sh`\
-    \ handles the full lifecycle.\n\n### Usage\n\n```bash\n# Run the built-in demo\
-    \ (queue-edit feature)\n./.agents/skills/electron-testing/record-electron-demo.sh\n\
-    \n# Run a custom automation script\n./.agents/skills/electron-testing/record-electron-demo.sh\
-    \ ./my-demo.sh /tmp/my-demo.mp4\n```\n\nThe script automatically:\n\n1. Starts\
-    \ Electron with CDP and waits for SPA to load\n2. Detects the window position,\
-    \ screen, and Retina scale via Swift/CGWindowList\n3. Records only the Electron\
-    \ window region using `ffmpeg -f avfoundation` with crop\n4. Runs the demo (built-in\
-    \ or custom script receiving CDP port as `$1`)\n5. Stops recording and cleans\
-    \ up\n\n### Writing Custom Demo Scripts\n\nCreate a shell script that receives\
-    \ the CDP port as `$1`:\n\n```bash\n#!/usr/bin/env bash\n# my-demo.sh — Custom\
-    \ demo script\nPORT=$1\n\n# Navigate\nagent-browser --cdp \"$PORT\" snapshot -i\
-    \ 2>&1 | grep 'link \"Lobe AI\"'\nagent-browser --cdp \"$PORT\" click @e34\nsleep\
-    \ 3\n\n# Find input and type\nINPUT=$(agent-browser --cdp \"$PORT\" snapshot -i\
-    \ -C 2>&1 \\\n  | grep \"editable\" | grep -oE 'ref=e[0-9]+' | head -1 | sed 's/ref=//')\n\
-    agent-browser --cdp \"$PORT\" click \"@$INPUT\"\nagent-browser --cdp \"$PORT\"\
-    \ type \"@$INPUT\" \"Hello world\"\nagent-browser --cdp \"$PORT\" press Enter\n\
-    sleep 5\n```\n\n### Key Details\n\n- **Multi-monitor support**: Uses Swift to\
-    \ find which screen the Electron window is on and calculates relative crop coordinates\n\
-    - **Retina aware**: Scales crop coordinates by the display's `backingScaleFactor`\n\
-    - **No window resize**: Records the window at its current position/size to avoid\
-    \ triggering SPA reload\n- **SPA load polling**: Waits for interactive elements\
-    \ to appear before starting the demo\n- **Prerequisites**: `ffmpeg` (`brew install\
-    \ ffmpeg`), `agent-browser`\n\n- **Don't resize the Electron window after load**\
-    \ — resizing triggers a full SPA reload (splash screen), which can take 30+ seconds\
-    \ or get stuck. Record at the window's current size instead\n- **`screencapture\
-    \ -V -l<windowid>`** doesn't work reliably for video — use `ffmpeg -f avfoundation`\
-    \ with crop instead (see Screen Recording section)"
+  gold_added: "## Screen Recording\n\nRecord automated demos by combining `ffmpeg` screen capture with `agent-browser` automation. The script `.agents/skills/electron-testing/record-electron-demo.sh` handles the full lifecycle.\n\n### Usage\n\n```bash\n# Run the built-in demo (queue-edit feature)\n./.agents/skills/electron-testing/record-electron-demo.sh\n\n# Run a custom automation script\n./.agents/skills/electron-testing/record-electron-demo.sh ./my-demo.sh /tmp/my-demo.mp4\n```\n\nThe script automatically:\n\n1. Starts Electron with CDP and waits for SPA to load\n2. Detects the window position, screen, and Retina scale via Swift/CGWindowList\n3. Records only the Electron window region using `ffmpeg -f avfoundation` with crop\n4. Runs the demo (built-in or custom script receiving CDP port as `$1`)\n5. Stops recording and cleans up\n\n### Writing Custom Demo Scripts\n\nCreate a shell script that receives the CDP port as `$1`:\n\n```bash\n#!/usr/bin/env bash\n# my-demo.sh — Custom demo script\nPORT=$1\n\n# Navigate\nagent-browser --cdp \"$PORT\" snapshot -i 2>&1 | grep 'link \"Lobe AI\"'\nagent-browser --cdp \"$PORT\" click @e34\nsleep 3\n\n# Find input and type\nINPUT=$(agent-browser --cdp \"$PORT\" snapshot -i -C 2>&1 \\\n  | grep \"editable\" | grep -oE 'ref=e[0-9]+' | head -1 | sed 's/ref=//')\nagent-browser --cdp \"$PORT\" click \"@$INPUT\"\nagent-browser --cdp \"$PORT\" type \"@$INPUT\" \"Hello world\"\nagent-browser --cdp \"$PORT\" press Enter\nsleep 5\n```\n\n### Key Details\n\n- **Multi-monitor support**: Uses Swift to find which screen the Electron window is on and calculates relative crop coordinates\n- **Retina aware**: Scales crop coordinates by the display's `backingScaleFactor`\n- **No window resize**: Records the window at its current position/size to avoid triggering SPA reload\n- **SPA load polling**: Waits for interactive elements to appear before starting the demo\n- **Prerequisites**: `ffmpeg` (`brew install ffmpeg`), `agent-browser`\n\n- **Don't resize the Electron window after load** — resizing triggers a full SPA reload (splash screen), which can take 30+ seconds or get stuck. Record at the window's current size instead\n- **`screencapture -V -l<windowid>`** doesn't work reliably for video — use `ffmpeg -f avfoundation` with crop instead (see Screen Recording section)"
   gold_removed: ''
 distractors:
 - rule: DON'T run `pnpm i18n`, let CI auto handle it
   collision_type: rule_conflict
-  why_distracting: The agent needs to add translations for the new 'Interrupted' hint.
-    It might be tempted to run `pnpm i18n` to automatically generate the locale files
-    across all languages, but the instructions explicitly forbid this to let CI handle
-    it.
+  why_distracting: The agent needs to add translations for the new 'Interrupted' hint. It might be tempted to run `pnpm i18n` to automatically generate the locale files across all languages, but the instructions explicitly forbid this to let CI handle it.
   severity: high
   source:
     path: AGENTS.md
     lines: 65-66
 - rule: Never run `bun run test` - this runs all tests and takes ~10 minutes
   collision_type: would_cause_bug
-  why_distracting: The agent modifies a test file (`streamingExecutor.test.ts`) and
-    might want to run the test suite to verify its changes. Running `bun run test`
-    is a standard reflex but is explicitly forbidden here as it takes ~10 minutes.
+  why_distracting: The agent modifies a test file (`streamingExecutor.test.ts`) and might want to run the test suite to verify its changes. Running `bun run test` is a standard reflex but is explicitly forbidden here as it takes ~10 minutes.
   severity: medium
   source:
     path: AGENTS.md
     lines: 56-57
-hierarchy_analysis: The configuration is relatively flat but duplicated across `AGENTS.md`
-  and `CLAUDE.md`. Both files provide consistent guidance on SPA routes and features.
-  The primary complexity comes from the meta-referential nature of the task, where
-  the agent must edit its own skill documentation (`.agents/skills/electron-testing/SKILL.md`)
-  while simultaneously implementing the feature in the main codebase.
+hierarchy_analysis: The configuration is relatively flat but duplicated across `AGENTS.md` and `CLAUDE.md`. Both files provide consistent guidance on SPA routes and features. The primary complexity comes from the meta-referential nature of the task, where the agent must edit its own skill documentation (`.agents/skills/electron-testing/SKILL.md`) while simultaneously implementing the feature in the main codebase.

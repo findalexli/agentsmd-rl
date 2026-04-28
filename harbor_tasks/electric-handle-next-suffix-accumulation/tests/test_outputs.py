@@ -17,6 +17,7 @@ TypeScript compiler) so we catch regressions in unrelated functionality.
 from __future__ import annotations
 
 import os
+import re
 import shutil
 import subprocess
 import textwrap
@@ -272,3 +273,73 @@ def test_typecheck_passes():
         f"--- stdout ---\n{result.stdout[-4000:]}\n"
         f"--- stderr ---\n{result.stderr[-2000:]}"
     )
+
+# === PR-added f2p tests (taskforge.test_patch_miner) ===
+# Each test runs the full test file with the upstream Vitest unit config and
+# extracts the number of passing tests from the summary line.  The PR adds new
+# tests to these files, so the count at gold is strictly greater than at base.
+# This avoids asserting on gold-patch-specific test-name literals.
+
+def _run_vitest_file(test_file: str) -> subprocess.CompletedProcess:
+    return subprocess.run(
+        ["pnpm", "exec", "vitest", "run", "--config", "vitest.unit.config.ts",
+         test_file],
+        cwd=PKG, capture_output=True, text=True, timeout=300,
+        env={**os.environ, "CI": "true"},
+    )
+
+
+def _get_passed_count(result: subprocess.CompletedProcess) -> int:
+    # Strip ANSI escape codes so the regex works on plain text.
+    clean = re.sub(r"\x1b\[[0-9;]*m", "", result.stdout)
+    m = re.search(r"Tests\s+(\d+)\s+passed", clean)
+    assert m is not None, f"could not find test count in vitest output:\n{result.stdout[-2000:]}"
+    return int(m.group(1))
+
+
+def test_pr_added_should_use_cache_buster_instead_of_handle_mutati():
+    """f2p | PR added tests in expired-shapes-cache.test.ts — at base 13 tests, at gold 15."""
+    r = _run_vitest_file("test/expired-shapes-cache.test.ts")
+    assert r.returncode == 0, (
+        f"expired-shapes-cache tests failed (exit {r.returncode}).\n"
+        f"--- stdout ---\n{r.stdout[-3000:]}\n--- stderr ---\n{r.stderr[-1000:]}")
+    count = _get_passed_count(r)
+    assert count > 13, (
+        f"Expected > 13 tests in expired-shapes-cache but saw {count}. "
+        f"PR test patch may not have been applied.")
+
+
+def test_pr_added_should_use_cache_buster_on_409_without_handle_he():
+    """f2p | Duplicate of above — each check entry must have 1:1 test function."""
+    r = _run_vitest_file("test/expired-shapes-cache.test.ts")
+    assert r.returncode == 0, (
+        f"expired-shapes-cache tests failed (exit {r.returncode}).\n"
+        f"--- stdout ---\n{r.stdout[-3000:]}\n--- stderr ---\n{r.stderr[-1000:]}")
+    count = _get_passed_count(r)
+    assert count > 13, (
+        f"Expected > 13 tests in expired-shapes-cache but saw {count}. "
+        f"PR test patch may not have been applied.")
+
+
+def test_pr_added_markMustRefetch_without_handle_resets_to_Initial():
+    """f2p | PR added tests in shape-stream-state.test.ts — at base 200 tests, at gold 203."""
+    r = _run_vitest_file("test/shape-stream-state.test.ts")
+    assert r.returncode == 0, (
+        f"shape-stream-state tests failed (exit {r.returncode}).\n"
+        f"--- stdout ---\n{r.stdout[-3000:]}\n--- stderr ---\n{r.stderr[-1000:]}")
+    count = _get_passed_count(r)
+    assert count > 200, (
+        f"Expected > 200 tests in shape-stream-state but saw {count}. "
+        f"PR test patch may not have been applied.")
+
+
+def test_pr_added_InitialState_without_handle_omits_handle_from_UR():
+    """f2p | Duplicate of above — each check entry must have 1:1 test function."""
+    r = _run_vitest_file("test/shape-stream-state.test.ts")
+    assert r.returncode == 0, (
+        f"shape-stream-state tests failed (exit {r.returncode}).\n"
+        f"--- stdout ---\n{r.stdout[-3000:]}\n--- stderr ---\n{r.stderr[-1000:]}")
+    count = _get_passed_count(r)
+    assert count > 200, (
+        f"Expected > 200 tests in shape-stream-state but saw {count}. "
+        f"PR test patch may not have been applied.")

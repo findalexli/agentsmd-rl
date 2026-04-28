@@ -8,8 +8,9 @@ RUN apt-get update && apt-get install -y \
     unzip \
     && rm -rf /var/lib/apt/lists/*
 
-# Install Composer
-RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/bin --filename=composer
+# Install Composer (pinned to v2.7.7 via GitHub release)
+RUN curl -L -o /usr/bin/composer https://github.com/composer/composer/releases/download/2.7.7/composer.phar && \
+    chmod +x /usr/bin/composer
 
 # Install pytest
 RUN pip3 install pytest --break-system-packages

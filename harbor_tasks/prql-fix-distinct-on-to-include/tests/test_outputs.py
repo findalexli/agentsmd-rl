@@ -42,9 +42,9 @@ def test_syntax_check():
     assert r.returncode == 0, f"cargo check failed:\n{r.stderr.decode()}"
 
 
-# [repo_tests] pass_to_pass — repo's CI clippy linting passes
+# [repo_tests] pass_to_pass — repo CI clippy linting passes
 def test_repo_clippy():
-    """Repo's clippy linting passes (pass_to_pass)."""
+    """Repo clippy linting passes (pass_to_pass)."""
     r = subprocess.run(
         ["cargo", "clippy", "-p", "prqlc", "--all-targets", "--", "-D", "warnings"],
         cwd=REPO, capture_output=True, text=True, timeout=120,
@@ -52,9 +52,9 @@ def test_repo_clippy():
     assert r.returncode == 0, f"Clippy failed:\n{r.stderr[-500:]}"
 
 
-# [repo_tests] pass_to_pass — repo's CI formatting check passes
+# [repo_tests] pass_to_pass — repo CI formatting check passes
 def test_repo_fmt():
-    """Repo's rustfmt formatting check passes (pass_to_pass)."""
+    """Repo rustfmt formatting check passes (pass_to_pass)."""
     r = subprocess.run(
         ["cargo", "fmt", "--all", "--check"],
         cwd=REPO, capture_output=True, text=True, timeout=60,
@@ -62,9 +62,9 @@ def test_repo_fmt():
     assert r.returncode == 0, f"Formatting check failed:\n{r.stderr[-500:]}"
 
 
-# [repo_tests] pass_to_pass — repo's lib tests for prqlc pass
+# [repo_tests] pass_to_pass — repo lib tests for prqlc pass
 def test_repo_prqlc_lib_tests():
-    """Repo's prqlc lib tests pass (pass_to_pass)."""
+    """Repo prqlc lib tests pass (pass_to_pass)."""
     r = subprocess.run(
         ["cargo", "test", "-p", "prqlc", "--no-default-features", "--features=default", "--lib", "--quiet"],
         cwd=REPO, capture_output=True, text=True, timeout=120,
@@ -72,9 +72,9 @@ def test_repo_prqlc_lib_tests():
     assert r.returncode == 0, f"prqlc lib tests failed:\n{r.stderr[-500:]}"
 
 
-# [repo_tests] pass_to_pass — repo's integration tests for prqlc pass
+# [repo_tests] pass_to_pass — repo integration tests for prqlc pass
 def test_repo_prqlc_integration_tests():
-    """Repo's prqlc integration tests pass (pass_to_pass)."""
+    """Repo prqlc integration tests pass (pass_to_pass)."""
     r = subprocess.run(
         ["cargo", "test", "-p", "prqlc", "--no-default-features", "--features=default", "--test", "integration", "--quiet"],
         cwd=REPO, capture_output=True, text=True, timeout=120,
@@ -84,7 +84,7 @@ def test_repo_prqlc_integration_tests():
 
 # [repo_tests] pass_to_pass — gen_query unit tests (covers modified file)
 def test_repo_gen_query_tests():
-    """Repo's gen_query unit tests pass (pass_to_pass) — covers modified gen_query.rs."""
+    """Repo gen_query unit tests pass (pass_to_pass) — covers modified gen_query.rs."""
     r = subprocess.run(
         ["cargo", "test", "-p", "prqlc", "--no-default-features", "--features=default", "--lib", "--", "gen_query"],
         cwd=REPO, capture_output=True, text=True, timeout=120,
@@ -94,7 +94,7 @@ def test_repo_gen_query_tests():
 
 # [repo_tests] pass_to_pass — distinct_on integration tests (related to PR)
 def test_repo_distinct_on_tests():
-    """Repo's DISTINCT ON integration tests pass (pass_to_pass) — covers the bug fix area."""
+    """Repo DISTINCT ON integration tests pass (pass_to_pass) — covers the bug fix area."""
     r = subprocess.run(
         ["cargo", "test", "-p", "prqlc", "--no-default-features", "--features=default", "--", "sql::test_distinct_on"],
         cwd=REPO, capture_output=True, text=True, timeout=120,
@@ -104,7 +104,7 @@ def test_repo_distinct_on_tests():
 
 # [repo_tests] pass_to_pass — prqlc-parser checks (dependency of modified code)
 def test_repo_prqlc_parser_check():
-    """Repo's prqlc-parser crate compiles without errors (pass_to_pass)."""
+    """Repo prqlc-parser crate compiles without errors (pass_to_pass)."""
     r = subprocess.run(
         ["cargo", "check", "-p", "prqlc-parser"],
         cwd=REPO, capture_output=True, text=True, timeout=120,
@@ -118,12 +118,13 @@ def test_repo_prqlc_parser_check():
 
 # [pr_diff] fail_to_pass
 def test_distinct_on_wildcard(prqlc_binary):
-    """DISTINCT ON with group/take must produce * not NULL in SQL output."""
+    """DISTINCT ON with group/take + select on DuckDB must produce * not NULL."""
     query = (
-        "prql target:sql.postgres\n\n"
+        "prql target:sql.duckdb\n\n"
         "from tab1\n"
         "group col1 (take 1)\n"
-        "derive {x = col1 + 1}\n"
+        "derive foo = 1\n"
+        "select foo\n"
     )
     r = subprocess.run(
         [prqlc_binary, "compile"],
@@ -132,19 +133,17 @@ def test_distinct_on_wildcard(prqlc_binary):
     assert r.returncode == 0, f"prqlc compile failed:\n{r.stderr}"
     sql = r.stdout
     assert "DISTINCT ON" in sql, f"Expected DISTINCT ON in output:\n{sql}"
-    # Extract what comes after DISTINCT ON (...) on the same line
-    after_paren = sql.split("DISTINCT ON")[1]
-    close = after_paren.index(")")
-    projection = after_paren[close + 1 :].split("\n")[0].strip()
-    assert projection == "*", (
-        f"DISTINCT ON projection should be *, got '{projection}'.\n"
-        f"Full SQL:\n{sql}"
+    assert "NULL" not in sql, (
+        f"DISTINCT ON output must not contain NULL:\n{sql}"
+    )
+    assert "DISTINCT ON (col1) *" in sql, (
+        f"DISTINCT ON should have wildcard *, got:\n{sql}"
     )
 
 
 # [pr_diff] fail_to_pass
 def test_distinct_on_aggregate_wildcard(prqlc_binary):
-    """DISTINCT ON with group/take + aggregate must produce * not NULL."""
+    """DISTINCT ON with group/take + aggregate on PostgreSQL must produce * not empty projection."""
     query = (
         "prql target:sql.postgres\n\n"
         "from t1\n"
@@ -158,13 +157,10 @@ def test_distinct_on_aggregate_wildcard(prqlc_binary):
     assert r.returncode == 0, f"prqlc compile failed:\n{r.stderr}"
     sql = r.stdout
     assert "DISTINCT ON" in sql, f"Expected DISTINCT ON in SQL:\n{sql}"
-    # Between DISTINCT ON and FROM, should have * not NULL
+    # Between DISTINCT ON and FROM, must have * wildcard
     distinct_to_from = sql.split("DISTINCT ON")[1].split("FROM")[0]
-    assert "NULL" not in distinct_to_from, (
-        f"DISTINCT ON should not contain NULL:\n{sql}"
-    )
     assert "*" in distinct_to_from, (
-        f"DISTINCT ON should contain wildcard *:\n{sql}"
+        f"DISTINCT ON projection must contain wildcard *, got:\n{sql}"
     )
 
 

@@ -12,7 +12,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 RUN pip install \
         pytest==8.3.4 \
         pytest-json-report==1.5.0 \
-        tomli==2.2.1
+        tomli==2.2.1 \
+        uv==0.7.12 \
+        ruff==0.13.0
 
 WORKDIR /workspace
 RUN git clone --filter=blob:none https://github.com/PrimeIntellect-ai/prime-rl.git

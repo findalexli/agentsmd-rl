@@ -40,8 +40,7 @@ checks:
 - id: next_swc_package_json_valid
   type: pass_to_pass
   origin: repo_tests
-  description: packages/next-swc/package.json must be valid JSON with required scripts
-    via node
+  description: packages/next-swc/package.json must be valid JSON with required scripts via node
 - id: root_package_json_valid
   type: pass_to_pass
   origin: repo_tests
@@ -57,13 +56,11 @@ checks:
 - id: prettier_turbo_jsonc
   type: pass_to_pass
   origin: repo_tests
-  description: packages/next-swc/turbo.jsonc must be formatted according to Prettier
-    standards
+  description: packages/next-swc/turbo.jsonc must be formatted according to Prettier standards
 - id: prettier_next_swc_package_json
   type: pass_to_pass
   origin: repo_tests
-  description: packages/next-swc/package.json must be formatted according to Prettier
-    standards
+  description: packages/next-swc/package.json must be formatted according to Prettier standards
 - id: node_syntax_build_native
   type: pass_to_pass
   origin: repo_tests
@@ -95,8 +92,7 @@ checks:
 - id: rust_fingerprint_writes_stamp
   type: fail_to_pass
   origin: pr_diff
-  description: rust-fingerprint.js writes TURBO_HASH to stamp file when env var is
-    set
+  description: rust-fingerprint.js writes TURBO_HASH to stamp file when env var is set
 - id: rust_fingerprint_skips_without_turbo_hash
   type: fail_to_pass
   origin: pr_diff
@@ -104,13 +100,11 @@ checks:
 - id: turbo_jsonc_has_fingerprint_task
   type: fail_to_pass
   origin: pr_diff
-  description: turbo.jsonc defines rust-fingerprint task with Rust source inputs and
-    stamp output
+  description: turbo.jsonc defines rust-fingerprint task with Rust source inputs and stamp output
 - id: build_tasks_depend_on_fingerprint
   type: fail_to_pass
   origin: pr_diff
-  description: Rust build/check tasks depend on rust-fingerprint instead of duplicating
-    globs
+  description: Rust build/check tasks depend on rust-fingerprint instead of duplicating globs
 - id: build_tasks_use_stamp_not_globs
   type: fail_to_pass
   origin: pr_diff
@@ -128,22 +122,17 @@ checks:
   origin: pr_diff
   description: packages/next-swc/package.json defines rust-fingerprint script
 rubric:
-- rule: When adding new scripts to the scripts/ directory, include a descriptive comment
-    header explaining the script's purpose and any environment variables it uses.
+- rule: When adding new scripts to the scripts/ directory, include a descriptive comment header explaining the script's purpose and any environment variables it uses.
   source:
     path: CLAUDE.md
     lines: 302-309
     commit: 8a241bb504bf167d191b96e914b7785156510038
-- rule: For changes to build configuration (turbo.json, turbo.jsonc, package.json
-    scripts), verify the changes work with the actual build system (e.g., turbo tasks
-    must have proper inputs/outputs defined).
+- rule: For changes to build configuration (turbo.json, turbo.jsonc, package.json scripts), verify the changes work with the actual build system (e.g., turbo tasks must have proper inputs/outputs defined).
   source:
     path: CLAUDE.md
     lines: 353-358
     commit: 8a241bb504bf167d191b96e914b7785156510038
-- rule: When modifying package.json files (especially in packages/next-swc/), ensure
-    scripts are properly named and follow the existing naming convention (e.g., rust-*
-    prefix for Rust-related scripts).
+- rule: When modifying package.json files (especially in packages/next-swc/), ensure scripts are properly named and follow the existing naming convention (e.g., rust-* prefix for Rust-related scripts).
   source:
     path: CLAUDE.md
     lines: 55-69
@@ -152,37 +141,26 @@ rubric:
   source:
     path: CLAUDE.md
     lines: 12-20
-  evidence: The gold solution creates \`scripts/rust-fingerprint.js\`, correctly placing
-    the new build script in the designated \`scripts/\` directory as defined by the
-    monorepo overview.
+  evidence: The gold solution creates \`scripts/rust-fingerprint.js\`, correctly placing the new build script in the designated \`scripts/\` directory as defined by the monorepo overview.
   category: architecture
 - rule: Build and maintenance scripts should be placed in the \`scripts/\` directory.
   source:
     path: AGENTS.md
     lines: 16-24
-  evidence: The new \`rust-fingerprint.js\` script is placed in the \`scripts/\` directory,
-    aligning with the monorepo structure definition.
+  evidence: The new \`rust-fingerprint.js\` script is placed in the \`scripts/\` directory, aligning with the monorepo structure definition.
   category: architecture
 - rule: Place build and maintenance scripts in the `scripts/` directory.
   source:
     path: AGENTS.md
     lines: 15-23
-  evidence: The gold solution creates the `rust-fingerprint.js` script in the `scripts/`
-    directory, which aligns with the monorepo overview designating `scripts/` for
-    'Build and maintenance scripts'.
+  evidence: The gold solution creates the `rust-fingerprint.js` script in the `scripts/` directory, which aligns with the monorepo overview designating `scripts/` for 'Build and maintenance scripts'.
   category: architecture
 distractors:
-- rule: Start `pnpm --filter=next dev` in a separate terminal session before making
-    edits to Next.js source or integration tests.
+- rule: Start `pnpm --filter=next dev` in a separate terminal session before making edits to Next.js source or integration tests.
   collision_type: scope_ambiguity
-  why_distracting: The rule instructs the agent to start `pnpm --filter=next dev`
-    when changing Next.js source or integration tests. However, this task involves
-    modifying Rust build configurations and turbo tasks, not Next.js JS/TS source
-    or integration tests. Running the dev server would be a waste of time and resources.
+  why_distracting: The rule instructs the agent to start `pnpm --filter=next dev` when changing Next.js source or integration tests. However, this task involves modifying Rust build configurations and turbo tasks, not Next.js JS/TS source or integration tests. Running the dev server would be a waste of time and resources.
   severity: medium
   source:
     path: AGENTS.md
     lines: 60-65
-hierarchy_analysis: The config hierarchy is flat, consisting of identical `AGENTS.md`
-  and `CLAUDE.md` files at the root level. There are no conflicting rules between
-  different levels of the hierarchy.
+hierarchy_analysis: The config hierarchy is flat, consisting of identical `AGENTS.md` and `CLAUDE.md` files at the root level. There are no conflicting rules between different levels of the hierarchy.

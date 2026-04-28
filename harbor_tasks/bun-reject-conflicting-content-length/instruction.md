@@ -43,16 +43,18 @@ same request" must continue to hold.
 
 ## Where the bug lives
 
-`HttpParser.h` only inspects the *first* matching header value via
-`req->getHeader("content-length")` after request line + header parsing has
-finished. A second header with a different value is silently dropped on the
-floor, and an empty first value resolves to a zero-length body that lets the
-attacker smuggle the next request straight into the byte stream.
+The HTTP request parser in `packages/bun-uws/src/HttpParser.h` currently
+accepts requests with multiple `Content-Length` headers without validating
+that all values agree, and it accepts requests where a `Content-Length`
+header has an empty value. In both cases the parser makes a body-length
+decision based on incomplete information, which creates a request-smuggling
+vulnerability. This is the only file you need to modify for this task.
 
-The fix needs to walk every `Content-Length` header that was actually parsed
-out of the request, not just the first one. The repo already maintains a
-bloom filter of seen header names on `req->bf` — use it to keep the
-no-Content-Length fast path zero-cost.
+The validation logic runs after the request line and all headers have been
+parsed. At that point the full set of headers that were present in the
+incoming request is available. You need to add a check that detects and
+rejects the ambiguous `Content-Length` cases described in the behavior
+specification above.
 
 ## How your fix will be evaluated
 

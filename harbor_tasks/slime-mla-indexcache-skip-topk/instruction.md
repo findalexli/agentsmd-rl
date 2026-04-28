@@ -41,4 +41,4 @@ The topk index caching logic (frequency-based or pattern-based skipping) should 
 
 Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
 
-- `ruff format and ruff check`
+- `ruff format and ruff check` (including import sorting via isort)

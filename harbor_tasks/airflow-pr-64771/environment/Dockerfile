@@ -10,10 +10,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     ca-certificates \
     patch \
     && rm -rf /var/lib/apt/lists/* \
-    && pip3 install pytest --break-system-packages
+    && pip3 install pytest pytest-json-ctrf --break-system-packages
 
-# Install pnpm
-RUN corepack enable && corepack prepare pnpm@latest --activate
+# Install pnpm (pin major version for reproducibility)
+RUN corepack enable && corepack prepare pnpm@10 --activate
 
 # Clone the airflow repository at the base commit
 WORKDIR /workspace

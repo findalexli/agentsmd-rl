@@ -197,3 +197,4 @@ def test_repo_root_files_intact():
     for name in ("package.json", "AGENTS.md", "CLAUDE.md"):
         p = REPO / name
         assert p.exists(), f"Repo file {name} should still exist at base commit"
+

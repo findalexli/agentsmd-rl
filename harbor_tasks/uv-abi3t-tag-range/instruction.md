@@ -11,9 +11,9 @@ This is incorrect. The `abi3t` tags should be emitted for every abi3-compatible 
 
 ## Expected Behavior
 
-For a free-threaded CPython 3.15 build, the tag list should include `abi3t` entries for `cp315` down to `cp32` — the same range that `abi3` covers for non-free-threaded builds.
+For a free-threaded CPython 3.15 build, the tag list should include `abi3t` entries for `cp315` down to `cp32` — the same range that `abi3` covers for non-free-threaded builds. For example, `cp314-abi3t`, `cp38-abi3t`, and `cp32-abi3t` must all appear in the output.
 
-Similarly, a free-threaded CPython 3.13 build should include `abi3t` entries for `cp313` down to `cp32`.
+Similarly, a free-threaded CPython 3.13 build should include `abi3t` entries for `cp313` down to `cp32` — for example, `cp313-abi3t`, `cp310-abi3t`, and `cp32-abi3t`.
 
 ## Files to Look At
 

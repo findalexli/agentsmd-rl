@@ -305,17 +305,18 @@ def test_url_replace_only_first_occurrence():
     """Test that str.replace only replaces first occurrence of https://."""
     from airflow.providers.git.hooks.git import GitHook
 
-    # URL with https:// appearing twice (unusual but tests the fix)
+    # URL with https:// appearing twice — base replaces ALL occurrences, corrupting the query param
     hook = GitHook(
         git_conn_id="git_default",
-        repo_url="https://github.com/apache/airflow.git",
+        repo_url="https://example.com/repo.git?redirect=https://example.com/other",
         user_name="user",
         auth_token="token"
     )
 
-    # Should only have one auth prefix
-    assert hook.repo_url.count("https://") == 1
-    assert hook.repo_url.count("http://") == 0
+    # After proper fix, only the leading https:// is replaced; the query param stays intact.
+    assert "?redirect=https://example.com/other" in hook.repo_url
+    # Credentials must not leak into the query string.
+    assert "token@example.com/other" not in hook.repo_url
 
 
 def test_local_path_expanded():
@@ -366,3 +367,6 @@ def test_proxy_command_formatting():
 
     # Should use single quotes (shlex.quote style), not double quotes
     assert "ProxyCommand='ssh -W %h:%p bastion.example.com'" in cmd
+
+# === CI-mined tests (taskforge.ci_check_miner) ===
+# test_ci_build_info_cleanup_repo removed — requires Docker-in-Docker infra not available in test container

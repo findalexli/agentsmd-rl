@@ -42,22 +42,6 @@ RUN git init /workspace/ClickHouse && \
     git fetch --depth=1 origin cafce4334d43cfade5382a9bde6910e787d69437 && \
     git checkout FETCH_HEAD
 
-# Pre-install dependencies and configure build
-# This speeds up subsequent builds
-RUN cd ClickHouse \
-    && mkdir -p build \
-    && cd build \
-    && cmake .. \
-        -DCMAKE_BUILD_TYPE=Release \
-        -DCMAKE_C_COMPILER=clang-18 \
-        -DCMAKE_CXX_COMPILER=clang++-18 \
-        -DENABLE_TESTS=OFF \
-        -DENABLE_UTILS=OFF \
-        -DENABLE_CCACHE=ON \
-        -DENABLE_THINLTO=OFF \
-        -G Ninja \
-        2>&1 | tail -20 || true
-
 # Create logs directory for verifier
 RUN mkdir -p /logs/verifier
 

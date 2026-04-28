@@ -12,8 +12,7 @@ checks:
 - id: not_stub
   type: pass_to_pass
   origin: static
-  description: bash.txt must be a substantial tool description (20+ lines, 100+ words,
-    5+ concepts)
+  description: bash.txt must be a substantial tool description (20+ lines, 100+ words, 5+ concepts)
 - id: no_directory_placeholder_in_template
   type: fail_to_pass
   origin: pr_diff
@@ -37,8 +36,7 @@ checks:
 - id: preserves_guidance_sections
   type: pass_to_pass
   origin: pr_diff
-  description: bash.txt must retain key guidance sections (quoting, tool preference,
-    timeout)
+  description: bash.txt must retain key guidance sections (quoting, tool preference, timeout)
 - id: no_any_type
   type: pass_to_pass
   origin: agent_config
@@ -122,48 +120,55 @@ checks:
 - id: repo_bash_txt_template_syntax
   type: pass_to_pass
   origin: repo_tests
-  description: Repo CI - Bash.txt must have valid template syntax with command/timeout/directory
-    sections
+  description: Repo CI - Bash.txt must have valid template syntax with command/timeout/directory sections
+- id: test_ci_typecheck_run_typecheck
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: typecheck / Run typecheck'
+- id: test_ci_build_electron_prepare
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: build-electron / Prepare'
+- id: test_ci_build_electron_build
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: build-electron / Build'
+- id: test_ci_build_tauri_show_tauri_cli_version
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: build-tauri / Show tauri-cli version'
+- id: test_ci_unit_run_unit_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: unit / Run unit tests'
+- id: test_ci_e2e_run_app_e2e_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: e2e / Run app e2e tests'
 rubric:
-- rule: Update AGENTS.md to document that tool descriptions should not use project-specific
-    paths like ${directory} to ensure prompt caching works correctly.
+- rule: Update AGENTS.md to document that tool descriptions should not use project-specific paths like ${directory} to ensure prompt caching works correctly.
   source:
     path: AGENTS.md
-  reference: Do not inject project-specific paths like ${directory} into tool descriptions,
-    as this breaks LLM prompt caching. Use static text (e.g., 'current working directory')
-    instead.
+  reference: Do not inject project-specific paths like ${directory} into tool descriptions, as this breaks LLM prompt caching. Use static text (e.g., 'current working directory') instead.
 - rule: Reduce total variable count by inlining when a value is only used once.
   source:
     path: AGENTS.md
     lines: 42-51
-  evidence: The gold solution modifies the `description` property in `bash.ts` by
-    chaining `.replaceAll` calls directly on the `DESCRIPTION` constant, keeping the
-    value inlined rather than extracting the modified
+  evidence: The gold solution modifies the `description` property in `bash.ts` by chaining `.replaceAll` calls directly on the `DESCRIPTION` constant, keeping the value inlined rather than extracting the modified
   category: style
 distractors:
-- rule: Use `InstanceState` (from `src/effect/instance-state.ts`) for per-directory
-    or per-project state that needs per-instance cleanup.
+- rule: Use `InstanceState` (from `src/effect/instance-state.ts`) for per-directory or per-project state that needs per-instance cleanup.
   collision_type: would_cause_bug
-  why_distracting: The prompt mentions that `Instance.directory` is causing issues
-    because it makes the tool description project-specific. An agent might misinterpret
-    this as a state management issue and try to wrap the tool description or the bash
-    tool itself in `InstanceState` to handle per-directory scoping, which completely
-    misses the goal of making the string globally cacheable.
+  why_distracting: The prompt mentions that `Instance.directory` is causing issues because it makes the tool description project-specific. An agent might misinterpret this as a state management issue and try to wrap the tool description or the bash tool itself in `InstanceState` to handle per-directory scoping, which completely misses the goal of making the string globally cacheable.
   severity: high
   source:
     path: packages/opencode/AGENTS.md
     lines: 23-28
 - rule: Reduce total variable count by inlining when a value is only used once.
   collision_type: architecture_boundary
-  why_distracting: The agent might take the 'inlining' rule too far and attempt to
-    inline the entire contents of `bash.txt` directly into `bash.ts` to eliminate
-    the `DESCRIPTION` variable entirely, violating the project's architecture of keeping
-    prompt templates in separate text files.
+  why_distracting: The agent might take the 'inlining' rule too far and attempt to inline the entire contents of `bash.txt` directly into `bash.ts` to eliminate the `DESCRIPTION` variable entirely, violating the project's architecture of keeping prompt templates in separate text files.
   severity: medium
   source:
     path: AGENTS.md
     lines: 46-55
-hierarchy_analysis: The hierarchy consists of a root `AGENTS.md` and a package-specific
-  `packages/opencode/AGENTS.md`. The package-specific config introduces complex Effect-based
-  state management rules (`InstanceState`) that act as a strong distractor for a problem
-  that actually requires a simple string manipulation to fix an LLM caching issue.
+hierarchy_analysis: The hierarchy consists of a root `AGENTS.md` and a package-specific `packages/opencode/AGENTS.md`. The package-specific config introduces complex Effect-based state management rules (`InstanceState`) that act as a strong distractor for a problem that actually requires a simple string manipulation to fix an LLM caching issue.

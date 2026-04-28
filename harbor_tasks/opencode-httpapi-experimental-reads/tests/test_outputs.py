@@ -236,3 +236,4 @@ def test_p2p_httpapi_file_still_passes() -> None:
     )
     combined = (proc.stdout or "") + "\n" + (proc.stderr or "")
     assert " 0 fail" in combined, combined[-2000:]
+

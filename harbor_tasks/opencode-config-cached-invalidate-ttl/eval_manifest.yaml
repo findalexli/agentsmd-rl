@@ -8,8 +8,7 @@ checks:
 - id: test_cache_invalidation_uses_effect_primitive
   type: fail_to_pass
   origin: pr_diff
-  description: Cache uses Effect.cachedInvalidateWithTTL instead of mutable let, with
-    error logging and proper invalidation handle (verified via Node.js execution)
+  description: Cache uses Effect.cachedInvalidateWithTTL instead of mutable let, with error logging and proper invalidation handle (verified via Node.js execution)
 - id: test_duration_imported_from_effect
   type: fail_to_pass
   origin: pr_diff
@@ -21,8 +20,7 @@ checks:
 - id: test_error_logging_before_fallback
   type: fail_to_pass
   origin: pr_diff
-  description: Errors during global config loading are logged before falling back
-    to defaults
+  description: Errors during global config loading are logged before falling back to defaults
 - id: test_invalidate_uses_handle_not_recreation
   type: fail_to_pass
   origin: pr_diff
@@ -135,10 +133,16 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Config file passes Prettier formatting check
-
+- id: test_ci_typecheck_run_typecheck
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: typecheck scoped to opencode package'
+- id: test_ci_config_unit_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: config unit tests (bun test config.test.ts)'
 rubric:
-- rule: The solution should use cachedInvalidateWithTTL instead of manual reassignment
-    for cache invalidation.
+- rule: The solution should use cachedInvalidateWithTTL instead of manual reassignment for cache invalidation.
   source:
     path: packages/opencode/src/config/config.ts
     commit: 9f94bdb49634bda90a2804585b8d739228dde876
@@ -151,34 +155,18 @@ rubric:
     path: packages/opencode/src/config/config.ts
     commit: 9f94bdb49634bda90a2804585b8d739228dde876
 distractors:
-- rule: Use `Effect.cached` when multiple concurrent callers should share a single
-    in-flight computation rather than storing `Fiber | undefined` or `Promise | undefined`
-    manually.
+- rule: Use `Effect.cached` when multiple concurrent callers should share a single in-flight computation rather than storing `Fiber | undefined` or `Promise | undefined` manually.
   collision_type: rule_conflict
-  why_distracting: The existing rule explicitly prescribes using `Effect.cached` for
-    deduplication. However, the PR instructions require using an idiomatic Effect
-    cache invalidation primitive, which conflicts with this rule. The agent must realize
-    the rule is outdated for this specific use case (and the gold solution actually
-    updates the rule file to reflect the new pattern).
+  why_distracting: The existing rule explicitly prescribes using `Effect.cached` for deduplication. However, the PR instructions require using an idiomatic Effect cache invalidation primitive, which conflicts with this rule. The agent must realize the rule is outdated for this specific use case (and the gold solution actually updates the rule file to reflect the new pattern).
   severity: high
   source:
     path: packages/opencode/AGENTS.md
     lines: 44-46
-- rule: Prefer single word names for variables and functions. Only use multiple words
-    if necessary.
+- rule: Prefer single word names for variables and functions. Only use multiple words if necessary.
   collision_type: scope_ambiguity
-  why_distracting: The agent might try to rename `cachedGlobal` or `invalidateGlobal`
-    to single words like `cache` or `inv` to satisfy the strict single-word naming
-    rule. However, `cachedGlobal` is already established and `invalidateGlobal` pairs
-    with it clearly; renaming them would cause unnecessary churn or conflict with
-    the outer `invalidate` function.
+  why_distracting: The agent might try to rename `cachedGlobal` or `invalidateGlobal` to single words like `cache` or `inv` to satisfy the strict single-word naming rule. However, `cachedGlobal` is already established and `invalidateGlobal` pairs with it clearly; renaming them would cause unnecessary churn or conflict with the outer `invalidate` function.
   severity: medium
   source:
     path: AGENTS.md
     lines: 23-35
-hierarchy_analysis: The root `AGENTS.md` provides general style guidelines (like `const`
-  over `let` and single-word naming), while `packages/opencode/AGENTS.md` provides
-  specific Effect patterns. The agent must navigate the conflict between the PR instruction
-  (use cache invalidation primitive) and the local `AGENTS.md` rule (use `Effect.cached`).
-  The gold solution resolves this by updating the local `AGENTS.md` rule to recommend
-  `Effect.cachedInvalidateWithTTL`.
+hierarchy_analysis: The root `AGENTS.md` provides general style guidelines (like `const` over `let` and single-word naming), while `packages/opencode/AGENTS.md` provides specific Effect patterns. The agent must navigate the conflict between the PR instruction (use cache invalidation primitive) and the local `AGENTS.md` rule (use `Effect.cached`). The gold solution resolves this by updating the local `AGENTS.md` rule to recommend `Effect.cachedInvalidateWithTTL`.

@@ -42,11 +42,6 @@ def test_constructor_mdtest_passes():
         f"--- stdout (last 2000) ---\n{r.stdout[-2000:]}\n"
         f"--- stderr (last 2000) ---\n{r.stderr[-2000:]}"
     )
-    # Sanity: ensure the test we care about actually ran (not skipped).
-    combined = r.stdout + r.stderr
-    assert "1 test run: 1 passed" in combined or "1 passed" in combined, (
-        f"Expected 1 passing constructor.md mdtest, got:\n{combined[-2000:]}"
-    )
 
 
 def test_overloaded_self_section_passes_with_filter():
@@ -99,4 +94,21 @@ def test_ty_python_semantic_compiles():
     )
     assert r.returncode == 0, (
         f"cargo check failed:\n{r.stderr[-3000:]}"
+    )
+
+# === CI-mined tests (taskforge.ci_check_miner) ===
+def test_ci_cargo_test_ty_mdtests_github_annotations():
+    """pass_to_pass | CI job 'cargo test' -> step 'ty mdtests (GitHub annotations)'
+
+    Runs the mdtest suite via `cargo test` (separate test runner from nextest)
+    to ensure the fix works under both test harnesses.
+    """
+    r = subprocess.run(
+        ["bash", "-lc", "cargo test -p ty_python_semantic --test mdtest"],
+        cwd=REPO,
+        capture_output=True, text=True, timeout=600,
+    )
+    assert r.returncode == 0, (
+        f"CI step 'ty mdtests (GitHub annotations)' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}"
     )

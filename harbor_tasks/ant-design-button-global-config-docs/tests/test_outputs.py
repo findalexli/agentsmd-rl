@@ -16,14 +16,16 @@ def _grep_file(path: Path, needle: str) -> bool:
     return r.returncode == 0
 
 
+# === fail_to_pass tests ===
+
 def test_button_en_has_global_config_column_header():
     """Button English docs API table header includes the Global Config column."""
     f = REPO / "components/button/index.en-US.md"
     assert f.exists(), f"missing {f}"
     needle = "[Global Config](/components/config-provider#component-config)"
     assert _grep_file(f, needle), (
-        f"Button en-US API table header is missing the 'Global Config' column "
-        f"linking to config-provider#component-config"
+        "Button en-US API table header is missing the 'Global Config' column "
+        "linking to config-provider#component-config"
     )
 
 
@@ -100,4 +102,53 @@ def test_config_provider_en_button_row_old_long_form_removed():
     assert old not in content, (
         "config-provider en-US 'button' row still contains the verbose inline "
         "type signature; it should now reference the Button page instead"
+    )
+
+
+# === pass_to_pass tests ===
+
+def test_button_en_danger_row_preserved():
+    """pass_to_pass: Button English docs retain unchanged 'danger' prop row."""
+    f = REPO / "components/button/index.en-US.md"
+    needle = "| danger | Syntactic sugar. Set the danger status of button."
+    assert _grep_file(f, needle), (
+        "Button en-US table lost the 'danger' row — an unchanged row was modified"
+    )
+
+
+def test_config_provider_en_calendar_row_preserved():
+    """pass_to_pass: Config-provider English docs retain adjacent 'calendar' row."""
+    f = REPO / "components/config-provider/index.en-US.md"
+    needle = "| calendar | Set Calendar common props |"
+    assert _grep_file(f, needle), (
+        "config-provider en-US lost the 'calendar' row — adjacent content was modified"
+    )
+
+
+def test_claude_md_sentence_table_preserved():
+    """pass_to_pass: CLAUDE.md retains the Chinese sentence format row in the 句式 table."""
+    f = REPO / "CLAUDE.md"
+    needle = "| 中文 | `Emoji 动词 组件名 描述`"
+    assert _grep_file(f, needle), (
+        "CLAUDE.md lost the Chinese 句式 row — content outside the API table section changed"
+    )
+
+
+def test_config_provider_en_adjacent_components_intact():
+    """pass_to_pass: ConfigProvider en-US docs retain key component rows after button simplification."""
+    cmd = (
+        "for comp in avatar badge breadcrumb calendar card; do "
+        "  grep -qF \"| $comp |\" components/config-provider/index.en-US.md || { echo \"missing $comp\"; exit 1; }; "
+        "done && echo 'all present'"
+    )
+    r = subprocess.run(
+        ["bash", "-lc", cmd],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=30,
+    )
+    assert r.returncode == 0, (
+        f"ConfigProvider en-US is missing expected component rows.\n"
+        f"stdout: {r.stdout}\nstderr: {r.stderr}"
     )

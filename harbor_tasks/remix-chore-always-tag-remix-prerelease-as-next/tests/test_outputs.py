@@ -9,19 +9,9 @@ Each test function maps 1:1 to a check in eval_manifest.yaml.
 
 import json
 import subprocess
-import re
 from pathlib import Path
 
 REPO = Path("/workspace/remix")
-
-
-def node_eval(code: str, timeout: int = 30) -> subprocess.CompletedProcess:
-    """Run Node.js code in the repo context."""
-    return subprocess.run(
-        ["node", "-e", code],
-        capture_output=True, text=True,
-        cwd=str(REPO), timeout=timeout,
-    )
 
 
 # ---------------------------------------------------------------------------
@@ -87,21 +77,23 @@ def test_changes_preview():
 
 # [static] pass_to_pass
 def test_syntax_check():
-    """Modified TypeScript files parse without syntax errors."""
-    files = [
-        REPO / "scripts/utils/changes.ts",
-        REPO / "scripts/publish.ts",
-    ]
-    for f in files:
-        result = subprocess.run(
-            ["node", "-e", f"import('{f}')"],
-            capture_output=True, text=True, timeout=30,
-        )
-        # node -e won't actually import TS without tsx, so just check it's valid JS-ish
-        # Use a basic syntax check: try to read and ensure no null bytes / valid UTF-8
-        content = f.read_text()
-        assert len(content) > 0, f"{f.name} is empty"
-        assert "\x00" not in content, f"{f.name} has null bytes"
+    """Modified TypeScript files import and execute without errors."""
+    code = """
+    import { readRemixPrereleaseConfig } from './scripts/utils/changes.ts';
+    const config = readRemixPrereleaseConfig();
+    if (!config.exists) throw new Error('Expected config to exist');
+    if (!config.valid) throw new Error('Expected config to be valid: ' + config.error);
+    if (!config.config) throw new Error('Expected config.config to exist');
+    const key = Object.keys(config.config)[0];
+    const val = config.config[key];
+    if (!val || typeof val !== 'string') throw new Error('Expected non-empty string config value');
+    console.log('OK');
+    """
+    r = subprocess.run(
+        ["npx", "tsx", "-e", code],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"changes.ts import/execution failed: {r.stderr}"
 
 
 # ---------------------------------------------------------------------------
@@ -175,7 +167,7 @@ def test_contributing_md_uses_channel():
 # Pass-to-pass (static) — anti-stub
 # ---------------------------------------------------------------------------
 
-# [static] pass_to_pass
+# [pr_diff] fail_to_pass
 def test_not_stub():
     """Modified functions have real logic, not just pass/return."""
     changes_src = (REPO / "scripts" / "utils" / "changes.ts").read_text()
@@ -184,3 +176,58 @@ def test_not_stub():
     assert "obj.channel.trim()" in changes_src,         "readRemixPrereleaseConfig must validate channel (trim check)"
     assert "semver.inc" in changes_src,         "getNextVersion must use semver for version calculation"
     assert "pnpm publish" in publish_src,         "publish script must have real publish commands"
+
+# === CI-mined tests (taskforge.ci_check_miner) ===
+def test_ci_build_build_packages():
+    """pass_to_pass | CI job 'build' → step 'Build packages'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'pnpm build'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Build packages' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_test_run_tests():
+    """pass_to_pass | CI job 'test' → step 'Run tests' (scoped to packages excluding browser-dependent tests)"""
+    r = subprocess.run(
+        ["bash", "-lc", 'pnpm --filter "./packages/*" --filter "!@remix-run/component" --filter "!@remix-run/interaction" --filter "!@remix-run/headers" test'],
+        cwd=REPO, capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Run tests' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_format_format():
+    """pass_to_pass | CI job 'format' → step 'Format check'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'pnpm format:check'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Format check' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_check_lint():
+    """pass_to_pass | CI job 'check' → step 'Lint'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'pnpm lint'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Lint' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_check_typecheck():
+    """pass_to_pass | CI job 'check' → step 'Typecheck'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'pnpm typecheck'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Typecheck' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_check_check_change_files():
+    """pass_to_pass | CI job 'check' → step 'Check change files'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'pnpm changes:validate'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Check change files' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")

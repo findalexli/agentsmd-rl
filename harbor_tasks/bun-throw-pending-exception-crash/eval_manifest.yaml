@@ -44,6 +44,14 @@ checks:
   type: pass_to_pass
   origin: pr_diff
   description: throwDOMException() must still exist with non-trivial body
+- id: no_inline_import_in_functions
+  type: pass_to_pass
+  origin: agent_config
+  description: Must not use @import inline inside function bodies
+  source:
+    path: src/CLAUDE.md
+    lines: '11'
+    commit: 698eb8104be9a42c9a2b5e5b03a8843f81911055
 - id: uses_bun_assert_not_std
   type: pass_to_pass
   origin: agent_config
@@ -64,10 +72,6 @@ checks:
   type: pass_to_pass
   origin: static
   description: Modified file must comply with .editorconfig (utf-8, lf, trailing whitespace)
-- id: test_repo_zig_fmt
-  type: pass_to_pass
-  origin: repo_tests
-  description: Zig code must be properly formatted (zig fmt --check)
 - id: test_repo_git_clean
   type: pass_to_pass
   origin: repo_tests

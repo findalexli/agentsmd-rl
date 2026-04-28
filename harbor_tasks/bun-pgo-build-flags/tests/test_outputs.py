@@ -242,6 +242,34 @@ try {
   failed("pgo_use_compile_flags", "Error: " + e.message);
 }
 
+// Test 9: resolveConfig basic (pass_to_pass regression guard)
+try {
+  const partial: any = { os: "linux", arch: "x64", abi: "gnu" };
+  const cfg = resolveConfig(partial, fakeToolchain as any);
+  if (cfg.os === "linux" && cfg.arch === "x64" && typeof cfg.lto === "boolean") {
+    passed("resolve_config_basic", { os: cfg.os, arch: cfg.arch, lto: cfg.lto });
+  } else {
+    failed("resolve_config_basic", "Unexpected config: os=" + cfg.os + ", arch=" + cfg.arch);
+  }
+} catch (e: any) {
+  failed("resolve_config_basic", "Threw error: " + e.message);
+}
+
+// Test 10: webkit.build returns valid build object for basic config (pass_to_pass regression guard)
+try {
+  const partial: any = { os: "linux", arch: "x64", abi: "gnu" };
+  const cfg = resolveConfig(partial, fakeToolchain as any);
+  const wb = webkit.build as (cfg: any) => any;
+  const result = wb(cfg);
+  if (result && typeof result.kind === "string" && result.kind.length > 0) {
+    passed("webkit_build_basic", { kind: result.kind });
+  } else {
+    failed("webkit_build_basic", "webkit.build did not return valid build object");
+  }
+} catch (e: any) {
+  failed("webkit_build_basic", "Error: " + e.message);
+}
+
 console.log("__TEST_RESULTS__");
 console.log(JSON.stringify(results, null, 2));
 '''
@@ -252,7 +280,7 @@ def run_ts_tests():
     with tempfile.NamedTemporaryFile(mode='w', suffix='.ts', delete=False) as f:
         f.write(TS_TEST_CODE)
         ts_file = f.name
-    
+
     try:
         result = subprocess.run(
             ['node', '--experimental-strip-types', ts_file],
@@ -261,7 +289,7 @@ def run_ts_tests():
             timeout=60,
             cwd='/workspace/bun/scripts/build'
         )
-        
+
         # Parse output - find the JSON after __TEST_RESULTS__
         output = result.stdout
         if '__TEST_RESULTS__' in output:
@@ -286,16 +314,16 @@ def get_test_results():
 
 class TestPGOBehavior:
     """Behavioral tests for PGO build support - these call actual code, not grep files."""
-    
+
     def test_pgo_mutual_exclusivity(self):
-        """resolveConfig must throw BuildError when both pgoGenerate and pgoUse are set."""
+        """resolveConfig must throw when both pgoGenerate and pgoUse are set."""
         results = get_test_results()
         for r in results:
             if r['name'] == 'pgo_mutual_exclusivity':
                 assert r['passed'], f"Mutual exclusivity check failed: {r.get('error')}"
                 return
         assert False, "pgo_mutual_exclusivity test did not run"
-    
+
     def test_pgo_generate_single(self):
         """Setting only pgoGenerate should preserve the value in resolved config."""
         results = get_test_results()
@@ -304,7 +332,7 @@ class TestPGOBehavior:
                 assert r['passed'], f"pgoGenerate not preserved: {r.get('error')}"
                 return
         assert False, "pgo_generate_single test did not run"
-    
+
     def test_pgo_use_single(self):
         """Setting only pgoUse should preserve the value in resolved config."""
         results = get_test_results()
@@ -313,17 +341,17 @@ class TestPGOBehavior:
                 assert r['passed'], f"pgoUse not preserved: {r.get('error')}"
                 return
         assert False, "pgo_use_single test did not run"
-    
+
     def test_pgo_feature_label_gen(self):
-        """formatConfig should include pgo-gen feature label when pgoGenerate is set."""
+        """Config with pgoGenerate should produce pgo-gen feature label."""
         results = get_test_results()
         for r in results:
             if r['name'] == 'pgo_feature_label_gen':
                 assert r['passed'], f"Feature label not found: {r.get('error')}"
                 return
         assert False, "pgo_feature_label_gen test did not run"
-    
-    def test_pgo_compile_flags(self):
+
+    def test_pgo_compile_flags_in_global_flags(self):
         """globalFlags should include -fprofile-generate when pgoGenerate is set."""
         results = get_test_results()
         for r in results:
@@ -331,8 +359,8 @@ class TestPGOBehavior:
                 assert r['passed'], f"Compile flags not found: {r.get('error')}"
                 return
         assert False, "pgo_compile_flags test did not run"
-    
-    def test_pgo_link_flags(self):
+
+    def test_pgo_link_flags_in_linker_flags(self):
         """linkerFlags should include -fprofile-generate when pgoGenerate is set."""
         results = get_test_results()
         for r in results:
@@ -340,7 +368,7 @@ class TestPGOBehavior:
                 assert r['passed'], f"Linker flags not found: {r.get('error')}"
                 return
         assert False, "pgo_link_flags test did not run"
-    
+
     def test_webkit_pgo_forwarding(self):
         """WebKit build should forward PGO flags via CMAKE_C/CXX_FLAGS."""
         results = get_test_results()
@@ -349,8 +377,8 @@ class TestPGOBehavior:
                 assert r['passed'], f"WebKit PGO forwarding failed: {r.get('error')}"
                 return
         assert False, "webkit_pgo_forwarding test did not run"
-    
-    def test_pgo_use_compile_flags(self):
+
+    def test_pgo_use_compile_flags_in_global_flags(self):
         """globalFlags should include -fprofile-use when pgoUse is set."""
         results = get_test_results()
         for r in results:
@@ -358,3 +386,21 @@ class TestPGOBehavior:
                 assert r['passed'], f"pgoUse compile flags not found: {r.get('error')}"
                 return
         assert False, "pgo_use_compile_flags test did not run"
+
+    def test_resolve_config_basic(self):
+        """resolveConfig should return valid config for basic inputs without PGO."""
+        results = get_test_results()
+        for r in results:
+            if r['name'] == 'resolve_config_basic':
+                assert r['passed'], f"Basic config resolution failed: {r.get('error')}"
+                return
+        assert False, "resolve_config_basic test did not run"
+
+    def test_webkit_build_basic(self):
+        """webkit.build should return valid build object for basic config."""
+        results = get_test_results()
+        for r in results:
+            if r['name'] == 'webkit_build_basic':
+                assert r['passed'], f"webkit.build basic failed: {r.get('error')}"
+                return
+        assert False, "webkit_build_basic test did not run"

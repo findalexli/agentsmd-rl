@@ -2,21 +2,22 @@
 
 ## Problem
 
-When compiling PRQL queries that use `group ... (take 1)` targeting PostgreSQL, the generated SQL for `DISTINCT ON` is malformed. The `SELECT` list in the `DISTINCT ON` CTE produces a `NULL` expression instead of projecting columns from the source table.
+When compiling PRQL queries that use `group ... (take 1)`, the generated SQL for `DISTINCT ON` is malformed. The `SELECT` list in the `DISTINCT ON` CTE fails to project columns from the source table, producing either the `NULL` literal or an empty projection instead of the `*` wildcard.
 
-For example, this PRQL:
+For example, this PRQL targeting DuckDB:
 
 ```prql
-prql target:sql.postgres
+prql target:sql.duckdb
 
 from tab1
 group col1 (take 1)
-derive {x = col1 + 1}
+derive foo = 1
+select foo
 ```
 
-Produces output containing `SELECT DISTINCT ON (col1) NULL` — the `NULL` is wrong because it should include all columns from `tab1`.
+Produces output containing `SELECT DISTINCT ON (col1) NULL` — the `NULL` is wrong because the `DISTINCT ON` CTE should project all columns from `tab1` using `*`.
 
-The same issue occurs when `DISTINCT ON` is combined with `aggregate`:
+The same issue occurs when `DISTINCT ON` is combined with `aggregate`. This PRQL targeting PostgreSQL:
 
 ```prql
 prql target:sql.postgres
@@ -26,13 +27,13 @@ group {id, name} (take 1)
 aggregate {c = count this}
 ```
 
-This also produces `NULL` in the `DISTINCT ON` projection instead of projecting all columns from `t1`.
+Produces an empty projection after `DISTINCT ON (id, name)` — there is no `*` wildcard and no column list between `DISTINCT ON (id, name)` and `FROM`. The projection is simply missing.
 
 ## Expected Behavior
 
-For both query patterns above, the compiled SQL must produce valid `DISTINCT ON` CTEs where the `SELECT` list includes all source table columns (i.e., a full column projection). The `NULL` literal must not appear as the select-list expression in the `DISTINCT ON` clause.
+For all query patterns above, the compiled SQL must produce valid `DISTINCT ON` CTEs where the `SELECT` list uses the `*` wildcard to include all source table columns. The `NULL` literal and empty projection must not appear as the select-list in the `DISTINCT ON` clause.
 
-Fix the PRQL compiler so that `DISTINCT ON` SQL generation produces valid, semantically correct PostgreSQL output for these query patterns.
+Fix the PRQL compiler so that `DISTINCT ON` SQL generation produces valid, semantically correct output for these query patterns.
 
 ## Code Style Requirements
 

@@ -81,6 +81,54 @@ title: p3
 \tb.AssertFileContent("public/fr/s1/index.html", "s1 fr")
 \tb.AssertFileContent("public/fr/s1/p3/index.html", "p3 fr")
 }
+
+// Issue 14681: same bug, but with two languages and a different default.
+// The fix must not depend on language count or config ordering.
+func TestPublishMultilingualSectionCreation_TwoLangs_Harness(t *testing.T) {
+\tt.Parallel()
+
+\tfiles := `
+-- hugo.toml --
+capitalizeListTitles = false
+pluralizeListTitles = false
+disableKinds = ['rss','sitemap','taxonomy','term']
+
+defaultContentLanguage = "en"
+defaultContentLanguageInSubdir = true
+
+[languages.en]
+contentDir = "content/en"
+weight = 1
+
+[languages.fr]
+contentDir = "content/fr"
+weight = 2
+-- layouts/home.html --
+HOME {{ .Language.Name }}
+-- layouts/page.html --
+{{ .Title }} {{ .Language.Name }}
+-- layouts/section.html --
+{{ .Title }} {{ .Language.Name }}
+-- content/en/s1/p1.md --
+---
+title: p1
+---
+-- content/fr/s1/p2.md --
+---
+title: p2
+---
+`
+
+\tb := Test(t, files)
+
+\tb.AssertFileContent("public/en/index.html", "HOME en")
+\tb.AssertFileContent("public/en/s1/index.html", "s1 en")
+\tb.AssertFileContent("public/en/s1/p1/index.html", "p1 en")
+
+\tb.AssertFileContent("public/fr/index.html", "HOME fr")
+\tb.AssertFileContent("public/fr/s1/index.html", "s1 fr")
+\tb.AssertFileContent("public/fr/s1/p2/index.html", "p2 fr")
+}
 '''
 
 
@@ -122,7 +170,7 @@ def test_multilingual_section_autocreate():
             "go",
             "test",
             "-run",
-            "TestPublishMultilingualSectionCreation_Harness",
+            "TestPublishMultilingualSectionCreation_Harness$",
             "./hugolib/",
             "-count=1",
             "-timeout",
@@ -222,4 +270,37 @@ def test_no_hdebug_printf_left_behind():
     assert not found, (
         "Debug-print markers remain in content_map_page_assembler.go: "
         + ", ".join(found)
+    )
+
+def test_multilingual_section_autocreate_two_langs():
+    """f2p: Section auto-creation works with a different language layout.
+
+    Same root cause as Issue 14681, but exercised with two languages and
+    a different defaultContentLanguage to ensure the fix is not ordering-
+    or count-dependent.
+    """
+    _ensure_test_injected()
+    r = _run(
+        [
+            "go",
+            "test",
+            "-run",
+            "TestPublishMultilingualSectionCreation_TwoLangs_Harness$",
+            "./hugolib/",
+            "-count=1",
+            "-timeout",
+            "120s",
+            "-v",
+        ],
+        timeout=300,
+    )
+    output = r.stdout + r.stderr
+    assert r.returncode == 0, (
+        "Two-language section auto-creation test failed.\n"
+        "Expected per-language section pages public/{en,fr}/s1/index.html.\n"
+        "Output (last 3000 chars):\n" + output[-3000:]
+    )
+    assert "--- PASS: TestPublishMultilingualSectionCreation_TwoLangs_Harness" in output, (
+        "Did not see PASS marker for the two-langs harness test.\n"
+        "Output (last 3000 chars):\n" + output[-3000:]
     )

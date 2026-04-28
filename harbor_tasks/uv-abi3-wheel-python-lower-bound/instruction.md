@@ -5,11 +5,8 @@
 `uv` is a Rust-based Python package manager. When `uv` resolves wheels, it
 derives a set of "implied" PEP 508 environment markers from the wheel's
 filename tags so the resolver knows which environments a wheel is
-compatible with. The relevant logic lives in:
-
-  `crates/uv-distribution-types/src/prioritized_distribution.rs`
-
-inside the function `implied_python_markers(filename: &WheelFilename)`,
+compatible with. The relevant logic lives in the `uv-distribution-types`
+crate's `implied_python_markers(filename: &WheelFilename)` function,
 called by the public `implied_markers(filename: &WheelFilename)` wrapper.
 
 ## Bug
@@ -86,8 +83,8 @@ language tag types).
 
 Per `CLAUDE.md`, you MUST add a test case for the changed behaviour. Follow
 the style of the existing `assert_python_markers` /
-`assert_implied_markers` helpers in
-`crates/uv-distribution-types/src/prioritized_distribution.rs::mod tests`.
+`assert_implied_markers` helpers in the test module adjacent to the
+`implied_python_markers` function.
 
 ## Code Style Requirements
 
@@ -106,5 +103,5 @@ Notably:
 ## Out of scope
 
 Do not modify the lockfile, do not change unrelated functions, and do not
-update workspace dependencies. The change is scoped to
-`prioritized_distribution.rs` (and a corresponding test).
+update workspace dependencies. The change is scoped to the
+`implied_python_markers` function and a corresponding test.

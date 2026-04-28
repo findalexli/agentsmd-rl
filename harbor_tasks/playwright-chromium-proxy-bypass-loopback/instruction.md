@@ -61,3 +61,10 @@ The fix lives in Playwright's Chromium launch-argument computation
 purely in the logic that decides whether to push the default
 `<-loopback>` token onto the proxy bypass list — no public API
 additions, no new exports, no changes elsewhere in the project.
+
+## Code Style Requirements
+
+This project uses ESLint for TypeScript linting. All changes must pass
+`eslint` checks without introducing new warnings or errors. Use the
+project's installed ESLint (do not install a global or different
+version).

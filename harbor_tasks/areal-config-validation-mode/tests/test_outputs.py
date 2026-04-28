@@ -163,36 +163,36 @@ def test_swanlab_default_mode():
 # Pass-to-pass (pr_diff) — regression checks
 # ---------------------------------------------------------------------------
 
-# [pr_diff] pass_to_pass
+# [pr_diff] fail_to_pass
 def test_wandb_post_init_validates():
-    """WandBConfig has __post_init__ with validation logic (not stub)."""
+    """WandBConfig validation raises ValueError with all valid options enumerated."""
     WandBConfig = _get_class_from_source("WandBConfig")
 
-    # Check __post_init__ exists
-    assert hasattr(WandBConfig, "__post_init__"), "WandBConfig missing __post_init__ method"
-
-    # Verify it actually validates by checking it rejects invalid mode
     try:
         WandBConfig(mode="bad_mode")
-        assert False, "__post_init__ should reject invalid mode"
-    except ValueError:
-        pass  # expected
+        assert False, "Expected ValueError for invalid mode, got no error"
+    except ValueError as e:
+        msg = str(e)
+        assert "bad_mode" in msg, f"Error must name the invalid value, got: {msg}"
+        assert "Invalid wandb mode" in msg, f"Expected 'Invalid wandb mode' in error, got: {msg}"
+        for opt in ["online", "offline", "disabled", "shared"]:
+            assert opt in msg, f"Error must list valid option '{opt}', got: {msg}"
 
 
-# [pr_diff] pass_to_pass
+# [pr_diff] fail_to_pass
 def test_swanlab_post_init_validates():
-    """SwanlabConfig has __post_init__ with validation logic (not stub)."""
+    """SwanlabConfig validation raises ValueError with all valid options enumerated."""
     SwanlabConfig = _get_class_from_source("SwanlabConfig")
 
-    # Check __post_init__ exists
-    assert hasattr(SwanlabConfig, "__post_init__"), "SwanlabConfig missing __post_init__ method"
-
-    # Verify it actually validates by checking it rejects invalid mode
     try:
         SwanlabConfig(mode="bad_mode")
-        assert False, "__post_init__ should reject invalid mode"
-    except ValueError:
-        pass  # expected
+        assert False, "Expected ValueError for invalid mode, got no error"
+    except ValueError as e:
+        msg = str(e)
+        assert "bad_mode" in msg, f"Error must name the invalid value, got: {msg}"
+        assert "Invalid swanlab mode" in msg, f"Expected 'Invalid swanlab mode' in error, got: {msg}"
+        for opt in ["cloud", "local", "disabled", "offline"]:
+            assert opt in msg, f"Error must list valid option '{opt}', got: {msg}"
 
 
 # ---------------------------------------------------------------------------
@@ -308,3 +308,75 @@ def test_repo_trailing_whitespace():
         capture_output=True, text=True, timeout=180, cwd=REPO,
     )
     assert r.returncode == 0, f"Trailing whitespace check failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
+
+# === CI-mined tests (taskforge.ci_check_miner) ===
+def test_ci_install_test_set_up_python():
+    """pass_to_pass | CI job 'Install test' → step 'Set up Python'"""
+    r = subprocess.run(
+        ["python3", "--version"], cwd=REPO,
+        capture_output=True, text=True, timeout=60)
+    assert r.returncode == 0, (
+        f"CI step 'Set up Python' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+    assert "3.12" in r.stdout, f"Expected Python 3.12, got: {r.stdout}"
+
+def test_ci_install_test_verify_package_import():
+    """pass_to_pass | CI job 'Install test' → step 'Verify package import'"""
+    # Structural check: package __init__.py and version module parse correctly
+    repo = Path(REPO)
+    init_py = repo / "areal" / "__init__.py"
+    version_py = repo / "areal" / "version.py"
+    for fp in [init_py, version_py]:
+        if not fp.exists():
+            raise AssertionError(f"Missing file: {fp}")
+        ast.parse(fp.read_text())
+    # Verify __version__ is exported from __init__.py
+    src = init_py.read_text()
+    assert "from .version import __version__" in src or "__version__" in src, (
+        f"areal/__init__.py must reference __version__")
+
+def test_ci_install_test_verify_core_modules_are_importable():
+    """pass_to_pass | CI job 'Install test' → step 'Verify core modules are importable'"""
+    # Structural check: key module files parse as valid Python
+    repo = Path(REPO)
+    modules = [
+        "areal/api/cli_args.py",
+        "areal/api/__init__.py",
+        "areal/__init__.py",
+    ]
+    for mod in modules:
+        fp = repo / mod
+        if not fp.exists():
+            raise AssertionError(f"Missing module: {fp}")
+        ast.parse(fp.read_text())
+    # Verify WandBConfig and SwanlabConfig are defined in cli_args.py
+    src = (repo / "areal/api/cli_args.py").read_text()
+    assert "class WandBConfig" in src, "WandBConfig class not found"
+    assert "class SwanlabConfig" in src, "SwanlabConfig class not found"
+
+def test_ci_install_test_build_wheel():
+    """pass_to_pass | CI job 'Install test' → step 'Build wheel'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'uv build --wheel'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Build wheel' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_install_test_verify_wheel_artifact():
+    """pass_to_pass | CI job 'Install test' → step 'Verify wheel artifact'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'python -m zipfile -l dist/*.whl 2>&1 | awk "NR<=20"'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Verify wheel artifact' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_build_build_the_book():
+    """pass_to_pass | CI job 'build' → step 'Build the book'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'cd docs && chmod +x ./build_all.sh && ./build_all.sh'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Build the book' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")

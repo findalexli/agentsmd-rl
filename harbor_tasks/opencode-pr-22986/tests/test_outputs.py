@@ -158,3 +158,22 @@ def test_bun_can_resolve_lsp_module():
         timeout=60,
     )
     assert r.returncode == 0, f"bun build of lsp.ts failed:\n{r.stderr}"
+
+# === CI-mined tests (taskforge.ci_check_miner) ===
+def test_ci_typecheck_run_typecheck():
+    """pass_to_pass | CI job 'typecheck' → step 'Run typecheck' (scoped to opencode package)"""
+    r = subprocess.run(
+        ["bash", "-lc", 'bun --cwd packages/opencode typecheck'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Run typecheck' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_unit_run_unit_tests():
+    """pass_to_pass | CI job 'unit' → step 'Run unit tests' (scoped to config tests)"""
+    r = subprocess.run(
+        ["bash", "-lc", 'bun --cwd packages/opencode test --timeout 30000 test/config/config.test.ts'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Run unit tests' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")

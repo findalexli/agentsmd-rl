@@ -244,3 +244,14 @@ def test_publish_go_imports_api_package():
         "publish.go must continue to import the api package "
         "(provider of api.ErrCanceled)."
     )
+
+# === CI-mined tests (taskforge.ci_check_miner) ===
+def test_ci_validate_run():
+    """pass_to_pass | CI job 'validate (lint)' — golangci-lint on pkg/compose."""
+    r = subprocess.run(
+        ["golangci-lint", "run", "--build-tags", "e2e", "./pkg/compose/..."],
+        cwd=REPO,
+        capture_output=True, text=True, timeout=900)
+    assert r.returncode == 0, (
+        f"golangci-lint on pkg/compose failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")

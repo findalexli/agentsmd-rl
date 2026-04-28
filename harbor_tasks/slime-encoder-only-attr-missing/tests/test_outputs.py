@@ -186,6 +186,7 @@ def test_not_stub():
         host = "127.0.0.1"
         node_rank = 1
         api_key = None
+        encoder_only = False
 
     _TrackingProcess.last_target = None
     launch_server_process(Args())
@@ -293,7 +294,7 @@ def test_repo_package_imports():
 def _ensure_precommit():
     """Install pre-commit if not already available."""
     try:
-        import precommit  # noqa: F401
+        import pre_commit  # noqa: F401
     except ImportError:
         subprocess.run(
             [sys.executable, "-m", "pip", "install", "pre-commit", "-q"],

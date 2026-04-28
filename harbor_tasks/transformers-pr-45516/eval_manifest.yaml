@@ -1,0 +1,88 @@
+version: "2.0"
+
+source:
+  repo: "huggingface/transformers"
+  pr: 45516
+  base_commit: "26bb358ea971aebe30729f8a7ae4f3f0fedb1d5a"
+  merge_commit: "fcc22811f5a7145a7454e1ba343eadc674f665cc"
+
+task:
+  kind: code_fix
+
+checks:
+  - id: test_labels_kwarg_accepted
+    type: fail_to_pass
+    origin: pr_diff
+    description: "prepare_decoder_input_ids_from_labels accepts labels= keyword argument"
+
+  - id: test_labels_kwarg_output_shape
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Output shape matches input shape when called with labels= keyword"
+
+  - id: test_labels_kwarg_shifts_right_and_prepends_bos
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Output shifts input right and prepends BOS token at position 0"
+
+  - id: test_labels_kwarg_replaces_neg100_with_pad
+    type: fail_to_pass
+    origin: pr_diff
+    description: "-100 values in labels are replaced with pad_token_id"
+
+  - id: test_labels_kwarg_batch_handling
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Method works with batched inputs passed via labels= keyword"
+
+  - id: test_ruff_check_passes
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Ruff linter passes on the changed modeling file"
+
+rubric:
+  - rule: "`make style`: runs formatters and linters (ruff), necessary to pass code style checks"
+    source:
+      path: ".ai/AGENTS.md"
+      lines: "1"
+      commit: "26bb358ea971aebe30729f8a7ae4f3f0fedb1d5a"
+    evidence: "Gold patch follows code style conventions"
+    category: "style"
+    verification: semantic_diff
+
+  - rule: "When a `modular` file is present, generated files should not be edited, as changes will be overwritten by `make fix-repo`! Instead, edit the `modular` file."
+    source:
+      path: ".ai/AGENTS.md"
+      lines: "84"
+      commit: "26bb358ea971aebe30729f8a7ae4f3f0fedb1d5a"
+    evidence: "Gold patch edits both the modular file and the generated modeling file, keeping them in sync"
+    category: "architecture"
+    verification: semantic_diff
+
+  - rule: "PRs should be as brief as possible. Bugfix PRs in particular can often be only one or two lines long, and do not need large comments, docstrings or new functions in this case."
+    source:
+      path: ".github/copilot-instructions.md"
+      lines: "17"
+      commit: "26bb358ea971aebe30729f8a7ae4f3f0fedb1d5a"
+    evidence: "Gold patch is a minimal 2-line parameter rename fix"
+    category: "scope"
+    verification: semantic_diff
+
+distractors:
+  - rule: "Code style is enforced in the CI. You can install the style tools with `pip install -e .[quality]`. You can then run `make fixup` to apply style and consistency fixes to your code."
+    source:
+      path: ".github/copilot-instructions.md"
+      lines: "21"
+      commit: "26bb358ea971aebe30729f8a7ae4f3f0fedb1d5a"
+    collision_type: meta_confusion
+    why_distracting: "Running make fixup after a modular edit would propagate changes automatically, which seems helpful but could distract from the manual fix needed in the generated file"
+    severity: medium
+
+  - rule: "Do not edit a `# Copied from` block, as it will be reverted by `make fix-repo`. Ideally you should edit the code it's copying from and propagate the change, but you can break the `# Copied from` link if needed."
+    source:
+      path: ".ai/AGENTS.md"
+      lines: "80"
+      commit: "26bb358ea971aebe30729f8a7ae4f3f0fedb1d5a"
+    collision_type: scope_ambiguity
+    why_distracting: "The method to fix is not marked as Copied from, but agents might waste time checking for copy annotations before editing"
+    severity: low

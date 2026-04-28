@@ -25,7 +25,7 @@ The same pattern is already used elsewhere in the Playwright client (e.g. screen
    - `packages/playwright-core/types/types.d.ts`
    - `packages/playwright-client/types/types.d.ts`
 4. The pre-existing pre-condition behavior is unchanged: the underlying `tracingGroup` channel call must still happen (with the same `name` / `location` arguments), and `_additionalSources` must still be updated when `options.location` is provided. Only the return value changes.
-5. The DEPS check (`node utils/check_deps.js`) and ESLint must continue to pass on any file you touch.
+5. The DEPS check (`node utils/check_deps.js`), workspace consistency (`node utils/workspace.js --ensure-consistent`), and ESLint must continue to pass on any file you touch.
 
 ## Hints about the codebase (read these before editing)
 
@@ -42,8 +42,8 @@ Grading runs the build and then exercises the runtime behavior of the compiled c
 - Verify that `dispose()` triggers exactly one `tracingGroupEnd` channel call, and that a second `dispose()` is a no-op.
 - Verify `await using` semantics work end-to-end against the returned value.
 - Inspect both generated `types.d.ts` files for the new return type.
-- Re-run the repo's dependency boundary check and ESLint.
+- Re-run the repo's dependency boundary check, workspace consistency check, and ESLint.
 
 ## Code Style Requirements
 
-When iterating, run the repo's linters before considering the change complete. The grader runs `node utils/check_deps.js` and `npx eslint packages/playwright-core/src/client/tracing.ts` as part of testing; both must pass. Refer to `CLAUDE.md` in the repo root for the project's lint conventions.
+When iterating, run the repo's linters before considering the change complete. The grader runs `node utils/check_deps.js`, `node utils/workspace.js --ensure-consistent`, and `npx eslint packages/playwright-core/src/client/tracing.ts` as part of testing; both must pass. Refer to `CLAUDE.md` in the repo root for the project's lint conventions.

@@ -446,3 +446,85 @@ def test_repo_shell_scripts_syntax():
             timeout=30,
         )
         assert result.returncode == 0, f"Syntax error in {script}:\n{result.stderr}"
+
+# === CI-mined tests (taskforge.ci_check_miner) ===
+def test_ci_test_warm_go_build_cache():
+    """pass_to_pass | CI job 'test' → step 'Warm Go build cache'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'make BUILD_IN_CONTAINER=false warmup-build-cache-integration-tests'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Warm Go build cache' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_lint_jsonnet_lint():
+    """fail_to_pass | CI job 'lint-jsonnet' → step 'Lint'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'make BUILD_IN_CONTAINER=false lint'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Lint' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_lint_jsonnet_check_vendor_directory():
+    """fail_to_pass | CI job 'lint-jsonnet' → step 'Check Vendor Directory'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'make BUILD_IN_CONTAINER=false mod-check'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Check Vendor Directory' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_lint_jsonnet_check_protos():
+    """fail_to_pass | CI job 'lint-jsonnet' → step 'Check Protos'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'make BUILD_IN_CONTAINER=false check-protos'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Check Protos' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_lint_jsonnet_check_generated_documentation():
+    """fail_to_pass | CI job 'lint-jsonnet' → step 'Check Generated Documentation'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'make BUILD_IN_CONTAINER=false check-doc'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Check Generated Documentation' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_lint_jsonnet_check_reference_help_documentation():
+    """fail_to_pass | CI job 'lint-jsonnet' → step 'Check Reference Help Documentation'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'make BUILD_IN_CONTAINER=false check-reference-help'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Check Reference Help Documentation' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_lint_jsonnet_check_white_noise():
+    """fail_to_pass | CI job 'lint-jsonnet' → step 'Check White Noise'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'make BUILD_IN_CONTAINER=false check-white-noise'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Check White Noise' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_lint_jsonnet_check_license_header():
+    """fail_to_pass | CI job 'lint-jsonnet' → step 'Check License Header'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'make BUILD_IN_CONTAINER=false check-license'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Check License Header' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_lint_jsonnet_check_docker_compose_yaml():
+    """fail_to_pass | CI job 'lint-jsonnet' → step 'Check Docker-Compose YAML'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'make BUILD_IN_CONTAINER=false check-mimir-microservices-mode-docker-compose-yaml'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Check Docker-Compose YAML' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")

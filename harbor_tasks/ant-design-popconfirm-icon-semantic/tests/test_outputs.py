@@ -187,3 +187,13 @@ def test_repo_popconfirm_type():
         capture_output=True, text=True, timeout=300, cwd=REPO, env=env,
     )
     assert r.returncode == 0, f"Popconfirm type tests failed:\n{r.stderr[-1000:]}"
+
+# === CI-mined tests (taskforge.ci_check_miner) ===
+def test_ci_test_image_generate_image_snapshots():
+    """pass_to_pass | CI job 'test image' → step 'generate image snapshots'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'node node_modules/puppeteer/install.mjs'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'generate image snapshots' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")

@@ -22,6 +22,28 @@ print("PASS")
     assert "PASS" in result.stdout
 
 
+def test_add_function_edge_cases():
+    """The add function should handle varied inputs correctly (fail_to_pass)."""
+    result = subprocess.run(
+        ["python3", "-c", """
+import sys
+sys.path.insert(0, 'src')
+from calculator import add
+cases = [
+    (add(-3, 5), 2),
+    (add(10, -4), 6),
+    (add(100, 200), 300),
+]
+for got, expected in cases:
+    assert got == expected, f"Expected {expected}, got {got}"
+print("PASS")
+"""],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert result.returncode == 0, f"Test failed: {result.stderr}"
+    assert "PASS" in result.stdout
+
+
 # ============================================================================
 # Pass-to-Pass Tests (repo_tests) - CI/CD gates that should pass at base commit
 # ============================================================================

@@ -216,6 +216,9 @@ class TestValuesSchemaUpdate:
         assert "description" in scheduler_schema, (
             "workers.celery.schedulerName should have a description"
         )
+        assert "celery" in scheduler_schema["description"].lower(), (
+            f"Description should mention celery: {scheduler_schema['description']}"
+        )
 
     def test_old_scheduler_name_marked_deprecated(self):
         """

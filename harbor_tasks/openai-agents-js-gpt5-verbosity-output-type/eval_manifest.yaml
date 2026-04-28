@@ -1,0 +1,103 @@
+version: '2.0'
+source:
+  repo: openai/openai-agents-js
+  pr: 362
+  base_commit: 2260e211926624c0bcd89497a8b180724b14d720
+  merge_commit: 47a28ad5544630a2bac664242e5bfde10d3fa72d
+task:
+  kind: code_fix
+checks:
+- id: test_response_format_verbosity
+  type: fail_to_pass
+  origin: pr_diff
+  description: getResponseFormat passes verbosity through and does not leak text to top level of request body
+- id: test_response_format_verbosity_nested_schema
+  type: fail_to_pass
+  origin: pr_diff
+  description: getResponseFormat merges verbosity with a nested json_schema output format
+- id: test_build_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: TypeScript build check passes for agents-openai package
+- id: test_ci_build_run_build
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: build / Run build (scoped to agents-openai)'
+- id: test_ci_test_run_linter
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: test / Run linter (scoped to agents-openai)'
+- id: test_ci_test_compile_examples
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: test / Compile examples (scoped to agents-openai)'
+- id: test_ci_test_run_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: test / Run tests (scoped to agents-openai)'
+rubric:
+- rule: Follow ESLint rules (`eslint.config.mjs`), no unused imports, adhere to Prettier.
+  source:
+    path: AGENTS.md
+    lines: '118'
+    commit: 2260e211926624c0bcd89497a8b180724b14d720
+  evidence: Gold diff introduces new imports and follows project code style with consistent formatting
+  category: style
+  verification: llm_judge
+- rule: Tests cover new behavior and edge cases.
+  source:
+    path: AGENTS.md
+    lines: '138'
+    commit: 2260e211926624c0bcd89497a8b180724b14d720
+  evidence: Gold diff fixes a parameter-passing bug covering the case where both outputType and verbosity are set
+  category: testing
+  verification: llm_judge
+- rule: Ensure TypeScript errors are absent via build
+  source:
+    path: AGENTS.md
+    lines: '55'
+    commit: 2260e211926624c0bcd89497a8b180724b14d720
+  evidence: Gold diff adds a new function parameter and destructuring assignment that must type-check correctly
+  category: correctness
+  verification: programmatic
+- rule: Comments must end with a period.
+  source:
+    path: AGENTS.md
+    lines: '62'
+    commit: 2260e211926624c0bcd89497a8b180724b14d720
+  evidence: The PR does not add new comments; existing comments already follow this rule
+  category: style
+  verification: llm_judge
+- rule: Code is readable and maintainable.
+  source:
+    path: AGENTS.md
+    lines: '145'
+    commit: 2260e211926624c0bcd89497a8b180724b14d720
+  evidence: Gold diff uses clear destructuring and spreads that improve readability over the previous approach
+  category: architecture
+  verification: llm_judge
+distractors:
+- rule: Commit using Conventional Commits.
+  source:
+    path: AGENTS.md
+    lines: '114'
+    commit: 2260e211926624c0bcd89497a8b180724b14d720
+  collision_type: meta_confusion
+  why_distracting: Agent may think it needs to create a git commit rather than just writing code
+  severity: medium
+- rule: If your change affects the public API, add a Changeset via `pnpm changeset`.
+  source:
+    path: AGENTS.md
+    lines: '132'
+    commit: 2260e211926624c0bcd89497a8b180724b14d720
+  collision_type: meta_confusion
+  why_distracting: Agent may spend time running changeset commands instead of fixing the actual code bug
+  severity: low
+- rule: Keep summary under 80 characters.
+  source:
+    path: AGENTS.md
+    lines: '128'
+    commit: 2260e211926624c0bcd89497a8b180724b14d720
+  collision_type: rule_conflict
+  why_distracting: This is a commit-message rule unrelated to writing code; following it wastes effort on prose instead of the bug fix
+  severity: low

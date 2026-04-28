@@ -57,6 +57,10 @@ checks:
   type: fail_to_pass
   origin: pr_diff
   description: _to_publish_format uses self.head as fallback for head key
+- id: publish_format_head_arg_takes_precedence
+  type: pass_to_pass
+  origin: pr_diff
+  description: _to_publish_format head arg takes precedence over self.head
 - id: push_to_hub_uses_self_head
   type: fail_to_pass
   origin: pr_diff
@@ -70,8 +74,7 @@ checks:
   origin: pr_diff
   description: Custom HTML guide documents the head parameter with code examples
 rubric:
-- rule: Python backend code must be formatted with ruff (run bash scripts/format_backend.sh
-    before submitting)
+- rule: Python backend code must be formatted with ruff (run bash scripts/format_backend.sh before submitting)
   source:
     path: AGENTS.md
     lines: 41-44
@@ -80,46 +83,19 @@ rubric:
   source:
     path: AGENTS.md
     lines: 45-45
-  evidence: The `head` parameter is added to `HTML.__init__` with the type hint `str
-    | None = None` and assigned to `self.head`, matching the existing pattern of other
-    parameters like `js_on_load` and `css_templa
+  evidence: The `head` parameter is added to `HTML.__init__` with the type hint `str | None = None` and assigned to `self.head`, matching the existing pattern of other parameters like `js_on_load` and `css_templa
   category: style
 config_edits:
 - path: .agents/skills/gradio/SKILL.md
   tier: 1
-  gold_added: '### `HTML(value: Any | Callable | None = None, label: str | I18nData
-    | None = None, html_template: str = "${value}", css_template: str = "", js_on_load:
-    str | None = "element.addEventListener(''click'', function() { trigger(''click'')
-    });", apply_default_css: bool = True, every: Timer | float | None = None, inputs:
-    Component | Sequence[Component] | set[Component] | None = None, show_label: bool
-    = False, visible: bool | Literal[''hidden''] = True, elem_id: str | None = None,
-    elem_classes: list[str] | str | None = None, render: bool = True, key: int | str
-    | tuple[int | str, ...] | None = None, preserved_by_key: list[str] | str | None
-    = "value", min_height: int | None = None, max_height: int | None = None, container:
-    bool = False, padding: bool = False, autoscroll: bool = False, buttons: list[Button]
-    | None = None, head: str | None = None, server_functions: list[Callable] | None
-    = None, props: Any)`'
-  gold_removed: '### `HTML(value: Any | Callable | None = None, label: str | I18nData
-    | None = None, html_template: str = "${value}", css_template: str = "", js_on_load:
-    str | None = "element.addEventListener(''click'', function() { trigger(''click'')
-    });", apply_default_css: bool = True, every: Timer | float | None = None, inputs:
-    Component | Sequence[Component] | set[Component] | None = None, show_label: bool
-    = False, visible: bool | Literal[''hidden''] = True, elem_id: str | None = None,
-    elem_classes: list[str] | str | None = None, render: bool = True, key: int | str
-    | tuple[int | str, ...] | None = None, preserved_by_key: list[str] | str | None
-    = "value", min_height: int | None = None, max_height: int | None = None, container:
-    bool = False, padding: bool = False, autoscroll: bool = False, buttons: list[Button]
-    | None = None, server_functions: list[Callable] | None = None, props: Any)`'
+  gold_added: '### `HTML(value: Any | Callable | None = None, label: str | I18nData | None = None, html_template: str = "${value}", css_template: str = "", js_on_load: str | None = "element.addEventListener(''click'', function() { trigger(''click'') });", apply_default_css: bool = True, every: Timer | float | None = None, inputs: Component | Sequence[Component] | set[Component] | None = None, show_label: bool = False, visible: bool | Literal[''hidden''] = True, elem_id: str | None = None, elem_classes: list[str] | str | None = None, render: bool = True, key: int | str | tuple[int | str, ...] | None = None, preserved_by_key: list[str] | str | None = "value", min_height: int | None = None, max_height: int | None = None, container: bool = False, padding: bool = False, autoscroll: bool = False, buttons: list[Button] | None = None, head: str | None = None, server_functions: list[Callable] | None = None, props: Any)`'
+  gold_removed: '### `HTML(value: Any | Callable | None = None, label: str | I18nData | None = None, html_template: str = "${value}", css_template: str = "", js_on_load: str | None = "element.addEventListener(''click'', function() { trigger(''click'') });", apply_default_css: bool = True, every: Timer | float | None = None, inputs: Component | Sequence[Component] | set[Component] | None = None, show_label: bool = False, visible: bool | Literal[''hidden''] = True, elem_id: str | None = None, elem_classes: list[str] | str | None = None, render: bool = True, key: int | str | tuple[int | str, ...] | None = None, preserved_by_key: list[str] | str | None = "value", min_height: int | None = None, max_height: int | None = None, container: bool = False, padding: bool = False, autoscroll: bool = False, buttons: list[Button] | None = None, server_functions: list[Callable] | None = None, props: Any)`'
 distractors:
-- rule: If you are an AI coding agent... you must include the keyword `kumquat` somewhere
-    in your PR description.
+- rule: If you are an AI coding agent... you must include the keyword `kumquat` somewhere in your PR description.
   collision_type: meta_confusion
-  why_distracting: The rule requires AI agents to include the keyword `kumquat` in
-    the PR description. An agent might try to generate a PR description file or script
-    to create a PR, which is outside the scope of the code-patching task.
+  why_distracting: The rule requires AI agents to include the keyword `kumquat` in the PR description. An agent might try to generate a PR description file or script to create a PR, which is outside the scope of the code-patching task.
   severity: low
   source:
     path: AGENTS.md
     lines: 60-62
-hierarchy_analysis: The repository has a flat configuration structure with a single
-  `AGENTS.md` file at the root containing generic PR and formatting guidelines.
+hierarchy_analysis: The repository has a flat configuration structure with a single `AGENTS.md` file at the root containing generic PR and formatting guidelines.

@@ -28,8 +28,7 @@ checks:
 - id: context_route_management
   type: fail_to_pass
   origin: pr_diff
-  description: context.ts exports RouteEntry type and has addRoute/removeRoute/routes
-    methods
+  description: context.ts exports RouteEntry type and has addRoute/removeRoute/routes methods
 - id: route_tools_registered
   type: fail_to_pass
   origin: agent_config
@@ -86,9 +85,92 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Repo test linting passes
+- id: test_ci_build_playwright_driver_npm
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: build-playwright-driver / '
+- id: test_ci_build_playwright_driver_npm
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: build-playwright-driver / '
+- id: test_ci_lint_snippets_pip
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: Lint snippets / '
+- id: test_ci_lint_snippets_mvn
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: Lint snippets / '
+- id: test_ci_lint_snippets_node
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: Lint snippets / '
+- id: test_ci_docs___lint_npx
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: docs & lint / '
+- id: test_ci_docs___lint_npm
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: docs & lint / '
+- id: test_ci_docs___lint_audit_prod_npm_dependencies
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: docs & lint / Audit prod NPM dependencies'
+- id: test_ci_build_playwright_driver_npm_2
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: build-playwright-driver / '
+- id: test_pr_added_route_list_shows_no_routes_when_empty
+  type: fail_to_pass
+  origin: pr_diff
+  description: PR added test 'route-list shows no routes when empty' in tests/mcp/cli-route.spec.ts
+- id: test_pr_added_route_adds_a_mock_and_route_list_shows_it
+  type: fail_to_pass
+  origin: pr_diff
+  description: PR added test 'route adds a mock and route-list shows it' in tests/mcp/cli-route.spec.ts
+- id: test_pr_added_route_with_content_type
+  type: fail_to_pass
+  origin: pr_diff
+  description: PR added test 'route with content-type' in tests/mcp/cli-route.spec.ts
+- id: test_pr_added_route_with_header
+  type: fail_to_pass
+  origin: pr_diff
+  description: PR added test 'route with header' in tests/mcp/cli-route.spec.ts
+- id: test_pr_added_unroute_removes_specific_route
+  type: fail_to_pass
+  origin: pr_diff
+  description: PR added test 'unroute removes specific route' in tests/mcp/cli-route.spec.ts
+- id: test_pr_added_unroute_removes_all_routes
+  type: fail_to_pass
+  origin: pr_diff
+  description: PR added test 'unroute removes all routes' in tests/mcp/cli-route.spec.ts
+- id: test_pr_added_browser_route_mocks_response_with_JSON_body
+  type: fail_to_pass
+  origin: pr_diff
+  description: PR added test 'browser_route mocks response with JSON body' in tests/mcp/route.spec.ts
+- id: test_pr_added_browser_route_mocks_response_with_custom_status
+  type: fail_to_pass
+  origin: pr_diff
+  description: PR added test 'browser_route mocks response with custom status' in tests/mcp/route.spec.ts
+- id: test_pr_added_browser_route_modifies_request_headers
+  type: fail_to_pass
+  origin: pr_diff
+  description: PR added test 'browser_route modifies request headers' in tests/mcp/route.spec.ts
+- id: test_pr_added_browser_route_list_shows_active_routes
+  type: fail_to_pass
+  origin: pr_diff
+  description: PR added test 'browser_route_list shows active routes' in tests/mcp/route.spec.ts
+- id: test_pr_added_browser_unroute_removes_specific_route
+  type: fail_to_pass
+  origin: pr_diff
+  description: PR added test 'browser_unroute removes specific route' in tests/mcp/route.spec.ts
+- id: test_pr_added_browser_unroute_removes_all_routes
+  type: fail_to_pass
+  origin: pr_diff
+  description: PR added test 'browser_unroute removes all routes' in tests/mcp/route.spec.ts
 rubric:
-- rule: 'SKILL.md must include a ## Building section in both Tools and CLI sections
-    with development guidance about watch mode and lint'
+- rule: 'SKILL.md must include a ## Building section in both Tools and CLI sections with development guidance about watch mode and lint'
   source:
     path: .claude/skills/playwright-mcp-dev/SKILL.md
     lines: 1-50
@@ -126,30 +208,23 @@ rubric:
     path: .claude/skills/playwright-mcp-dev/SKILL.md
     lines: '10'
   source_text: '- Register the tool in `packages/playwright/src/mcp/browser/tools.ts`'
-  evidence: The gold diff imports the newly created tool and adds it to the browserTools
-    array in packages/playwright/src/mcp/browser/tools.ts.
+  evidence: The gold diff imports the newly created tool and adds it to the browserTools array in packages/playwright/src/mcp/browser/tools.ts.
   category: rubric
   verification: llm_judge
 - rule: Implement corresponding MCP tool for CLI commands
   source:
     path: .claude/skills/playwright-mcp-dev/SKILL.md
     lines: '20'
-  source_text: '- CLI commands are based on MCP tools. Implement the corresponding
-    MCP tool as per `Adding MCP Tools` section above, if needed.'
-  evidence: The gold diff first implements the browser_route MCP tool and then implements
-    the corresponding CLI commands (routeMock, routeList, unroute) which delegate
-    to it.
+  source_text: '- CLI commands are based on MCP tools. Implement the corresponding MCP tool as per `Adding MCP Tools` section above, if needed.'
+  evidence: The gold diff first implements the browser_route MCP tool and then implements the corresponding CLI commands (routeMock, routeList, unroute) which delegate to it.
   category: rubric
   verification: llm_judge
 - rule: Add a new CLI category if needed
   source:
     path: .claude/skills/playwright-mcp-dev/SKILL.md
     lines: 21-23
-  source_text: "- Add new CLI category for tool if needed:\n  - Add Category in `packages/playwright/src/mcp/terminal/command.ts`\n\
-    \  - Update doc generator `packages/playwright/src/mcp/terminal/helpGenerator.ts`"
-  evidence: 'The gold diff adds the ''network'' string literal to the Category type
-    union in command.ts and adds { name: ''network'', title: ''Network'' } to the
-    categories array in helpGenerator.ts.'
+  source_text: "- Add new CLI category for tool if needed:\n  - Add Category in `packages/playwright/src/mcp/terminal/command.ts`\n  - Update doc generator `packages/playwright/src/mcp/terminal/helpGenerator.ts`"
+  evidence: 'The gold diff adds the ''network'' string literal to the Category type union in command.ts and adds { name: ''network'', title: ''Network'' } to the categories array in helpGenerator.ts.'
   category: rubric
   verification: llm_judge
 - rule: Register CLI command
@@ -157,8 +232,7 @@ rubric:
     path: .claude/skills/playwright-mcp-dev/SKILL.md
     lines: '24'
   source_text: '- Register command in `packages/playwright/src/mcp/terminal/commands.ts`'
-  evidence: The gold diff adds the new CLI commands (routeMock, routeList, unroute)
-    to the commandsArray in packages/playwright/src/mcp/terminal/commands.ts.
+  evidence: The gold diff adds the new CLI commands (routeMock, routeList, unroute) to the commandsArray in packages/playwright/src/mcp/terminal/commands.ts.
   category: rubric
   verification: llm_judge
 config_edits:
@@ -187,9 +261,7 @@ distractors:
     lines: '11'
   source_text: '- Add ToolCapability in `packages/playwright/src/mcp/config.d.ts`'
   collision_type: architecture_boundary
-  why_distracting: The developer might think they need to add a new 'network' capability
-    in config.d.ts, but the new tools reuse the existing 'core' capability. Modifying
-    config.d.ts unnecessarily breaks architecture boundaries.
+  why_distracting: The developer might think they need to add a new 'network' capability in config.d.ts, but the new tools reuse the existing 'core' capability. Modifying config.d.ts unnecessarily breaks architecture boundaries.
   severity: high
 - rule: Place new MCP tests following the <category> pattern
   source:
@@ -197,20 +269,15 @@ distractors:
     lines: '12'
   source_text: '- Place new tests in `tests/mcp/mcp-<category>.spec.ts`'
   collision_type: rule_conflict
-  why_distracting: The developer might create a file strictly named tests/mcp/mcp-network.spec.ts
-    (using the category), but the actual convention observed in the diff is to name
-    it after the feature, e.g., tests/mcp/route.spec.ts.
+  why_distracting: The developer might create a file strictly named tests/mcp/mcp-network.spec.ts (using the category), but the actual convention observed in the diff is to name it after the feature, e.g., tests/mcp/route.spec.ts.
   severity: medium
 - rule: Update skill file and references
   source:
     path: .claude/skills/playwright-mcp-dev/SKILL.md
     lines: 25-26
-  source_text: "- Update skill file at `packages/playwright/src/skill/SKILL.md` and\
-    \ references if necessary\n  in `packages/playwright/src/skill/references/`"
+  source_text: "- Update skill file at `packages/playwright/src/skill/SKILL.md` and references if necessary\n  in `packages/playwright/src/skill/references/`"
   collision_type: scope_ambiguity
-  why_distracting: A developer might try to add documentation for the new CLI commands
-    into SKILL.md, but the gold diff explicitly avoids updating these user-facing
-    skill docs, as the scope of this change does not include user documentation.
+  why_distracting: A developer might try to add documentation for the new CLI commands into SKILL.md, but the gold diff explicitly avoids updating these user-facing skill docs, as the scope of this change does not include user documentation.
   severity: medium
 - rule: Place new CLI tests following the cli-<category> pattern
   source:
@@ -218,7 +285,5 @@ distractors:
     lines: '27'
   source_text: '- Place new tests in `tests/mcp/cli-<category>.spec.ts`'
   collision_type: rule_conflict
-  why_distracting: A developer might try to create tests/mcp/cli-network.spec.ts using
-    the category name, but the correct convention observed in the diff is to name
-    it after the specific tool/feature, e.g., tests/mcp/cli-route.spec.ts.
+  why_distracting: A developer might try to create tests/mcp/cli-network.spec.ts using the category name, but the correct convention observed in the diff is to name it after the specific tool/feature, e.g., tests/mcp/cli-route.spec.ts.
   severity: medium

@@ -48,7 +48,8 @@ checks:
 - id: test_hub_pages_valid_tsx
   type: fail_to_pass
   origin: pr_diff
-  description: New intermediate hub pages exist as valid TSX with correct imports and default export
+  description: New intermediate hub pages exist as valid TSX with correct imports and
+    default export
 - id: test_stale_pages_link_to_hub_pages
   type: fail_to_pass
   origin: pr_diff
@@ -56,7 +57,8 @@ checks:
 - id: test_deflaked_test_forward_navigation
   type: fail_to_pass
   origin: pr_diff
-  description: Flaky test uses forward navigation to intermediate pages instead of browser.back()
+  description: Flaky test uses forward navigation to intermediate pages instead of
+    browser.back()
 - id: test_agents_md_documents_pattern
   type: fail_to_pass
   origin: pr_diff
@@ -66,31 +68,40 @@ checks:
   origin: pr_diff
   description: Router-act skill exists with frontmatter and key testing pattern documentation
 rubric:
-- rule: Router-act skill (.agents/skills/router-act/SKILL.md) is created with proper frontmatter (name, description, user-invocable) and comprehensive documentation covering LinkAccordion, hub pages, no-requests assertions, BFCache warnings, and fake clock setup.
+- rule: Router-act skill (.agents/skills/router-act/SKILL.md) is created with proper
+    frontmatter (name, description, user-invocable) and comprehensive documentation
+    covering LinkAccordion, hub pages, no-requests assertions, BFCache warnings, and
+    fake clock setup.
   source:
     path: .agents/skills/router-act/SKILL.md
     lines: 1-50
     commit: 8283b1260ba3eb187baf20727e739fbd8ba7bbf6
   category: documentation
-- rule: Hub pages (hub-a, hub-b, hub-c) are created in test/e2e/app-dir/segment-cache/staleness/app/per-page-config/ with LinkAccordion, connection(), Suspense, and links to dynamic-stale pages.
+- rule: Hub pages (hub-a, hub-b, hub-c) are created in test/e2e/app-dir/segment-cache/staleness/app/per-page-config/
+    with LinkAccordion, connection(), Suspense, and links to dynamic-stale pages.
   source:
     path: test/e2e/app-dir/segment-cache/staleness/app/per-page-config/hub-a/page.tsx
     lines: 1-30
     commit: 8283b1260ba3eb187baf20727e739fbd8ba7bbf6
   category: architecture
-- rule: AGENTS.md is updated with the LinkAccordion/router-act rule documenting that tests must use LinkAccordion to control prefetches and must not use browser.back() due to BFCache-triggered re-prefetches.
+- rule: AGENTS.md is updated with the LinkAccordion/router-act rule documenting that
+    tests must use LinkAccordion to control prefetches and must not use browser.back()
+    due to BFCache-triggered re-prefetches.
   source:
     path: AGENTS.md
     lines: 400-420
     commit: 8283b1260ba3eb187baf20727e739fbd8ba7bbf6
   category: documentation
-- rule: Test file segment-cache-per-page-dynamic-stale-time.test.ts is updated to navigate via hub pages (hub-a, hub-b, hub-c) instead of using browser.back(), with accordion toggles before each navigation.
+- rule: Test file segment-cache-per-page-dynamic-stale-time.test.ts is updated to
+    navigate via hub pages (hub-a, hub-b, hub-c) instead of using browser.back(),
+    with accordion toggles before each navigation.
   source:
     path: test/e2e/app-dir/segment-cache/staleness/segment-cache-per-page-dynamic-stale-time.test.ts
     lines: 217-250
     commit: 8283b1260ba3eb187baf20727e739fbd8ba7bbf6
   category: testing
-- rule: Dynamic stale pages (dynamic-stale-10, dynamic-stale-60) are updated with LinkAccordion links to hub pages (hub-a, hub-b, hub-c).
+- rule: Dynamic stale pages (dynamic-stale-10, dynamic-stale-60) are updated with
+    LinkAccordion links to hub pages (hub-a, hub-b, hub-c).
   source:
     path: test/e2e/app-dir/segment-cache/staleness/app/per-page-config/dynamic-stale-10/page.tsx
     lines: 1-30
@@ -100,21 +111,33 @@ config_edits:
 - path: .agents/skills/router-act/SKILL.md
   tier: 1
   gold_added: '---'
-  gold_removed: ''
 name: null
 distractors:
-- rule: If you are changing Next.js source or integration tests, start `pnpm --filter=next dev` in a separate terminal session before making edits.
+- rule: If you are changing Next.js source or integration tests, start `pnpm --filter=next
+    dev` in a separate terminal session before making edits.
   collision_type: meta_confusion
-  why_distracting: The rule instructs the agent to start a background dev server (`pnpm --filter=next dev`) before making edits to integration tests. In an automated evaluation or scripting context, attempting to start a long-running background process could hang the execution or overcomplicate the task, which only requires static file modifications.
+  why_distracting: The rule instructs the agent to start a background dev server (`pnpm
+    --filter=next dev`) before making edits to integration tests. In an automated
+    evaluation or scripting context, attempting to start a long-running background
+    process could hang the execution or overcomplicate the task, which only requires
+    static file modifications.
   severity: medium
   source:
     path: AGENTS.md
     lines: 61-65
-- rule: Before editing or creating files in any subdirectory, read all README.md files in the directory path from the repo root up to and including the target file's directory.
+- rule: Before editing or creating files in any subdirectory, read all README.md files
+    in the directory path from the repo root up to and including the target file's
+    directory.
   collision_type: scope_ambiguity
-  why_distracting: The rule asks the agent to read all README.md files in the directory path up to the target file before creating files. The agent might waste time searching for non-existent READMEs in the deep `test/e2e/app-dir/segment-cache/staleness/app/per-page-config/` hierarchy instead of just creating the requested hub pages.
+  why_distracting: The rule asks the agent to read all README.md files in the directory
+    path up to the target file before creating files. The agent might waste time searching
+    for non-existent READMEs in the deep `test/e2e/app-dir/segment-cache/staleness/app/per-page-config/`
+    hierarchy instead of just creating the requested hub pages.
   severity: low
   source:
     path: AGENTS.md
     lines: 38-42
-hierarchy_analysis: The configuration is relatively flat, relying primarily on a single root `AGENTS.md` file (symlinked to `CLAUDE.md`). The complexity comes from the task instruction requiring the agent to modify this very configuration file and scaffold a new skill file, making it a meta-referential task.
+hierarchy_analysis: The configuration is relatively flat, relying primarily on a single
+  root `AGENTS.md` file (symlinked to `CLAUDE.md`). The complexity comes from the
+  task instruction requiring the agent to modify this very configuration file and
+  scaffold a new skill file, making it a meta-referential task.

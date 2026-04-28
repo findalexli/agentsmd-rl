@@ -17,20 +17,18 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Repo generate_channels script runs without error
-- id: typescript_syntax
+- id: test_typescript_syntax
   type: pass_to_pass
   origin: static
   description: Key modified TypeScript files have balanced braces/parens/brackets
 - id: video_tool_module_exists
   type: fail_to_pass
   origin: pr_diff
-  description: video.ts browser tool module exists with start/stop video tools under
-    devtools capability
+  description: video.ts browser tool module exists with start/stop video tools under devtools capability
 - id: video_commands_registered
   type: fail_to_pass
   origin: pr_diff
-  description: Terminal commands.ts declares video-start and video-stop commands mapping
-    to browser tools
+  description: Terminal commands.ts declares video-start and video-stop commands mapping to browser tools
 - id: devtools_capability_replaces_tracing
   type: fail_to_pass
   origin: pr_diff
@@ -46,13 +44,15 @@ checks:
 - id: video_tools_imported_in_browser_tools
   type: fail_to_pass
   origin: pr_diff
-  description: browser/tools.ts imports and spreads video tools into browserTools
-    array
+  description: browser/tools.ts imports and spreads video tools into browserTools array
+- id: video_tools_executable
+  type: fail_to_pass
+  origin: pr_diff
+  description: video.ts module has valid TypeScript syntax and exports start/stop functionality
 - id: skill_md_documents_video_commands
   type: fail_to_pass
   origin: pr_diff
-  description: SKILL.md documents video-start and video-stop CLI commands in DevTools
-    section
+  description: SKILL.md documents video-start and video-stop CLI commands in DevTools section
 - id: existing_tracing_commands_intact
   type: pass_to_pass
   origin: static
@@ -61,9 +61,20 @@ checks:
   type: pass_to_pass
   origin: static
   description: SKILL.md still documents tracing-start and tracing-stop
+- id: test_ci_lint_snippets_npm
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: Lint snippets / '
+- id: test_ci_docs___lint_npm
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: docs & lint / '
+- id: test_ci_docs___lint_npx
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: docs & lint / '
 rubric:
-- rule: When adding new CLI commands in the 'devtools' category, the SKILL.md documentation
-    must include examples of the new commands in the DevTools section
+- rule: When adding new CLI commands in the 'devtools' category, the SKILL.md documentation must include examples of the new commands in the DevTools section
   source:
     path: packages/playwright/src/mcp/terminal/SKILL.md
     lines: 97-106

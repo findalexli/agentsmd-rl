@@ -3,6 +3,7 @@ import os
 import re
 import subprocess
 import sys
+import textwrap
 from pathlib import Path
 
 import pytest
@@ -128,6 +129,71 @@ def test_timm_wrapper_pixel_values_explicitly_cast_to_model_dtype():
     # If the bug were present, the bfloat16 weights would error before producing output.
     # A correctly fixed wrapper produces fp16 output here.
     assert outputs.last_hidden_state.dtype == torch.float16
+
+
+# ---------------------------------------------------------------------------
+# CI-style subprocess test: runs pytest via bash login shell, exercising the
+# fix in a separate process (simulates CI isolation).
+# ---------------------------------------------------------------------------
+
+
+def test_ci_runner_dtype_fix_bash_pytest():
+    """Run the dtype-fix verification through 'bash -lc pytest' (CI-style).
+
+    The inner test file is written to a temp directory at runtime and pytest
+    is invoked through a bash login shell, matching the isolation model of CI
+    runners. At base the inner test raises RuntimeError; after the fix it
+    passes cleanly.
+    """
+    import tempfile
+
+    inner = textwrap.dedent("""\
+    import torch
+    from transformers.models.switch_transformers.configuration_switch_transformers import (
+        SwitchTransformersConfig,
+    )
+    from transformers.models.switch_transformers.modeling_switch_transformers import (
+        SwitchTransformersTop1Router,
+    )
+
+    def test_router_bf16_cast_accepts_f32_input():
+        config = SwitchTransformersConfig(
+            num_experts=4, expert_capacity=4, d_model=8,
+            router_bias=False, router_jitter_noise=0.0,
+            router_ignore_padding_tokens=False, router_dtype="float32",
+        )
+        router = SwitchTransformersTop1Router(config).to(torch.bfloat16).eval()
+        hidden = torch.randn(2, 4, 8, dtype=torch.float32)
+        with torch.no_grad():
+            probs, expert_index, logits = router(hidden)
+        assert probs.shape == (2, 4, 1)
+        assert expert_index.shape == (2, 4, 1, 4)
+        assert logits.shape == (2, 4, 1)
+    """)
+
+    tmpdir = Path(tempfile.mkdtemp(prefix="ci_dtype_"))
+    test_file = tmpdir / "test_ci_dtype.py"
+    test_file.write_text(inner)
+    try:
+        cmd = (
+            f"cd /workspace/transformers && "
+            f"{sys.executable} -m pytest {test_file} -v --tb=short "
+            f"-p no:cacheprovider -W ignore::pytest.PytestCacheWarning"
+        )
+        r = subprocess.run(
+            ["bash", "-lc", cmd],
+            capture_output=True,
+            text=True,
+            timeout=180,
+        )
+        assert r.returncode == 0, (
+            f"CI-style pytest subprocess failed (rc={r.returncode}):\n"
+            f"STDOUT:\n{r.stdout}\nSTDERR:\n{r.stderr}"
+        )
+    finally:
+        import shutil
+
+        shutil.rmtree(tmpdir, ignore_errors=True)
 
 
 # ---------------------------------------------------------------------------

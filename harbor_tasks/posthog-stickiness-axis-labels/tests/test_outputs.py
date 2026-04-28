@@ -151,7 +151,6 @@ def test_no_prefix_returns_plain_numbers():
     results = _call_tick_callback(
         allDays=[1, 2, 3, 4, 5],
         interval="day",
-        # No numericTickPrefix — existing behavior
         test_values=[[1, 0], [3, 2], [5, 4]],
     )
     assert results["1_0"] == "1", f"Expected '1', got {results['1_0']!r}"
@@ -163,14 +162,12 @@ def test_no_prefix_returns_plain_numbers():
 def test_dayjs_import_convention():
     """dates.ts must import dayjs from 'lib/dayjs', not directly from 'dayjs' package (AGENTS.md:95)."""
     src = Path(DATES_TS).read_text()
-    # Bad: import from 'dayjs' directly
     direct_import = re.search(r"from\s+['\"]dayjs['\"]", src) or re.search(
         r"from\s+['\"]dayjs/", src
     )
     assert direct_import is None, (
         "dates.ts must use 'lib/dayjs', not import directly from 'dayjs' package"
     )
-    # Good: import from 'lib/dayjs'
     lib_import = re.search(r"from\s+['\"]lib/dayjs['\"]", src)
     assert lib_import is not None, "dates.ts must import from 'lib/dayjs'"
 
@@ -182,7 +179,6 @@ def test_dayjs_import_convention():
 # [repo_tests] pass_to_pass
 def test_repo_lint_js():
     """Repo's JavaScript/TypeScript linting passes (pass_to_pass)."""
-    # First install dependencies (oxlint is a devDependency)
     setup = subprocess.run(
         ["bash", "-c", "cd /workspace/posthog && corepack enable && corepack prepare pnpm@10.29.3 --activate && pnpm install --frozen-lockfile >/dev/null 2>&1"],
         capture_output=True, text=True, timeout=300, cwd=REPO,
@@ -199,14 +195,12 @@ def test_repo_lint_js():
 # [repo_tests] pass_to_pass
 def test_repo_jest_dates():
     """Repo's Jest tests for dates.ts module pass (pass_to_pass)."""
-    # First install dependencies and build products
     setup = subprocess.run(
         ["bash", "-c", "cd /workspace/posthog && corepack enable && corepack prepare pnpm@10.29.3 --activate && pnpm install --frozen-lockfile >/dev/null 2>&1 && pnpm --filter=@posthog/frontend build:products >/dev/null 2>&1"],
         capture_output=True, text=True, timeout=300, cwd=REPO,
     )
     assert setup.returncode == 0, f"Setup for Jest failed:\n{setup.stderr[-500:]}"
 
-    # Run Jest tests for dates.test.ts
     r = subprocess.run(
         ["bash", "-c", "cd /workspace/posthog/frontend && pnpm exec jest --testPathPattern='dates.test.ts' --forceExit"],
         capture_output=True, text=True, timeout=180, cwd=REPO,
@@ -217,7 +211,6 @@ def test_repo_jest_dates():
 # [repo_tests] pass_to_pass
 def test_repo_lint_css():
     """Repo's CSS/SCSS linting passes (pass_to_pass)."""
-    # Install dependencies
     setup = subprocess.run(
         ["bash", "-c", "cd /workspace/posthog && corepack enable && corepack prepare pnpm@10.29.3 --activate && pnpm install --frozen-lockfile >/dev/null 2>&1"],
         capture_output=True, text=True, timeout=300, cwd=REPO,
@@ -234,7 +227,6 @@ def test_repo_lint_css():
 # [repo_tests] pass_to_pass
 def test_repo_markdown_lint():
     """Repo's markdown linting passes (pass_to_pass)."""
-    # Install dependencies
     setup = subprocess.run(
         ["bash", "-c", "cd /workspace/posthog && corepack enable && corepack prepare pnpm@10.29.3 --activate && pnpm install --frozen-lockfile >/dev/null 2>&1"],
         capture_output=True, text=True, timeout=300, cwd=REPO,
@@ -251,7 +243,6 @@ def test_repo_markdown_lint():
 # [repo_tests] pass_to_pass
 def test_repo_build_products():
     """Repo's frontend product build passes (pass_to_pass)."""
-    # Install dependencies
     setup = subprocess.run(
         ["bash", "-c", "cd /workspace/posthog && corepack enable && corepack prepare pnpm@10.29.3 --activate && pnpm install --frozen-lockfile >/dev/null 2>&1"],
         capture_output=True, text=True, timeout=300, cwd=REPO,

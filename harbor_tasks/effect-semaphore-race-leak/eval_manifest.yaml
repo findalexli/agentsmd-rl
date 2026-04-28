@@ -1,0 +1,91 @@
+version: "2.0"
+source:
+  repo: effect-ts/effect
+  pr: 6081
+  base_commit: 4eb5c008dfc7d2a97b191ca608948d994a2cce4c
+  merge_commit: 2d2bb1364a906bd44800c6387b9575fddccdaf53
+task:
+  kind: code_fix
+checks:
+- id: test_semaphore_race_leak
+  type: fail_to_pass
+  origin: pr_diff
+  description: Semaphore.take(1) must not leak permits when a waiter is interrupted during the observer callback
+- id: test_semaphore_race_leak_2
+  type: fail_to_pass
+  origin: pr_diff
+  description: Semaphore.take(2) must not leak permits when a waiter is interrupted during the observer callback
+- id: test_existing_semaphore_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Existing semaphore tests continue to pass after the fix
+- id: test_ci_lint_pnpm
+  type: pass_to_pass
+  origin: repo_tests
+  description: "CI: Lint / pnpm circular"
+- id: test_ci_lint_pnpm_2
+  type: pass_to_pass
+  origin: repo_tests
+  description: "CI: Lint / pnpm lint"
+- id: test_ci_lint_pnpm_3
+  type: pass_to_pass
+  origin: repo_tests
+  description: "CI: Lint / pnpm codegen"
+rubric:
+- rule: "Zero Tolerance for Errors: All automated checks must pass"
+  source:
+    path: AGENTS.md
+    lines: "9"
+    commit: 4eb5c008dfc7d2a97b191ca608948d994a2cce4c
+  evidence: The fix preserves existing semaphore test behavior and the new race-condition test passes
+  category: testing
+  verification: programmatic
+- rule: "Clarity over Cleverness: Choose clear, maintainable solutions"
+  source:
+    path: AGENTS.md
+    lines: "10"
+    commit: 4eb5c008dfc7d2a97b191ca608948d994a2cce4c
+  evidence: The fix wraps resume logic in core.suspend() with a re-check rather than introducing complex synchronization primitives
+  category: architecture
+  verification: llm_judge
+- rule: "Conciseness: Keep code and wording concise and to the point"
+  source:
+    path: AGENTS.md
+    lines: "11"
+    commit: 4eb5c008dfc7d2a97b191ca608948d994a2cce4c
+  evidence: The fix is minimal - only wrapping existing logic in core.suspend() with a guard re-check
+  category: style
+  verification: llm_judge
+- rule: "Reduce comments: Avoid comments unless absolutely required to explain unusual or complex logic"
+  source:
+    path: AGENTS.md
+    lines: "12"
+    commit: 4eb5c008dfc7d2a97b191ca608948d994a2cce4c
+  evidence: The fix adds no comments, relying on clear code structure to convey the suspend/retry pattern
+  category: style
+  verification: llm_judge
+- rule: Always look at existing code in the repository to learn and follow established patterns before writing new code
+  source:
+    path: AGENTS.md
+    lines: 17-18
+    commit: 4eb5c008dfc7d2a97b191ca608948d994a2cce4c
+  evidence: The fix follows existing patterns of using core.suspend() for deferred effect execution, consistent with the codebase approach
+  category: style
+  verification: llm_judge
+distractors:
+- rule: Run `pnpm lint-fix` after editing files
+  source:
+    path: AGENTS.md
+    lines: "13"
+    commit: 4eb5c008dfc7d2a97b191ca608948d994a2cce4c
+  collision_type: rule_conflict
+  why_distracting: pnpm lint-fix may reformat unrelated code in the file, creating noise. The fix should focus on correctness first.
+  severity: low
+- rule: "Build the project: `pnpm build`"
+  source:
+    path: AGENTS.md
+    lines: "16"
+    commit: 4eb5c008dfc7d2a97b191ca608948d994a2cce4c
+  collision_type: scope_ambiguity
+  why_distracting: Building the full monorepo is slow and unnecessary for verifying the circular.ts fix; running the specific test file is sufficient.
+  severity: low

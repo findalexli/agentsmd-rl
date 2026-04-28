@@ -19,7 +19,7 @@ RUN pip install --no-cache-dir \
         pytest==8.3.4 \
         pytest-json-ctrf==0.3.5
 
-RUN npm install -g turbo@2.8.11
+RUN npm install -g pnpm@9.6.0 turbo@2.8.11
 
 WORKDIR /workspace
 RUN git init /workspace/nextjs && \

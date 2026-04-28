@@ -12,8 +12,7 @@ checks:
 - id: subagent_footer_exists_with_navigation
   type: fail_to_pass
   origin: pr_diff
-  description: SubagentFooter exports a component with navigation commands and event
-    handlers
+  description: SubagentFooter exports a component with navigation commands and event handlers
 - id: subagent_footer_token_cost
   type: fail_to_pass
   origin: pr_diff
@@ -21,8 +20,7 @@ checks:
 - id: session_imports_and_renders_subagent_footer
   type: fail_to_pass
   origin: pr_diff
-  description: Session index.tsx imports and conditionally renders SubagentFooter
-    on parentID
+  description: Session index.tsx imports and conditionally renders SubagentFooter on parentID
 - id: subagent_footer_title
   type: fail_to_pass
   origin: pr_diff
@@ -99,25 +97,41 @@ checks:
     path: AGENTS.md
     lines: '17'
     commit: 41b0d03f6afabc30696e9ccbbdbb7c3df34fd404
+- id: test_ci_unit_run_unit_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: unit / Run unit tests'
+- id: test_ci_e2e_run_app_e2e_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: e2e / Run app e2e tests'
+- id: test_ci_build_tauri_prepare
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: build-tauri / Prepare'
+- id: test_ci_build_tauri_show_tauri_cli_version
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: build-tauri / Show tauri-cli version'
+- id: test_ci_build_electron_build
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: build-electron / Build'
+- id: test_ci_typecheck_run_typecheck
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: typecheck / Run typecheck'
 distractors:
 - rule: Keep things in one function unless composable or reusable
   collision_type: rule_conflict
-  why_distracting: The rule 'Keep things in one function unless composable or reusable'
-    might lead an agent to inline the new subagent footer directly into the massive
-    `Session` component in `index.tsx`. However, the gold solution correctly creates
-    a separate `SubagentFooter` component in a new file to maintain readability and
-    match existing component patterns.
+  why_distracting: The rule 'Keep things in one function unless composable or reusable' might lead an agent to inline the new subagent footer directly into the massive `Session` component in `index.tsx`. However, the gold solution correctly creates a separate `SubagentFooter` component in a new file to maintain readability and match existing component patterns.
   severity: medium
   source:
     path: AGENTS.md
     lines: 13-13
-- rule: Prefer single word names for variables and functions. Only use multiple words
-    if necessary.
+- rule: Prefer single word names for variables and functions. Only use multiple words if necessary.
   collision_type: scope_ambiguity
-  why_distracting: The strict 'single word names' enforcement might cause the agent
-    to name the new component `Footer` or `Subagent` instead of `SubagentFooter`.
-    Given the context of a complex TUI with many specific components, a multi-word
-    name is required to avoid ambiguity.
+  why_distracting: The strict 'single word names' enforcement might cause the agent to name the new component `Footer` or `Subagent` instead of `SubagentFooter`. Given the context of a complex TUI with many specific components, a multi-word name is required to avoid ambiguity.
   severity: medium
   source:
     path: AGENTS.md
@@ -131,11 +145,7 @@ distractors:
 
     - Always prefer `createStore` over multiple `createSignal` calls'
   collision_type: scope_ambiguity
-  why_distracting: This rule applies specifically to the SolidJS web application in
-    packages/app. The gold diff modifies a terminal UI (TUI) inside packages/opencode
-    which happens to also use SolidJS, but where complex state management like createStore
-    may be overkill or structurally inappropriate. Applying it would unnecessarily
-    refactor valid CLI code.
+  why_distracting: This rule applies specifically to the SolidJS web application in packages/app. The gold diff modifies a terminal UI (TUI) inside packages/opencode which happens to also use SolidJS, but where complex state management like createStore may be overkill or structurally inappropriate. Applying it would unnecessarily refactor valid CLI code.
   severity: medium
 - rule: opencode Effect rules
   source:
@@ -155,49 +165,35 @@ distractors:
 
     - Use `Effect.gen(function* () { ... })` for composition.
 
-    - Use `Effect.fn("Domain.method")` for named/traced effects and `Effect.fnUntraced`
-    for internal helpers.'
+    - Use `Effect.fn("Domain.method")` for named/traced effects and `Effect.fnUntraced` for internal helpers.'
   collision_type: architecture_boundary
-  why_distracting: These rules govern the backend/core logic of packages/opencode
-    which is built on the Effect framework. The gold diff is modifying SolidJS frontend
-    TUI components within the same package. Attempting to mix Effect patterns (like
-    Effect.gen or Effect services) into synchronous UI components would break the
-    UI architecture.
+  why_distracting: These rules govern the backend/core logic of packages/opencode which is built on the Effect framework. The gold diff is modifying SolidJS frontend TUI components within the same package. Attempting to mix Effect patterns (like Effect.gen or Effect services) into synchronous UI components would break the UI architecture.
   severity: high
-hierarchy_analysis: The task relies on the root `AGENTS.md` for general TypeScript/SolidJS
-  style guidelines. The deeper `packages/opencode/AGENTS.md` contains Effect and Database
-  rules which are irrelevant to this UI/TUI task, requiring the agent to filter out
-  the noise from the deeper config and focus on the root style guide.
+hierarchy_analysis: The task relies on the root `AGENTS.md` for general TypeScript/SolidJS style guidelines. The deeper `packages/opencode/AGENTS.md` contains Effect and Database rules which are irrelevant to this UI/TUI task, requiring the agent to filter out the noise from the deeper config and focus on the root style guide.
 rubric:
 - rule: Avoid `else` statements. Prefer early returns.
   source:
     path: AGENTS.md
     lines: 76-92
-  evidence: In `dialog-model.tsx`, the gold solution removes the `else` block and
-    replaces it with an early return (`return` inside the `if` block, followed by
-    `dialog.clear()` outside), directly following the 'Control Flow' style guide.
+  evidence: In `dialog-model.tsx`, the gold solution removes the `else` block and replaces it with an early return (`return` inside the `if` block, followed by `dialog.clear()` outside), directly following the 'Control Flow' style guide.
   category: style
   verification: llm_judge
 - rule: Prefer single word variable names where possible
   source:
     path: /workspace/repo/AGENTS.md
     lines: 27-28
-  source_text: '- Use single word names by default for new locals, params, and helper
-    functions.
+  source_text: '- Use single word names by default for new locals, params, and helper functions.
 
     - Multi-word names are allowed only when a single word would be unclear or ambiguous.'
-  evidence: 'The new file subagent-footer.tsx uses single word locals extensively:
-    route, sync, messages, usage, msg, last, tokens, model, pct, cost, money, hover.'
+  evidence: 'The new file subagent-footer.tsx uses single word locals extensively: route, sync, messages, usage, msg, last, tokens, model, pct, cost, money, hover.'
   category: Naming
   verification: llm_judge
 - rule: Prefer functional array methods over for loops
   source:
     path: /workspace/repo/AGENTS.md
     lines: 17-17
-  source_text: '- Prefer functional array methods (flatMap, filter, map) over for
-    loops; use type guards on filter to maintain type inference downstream'
-  evidence: The new code utilizes findLast(), find(), reduce(), and filter(Boolean)
-    on arrays rather than using manual for loops.
+  source_text: '- Prefer functional array methods (flatMap, filter, map) over for loops; use type guards on filter to maintain type inference downstream'
+  evidence: The new code utilizes findLast(), find(), reduce(), and filter(Boolean) on arrays rather than using manual for loops.
   category: Style
   verification: llm_judge
 - rule: Avoid unnecessary destructuring. Use dot notation to preserve context.
@@ -208,9 +204,7 @@ rubric:
 
 
     Avoid unnecessary destructuring. Use dot notation to preserve context.'
-  evidence: Object properties are accessed via dot notation (e.g., last.tokens.input,
-    model.limit.context, sync.data.provider) instead of destructuring them into local
-    variables.
+  evidence: Object properties are accessed via dot notation (e.g., last.tokens.input, model.limit.context, sync.data.provider) instead of destructuring them into local variables.
   category: Style
   verification: llm_judge
 - rule: Prefer const over let. Use ternaries or early returns instead of reassignment.
@@ -221,9 +215,7 @@ rubric:
 
 
     Prefer `const` over `let`. Use ternaries or early returns instead of reassignment.'
-  evidence: All local variables are declared with const. Conditional assignments (like
-    pct) are done via ternaries, and conditional state exits use early returns (if
-    (!last) return).
+  evidence: All local variables are declared with const. Conditional assignments (like pct) are done via ternaries, and conditional state exits use early returns (if (!last) return).
   category: Variables
   verification: llm_judge
 - rule: Avoid else statements. Prefer early returns.
@@ -234,7 +226,6 @@ rubric:
 
 
     Avoid `else` statements. Prefer early returns.'
-  evidence: An explicit else block was removed in dialog-model.tsx and refactored
-    into a return within the preceding if block.
+  evidence: An explicit else block was removed in dialog-model.tsx and refactored into a return within the preceding if block.
   category: Control Flow
   verification: llm_judge

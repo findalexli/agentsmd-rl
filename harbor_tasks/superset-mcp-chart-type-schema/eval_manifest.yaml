@@ -158,6 +158,22 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Python syntax is valid in mcp_service/app.py
+- id: test_behavioral_valid_chart_type_returns_schema
+  type: fail_to_pass
+  origin: pr_diff
+  description: Calling _get_chart_type_schema_impl for valid chart type returns a dict with chart_type, schema, and examples keys
+- id: test_behavioral_invalid_chart_type_returns_error
+  type: fail_to_pass
+  origin: pr_diff
+  description: Calling _get_chart_type_schema_impl for unknown chart type returns error dict with valid_chart_types and hint
+- id: test_behavioral_include_examples_false_omits_examples
+  type: fail_to_pass
+  origin: pr_diff
+  description: Calling _get_chart_type_schema_impl with include_examples=False omits the examples key
+- id: test_behavioral_all_seven_chart_types_registered
+  type: fail_to_pass
+  origin: pr_diff
+  description: All 7 chart types are registered in _CHART_TYPE_ADAPTERS and VALID_CHART_TYPES
 rubric:
 - id: modern_type_hints
   rule: The new get_chart_type_schema.py module uses Python type hints (Dict, Any from typing module)

@@ -50,19 +50,20 @@ To extend coverage to TypeScript 6, follow the existing convention:
 - Add a new TypeScript-6 entry to `TSC_SUPPORTED_VERSIONS` using the same
   yarn-style version slug shape as the existing entries (so `^6` matches
   `^3` / `^4`).
-- Add a matching per-version package file at
-  `sdk/nodejs/tests/sxs_ts_test/package^6.json` (mirroring the structure
-  of the existing `package^4.json`, but pinning typescript to the new
-  major).
+- Add a matching per-version package file following the existing
+  `package<version>.json` naming convention (which you can infer from the
+  files already present for `~3.8.3`, `^3`, and `^4`), mirroring the
+  structure of the existing `package^4.json` but pinning typescript to
+  the new major.
 
 Because TS 6 deprecates the classic `"node"` module resolver, the build
 needs to use a tsconfig whose `module`/`moduleResolution` settings are
 still supported under TS 6. The Makefile rule should pick up an optional
 per-version tsconfig override automatically when one is present, falling
 back to the default `tsconfig.json` otherwise (so the older versions stay
-unaffected). The natural name for that override is
-`sdk/nodejs/tests/sxs_ts_test/tsconfig^6.json`, mirroring the
-per-version filename convention.
+unaffected). The natural name for that override follows the same per-version
+filename convention (using `tsconfig` as the prefix instead of
+`package`, so the agent can derive the expected filename).
 
 For CommonJS projects (no `"type": "module"` in `package.json`, as is the
 case here), the appropriate replacement for the deprecated `"node"` module

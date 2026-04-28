@@ -1,11 +1,11 @@
 FROM node:22-slim
 
-RUN rm -rf /var/lib/apt/lists/* && apt-get update && apt-get install -y \
+RUN apt-get update && apt-get install -y \
     git curl ca-certificates build-essential python3 tmux \
     && rm -rf /var/lib/apt/lists/*
 
-# Install bun
-RUN npm install -g bun@latest
+# Install bun (pinned version for reproducibility)
+RUN npm install -g bun@1.3.13
 
 # Clone repo at base commit (before fix)
 RUN git init /workspace/opencode && \

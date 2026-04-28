@@ -1,0 +1,111 @@
+version: '2.0'
+source:
+  repo: openai/openai-agents-js
+  pr: 340
+  base_commit: 72cef622c6265dffcb51b1c54cb97121ec4c504c
+  merge_commit: 1cd326689e112a5efd4aab767c44ef4ff451f5e5
+task:
+  kind: code_fix
+checks:
+- id: test_history_getter_defined
+  type: fail_to_pass
+  origin: pr_diff
+  description: RunState instances expose a `history` property that returns an array
+- id: test_history_includes_original_input
+  type: fail_to_pass
+  origin: pr_diff
+  description: The history array includes the original input item(s)
+- id: test_history_includes_generated_items
+  type: fail_to_pass
+  origin: pr_diff
+  description: After pushing a generated item, history reflects it
+- id: test_history_survives_serialization
+  type: fail_to_pass
+  origin: pr_diff
+  description: The history property value survives JSON serialization round-trip
+- id: test_build_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: pnpm build-check passes for agents-core (compilation and type-checking)
+- id: test_ci_test_build_all_packages
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: test / Build all packages'
+- id: test_ci_test_run_linter
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: test / Run linter'
+- id: test_ci_test_compile_examples
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: test / Compile examples'
+- id: test_ci_test_run_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: test / Run tests'
+- id: test_pr_added_returns_history_including_original_input_and_gen
+  type: fail_to_pass
+  origin: pr_diff
+  description: PR added test 'returns history including original input and generated items' in packages/agents-core/test/runState.test.ts
+- id: test_pr_added_preserves_history_after_serialization
+  type: fail_to_pass
+  origin: pr_diff
+  description: PR added test 'preserves history after serialization' in packages/agents-core/test/runState.test.ts
+rubric:
+- rule: Tests cover new behavior and edge cases
+  source:
+    path: AGENTS.md
+    lines: '92'
+    commit: 72cef622c6265dffcb51b1c54cb97121ec4c504c
+  evidence: Gold adds unit tests for the history getter including a serialization edge-case test
+  category: testing
+  verification: llm_judge
+- rule: Public APIs have doc comments
+  source:
+    path: AGENTS.md
+    lines: '94'
+    commit: 72cef622c6265dffcb51b1c54cb97121ec4c504c
+  evidence: Gold adds a JSDoc comment on the history getter describing its purpose
+  category: documentation
+  verification: llm_judge
+- rule: Code is readable and maintainable
+  source:
+    path: AGENTS.md
+    lines: '93'
+    commit: 72cef622c6265dffcb51b1c54cb97121ec4c504c
+  evidence: Gold implements a clean getter delegating to the existing getTurnInput utility
+  category: style
+  verification: llm_judge
+- rule: Follow ESLint rules (eslint.config.mjs), no unused imports, adhere to Prettier
+  source:
+    path: AGENTS.md
+    lines: '68'
+    commit: 72cef622c6265dffcb51b1c54cb97121ec4c504c
+  evidence: Gold adds the new getTurnInput import without unused imports and passes lint
+  category: style
+  verification: semantic_diff
+- rule: Comments must end with a period
+  source:
+    path: AGENTS.md
+    lines: '69'
+    commit: 72cef622c6265dffcb51b1c54cb97121ec4c504c
+  evidence: Gold JSDoc comments end with periods
+  category: style
+  verification: llm_judge
+distractors:
+- rule: 'If your change affects the public API, add a Changeset via: `pnpm changeset`'
+  source:
+    path: AGENTS.md
+    lines: '84'
+    commit: 72cef622c6265dffcb51b1c54cb97121ec4c504c
+  collision_type: rule_conflict
+  why_distracting: The changeset CLI is interactive and not needed for the benchmark solution
+  severity: medium
+- rule: Keep summary under 80 characters
+  source:
+    path: AGENTS.md
+    lines: '80'
+    commit: 72cef622c6265dffcb51b1c54cb97121ec4c504c
+  collision_type: meta_confusion
+  why_distracting: This is a commit-message guideline not applicable to code changes
+  severity: low

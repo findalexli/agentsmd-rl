@@ -8,18 +8,15 @@ checks:
 - id: panresponder_runtime_works
   type: fail_to_pass
   origin: pr_diff
-  description: PanResponder.create() in shared-runtime returns its argument (freezing
-    behavior)
+  description: PanResponder.create() in shared-runtime returns its argument (freezing behavior)
 - id: validation_handles_immutable_capture
   type: fail_to_pass
   origin: pr_diff
-  description: ValidateNoRefAccessInRender handles ImmutableCapture+Freeze for non-hook
-    functions
+  description: ValidateNoRefAccessInRender handles ImmutableCapture+Freeze for non-hook functions
 - id: panresponder_type_has_freeze_aliasing
   type: fail_to_pass
   origin: pr_diff
-  description: PanResponder type in type-provider has Freeze+ImmutableCapture aliasing
-    effects
+  description: PanResponder type in type-provider has Freeze+ImmutableCapture aliasing effects
 - id: mutate_ref_fixture_uses_mutate
   type: fail_to_pass
   origin: pr_diff
@@ -27,8 +24,7 @@ checks:
 - id: panresponder_fixture_exists
   type: fail_to_pass
   origin: pr_diff
-  description: panresponder-ref-in-callback fixture exists with PanResponder.create
-    and ref usage
+  description: panresponder-ref-in-callback fixture exists with PanResponder.create and ref usage
 - id: repo_compiler_lint
   type: pass_to_pass
   origin: repo_tests
@@ -37,22 +33,6 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Repo's Jest tests for babel-plugin-react-compiler pass
-- id: test_repo_compiler_typecheck
-  type: pass_to_pass
-  origin: repo_tests
-  description: TypeScript type check for babel-plugin-react-compiler passes
-- id: test_repo_compiler_unit_parseconfig
-  type: pass_to_pass
-  origin: repo_tests
-  description: Repo unit test for parseConfigPragma passes
-- id: test_repo_compiler_unit_logger
-  type: pass_to_pass
-  origin: repo_tests
-  description: Repo unit test for Logger passes
-- id: test_repo_eslint_plugin_jest
-  type: pass_to_pass
-  origin: repo_tests
-  description: Repo's Jest tests for eslint-plugin-react-compiler pass
 - id: validation_preserves_ref_lvalue_branch
   type: pass_to_pass
   origin: static
@@ -60,8 +40,7 @@ checks:
 - id: shared_runtime_exports_typedlog
   type: pass_to_pass
   origin: static
-  description: shared-runtime.ts still exports typedLog and typedMutate after PanResponder
-    addition
+  description: shared-runtime.ts still exports typedLog and typedMutate after PanResponder addition
 - id: claude_md_lint_section
   type: fail_to_pass
   origin: pr_diff
@@ -70,10 +49,37 @@ checks:
   type: fail_to_pass
   origin: pr_diff
   description: compiler/CLAUDE.md documents the prettier formatting command
+- id: test_ci_jest_babel_plugin_react_compil_yarn
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: Jest babel-plugin-react-compiler / '
+- id: test_ci_jest_babel_plugin_react_compil_yarn_2
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: Jest babel-plugin-react-compiler / '
+- id: test_ci_lint_babel_plugin_react_compil_yarn
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: Lint babel-plugin-react-compiler / '
+- id: test_ci_test_eslint_plugin_react_hooks_scripts_react_compiler_build_compiler_sh
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: Test eslint-plugin-react-hooks / '
+- id: test_ci_test_eslint_plugin_react_hooks_yarn
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: Test eslint-plugin-react-hooks / '
+- id: test_ci_yarn_build_and_lint_yarn
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: yarn build and lint / '
+- id: test_ci_yarn_build_and_lint_lint_build
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: yarn build and lint / Lint build'
 rubric:
-- rule: 'New Linting and Formatting sections in CLAUDE.md follow the existing style:
-    ## heading, ```bash code block with a descriptive comment, consistent with Running
-    Tests / Compiling Arbitrary Files sections'
+- rule: 'New Linting and Formatting sections in CLAUDE.md follow the existing style: ## heading, ```bash code block with a descriptive comment, consistent with Running Tests / Compiling Arbitrary Files
+    sections'
   source:
     path: compiler/CLAUDE.md
     lines: 1-36
@@ -82,50 +88,41 @@ rubric:
   source:
     path: compiler/CLAUDE.md
     lines: 82-85
-  evidence: The gold solution accesses `instr.effects` and iterates over them to check
-    for specific aliasing effects (like `ImmutableCapture`) to determine the appropriate
-    validation, directly applying the docume
+  evidence: The gold solution accesses `instr.effects` and iterates over them to check for specific aliasing effects (like `ImmutableCapture`) to determine the appropriate validation, directly applying
+    the docume
   category: architecture
 - rule: Update fixture outputs using `yarn snap -u`
   source:
     path: compiler/CLAUDE.md
     lines: 34-35
-  evidence: The gold solution includes modifications to `*.expect.md` files (e.g.,
-    `error.validate-mutate-ref-arg-in-render.expect.md`), which are the expected outputs
-    generated and updated by running the `yarn s
+  evidence: The gold solution includes modifications to `*.expect.md` files (e.g., `error.validate-mutate-ref-arg-in-render.expect.md`), which are the expected outputs generated and updated by running the
+    `yarn s
   category: testing
-- rule: React Compiler has its own instructions in the `/compiler/` directory, separate
-    from the root React project.
+- rule: React Compiler has its own instructions in the `/compiler/` directory, separate from the root React project.
   source:
     path: CLAUDE.md
     lines: 6-7
-  evidence: The gold solution adds the linting and formatting documentation specifically
-    to `compiler/CLAUDE.md` and explicitly notes that the prettier command must be
-    run 'from the react root directory, not comp
+  evidence: The gold solution adds the linting and formatting documentation specifically to `compiler/CLAUDE.md` and explicitly notes that the prettier command must be run 'from the react root directory,
+    not comp
   category: documentation
 - rule: Respect the monorepo boundary between React (root) and React Compiler (/compiler/).
   source:
     path: CLAUDE.md
     lines: 5-8
-  evidence: The formatting command added to compiler/CLAUDE.md explicitly notes to
-    run `yarn prettier-all` 'from the react root directory, not compiler/', respecting
-    the monorepo boundary defined in the root conf
+  evidence: The formatting command added to compiler/CLAUDE.md explicitly notes to run `yarn prettier-all` 'from the react root directory, not compiler/', respecting the monorepo boundary defined in the
+    root conf
   category: tooling
-- rule: Use the AliasingEffects system (`instr.effects`) to describe data flow and
-    operations.
+- rule: Use the AliasingEffects system (`instr.effects`) to describe data flow and operations.
   source:
     path: compiler/CLAUDE.md
     lines: 85-90
-  evidence: The gold solution accesses `instr.effects` to determine the validation
-    logic, aligning with the documented AliasingEffects system.
+  evidence: The gold solution accesses `instr.effects` to determine the validation logic, aligning with the documented AliasingEffects system.
   category: architecture
-- rule: Update the knowledge base document (`compiler/CLAUDE.md`) when new commands
-    or instructions need to be recorded.
+- rule: Update the knowledge base document (`compiler/CLAUDE.md`) when new commands or instructions need to be recorded.
   source:
     path: compiler/CLAUDE.md
     lines: 1-91
-  evidence: The gold solution directly edits `compiler/CLAUDE.md` to add linting and
-    formatting commands as requested by the prompt.
+  evidence: The gold solution directly edits `compiler/CLAUDE.md` to add linting and formatting commands as requested by the prompt.
   category: documentation
 config_edits:
 - path: compiler/CLAUDE.md
@@ -154,27 +151,21 @@ config_edits:
     ```'
   gold_removed: ''
 distractors:
-- rule: When modifying the compiler, you MUST read the documentation about that pass
-    in `compiler/packages/babel-plugin-react-compiler/docs/passes/`
+- rule: When modifying the compiler, you MUST read the documentation about that pass in `compiler/packages/babel-plugin-react-compiler/docs/passes/`
   collision_type: scope_ambiguity
-  why_distracting: The config states 'you MUST read the documentation about that pass
-    in compiler/packages/babel-plugin-react-compiler/docs/passes/'. An agent might
-    waste time trying to read or update documentation for `ValidateNoRefAccessInRender`
-    in that directory, which is out of scope for this PR.
+  why_distracting: The config states 'you MUST read the documentation about that pass in compiler/packages/babel-plugin-react-compiler/docs/passes/'. An agent might waste time trying to read or update documentation
+    for `ValidateNoRefAccessInRender` in that directory, which is out of scope for this PR.
   severity: medium
   source:
     path: compiler/CLAUDE.md
     lines: 6-8
 - rule: This repository uses Sapling (`sl`) for version control.
   collision_type: meta_confusion
-  why_distracting: The config instructs the use of Sapling (`sl`) for version control.
-    An agent might try to use `sl commit` or `sl addremove` to save its work, which
-    could fail or cause confusion in a standard git-based evaluation environment.
+  why_distracting: The config instructs the use of Sapling (`sl`) for version control. An agent might try to use `sl commit` or `sl addremove` to save its work, which could fail or cause confusion in a
+    standard git-based evaluation environment.
   severity: low
   source:
     path: compiler/CLAUDE.md
     lines: 46-61
-hierarchy_analysis: The workspace uses a two-level hierarchy where the root `CLAUDE.md`
-  explicitly delegates React Compiler instructions to `compiler/CLAUDE.md`. The agent
-  must navigate to the child config to understand the AliasingEffects architecture,
-  and uniquely, must also edit this child config file as part of the task requirements.
+hierarchy_analysis: The workspace uses a two-level hierarchy where the root `CLAUDE.md` explicitly delegates React Compiler instructions to `compiler/CLAUDE.md`. The agent must navigate to the child config
+  to understand the AliasingEffects architecture, and uniquely, must also edit this child config file as part of the task requirements.

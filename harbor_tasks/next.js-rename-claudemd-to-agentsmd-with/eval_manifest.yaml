@@ -8,8 +8,7 @@ checks:
 - id: test_repo_git_status_clean
   type: pass_to_pass
   origin: repo_tests
-  description: Repository should have clean git status (no uncommitted changes before
-    fix)
+  description: Repository should have clean git status (no uncommitted changes before fix)
 - id: test_repo_claude_md_readable
   type: pass_to_pass
   origin: repo_tests
@@ -53,33 +52,32 @@ checks:
 - id: test_symlink_resolves_correctly
   type: fail_to_pass
   origin: pr_diff
-  description: The CLAUDE.md symlink should resolve and be readable via subprocess
+  description: The CLAUDE.md symlink should resolve correctly via readlink
 - id: test_agents_md_has_content
   type: fail_to_pass
   origin: pr_diff
   description: AGENTS.md should have substantial content from the original CLAUDE.md
+- id: test_alex_ignores_configured_files
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: alex linter should respect .alexignore entries'
 rubric:
-- rule: AGENTS.md must be created with the full agent instructions content, including
-    the 'Next.js Development Guide' header and key sections like Git Workflow, Build
-    Commands, Testing, Linting and Types, and Development Anti-Patterns
+- rule: AGENTS.md must be created with the full agent instructions content, including the 'Next.js Development Guide' header and key sections like Git Workflow, Build Commands, Testing, Linting and Types, and Development Anti-Patterns
   source:
     path: CLAUDE.md
     lines: 1-206
     commit: c5b19eb7f5cf48dffa1b8bf87cd089f079fb031a
-- rule: CLAUDE.md must be converted to a symbolic link pointing to AGENTS.md (ln -s
-    AGENTS.md CLAUDE.md)
+- rule: CLAUDE.md must be converted to a symbolic link pointing to AGENTS.md (ln -s AGENTS.md CLAUDE.md)
   source:
     path: CLAUDE.md
     lines: 1-206
     commit: c5b19eb7f5cf48dffa1b8bf87cd089f079fb031a
-- rule: .alexignore must be updated to include both AGENTS.md and CLAUDE.md to prevent
-    linting issues
+- rule: .alexignore must be updated to include both AGENTS.md and CLAUDE.md to prevent linting issues
   source:
     path: CLAUDE.md
     lines: 1-206
     commit: c5b19eb7f5cf48dffa1b8bf87cd089f079fb031a
-- rule: When modifying agent configuration files, do NOT add "Generated with Claude
-    Code" or co-author footers to commits or PRs (per the Commit and PR Style section)
+- rule: When modifying agent configuration files, do NOT add "Generated with Claude Code" or co-author footers to commits or PRs (per the Commit and PR Style section)
   source:
     path: CLAUDE.md
     lines: 186-188
@@ -104,15 +102,12 @@ config_edits:
 
     - `gt sync` - Sync and restack all branches
 
-    - `gt submit --no-edit` - Push and create/update PRs (use `--no-edit` to avoid
-    interactive prompts)
+    - `gt submit --no-edit` - Push and create/update PRs (use `--no-edit` to avoid interactive prompts)
 
     - `gt log short` - View stack status
 
 
-    **Note**: `gt submit` runs in interactive mode by default and won''t push in automated
-    contexts. Always use `gt submit --no-edit` or `gt submit -q` when running from
-    Claude.
+    **Note**: `gt submit` runs in interactive mode by default and won''t push in automated contexts. Always use `gt submit --no-edit` or `gt submit -q` when running from Claude.
 
 
     **Graphite Stack Safety Rules:**
@@ -120,13 +115,11 @@ config_edits:
 
     - Graphite force-pushes everything - old commits only recoverable via reflog
 
-    - Never have uncommitted changes when switching branches - they get lost during
-    restack
+    - Never have uncommitted changes when switching branches - they get lost during restack
 
     - Never use `git stash` with Graphite - causes conflicts when `gt modify` restacks
 
-    - Never use `git checkout HEAD -- <file>` after editing - silently restores unfixed
-    version
+    - Never use `git checkout HEAD -- <file>` after editing - silently restores unfixed version
 
     - Always use `gt checkout` (not `git checkout`) to switch branches
 
@@ -138,8 +131,7 @@ config_edits:
 
     - Always verify with `git status -sb` after stack operations
 
-    - When resuming from summarized conversation, never trust cached IDs - re-fetch
-    from git/GitHub API
+    - When resuming from summarized conversation, never trust cached IDs - re-fetch from git/GitHub API
 
 
     **Safe multi-branch fix workflow:**
@@ -227,8 +219,7 @@ config_edits:
     **3. When done, kill the background watch process.**
 
 
-    Only use full `pnpm --filter=next build` for one-off builds (after branch switch,
-    before CI push).
+    Only use full `pnpm --filter=next build` for one-off builds (after branch switch, before CI push).
 
 
     **Always rebuild after switching branches:**
@@ -306,8 +297,7 @@ config_edits:
     ## Investigating CI Test Failures
 
 
-    **Use `/ci-failures` for automated analysis** - analyzes failing jobs in parallel
-    and groups by test file.
+    **Use `/ci-failures` for automated analysis** - analyzes failing jobs in parallel and groups by test file.
 
 
     **CI Analysis Tips:**
@@ -332,14 +322,12 @@ config_edits:
 
     # Get failed job names
 
-    gh run view <run-id> --json jobs --jq ''.jobs[] | select(.conclusion == "failure")
-    | .name''
+    gh run view <run-id> --json jobs --jq ''.jobs[] | select(.conclusion == "failure") | .name''
 
 
     # Search job logs for errors (completed runs only - use gh api for in-progress)
 
-    gh run view <run-id> --job <job-id> --log 2>&1 | grep -E "FAIL|Error|error:" |
-    head -30
+    gh run view <run-id> --job <job-id> --log 2>&1 | grep -E "FAIL|Error|error:" | head -30
 
     ```
 
@@ -425,11 +413,9 @@ config_edits:
     ### Test Gotchas
 
 
-    - Mode-specific tests need `skipStart: true` + manual `next.start()` in `beforeAll`
-    after mode check
+    - Mode-specific tests need `skipStart: true` + manual `next.start()` in `beforeAll` after mode check
 
-    - Don''t rely on exact log messages - filter by content patterns, find sequences
-    not positions
+    - Don''t rely on exact log messages - filter by content patterns, find sequences not positions
 
 
     ### Rust/Cargo
@@ -445,44 +431,30 @@ config_edits:
 
     - Source map paths vary (webpack: `./src/`, tsc: `src/`) - try multiple formats
 
-    - `process.cwd()` in the stack trace formatting produces different paths in tests
-    vs production
+    - `process.cwd()` in the stack trace formatting produces different paths in tests vs production
 
     '
   gold_removed: ''
 distractors:
-- rule: Use Graphite for all git operations instead of raw git commands, and always
-    use gt submit --no-edit when running from Claude.
+- rule: Use Graphite for all git operations instead of raw git commands, and always use gt submit --no-edit when running from Claude.
   collision_type: meta_confusion
-  why_distracting: The instructions explicitly tell Claude to use Graphite (gt) for
-    all git operations and to push changes using gt submit. In an evaluation environment,
-    the agent should simply modify the files on disk without committing or pushing.
-    Attempting to use Graphite will likely fail and waste the agent's time.
+  why_distracting: The instructions explicitly tell Claude to use Graphite (gt) for all git operations and to push changes using gt submit. In an evaluation environment, the agent should simply modify the files on disk without committing or pushing. Attempting to use Graphite will likely fail and waste the agent's time.
   severity: high
   source:
     path: CLAUDE.md
     lines: 5-16
 - rule: 'Always rebuild after switching branches: pnpm build'
   collision_type: scope_ambiguity
-  why_distracting: The rule mandates running pnpm build after switching branches.
-    If the agent creates a new branch for its work, it might trigger a full build,
-    which is completely unnecessary for a markdown file rename and will waste significant
-    time.
+  why_distracting: The rule mandates running pnpm build after switching branches. If the agent creates a new branch for its work, it might trigger a full build, which is completely unnecessary for a markdown file rename and will waste significant time.
   severity: medium
   source:
     path: CLAUDE.md
     lines: 68-71
 - rule: Run pnpm lint for full linting.
   collision_type: scope_ambiguity
-  why_distracting: The agent might run pnpm lint to verify its .alexignore changes.
-    In a large repository like Next.js, a full lint might take a long time or surface
-    unrelated warnings, distracting the agent from the simple task of updating the
-    ignore file.
+  why_distracting: The agent might run pnpm lint to verify its .alexignore changes. In a large repository like Next.js, a full lint might take a long time or surface unrelated warnings, distracting the agent from the simple task of updating the ignore file.
   severity: low
   source:
     path: CLAUDE.md
     lines: 96-97
-hierarchy_analysis: The only config file is CLAUDE.md, which contains general Next.js
-  development guidelines. Since the task is to rename this very file and update an
-  ignore list, the rules within it are largely irrelevant to the task itself and serve
-  primarily as distractors (especially the git/Graphite workflow rules).
+hierarchy_analysis: The only config file is CLAUDE.md, which contains general Next.js development guidelines. Since the task is to rename this very file and update an ignore list, the rules within it are largely irrelevant to the task itself and serve primarily as distractors (especially the git/Graphite workflow rules).

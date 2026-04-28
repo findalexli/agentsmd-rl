@@ -12,8 +12,7 @@ checks:
 - id: test_repo_media_tests
   type: pass_to_pass
   origin: repo_tests
-  description: Repo's media module unit tests pass (excluding local-roots tests that
-    test old behavior)
+  description: Repo's media module unit tests pass (excluding local-roots tests that test old behavior)
 - id: test_repo_typecheck_plugin_sdk
   type: pass_to_pass
   origin: repo_tests
@@ -29,13 +28,11 @@ checks:
 - id: append_no_widening
   type: fail_to_pass
   origin: pr_diff
-  description: appendLocalMediaParentRoots must not add media source parent dirs to
-    roots
+  description: appendLocalMediaParentRoots must not add media source parent dirs to roots
 - id: append_no_widening_varied_inputs
   type: fail_to_pass
   origin: pr_diff
-  description: appendLocalMediaParentRoots ignores media sources regardless of root
-    contents
+  description: appendLocalMediaParentRoots ignores media sources regardless of root contents
 - id: resolve_media_tool_no_widening
   type: fail_to_pass
   origin: pr_diff
@@ -43,8 +40,7 @@ checks:
 - id: resolve_media_tool_modes
   type: pass_to_pass
   origin: pr_diff
-  description: resolveMediaToolLocalRoots handles default, workspace, and workspaceOnly
-    modes
+  description: resolveMediaToolLocalRoots handles default, workspace, and workspaceOnly modes
 - id: append_deduplicates_and_preserves
   type: pass_to_pass
   origin: pr_diff
@@ -77,99 +73,118 @@ checks:
     path: CLAUDE.md
     lines: 146-147
     commit: aff6883f93abcbfd18ebb743871bc804b10f5728
+- id: test_ci_build_bun_artifacts_build_a2ui_bundle
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: build-bun-artifacts / Build A2UI bundle'
+- id: test_ci_check_run_matrix_task_matrix_runtime
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: check / Run ${{ matrix.task }} (${{ matrix.runtime }})'
+- id: test_ci_check_additional_check_types_and_lint_and_oxfmt
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: check-additional / Check types and lint and oxfmt'
+- id: test_ci_check_additional_strict_ts_build_smoke
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: check-additional / Strict TS build smoke'
+- id: test_ci_build_artifacts_build_dist
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: build-artifacts / Build dist'
+- id: test_ci_build_artifacts_build_control_ui
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: build-artifacts / Build Control UI'
+- id: test_ci_build_smoke_smoke_test_cli_launcher_help
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: build-smoke / Smoke test CLI launcher help'
+- id: test_ci_build_smoke_smoke_test_cli_launcher_status_json
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: build-smoke / Smoke test CLI launcher status json'
+- id: test_ci_build_smoke_smoke_test_built_bundled_plugin_singleto
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: build-smoke / Smoke test built bundled plugin singleton'
+- id: test_ci_build_smoke_check_cli_startup_memory
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: build-smoke / Check CLI startup memory'
 rubric:
 - rule: Add brief code comments for tricky or non-obvious logic.
   source:
     path: CLAUDE.md
     lines: '163'
     commit: aff6883f93abcbfd18ebb743871bc804b10f5728
-  reference: "(no config file changes required - this is a code-only task)"
+  reference: (no config file changes required - this is a code-only task)
 - rule: Prefer discriminated unions when parameter shape changes runtime behavior.
   source:
     path: CLAUDE.md
     lines: '149'
     commit: aff6883f93abcbfd18ebb743871bc804b10f5728
-  reference: "(no config file changes required - this is a code-only task)"
+  reference: (no config file changes required - this is a code-only task)
 - rule: Keep files concise; extract helpers instead of V2 copies.
   source:
     path: CLAUDE.md
     lines: '164'
     commit: aff6883f93abcbfd18ebb743871bc804b10f5728
-  reference: "(no config file changes required - this is a code-only task)"
+  reference: (no config file changes required - this is a code-only task)
 - rule: Use American spelling and grammar in code, comments, docs, and UI strings.
   source:
     path: CLAUDE.md
     lines: '167'
     commit: aff6883f93abcbfd18ebb743871bc804b10f5728
-  reference: "(no config file changes required - this is a code-only task)"
-- rule: Prefer Result<T, E>-style outcomes and closed error-code unions for recoverable
-    runtime decisions rather than returning string | undefined sentinels.
+  reference: (no config file changes required - this is a code-only task)
+- rule: Prefer Result<T, E>-style outcomes and closed error-code unions for recoverable runtime decisions rather than returning string | undefined sentinels.
   source:
     path: CLAUDE.md
     lines: '150'
     commit: aff6883f93abcbfd18ebb743871bc804b10f5728
-  reference: "(no config file changes required - this is a code-only task)"
+  reference: (no config file changes required - this is a code-only task)
 - rule: Respect architecture boundaries and public plugin contracts (e.g., `src/plugin-sdk/*`).
   source:
     path: CLAUDE.md
     lines: 31-38
-  evidence: 'The gold solution retains the `appendLocalMediaParentRoots` function
-    and marks it with `@deprecated Kept for plugin-sdk compatibility` rather than
-    deleting it entirely, demonstrating awareness of the '
+  evidence: 'The gold solution retains the `appendLocalMediaParentRoots` function and marks it with `@deprecated Kept for plugin-sdk compatibility` rather than deleting it entirely, demonstrating awareness of the '
   category: architecture
-  reference: "(no config file changes required - this is a code-only task)"
-- rule: 'Architecture Boundaries: src/plugin-sdk/* = the public plugin contract that
-    extensions are allowed to import.'
+  reference: (no config file changes required - this is a code-only task)
+- rule: 'Architecture Boundaries: src/plugin-sdk/* = the public plugin contract that extensions are allowed to import.'
   source:
     path: AGENTS.md
     lines: 31-32
-  evidence: The gold solution retains the `appendLocalMediaParentRoots` function and
-    marks it `@deprecated Kept for plugin-sdk compatibility` rather than deleting
-    it entirely, respecting the public plugin contrac
+  evidence: The gold solution retains the `appendLocalMediaParentRoots` function and marks it `@deprecated Kept for plugin-sdk compatibility` rather than deleting it entirely, respecting the public plugin contrac
   category: architecture
-  reference: "(no config file changes required - this is a code-only task)"
+  reference: (no config file changes required - this is a code-only task)
 - rule: 'Source code: `src/` (... media pipeline in `src/media`).'
   source:
     path: AGENTS.md
     lines: 10-10
-  evidence: The gold solution correctly targets `src/media/local-roots.ts` to fix
-    the media path traversal issue, aligning with the defined directory structure.
+  evidence: The gold solution correctly targets `src/media/local-roots.ts` to fix the media path traversal issue, aligning with the defined directory structure.
   category: architecture
-  reference: "(no config file changes required - this is a code-only task)"
-- rule: src/plugin-sdk/* = the public plugin contract that extensions are allowed
-    to import
+  reference: (no config file changes required - this is a code-only task)
+- rule: src/plugin-sdk/* = the public plugin contract that extensions are allowed to import
   source:
     path: AGENTS.md
     lines: 30-35
-  evidence: The gold solution retains the `appendLocalMediaParentRoots` function and
-    marks it as `@deprecated Kept for plugin-sdk compatibility` rather than deleting
-    it entirely, respecting the architectural boun
+  evidence: The gold solution retains the `appendLocalMediaParentRoots` function and marks it as `@deprecated Kept for plugin-sdk compatibility` rather than deleting it entirely, respecting the architectural boun
   category: architecture
-  reference: "(no config file changes required - this is a code-only task)"
+  reference: (no config file changes required - this is a code-only task)
 distractors:
-- rule: Do not edit files covered by security-focused CODEOWNERS rules unless a listed
-    owner explicitly asked for the change or is already reviewing it with you. Treat
-    those paths as restricted surfaces, not drive-by cleanup.
+- rule: Do not edit files covered by security-focused CODEOWNERS rules unless a listed owner explicitly asked for the change or is already reviewing it with you. Treat those paths as restricted surfaces, not drive-by cleanup.
   collision_type: rule_conflict
-  why_distracting: The rule forbids editing security-focused files without explicit
-    owner permission. Since the bug report describes a path traversal vulnerability
-    (a security issue), an agent might refuse to edit `src/media/local-roots.ts` or
-    halt to ask for permission, failing the task.
+  why_distracting: The rule forbids editing security-focused files without explicit owner permission. Since the bug report describes a path traversal vulnerability (a security issue), an agent might refuse to edit `src/media/local-roots.ts` or halt to ask for permission, failing the task.
   severity: high
   source:
     path: AGENTS.md
     lines: 4-6
 - rule: 'Tests: colocated *.test.ts.'
   collision_type: scope_ambiguity
-  why_distracting: 'The rule states ''Tests: colocated *.test.ts''. The bug report
-    mentions `src/media/local-roots.test.ts` and `src/agents/tools/media-tool-shared.test.ts`.
-    An agent might waste effort trying to rewrite or delete tests for the removed
-    widening logic, whereas the gold solution strictly patches the vulnerability in
-    the source files.'
+  why_distracting: 'The rule states ''Tests: colocated *.test.ts''. The bug report mentions `src/media/local-roots.test.ts` and `src/agents/tools/media-tool-shared.test.ts`. An agent might waste effort trying to rewrite or delete tests for the removed widening logic, whereas the gold solution strictly patches the vulnerability in the source files.'
   severity: medium
   source:
     path: AGENTS.md
     lines: 10-10
-hierarchy_analysis: The configuration is flat (AGENTS.md and CLAUDE.md contain identical
-  rules). The primary challenge is resolving the conflict between the strict security-file
-  editing prohibition and the direct user instruction to fix a security vulnerability.
+hierarchy_analysis: The configuration is flat (AGENTS.md and CLAUDE.md contain identical rules). The primary challenge is resolving the conflict between the strict security-file editing prohibition and the direct user instruction to fix a security vulnerability.

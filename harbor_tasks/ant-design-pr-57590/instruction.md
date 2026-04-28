@@ -19,4 +19,5 @@ The notification panel should render correctly regardless of whether a title is 
 
 Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
 
-- `eslint (JS/TS linter)`
+- `eslint` (JS/TS linter)
+- `biome` (linter/formatter)

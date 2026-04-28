@@ -52,7 +52,6 @@ def test_webToReadable_edge_guard():
     src = HELPER.read_text()
     body = _extract_function_body(src, "webToReadable")
     assert body is not None, "webToReadable function not found"
-    # Must have NEXT_RUNTIME edge check
     edge_check = re.search(r"NEXT_RUNTIME\s*===\s*['\"]edge['\"]", body)
     assert edge_check is not None, "webToReadable must check NEXT_RUNTIME"
     require_match = re.search(r"require\(['\"]node:stream['\"]\)", body)
@@ -105,7 +104,9 @@ def test_render_result_edge_guards():
 
 # [pr_diff] fail_to_pass
 def test_edge_error_codes():
-    """errors.json must include edge-runtime-specific error messages."""
+    """errors.json must include the three specific edge-runtime error messages
+    added to guard node:stream usage: webToReadable guard, tee guard, and
+    stream conversion guard."""
     r = subprocess.run(
         [
             "node",
@@ -113,24 +114,30 @@ def test_edge_error_codes():
             """
 const errors = require('./packages/next/errors.json');
 const vals = Object.values(errors);
-const edgeErrors = vals.filter(v => v.toLowerCase().includes('edge runtime'));
-if (edgeErrors.length < 3) {
-    console.error("Expected >= 3 edge runtime errors, found " + edgeErrors.length);
+const required = [
+    'webToReadable cannot be used in the edge runtime',
+    'Node.js Readable cannot be teed in the edge runtime',
+    'Node.js Readable cannot be converted to a web stream in the edge runtime',
+];
+let missing = [];
+for (const msg of required) {
+    if (!vals.some(v => v === msg)) {
+        missing.push(msg);
+    }
+}
+if (missing.length > 0) {
+    console.error('Missing required error codes:');
+    missing.forEach(m => console.error('  - ' + m));
     process.exit(1);
 }
-const streamRelated = edgeErrors.filter(v => v.includes('Readable') || v.includes('stream') || v.includes('webToReadable'));
-if (streamRelated.length < 1) {
-    console.error("No stream-related edge runtime errors found");
-    process.exit(1);
-}
-console.log("OK");
+console.log('OK');
 """,
         ],
         cwd=REPO,
         capture_output=True,
         timeout=30,
     )
-    assert r.returncode == 0, f"errors.json check failed: {r.stderr.decode()}"
+    assert r.returncode == 0, f"errors.json missing required messages:\n{r.stderr.decode()}"
 
 
 # ---------------------------------------------------------------------------
@@ -181,14 +188,6 @@ def test_modified_files_valid():
 # ---------------------------------------------------------------------------
 
 
-def _setup_corepack():
-    """Enable corepack for pnpm."""
-    subprocess.run(["corepack", "enable"], capture_output=True, cwd=REPO)
-    subprocess.run(["corepack", "prepare", "pnpm@9.6.0", "--activate"], capture_output=True, cwd=REPO)
-
-
-
-
 # [repo_tests] pass_to_pass
 def test_repo_error_codes_valid():
     """Error codes validation passes (pass_to_pass)."""
@@ -199,6 +198,7 @@ def test_repo_error_codes_valid():
     )
     assert r.returncode == 0, f"Error codes check failed:\n{r.stdout[-500:]}{r.stderr[-500:]}"
 
+
 # [repo_tests] pass_to_pass
 def test_repo_prettier_helper():
     """Prettier formatting check for node-web-streams-helper.ts passes (pass_to_pass)."""
@@ -208,6 +208,7 @@ def test_repo_prettier_helper():
     )
     assert r.returncode == 0, f"Prettier check failed:\n{r.stdout[-500:]}{r.stderr[-500:]}"
 
+
 # [repo_tests] pass_to_pass
 def test_repo_prettier_prerender():
     """Prettier formatting check for app-render-prerender-utils.ts passes (pass_to_pass)."""
@@ -216,6 +217,7 @@ def test_repo_prettier_prerender():
         capture_output=True, text=True, timeout=120, cwd=REPO,
     )
     assert r.returncode == 0, f"Prettier check failed:\n{r.stdout[-500:]}{r.stderr[-500:]}"
+
 
 # [repo_tests] pass_to_pass
 def test_repo_prettier_render_result():
@@ -236,7 +238,6 @@ def test_repo_errors_json_valid():
     )
     assert r.returncode == 0, f"errors.json validation failed:\n{r.stderr[-500:]}"
     assert "Valid JSON" in r.stdout, "errors.json should output valid JSON message"
-
 
 
 # [repo_tests] pass_to_pass
@@ -292,7 +293,6 @@ def test_repo_package_json_valid():
 # [repo_tests] pass_to_pass
 def test_repo_import_paths_valid():
     """Key import paths in modified files use valid patterns (pass_to_pass)."""
-    # Check that modified files don't have obvious import issues
     files_to_check = [
         "packages/next/src/server/stream-utils/node-web-streams-helper.ts",
         "packages/next/src/server/app-render/app-render-prerender-utils.ts",
@@ -300,9 +300,33 @@ def test_repo_import_paths_valid():
     ]
     for fpath in files_to_check:
         r = subprocess.run(
-            ["node", "-e", f"const content=require('fs').readFileSync('{fpath}','utf8'); const imports=content.match(/from\s+['\"]([^'\"]+)['\"]/g)||[]; console.log('OK:',imports.length,'imports');"],
+            ["node", "-e", f"const content=require('fs').readFileSync('{fpath}','utf8'); const imports=content.match(/from\\s+['\"]([^'\"]+)['\"]/g)||[]; console.log('OK:',imports.length,'imports');"],
             capture_output=True, text=True, timeout=30, cwd=REPO,
         )
         assert r.returncode == 0, f"Import check failed for {fpath}:\n{r.stderr[-500:]}"
 
 
+# === CI-mined tests (taskforge.ci_check_miner) ===
+
+# [repo_tests] pass_to_pass
+def test_ci_pnpm_check_error_codes():
+    """pass_to_pass | CI-mined: pnpm run check-error-codes (scoped validation)."""
+    r = subprocess.run(
+        ["bash", "-lc", "pnpm run check-error-codes"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, (
+        f"pnpm check-error-codes failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+
+# [repo_tests] pass_to_pass
+def test_ci_pnpm_prettier_scoped():
+    """pass_to_pass | CI-mined: pnpm exec prettier --check scoped to node-web-streams-helper.ts."""
+    r = subprocess.run(
+        ["bash", "-lc", "pnpm exec prettier --check packages/next/src/server/stream-utils/node-web-streams-helper.ts"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, (
+        f"pnpm prettier check failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")

@@ -5,7 +5,8 @@ input width after tag collapse in `oneLine` mode of the multi-select
 component (`<Select>` in `superset-ui-core`). These tests inject a
 benchmark Jest test file and verify that:
   * `f2p` — the new behavior (dropdown style.width tracks the measured
-    select width when tags collapse) is implemented correctly.
+    select width when tags collapse) is implemented correctly at two
+    distinct widths (300px and 450px) to prevent hard-coding.
   * `p2p` — the existing 78 tests in `Select.test.tsx` still pass.
 """
 from __future__ import annotations
@@ -167,15 +168,20 @@ def _install_benchmark_test() -> None:
     BENCH_DST.write_text(BENCHMARK_TEST_TSX)
 
 
-def _run_jest(test_path: str, timeout: int) -> subprocess.CompletedProcess:
+def _run_jest(
+    test_path: str, timeout: int, test_name_filter: str | None = None
+) -> subprocess.CompletedProcess:
+    cmd = [
+        "npx",
+        "jest",
+        "--no-coverage",
+        "--colors=false",
+    ]
+    if test_name_filter:
+        cmd.extend(["-t", test_name_filter])
+    cmd.append(test_path)
     return subprocess.run(
-        [
-            "npx",
-            "jest",
-            "--no-coverage",
-            "--colors=false",
-            test_path,
-        ],
+        cmd,
         cwd=FRONTEND,
         capture_output=True,
         text=True,
@@ -183,23 +189,44 @@ def _run_jest(test_path: str, timeout: int) -> subprocess.CompletedProcess:
     )
 
 
-def test_dropdown_width_matches_collapsed_input_width():
-    """f2p: dropdown popup width matches the collapsed select width in oneLine mode.
-
-    Asserts both 300px and 450px scenarios — guards against an agent
-    hard-coding a single value rather than measuring the rendered width.
+def test_oneLine_dropdown_width_matches_collapsed_input_300():
+    """f2p: In oneLine multi-select mode, after tags collapse, the dropdown's
+    inline style.width (in px) equals the measured width for a 300px container.
     """
     _install_benchmark_test()
-    rel = "packages/superset-ui-core/src/components/Select/Select.benchmark.test.tsx"
-    r = _run_jest(rel, timeout=300)
+    rel = (
+        "packages/superset-ui-core/src/components/Select/"
+        "Select.benchmark.test.tsx"
+    )
+    r = _run_jest(rel, timeout=300, test_name_filter="(300)")
     combined = (r.stdout or "") + "\n" + (r.stderr or "")
     assert r.returncode == 0, (
-        "Benchmark jest tests for dropdown width did not pass.\n"
+        "Benchmark jest test (300px) for dropdown width did not pass.\n"
         f"stdout/stderr (last 4000 chars):\n{combined[-4000:]}"
     )
-    assert "Tests:       2 passed, 2 total" in combined or (
+    assert "Tests:       1 skipped, 1 passed, 2 total" in combined or (
         "passed" in combined and "2 total" in combined
-    ), f"Expected both benchmark tests to pass:\n{combined[-2000:]}"
+    ), f"Expected benchmark (300) test to pass:\n{combined[-2000:]}"
+
+
+def test_oneLine_dropdown_width_matches_collapsed_input_450():
+    """f2p: In oneLine multi-select mode, after tags collapse, the dropdown's
+    inline style.width (in px) equals the measured width for a 450px container.
+    """
+    _install_benchmark_test()
+    rel = (
+        "packages/superset-ui-core/src/components/Select/"
+        "Select.benchmark.test.tsx"
+    )
+    r = _run_jest(rel, timeout=300, test_name_filter="(450)")
+    combined = (r.stdout or "") + "\n" + (r.stderr or "")
+    assert r.returncode == 0, (
+        "Benchmark jest test (450px) for dropdown width did not pass.\n"
+        f"stdout/stderr (last 4000 chars):\n{combined[-4000:]}"
+    )
+    assert "Tests:       1 skipped, 1 passed, 2 total" in combined or (
+        "passed" in combined and "2 total" in combined
+    ), f"Expected benchmark (450) test to pass:\n{combined[-2000:]}"
 
 
 def test_select_existing_suite_still_passes():
@@ -210,4 +237,29 @@ def test_select_existing_suite_still_passes():
     assert r.returncode == 0, (
         "Existing Select.test.tsx suite regressed.\n"
         f"stdout/stderr (last 4000 chars):\n{combined[-4000:]}"
+    )
+
+
+def test_ci_jest_select_suite_via_shell():
+    """p2p: CI-style jest run of existing Select.test.tsx suite via bash -lc,
+    matching how CI invokes the test runner.
+    """
+    r = subprocess.run(
+        [
+            "bash", "-lc",
+            "npx jest --no-coverage --colors=false "
+            "packages/superset-ui-core/src/components/Select/Select.test.tsx",
+        ],
+        cwd=FRONTEND,
+        capture_output=True,
+        text=True,
+        timeout=600,
+    )
+    combined = (r.stdout or "") + "\n" + (r.stderr or "")
+    assert r.returncode == 0, (
+        f"CI-style jest run of Select.test.tsx failed (returncode={r.returncode}):\n"
+        f"stdout/stderr (last 3000 chars):\n{combined[-3000:]}"
+    )
+    assert "Tests:" in combined and ("78 passed" in combined or "passed" in combined), (
+        f"Expected Select.test.tsx to pass all tests via shell:\n{combined[-2000:]}"
     )

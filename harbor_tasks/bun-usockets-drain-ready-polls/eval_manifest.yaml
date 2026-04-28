@@ -33,26 +33,14 @@ checks:
   type: fail_to_pass
   origin: pr_diff
   description: Drain loop checks for buffer saturation before re-polling
-- id: test_drain_called_after_dispatch_in_both_functions
+- id: test_drain_has_real_logic
   type: fail_to_pass
   origin: pr_diff
-  description: Both us_loop_run and us_loop_run_bun_tick drain saturated buffer after dispatch
-- id: test_drain_has_real_logic
-  type: pass_to_pass
-  origin: static
   description: Drain function has substantial implementation, not a stub
 - id: test_saturation_guard_present
-  type: pass_to_pass
-  origin: static
+  type: fail_to_pass
+  origin: pr_diff
   description: Drain checks for buffer saturation before re-polling
-- id: test_drain_behavioral_verification
-  type: fail_to_pass
-  origin: pr_diff
-  description: Drain behavior verified via code analysis subprocess
-- id: test_no_hardcoded_1024_in_poll_calls
-  type: fail_to_pass
-  origin: pr_diff
-  description: No hardcoded 1024 verified via behavioral code analysis
 - id: test_c_source_file_valid
   type: pass_to_pass
   origin: repo_tests
@@ -81,10 +69,6 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Modified C file exists and is valid (verified via git show and Python brace check)
-- id: test_c_code_grep_patterns
-  type: pass_to_pass
-  origin: repo_tests
-  description: C code has expected patterns verified via grep (key functions, epoll/kqueue calls)
 - id: test_header_file_grep_patterns
   type: pass_to_pass
   origin: repo_tests

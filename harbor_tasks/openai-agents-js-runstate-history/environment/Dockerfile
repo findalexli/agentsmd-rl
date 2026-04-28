@@ -28,7 +28,7 @@ WORKDIR /workspace/openai-agents-js
 
 RUN pnpm install --frozen-lockfile --ignore-scripts \
  && pnpm -F @openai/agents-core run prebuild \
- && pnpm -F @openai/agents-core run build
+ && pnpm build
 
 RUN mkdir -p /logs/verifier
 

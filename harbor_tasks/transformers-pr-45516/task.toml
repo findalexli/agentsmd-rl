@@ -1,0 +1,20 @@
+[task]
+name = "transformers-t5gemma2-fix-decoder-labels"
+difficulty = "easy"
+time_seconds = 300
+
+[tags]
+primary = "python"
+secondary = ["machine-learning", "transformers", "huggingface"]
+
+[description]
+short = "Fix parameter name in prepare_decoder_input_ids_from_labels to accept 'labels' keyword argument"
+long = """
+The T5Gemma2 model's prepare_decoder_input_ids_from_labels method uses 'input_ids'
+as its parameter name, but HuggingFace's DataCollatorForSeq2Seq passes the labels
+tensor as a keyword argument 'labels='. This mismatch causes a TypeError when
+using the standard data collator with T5Gemma2.
+
+The fix renames the parameter from 'input_ids' to 'labels' and adds a type annotation,
+consistent with how other models implement this method.
+"""

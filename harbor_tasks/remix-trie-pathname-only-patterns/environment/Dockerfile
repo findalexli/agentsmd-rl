@@ -21,4 +21,6 @@ RUN git clone --filter=blob:none https://github.com/remix-run/remix.git \
 
 WORKDIR /workspace/remix
 
+RUN corepack enable && pnpm install --frozen-lockfile
+
 RUN mkdir -p /logs/verifier

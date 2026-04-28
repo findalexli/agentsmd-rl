@@ -12,34 +12,46 @@ task:
   language: rust
   domain: linter
 checks:
-- id: test_invalid_destructuring_detected
-  type: pass_to_pass
-  origin: pr_diff
-  description: 'The new snapshot fixture `invalidDestructuring.js` covers the "outer regular const, inner destructured" case. On the base commit it accidentally produces the same diagnostics as the post-fix version (the false-positive default-true path emits a diagnostic that incidentally matches the snapshot). The fix keeps the same output but reaches it via the correct declaration-recognition path; this test guards against the fix accidentally dropping the diagnostics for this case.
-
-    '
 - id: test_valid_destructuring_not_flagged
   type: fail_to_pass
   origin: pr_diff
-  description: 'The new snapshot fixture `validDestructuring.js` expects no diagnostics. On the base commit the rule emits false-positive shadow diagnostics for destructuring across sibling scopes. After the fix, the rule emits no diagnostics for sibling-scope destructuring, matching the snapshot.
+  description: 'The validDestructuring.js snapshot expects no diagnostics. On base the rule emits false-positive shadow diagnostics for destructuring across sibling scopes -> insta panics. After the fix the rule emits no diagnostics for sibling-scope destructuring.
+
+    '
+- id: test_all_no_shadow_snapshot_tests_pass
+  type: fail_to_pass
+  origin: repo_tests
+  description: 'The full noShadow nursery snapshot suite (invalid.js, valid.js, valid-func-in-type.ts, invalidDestructuring.js, validDestructuring.js). On base the validDestructuring fixture fails -> suite fails. After the fix all 5 fixtures pass.
+
+    '
+- id: test_invalid_destructuring_detected
+  type: pass_to_pass
+  origin: pr_diff
+  description: 'The invalidDestructuring.js snapshot covers the "outer regular const, inner destructured" case. On base the false-positive default-true path incidentally matches the snapshot. The fix reaches the same output via correct declaration-recognition; this guards against regression.
 
     '
 - id: test_existing_no_shadow_invalid_still_passes
   type: pass_to_pass
   origin: repo_tests
-  description: 'The pre-existing `invalid.js` fixture in the noShadow spec directory continues to detect the original (non-destructuring) shadow cases.
+  description: 'The pre-existing invalid.js fixture in the noShadow spec directory continues to detect the original (non-destructuring) shadow cases.
 
     '
 - id: test_existing_no_shadow_valid_still_passes
   type: pass_to_pass
   origin: repo_tests
-  description: 'The pre-existing `valid.js` fixture in the noShadow spec directory continues to be quiet.
+  description: 'The pre-existing valid.js fixture in the noShadow spec directory continues to be quiet.
 
     '
 - id: test_existing_no_shadow_valid_func_in_type_still_passes
   type: pass_to_pass
   origin: repo_tests
-  description: 'The pre-existing TypeScript `valid-func-in-type.ts` fixture continues to be quiet.
+  description: 'The pre-existing TypeScript valid-func-in-type.ts fixture continues to be quiet.
+
+    '
+- id: test_ci_format_rust_files_run_rustfmt
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: Format Rust Files — cargo fmt --all --check passes workspace-wide.
 
     '
 rubric:

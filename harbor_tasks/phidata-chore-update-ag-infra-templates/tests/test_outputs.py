@@ -416,3 +416,22 @@ def test_agno_infra_import_check():
     )
     assert r.returncode == 0, f"Import check failed: {r.stderr}"
     assert "All agno.infra imports OK" in r.stdout
+
+# === CI-mined tests (taskforge.ci_check_miner) ===
+def test_ci_style_check_cookbook_ruff_check():
+    """pass_to_pass | CI job 'style-check-cookbook' → step 'Ruff check'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'ruff check .'], cwd=f"{REPO}/cookbook",
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Ruff check' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_style_check_agno_mypy():
+    """pass_to_pass | CI job 'style-check-agno' → step 'Mypy'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'mypy . --config-file pyproject.toml'], cwd=f"{REPO}/libs/agno",
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Mypy' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")

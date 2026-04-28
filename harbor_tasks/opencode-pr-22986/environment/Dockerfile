@@ -7,6 +7,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     ca-certificates \
     git \
     unzip \
+    make \
+    g++ \
     && rm -rf /var/lib/apt/lists/*
 
 # Install bun (pinned binary release, no install script — deterministic)
@@ -41,6 +43,9 @@ WORKDIR /workspace
 RUN echo '{"name":"probe-deps","type":"module","dependencies":{"zod":"4.1.8"}}' > package.json \
     && /usr/local/bin/bun install \
     && rm package.json
+
+# Install monorepo dependencies so typecheck and unit tests can run
+RUN cd /workspace/opencode && bun install
 
 # Verifier output dir
 RUN mkdir -p /logs/verifier

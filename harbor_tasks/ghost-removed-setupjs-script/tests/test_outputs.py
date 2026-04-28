@@ -13,6 +13,7 @@ Each test function maps 1:1 to a check in eval_manifest.yaml.
 """
 
 import json
+import os
 import subprocess
 from pathlib import Path
 
@@ -24,12 +25,20 @@ REPO = "/workspace/Ghost"
 # ---------------------------------------------------------------------------
 
 def test_repo_git_valid():
-    """Repo has valid git structure and HEAD commit (pass_to_pass)."""
+    """Repo has valid git structure and HEAD at expected commit (pass_to_pass)."""
     r = subprocess.run(
         ["git", "status"], capture_output=True, text=True, timeout=30, cwd=REPO,
     )
     assert r.returncode == 0, f"Git status failed:\n{r.stderr}"
-    assert "HEAD detached at c1e86e6" in r.stdout, "Repo not at expected base commit"
+    assert "HEAD detached" in r.stdout, "Repo not in detached HEAD state"
+
+    r2 = subprocess.run(
+        ["git", "rev-parse", "HEAD"], capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r2.returncode == 0, f"Git rev-parse failed:\n{r2.stderr}"
+    assert r2.stdout.strip().startswith("c1e86e6"), (
+        f"Unexpected HEAD commit: {r2.stdout.strip()}"
+    )
 
 
 def test_repo_gitmodules_valid():
@@ -37,7 +46,6 @@ def test_repo_gitmodules_valid():
     r = subprocess.run(
         ["git", "submodule", "status"], capture_output=True, text=True, timeout=30, cwd=REPO,
     )
-    # This may exit 0 even with uninitialized submodules - check it runs
     assert r.returncode == 0, f"Git submodule command failed:\n{r.stderr}"
 
 
@@ -48,11 +56,8 @@ def test_repo_submodules_initialized():
         capture_output=True, text=True, timeout=30, cwd=REPO,
     )
     assert r.returncode == 0, f"Git submodule check failed:\n{r.stderr}"
-    # All submodules should have a SHA (no '-' or '+' at start means initialized)
     lines = [l for l in r.stdout.strip().split('\n') if l.strip()]
     for line in lines:
-        # Lines start with '-' if not initialized, '+' if modified
-        # Just verify we have submodules listed
         assert len(line) > 40, f"Unexpected submodule line format: {line}"
 
 
@@ -63,10 +68,8 @@ def test_repo_git_log_valid():
         capture_output=True, text=True, timeout=30, cwd=REPO,
     )
     assert r.returncode == 0, f"Git log failed:\n{r.stderr}"
-    # Should have at least one commit
     lines = [l for l in r.stdout.strip().split('\n') if l.strip()]
     assert len(lines) > 0, "Git log appears empty"
-    # Each line should have commit hash format (7+ hex chars)
     for line in lines:
         parts = line.split()
         assert len(parts[0]) >= 7, f"Unexpected commit format: {line}"
@@ -130,7 +133,7 @@ print('SCHEMA_OK')
 """], capture_output=True, text=True, timeout=30, cwd=REPO,
     )
     assert r.returncode == 0, f"package.json schema check failed:\n{r.stderr}"
-    assert "SCHEMA_OK" in r.stdout, "Schema validation did not complete"
+    assert "SCHEMA_OK" in r.stdout
 
 
 def test_repo_docs_valid():
@@ -147,7 +150,7 @@ print('DOCS_OK')
 """], capture_output=True, text=True, timeout=30, cwd=REPO,
     )
     assert r.returncode == 0, f"Docs README validation failed:\n{r.stderr}"
-    assert "DOCS_OK" in r.stdout, "Docs validation did not complete"
+    assert "DOCS_OK" in r.stdout
 
 
 def test_repo_core_package_valid():
@@ -173,11 +176,9 @@ def test_repo_github_workflows_exist():
         ["python3", "-c", """
 from pathlib import Path
 
-# Check CI workflow exists
 ci_yml = Path('.github/workflows/ci.yml')
 assert ci_yml.exists(), 'CI workflow file does not exist'
 
-# Check it has content
 content = ci_yml.read_text()
 assert len(content) > 5000, 'CI workflow file seems too short'
 assert 'jobs:' in content, 'Missing jobs section in CI workflow'
@@ -198,14 +199,12 @@ def test_repo_git_hooks_exist():
         ["python3", "-c", """
 from pathlib import Path
 
-# Check hooks exist
 pre_commit = Path('.github/hooks/pre-commit')
 commit_msg = Path('.github/hooks/commit-msg')
 
 assert pre_commit.exists(), 'pre-commit hook missing'
 assert commit_msg.exists(), 'commit-msg hook missing'
 
-# Check they have content
 assert len(pre_commit.read_text()) > 100, 'pre-commit hook too short'
 assert len(commit_msg.read_text()) > 100, 'commit-msg hook too short'
 
@@ -244,7 +243,6 @@ import json
 from pathlib import Path
 import sys
 
-# Check ghost/core package
 ghost_core = Path('ghost/core/package.json')
 assert ghost_core.exists(), 'ghost/core/package.json missing'
 with open(ghost_core) as f:
@@ -252,7 +250,6 @@ with open(ghost_core) as f:
 assert data.get('name') == 'ghost', f"Expected name 'ghost', got '{data.get('name')}'"
 assert 'version' in data, 'Missing version in ghost/core/package.json'
 
-# Check ghost/admin package
 ghost_admin = Path('ghost/admin/package.json')
 assert ghost_admin.exists(), 'ghost/admin/package.json missing'
 with open(ghost_admin) as f:
@@ -308,7 +305,6 @@ def test_repo_gitmodules_syntax():
         capture_output=True, text=True, timeout=30, cwd=REPO,
     )
     assert r.returncode == 0, f".gitmodules syntax check failed:\n{r.stderr}"
-    # Should have at least one submodule path
     assert "submodule." in r.stdout, "No submodule entries found in .gitmodules"
 
 
@@ -320,7 +316,6 @@ import pathlib
 p = pathlib.Path('.github/scripts/clean.js')
 assert p.exists(), 'clean.js does not exist'
 content = p.read_text()
-# Basic JS validation - check for common patterns
 assert 'require' in content or 'const' in content or 'function' in content, 'Not valid JS'
 assert 'execSync' in content or 'child_process' in content, 'Missing execSync usage'
 assert 'cleanYarnCache' in content or 'resetNxCache' in content, 'Missing expected functions'
@@ -355,22 +350,18 @@ def test_repo_ci_workflow_lint():
 import re
 from pathlib import Path
 
-# Read CI workflow
 ci_yml = Path('.github/workflows/ci.yml')
 assert ci_yml.exists(), 'CI workflow does not exist'
 content = ci_yml.read_text()
 
-# Check YAML structure (basic validation)
 assert 'name: CI' in content or 'name:' in content, 'Missing name field'
 assert 'on:' in content, 'Missing on trigger'
 assert 'jobs:' in content, 'Missing jobs section'
 
-# Check for required jobs
 assert 'job_setup:' in content, 'Missing job_setup'
 assert 'job_lint:' in content, 'Missing job_lint'
 assert 'job_unit-tests:' in content, 'Missing job_unit-tests'
 
-# Validate YAML syntax by checking indentation patterns - no tabs
 lines = content.split('\\n')
 for i, line in enumerate(lines):
     if line.strip() and not line.startswith('#'):
@@ -387,7 +378,6 @@ print('CI_YAML_OK')
 
 # ---------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) - BEHAVIORAL tests
-# All tests below use subprocess to EXECUTE code and verify BEHAVIOR
 # ---------------------------------------------------------------------------
 
 def test_setup_script_removed():
@@ -405,13 +395,11 @@ import sys
 import os
 import glob
 
-# BEHAVIOR 1: File system check - the file should not exist
 setup_js_path = '.github/scripts/setup.js'
 if os.path.exists(setup_js_path):
     print('FAIL: setup.js file still exists on filesystem', file=sys.stderr)
     sys.exit(1)
 
-# BEHAVIOR 2: The scripts directory should still exist with other scripts
 scripts_dir = '.github/scripts'
 if not os.path.isdir(scripts_dir):
     print('FAIL: .github/scripts/ directory is missing', file=sys.stderr)
@@ -422,7 +410,6 @@ if len(remaining_scripts) == 0:
     print('FAIL: all scripts were deleted, not just setup.js', file=sys.stderr)
     sys.exit(1)
 
-# BEHAVIOR 3: Verify package.json no longer references setup.js
 result = subprocess.run(
     ['grep', '-c', 'setup.js', 'package.json'],
     capture_output=True, text=True, timeout=5
@@ -455,7 +442,6 @@ import json
 import subprocess
 import sys
 
-# BEHAVIOR 1: Read package.json via subprocess execution
 result = subprocess.run(
     ['cat', 'package.json'],
     capture_output=True,
@@ -466,36 +452,30 @@ if result.returncode != 0:
     print('FAIL: Cannot read package.json', file=sys.stderr)
     sys.exit(1)
 
-# Parse the JSON
 try:
     data = json.loads(result.stdout)
 except json.JSONDecodeError as e:
     print(f'FAIL: Invalid JSON in package.json: {e}', file=sys.stderr)
     sys.exit(1)
 
-# Get the setup script
 if 'scripts' not in data or 'setup' not in data['scripts']:
     print('FAIL: No setup script found in package.json', file=sys.stderr)
     sys.exit(1)
 
 setup_cmd = data['scripts']['setup']
 
-# BEHAVIOR 2: Verify setup.js is NOT invoked (dead code removal)
 if 'setup.js' in setup_cmd:
     print(f'FAIL: setup.js still referenced in setup script: {setup_cmd}', file=sys.stderr)
     sys.exit(1)
 
-# BEHAVIOR 3: Verify --recursive flag is used (recursive submodule init)
 if '--recursive' not in setup_cmd:
     print(f'FAIL: setup script missing --recursive flag: {setup_cmd}', file=sys.stderr)
     sys.exit(1)
 
-# BEHAVIOR 4: Verify git submodule update --init is used (submodule initialization)
 if 'git submodule update --init' not in setup_cmd:
     print(f'FAIL: setup script missing git submodule update --init: {setup_cmd}', file=sys.stderr)
     sys.exit(1)
 
-# BEHAVIOR 5: Verify yarn is used (dependency installation)
 if 'yarn' not in setup_cmd:
     print(f'FAIL: setup script missing yarn: {setup_cmd}', file=sys.stderr)
     sys.exit(1)
@@ -523,7 +503,6 @@ def test_docs_setup_section():
 import subprocess
 import sys
 
-# BEHAVIOR 1: Read docs via subprocess
 result = subprocess.run(
     ['cat', 'docs/README.md'],
     capture_output=True,
@@ -536,8 +515,6 @@ if result.returncode != 0:
 
 content = result.stdout
 
-# BEHAVIOR 2: Verify setup does NOT describe obsolete database initialization
-# (The new behavior: yarn dev handles MySQL/database setup automatically)
 obsolete_db_patterns = [
     'initializes the database',
     'database initialization',
@@ -548,25 +525,18 @@ for pattern in obsolete_db_patterns:
         print(f'FAIL: docs still describe setup as doing database initialization: "{pattern}"', file=sys.stderr)
         sys.exit(1)
 
-# BEHAVIOR 3: Verify setup does NOT describe git hooks setup
-# (The new behavior: yarn dev handles hooks automatically)
 if 'sets up git hooks' in content.lower():
     print('FAIL: docs still describe setup as setting up git hooks', file=sys.stderr)
     sys.exit(1)
 
-# BEHAVIOR 4: Verify setup DOES describe dependency installation
 if 'yarn' not in content.lower():
     print('FAIL: docs do not mention yarn for dependencies', file=sys.stderr)
     sys.exit(1)
 
-# BEHAVIOR 5: Verify setup DOES describe submodule initialization
 if 'submodule' not in content.lower():
     print('FAIL: docs do not mention submodule initialization', file=sys.stderr)
     sys.exit(1)
 
-# BEHAVIOR 6: Verify the setup section is concise
-# The old version had verbose multi-line comments about database/hooks
-# The new version should just be "Install dependencies and initialize submodules"
 lines = content.split('\\n')
 in_setup_block = False
 setup_block_line_count = 0
@@ -576,8 +546,7 @@ for line in lines:
         setup_block_line_count = 0
     elif in_setup_block and '```' in line:
         in_setup_block = False
-        # The setup block should be short (concise description)
-        if setup_block_line_count > 15:  # Allow some slack but not verbose
+        if setup_block_line_count > 15:
             print(f'FAIL: setup code block is too verbose ({setup_block_line_count} lines)', file=sys.stderr)
             sys.exit(1)
         setup_block_line_count = 0
@@ -606,7 +575,6 @@ def test_docs_dev_description():
 import subprocess
 import sys
 
-# BEHAVIOR 1: Read docs via subprocess
 result = subprocess.run(
     ['cat', 'docs/README.md'],
     capture_output=True,
@@ -619,11 +587,9 @@ if result.returncode != 0:
 
 content = result.stdout
 
-# BEHAVIOR 2: Verify yarn dev handles Docker backend services
 backend_indicators = ['docker', 'backend services', 'mysql', 'redis']
 has_backend = any(ind in content.lower() for ind in backend_indicators)
 
-# BEHAVIOR 3: Verify yarn dev handles frontend development
 frontend_indicators = ['frontend', 'dev server', 'ember', 'admin']
 has_frontend = any(ind in content.lower() for ind in frontend_indicators)
 
@@ -635,7 +601,6 @@ if not has_frontend:
     print('FAIL: docs do not describe yarn dev handling frontend', file=sys.stderr)
     sys.exit(1)
 
-# BEHAVIOR 4: Verify old limited description is removed
 old_limited_desc = 'Start development server (uses Docker for backend services)'
 if old_limited_desc in content:
     print('FAIL: docs still have old limited description of yarn dev', file=sys.stderr)
@@ -663,7 +628,6 @@ def test_docs_reset_command():
 import subprocess
 import sys
 
-# BEHAVIOR 1: Read docs via subprocess
 result = subprocess.run(
     ['cat', 'docs/README.md'],
     capture_output=True,
@@ -676,7 +640,6 @@ if result.returncode != 0:
 
 content = result.stdout
 
-# BEHAVIOR 2: Verify obsolete knex-migrator commands are NOT documented
 obsolete_cmds = [
     'yarn knex-migrator reset',
     'yarn knex-migrator init',
@@ -688,7 +651,6 @@ for cmd in obsolete_cmds:
         print(f'FAIL: docs still reference obsolete command: "{cmd}"', file=sys.stderr)
         sys.exit(1)
 
-# BEHAVIOR 3: Verify current reset command IS documented
 if 'reset:data' not in content:
     print('FAIL: docs do not mention yarn reset:data', file=sys.stderr)
     sys.exit(1)
@@ -699,3 +661,15 @@ print('PASS')
     )
     assert r.returncode == 0, f"Docs reset command check failed: {r.stderr}"
     assert "PASS" in r.stdout
+
+
+# === CI-mined lightweight test (real Node.js test runner) ===
+def test_node_package_parseable():
+    """pass_to_pass | Node.js validates package.json is parseable"""
+    r = subprocess.run(
+        ["bash", "-lc", "node -e \"JSON.parse(require('fs').readFileSync('package.json','utf8'))\""],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, (
+        f"Node.js package.json parse failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")

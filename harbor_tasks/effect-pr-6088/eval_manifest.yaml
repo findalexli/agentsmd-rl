@@ -1,0 +1,111 @@
+version: '2.0'
+source:
+  repo: Effect-TS/effect
+  pr: 6088
+  base_commit: 4d97a61a15b9dd6a0eece65b8f0c035e16d42ada
+  merge_commit: 82996bce8debffcb44feb98bb862cf2662bd56b7
+task:
+  kind: code_fix
+checks:
+- id: test_omit_preserves_index_signatures
+  type: fail_to_pass
+  origin: pr_diff
+  description: Schema.omit on Struct with optionalWith({default}) and Record returns TypeLiteral with index signatures, not Transformation
+- id: test_omit_with_as_option_preserves_index_signatures
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'Schema.omit on Struct with optionalWith({as: "Option"}) and Record returns TypeLiteral with index signatures, not Transformation'
+- id: test_existing_omit_test_passes
+  type: pass_to_pass
+  origin: repo_tests
+  description: Existing omit.test.ts test passes
+- id: test_ci_lint_pnpm
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: pnpm circular (no circular dependencies)'
+- id: test_ci_lint_pnpm_2
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: pnpm lint passes'
+- id: test_ci_lint_pnpm_3
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: pnpm codegen (no uncommitted codegen changes)'
+- id: test_ci_build_pnpm
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: pnpm docgen (documentation builds)'
+rubric:
+- rule: 'Clarity over Cleverness: Choose clear, maintainable solutions'
+  source:
+    path: AGENTS.md
+    lines: '13'
+    commit: 4d97a61a15b9dd6a0eece65b8f0c035e16d42ada
+  evidence: The fix adds one switch case following the delegation pattern already used by getPropertyKeys for the same AST node type.
+  category: architecture
+  verification: llm_judge
+- rule: 'Conciseness: Keep code and wording concise and to the point. Sacrifice grammar for the sake of concision.'
+  source:
+    path: AGENTS.md
+    lines: '14'
+    commit: 4d97a61a15b9dd6a0eece65b8f0c035e16d42ada
+  evidence: The fix is a single switch case line with no extra commentary or abstraction.
+  category: style
+  verification: llm_judge
+- rule: '**Always** look at existing code in the repository to learn and follow established patterns before writing new code.'
+  source:
+    path: AGENTS.md
+    lines: 28-29
+    commit: 4d97a61a15b9dd6a0eece65b8f0c035e16d42ada
+  evidence: The fix follows the same pattern as getPropertyKeys which already handles Transformation by delegating to ast.to.
+  category: architecture
+  verification: llm_judge
+- rule: 'Zero Tolerance for Errors: All automated checks must pass'
+  source:
+    path: AGENTS.md
+    lines: '12'
+    commit: 4d97a61a15b9dd6a0eece65b8f0c035e16d42ada
+  evidence: Fix passes existing tests in omit.test.ts and the behavioral check for index signature preservation.
+  category: testing
+  verification: programmatic
+- rule: 'Run type checking: `pnpm check`'
+  source:
+    path: AGENTS.md
+    lines: '21'
+    commit: 4d97a61a15b9dd6a0eece65b8f0c035e16d42ada
+  evidence: TypeScript compilation succeeds after the fix.
+  category: testing
+  verification: llm_judge
+- rule: 'Reduce comments: Avoid comments unless absolutely required to explain unusual or complex logic.'
+  source:
+    path: AGENTS.md
+    lines: '15'
+    commit: 4d97a61a15b9dd6a0eece65b8f0c035e16d42ada
+  evidence: The fix adds no comments, consistent with the surrounding switch cases.
+  category: style
+  verification: llm_judge
+distractors:
+- rule: Use `it.effect` for all Effect-based tests, not `Effect.runSync` with regular `it`
+  source:
+    path: AGENTS.md
+    lines: '79'
+    commit: 4d97a61a15b9dd6a0eece65b8f0c035e16d42ada
+  collision_type: scope_ambiguity
+  why_distracting: The omit tests use regular it() with deepStrictEqual because they test pure AST manipulation without Effect values. The it.effect rule applies only to tests involving Effect computations.
+  severity: medium
+- rule: Import { assert, describe, it } from '@effect/vitest' - Never use expect from vitest in Effect tests
+  source:
+    path: AGENTS.md
+    lines: '80'
+    commit: 4d97a61a15b9dd6a0eece65b8f0c035e16d42ada
+  collision_type: rule_conflict
+  why_distracting: Existing omit tests use deepStrictEqual from @effect/vitest/utils, not assert. The assertion-style rule is orthogonal to the structural fix needed.
+  severity: low
+- rule: All pull requests must include a changeset in the `.changeset/` directory.
+  source:
+    path: AGENTS.md
+    lines: 47-49
+    commit: 4d97a61a15b9dd6a0eece65b8f0c035e16d42ada
+  collision_type: meta_confusion
+  why_distracting: This is a behavioral correctness task. Adding a changeset file does not affect whether the code fix passes the behavioral tests.
+  severity: low

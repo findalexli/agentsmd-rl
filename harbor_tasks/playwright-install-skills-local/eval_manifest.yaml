@@ -38,8 +38,7 @@ checks:
 - id: test_repo_lint_code_snippets
   type: pass_to_pass
   origin: repo_tests
-  description: Repo's documentation code snippet linting passes (node utils/doclint/linting-code-snippets/cli.js
-    --js-only)
+  description: Repo's documentation code snippet linting passes (node utils/doclint/linting-code-snippets/cli.js --js-only)
 - id: test_repo_generate_channels
   type: pass_to_pass
   origin: repo_tests
@@ -92,9 +91,20 @@ checks:
     path: .claude/skills/playwright-mcp-dev/SKILL.md
     lines: 29-30
     commit: 6a928b02f4de1efc633a8fae0331cd1fa821950e
+- id: test_ci_build_playwright_driver_npm
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: build-playwright-driver / '
+- id: test_ci_build_playwright_driver_npm
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: build-playwright-driver / '
+- id: test_ci_build_playwright_driver_npm_2
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: build-playwright-driver / '
 rubric:
-- rule: Skill documentation updates are consistent with the style and structure of
-    the existing SKILL.md
+- rule: Skill documentation updates are consistent with the style and structure of the existing SKILL.md
   source:
     path: packages/playwright/src/skill/SKILL.md
     lines: 1-10
@@ -104,8 +114,7 @@ rubric:
     path: .claude/skills/playwright-mcp-dev/SKILL.md
     lines: '11'
   source_text: '- Add ToolCapability in `packages/playwright/src/mcp/config.d.ts`'
-  evidence: The gold diff adds the 'network' capability to the ToolCapability type
-    in packages/playwright/src/mcp/config.d.ts.
+  evidence: The gold diff adds the 'network' capability to the ToolCapability type in packages/playwright/src/mcp/config.d.ts.
   category: architecture
   verification: llm_judge
 - rule: Register command in commands.ts
@@ -113,18 +122,15 @@ rubric:
     path: .claude/skills/playwright-mcp-dev/SKILL.md
     lines: '28'
   source_text: '- Register command in `packages/playwright/src/mcp/terminal/commands.ts`'
-  evidence: The gold diff registers the new installSkills command by adding it to
-    the commandsArray in packages/playwright/src/mcp/terminal/commands.ts.
+  evidence: The gold diff registers the new installSkills command by adding it to the commandsArray in packages/playwright/src/mcp/terminal/commands.ts.
   category: architecture
   verification: llm_judge
 - rule: Update skill file and references
   source:
     path: .claude/skills/playwright-mcp-dev/SKILL.md
     lines: 29-30
-  source_text: "- Update skill file at `packages/playwright/src/skill/SKILL.md` and\
-    \ references if necessary\n  in `packages/playwright/src/skill/references/`"
-  evidence: The gold diff adds new commands to packages/playwright/src/skill/SKILL.md
-    and updates network-related documentation in packages/playwright/src/skill/references/request-mocking.md.
+  source_text: "- Update skill file at `packages/playwright/src/skill/SKILL.md` and references if necessary\n  in `packages/playwright/src/skill/references/`"
+  evidence: The gold diff adds new commands to packages/playwright/src/skill/SKILL.md and updates network-related documentation in packages/playwright/src/skill/references/request-mocking.md.
   category: documentation
   verification: llm_judge
 config_edits:
@@ -133,12 +139,9 @@ config_edits:
   gold_added: '# SKILL File
 
 
-    The skill file is located at `packages/playwright/src/skill/SKILL.md`. It contains
-    documentation for all available CLI commands and MCP tools. Update it whenever
-    you add new commands or tools.
+    The skill file is located at `packages/playwright/src/skill/SKILL.md`. It contains documentation for all available CLI commands and MCP tools. Update it whenever you add new commands or tools.
 
-    At any point in time you can run "npm run playwright-cli -- --help" to see the
-    latest available commands and use them to update the skill file.'
+    At any point in time you can run "npm run playwright-cli -- --help" to see the latest available commands and use them to update the skill file.'
   gold_removed: ''
 - path: packages/playwright/src/skill/SKILL.md
   tier: 1
@@ -220,12 +223,7 @@ distractors:
   source:
     path: .claude/skills/playwright-mcp-dev/SKILL.md
     lines: '24'
-  source_text: '- CLI commands are based on MCP tools. Implement the corresponding
-    MCP tool as per `Adding MCP Tools` section above, if needed.'
+  source_text: '- CLI commands are based on MCP tools. Implement the corresponding MCP tool as per `Adding MCP Tools` section above, if needed.'
   collision_type: architecture_boundary
-  why_distracting: The install-skills command strictly performs local file system
-    operations to install skills, rather than interacting with the browser. An agent
-    might mistakenly attempt to create a full MCP tool for it, incorrectly crossing
-    the architecture boundary from the local CLI execution context into the browser
-    automation context.
+  why_distracting: The install-skills command strictly performs local file system operations to install skills, rather than interacting with the browser. An agent might mistakenly attempt to create a full MCP tool for it, incorrectly crossing the architecture boundary from the local CLI execution context into the browser automation context.
   severity: medium

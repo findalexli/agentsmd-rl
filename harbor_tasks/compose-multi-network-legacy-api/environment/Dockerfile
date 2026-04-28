@@ -3,7 +3,8 @@ FROM golang:1.25.8-bookworm
 ENV DEBIAN_FRONTEND=noninteractive \
     GOFLAGS=-mod=mod \
     GOTOOLCHAIN=local \
-    CGO_ENABLED=0
+    CGO_ENABLED=0 \
+    PATH="/usr/local/go/bin:/go/bin:${PATH}"
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
         ca-certificates \
@@ -12,6 +13,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         python3-pip \
         python3-venv \
     && rm -rf /var/lib/apt/lists/*
+
+# Ensure login shells (bash -lc) can find Go — Debian /etc/profile resets PATH.
+RUN echo 'export PATH="/usr/local/go/bin:/go/bin:$PATH"' > /etc/profile.d/go.sh
 
 RUN python3 -m venv /opt/venv
 ENV PATH="/opt/venv/bin:${PATH}"

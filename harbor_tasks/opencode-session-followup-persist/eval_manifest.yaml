@@ -68,8 +68,7 @@ checks:
 - id: test_no_for_loop_in_followup_block
   type: pass_to_pass
   origin: agent_config
-  description: No for loops in followup persistence block — prefer functional array
-    methods
+  description: No for loops in followup persistence block — prefer functional array methods
   source:
     path: AGENTS.md
     lines: '17'
@@ -98,6 +97,30 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Repo's persist utility unit tests pass (covers workspace-scoped persistence)
+- id: test_ci_e2e_run_app_e2e_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: e2e / Run app e2e tests'
+- id: test_ci_unit_run_unit_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: unit / Run unit tests'
+- id: test_ci_build_tauri_prepare
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: build-tauri / Prepare'
+- id: test_ci_build_tauri_show_tauri_cli_version
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: build-tauri / Show tauri-cli version'
+- id: test_ci_build_electron_build
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: build-electron / Build'
+- id: test_ci_typecheck_run_typecheck
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: typecheck / Run typecheck'
 rubric:
 - rule: Avoid unnecessary destructuring. Use dot notation to preserve context.
   source:
@@ -114,8 +137,7 @@ rubric:
     path: packages/app/src/pages/session.tsx
     lines: '11'
     commit: 3fb60d05e555dad020d3354602affe166ef0cc22
-- rule: Rely on type inference when possible; avoid explicit type annotations or interfaces
-    unless necessary for exports or clarity.
+- rule: Rely on type inference when possible; avoid explicit type annotations or interfaces unless necessary for exports or clarity.
   source:
     path: packages/app/src/pages/session.tsx
     lines: '16'
@@ -124,45 +146,27 @@ rubric:
   source:
     path: packages/app/src/pages/session.tsx
     lines: 14-16
-  evidence: The gold solution wraps the existing `createStore` with `persisted` to
-    persist the complex followup state, rather than breaking it down into multiple
-    `createSignal` calls.
+  evidence: The gold solution wraps the existing `createStore` with `persisted` to persist the complex followup state, rather than breaking it down into multiple `createSignal` calls.
   category: architecture
 - rule: Avoid using the `any` type
   source:
     path: packages/app/src/pages/session.tsx
     lines: 11-11
-  evidence: The gold solution carefully defines `FollowupItem` and `FollowupEdit`
-    types and passes them to `createStore` to ensure strict typing without falling
-    back to `any`.
+  evidence: The gold solution carefully defines `FollowupItem` and `FollowupEdit` types and passes them to `createStore` to ensure strict typing without falling back to `any`.
   category: style
 distractors:
-- rule: Rely on type inference when possible; avoid explicit type annotations or interfaces
-    unless necessary for exports or clarity
+- rule: Rely on type inference when possible; avoid explicit type annotations or interfaces unless necessary for exports or clarity
   collision_type: rule_conflict
-  why_distracting: The rule instructs to 'avoid explicit type annotations or interfaces
-    unless necessary'. An agent might try to avoid defining the `FollowupItem` and
-    `FollowupEdit` types, instead keeping the inline `as Record<...>` assertions.
-    However, wrapping `createStore` with `persisted` often requires explicit generic
-    type arguments for proper inference, making explicit types necessary for clarity
-    and correctness here.
+  why_distracting: The rule instructs to 'avoid explicit type annotations or interfaces unless necessary'. An agent might try to avoid defining the `FollowupItem` and `FollowupEdit` types, instead keeping the inline `as Record<...>` assertions. However, wrapping `createStore` with `persisted` often requires explicit generic type arguments for proper inference, making explicit types necessary for clarity and correctness here.
   severity: high
   source:
     path: AGENTS.md
     lines: 14-15
-- rule: Prefer single word names for variables and functions. Only use multiple words
-    if necessary.
+- rule: Prefer single word names for variables and functions. Only use multiple words if necessary.
   collision_type: scope_ambiguity
-  why_distracting: The rule enforces 'single word names by default'. An agent extracting
-    the complex inline types might try to name them `Item` and `Edit` to strictly
-    follow this rule. However, in the module scope, these names are too generic and
-    ambiguous, so the multi-word names `FollowupItem` and `FollowupEdit` are required.
+  why_distracting: The rule enforces 'single word names by default'. An agent extracting the complex inline types might try to name them `Item` and `Edit` to strictly follow this rule. However, in the module scope, these names are too generic and ambiguous, so the multi-word names `FollowupItem` and `FollowupEdit` are required.
   severity: medium
   source:
     path: AGENTS.md
     lines: 20-21
-hierarchy_analysis: The agent must navigate from the root `AGENTS.md` to the app-specific
-  `packages/app/AGENTS.md`. The app-specific rule about `createStore` reinforces keeping
-  the existing state structure, while the root rules about naming and type inference
-  require nuanced application (knowing when to break the 'no explicit types' and 'single
-  word' rules for clarity).
+hierarchy_analysis: The agent must navigate from the root `AGENTS.md` to the app-specific `packages/app/AGENTS.md`. The app-specific rule about `createStore` reinforces keeping the existing state structure, while the root rules about naming and type inference require nuanced application (knowing when to break the 'no explicit types' and 'single word' rules for clarity).

@@ -25,7 +25,8 @@ The implementation must also handle the abnormal positive return code case, trea
 
 The statx syscall wrapper for Linux is in `src/sys.zig`. When implementing the fix:
 - Use `bun.sys` API patterns: `Maybe(T)` return type, `.result`/`.err` tagged union handling
-- Handle both path-based (`stat`/`lstat`) and fd-based (`fstat`) fallback cases
+- Create a `statxFallback` helper function that consolidates the fallback to legacy syscalls (`stat`/`lstat`/`fstat`)
+- Handle both path-based (`stat`/`lstat`) and fd-based (`fstat`) fallback cases within the helper
 - Respect the `SYMLINK_NOFOLLOW` flag to choose `lstat` vs `stat` for path-based calls
 - Preserve the existing `EINTR` retry loop and `linux.statx` syscall call
 - Disable the `supports_statx_on_linux` flag when falling back

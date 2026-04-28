@@ -66,11 +66,8 @@ servicer classes — this is the gRPC method name dispatched by the
 
 ## Constraints
 
-- Do not change unrelated files. The fix is local to
-  `sdk/python/lib/pulumi/provider/provider.py`,
-  `sdk/python/lib/pulumi/provider/server.py`,
-  `sdk/python/lib/pulumi/provider/experimental/provider.py`, and
-  `sdk/python/lib/pulumi/provider/experimental/server.py`.
+- Do not change files outside `sdk/python/lib/pulumi/provider/`
+  (including the `experimental/` subdirectory).
 - Do not edit any generated protobuf files (`*_pb2.py`, `*_pb2_grpc.py`,
   `*_pb2.pyi`).
 - Do not introduce new external runtime dependencies. The protobuf
@@ -79,9 +76,8 @@ servicer classes — this is the gRPC method name dispatched by the
   in the relevant modules or trivially importable from `google.protobuf`.
 - Do not modify the existing test suite under
   `sdk/python/lib/test/provider/`.
-- Existing tests under `sdk/python/lib/test/provider/test_server.py` and
-  `sdk/python/lib/test/provider/experimental/test_provider.py` must
-  continue to pass.
+- Existing tests under `sdk/python/lib/test/provider/` must continue to
+  pass.
 
 ## Where to verify yourself
 

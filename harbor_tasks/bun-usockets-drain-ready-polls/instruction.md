@@ -25,3 +25,7 @@ In other words: after the initial polling and dispatch, if the buffer was comple
 - For kqueue, a flag like `KEVENT_FLAG_IMMEDIATE` achieves the same non-blocking behavior.
 - The drain mechanism should have an iteration cap to prevent unbounded spinning if events keep arriving.
 - The drain check should stop when no more polls are registered (`num_polls`).
+
+## Code Style Requirements
+
+- The modified C file must pass `clang-format --dry-run --Werror` (the project uses LLVM-style C formatting enforced by CI).

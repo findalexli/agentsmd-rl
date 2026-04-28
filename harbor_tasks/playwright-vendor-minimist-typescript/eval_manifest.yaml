@@ -8,8 +8,7 @@ checks:
 - id: minimist_parses_args
   type: fail_to_pass
   origin: pr_diff
-  description: Vendored minimist correctly parses boolean, string, and positional
-    args
+  description: Vendored minimist correctly parses boolean, string, and positional args
 - id: minimist_boolean_equals_error
   type: fail_to_pass
   origin: pr_diff
@@ -29,8 +28,7 @@ checks:
 - id: deps_list_updated
   type: fail_to_pass
   origin: agent_config
-  description: DEPS.list declares minimist.ts as allowed import per CLAUDE.md DEPS
-    rule
+  description: DEPS.list declares minimist.ts as allowed import per CLAUDE.md DEPS rule
   source:
     path: CLAUDE.md
     lines: '95'
@@ -90,8 +88,7 @@ rubric:
     path: CLAUDE.md
     lines: 90-95
     commit: 4df350b1c81b61ea471ff12767efd8e05f773377
-  evidence: The gold solution updates DEPS.list to declare `./minimist.ts` as an allowed
-    import for program.ts and session.ts, and creates a new `[minimist.ts]` section
+  evidence: The gold solution updates DEPS.list to declare `./minimist.ts` as an allowed import for program.ts and session.ts, and creates a new `[minimist.ts]` section
   category: architecture
 config_edits:
 - path: CLAUDE.md
@@ -101,23 +98,16 @@ config_edits:
 distractors:
 - rule: Generated files (types, channels, validators) are produced by watch automatically.
   collision_type: scope_ambiguity
-  why_distracting: The rule states that generated files (types, channels) are produced
-    by watch automatically. An agent might incorrectly assume it doesn't need to manually
-    define and export the MinimistArgs type in the vendored file, relying on auto-generation
-    instead.
+  why_distracting: The rule states that generated files (types, channels) are produced by watch automatically. An agent might incorrectly assume it doesn't need to manually define and export the MinimistArgs type in the vendored file, relying on auto-generation instead.
   severity: medium
   source:
     path: CLAUDE.md
     lines: 50-52
 - rule: Do not use `tsc --noEmit` or individual lint commands separately.
   collision_type: rule_conflict
-  why_distracting: The agent might want to run `tsc` or `eslint` on the newly created
-    minimist.ts file to ensure it is correct, but the rule strictly forbids individual
-    lint commands, requiring the full `flint` suite instead.
+  why_distracting: The agent might want to run `tsc` or `eslint` on the newly created minimist.ts file to ensure it is correct, but the rule strictly forbids individual lint commands, requiring the full `flint` suite instead.
   severity: low
   source:
     path: CLAUDE.md
     lines: 58-60
-hierarchy_analysis: The repository uses a single CLAUDE.md file at the root, but it
-  enforces a distributed architecture rule (DEPS.list files in subdirectories). The
-  agent must apply the root-level DEPS concept to the specific cli-client subdirectory.
+hierarchy_analysis: The repository uses a single CLAUDE.md file at the root, but it enforces a distributed architecture rule (DEPS.list files in subdirectories). The agent must apply the root-level DEPS concept to the specific cli-client subdirectory.

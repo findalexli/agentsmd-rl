@@ -1041,3 +1041,30 @@ def test_file_module_scope_imports():
     assert not re.search(r"\brequire\s*\(", content), (
         "Test file uses require() -- use module-scope import statements instead"
     )
+
+# === PR-added f2p tests (taskforge.test_patch_miner) ===
+def test_pr_added_dropping_signal_references_should_not_leak_Abort():
+    """fail_to_pass | PR added test 'dropping signal references should not leak AbortSignal when pipe never completes' in 'test/js/web/streams/pipeTo-signal-leak.test.ts'"""
+    p = Path(f"{REPO}/{TEST_FILE}")
+    assert p.exists(), f"Regression test file {TEST_FILE} not found (fix not applied?)"
+
+    r = subprocess.run(
+        ["bun", "test", TEST_FILE, "-t", "dropping signal references should not leak AbortSignal when pipe never completes"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, (
+        f"PR-added test 'dropping signal references should not leak AbortSignal when pipe never completes' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_pr_added_aborting_signal_still_works_and_cleans_up_after_():
+    """fail_to_pass | PR added test 'aborting signal still works and cleans up after pipe completes via abort' in 'test/js/web/streams/pipeTo-signal-leak.test.ts'"""
+    p = Path(f"{REPO}/{TEST_FILE}")
+    assert p.exists(), f"Regression test file {TEST_FILE} not found (fix not applied?)"
+
+    r = subprocess.run(
+        ["bun", "test", TEST_FILE, "-t", "aborting signal still works and cleans up after pipe completes via abort"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, (
+        f"PR-added test 'aborting signal still works and cleans up after pipe completes via abort' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")

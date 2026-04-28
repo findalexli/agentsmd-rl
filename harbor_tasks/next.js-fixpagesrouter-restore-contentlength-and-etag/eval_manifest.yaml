@@ -10,18 +10,17 @@ checks:
   origin: static
   description: Modified TypeScript files compile without errors
 - id: render_result_isdynamic_with_string
-  type: fail_to_pass
-  origin: pr_diff
+  type: pass_to_pass
+  origin: static
   description: RenderResult.isDynamic returns false for string response (not Buffer)
 - id: pages_handler_uses_string_not_buffer
   type: fail_to_pass
   origin: pr_diff
   description: pages-handler.ts passes string to RenderResult, not Buffer.from()
 - id: send_payload_generates_headers_for_static
-  type: fail_to_pass
-  origin: pr_diff
-  description: sendRenderResult generates Content-Length and ETag for non-dynamic
-    responses
+  type: pass_to_pass
+  origin: static
+  description: sendRenderResult generates Content-Length and ETag for non-dynamic responses
 - id: render_result_class_exists
   type: pass_to_pass
   origin: static
@@ -70,17 +69,15 @@ checks:
     path: AGENTS.md
     lines: 148-150
     commit: 56d75a0b77f2ceda8ea747810275da8e0a9a3d71
+
 rubric:
-- rule: Documentation for pnpm new-test command must use '-- --args' syntax (with
-    double-dash separator) instead of '--args' to properly forward arguments to the
-    script
+- rule: Documentation for pnpm new-test command must use '-- --args' syntax (with double-dash separator) instead of '--args' to properly forward arguments to the script
   source:
     path: AGENTS.md
     lines: 148-157
     commit: 56d75a0b77f2ceda8ea747810275da8e0a9a3d71
   reference: pnpm new-test -- --args true my-feature e2e
-- rule: Update the 'Quick smoke testing with toy apps' bullet point in AGENTS.md to
-    use the '-- --args' syntax for pnpm new-test
+- rule: Update the 'Quick smoke testing with toy apps' bullet point in AGENTS.md to use the '-- --args' syntax for pnpm new-test
   source:
     path: AGENTS.md
     lines: '403'
@@ -89,15 +86,12 @@ rubric:
   source:
     path: AGENTS.md
     lines: 148-154, 403
-  evidence: The gold solution updates the `pnpm new-test` command examples in AGENTS.md
-    to use `-- --args` instead of `--args`, modifying both the main example block
-    and the 'Quick smoke testing' bullet point.
+  evidence: The gold solution updates the `pnpm new-test` command examples in AGENTS.md to use `-- --args` instead of `--args`, modifying both the main example block and the 'Quick smoke testing' bullet point.
   category: documentation
 config_edits:
 - path: AGENTS.md
   tier: 1
-  gold_added: '# Use --args for non-interactive mode (forward args to the script using
-    `--`)
+  gold_added: '# Use --args for non-interactive mode (forward args to the script using `--`)
 
     # Format: pnpm new-test -- --args <appDir> <name> <type>
 
@@ -110,25 +104,16 @@ config_edits:
 distractors:
 - rule: Generating tests using `pnpm new-test` is mandatory.
   collision_type: scope_ambiguity
-  why_distracting: The config explicitly states that generating tests is 'mandatory'.
-    An agent might try to use the `pnpm new-test` command to scaffold a test for the
-    `Content-Length` fix, which is out of scope for this specific PR and likely to
-    waste time.
+  why_distracting: The config explicitly states that generating tests is 'mandatory'. An agent might try to use the `pnpm new-test` command to scaffold a test for the `Content-Length` fix, which is out of scope for this specific PR and likely to waste time.
   severity: high
   source:
     path: AGENTS.md
     lines: 148-148
-- rule: If you are changing Next.js source or integration tests, start `pnpm --filter=next
-    dev` in a separate terminal session before making edits
+- rule: If you are changing Next.js source or integration tests, start `pnpm --filter=next dev` in a separate terminal session before making edits
   collision_type: meta_confusion
-  why_distracting: The config instructs the agent to start a background dev server
-    (`pnpm --filter=next dev`) before making edits. In an evaluation environment,
-    starting background watch processes can cause hangs or interfere with the test
-    harness.
+  why_distracting: The config instructs the agent to start a background dev server (`pnpm --filter=next dev`) before making edits. In an evaluation environment, starting background watch processes can cause hangs or interfere with the test harness.
   severity: medium
   source:
     path: AGENTS.md
     lines: 98-102
-hierarchy_analysis: 'The configuration is flat, consisting of a single AGENTS.md file
-  (and a symlink). The primary complexity comes from the task being meta-referential:
-  the agent must edit the very instruction file that governs its behavior.'
+hierarchy_analysis: 'The configuration is flat, consisting of a single AGENTS.md file (and a symlink). The primary complexity comes from the task being meta-referential: the agent must edit the very instruction file that governs its behavior.'

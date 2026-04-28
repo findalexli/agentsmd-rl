@@ -236,3 +236,14 @@ def test_provider_module_still_imports():
     )
     assert r.returncode == 0, f"provider.ts failed to import:\nstdout:\n{r.stdout}\nstderr:\n{r.stderr}"
     assert "OK" in r.stdout, r.stdout
+
+# === CI-mined test (taskforge.ci_check_miner) ===
+def test_ci_smoke_bun_test():
+    """pass_to_pass | Run bun test on smoke suite to verify effect+zod toolchain."""
+    r = subprocess.run(
+        ["bash", "-lc", "bun test /test-sandbox/smoke.test.ts"],
+        cwd="/test-sandbox",
+        capture_output=True, text=True, timeout=120)
+    assert r.returncode == 0, (
+        f"bun test smoke suite failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")

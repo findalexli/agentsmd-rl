@@ -1,11 +1,12 @@
 # Restore the missing single-argument `BiDi` constructor
 
 The Selenium Java BiDi module currently exposes only the two-argument
-constructor `BiDi(Connection connection, Duration timeout)` in
-`java/src/org/openqa/selenium/bidi/BiDi.java`. Downstream projects (notably
-the Appium Java client) historically constructed `BiDi` with just a
-`Connection`, and that one-argument constructor is no longer present.
-Remove of that constructor is a breaking change for those callers.
+constructor `BiDi(Connection connection, Duration timeout)` in the
+`BiDi` class (`org.openqa.selenium.bidi` package, within the Java bindings
+at `java/`). Downstream projects (notably the Appium Java client)
+historically constructed `BiDi` with just a `Connection`, and that
+one-argument constructor is no longer present. Removal of that constructor
+is a breaking change for those callers.
 
 ## Required behavior
 

@@ -5,7 +5,7 @@ ENV LANG=C.UTF-8
 
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
-        git curl ca-certificates build-essential tmux && \
+        git curl ca-certificates build-essential tmux nodejs npm && \
     rm -rf /var/lib/apt/lists/*
 
 # Angular monorepo — use shallow clone with sparse checkout for speed

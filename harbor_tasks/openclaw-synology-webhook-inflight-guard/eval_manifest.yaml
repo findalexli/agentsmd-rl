@@ -92,8 +92,7 @@ checks:
 - id: guard_integrated_before_auth
   type: fail_to_pass
   origin: pr_diff
-  description: Pre-auth concurrency guard is called before auth with early-return
-    on rejection
+  description: Pre-auth concurrency guard is called before auth with early-return on rejection
 - id: guard_release_lifecycle
   type: fail_to_pass
   origin: pr_diff
@@ -101,8 +100,7 @@ checks:
 - id: import_from_plugin_sdk
   type: fail_to_pass
   origin: agent_config
-  description: New webhook-ingress imports use openclaw/plugin-sdk/* path, not core
-    internals
+  description: New webhook-ingress imports use openclaw/plugin-sdk/* path, not core internals
   source:
     path: AGENTS.md
     lines: '16'
@@ -118,8 +116,7 @@ checks:
 - id: no_relative_imports_outside_package
   type: pass_to_pass
   origin: agent_config
-  description: No relative imports that escape the synology-chat extension package
-    root
+  description: No relative imports that escape the synology-chat extension package root
   source:
     path: AGENTS.md
     lines: '158'
@@ -148,14 +145,57 @@ checks:
     path: AGENTS.md
     lines: '157'
     commit: 7a953a52271b9188a5fa830739a4366614ff9916
+- id: test_ci_build_bun_artifacts_build_a2ui_bundle
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: build-bun-artifacts / Build A2UI bundle'
+- id: test_ci_check_additional_check_types_and_lint_and_oxfmt
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: check-additional / Check types and lint and oxfmt'
+- id: test_ci_check_additional_strict_ts_build_smoke
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: check-additional / Strict TS build smoke'
+- id: test_ci_build_artifacts_build_dist
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: build-artifacts / Build dist'
+- id: test_ci_build_artifacts_build_control_ui
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: build-artifacts / Build Control UI'
+- id: test_ci_check_run_matrix_task_matrix_runtime
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: check / Run ${{ matrix.task }} (${{ matrix.runtime }})'
+- id: test_ci_build_smoke_smoke_test_cli_launcher_help
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: build-smoke / Smoke test CLI launcher help'
+- id: test_ci_build_smoke_smoke_test_cli_launcher_status_json
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: build-smoke / Smoke test CLI launcher status json'
+- id: test_ci_build_smoke_smoke_test_built_bundled_plugin_singleto
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: build-smoke / Smoke test built bundled plugin singleton'
+- id: test_ci_build_smoke_check_cli_startup_memory
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: build-smoke / Check CLI startup memory'
+- id: test_pr_added_rejects_excess_concurrent_pre_auth_body_reads_fr
+  type: fail_to_pass
+  origin: pr_diff
+  description: PR added test 'rejects excess concurrent pre-auth body reads from the same remote IP' in extensions/synology-chat/src/webhook-handler.test.ts
 rubric:
 - rule: Add brief code comments for tricky or non-obvious logic.
   source:
     path: AGENTS.md
     lines: '163'
     commit: 7a953a52271b9188a5fa830739a4366614ff9916
-- rule: Prefer Result<T, E>-style outcomes and closed error-code unions for recoverable
-    runtime decisions.
+- rule: Prefer Result<T, E>-style outcomes and closed error-code unions for recoverable runtime decisions.
   source:
     path: AGENTS.md
     lines: '150'
@@ -165,70 +205,51 @@ rubric:
     path: AGENTS.md
     lines: '149'
     commit: 7a953a52271b9188a5fa830739a4366614ff9916
-- rule: 'Written English: use American spelling and grammar in code, comments, docs,
-    and UI strings.'
+- rule: 'Written English: use American spelling and grammar in code, comments, docs, and UI strings.'
   source:
     path: AGENTS.md
     lines: '167'
     commit: 7a953a52271b9188a5fa830739a4366614ff9916
-- rule: Extension production code should import from openclaw/plugin-sdk/* and its
-    own local barrels; do not import core internals or another extension's src/**.
+- rule: Extension production code should import from openclaw/plugin-sdk/* and its own local barrels; do not import core internals or another extension's src/**.
   source:
     path: extensions/AGENTS.md
     lines: 27-30
     commit: 7a953a52271b9188a5fa830739a4366614ff9916
-- rule: Keep human-readable strings for logs, CLI output, and UI; do not use freeform
-    strings as the source of truth for internal branching.
+- rule: Keep human-readable strings for logs, CLI output, and UI; do not use freeform strings as the source of truth for internal branching.
   source:
     path: AGENTS.md
     lines: '151'
     commit: 7a953a52271b9188a5fa830739a4366614ff9916
-- rule: Write tests to clean up timers, env, globals, mocks, sockets, temp dirs, and
-    module state so --isolate=false stays green.
+- rule: Write tests to clean up timers, env, globals, mocks, sockets, temp dirs, and module state so --isolate=false stays green.
   source:
     path: AGENTS.md
     lines: '181'
     commit: 7a953a52271b9188a5fa830739a4366614ff9916
-- rule: Extension production code should import from `openclaw/plugin-sdk/*` and its
-    own local barrels.
+- rule: Extension production code should import from `openclaw/plugin-sdk/*` and its own local barrels.
   source:
     path: extensions/CLAUDE.md
     lines: 22-23
-  evidence: The gold solution imports `beginWebhookRequestPipelineOrReject` and `createWebhookInFlightLimiter`
-    from `openclaw/plugin-sdk/webhook-ingress` rather than reaching into core internals.
+  evidence: The gold solution imports `beginWebhookRequestPipelineOrReject` and `createWebhookInFlightLimiter` from `openclaw/plugin-sdk/webhook-ingress` rather than reaching into core internals.
   category: architecture
 - rule: 'Tests: colocated `*.test.ts`.'
   source:
     path: CLAUDE.md
     lines: 9-9
-  evidence: The new test for rejecting excess concurrent pre-auth body reads is added
-    directly to the colocated `extensions/synology-chat/src/webhook-handler.test.ts`
-    file.
+  evidence: The new test for rejecting excess concurrent pre-auth body reads is added directly to the colocated `extensions/synology-chat/src/webhook-handler.test.ts` file.
   category: testing
 distractors:
-- rule: Do not import core internals from `src/**`, `src/channels/**`, `src/plugin-sdk-internal/**`,
-    or another extension's `src/**`.
+- rule: Do not import core internals from `src/**`, `src/channels/**`, `src/plugin-sdk-internal/**`, or another extension's `src/**`.
   collision_type: architecture_boundary
-  why_distracting: The task hint explicitly tells the agent to look at how limiters
-    are used by other webhook handlers. The agent will likely look at core channels
-    in `src/channels/*` and might be tempted to import helper functions or constants
-    from those core directories, which violates the strict extension boundary.
+  why_distracting: The task hint explicitly tells the agent to look at how limiters are used by other webhook handlers. The agent will likely look at core channels in `src/channels/*` and might be tempted to import helper functions or constants from those core directories, which violates the strict extension boundary.
   severity: high
   source:
     path: extensions/AGENTS.md
     lines: 21-22
-- rule: Do not edit files covered by security-focused `CODEOWNERS` rules unless a
-    listed owner explicitly asked for the change.
+- rule: Do not edit files covered by security-focused `CODEOWNERS` rules unless a listed owner explicitly asked for the change.
   collision_type: scope_ambiguity
-  why_distracting: The task involves fixing a pre-auth concurrency limit (a DoS/security
-    issue) in a webhook handler. An agent might overly cautiously refuse to edit the
-    webhook handler, thinking it's a restricted security surface covered by CODEOWNERS.
+  why_distracting: The task involves fixing a pre-auth concurrency limit (a DoS/security issue) in a webhook handler. An agent might overly cautiously refuse to edit the webhook handler, thinking it's a restricted security surface covered by CODEOWNERS.
   severity: medium
   source:
     path: AGENTS.md
     lines: 5-5
-hierarchy_analysis: The repository defines a global architecture in the root `AGENTS.md`
-  and enforces a strict plugin boundary in `extensions/AGENTS.md`. The agent must
-  navigate this hierarchy to understand that while it can look at core channels for
-  inspiration (as hinted), it must strictly adhere to the `openclaw/plugin-sdk/*`
-  boundary for imports.
+hierarchy_analysis: The repository defines a global architecture in the root `AGENTS.md` and enforces a strict plugin boundary in `extensions/AGENTS.md`. The agent must navigate this hierarchy to understand that while it can look at core channels for inspiration (as hinted), it must strictly adhere to the `openclaw/plugin-sdk/*` boundary for imports.

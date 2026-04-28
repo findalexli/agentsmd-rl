@@ -12,7 +12,7 @@ RUN apt-get update && \
 RUN git init /workspace/angular && \
     cd /workspace/angular && \
     git remote add origin https://github.com/angular/angular.git && \
-    git fetch --depth=1 origin d75046bc091699bbadcb5f2032be627e983ee6fa && \
+    git fetch --depth=1 origin ba009b603119299a03f9d844f93882d42d47d150 && \
     git checkout FETCH_HEAD && \
     git config user.email "agent@test" && \
     git config user.name "Agent"

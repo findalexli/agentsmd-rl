@@ -85,6 +85,10 @@ The following test names are part of the snapshot test harness in
 
 - `force-break-nontext-and-non-sensitive-sibling.html`
   (input `<div>a<div>b</div> c</div>`) — currently fails; must pass.
+- `force-break-nontext-and-non-sensitive-sibling-2.html`
+  (input `<div>before<article>middle</article>after</div>`) — same rule
+  with a different visible block-like element (`<article>`); currently
+  fails; must pass.
 - `no-break-display-none.html`
   (input `<div>123<meta attr />456</div>`) — must continue to pass.
 

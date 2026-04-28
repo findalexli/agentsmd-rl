@@ -8,13 +8,11 @@ checks:
 - id: behavioral_helpers_are_effect_generators
   type: fail_to_pass
   origin: pr_diff
-  description: Execute module with mocked deps and verify Effect.fnUntraced is called
-    for add/scan/loadSkills helpers
+  description: Execute module with mocked deps and verify Effect.fnUntraced is called for add/scan/loadSkills helpers
 - id: behavioral_default_layer_provides_config_and_bus
   type: fail_to_pass
   origin: pr_diff
-  description: Execute module with mocked deps and verify defaultLayer provides Config
-    and Bus layers at runtime
+  description: Execute module with mocked deps and verify defaultLayer provides Config and Bus layers at runtime
 - id: loadskills_is_effect_generator
   type: fail_to_pass
   origin: pr_diff
@@ -30,8 +28,7 @@ checks:
 - id: static_config_facades_removed
   type: fail_to_pass
   origin: pr_diff
-  description: Config.get() and Config.directories() static facades removed in favor
-    of yielded instance
+  description: Config.get() and Config.directories() static facades removed in favor of yielded instance
 - id: effect_run_promise_removed
   type: fail_to_pass
   origin: pr_diff
@@ -120,62 +117,53 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Syntax check skill/discovery.ts using Node.js — dependency of skill/index.ts
+- id: test_ci_unit_run_unit_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: unit / Run unit tests (scoped to packages/opencode)'
+- id: test_ci_typecheck_run_typecheck
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: typecheck / Run typecheck'
 rubric:
 - rule: Use `Effect.fnUntraced` for internal helpers.
   source:
     path: packages/opencode/AGENTS.md
     lines: 16-17
-  evidence: The helper functions `add`, `scan`, and `loadSkills` are wrapped in `Effect.fnUntraced(function*
-    (...) { ... })` instead of using `Effect.gen` or plain async functions.
+  evidence: The helper functions `add`, `scan`, and `loadSkills` are wrapped in `Effect.fnUntraced(function* (...) { ... })` instead of using `Effect.gen` or plain async functions.
   category: architecture
 - rule: Avoid `try`/`catch` where possible
   source:
     path: AGENTS.md
     lines: 11-12
-  evidence: 'The gold solution uses `Effect.tryPromise({ try: ..., catch: ... })`
-    and `Effect.catch` instead of native `try`/`catch` blocks for error handling.'
+  evidence: 'The gold solution uses `Effect.tryPromise({ try: ..., catch: ... })` and `Effect.catch` instead of native `try`/`catch` blocks for error handling.'
   category: style
 - rule: Prefer single word names for variables and functions.
   source:
     path: AGENTS.md
     lines: 21-22
-  evidence: The gold solution introduces single-word variable names like `bus`, `config`,
-    `err`, and `md` when refactoring the functions.
+  evidence: The gold solution introduces single-word variable names like `bus`, `config`, `err`, and `md` when refactoring the functions.
   category: naming
 distractors:
 - rule: Use `Effect.gen(function* () { ... })` for composition.
   collision_type: rule_conflict
-  why_distracting: The rule suggests using `Effect.gen(function* () { ... })` for
-    composition. An agent might wrap the helper functions in `Effect.gen` instead
-    of `Effect.fnUntraced`, which violates the specific instruction for internal helpers.
+  why_distracting: The rule suggests using `Effect.gen(function* () { ... })` for composition. An agent might wrap the helper functions in `Effect.gen` instead of `Effect.fnUntraced`, which violates the specific instruction for internal helpers.
   severity: high
   source:
     path: packages/opencode/AGENTS.md
     lines: 15-16
-- rule: Prefer `FileSystem.FileSystem` instead of raw `fs/promises` for effectful
-    file I/O.
+- rule: Prefer `FileSystem.FileSystem` instead of raw `fs/promises` for effectful file I/O.
   collision_type: architecture_boundary
-  why_distracting: The rule says to prefer `FileSystem.FileSystem` instead of raw
-    `fs/promises`. The existing code uses `Glob.scan` and `Filesystem.isDir`. An agent
-    might attempt to rewrite these using Effect's `FileSystem` module, which is out
-    of scope and crosses an architecture boundary for this specific dependency injection
-    fix.
+  why_distracting: The rule says to prefer `FileSystem.FileSystem` instead of raw `fs/promises`. The existing code uses `Glob.scan` and `Filesystem.isDir`. An agent might attempt to rewrite these using Effect's `FileSystem` module, which is out of scope and crosses an architecture boundary for this specific dependency injection fix.
   severity: medium
   source:
     path: packages/opencode/AGENTS.md
     lines: 38-39
 - rule: Prefer functional array methods (flatMap, filter, map) over for loops
   collision_type: rule_conflict
-  why_distracting: The rule says to prefer functional array methods (flatMap, filter,
-    map) over for loops. The original code uses `Promise.all(matches.map(...))`. An
-    agent might try to keep `.map()` inside an Effect context, but the correct Effect
-    pattern is to use `Effect.forEach` with concurrency options.
+  why_distracting: The rule says to prefer functional array methods (flatMap, filter, map) over for loops. The original code uses `Promise.all(matches.map(...))`. An agent might try to keep `.map()` inside an Effect context, but the correct Effect pattern is to use `Effect.forEach` with concurrency options.
   severity: medium
   source:
     path: AGENTS.md
     lines: 15-16
-hierarchy_analysis: The agent must synthesize rules from both `AGENTS.md` and `packages/opencode/AGENTS.md`.
-  The root config provides general style guidelines (avoid try/catch, single-word
-  naming), while the package-level config provides highly specific Effect migration
-  patterns. The agent must prioritize the package-level `Effect.fnUntraced` rule over
-  the general `Effect.gen` rule for internal helpers.
+hierarchy_analysis: The agent must synthesize rules from both `AGENTS.md` and `packages/opencode/AGENTS.md`. The root config provides general style guidelines (avoid try/catch, single-word naming), while the package-level config provides highly specific Effect migration patterns. The agent must prioritize the package-level `Effect.fnUntraced` rule over the general `Effect.gen` rule for internal helpers.

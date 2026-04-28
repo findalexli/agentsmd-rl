@@ -20,13 +20,11 @@ checks:
 - id: agents_md_smoke_test_gotchas_syntax
   type: fail_to_pass
   origin: pr_diff
-  description: AGENTS.md Test Gotchas section must use correct new-test -- --args
-    syntax
+  description: AGENTS.md Test Gotchas section must use correct new-test -- --args syntax
 - id: string_render_result_enables_headers
   type: pass_to_pass
   origin: pr_diff
-  description: RenderResult with string input produces Content-Length and ETag headers
-    (not with Buffer)
+  description: RenderResult with string input produces Content-Length and ETag headers (not with Buffer)
 - id: handler_not_stub
   type: pass_to_pass
   origin: static
@@ -47,22 +45,26 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Repo unit tests pass
+- id: test_ci_build_pnpm
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: build / '
+- id: test_ci_build_pnpm_2
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: build / '
 rubric:
-- rule: Update the `pnpm new-test` command syntax to properly forward arguments to
-    the underlying script.
+- rule: Update the `pnpm new-test` command syntax to properly forward arguments to the underlying script.
   source:
     path: AGENTS.md
     lines: 148-158
-  evidence: The gold solution updates the `pnpm new-test` command syntax in the 'Generate
-    tests non-interactively' section to use `-- --args` instead of `--args`.
+  evidence: The gold solution updates the `pnpm new-test` command syntax in the 'Generate tests non-interactively' section to use `-- --args` instead of `--args`.
   category: documentation
-- rule: Ensure all instances of `pnpm new-test` in the documentation correctly use
-    `-- --args`.
+- rule: Ensure all instances of `pnpm new-test` in the documentation correctly use `-- --args`.
   source:
     path: AGENTS.md
     lines: 400-405
-  evidence: The gold solution updates the `pnpm new-test` command syntax in the 'Test
-    Gotchas' section for the quick smoke testing tip.
+  evidence: The gold solution updates the `pnpm new-test` command syntax in the 'Test Gotchas' section for the quick smoke testing tip.
   category: documentation
 config_edits:
 - path: AGENTS.md
@@ -72,26 +74,16 @@ config_edits:
 distractors:
 - rule: Generating tests using `pnpm new-test` is mandatory.
   collision_type: rule_conflict
-  why_distracting: The config explicitly states that generating tests is mandatory,
-    which might lead the agent to waste time scaffolding a new test for the regression.
-    However, the gold solution only fixes the code and updates the documentation without
-    adding a test.
+  why_distracting: The config explicitly states that generating tests is mandatory, which might lead the agent to waste time scaffolding a new test for the regression. However, the gold solution only fixes the code and updates the documentation without adding a test.
   severity: high
   source:
     path: AGENTS.md
     lines: 148-148
-- rule: 'Default agent rule: If you are changing Next.js source or integration tests,
-    start `pnpm --filter=next dev` in a separate terminal session before making edits'
+- rule: 'Default agent rule: If you are changing Next.js source or integration tests, start `pnpm --filter=next dev` in a separate terminal session before making edits'
   collision_type: meta_confusion
-  why_distracting: The config instructs the agent to start a background dev server
-    before making edits and to explicitly state why if skipped. This behavioral rule
-    is irrelevant for the benchmark environment and might cause the agent to hang
-    or output unnecessary explanations.
+  why_distracting: The config instructs the agent to start a background dev server before making edits and to explicitly state why if skipped. This behavioral rule is irrelevant for the benchmark environment and might cause the agent to hang or output unnecessary explanations.
   severity: medium
   source:
     path: AGENTS.md
     lines: 105-108
-hierarchy_analysis: The configuration is flat, consisting of a single AGENTS.md file
-  (and its symlink CLAUDE.md). The primary challenge is not navigating a deep hierarchy,
-  but rather the meta-referential nature of the task, where the agent must edit the
-  very file that provides its instructions.
+hierarchy_analysis: The configuration is flat, consisting of a single AGENTS.md file (and its symlink CLAUDE.md). The primary challenge is not navigating a deep hierarchy, but rather the meta-referential nature of the task, where the agent must edit the very file that provides its instructions.

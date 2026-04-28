@@ -317,3 +317,22 @@ def test_package_json_node_engine_intact():
     """The repo's Node engine constraint should not have changed."""
     pkg = json.loads(PKG_JSON.read_text())
     assert pkg.get("engines", {}).get("node") == ">=18"
+
+# === CI-mined tests (taskforge.ci_check_miner) ===
+def test_ci_build_playwright_driver_npm():
+    """pass_to_pass | CI job 'build-playwright-driver' → step ''"""
+    r = subprocess.run(
+        ["bash", "-lc", 'npm ci'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step '' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_build_playwright_driver_npm_2():
+    """pass_to_pass | CI job 'build-playwright-driver' → step ''"""
+    r = subprocess.run(
+        ["bash", "-lc", 'npm run build'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step '' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")

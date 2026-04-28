@@ -1,0 +1,92 @@
+version: "2.0"
+
+source:
+  repo: "huggingface/transformers"
+  pr: 45598
+  base_commit: "a804c74a9fc0518c1fa992decdac485c17f87479"
+  merge_commit: "7e435bef05ce0f699f56ce58d54fd3320c220a43"
+
+task:
+  kind: code_fix
+
+checks:
+  - id: test_get_interface_used_in_forward
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Affected attention forward methods import and use ALL_ATTENTION_FUNCTIONS.get_interface() for dispatch"
+
+  - id: test_old_dispatch_removed_from_forward
+    type: fail_to_pass
+    origin: pr_diff
+    description: "No affected attention forward method uses the old manual _attn_implementation dispatch pattern"
+
+  - id: test_get_interface_behavior
+    type: pass_to_pass
+    origin: repo_tests
+    description: "ALL_ATTENTION_FUNCTIONS.get_interface() correctly dispatches attention functions and validates keys"
+
+  - id: test_ruff_check
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Changed model files pass ruff style checks"
+
+  - id: test_model_attention_via_pytest
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Attention dispatch works correctly when imported and tested under a real pytest runner"
+
+rubric:
+  - rule: "When a modular file is present, generated files should not be edited, as changes will be overwritten by make fix-repo! Instead, edit the modular file."
+    source:
+      path: "AGENTS.md"
+      lines: "62"
+      commit: "a804c74a9fc0518c1fa992decdac485c17f87479"
+    evidence: "The gold patch edits both modular_*.py and modeling_*.py files for each model, because make fix-repo propagates modular edits to modeling files automatically"
+    category: "architecture"
+    verification: llm_judge
+
+  - rule: "make style or make fix-repo should be run as the final step before opening a PR."
+    source:
+      path: "AGENTS.md"
+      lines: "15"
+      commit: "a804c74a9fc0518c1fa992decdac485c17f87479"
+    evidence: "The gold patch passes ruff check; style tools should be run as final step"
+    category: "style"
+    verification: programmatic
+
+  - rule: "If a model has a modular file, the modeling file should never be edited directly! Instead, changes should be made in the modular file, and then you should run make fixup to update the modeling file automatically."
+    source:
+      path: ".github/copilot-instructions.md"
+      lines: "37"
+      commit: "a804c74a9fc0518c1fa992decdac485c17f87479"
+    evidence: "All three models have modular files; the fix should originate in the modular files and propagate to modeling files via make fixup or make fix-repo"
+    category: "architecture"
+    verification: llm_judge
+
+  - rule: "After making changes, you should usually run make fixup to ensure any copies and modular files are updated, and then test all affected models."
+    source:
+      path: ".github/copilot-instructions.md"
+      lines: "41"
+      commit: "a804c74a9fc0518c1fa992decdac485c17f87479"
+    evidence: "The fix touches 3 models (gemma4, modernbert, moonshine_streaming); make fixup ensures consistency across modular and generated files"
+    category: "testing"
+    verification: llm_judge
+
+distractors:
+  - rule: "PRs should be as brief as possible. Bugfix PRs in particular can often be only one or two lines long, and do not need large comments, docstrings or new functions in this case."
+    source:
+      path: ".github/copilot-instructions.md"
+      lines: "22"
+      commit: "a804c74a9fc0518c1fa992decdac485c17f87479"
+    collision_type: rule_conflict
+    why_distracting: "The PR spans 6 files with ~37 lines total, which might seem large relative to the 'one or two lines' guideline, but the change is identical across all files"
+    severity: low
+
+  - rule: "Do not edit a # Copied from block, as it will be reverted by make fix-repo. Ideally you should edit the code it's copying from and propagate the change."
+    source:
+      path: "AGENTS.md"
+      lines: "56"
+      commit: "a804c74a9fc0518c1fa992decdac485c17f87479"
+    collision_type: scope_ambiguity
+    why_distracting: "The attention dispatch change is not in a Copied from block; the modular+modeling mechanism (not Copied from) applies here"
+    severity: medium

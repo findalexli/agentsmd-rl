@@ -427,3 +427,14 @@ def test_qwen35_mtp_calls_init_verifier():
     assert "cls.init_reasoning_token_verifier()" in src or \
            "self.init_reasoning_token_verifier()" in src, \
         "init_reasoning_token_verifier() not called in TestQwen35FP4MTP.setUpClass"
+
+# === CI-mined test (taskforge.ci_check_miner) ===
+def test_ci_precommit_ruff():
+    """pass_to_pass | Run ruff via pre-commit as a real CI tool (bash -lc form)"""
+    r = subprocess.run(["pip", "install", "pre-commit", "-q"], capture_output=True, text=True, timeout=120, cwd=REPO)
+    assert r.returncode == 0, f"Failed to install pre-commit: {r.stderr[-500:]}"
+    r = subprocess.run(
+        ["bash", "-lc", "cd /workspace/sglang && SKIP='no-commit-to-branch,lychee,clang-format,mirrors-clang-format,nbstripout' pre-commit run ruff --all-files"],
+        capture_output=True, text=True, timeout=300, env=os.environ,
+    )
+    assert r.returncode == 0, f"ruff (bash -lc) failed:\n{r.stderr[-500:]}{r.stdout[-500:]}"

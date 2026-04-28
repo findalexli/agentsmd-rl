@@ -427,3 +427,4 @@ def test_workflow_md_documents_one_step():
     assert "one step" in content.lower(), (
         "workflow.md should describe the one-step alternative"
     )
+

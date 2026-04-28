@@ -2,7 +2,11 @@
 
 ## Summary
 
-When using `Bun.serve()` with a `unix` option that results in an unparseable URL (e.g., passing a non-string value), accessing `server.url` causes a hard crash (segfault) instead of throwing a proper JavaScript error.
+When using `Bun.serve()` with a `unix` option that results in an unparseable URL (e.g., passing a non-string value such as the `Bun` object itself), accessing `server.url` causes a hard crash (segfault) instead of throwing a proper JavaScript error. The stringified value `"unix://[object Bun]"` is not parseable by the WHATWG URL parser.
+
+## Relevant Code
+
+The crash is in the C++ bindings. The function `BunString__toJSDOMURL` converts Bun strings to JavaScript DOMURL objects. The code path first calls `toJSNewlyCreated` to construct a JavaScript wrapper around the DOMURL, then uses `jsCast<JSDOMURL*>` to perform a downcast. On the success path, execution continues through `reportExtraMemoryAllocated` and `RELEASE_AND_RETURN`.
 
 ## Reproduction
 
@@ -24,11 +28,12 @@ Accessing `server.url` when the URL is invalid should throw a proper JavaScript 
 
 1. Accessing `server.url` with an invalid URL must throw a JavaScript exception instead of crashing
 2. The fix must be a pure insertion — no existing lines may be modified or removed
-3. The exception-handling code for the URL conversion function must prevent control flow from continuing with an invalid JSValue after the DOMURL object creation fails, which currently causes a null dereference crash
+3. The success path (through `reportExtraMemoryAllocated` and `RELEASE_AND_RETURN`) must remain reachable when the URL is valid
 
 ## Code Style Requirements
 
 Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
 
-- `prettier (JS/TS/JSON/Markdown formatter)`
-- `typos (spell-check)`
+- `prettier` (JS/TS/JSON/Markdown formatter)
+- `typos` (spell-check)
+- `clang-format` (C++ formatter)

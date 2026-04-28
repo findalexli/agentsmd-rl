@@ -88,9 +88,12 @@ def test_logic_structure():
         if "ignore_drop_queries_probability" in line:
             prob_line = i
 
-    if mv_line != -1 and prob_line != -1:
-        assert mv_line < prob_line, \
-            "The refreshable materialized view check should happen before the probability condition"
+    assert mv_line != -1, \
+        "Missing refreshable materialized view check (StorageMaterializedView + dynamic_cast)"
+    assert prob_line != -1, \
+        "Missing ignore_drop_queries_probability reference"
+    assert mv_line < prob_line, \
+        "The refreshable materialized view check should happen before the probability condition"
 
 
 def test_cpp_syntax_valid():
@@ -146,8 +149,6 @@ def test_repo_clang_tidy_basic():
         capture_output=True, text=True, timeout=120, cwd=REPO
     )
 
-    # Check for fatal errors that would indicate syntax issues
-    fatal_error_pattern = r"fatal error:.*file not found"
     combined = r.stdout + r.stderr
 
     # We expect "file not found" for includes since we're not in a proper build context
@@ -161,12 +162,6 @@ def test_repo_code_style_basic():
     with open(TARGET_FILE, 'r') as f:
         content = f.read()
         lines = content.split('\n')
-
-    # Check that file doesn't have tabs (basic style check)
-    for i, line in enumerate(lines, 1):
-        if '\t' in line:
-            # Allow tabs in certain contexts (like makefiles, embedded scripts)
-            pass  # Just check, don't assert - this is a p2p test
 
     # Check that file doesn't have trailing whitespace
     trailing_ws_count = 0

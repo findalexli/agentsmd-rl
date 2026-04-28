@@ -35,11 +35,11 @@ When the updates are complete, the codebase should reflect that `OnPush` is the 
    - References the `Eager` strategy (the renamed replacement for the old `Default` strategy)
 
 3. The documentation and configuration files no longer describe OnPush as a strategy that must be manually enabled. Specifically:
-   - `adev/src/content/best-practices/runtime-performance/skipping-subtrees.md` should describe OnPush as the default (not as a manual setting)
-   - `adev/src/content/tutorials/signals/steps/1-creating-your-first-signal/README.md` should not have a callout about manually setting OnPush
-   - `adev/src/context/airules.md` should not instruct agents to set OnPush in @Component decorators
-   - `adev/src/context/guidelines.md` should not instruct agents to set OnPush in @Component decorators
-   - `adev/src/context/angular-20.mdc` should not instruct agents to always set OnPush
+   - `adev/src/content/best-practices/runtime-performance/skipping-subtrees.md` should describe OnPush as the default (not as a manual setting) — the current version includes a code example with `changeDetection: ChangeDetectionStrategy.OnPush,` showing how to manually set it
+   - `adev/src/content/tutorials/signals/steps/1-creating-your-first-signal/README.md` should not have the callout titled "About ChangeDetectionStrategy.OnPush" about manually setting OnPush
+   - `adev/src/context/airules.md` currently has the line `changeDetection: ChangeDetectionStrategy.OnPush` telling agents to set OnPush in @Component decorators — this must be removed
+   - `adev/src/context/guidelines.md` currently has the line `changeDetection: ChangeDetectionStrategy.OnPush` telling agents to set OnPush in @Component decorators — this must be removed
+   - `adev/src/context/angular-20.mdc` currently instructs "Always set `changeDetection: ChangeDetectionStrategy.OnPush`" in components — this must be removed
 
 4. The documentation accurately describes `OnPush` as the default strategy and `Eager` as an optional mode. Specifically:
    - The first mention of `OnPush` in `skipping-subtrees.md` should be in context with the word "default"

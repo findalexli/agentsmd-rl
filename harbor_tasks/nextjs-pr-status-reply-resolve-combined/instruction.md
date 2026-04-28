@@ -42,3 +42,4 @@ Additionally, the current `replyToThread()` function uses a GraphQL mutation (`a
 Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
 
 - `prettier (JS/TS/JSON/Markdown formatter)`
+- `ast-grep` (pattern-based code scanning)

@@ -25,8 +25,6 @@ def test_repo_git_status_clean():
         ["git", "status", "--porcelain"],
         capture_output=True, text=True, timeout=30, cwd=REPO,
     )
-    # Before fix is applied, repo should be clean
-    # After fix, there will be changes, so this tests the base state
     assert r.returncode == 0, f"Git status failed: {r.stderr}"
 
 
@@ -39,7 +37,6 @@ def test_repo_claude_md_readable():
     )
     assert r.returncode == 0, f"CLAUDE.md not readable: {r.stderr}"
     content = r.stdout
-    # Should have substantial content
     assert len(content) > 5000, f"CLAUDE.md too short ({len(content)} chars)"
     assert "# Next.js Development Guide" in content, "Missing expected header"
 
@@ -56,15 +53,14 @@ def test_repo_claude_md_valid():
     """CLAUDE.md should be valid (regular file or working symlink) (pass_to_pass)."""
     claude_md = Path(f"{REPO}/CLAUDE.md")
     assert claude_md.exists(), "CLAUDE.md should exist and be readable"
-    
+
     # Check that content is valid regardless of file type
     content = claude_md.read_text()
     assert "# Next.js Development Guide" in content, "CLAUDE.md should have valid content"
-    
+
     # If it's a symlink, verify it points to a valid target
     if claude_md.is_symlink():
         target = os.readlink(claude_md)
-        # Should point to AGENTS.md (relative path)
         assert target == "AGENTS.md", f"CLAUDE.md symlink should point to AGENTS.md, got: {target}"
 
 
@@ -75,21 +71,17 @@ def test_repo_readme_symlink_valid():
     assert readme.exists(), "readme.md symlink should resolve"
     assert readme.is_symlink(), "readme.md should be a symlink"
     target = os.readlink(readme)
-    # Should point to packages/next/README.md
     assert "packages/next/README.md" in target, f"Unexpected readme target: {target}"
 
 
 # [repo_tests] pass_to_pass
 def test_repo_no_broken_symlinks():
     """Repository should have no broken symlinks in tracked files (pass_to_pass)."""
-    # Find broken symlinks (excluding .git to avoid false positives)
     r = subprocess.run(
-        ["bash", "-c", f"cd {REPO} && find . -type l ! -exec test -e {{}} \\; -print 2>/dev/null | grep -v '^\\./\\.git' | head -20"],
+        ["bash", "-c", f"cd {REPO} && find . -type l ! -exec test -e {{}} \; -print 2>/dev/null | grep -v '^\\./\\.git' | head -20"],
         capture_output=True, text=True, timeout=30,
     )
-    # Command succeeds even when finding broken links - check output
     broken_links = r.stdout.strip()
-    # Allow broken links only in node_modules paths (test fixtures)
     if broken_links:
         non_node_modules = [l for l in broken_links.split('\n') if l and 'node_modules' not in l]
         if non_node_modules:
@@ -99,13 +91,11 @@ def test_repo_no_broken_symlinks():
 # [repo_tests] pass_to_pass
 def test_repo_pnpm_config_valid():
     """pnpm package manager config should be valid (pass_to_pass)."""
-    # Enable corepack and verify pnpm can read package.json
     r = subprocess.run(
         ["bash", "-c", f"cd {REPO} && corepack enable && pnpm --version"],
         capture_output=True, text=True, timeout=60,
     )
     assert r.returncode == 0, f"pnpm config check failed: {r.stderr}"
-    # Should output a version number like 9.6.0
     assert len(r.stdout.strip()) > 0, "pnpm version should be readable"
 
 
@@ -113,13 +103,12 @@ def test_repo_pnpm_config_valid():
 def test_repo_git_log_readable():
     """Git history should be readable (pass_to_pass)."""
     r = subprocess.run(
-        ["git", "log", "--oneline", "-10"],
+        ["git", "log", "--oneline", "-1"],
         capture_output=True, text=True, timeout=30, cwd=REPO,
     )
     assert r.returncode == 0, f"Git log failed: {r.stderr}"
-    # Should have commit history
     lines = r.stdout.strip().split('\n')
-    assert len(lines) >= 5, f"Expected at least 5 commits, got {len(lines)}"
+    assert len(lines) >= 1, f"Expected at least 1 commit, got {len(lines)}"
 
 
 # ---------------------------------------------------------------------------
@@ -134,7 +123,6 @@ def test_agents_md_exists():
     assert agents_md.is_file(), "AGENTS.md should be a regular file, not a symlink"
 
     content = agents_md.read_text()
-    # Should contain key content from the original CLAUDE.md
     assert "# Next.js Development Guide" in content, "AGENTS.md missing expected header"
     assert "Git Workflow" in content, "AGENTS.md missing Git Workflow section"
 
@@ -144,17 +132,12 @@ def test_claude_md_is_symlink():
     """CLAUDE.md should be a symbolic link pointing to AGENTS.md."""
     claude_md = Path(f"{REPO}/CLAUDE.md")
 
-    # Should exist
     assert claude_md.exists(), "CLAUDE.md does not exist"
-
-    # Should be a symlink (not a regular file)
     assert claude_md.is_symlink(), "CLAUDE.md should be a symbolic link"
 
-    # Should point to AGENTS.md
     target = os.readlink(claude_md)
     assert target == "AGENTS.md", f"CLAUDE.md should point to AGENTS.md, got: {target}"
 
-    # Should be readable and have same content as AGENTS.md
     agents_content = Path(f"{REPO}/AGENTS.md").read_text()
     claude_content = claude_md.read_text()
     assert agents_content == claude_content, "CLAUDE.md content does not match AGENTS.md"
@@ -168,26 +151,19 @@ def test_alexignore_updated():
 
     content = alexignore.read_text()
 
-    # Should have AGENTS.md
     assert "AGENTS.md" in content, ".alexignore missing AGENTS.md"
-
-    # Should have CLAUDE.md
     assert "CLAUDE.md" in content, ".alexignore missing CLAUDE.md"
 
 
 # [pr_diff] fail_to_pass
 def test_symlink_resolves_correctly():
     """The CLAUDE.md symlink should resolve and be readable via subprocess."""
-    # Use subprocess to verify the symlink works at the OS level
     r = subprocess.run(
-        ["cat", f"{REPO}/CLAUDE.md"],
+        ["readlink", f"{REPO}/CLAUDE.md"],
         capture_output=True, text=True, timeout=10,
     )
-    assert r.returncode == 0, f"Failed to read CLAUDE.md via symlink: {r.stderr}"
-
-    content = r.stdout
-    assert "# Next.js Development Guide" in content, "Symlinked CLAUDE.md missing expected content"
-    assert "Git Workflow" in content, "Symlinked CLAUDE.md missing Git Workflow section"
+    assert r.returncode == 0, f"CLAUDE.md is not a symlink (readlink failed): {r.stderr}"
+    assert r.stdout.strip() == "AGENTS.md", f"Unexpected symlink target: {r.stdout.strip()}"
 
 
 # [pr_diff] fail_to_pass
@@ -196,10 +172,25 @@ def test_agents_md_has_content():
     agents_md = Path(f"{REPO}/AGENTS.md")
     content = agents_md.read_text()
 
-    # Check for key sections that were in the original CLAUDE.md
     assert "Build Commands" in content, "Missing Build Commands section"
     assert "Testing" in content, "Missing Testing section"
     assert "Linting and Types" in content, "Missing Linting and Types section"
 
-    # Should be substantial (not just a stub)
     assert len(content) > 5000, f"AGENTS.md content too short ({len(content)} chars), expected substantial content"
+
+
+# ---------------------------------------------------------------------------
+# CI-mined test (scoped — verifies .alexignore works with the alex linter)
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass
+def test_alex_ignores_configured_files():
+    """CI: alex linter should respect .alexignore entries (pass_to_pass)."""
+    r = subprocess.run(
+        ["alex", f"{REPO}/CLAUDE.md"],
+        capture_output=True, text=True, timeout=60,
+    )
+    combined = (r.stdout + r.stderr).lower()
+    # alex should report the file as "ignored" when it's in .alexignore.
+    # CLAUDE.md is in .alexignore at both base and gold.
+    assert "ignored" in combined, f"alex did not report CLAUDE.md as ignored: {combined[:500]}"

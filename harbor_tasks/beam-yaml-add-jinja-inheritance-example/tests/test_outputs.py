@@ -429,3 +429,88 @@ print("PASS")
 """)
     assert r.returncode == 0, f"Input data check failed: {r.stderr}"
     assert "PASS" in r.stdout
+
+# === CI-mined test (scoped to YAML examples, uses real test runner) ===
+def test_ci_jinja_yaml_template_validation():
+    """CI-scoped: run pytest on Jinja YAML template validation (pass_to_pass)."""
+    import shutil
+    sdk_python = str(Path(REPO) / "sdks" / "python")
+    test_file = Path("/tmp") / "test_jinja_validation_ci.py"
+    test_file.write_text(r'''
+import os, sys
+import yaml
+import pytest
+from jinja2 import Environment, FileSystemLoader
+
+SDK = r"""''' + sdk_python + r'''"""
+
+TEMPLATE_VARS = {
+    "readFromTextTransform": {"path": "/tmp/test.txt"},
+    "mapToFieldsSplitConfig": {"language": "python", "fields": {"value": "1"}},
+    "explodeTransform": {"fields": "word"},
+    "combineTransform": {"group_by": "word", "combine": {"value": "sum"}},
+    "mapToFieldsCountConfig": {"language": "python", "fields": {"output": "str(word)"}},
+    "writeToTextTransform": {"path": "/tmp/out.txt"},
+}
+
+def test_include_template_renders():
+    """Include template renders to valid YAML with core transforms."""
+    env = Environment(loader=FileSystemLoader(SDK))
+    template = env.get_template(
+        "apache_beam/yaml/examples/transforms/jinja/include/wordCountInclude.yaml")
+    rendered = template.render(**TEMPLATE_VARS)
+    data = yaml.safe_load(rendered)
+    assert data is not None, "Rendered YAML must not be None"
+    types = [t.get("type") for t in data["pipeline"]["transforms"]]
+    for expected in ["ReadFromText", "MapToFields", "Explode", "Combine",
+                       "WriteToText"]:
+        assert expected in types, f"Missing {expected} transform, got: {types}"
+
+def test_import_template_renders():
+    """Import template renders to valid YAML with core transforms."""
+    env = Environment(loader=FileSystemLoader(SDK))
+    template = env.get_template(
+        "apache_beam/yaml/examples/transforms/jinja/import/wordCountImport.yaml")
+    rendered = template.render(**TEMPLATE_VARS)
+    data = yaml.safe_load(rendered)
+    assert data is not None, "Rendered YAML must not be None"
+    types = [t.get("type") for t in data["pipeline"]["transforms"]]
+    for expected in ["ReadFromText", "MapToFields", "Explode", "Combine",
+                       "WriteToText"]:
+        assert expected in types, f"Missing {expected} transform, got: {types}"
+
+def test_inheritance_template_if_present():
+    """If inheritance example exists, it must render to valid YAML with Combine."""
+    child = os.path.join(
+        SDK,
+        "apache_beam/yaml/examples/transforms/jinja/inheritance/"
+        "wordCountInheritance.yaml")
+    if not os.path.exists(child):
+        pytest.skip("Inheritance example not yet created")
+    env = Environment(loader=FileSystemLoader(SDK))
+    template = env.get_template(
+        "apache_beam/yaml/examples/transforms/jinja/inheritance/"
+        "wordCountInheritance.yaml")
+    rendered = template.render(**TEMPLATE_VARS)
+    data = yaml.safe_load(rendered)
+    assert data is not None, "Rendered YAML must not be None"
+    types = [t.get("type") for t in data["pipeline"]["transforms"]]
+    for expected in ["ReadFromText", "MapToFields", "Explode", "WriteToText"]:
+        assert expected in types, f"Missing base {expected}, got: {types}"
+    assert "Combine" in types, (
+        f"Combine must be injected by inheritance, got: {types}")
+''')
+    r = subprocess.run(
+        ["bash", "-lc",
+         f"cd {REPO} && python3 -m pytest {test_file} -xvs --tb=short 2>&1"],
+        capture_output=True, text=True, timeout=120,
+    )
+    try:
+        test_file.unlink()
+    except OSError:
+        pass
+    if r.returncode != 0:
+        raise AssertionError(
+            f"CI Jinja validation failed (rc={r.returncode}):\n"
+            f"stdout: {r.stdout[-2000:]}\nstderr: {r.stderr[-2000:]}"
+        )

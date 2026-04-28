@@ -51,7 +51,7 @@ def test_spec_files_parse():
             f"Syntax error in {spec_file.name}: {stderr[:500]}"
 
 
-def test_actions_exports_slug_from_url():
+def test_actions_has_slug_from_url():
     """actions.ts exports a function to extract slug from URL; verify by running TypeScript typecheck."""
     assert ACTIONS_FILE.exists(), f"actions.ts not found at {ACTIONS_FILE}"
 
@@ -333,3 +333,4 @@ def test_session_id_from_url_still_present():
     assert "export function sessionIDFromUrl(url: string)" in content or \
            "export const sessionIDFromUrl" in content, \
         "sessionIDFromUrl should still be exported from actions.ts"
+

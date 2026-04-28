@@ -17,10 +17,16 @@ source:
   - packages/opencode/specs/effect/schema.md
   pr: 23744
 checks:
-- id: test_effect_schema_migration_probe
+- id: test_effect_schema_migration_leaves
   type: fail_to_pass
   origin: pr_diff
-  description: 'OutputFormatText / OutputFormatJsonSchema are Schema.Class instances, Format is a Schema.Union, and all three expose a .zod accessor whose safeParse mirrors the original Zod behaviour. Also verifies that SessionPrompt.PromptInput continues to accept the format field after callers are updated to go through .zod.optional().
+  description: 'OutputFormatText / OutputFormatJsonSchema are Schema.Class instances with constructible instances and expose a working .zod accessor whose safeParse mirrors the original Zod behaviour including retryCount defaults and validation.
+
+    '
+- id: test_format_migration_regression
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'Format is a Schema.Union with .zod accessor that handles the discriminated union. Format.safeParse is no longer directly exposed. SessionPrompt.PromptInput continues to accept the format field after callers are updated to go through .zod.optional().
 
     '
 - id: test_structured_output_test

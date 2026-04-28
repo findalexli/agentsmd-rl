@@ -29,6 +29,10 @@ Converting the HTML object to a string (via `str(html)` or `print(html)`) should
 - `.agents/skills/gradio/SKILL.md` — Agent skill documentation (must be updated to reflect the new parameter in the HTML component section)
 - `test/components/test_html.py` — Existing backend tests for the HTML component. The repo's HTML test suite (run as part of CI / `bash scripts/run_backend_tests.sh`) asserts on the dictionary returned by `HTML().get_config()`. Because the base `Component` class auto-includes constructor parameters in that config, adding `server_functions` to `__init__` will cause the existing assertion to fail unless the expected dictionary in this test file is updated to include `"server_functions": None`. Update this test file accordingly so existing backend tests continue to pass.
 
+## Code Style Requirements
+
+This project uses ruff for Python linting and formatting. All Python code must pass `ruff check` (linting) and `ruff format --check` (formatting) without errors.
+
 ## Documentation Requirements
 
 When updating `.agents/skills/gradio/SKILL.md`, document the `server_functions` parameter within the HTML component signature section. The HTML component documentation section uses a header with the format:

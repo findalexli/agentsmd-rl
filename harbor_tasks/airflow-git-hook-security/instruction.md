@@ -43,7 +43,7 @@ The URL processing method handles different types of repository URLs (HTTPS, HTT
 
 When injecting credentials into URLs, the protocol prefix (e.g., `https://`) is replaced throughout the entire URL string rather than only at the beginning. A URL containing the protocol string more than once will have every occurrence modified, corrupting the URL.
 
-**Expected behavior:** Only the first occurrence of the protocol prefix should be replaced. For a URL like `https://github.com/apache/airflow.git` with auth credentials injected, the resulting URL should contain exactly one `https://` prefix (and zero standalone `http://` prefixes).
+**Expected behavior:** Only the first occurrence of the protocol prefix should be replaced. For a URL like `https://github.com/apache/airflow.git` with auth credentials injected, the resulting URL should contain exactly one `https://` prefix (and zero standalone `http://` prefixes). When a URL contains the protocol string in a query parameter (e.g., `https://example.com/repo.git?redirect=https://example.com/other`), only the leading `https://` must be replaced; the query parameter `?redirect=https://example.com/other` must remain intact.
 
 ## Testing
 

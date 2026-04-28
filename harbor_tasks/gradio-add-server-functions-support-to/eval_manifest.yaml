@@ -48,8 +48,7 @@ checks:
 - id: server_functions_decorated_and_attached
   type: fail_to_pass
   origin: pr_diff
-  description: Functions in server_functions are decorated with @server and attached
-    to instance
+  description: Functions in server_functions are decorated with @server and attached to instance
 - id: js_on_load_docstring_updated
   type: fail_to_pass
   origin: pr_diff
@@ -63,7 +62,7 @@ checks:
   origin: repo_tests
   description: HTML component without server_functions still works (regression test)
 - id: not_stub
-  type: pass_to_pass
+  type: fail_to_pass
   origin: static
   description: server_functions logic is not a stub (has real implementation)
 - id: skill_md_html_signature_updated
@@ -90,40 +89,35 @@ checks:
     path: AGENTS.md
     lines: '44'
     commit: 7c3fa2a6900cfa3c87cb61ffa9b34b75d1ae49ba
+- id: test_ci__storybook_build_generate_theme_css
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: :storybook-build / generate theme.css'
+- id: test_ci_hygiene_test_generate_notebooks
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: hygiene-test / Generate Notebooks'
 rubric:
-- rule: Backend components are located in `gradio/components/` and frontend code is
-    in `js/` with each component in its own subdirectory.
+- rule: Backend components are located in `gradio/components/` and frontend code is in `js/` with each component in its own subdirectory.
   source:
     path: AGENTS.md
     lines: 5-11
-  evidence: The gold solution correctly modifies the Python backend component in `gradio/components/html.py`
-    and the Svelte frontend components in `js/html/Index.svelte` and `js/html/shared/HTML.svelte`,
-    adhering
+  evidence: The gold solution correctly modifies the Python backend component in `gradio/components/html.py` and the Svelte frontend components in `js/html/Index.svelte` and `js/html/shared/HTML.svelte`, adhering
   category: architecture
 config_edits: []
 distractors:
-- rule: Target an issue. Every non-trivial PR should reference an existing GitHub
-    issue. If one doesn't exist, create it first.
+- rule: Target an issue. Every non-trivial PR should reference an existing GitHub issue. If one doesn't exist, create it first.
   collision_type: scope_ambiguity
-  why_distracting: The rule instructs contributors to target an existing GitHub issue
-    or create one if it doesn't exist. An agent might attempt to use GitHub CLI or
-    API tools to create an issue, which is out of scope for this code-generation task
-    and would waste execution time.
+  why_distracting: The rule instructs contributors to target an existing GitHub issue or create one if it doesn't exist. An agent might attempt to use GitHub CLI or API tools to create an issue, which is out of scope for this code-generation task and would waste execution time.
   severity: medium
   source:
     path: AGENTS.md
     lines: 16-17
 - rule: Use the PR template and disclose AI usage.
   collision_type: scope_ambiguity
-  why_distracting: The rule mandates filling out the PR template and disclosing AI
-    usage. The agent might try to create a PR or modify `.github/PULL_REQUEST_TEMPLATE.md`
-    to include its disclosure, which is outside the scope of implementing the requested
-    feature.
+  why_distracting: The rule mandates filling out the PR template and disclosing AI usage. The agent might try to create a PR or modify `.github/PULL_REQUEST_TEMPLATE.md` to include its disclosure, which is outside the scope of implementing the requested feature.
   severity: medium
   source:
     path: AGENTS.md
     lines: 19-24
-hierarchy_analysis: The configuration is a flat, single-file structure (`AGENTS.md`).
-  The primary challenge is not resolving config conflicts, but rather adhering to
-  the repository structure and correctly identifying the boundary between the Python
-  backend and Svelte frontend.
+hierarchy_analysis: The configuration is a flat, single-file structure (`AGENTS.md`). The primary challenge is not resolving config conflicts, but rather adhering to the repository structure and correctly identifying the boundary between the Python backend and Svelte frontend.

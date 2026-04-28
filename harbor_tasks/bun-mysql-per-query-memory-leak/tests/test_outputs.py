@@ -82,7 +82,7 @@ def _check_subprocess_compiles(zig_path: str) -> None:
     related to the fix and should not cause false failures.
     """
     r = subprocess.run(
-        ["zig", "ast-check", zig_path],
+        ["bash", "-lc", f"zig ast-check {zig_path}"],
         capture_output=True,
         text=True,
         timeout=120,

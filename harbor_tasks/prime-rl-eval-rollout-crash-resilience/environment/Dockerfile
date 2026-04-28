@@ -4,8 +4,8 @@ RUN rm -rf /var/lib/apt/lists/* && apt-get update && apt-get install -y \
     git curl ca-certificates build-essential tmux \
     && rm -rf /var/lib/apt/lists/*
 
-# Install test dependencies (numpy + pandas for eval_utils metrics)
-RUN pip install --no-cache-dir numpy pandas pyyaml
+# Install test dependencies (numpy + pandas for eval_utils metrics, verifiers + pyzmq for orchestrator imports)
+RUN pip install --no-cache-dir numpy pandas pyyaml verifiers pyzmq
 
 # Clone repo at base commit (BEFORE the fix) — shallow fetch for speed
 RUN git init /workspace \

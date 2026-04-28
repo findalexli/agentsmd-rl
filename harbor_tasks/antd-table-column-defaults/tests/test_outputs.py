@@ -318,3 +318,23 @@ def test_internal_tests_use_relative_imports():
     assert "from '..'" in content or "from '../" in content, \
         "Tests should use relative imports"
     assert "from 'antd'" not in content, "Tests should NOT use absolute 'antd' imports"
+
+# === CI-mined tests (taskforge.ci_check_miner) ===
+def test_ci_test_image_generate_image_snapshots():
+    """pass_to_pass | CI job 'test image' → step 'generate image snapshots'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'node node_modules/puppeteer/install.mjs'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'generate image snapshots' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+# === PR-added f2p tests (taskforge.test_patch_miner) ===
+def test_pr_added_supports_column_align_with_per_column_override_a():
+    """fail_to_pass | PR added test 'supports column align with per-column override and special columns' in 'components/table/__tests__/Table.test.tsx' (vitest_or_jest)"""
+    r = subprocess.run(
+        ["bash", "-lc", '(pnpm vitest run "components/table/__tests__/Table.test.tsx" -t "supports column align with per-column override and special columns" 2>&1 || npx vitest run "components/table/__tests__/Table.test.tsx" -t "supports column align with per-column override and special columns" 2>&1 || pnpm jest "components/table/__tests__/Table.test.tsx" -t "supports column align with per-column override and special columns" 2>&1 || npx jest "components/table/__tests__/Table.test.tsx" -t "supports column align with per-column override and special columns" 2>&1) | tail -50'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"PR-added test 'supports column align with per-column override and special columns' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")

@@ -19,6 +19,10 @@ The `StatsLogger` class should integrate trackio for the full lifecycle:
 
 The combined logging helper function in `logging.py` should also call `trackio.log(data, step=...)` with a graceful fallback (try/except with `pass`) when trackio is not installed.
 
+## Code Style Requirements
+
+All modified files must pass `ruff format --check` and `ruff check` with no errors. Follow existing code patterns — all configuration dataclasses must use the `@dataclass` decorator with `__post_init__` validation, class docstrings, and `field(metadata={"help": ...})` for help text.
+
 ## Files to Look At
 
 - `areal/api/cli_args.py` — Configuration dataclasses; look at how `TensorBoardConfig` and `StatsLoggerConfig` are structured

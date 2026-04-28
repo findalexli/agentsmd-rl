@@ -22,17 +22,8 @@ The priority order should be:
 
 The old `workers.schedulerName` should remain as a deprecated fallback for backward compatibility.
 
-## Files to Investigate
+The Helm values schema should include descriptions for the new fields, and a deprecation warning should inform users who still use the old `workers.schedulerName` option.
 
-- `chart/files/pod-template-file.kubernetes-helm-yaml` - Pod template for Kubernetes executor
-- `chart/values.yaml` - Default Helm values
-- `chart/values.schema.json` - JSON schema for values validation
-- `chart/templates/NOTES.txt` - Deprecation warnings
+## Code Style Requirements
 
-## Requirements
-
-1. Update the pod-template-file to check `workers.kubernetes.schedulerName` first
-2. Add the new scheduler name fields to `values.yaml` with null defaults
-3. Add JSON schema definitions for the new fields in `values.schema.json`
-4. Mark the old `workers.schedulerName` as deprecated in the schema description
-5. Add a deprecation warning in `NOTES.txt` when the old option is used
+When modifying JSON Schema files (`values.schema.json`), each property addition should include a `description` field explaining its purpose. Deprecated fields must have their description updated to include a deprecation notice mentioning the replacement fields.

@@ -69,12 +69,13 @@ def test_repo_prettier():
 
 # [repo_tests] pass_to_pass
 def test_repo_git_status():
-    """Git repo is clean at base commit (pass_to_pass)."""
+    """Git repository is properly initialized and functional (pass_to_pass)."""
     r = subprocess.run(
-        ["git", "status", "--porcelain"],
+        ["git", "rev-parse", "--is-inside-work-tree"],
         capture_output=True, text=True, timeout=30, cwd=REPO,
     )
-    assert r.returncode == 0, f"git status failed: {r.stderr[-500:]}"
+    assert r.returncode == 0, f"git rev-parse failed: {r.stderr}"
+    assert "true" in r.stdout.strip(), "Not inside a valid git work tree"
 
 
 # [repo_tests] pass_to_pass

@@ -298,3 +298,112 @@ print("PASS")
 """)
     assert r.returncode == 0, f"Failed: {r.stderr}\n{r.stdout}"
     assert "PASS" in r.stdout
+
+# === CI-mined tests (taskforge.ci_check_miner) ===
+def test_ci_smoke_tests_run_smoke_tests_with_provider_script():
+    """fail_to_pass | CI job 'Smoke Tests' → step 'Run Smoke Tests with Provider Script'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'bash scripts/test_providers.sh'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Run Smoke Tests with Provider Script' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_smoke_tests_run_mcp_tests():
+    """fail_to_pass | CI job 'Smoke Tests' → step 'Run MCP Tests'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'bash scripts/test_mcp.sh'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Run MCP Tests' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_smoke_tests_run_subrecipe_tests():
+    """fail_to_pass | CI job 'Smoke Tests' → step 'Run Subrecipe Tests'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'bash scripts/test_subrecipes.sh'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Run Subrecipe Tests' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_smoke_tests_run_compaction_tests():
+    """fail_to_pass | CI job 'Smoke Tests' → step 'Run Compaction Tests'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'bash scripts/test_compaction.sh'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Run Compaction Tests' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_build_and_test_rust_project_build_and_test():
+    """pass_to_pass | CI job 'Build and Test Rust Project' → step 'Build and Test'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'cargo test -- --skip scenario_tests::scenarios::tests && cargo test --jobs 1 scenario_tests::scenarios::tests'], cwd=os.path.join(REPO, 'crates'),
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Build and Test' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_test_and_lint_electron_desktop_run_lint():
+    """pass_to_pass | CI job 'Test and Lint Electron Desktop App' → step 'Run Lint'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'npm run lint:check'], cwd=os.path.join(REPO, 'ui/desktop'),
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Run Lint' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_test_and_lint_electron_desktop_run_tests():
+    """pass_to_pass | CI job 'Test and Lint Electron Desktop App' → step 'Run Tests'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'npm run test:run'], cwd=os.path.join(REPO, 'ui/desktop'),
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Run Tests' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_lint_rust_code_lint():
+    """pass_to_pass | CI job 'Lint Rust Code' → step 'Lint'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'cargo clippy --all-targets -- -D warnings'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Lint' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_lint_rust_code_check_for_banned_tls_crates():
+    """pass_to_pass | CI job 'Lint Rust Code' → step 'Check for banned TLS crates'"""
+    r = subprocess.run(
+        ["bash", "-lc", './scripts/check-no-native-tls.sh'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Check for banned TLS crates' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_check_openapi_schema_is_up_to__install_node_js_dependencies_for_openapi():
+    """pass_to_pass | CI job 'Check OpenAPI Schema is Up-to-Date' → step 'Install Node.js Dependencies for OpenAPI Check'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'npm ci'], cwd=os.path.join(REPO, 'ui/desktop'),
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Install Node.js Dependencies for OpenAPI Check' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_check_openapi_schema_is_up_to__check_openapi_schema_is_up_to_date():
+    """pass_to_pass | CI job 'Check OpenAPI Schema is Up-to-Date' → step 'Check OpenAPI Schema is Up-to-Date'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'just check-openapi-schema'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Check OpenAPI Schema is Up-to-Date' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_check_rust_code_format_run_cargo_fmt():
+    """pass_to_pass | CI job 'Check Rust Code Format' → step 'Run cargo fmt'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'cargo fmt --check'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Run cargo fmt' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")

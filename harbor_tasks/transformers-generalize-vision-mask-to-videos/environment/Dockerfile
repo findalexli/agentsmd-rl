@@ -22,7 +22,8 @@ RUN pip install \
         pytest==8.3.4 \
         pytest-json-ctrf==0.3.5 \
         ruff==0.13.0 \
-        pyyaml==6.0.2
+        pyyaml==6.0.2 \
+        GitPython==3.1.48
 
 WORKDIR /workspace
 

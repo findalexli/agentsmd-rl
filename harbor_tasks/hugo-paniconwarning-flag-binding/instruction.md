@@ -67,19 +67,17 @@ with this Hugo`** — must be visible on stderr.
    `max = "9.99.0"` (clearly above the running build's version) must
    likewise trigger the panic when `--panicOnWarning` is set.
 
-The fix lives in the CLI's command-wiring layer (the package that defines
-the root command and the `createLogger` helper). The `loggers` package
-already provides a hook value (`PanicOnWarningHook`) and the `loggers.Options`
-struct already accepts a `HandlerPost` field — neither needs to be created.
-The flag itself is already declared in the Hugo CLI's local-build flag set;
-what is broken is how that flag's value is propagated to the logger that
-gets constructed for the running command.
+## Guidance
 
-You should also propagate the same option through Hugo's `IntegrationTest`
-helper in `hugolib/` so that integration tests written against
-`IntegrationTestConfig` can opt into the same behaviour. The integration
-helper builds its logger via the same `loggers.New` factory, so it needs to
-forward the new option there as well.
+The `--panicOnWarning` flag is already registered in Hugo's CLI and the
+codebase already contains fail-on-warning logic in its logging subsystem.
+The problem is purely one of wiring: the boolean value of the flag is not
+communicated to the logging layer, so the fail-on-warning logic never
+activates when set.
+
+The project's integration-test framework constructs its own logger
+independently and will need corresponding wiring so that integration tests
+can opt into this behaviour.
 
 ## Out of scope
 
@@ -87,8 +85,7 @@ forward the new option there as well.
   module-compatibility warning to an error, and do not change its message).
   Other consumers of the `WARN` level still rely on it.
 * Do **not** alter the public API of the `loggers` package; the necessary
-  hook (`PanicOnWarningHook`) and the `HandlerPost` option are already
-  exported.
+  hook and handler option are already exported.
 
 ## Code Style Requirements
 

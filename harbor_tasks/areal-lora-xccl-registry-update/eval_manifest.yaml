@@ -12,18 +12,15 @@ checks:
 - id: lora_xccl_update_payload_has_lora_fields
   type: fail_to_pass
   origin: pr_diff
-  description: XCCL update request payload must contain lora_name/lora_int_id when
-    use_lora=True
+  description: XCCL update request payload must contain lora_name/lora_int_id when use_lora=True
 - id: lora_xccl_update_payload_varies_with_version
   type: fail_to_pass
   origin: pr_diff
-  description: Versioned LoRA name in XCCL update payload changes correctly with version
-    number
+  description: Versioned LoRA name in XCCL update payload changes correctly with version number
 - id: lora_xccl_endpoint_updates_lora_registry
   type: fail_to_pass
   origin: pr_diff
-  description: After LoRA XCCL weight update, openai_serving_models registry reflects
-    the new LoRA name
+  description: After LoRA XCCL weight update, openai_serving_models registry reflects the new LoRA name
 - id: non_lora_xccl_payload_empty
   type: pass_to_pass
   origin: pr_diff
@@ -66,6 +63,30 @@ checks:
   type: pass_to_pass
   origin: static
   description: Modified files end with a newline (file content check)
+- id: test_ci_build_build_the_book
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: build / Build the book'
+- id: test_ci_install_test_set_up_python
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: Install test / Set up Python'
+- id: test_ci_install_test_verify_package_import
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: Install test / Verify package import'
+- id: test_ci_install_test_verify_core_modules_are_importable
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: Install test / Verify core modules are importable'
+- id: test_ci_install_test_build_wheel
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: Install test / Build wheel'
+- id: test_ci_install_test_verify_wheel_artifact
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: Install test / Verify wheel artifact'
 rubric:
 - rule: Composition over inheritance -- keep hierarchies <= 2 levels; prefer delegation.
   source:
@@ -87,24 +108,16 @@ rubric:
 distractors:
 - rule: Add tests for new functionality.
   collision_type: scope_ambiguity
-  why_distracting: The agent might attempt to add tests for the XCCL LoRA update endpoint.
-    However, testing distributed XCCL updates requires multi-node hardware (as noted
-    in the integration test rule) or complex mocking of the vLLM engine and FastAPI
-    state, which is out of scope for this bug fix.
+  why_distracting: The agent might attempt to add tests for the XCCL LoRA update endpoint. However, testing distributed XCCL updates requires multi-node hardware (as noted in the integration test rule) or complex mocking of the vLLM engine and FastAPI state, which is out of scope for this bug fix.
   severity: medium
   source:
     path: AGENTS.md
     lines: '32'
 - rule: Register new loggers with color in `areal/utils/logging.py`.
   collision_type: rule_conflict
-  why_distracting: Because the agent is adding new log statements for the registry
-    update, it might try to register a new logger in `areal/utils/logging.py` following
-    this rule. However, it should just use the existing `logger` in `areal_vllm_server.py`.
+  why_distracting: Because the agent is adding new log statements for the registry update, it might try to register a new logger in `areal/utils/logging.py` following this rule. However, it should just use the existing `logger` in `areal_vllm_server.py`.
   severity: low
   source:
     path: AGENTS.md
     lines: 61-62
-hierarchy_analysis: The rules in `AGENTS.md` and `CLAUDE.md` are largely identical
-  and flat. The agent must balance the general instruction to 'Add tests' against
-  the specific constraint that 'Integration tests require multi-node hardware', ultimately
-  deciding to skip test creation for this distributed communication bug fix.
+hierarchy_analysis: The rules in `AGENTS.md` and `CLAUDE.md` are largely identical and flat. The agent must balance the general instruction to 'Add tests' against the specific constraint that 'Integration tests require multi-node hardware', ultimately deciding to skip test creation for this distributed communication bug fix.

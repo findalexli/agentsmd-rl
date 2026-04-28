@@ -56,8 +56,7 @@ checks:
 - id: non_ts_bare_args_not_converted
   type: pass_to_pass
   origin: pr_diff
-  description: Non-.ts/.js bare arguments stay in positional args, not converted to
-    --run
+  description: Non-.ts/.js bare arguments stay in positional args, not converted to --run
 - id: bare_ts_file_becomes_run_arg
   type: fail_to_pass
   origin: pr_diff
@@ -69,15 +68,17 @@ checks:
 - id: bare_files_merge_with_explicit_run
   type: fail_to_pass
   origin: pr_diff
-  description: Bare files merge with an explicit --run flag rather than replacing
-    it
+  description: Bare files merge with an explicit --run flag rather than replacing it
 - id: help_text_mentions_positional_files
   type: fail_to_pass
   origin: pr_diff
   description: Help text documents that bare file paths work as positional args
+- id: test_ci_compile_create_node_modules_archive
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: Compile / Create node_modules archive'
 rubric:
-- rule: SKILL.md documents the bare file path positional argument feature with clear
-    examples and follows the style of existing documentation sections
+- rule: SKILL.md documents the bare file path positional argument feature with clear examples and follows the style of existing documentation sections
   source:
     path: .github/skills/unit-tests/SKILL.md
     lines: 1-25
@@ -85,8 +86,7 @@ rubric:
   reference: '#### Bare file paths - Run tests from specific files
 
 
-    Pass source file paths directly as positional arguments. The test runner automatically
-    treats bare .ts/.js positional arguments as --run values.
+    Pass source file paths directly as positional arguments. The test runner automatically treats bare .ts/.js positional arguments as --run values.
 
 
     bash
@@ -131,14 +131,11 @@ rubric:
     bash
 
     ./scripts/test.sh src/vs/editor/test/common/model.test.ts src/vs/editor/test/common/range.'
-- rule: Document new CLI options using the established `#### [Option] - [Description]`
-    heading format and provide concrete usage examples.
+- rule: Document new CLI options using the established `#### [Option] - [Description]` heading format and provide concrete usage examples.
   source:
     path: .github/skills/unit-tests/SKILL.md
     lines: 29-49
-  evidence: The gold solution adds a new `#### Bare file paths - Run tests from specific
-    files` heading that perfectly matches the existing `#### `--run <file>` - Run
-    tests from a specific file` heading format, a
+  evidence: The gold solution adds a new `#### Bare file paths - Run tests from specific files` heading that perfectly matches the existing `#### `--run <file>` - Run tests from a specific file` heading format, a
   category: documentation
 - rule: Cross-platform compatibility - Abstractions separate platform-specific code
   source:
@@ -158,9 +155,7 @@ rubric:
     .\scripts\test.bat src\vs\editor\test\common\model.test.ts
 
     ```'
-  evidence: The gold solution provides examples for both macOS/Linux (`./scripts/test.sh`)
-    and Windows (`.\scripts\test.bat`) when documenting the new bare file path feature
-    in SKILL.md.
+  evidence: The gold solution provides examples for both macOS/Linux (`./scripts/test.sh`) and Windows (`.\scripts\test.bat`) when documenting the new bare file path feature in SKILL.md.
   category: documentation
 config_edits:
 - path: .github/skills/unit-tests/SKILL.md
@@ -168,8 +163,7 @@ config_edits:
   gold_added: '#### Bare file paths - Run tests from specific files
 
 
-    Pass source file paths directly as positional arguments. The test runner automatically
-    treats bare `.ts`/`.js` positional arguments as `--run` values.
+    Pass source file paths directly as positional arguments. The test runner automatically treats bare `.ts`/`.js` positional arguments as `--run` values.
 
 
     ```bash
@@ -198,41 +192,23 @@ config_edits:
 
     #### `--run <file>` - Run tests from a specific file (explicit form)
 
-    Integration tests (files ending in `.integrationTest.ts` or located in `extensions/`)
-    are **not run** by `scripts/test.sh`. Use `scripts/test-integration.sh` (or `scripts/test-integration.bat`)
-    instead. See the `integration-tests` skill for details.'
+    Integration tests (files ending in `.integrationTest.ts` or located in `extensions/`) are **not run** by `scripts/test.sh`. Use `scripts/test-integration.sh` (or `scripts/test-integration.bat`) instead. See the `integration-tests` skill for details.'
   gold_removed: '#### `--run <file>` - Run tests from a specific file
 
-    Integration tests (files ending in `.integrationTest.ts` or located in `extensions/`)
-    are **not run** by `scripts/test.sh`. Use `scripts/test-integration.sh` (or `scripts/test-integration.bat`)
-    instead. See the `integration-tests` skill for details on filtering and running
-    specific integration test files.'
+    Integration tests (files ending in `.integrationTest.ts` or located in `extensions/`) are **not run** by `scripts/test.sh`. Use `scripts/test-integration.sh` (or `scripts/test-integration.bat`) instead. See the `integration-tests` skill for details on filtering and running specific integration test files.'
 distractors:
-- rule: Integration tests (files ending in .integrationTest.ts...) are not run by
-    scripts/test.sh
+- rule: Integration tests (files ending in .integrationTest.ts...) are not run by scripts/test.sh
   collision_type: scope_ambiguity
-  why_distracting: The agent might try to explicitly filter out `.integrationTest.ts`
-    files when parsing bare file arguments in `index.js`. However, the instruction
-    simply says to treat bare `.ts` and `.js` files as `--run` values, and adding
-    explicit exclusion logic would overcomplicate the argument parsing and potentially
-    conflict with downstream test resolution.
+  why_distracting: The agent might try to explicitly filter out `.integrationTest.ts` files when parsing bare file arguments in `index.js`. However, the instruction simply says to treat bare `.ts` and `.js` files as `--run` values, and adding explicit exclusion logic would overcomplicate the argument parsing and potentially conflict with downstream test resolution.
   severity: high
   source:
     path: .github/skills/unit-tests/SKILL.md
     lines: 83-85
-- rule: Run `npm run compile-check-ts-native` after making changes to type-check the
-    main VS Code sources
+- rule: Run `npm run compile-check-ts-native` after making changes to type-check the main VS Code sources
   collision_type: scope_ambiguity
-  why_distracting: The agent is editing `test/unit/electron/index.js`, which is a
-    plain JavaScript file. Attempting to run TypeScript compilation checks for this
-    change is unnecessary and could lead to confusion if the agent expects TS validation.
+  why_distracting: The agent is editing `test/unit/electron/index.js`, which is a plain JavaScript file. Attempting to run TypeScript compilation checks for this change is unnecessary and could lead to confusion if the agent expects TS validation.
   severity: medium
   source:
     path: .github/copilot-instructions.md
     lines: 48-55
-hierarchy_analysis: The task involves a flat but meta-referential config hierarchy.
-  The agent must edit its own skill documentation (`SKILL.md`) while adhering to general
-  project instructions in `copilot-instructions.md`. The primary challenge is correctly
-  updating the skill file without being distracted by existing rules in the skill
-  file itself (like integration test exclusions) that don't apply to the specific
-  argument parsing logic being added.
+hierarchy_analysis: The task involves a flat but meta-referential config hierarchy. The agent must edit its own skill documentation (`SKILL.md`) while adhering to general project instructions in `copilot-instructions.md`. The primary challenge is correctly updating the skill file without being distracted by existing rules in the skill file itself (like integration test exclusions) that don't apply to the specific argument parsing logic being added.

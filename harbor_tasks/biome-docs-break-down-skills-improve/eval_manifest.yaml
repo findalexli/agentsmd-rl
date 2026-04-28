@@ -64,6 +64,11 @@ checks:
   origin: pr_diff
   description: Skills README.md lists changeset and pull-request skills with updated
     testing-codegen description
+- id: test_justfile_recipe_runs
+  type: fail_to_pass
+  origin: pr_diff
+  description: new-changeset-empty recipe is registered in just --list and invokes
+    pnpm changeset --empty
 rubric:
 - rule: New skill files follow the established frontmatter format (name, description,
     compatibility)
@@ -111,152 +116,222 @@ rubric:
   source:
     path: .claude/skills/changeset/SKILL.md
     lines: 45-50
-  reference: |
-    - `patch` — Bug fixes.
+  reference: '- `patch` — Bug fixes.
+
     - `minor` — New features. PR must target the `next` branch.
+
     - `major` — Breaking user API changes. PR must target the `next` branch.
+
+    '
   category: documentation
 - rule: 'Bug fix changesets must start with `Fixed [#NUMBER](issue link): ...`'
   source:
     path: .claude/skills/changeset/SKILL.md
     lines: 75-82
-  reference: |
-    ### Bug Fixes
+  reference: '### Bug Fixes
+
 
     Start with a link to the issue:
 
+
     ```markdown
-    Fixed [#4444](https://github.com/biomejs/biome/issues/4444): [`useOptionalChain`](https://biomejs.dev/linter/rules/use-optional-chain/) now detects negated logical OR chains.
+
+    Fixed [#4444](https://github.com/biomejs/biome/issues/4444): [`useOptionalChain`](https://biomejs.dev/linter/rules/use-optional-chain/)
+    now detects negated logical OR chains.
+
     ```
+
+    '
   category: documentation
 - rule: Document the correct change types and their target branches (main vs next).
   source:
     path: .claude/skills/changeset/SKILL.md
     lines: 45-50
-  reference: |
-    ## Choose the Correct Change Type
+  reference: '## Choose the Correct Change Type
+
 
     - `patch` — Bug fixes.
+
     - `minor` — New features. PR must target the `next` branch.
+
     - `major` — Breaking user API changes. PR must target the `next` branch.
+
+    '
   category: documentation
 - rule: Document the requirement to disclose AI assistance in pull requests.
   source:
     path: .claude/skills/pull-request/SKILL.md
     lines: 16-20
-  reference: |
-    ## AI Assistance Disclosure
+  reference: '## AI Assistance Disclosure
+
 
     If AI was used in any capacity to produce the PR, **you must disclose it** in
+
     the PR description.
+
+    '
   category: documentation
 - rule: Document the requirement to write concise PR summaries and reject verbose
     ones.
   source:
     path: .claude/skills/pull-request/SKILL.md
     lines: 100-110
-  reference: |
-    Keep it brief. Examples:
+  reference: 'Keep it brief. Examples:
+
 
     - "Added new tests from the bug report."
+
     - "Extended existing snapshot tests to cover the new edge case."
+
+    '
   category: documentation
 - rule: Changeset guidelines (types, formatting, user-facing requirement) must be
     accurately documented for agents.
   source:
     path: .claude/skills/changeset/SKILL.md
     lines: 1-50
-  reference: |
-    ## Purpose
+  reference: '## Purpose
+
 
     Use this skill when a PR introduces user-facing changes that require a changeset.
 
+
     ## Create a Changeset
+
 
     **Do not create changeset files manually.** Use:
 
+
     ```shell
+
     just new-changeset-empty
+
     ```
+
 
     ## Choose the Correct Change Type
 
+
     - `patch` — Bug fixes.
+
     - `minor` — New features. PR must target the `next` branch.
+
+    '
   category: documentation
 - rule: AI assistance must be disclosed in pull requests.
   source:
     path: .claude/skills/pull-request/SKILL.md
     lines: 16-20
-  reference: |
-    ## AI Assistance Disclosure
+  reference: '## AI Assistance Disclosure
+
 
     If AI was used in any capacity to produce the PR, **you must disclose it** in
+
     the PR description.
+
+    '
   category: documentation
 config_edits:
 - path: .claude/skills/README.md
   tier: 2
-  gold_added: |
-    | **[changeset](./changeset/SKILL.md)** | Create and write proper changesets for the CHANGELOG | Any agent |
-    | **[pull-request](./pull-request/SKILL.md)** | Create PRs with proper titles, descriptions, and branch targeting | Any agent |
+  gold_added: '| **[changeset](./changeset/SKILL.md)** | Create and write proper changesets
+    for the CHANGELOG | Any agent |
+
+    | **[pull-request](./pull-request/SKILL.md)** | Create PRs with proper titles,
+    descriptions, and branch targeting | Any agent |
+
+    '
   gold_removed: ''
 - path: .claude/skills/changeset/SKILL.md
   tier: 1
-  gold_added: |
-    ---
+  gold_added: '---
+
     name: changeset
+
     description: Guide for creating and writing proper changesets for Biome PRs.
+
     compatibility: Designed for coding agents working on the Biome codebase.
+
     ---
 
+
     ## Purpose
+
 
     Use this skill when a PR introduces user-facing changes that require a changeset.
 
+
     ## Create a Changeset
+
 
     **Do not create changeset files manually.** Use:
 
+
     ```shell
+
     just new-changeset-empty
+
     ```
+
 
     ## Choose the Correct Change Type
 
+
     - `patch` — Bug fixes.
+
     - `minor` — New features. PR must target the `next` branch.
+
     - `major` — Breaking user API changes. PR must target the `next` branch.
+
+    '
   gold_removed: ''
 - path: .claude/skills/pull-request/SKILL.md
   tier: 1
-  gold_added: |
-    ---
+  gold_added: '---
+
     name: pull-request
+
     description: Guide for creating proper pull requests for the Biome project.
+
     compatibility: Designed for coding agents working on the Biome codebase.
+
     ---
+
 
     ## Purpose
 
+
     Use this skill when creating a pull request for the Biome repository.
+
 
     ## AI Assistance Disclosure
 
+
     If AI was used in any capacity to produce the PR, **you must disclose it** in
+
     the PR description.
+
 
     ## Choose the Target Branch
 
+
     | Change type | Target branch |
+
     | --- | --- |
+
     | Bug fix (code or docs) | `main` |
+
     | New **nursery** rule | `main` |
+
 
     ## PR Title
 
+
     Use **conventional commit format**. The title becomes the squash-merge commit
+
     message.
+
+    '
   gold_removed: ''
 - path: .claude/skills/testing-codegen/SKILL.md
   tier: 1

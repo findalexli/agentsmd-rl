@@ -313,3 +313,62 @@ def test_repo_build_check_passes():
         "build-check failed.\n"
         f"stdout:\n{r.stdout[-3000:]}\nstderr:\n{r.stderr[-1500:]}"
     )
+
+# === PR-added f2p tests — verify the agent added the PR's test cases and they pass ===
+
+def test_pr_added_extractAllUserContent_preserves_extras_but_ignor():
+    """f2p: PR-added test 'extractAllUserContent preserves extras but ignores reserved providerData fields' exists and passes."""
+    _ensure_built()
+    _remove_f2p_test()
+    test_file = "test/openaiChatCompletionsConverter.test.ts"
+    test_name = "extractAllUserContent preserves extras but ignores reserved providerData fields"
+    r = _run([
+        "pnpm", "exec", "vitest", "run", "--no-coverage",
+        "--project", "@openai/agents-openai",
+        "--reporter", "verbose",
+        test_file,
+    ])
+    assert r.returncode == 0, (
+        f"Vitest run for {test_file} failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-2000:]}\nstderr: {r.stderr[-1000:]}")
+    assert test_name in r.stdout, (
+        f"PR-added test '{test_name}' not found in vitest output.\n"
+        f"stdout: {r.stdout[-2000:]}")
+
+def test_pr_added_preserves_extra_providerData_without_letting_it_():
+    """f2p: PR-added test 'preserves extra providerData without letting it overwrite canonical envelopes' exists and passes."""
+    _ensure_built()
+    _remove_f2p_test()
+    test_file = "test/openaiChatCompletionsConverter.test.ts"
+    test_name = "preserves extra providerData without letting it overwrite canonical envelopes"
+    r = _run([
+        "pnpm", "exec", "vitest", "run", "--no-coverage",
+        "--project", "@openai/agents-openai",
+        "--reporter", "verbose",
+        test_file,
+    ])
+    assert r.returncode == 0, (
+        f"Vitest run for {test_file} failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-2000:]}\nstderr: {r.stderr[-1000:]}")
+    assert test_name in r.stdout, (
+        f"PR-added test '{test_name}' not found in vitest output.\n"
+        f"stdout: {r.stdout[-2000:]}")
+
+def test_pr_added_removes_reserved_keys_without_touching_other_val():
+    """f2p: PR-added test 'removes reserved keys without touching other values' exists and passes."""
+    _ensure_built()
+    _remove_f2p_test()
+    test_file = "test/utils/providerData.test.ts"
+    test_name = "removes reserved keys without touching other values"
+    r = _run([
+        "pnpm", "exec", "vitest", "run", "--no-coverage",
+        "--project", "@openai/agents-openai",
+        "--reporter", "verbose",
+        test_file,
+    ])
+    assert r.returncode == 0, (
+        f"Vitest run for {test_file} failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-2000:]}\nstderr: {r.stderr[-1000:]}")
+    assert test_name in r.stdout, (
+        f"PR-added test '{test_name}' not found in vitest output.\n"
+        f"stdout: {r.stdout[-2000:]}")

@@ -60,8 +60,7 @@ checks:
 - id: poll_script_api_and_event
   type: fail_to_pass
   origin: pr_diff
-  description: poll.sh uses GitHub timeline API and checks for copilot_work_finished
-    event
+  description: poll.sh uses GitHub timeline API and checks for copilot_work_finished event
 - id: skill_allows_poll_tool
   type: fail_to_pass
   origin: pr_diff
@@ -70,6 +69,110 @@ checks:
   type: fail_to_pass
   origin: pr_diff
   description: SKILL.md has a polling for completion section with usage instructions
+- id: test_ci_check_external_links_run_external_links_checker
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: check-external-links / Run external links checker'
+- id: test_ci_unit_tests_run_fs2db_pytest_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: unit-tests / Run fs2db pytest tests'
+- id: test_ci_e2e_tests_generate_synthetic_data_for_mlflow_matri
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: e2e-tests / Generate synthetic data for MLflow ${{ matrix.mlflow-version }}'
+- id: test_ci_e2e_tests_run_migration_for_mlflow_matrix_mlflow_v
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: e2e-tests / Run migration for MLflow ${{ matrix.mlflow-version }}'
+- id: test_ci_lint_macos_run_pre_commit
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: lint-macos / Run pre-commit'
+- id: test_ci_lint_macos_test_clint
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: lint-macos / Test clint'
+- id: test_ci_lint_macos_check_function_signatures
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: lint-macos / Check function signatures'
+- id: test_ci_lint_macos_check_whitespace_only_changes
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: lint-macos / Check whitespace-only changes'
+- id: test_ci_lint_macos_check_uv_lock_changes
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: lint-macos / Check uv.lock changes'
+- id: test_ci_lint_macos_check_unused_media
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: lint-macos / Check unused media'
+- id: test_ci_lint_run_pre_commit
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: lint / Run pre-commit'
+- id: test_ci_lint_test_clint
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: lint / Test clint'
+- id: test_ci_lint_check_function_signatures
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: lint / Check function signatures'
+- id: test_ci_lint_check_whitespace_only_changes
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: lint / Check whitespace-only changes'
+- id: test_ci_lint_check_uv_lock_changes
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: lint / Check uv.lock changes'
+- id: test_ci_lint_check_unused_media
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: lint / Check unused media'
+- id: test_ci_build_build_ui
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: build / Build UI'
+- id: test_ci_build_build_distribution_files
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: build / Build distribution files'
+- id: test_ci_build_list_files_in_source_distribution
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: build / List files in source distribution'
+- id: test_ci_build_list_files_in_binary_distribution
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: build / List files in binary distribution'
+- id: test_ci_build_compare_files_in_source_and_binary_distr
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: build / Compare files in source and binary distributions'
+- id: test_ci_build_run_twine_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: build / Run twine check'
+- id: test_ci_build_test_installation_from_tarball
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: build / Test installation from tarball'
+- id: test_ci_build_test_installation_from_wheel
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: build / Test installation from wheel'
+- id: test_ci_build_test_installation_from_github
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: build / Test installation from GitHub'
+- id: test_ci_build_test_dev_install_skinny_sh
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: build / Test dev/install-skinny.sh'
 config_edits:
 - path: .claude/skills/copilot/SKILL.md
   tier: 1
@@ -91,20 +194,14 @@ config_edits:
 distractors:
 - rule: Run Python tests using pytest
   collision_type: scope_ambiguity
-  why_distracting: The config file heavily emphasizes Python testing with pytest for
-    the MLflow backend. An agent might attempt to write Python tests for the new polling
-    script, but this is a simple bash script for a Claude skill where the MLflow Python
-    testing framework does not apply.
+  why_distracting: The config file heavily emphasizes Python testing with pytest for the MLflow backend. An agent might attempt to write Python tests for the new polling script, but this is a simple bash script for a Claude skill where the MLflow Python testing framework does not apply.
   severity: medium
   source:
     path: CLAUDE.md
     lines: 63-75
 - rule: Use top-level imports (only use lazy imports when necessary)
   collision_type: rule_conflict
-  why_distracting: The rule mandates top-level imports, which is a Python-specific
-    instruction. An agent might be confused and attempt to implement the polling mechanism
-    in Python to adhere to the repository's primary language conventions, conflicting
-    with the explicit instruction to write a shell script.
+  why_distracting: The rule mandates top-level imports, which is a Python-specific instruction. An agent might be confused and attempt to implement the polling mechanism in Python to adhere to the repository's primary language conventions, conflicting with the explicit instruction to write a shell script.
   severity: low
   source:
     path: CLAUDE.md
@@ -116,12 +213,10 @@ distractors:
   source_text: '## Use `ubuntu-slim` for Lightweight Tasks
 
 
-    Prefer `ubuntu-slim` over `ubuntu-latest` for simple jobs (e.g., labeling, commenting,
-    notifications).
+    Prefer `ubuntu-slim` over `ubuntu-latest` for simple jobs (e.g., labeling, commenting, notifications).
 
 
-    Note: `ubuntu-slim` has a 15-minute timeout limit. Use `ubuntu-latest` for long-running
-    jobs (e.g., polling).
+    Note: `ubuntu-slim` has a 15-minute timeout limit. Use `ubuntu-latest` for long-running jobs (e.g., polling).
 
 
     ```yaml
@@ -137,24 +232,14 @@ distractors:
 
     ```'
   collision_type: scope_ambiguity
-  why_distracting: 'The gold diff adds a bash script to poll in the background within
-    a Claude Skill definition file (.md). This rule mentions using ''ubuntu-latest''
-    specifically for ''long-running jobs (e.g., polling)''. An agent might mistakenly
-    think this rule applies and attempt to add GitHub Actions configurations (like
-    `runs-on: ubuntu-latest`) to the Markdown file, even though this rule is strictly
-    for `.github/workflows/**/*.yml` files.'
+  why_distracting: 'The gold diff adds a bash script to poll in the background within a Claude Skill definition file (.md). This rule mentions using ''ubuntu-latest'' specifically for ''long-running jobs (e.g., polling)''. An agent might mistakenly think this rule applies and attempt to add GitHub Actions configurations (like `runs-on: ubuntu-latest`) to the Markdown file, even though this rule is strictly for `.github/workflows/**/*.yml` files.'
   severity: high
-hierarchy_analysis: The repository has a flat, single-file configuration (`CLAUDE.md`)
-  at the root level. The rules in `CLAUDE.md` are heavily tailored towards the MLflow
-  Python backend and Databricks integration, which are largely out of scope for this
-  meta-referential task of updating a Claude skill's bash script and markdown definition.
+hierarchy_analysis: The repository has a flat, single-file configuration (`CLAUDE.md`) at the root level. The rules in `CLAUDE.md` are heavily tailored towards the MLflow Python backend and Databricks integration, which are largely out of scope for this meta-referential task of updating a Claude skill's bash script and markdown definition.
 rubric:
-- rule: Allowed tools for the skill must be listed under the `allowed-tools` YAML
-    frontmatter.
+- rule: Allowed tools for the skill must be listed under the `allowed-tools` YAML frontmatter.
   source:
     path: .claude/skills/copilot/SKILL.md
     lines: 4-5
-  evidence: The gold solution appends the new polling script to the `allowed-tools`
-    list in the YAML frontmatter, respecting the existing tool declaration convention.
+  evidence: The gold solution appends the new polling script to the `allowed-tools` list in the YAML frontmatter, respecting the existing tool declaration convention.
   category: tooling
   verification: llm_judge

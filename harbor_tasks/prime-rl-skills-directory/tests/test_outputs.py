@@ -467,3 +467,12 @@ print("PASS")
     )
     assert r.returncode == 0, f"CLI skill reference check failed: {r.stderr}"
     assert "PASS" in r.stdout
+
+# === CI-mined tests (taskforge.ci_check_miner) ===
+def test_ci_ruff_check():
+    """pass_to_pass | CI job 'Ruff' → ruff check (bash -lc wrapper)"""
+    r = subprocess.run(
+        ["bash", "-lc", "ruff check --config=pyproject.toml src/ tests/"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff check failed:\n{r.stdout}\n{r.stderr}"

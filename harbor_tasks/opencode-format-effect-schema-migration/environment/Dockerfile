@@ -11,7 +11,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 RUN python3 -m venv /opt/pyenv \
     && /opt/pyenv/bin/pip install --no-cache-dir \
-        pytest==8.3.4
+        pytest==8.3.4 \
+        pytest-json-ctrf==0.4.1
 ENV PATH="/opt/pyenv/bin:${PATH}"
 
 WORKDIR /workspace

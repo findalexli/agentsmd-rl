@@ -1,0 +1,108 @@
+version: '2.0'
+source:
+  repo: openai/openai-agents-js
+  pr: 862
+  base_commit: 4a53e998a2cd27eb004c4c25d6d178bfe371b72e
+  merge_commit: f0ad7065c8ec8c532bf702d1912b7d42ee17b141
+task:
+  kind: code_fix
+  difficulty: easy
+  tags:
+  - typescript
+  - error-handling
+  - agents-core
+checks:
+- id: test_error_subclass_names
+  type: fail_to_pass
+  origin: pr_diff
+  description: All AgentsError subclasses report correct .name property
+- id: test_error_to_string_includes_subclass_name
+  type: fail_to_pass
+  origin: pr_diff
+  description: Error.toString() includes the specific error subclass name
+- id: test_agents_core_build
+  type: pass_to_pass
+  origin: repo_tests
+  description: The agents-core package builds successfully
+- id: test_agents_core_build_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: TypeScript type checking with test files passes
+- id: test_ci_test_build_all_packages
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: test / Build all packages'
+- id: test_ci_test_check_generated_declarations
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: test / Check generated declarations'
+- id: test_ci_test_run_linter
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: test / Run linter'
+- id: test_ci_test_type_check_docs_scripts
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: test / Type-check docs scripts'
+- id: test_ci_test_compile_examples
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: test / Compile examples'
+- id: test_ci_test_run_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: test / Run tests'
+- id: test_pr_added_should_set_error_names
+  type: fail_to_pass
+  origin: pr_diff
+  description: PR added test 'should set error names' in packages/agents-core/test/errors.test.ts
+rubric:
+- rule: Add or update unit tests for any code change unless it is truly infeasible; if something prevents adding tests, explain why in the PR.
+  source:
+    path: AGENTS.md
+    lines: '115'
+    commit: 4a53e998a2cd27eb004c4c25d6d178bfe371b72e
+  evidence: Gold diff adds a comprehensive test for all error subclass names in errors.test.ts.
+  category: testing
+  verification: llm_judge
+- rule: Code is readable and maintainable.
+  source:
+    path: AGENTS.md
+    lines: '237'
+    commit: 4a53e998a2cd27eb004c4c25d6d178bfe371b72e
+  evidence: 'Gold fix is a single clear line: this.name = new.target.name; placed right after super(message) in the constructor.'
+  category: style
+  verification: llm_judge
+- rule: Commit using Conventional Commits.
+  source:
+    path: AGENTS.md
+    lines: '219'
+    commit: 4a53e998a2cd27eb004c4c25d6d178bfe371b72e
+  evidence: 'Gold commit uses fix(agents-core): prefix matching Conventional Commits format.'
+  category: naming
+  verification: llm_judge
+- rule: Comments must end with a period.
+  source:
+    path: AGENTS.md
+    lines: '145'
+    commit: 4a53e998a2cd27eb004c4c25d6d178bfe371b72e
+  evidence: Not directly relevant to this PR but is a repo-level style rule agents must follow.
+  category: style
+  verification: llm_judge
+distractors:
+- rule: 'Treat review feedback critically: reviewers can be wrong. Reproduce or verify each comment, cross-check with source docs, and only make changes when the feedback remains valid after your own validation.'
+  source:
+    path: AGENTS.md
+    lines: '249'
+    commit: 4a53e998a2cd27eb004c4c25d6d178bfe371b72e
+  collision_type: meta_confusion
+  why_distracting: This rule about review process could distract agents into second-guessing the bug report instead of fixing the clear behavioral issue.
+  severity: low
+- rule: If your change affects the public API, add a Changeset.
+  source:
+    path: AGENTS.md
+    lines: '231'
+    commit: 4a53e998a2cd27eb004c4c25d6d178bfe371b72e
+  collision_type: scope_ambiguity
+  why_distracting: Agents might focus on creating a changeset file instead of the core fix, but the task scope is the behavioral fix itself.
+  severity: medium

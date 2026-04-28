@@ -151,3 +151,17 @@ def test_existing_adapter_neon_unit_tests_pass():
     assert r.returncode == 0, (
         f"adapter-neon upstream tests failed:\nSTDOUT:\n{r.stdout[-2000:]}\nSTDERR:\n{r.stderr[-1000:]}"
     )
+
+# === PR-added f2p tests (taskforge.test_patch_miner) ===
+def test_pr_added_should_handle_InvalidInputValue_22P02():
+    """fail_to_pass | PR added test 'should handle InvalidInputValue (22P02)' in 'packages/adapter-pg/src/__tests__/errors.test.ts'"""
+    r = _run_vitest("@prisma/adapter-pg", "errors.test.ts")
+    assert r.returncode == 0, (
+        f"PR-added test run failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+    combined = r.stdout + r.stderr
+    # nop has 23 tests in errors.test.ts; gold adds 1 PR test → 24
+    assert "24 passed" in combined, (
+        "PR-added test was not detected — expected 24 passing tests "
+        "(23 base + 1 PR-added) but vitest summary does not show 24 passed.\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")

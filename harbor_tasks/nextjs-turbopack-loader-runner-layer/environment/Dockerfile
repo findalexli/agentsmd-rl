@@ -4,6 +4,13 @@ RUN rm -rf /var/lib/apt/lists/* && apt-get update && apt-get install -y \
     git curl ca-certificates build-essential tmux \
     && rm -rf /var/lib/apt/lists/*
 
+# Install Rust toolchain (for cargo fmt / rustfmt checks)
+RUN curl --proto '=https' --tlsv1.2 -sSf https://static.rust-lang.org/rustup/dist/x86_64-unknown-linux-gnu/rustup-init -o /tmp/rustup-init \
+    && chmod +x /tmp/rustup-init \
+    && /tmp/rustup-init -y --default-toolchain stable --component rustfmt --no-modify-path \
+    && rm /tmp/rustup-init
+ENV PATH="/root/.cargo/bin:${PATH}"
+
 # Clone next.js at the base commit (before the fix)
 # Use init+fetch to avoid downloading the default branch first (repo is very large)
 RUN git init /workspace/next.js \

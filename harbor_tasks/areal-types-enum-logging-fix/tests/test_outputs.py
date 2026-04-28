@@ -426,12 +426,12 @@ def test_repo_ruff_check_fix():
         timeout=60,
     )
     r = subprocess.run(
-        ["ruff", "check", "--fix", TYPES_PY, CLEVR_PY],
+        ["ruff", "check", "--diff", TYPES_PY, CLEVR_PY],
         capture_output=True,
         text=True,
         timeout=60,
     )
-    assert r.returncode == 0, f"ruff check --fix failed:\n{r.stdout}\n{r.stderr}"
+    assert r.returncode == 0, f"ruff check --diff failed:\n{r.stdout}\n{r.stderr}"
 
 
 # [repo_tests] pass_to_pass

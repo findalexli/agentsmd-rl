@@ -23,6 +23,15 @@ The filter controls currently appear misaligned relative to the sort options abo
 - `webview-ui/src/components/history/HistoryView.tsx` — contains the filter UI logic
 - `package.json` — for discovering available scripts
 
+## Code Style Requirements
+
+This project uses Biome for both linting and formatting. Before submitting changes, ensure the code passes:
+
+- `npx biome lint --no-errors-on-unmatched --files-ignore-unknown=true --diagnostic-level=error src/ webview-ui/src/`
+- `npx biome format --no-errors-on-unmatched --files-ignore-unknown=true --diagnostic-level=error src/ webview-ui/src/`
+
+The project also requires TypeScript compilation to succeed (`npm run compile-tests`) and proto generation/linting (`npm run protos`, `npm run lint:proto`).
+
 ## Documentation Update Requirement
 
 After fixing the code, update `CLAUDE.md`:

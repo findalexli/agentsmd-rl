@@ -16,22 +16,19 @@ checks:
 - id: prerender_tee_edge_guard
   type: fail_to_pass
   origin: pr_diff
-  description: ReactServerResult tee must guard node:stream usage with edge runtime
-    check
+  description: ReactServerResult tee must guard node:stream usage with edge runtime check
 - id: render_result_edge_guards
   type: fail_to_pass
   origin: pr_diff
-  description: RenderResult must guard all node:stream requires with edge runtime
-    checks
+  description: RenderResult must guard all node:stream requires with edge runtime checks
 - id: edge_error_codes
   type: fail_to_pass
   origin: pr_diff
-  description: errors.json must include edge-runtime-specific error messages
+  description: errors.json must include the three specific edge-runtime error messages for node:stream guards
 - id: require_node_stream_dce_safe
   type: fail_to_pass
   origin: agent_config
-  description: All require('node:stream') must be in else branches of if/else for
-    DCE safety
+  description: All require('node:stream') must be in else branches of if/else for DCE safety
   source:
     path: AGENTS.md
     lines: '404'
@@ -84,3 +81,27 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Key import paths in modified files use valid patterns
+- id: test_ci_pnpm_check_error_codes
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: pnpm run check-error-codes scoped validation'
+- id: test_ci_pnpm_prettier_scoped
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: pnpm exec prettier --check scoped to node-web-streams-helper.ts'
+rubric:
+- rule: In edge builds, force feature flags that gate Node-only imports to false in
+    define-env.ts.
+  source:
+    path: AGENTS.md
+    lines: '405'
+    commit: 15d9b4d7f923e637d1661b109df639a918f59c8a
+- rule: Use if/else (not two independent if blocks) when assigning a variable conditionally
+    on process.env.X. TypeScript cannot prove exhaustiveness across if (flag) { x =
+    a }; if (!flag) { x = b } and will error with 'variable used before being assigned'.
+    The if/else pattern satisfies both TypeScript (definite assignment) and webpack
+    DCE.
+  source:
+    path: .agents/skills/dce-edge/SKILL.md
+    lines: '38'
+    commit: 15d9b4d7f923e637d1661b109df639a918f59c8a

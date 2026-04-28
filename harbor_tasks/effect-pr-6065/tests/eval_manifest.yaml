@@ -1,0 +1,103 @@
+version: "2.0"
+
+source:
+  repo: "Effect-TS/effect"
+  pr: 6065
+  base_commit: "12b1f1eadf649e30dec581b7351ba3abb12f8004"
+  merge_commit: "94b00c8e4c5c150f858c95262d0ff1433276ede5"
+
+task:
+  kind: code_fix
+
+checks:
+  - id: test_exit_schema_custom_defect
+    type: fail_to_pass
+    origin: pr_diff
+    description: "exitSchema uses the RPC's defectSchema instead of hardcoded Schema.Defect"
+
+  - id: test_rpc_existing_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Existing RPC vitest tests pass"
+
+rubric:
+  - rule: "Zero Tolerance for Errors: All automated checks must pass"
+    source:
+      path: "AGENTS.md"
+      lines: "10"
+      commit: "12b1f1eadf649e30dec581b7351ba3abb12f8004"
+    evidence: "The fix adds the defectSchema field to all Proto methods, makeProto, and fromTaggedRequest so the build and type-check pass without errors."
+    category: "testing"
+    verification: programmatic
+
+  - rule: "Clarity over Cleverness: Choose clear, maintainable solutions"
+    source:
+      path: "AGENTS.md"
+      lines: "11"
+      commit: "12b1f1eadf649e30dec581b7351ba3abb12f8004"
+    evidence: "The fix uses a straightforward per-RPC defectSchema field with a sensible default (Schema.Defect), threading it through Proto methods explicitly rather than using global state or monkey-patching."
+    category: "architecture"
+    verification: llm_judge
+
+  - rule: "Conciseness: Keep code and any wording concise and to the point."
+    source:
+      path: "AGENTS.md"
+      lines: "12"
+      commit: "12b1f1eadf649e30dec581b7351ba3abb12f8004"
+    evidence: "The fix adds only the necessary defectSchema field and threads it through existing call chains without introducing new abstractions or helper functions."
+    category: "style"
+    verification: llm_judge
+
+  - rule: "Reduce comments: Avoid comments unless absolutely required to explain unusual or complex logic."
+    source:
+      path: "AGENTS.md"
+      lines: "13"
+      commit: "12b1f1eadf649e30dec581b7351ba3abb12f8004"
+    evidence: "The gold patch adds no new comments; the code is self-documenting through clear field and parameter names."
+    category: "style"
+    verification: llm_judge
+
+  - rule: "Run `pnpm lint-fix` after editing files"
+    source:
+      path: "AGENTS.md"
+      lines: "15"
+      commit: "12b1f1eadf649e30dec581b7351ba3abb12f8004"
+    evidence: "After applying the fix, pnpm lint-fix should pass without changes."
+    category: "testing"
+    verification: programmatic
+
+  - rule: "Always run tests after making changes: `pnpm test run <test_file.ts>`"
+    source:
+      path: "AGENTS.md"
+      lines: "16"
+      commit: "12b1f1eadf649e30dec581b7351ba3abb12f8004"
+    evidence: "After the fix, existing RPC tests continue to pass."
+    category: "testing"
+    verification: programmatic
+
+  - rule: "Run type checking: `pnpm check`"
+    source:
+      path: "AGENTS.md"
+      lines: "17"
+      commit: "12b1f1eadf649e30dec581b7351ba3abb12f8004"
+    evidence: "After the fix, TypeScript type checking passes."
+    category: "testing"
+    verification: programmatic
+
+  - rule: "Always look at existing code in the repository to learn and follow established patterns before writing new code."
+    source:
+      path: "AGENTS.md"
+      lines: "22"
+      commit: "12b1f1eadf649e30dec581b7351ba3abb12f8004"
+    evidence: "The fix follows the existing Proto method pattern where each transformation method returns a new object with all fields spread, adding defectSchema alongside the other schema fields."
+    category: "style"
+    verification: llm_judge
+
+  - rule: "Use `it.effect` for all Effect-based tests, not `Effect.runSync` with regular `it`"
+    source:
+      path: "AGENTS.md"
+      lines: "35"
+      commit: "12b1f1eadf649e30dec581b7351ba3abb12f8004"
+    evidence: "Not directly applicable to the code change (no new Effect-based tests in the fix), but the agent should not introduce tests using Effect.runSync."
+    category: "testing"
+    verification: llm_judge

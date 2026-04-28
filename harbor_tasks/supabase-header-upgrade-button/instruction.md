@@ -35,6 +35,10 @@ The click telemetry event must follow these conventions:
   }
   ```
 
+## Code Style Requirements
+
+This project uses ESLint for code style enforcement. All modified files must pass the existing repository ESLint configuration. Follow the code conventions visible in the existing codebase: co-locate sub-components with their parent, use `on` prefix for prop callbacks and `handle` prefix for internal handlers, and define TypeScript interfaces for component props.
+
 ## Files to Look At
 
 - `apps/studio/components/layouts/Navigation/LayoutHeader/LayoutHeader.tsx` — Desktop header layout where the button should be added

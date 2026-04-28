@@ -81,9 +81,20 @@ checks:
     path: packages/playwright/src/skill/references/session-management.md
     lines: 120-130
     commit: 08752e9a9be05e5d11173977c8651cf105c1aace
+- id: test_ci_build_playwright_driver_npm
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: build-playwright-driver / '
+- id: test_ci_build_playwright_driver_npm
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: build-playwright-driver / '
+- id: test_ci_build_playwright_driver_npm_2
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: build-playwright-driver / '
 rubric:
-- rule: Updated skill documentation is consistent with the style and format of existing
-    documentation in SKILL.md
+- rule: Updated skill documentation is consistent with the style and format of existing documentation in SKILL.md
   source:
     path: packages/playwright/src/skill/SKILL.md
     lines: 1-10
@@ -93,21 +104,15 @@ rubric:
     path: .claude/skills/playwright-mcp-dev/SKILL.md
     lines: 28-28
   source_text: '- Register command in `packages/playwright/src/mcp/terminal/commands.ts`'
-  evidence: The gold diff explicitly follows this by modifying the `commandsArray`
-    in `packages/playwright/src/mcp/terminal/commands.ts` to register the new `installBrowser`
-    command.
+  evidence: The gold diff explicitly follows this by modifying the `commandsArray` in `packages/playwright/src/mcp/terminal/commands.ts` to register the new `installBrowser` command.
   category: architecture
   verification: llm_judge
 - rule: CLI commands are based on MCP tools, but only implement them if needed
   source:
     path: .claude/skills/playwright-mcp-dev/SKILL.md
     lines: 24-24
-  source_text: '- CLI commands are based on MCP tools. Implement the corresponding
-    MCP tool as per `Adding MCP Tools` section above, if needed.'
-  evidence: 'The gold diff introduces the `install` command and renames `killAll`
-    to `session-kill-all`, but deliberately sets `toolName: ''''` for both, correctly
-    bypassing MCP tool creation since they are local CLI operations and do not need
-    to be exposed.'
+  source_text: '- CLI commands are based on MCP tools. Implement the corresponding MCP tool as per `Adding MCP Tools` section above, if needed.'
+  evidence: 'The gold diff introduces the `install` command and renames `killAll` to `session-kill-all`, but deliberately sets `toolName: ''''` for both, correctly bypassing MCP tool creation since they are local CLI operations and do not need to be exposed.'
   category: architecture
   verification: llm_judge
 config_edits:
@@ -134,8 +139,7 @@ config_edits:
 
     playwright-cli delete-data                # delete user data for default session
 
-    playwright-cli kill-all                   # forcefully kill all daemon processes
-    (for stale/zombie processes)'
+    playwright-cli kill-all                   # forcefully kill all daemon processes (for stale/zombie processes)'
 distractors:
 - rule: Add MCP Tool capability and register it
   source:
@@ -147,11 +151,7 @@ distractors:
 
     - Add ToolCapability in `packages/playwright/src/mcp/config.d.ts`'
   collision_type: architecture_boundary
-  why_distracting: An agent tasked with adding the new `install` command might blindly
-    follow these steps to create an MCP tool for it. However, the `install` command
-    is an internal workspace initialization tool that should not be exposed via MCP.
-    Following these rules would lead to implementing an unnecessary and architecturally
-    incorrect tool.
+  why_distracting: An agent tasked with adding the new `install` command might blindly follow these steps to create an MCP tool for it. However, the `install` command is an internal workspace initialization tool that should not be exposed via MCP. Following these rules would lead to implementing an unnecessary and architecturally incorrect tool.
   severity: high
 - rule: Preserve existing documented commands
   source:
@@ -161,20 +161,13 @@ distractors:
 
     playwright-cli install-skills'
   collision_type: meta_confusion
-  why_distracting: This file is the documentation for the tool being developed, not
-    a constraint for the developer. An agent might treat these documented commands
-    as an immutable API contract and refuse to refactor them, whereas the PR explicitly
-    renames `install-browser` and changes `install-skills` logic.
+  why_distracting: This file is the documentation for the tool being developed, not a constraint for the developer. An agent might treat these documented commands as an immutable API contract and refuse to refactor them, whereas the PR explicitly renames `install-browser` and changes `install-skills` logic.
   severity: medium
 - rule: Preserve kill-all command
   source:
     path: packages/playwright/src/skill/SKILL.md
     lines: 192-192
-  source_text: 'playwright-cli kill-all                   # forcefully kill all daemon
-    processes (for stale/zombie processes)'
+  source_text: 'playwright-cli kill-all                   # forcefully kill all daemon processes (for stale/zombie processes)'
   collision_type: scope_ambiguity
-  why_distracting: Similar to the install commands, an agent might see `kill-all`
-    in the documentation and believe it must not be altered, conflicting with the
-    diff which intentionally renames it to `session-kill-all` to match other session
-    command naming conventions.
+  why_distracting: Similar to the install commands, an agent might see `kill-all` in the documentation and believe it must not be altered, conflicting with the diff which intentionally renames it to `session-kill-all` to match other session command naming conventions.
   severity: medium

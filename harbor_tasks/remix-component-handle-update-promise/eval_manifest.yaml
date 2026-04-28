@@ -49,80 +49,84 @@ checks:
   type: fail_to_pass
   origin: pr_diff
   description: docs/handle.md documents the await handle.update() pattern
+- id: test_ci_check_lint
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: check / Lint'
+- id: test_ci_check_typecheck
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: check / Typecheck'
+- id: test_ci_check_check_change_files
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: check / Check change files'
+- id: test_ci_test_run_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: test / Run tests'
+- id: test_ci_format_format
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: format / Format'
+- id: test_ci_build_build_packages
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: build / Build packages'
 rubric:
 - rule: Documentation updates are consistent in style with existing content
   source:
     path: packages/component/AGENTS.md
     lines: 1-10
     commit: 649aecadeb54fc3027a2b6a85020dd31421b5327
-- rule: 'Adding changes: Create `packages/*/.changes/[major|minor|patch].short-description.md`
-    files.'
+- rule: 'Adding changes: Create `packages/*/.changes/[major|minor|patch].short-description.md` files.'
   source:
     path: AGENTS.md
     lines: 34-35
-  evidence: The gold solution creates `packages/component/.changes/minor.handle-update-promise.md`
-    to document the breaking change to the `handle.update()` API.
+  evidence: The gold solution creates `packages/component/.changes/minor.handle-update-promise.md` to document the breaking change to the `handle.update()` API.
   category: tooling
-- rule: 'Object methods: When defining functions in object literals, use shorthand
-    method syntax (`{ method() {} }`) instead of arrow functions (`{ method: () =>
-    {} }`).'
+- rule: 'Object methods: When defining functions in object literals, use shorthand method syntax (`{ method() {} }`) instead of arrow functions (`{ method: () => {} }`).'
   source:
     path: AGENTS.md
     lines: 20-21
-  evidence: In `demos/frames/app/assets/state-search-page.tsx` and the updated documentation
-    in `packages/component/AGENTS.md`, event handlers inside object literals are written
-    using shorthand method syntax (e.g
+  evidence: In `demos/frames/app/assets/state-search-page.tsx` and the updated documentation in `packages/component/AGENTS.md`, event handlers inside object literals are written using shorthand method syntax (e.g
   category: style
-- rule: 'Formatting: Prettier (printWidth: 100, no semicolons, single quotes, spaces
-    not tabs).'
+- rule: 'Formatting: Prettier (printWidth: 100, no semicolons, single quotes, spaces not tabs).'
   source:
     path: AGENTS.md
     lines: 23-23
-  evidence: The newly added code and documentation examples omit semicolons (e.g.,
-    `await handle.update()`) and use single quotes.
+  evidence: The newly added code and documentation examples omit semicolons (e.g., `await handle.update()`) and use single quotes.
   category: style
-- rule: 'Adding changes: Create packages/*/.changes/[major|minor|patch].short-description.md
-    files.'
+- rule: 'Adding changes: Create packages/*/.changes/[major|minor|patch].short-description.md files.'
   source:
     path: AGENTS.md
     lines: 36-37
-  evidence: Creates packages/component/.changes/minor.handle-update-promise.md following
-    the specified naming convention
+  evidence: Creates packages/component/.changes/minor.handle-update-promise.md following the specified naming convention
   category: documentation
-- rule: 'Variables: Prefer `let` for locals, `const` only at module scope; never use
-    `var`'
+- rule: 'Variables: Prefer `let` for locals, `const` only at module scope; never use `var`'
   source:
     path: AGENTS.md
     lines: 23-23
-  evidence: The cascading update guard in scheduler.ts requires a counter to track
-    infinite loops, which is declared using `let` instead of `var` or `const` at the
-    local scope.
+  evidence: The cascading update guard in scheduler.ts requires a counter to track infinite loops, which is declared using `let` instead of `var` or `const` at the local scope.
   category: style
 - rule: 'Imports: Always use `import type { X }` for types (separate from value imports)'
   source:
     path: AGENTS.md
     lines: 22-22
-  evidence: When updating the Handle interface in component.ts to return Promise<AbortSignal>,
-    any new type imports use the `import type` syntax.
+  evidence: When updating the Handle interface in component.ts to return Promise<AbortSignal>, any new type imports use the `import type` syntax.
   category: style
 - rule: 'Variables: Prefer let for locals, const only at module scope; never use var'
   source:
     path: AGENTS.md
     lines: 24-24
-  evidence: The gold solution checks for the presence of MAX_CASCADING_UPDATES in
-    scheduler.ts, which aligns with the rule to use const for module-scoped variables.
+  evidence: The gold solution checks for the presence of MAX_CASCADING_UPDATES in scheduler.ts, which aligns with the rule to use const for module-scoped variables.
   category: style
 distractors:
-- rule: 'Adding changes: Create packages/*/.changes/[major|minor|patch].short-description.md
-    files.'
+- rule: 'Adding changes: Create packages/*/.changes/[major|minor|patch].short-description.md files.'
   collision_type: scope_ambiguity
-  why_distracting: The rule requires creating a .changes file for modifications. Since
-    this is a breaking API change, the agent might create a changeset file, but the
-    task instructions do not request this, potentially leading to out-of-scope file
-    creation.
+  why_distracting: The rule requires creating a .changes file for modifications. Since this is a breaking API change, the agent might create a changeset file, but the task instructions do not request this, potentially leading to out-of-scope file creation.
   severity: medium
   source:
     path: AGENTS.md
     lines: 45-45
-hierarchy_analysis: The config is a single AGENTS.md file. The primary challenge is
-  that the task requires editing this exact file, creating a meta-referential loop.
+hierarchy_analysis: The config is a single AGENTS.md file. The primary challenge is that the task requires editing this exact file, creating a meta-referential loop.

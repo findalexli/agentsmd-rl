@@ -72,6 +72,25 @@ def test_post_endpoint_requests_fresh_screenshot():
     )
 
 
+def test_endpoint_includes_rison_query_parameter():
+    """The force flag must travel via a rison-encoded query parameter.
+
+    Superset reads query params as a single rison blob: ``?q=<rison>``.
+    A correct fix encodes ``{force: true}`` with rison and appends it
+    as ``?q=(force:!t)`` (or URL-encoded equivalent), rather than
+    inventing a different query scheme.
+    """
+    endpoint = _run_harness()
+    assert "?q=" in endpoint or "&q=" in endpoint, (
+        f"Expected rison 'q' query parameter in URL, got: {endpoint!r}"
+    )
+    # rison.encode({force: true}) produces (force:!t); the query value
+    # must look like a rison expression (paren-delimited, not bare params).
+    assert re.search(r"[?&]q=(\(|%28)", endpoint), (
+        f"Query value must use rison object encoding, got: {endpoint!r}"
+    )
+
+
 def test_post_endpoint_targets_cache_dashboard_screenshot():
     """Hook still posts to the cache_dashboard_screenshot endpoint."""
     endpoint = _run_harness()

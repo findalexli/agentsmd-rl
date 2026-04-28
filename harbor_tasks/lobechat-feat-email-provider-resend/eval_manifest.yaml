@@ -52,8 +52,7 @@ checks:
 - id: resend_impl_file_structure
   type: fail_to_pass
   origin: pr_diff
-  description: ResendImpl class exists implementing EmailServiceImpl with sendMail
-    and TRPCError handling
+  description: ResendImpl class exists implementing EmailServiceImpl with sendMail and TRPCError handling
 - id: enum_includes_resend
   type: fail_to_pass
   origin: pr_diff
@@ -61,13 +60,11 @@ checks:
 - id: env_configures_resend_vars
   type: fail_to_pass
   origin: pr_diff
-  description: src/envs/email.ts defines RESEND_API_KEY, RESEND_FROM, EMAIL_SERVICE_PROVIDER
-    with nodemailer/resend validation
+  description: src/envs/email.ts defines RESEND_API_KEY, RESEND_FROM, EMAIL_SERVICE_PROVIDER with nodemailer/resend validation
 - id: email_service_resolves_provider
   type: fail_to_pass
   origin: pr_diff
-  description: EmailService constructor resolves provider from EMAIL_SERVICE_PROVIDER
-    env var with Nodemailer fallback
+  description: EmailService constructor resolves provider from EMAIL_SERVICE_PROVIDER env var with Nodemailer fallback
 - id: email_readme_documents_resend
   type: fail_to_pass
   origin: pr_diff
@@ -75,32 +72,51 @@ checks:
 - id: agents_md_has_project_description
   type: fail_to_pass
   origin: pr_diff
-  description: AGENTS.md includes Project Description section with AI Agent Workspace
-    branding
+  description: AGENTS.md includes Project Description section with AI Agent Workspace branding
+- id: test_ci_test_website_test_app_coverage
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: Test Website / Test App Coverage'
+- id: test_ci_test_database_lint
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: Test Database / Lint'
+- id: test_ci_test_database_test_client_db
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: Test Database / Test Client DB'
+- id: test_ci_test_database_test_coverage
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: Test Database / Test Coverage'
+- id: test_ci_test_desktop_app_test_desktop_client
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: Test Desktop App / Test Desktop Client'
+- id: test_ci_test_web_app_run_e2e_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: Test Web App / Run E2E tests'
 rubric:
-- rule: Debug loggers must use the namespace pattern 'lobe-[module]:[submodule]' (e.g.,
-    'lobe-email:Resend' for email services)
+- rule: Debug loggers must use the namespace pattern 'lobe-[module]:[submodule]' (e.g., 'lobe-email:Resend' for email services)
   source:
     path: .cursor/rules/debug-usage.mdc
     lines: 21-23,33-36
     commit: 08572d060270afd65fcc5efdf7cde9e5fb0b0e04
-  evidence: "The gold solution uses `const log = debug('lobe-email:Resend');` in the ResendImpl class, which follows the required namespace pattern."
-- rule: When importing a directory module, use the explicit index path like '@/envs/email/index'
-    instead of '@/envs/email'
+  evidence: The gold solution uses `const log = debug('lobe-email:Resend');` in the ResendImpl class, which follows the required namespace pattern.
+- rule: When importing a directory module, use the explicit index path like '@/envs/email/index' instead of '@/envs/email'
   source:
     path: .cursor/rules/typescript.mdc
     lines: '21'
     commit: 08572d060270afd65fcc5efdf7cde9e5fb0b0e04
   evidence: The gold solution uses `import { emailEnv } from '@/envs/email/index';` in the resend/index.ts file, following the explicit index path convention.
-- rule: Server environment variables must be defined using createEnv from '@t3-oss/env-nextjs'
-    with zod validation schema in src/envs/<domain>.ts files
+- rule: Server environment variables must be defined using createEnv from '@t3-oss/env-nextjs' with zod validation schema in src/envs/<domain>.ts files
   source:
     path: .cursor/rules/add-setting-env.mdc
     lines: 16-34
     commit: 08572d060270afd65fcc5efdf7cde9e5fb0b0e04
   evidence: The gold solution adds RESEND_API_KEY, RESEND_FROM, and EMAIL_SERVICE_PROVIDER to src/envs/email.ts using createEnv with zod validation schema.
-- rule: Prefer async/await over callbacks or chained .then() promises in asynchronous
-    code
+- rule: Prefer async/await over callbacks or chained .then() promises in asynchronous code
   source:
     path: .cursor/rules/typescript.mdc
     lines: 25-28
@@ -112,15 +128,13 @@ rubric:
     lines: 6-8
   evidence: The gold solution updates the project description in `.cursor/rules/project-introduce.mdc` in addition to `AGENTS.md`, following the cross-reference in CLAUDE.md's Tech Stack section.
   category: documentation
-- rule: Update the project description in the agent instructions to reflect the new
-    'AI Agent Workspace' branding.
+- rule: Update the project description in the agent instructions to reflect the new 'AI Agent Workspace' branding.
   source:
     path: AGENTS.md
     lines: 1-5
-  evidence: "The gold solution directly edits AGENTS.md to add the Project Description section with the text You are developing an open-source, modern-design AI Agent Workspace: LobeHub(previous LobeChat)."
+  evidence: 'The gold solution directly edits AGENTS.md to add the Project Description section with the text You are developing an open-source, modern-design AI Agent Workspace: LobeHub(previous LobeChat).'
   category: documentation
-- rule: Maintain accurate and consistent project description across documentation
-    and rule files
+- rule: Maintain accurate and consistent project description across documentation and rule files
   source:
     path: .cursor/rules/project-introduce.mdc
     lines: 4-7
@@ -130,31 +144,26 @@ rubric:
   source:
     path: AGENTS.md
     lines: 1-10
-  evidence: "The gold solution adds a new '## Project Description' section to AGENTS.md with the updated branding 'AI Agent Workspace: LobeHub(previous LobeChat)'."
+  evidence: 'The gold solution adds a new ''## Project Description'' section to AGENTS.md with the updated branding ''AI Agent Workspace: LobeHub(previous LobeChat)''.'
   category: documentation
-
 config_edits:
 - path: .cursor/rules/project-introduce.mdc
   tier: 1
-  gold_added: 'You are developing an open-source, modern-design AI Agent Workspace:
-    LobeHub(previous LobeChat).'
-  gold_removed: 'You are developing an open-source, modern-design AI chat framework:
-    lobehub(previous lobe-chat).'
+  gold_added: 'You are developing an open-source, modern-design AI Agent Workspace: LobeHub(previous LobeChat).'
+  gold_removed: 'You are developing an open-source, modern-design AI chat framework: lobehub(previous lobe-chat).'
 - path: AGENTS.md
   tier: 1
   gold_added: '## Project Description
 
 
-    You are developing an open-source, modern-design AI Agent Workspace: LobeHub(previous
-    LobeChat).'
+    You are developing an open-source, modern-design AI Agent Workspace: LobeHub(previous LobeChat).'
   gold_removed: ''
 - path: src/server/services/email/README.md
   tier: 2
   gold_added: '### Resend
 
 
-    If you prefer Resend, configure the following and initialize the service with
-    `EmailImplType.Resend`:
+    If you prefer Resend, configure the following and initialize the service with `EmailImplType.Resend`:
 
 
     ```bash
@@ -172,8 +181,7 @@ config_edits:
     ### Choose Provider by Environment
 
 
-    Set `EMAIL_SERVICE_PROVIDER` to `nodemailer` or `resend` to pick the default implementation
-    without changing code:
+    Set `EMAIL_SERVICE_PROVIDER` to `nodemailer` or `resend` to pick the default implementation without changing code:
 
 
     ```bash
@@ -183,26 +191,18 @@ config_edits:
     ```'
   gold_removed: ''
 distractors:
-- rule: Never run `bun run test` etc to run tests, this will run all tests and cost
-    about 10mins.
+- rule: Never run `bun run test` etc to run tests, this will run all tests and cost about 10mins.
   collision_type: rule_conflict
-  why_distracting: The agent creates a new test file `src/server/services/email/index.test.ts`
-    and will likely want to run tests to verify its implementation. Standard instinct
-    is to run `bun run test` or `npm test`, but doing so will trigger the entire test
-    suite and waste significant time (10+ minutes).
+  why_distracting: The agent creates a new test file `src/server/services/email/index.test.ts` and will likely want to run tests to verify its implementation. Standard instinct is to run `bun run test` or `npm test`, but doing so will trigger the entire test suite and waste significant time (10+ minutes).
   severity: high
   source:
     path: CLAUDE.md
     lines: 35-45
 - rule: DON'T run `pnpm i18n`, let CI auto handle it.
   collision_type: scope_ambiguity
-  why_distracting: The agent is updating documentation and might notice the existence
-    of localized files like `auth.zh-CN.mdx`. It might attempt to run `pnpm i18n`
-    to automatically sync or generate translations for the new Resend documentation.
+  why_distracting: The agent is updating documentation and might notice the existence of localized files like `auth.zh-CN.mdx`. It might attempt to run `pnpm i18n` to automatically sync or generate translations for the new Resend documentation.
   severity: medium
   source:
     path: CLAUDE.md
     lines: 50-55
-hierarchy_analysis: The configuration is relatively flat but split across `AGENTS.md`
-  and `CLAUDE.md`. The most interesting dynamic is that `AGENTS.md` acts simultaneously
-  as a rule file and a target file to be edited, creating a meta-referential loop.
+hierarchy_analysis: The configuration is relatively flat but split across `AGENTS.md` and `CLAUDE.md`. The most interesting dynamic is that `AGENTS.md` acts simultaneously as a rule file and a target file to be edited, creating a meta-referential loop.

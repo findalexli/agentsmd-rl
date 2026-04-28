@@ -293,3 +293,17 @@ def test_gofmt_clean():
     )
     assert r.returncode == 0, f"gofmt errored:\n{r.stderr}"
     assert r.stdout.strip() == "", f"files need gofmt:\n{r.stdout}"
+
+# === PR-added f2p tests (taskforge.test_patch_miner) ===
+def test_pr_added_TestReplacePairs():
+    """fail_to_pass | PR added test 'TestReplacePairs' in 'tpl/strings/strings_test.go' (go_test)"""
+    r = subprocess.run(
+        ["go", "test", "-count=1", "-v", "-run", "^TestReplacePairs$", "./tpl/strings/"],
+        cwd=str(REPO), capture_output=True, text=True, timeout=300,
+    )
+    assert r.returncode == 0, (
+        f"PR-added test 'TestReplacePairs' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+    assert "--- PASS:" in r.stdout, (
+        f"TestReplacePairs: per-test PASS line missing — test may not have "
+        f"been compiled or matched by -run\n{r.stdout[-2000:]}")

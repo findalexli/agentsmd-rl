@@ -30,6 +30,13 @@ Both `test_sft` and `test_grpo` must exercise both `fsdp` and `megatron` backend
 
 7. **No hardcoded config paths**: The test functions must not pass a literal `"config.yaml"` string as the config path argument to `load_expr_config`.
 
+## Code Style Requirements
+
+Before submitting your changes, ensure they pass:
+- **Ruff**: `ruff check` and `ruff format --check` on modified Python files
+- **Pre-commit hooks**: `check-yaml`, `check-json`, `trailing-whitespace`, `end-of-file-fixer`
+- **clang-format**: C/C++ source formatting checks
+
 ## Files to Look At
 
 - `areal/tests/grpo/test_grpo.py` — GRPO integration test

@@ -73,63 +73,106 @@ checks:
     path: AGENTS.md
     lines: '76'
     commit: 50ee3c2e70ccd8b945b1280cc1a1bf92612744db
+- id: test_ci_cargo_test_ty_mdtests_github_annotations
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: cargo test / ty mdtests (GitHub annotations)'
+- id: test_ci_cargo_test_run_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: cargo test / Run tests'
+- id: test_ci_cargo_test_dogfood_ty_on_py_fuzzer
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: cargo test / Dogfood ty on py-fuzzer'
+- id: test_ci_cargo_test_dogfood_ty_on_the_scripts_directory
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: cargo test / Dogfood ty on the scripts directory'
+- id: test_ci_cargo_test_dogfood_ty_on_ty_benchmark
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: cargo test / Dogfood ty on ty_benchmark'
+- id: test_ci_cargo_test_cargo
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: cargo test / '
+- id: test_ci_cargo_test_cargo
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: cargo test / '
+- id: test_ci_cargo_fuzz_build_cargo
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: cargo fuzz build / '
+- id: test_ci_cargo_build_build_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: cargo build / Build tests'
+- id: test_ci_test_scripts_python
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: test scripts / '
+- id: test_ci_test_scripts_python
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: test scripts / '
+- id: test_ci_test_scripts_scripts_add_rule_py
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: test scripts / '
+- id: test_ci_cargo_test_cargo_2
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: cargo test / '
+- id: test_ci_test_scripts_python_2
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: test scripts / '
+- id: test_ci_test_scripts_cargo
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: test scripts / '
 rubric:
 - rule: Follow existing code style. Check neighboring files for patterns.
   source:
     path: AGENTS.md
     lines: '75'
     commit: 50ee3c2e70ccd8b945b1280cc1a1bf92612744db
-- rule: Prefer let chains (if let combined with &&) over nested if let statements
-    to reduce indentation and improve readability.
+- rule: Prefer let chains (if let combined with &&) over nested if let statements to reduce indentation and improve readability.
   source:
     path: AGENTS.md
     lines: '80'
     commit: 50ee3c2e70ccd8b945b1280cc1a1bf92612744db
-- rule: Avoid writing significant amounts of new code. This is often a sign that we
-    are missing an existing method or mechanism that could help solve the problem.
-    Look for existing utilities first.
+- rule: Avoid writing significant amounts of new code. This is often a sign that we are missing an existing method or mechanism that could help solve the problem. Look for existing utilities first.
   source:
     path: AGENTS.md
     lines: '78'
     commit: 50ee3c2e70ccd8b945b1280cc1a1bf92612744db
-- rule: Look to see if your tests could go in an existing file before adding a new
-    file for your tests.
+- rule: Look to see if your tests could go in an existing file before adding a new file for your tests.
   source:
     path: AGENTS.md
     lines: 54-54
-  evidence: The gold solution adds new test cases for `Literal[-3.14]`, `Literal[-3j]`,
-    and `var1` to the existing `literal.md` and `pep613_type_aliases.md` files rather
-    than creating new markdown test files.
+  evidence: The gold solution adds new test cases for `Literal[-3.14]`, `Literal[-3j]`, and `var1` to the existing `literal.md` and `pep613_type_aliases.md` files rather than creating new markdown test files.
   category: testing
-- rule: All changes must be tested. If you're not testing your changes, you're not
-    done.
+- rule: All changes must be tested. If you're not testing your changes, you're not done.
   source:
     path: AGENTS.md
     lines: 53-53
-  evidence: The gold solution adds specific test cases to ensure the new `invalid-type-form`
-    diagnostics are correctly emitted for non-integer unary expressions and invalid
-    type alias assignments.
+  evidence: The gold solution adds specific test cases to ensure the new `invalid-type-form` diagnostics are correctly emitted for non-integer unary expressions and invalid type alias assignments.
   category: testing
-- rule: Avoid writing significant amounts of new code. Look for existing utilities
-    first.
+- rule: Avoid writing significant amounts of new code. Look for existing utilities first.
   source:
     path: AGENTS.md
     lines: 63-64
-  evidence: The gold solution removes the ad-hoc `alias_syntax_validation` function
-    and reuses the existing `infer_type_expression` infrastructure to validate PEP-613
-    type aliases.
+  evidence: The gold solution removes the ad-hoc `alias_syntax_validation` function and reuses the existing `infer_type_expression` infrastructure to validate PEP-613 type aliases.
   category: architecture
 distractors:
 - rule: Avoid writing significant amounts of new code.
   collision_type: architecture_boundary
-  why_distracting: The rule to 'Avoid writing significant amounts of new code' might
-    discourage the agent from creating the new `pep_613_alias.rs` module, leading
-    it to cram the validation logic into `builder.rs` or an existing post-inference
-    module despite the task instruction suggesting a new module.
+  why_distracting: The rule to 'Avoid writing significant amounts of new code' might discourage the agent from creating the new `pep_613_alias.rs` module, leading it to cram the validation logic into `builder.rs` or an existing post-inference module despite the task instruction suggesting a new module.
   severity: medium
   source:
     path: AGENTS.md
     lines: 59-60
-hierarchy_analysis: The configuration is a flat, single-file structure where `CLAUDE.md`
-  simply includes `AGENTS.md`. The rules are straightforward and apply globally to
-  the repository.
+hierarchy_analysis: The configuration is a flat, single-file structure where `CLAUDE.md` simply includes `AGENTS.md`. The rules are straightforward and apply globally to the repository.

@@ -1,11 +1,11 @@
-FROM node:22-slim
+FROM node:24-slim
 
 ENV DEBIAN_FRONTEND=noninteractive
 ENV LANG=C.UTF-8
 
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
-        git curl ca-certificates build-essential python3 tmux && \
+        git curl ca-certificates build-essential python3 python3-pip tmux && \
     rm -rf /var/lib/apt/lists/*
 
 # Install typescript and oxlint globally (for tests)

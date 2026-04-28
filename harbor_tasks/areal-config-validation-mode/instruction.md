@@ -17,7 +17,7 @@ Both dataclasses should validate the `mode` field and raise a `ValueError` with 
 **SwanlabConfig valid modes:** `cloud`, `local`, `disabled`, `offline`
 
 The error message should clearly indicate:
-1. What field is invalid (wandb mode vs swanlab mode)
+1. What field is invalid (e.g., "Invalid wandb mode" vs "Invalid swanlab mode")
 2. What invalid value was provided
 3. What the valid options are
 

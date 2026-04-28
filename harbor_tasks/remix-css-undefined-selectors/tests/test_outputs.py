@@ -166,12 +166,9 @@ console.log("CSS_END");
     )
     out = r.stdout
     css = out.split("CSS_START\n", 1)[1].split("\nCSS_END", 1)[0]
-    # The array step ['color: red'] must NOT produce indexed-key declarations
-    # like `0: color: red;`. Iterating an array as a record would yield those.
     assert "0: color: red" not in css, (
         f"Array must not be iterated as a record (would yield numeric-key declarations):\n{css}"
     )
-    # The valid 'to' frame should still produce a color-blue declaration.
     assert "color: blue" in css, f"Valid keyframe step must be emitted:\n{css}"
 
 
@@ -251,3 +248,42 @@ def test_node_can_strip_types_on_style_module():
         timeout=30,
     )
     assert r.returncode == 0, f"style.ts has a syntax error:\n{r.stderr}"
+
+
+# === CI-mined tests scoped to the affected package ===
+
+
+def test_ci_format_format():
+    """pass_to_pass | CI job 'format' — scoped to @remix-run/component"""
+    r = subprocess.run(
+        ["bash", "-lc", "pnpm --filter @remix-run/component exec prettier --check src/"],
+        cwd=REPO,
+        capture_output=True, text=True, timeout=300,
+    )
+    assert r.returncode == 0, (
+        f"CI step 'Format' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+
+def test_ci_build_build_packages():
+    """pass_to_pass | CI job 'build' — scoped to @remix-run/component"""
+    r = subprocess.run(
+        ["bash", "-lc", "pnpm --filter @remix-run/component build"],
+        cwd=REPO,
+        capture_output=True, text=True, timeout=300,
+    )
+    assert r.returncode == 0, (
+        f"CI step 'Build packages' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+
+def test_ci_check_typecheck():
+    """pass_to_pass | CI job 'check' — scoped to @remix-run/component"""
+    r = subprocess.run(
+        ["bash", "-lc", "pnpm --filter @remix-run/component typecheck"],
+        cwd=REPO,
+        capture_output=True, text=True, timeout=300,
+    )
+    assert r.returncode == 0, (
+        f"CI step 'Typecheck' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")

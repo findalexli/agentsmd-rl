@@ -1,0 +1,142 @@
+version: '2.0'
+source:
+  repo: openai/openai-agents-js
+  pr: 888
+  base_commit: 60a48d71be74bcdf35646b1e1fb84bde7445e8dd
+  merge_commit: 24a4066aa7015b507537a4b35aa0845e2692c2e5
+task:
+  kind: code_with_config
+checks:
+- id: test_validate_shape_accepts_major
+  type: fail_to_pass
+  origin: pr_diff
+  description: validateShape() accepts 'major' as a valid required_bump value
+- id: test_schema_accepts_major
+  type: fail_to_pass
+  origin: pr_diff
+  description: JSON schema enum for required_bump includes 'major'
+- id: test_milestone_sort_ascending
+  type: fail_to_pass
+  origin: pr_diff
+  description: Milestone sort comparator sorts ascending by major then minor
+- id: test_milestone_handles_major_bump
+  type: fail_to_pass
+  origin: pr_diff
+  description: assignMilestone has branch logic for selecting a major-bump target milestone
+- id: test_repo_lint
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo ESLint passes
+- id: test_ci_test_build_all_packages
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: test / Build all packages'
+- id: test_ci_test_check_generated_declarations
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: test / Check generated declarations'
+- id: test_ci_test_run_linter
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: test / Run linter'
+- id: test_ci_test_type_check_docs_scripts
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: test / Type-check docs scripts'
+- id: test_ci_test_compile_examples
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: test / Compile examples'
+- id: test_ci_test_run_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: test / Run tests'
+config_edits:
+- path: .codex/skills/changeset-validation/SKILL.md
+  tier: 1
+  gold_added: 'Major bumps are only allowed after the first major release; before that, do not use major bumps for feature-level changes.
+
+    3. Provide a clear verdict and required bump (patch/minor/major/none).
+
+    '
+  gold_removed: '3. Provide a clear verdict and required bump (patch/minor/none).
+
+    '
+- path: .codex/skills/changeset-validation/references/validation-prompt.md
+  tier: 1
+  gold_added: '- required_bump: "patch" | "minor" | "major" | "none"
+
+    7. Default bump is patch. Minor is allowed only when changes include breaking changes, dropped support, or a major feature addition. Major is allowed only after the first major release and only for changes that warrant a major release (breaking changes, dropped support, or significant behavior shifts). Before the first major release, do not use major bumps for feature-level changes. Exception: if the new feature is explicitly labeled experimental/preview in the diff (e.g., module name, docs, comments, or exports) and does not change existing behavior, a patch bump is acceptable.
+
+    '
+  gold_removed: '- required_bump: "patch" | "minor" | "none"
+
+    7. Default bump is patch. Minor is allowed only when changes include breaking changes, dropped support, or a major feature addition. Exception: if the new feature is explicitly labeled experimental/preview in the diff (e.g., module name, docs, comments, or exports) and does not change existing behavior, a patch bump is acceptable.
+
+    '
+rubric:
+- rule: Keep the prompt file as the single source of validation rules.
+  source:
+    path: .codex/skills/changeset-validation/SKILL.md
+    lines: '39'
+    commit: 60a48d71be74bcdf35646b1e1fb84bde7445e8dd
+  evidence: validation-prompt.md was updated to add 'major' to the allowed bump values and expand rule 7, keeping it as the single source of truth.
+  category: architecture
+  verification: llm_judge
+- rule: 'Keep the script lightweight: it should only gather context and emit the prompt.'
+  source:
+    path: .codex/skills/changeset-validation/SKILL.md
+    lines: '41'
+    commit: 60a48d71be74bcdf35646b1e1fb84bde7445e8dd
+  evidence: changeset-validation-result.mjs was updated minimally to add 'major' to the allowed enum; no logic bloat added.
+  category: architecture
+  verification: llm_judge
+- rule: Run `pnpm lint` and fix all errors locally.
+  source:
+    path: AGENTS.md
+    lines: '148'
+    commit: 60a48d71be74bcdf35646b1e1fb84bde7445e8dd
+  evidence: All changed .mjs files pass ESLint.
+  category: style
+  verification: programmatic
+- rule: Code style follows `eslint.config.mjs` and Prettier defaults.
+  source:
+    path: AGENTS.md
+    lines: '151'
+    commit: 60a48d71be74bcdf35646b1e1fb84bde7445e8dd
+  evidence: Changed code conforms to the repo's ESLint and Prettier configuration.
+  category: style
+  verification: programmatic
+- rule: Comments must end with a period.
+  source:
+    path: AGENTS.md
+    lines: '123'
+    commit: 60a48d71be74bcdf35646b1e1fb84bde7445e8dd
+  evidence: Any comments added in the diff end with a period.
+  category: style
+  verification: llm_judge
+- rule: Use **Conventional Commits**
+  source:
+    path: AGENTS.md
+    lines: '163'
+    commit: 60a48d71be74bcdf35646b1e1fb84bde7445e8dd
+  evidence: PR title uses 'ci:' prefix, following Conventional Commits.
+  category: naming
+  verification: llm_judge
+distractors:
+- rule: When editing GitHub Actions workflows, always web-search for the latest stable major versions of official actions (e.g., `actions/checkout`, `actions/setup-node`) before updating version pins.
+  source:
+    path: AGENTS.md
+    lines: '187'
+    commit: 60a48d71be74bcdf35646b1e1fb84bde7445e8dd
+  collision_type: scope_ambiguity
+  why_distracting: The PR adds a new step using actions/github-script@v8 but the task is about the changeset validation logic, not about bumping action versions. The existing action versions in the workflow are correct.
+  severity: medium
+- rule: 'Treat review feedback critically: reviewers can be wrong. Reproduce or verify each comment, cross-check with source docs, and only make changes when the feedback remains valid after your own validation.'
+  source:
+    path: AGENTS.md
+    lines: '189'
+    commit: 60a48d71be74bcdf35646b1e1fb84bde7445e8dd
+  collision_type: meta_confusion
+  why_distracting: This is a meta-rule about the review process. It could distract agents into second-guessing the validation rules rather than updating them.
+  severity: low

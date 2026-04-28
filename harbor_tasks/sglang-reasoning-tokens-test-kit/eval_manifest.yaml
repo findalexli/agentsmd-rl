@@ -5,11 +5,11 @@ source:
   base_commit: bb9e058f5b9d4754ac2965bb36864fee1cd978e8
   merge_commit: 904bb476d86b62aed1bf840db3be3ae2b1cf128b
 checks:
-- id: reasoning_tokens_kit_syntax
-  type: pass_to_pass
+- id: test_reasoning_tokens_kit_syntax
+  type: fail_to_pass
   origin: static
   description: New reasoning_tokens_kit.py must be valid Python
-- id: modified_files_syntax
+- id: test_modified_files_syntax
   type: pass_to_pass
   origin: static
   description: Modified test files must parse without errors
@@ -85,15 +85,15 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Repo's debug statements check passes via pre-commit
-- id: reasoning_tokens_kit_exists
+- id: test_reasoning_tokens_kit_exists
   type: fail_to_pass
   origin: pr_diff
   description: reasoning_tokens_kit.py must exist with ReasoningTokenUsageMixin
-- id: mixin_has_required_methods
+- id: test_mixin_has_required_methods
   type: fail_to_pass
   origin: pr_diff
   description: ReasoningTokenUsageMixin must have all 5 test methods
-- id: mixin_has_init_reasoning_token_verifier
+- id: test_mixin_has_init_reasoning_token_verifier
   type: fail_to_pass
   origin: pr_diff
   description: Mixin must have init_reasoning_token_verifier classmethod
@@ -117,7 +117,7 @@ checks:
   type: fail_to_pass
   origin: pr_diff
   description: TestQwen35FP4 must use CustomTestCase instead of unittest.TestCase
-- id: old_reasoning_usage_tokens_deleted
+- id: test_old_reasoning_usage_tokens_deleted
   type: fail_to_pass
   origin: pr_diff
   description: Old standalone test_reasoning_usage_tokens.py must be deleted
@@ -129,58 +129,41 @@ checks:
   type: fail_to_pass
   origin: pr_diff
   description: TestQwen35FP4MTP setUpClass must call init_reasoning_token_verifier
+- id: test_ci_precommit_ruff
+  type: pass_to_pass
+  origin: repo_tests
+  description: Run ruff via pre-commit as a real CI tool (bash -lc form)
 rubric:
 - rule: Use the mixin pattern to separate what to test from how to test
   source:
     path: .claude/skills/write-sglang-test/SKILL.md
     lines: 402-404
-  source_text: '**Design philosophy**: Most test files don''t care about eval logic
-    — they only need a "does this feature break model output quality?" sanity check.
-    The mixin pattern separates **what to test** (threshold) from **how to test**
-    (run_eval, assertions, CI summary). Test classes declare thresholds as class attributes;
-    the mixin provides the `test_*` method. Override when you need extra assertions
-    (e.g. EAGLE accept length).'
-  evidence: The gold diff creates ReasoningTokenUsageMixin, which relies on class
-    attributes like `model`, `base_url`, and `reasoning_parser_name` to define the
-    specific test setup, while encapsulating the standard `test_*` assertion methods
-    for reasoning token behavior within the mixin.
+  source_text: '**Design philosophy**: Most test files don''t care about eval logic — they only need a "does this feature break model output quality?" sanity check. The mixin pattern separates **what to test** (threshold) from **how to test** (run_eval, assertions, CI summary). Test classes declare thresholds as class attributes; the mixin provides the `test_*` method. Override when you need extra assertions (e.g. EAGLE accept length).'
+  evidence: The gold diff creates ReasoningTokenUsageMixin, which relies on class attributes like `model`, `base_url`, and `reasoning_parser_name` to define the specific test setup, while encapsulating the standard `test_*` assertion methods for reasoning token behavior within the mixin.
   category: architecture
   verification: llm_judge
 - rule: Always use CustomTestCase for tests
   source:
     path: .claude/skills/write-sglang-test/SKILL.md
     lines: 12-12
-  source_text: 1. **Always use `CustomTestCase`** — never raw `unittest.TestCase`.
-    It ensures `tearDownClass` runs even when `setUpClass` fails, preventing resource
-    leaks in CI.
-  evidence: The gold diff correctly changes `class TestQwen35FP4(unittest.TestCase):`
-    to `class TestQwen35FP4(CustomTestCase):` and inherits `CustomTestCase` for `TestQwen35FP4MTP`.
+  source_text: 1. **Always use `CustomTestCase`** — never raw `unittest.TestCase`. It ensures `tearDownClass` runs even when `setUpClass` fails, preventing resource leaks in CI.
+  evidence: The gold diff correctly changes `class TestQwen35FP4(unittest.TestCase):` to `class TestQwen35FP4(CustomTestCase):` and inherits `CustomTestCase` for `TestQwen35FP4MTP`.
   category: Testing Conventions
   verification: llm_judge
 - rule: Use the mixin pattern for reusable test logic
   source:
     path: .claude/skills/write-sglang-test/SKILL.md
     lines: 402-404
-  source_text: '**Design philosophy**: Most test files don''t care about eval logic
-    — they only need a "does this feature break model output quality?" sanity check.
-    The mixin pattern separates **what to test** (threshold) from **how to test**
-    (run_eval, assertions, CI summary). Test classes declare thresholds as class attributes;
-    the mixin provides the `test_*` method. Override when you need extra assertions
-    (e.g. EAGLE accept length).'
-  evidence: The gold diff extracts reasoning token test logic into a reusable `ReasoningTokenUsageMixin`
-    located in `python/sglang/test/kits/reasoning_tokens_kit.py` and has actual test
-    classes inherit from it while declaring `reasoning_parser_name`.
+  source_text: '**Design philosophy**: Most test files don''t care about eval logic — they only need a "does this feature break model output quality?" sanity check. The mixin pattern separates **what to test** (threshold) from **how to test** (run_eval, assertions, CI summary). Test classes declare thresholds as class attributes; the mixin provides the `test_*` method. Override when you need extra assertions (e.g. EAGLE accept length).'
+  evidence: The gold diff extracts reasoning token test logic into a reusable `ReasoningTokenUsageMixin` located in `python/sglang/test/kits/reasoning_tokens_kit.py` and has actual test classes inherit from it while declaring `reasoning_parser_name`.
   category: Architecture Patterns
   verification: llm_judge
 - rule: Reuse server fixtures using popen_launch_server
   source:
     path: .claude/skills/write-sglang-test/SKILL.md
     lines: 15-15
-  source_text: 4. **Reuse server fixtures** — inherit from `DefaultServerBase` or
-    write `setUpClass`/`tearDownClass` with `popen_launch_server`
-  evidence: The modified tests (`TestQwen35FP4MTP` and `TestEnableThinking`) both
-    configure class attributes in `setUpClass` and utilize `popen_launch_server` exactly
-    as required.
+  source_text: 4. **Reuse server fixtures** — inherit from `DefaultServerBase` or write `setUpClass`/`tearDownClass` with `popen_launch_server`
+  evidence: The modified tests (`TestQwen35FP4MTP` and `TestEnableThinking`) both configure class attributes in `setUpClass` and utilize `popen_launch_server` exactly as required.
   category: Testing Architecture
   verification: llm_judge
 distractors:
@@ -188,78 +171,47 @@ distractors:
   source:
     path: .claude/skills/write-sglang-test/SKILL.md
     lines: '12'
-  source_text: 1. **Always use `CustomTestCase`** — never raw `unittest.TestCase`.
-    It ensures `tearDownClass` runs even when `setUpClass` fails, preventing resource
-    leaks in CI.
+  source_text: 1. **Always use `CustomTestCase`** — never raw `unittest.TestCase`. It ensures `tearDownClass` runs even when `setUpClass` fails, preventing resource leaks in CI.
   collision_type: scope_ambiguity
-  why_distracting: An agent might incorrectly attempt to make the mixin class inherit
-    from CustomTestCase. As a mixin, it should not inherit from test case base classes;
-    it is designed to be composed alongside them in the final test suite files.
+  why_distracting: An agent might incorrectly attempt to make the mixin class inherit from CustomTestCase. As a mixin, it should not inherit from test case base classes; it is designed to be composed alongside them in the final test suite files.
   severity: medium
 - rule: Place tests in test/registered/<category>/
   source:
     path: .claude/skills/write-sglang-test/SKILL.md
     lines: '14'
-  source_text: 3. **Place tests in `test/registered/<category>/`** — except JIT kernel
-    tests and benchmarks, which live in `python/sglang/jit_kernel/tests/` and `python/sglang/jit_kernel/benchmark/`
-    (nested subfolders are allowed)
+  source_text: 3. **Place tests in `test/registered/<category>/`** — except JIT kernel tests and benchmarks, which live in `python/sglang/jit_kernel/tests/` and `python/sglang/jit_kernel/benchmark/` (nested subfolders are allowed)
   collision_type: scope_ambiguity
-  why_distracting: An agent might place the new reasoning tokens file inside the test/registered/
-    directory because it contains actual test methods, but as a reusable test utility
-    mixin, it correctly belongs in python/sglang/test/kits/.
+  why_distracting: An agent might place the new reasoning tokens file inside the test/registered/ directory because it contains actual test methods, but as a reusable test utility mixin, it correctly belongs in python/sglang/test/kits/.
   severity: medium
 - rule: Every test file must call a registration function
   source:
     path: .claude/skills/write-sglang-test/SKILL.md
     lines: '310'
-  source_text: 'Every CI-discovered test file must call a registration function at
-    module level:'
+  source_text: 'Every CI-discovered test file must call a registration function at module level:'
   collision_type: scope_ambiguity
-  why_distracting: An agent might add a CI registration call like register_cuda_ci()
-    at the top of the file simply because it contains test methods. Since this is
-    a utility mixin and not an executable test file itself, registering it would be
-    incorrect.
+  why_distracting: An agent might add a CI registration call like register_cuda_ci() at the top of the file simply because it contains test methods. Since this is a utility mixin and not an executable test file itself, registering it would be incorrect.
   severity: medium
 - rule: Prefer mock over real server for testing logic
   source:
     path: .claude/skills/write-sglang-test/SKILL.md
     lines: 16-16
-  source_text: 5. **Prefer mock over real server** — when testing logic that doesn't
-    need a server / engine launch (middleware, request routing, config validation,
-    argument parsing), use `unittest.mock.patch` / `MagicMock` and place tests in
-    `test/registered/unit/`.
+  source_text: 5. **Prefer mock over real server** — when testing logic that doesn't need a server / engine launch (middleware, request routing, config validation, argument parsing), use `unittest.mock.patch` / `MagicMock` and place tests in `test/registered/unit/`.
   collision_type: would_cause_bug
-  why_distracting: An agent reading this rule might assume that counting reasoning
-    tokens could be tested locally using mock dependencies. However, asserting accurate
-    reasoning token generation metrics explicitly requires a full end-to-end server
-    lifecycle to generate real tokens. Trying to mock it would result in testing incomplete
-    logic.
+  why_distracting: An agent reading this rule might assume that counting reasoning tokens could be tested locally using mock dependencies. However, asserting accurate reasoning token generation metrics explicitly requires a full end-to-end server lifecycle to generate real tokens. Trying to mock it would result in testing incomplete logic.
   severity: high
 - rule: Do NOT add register_amd_ci unless explicitly needed
   source:
     path: .claude/skills/write-sglang-test/SKILL.md
     lines: 36-36
-  source_text: '**Key principle for E2E tests**: Do NOT add `register_amd_ci` unless
-    the test specifically exercises AMD/ROCm code paths. Common E2E tests just need
-    any GPU to run — duplicating across backends wastes CI time with no extra coverage.'
+  source_text: '**Key principle for E2E tests**: Do NOT add `register_amd_ci` unless the test specifically exercises AMD/ROCm code paths. Common E2E tests just need any GPU to run — duplicating across backends wastes CI time with no extra coverage.'
   collision_type: scope_ambiguity
-  why_distracting: The target test file (`test_enable_thinking.py`) already has a
-    `register_amd_ci` line. If an agent tries to actively enforce this rule on the
-    file, they might incorrectly delete the existing `register_amd_ci` statement,
-    interfering with established CI matrices instead of focusing strictly on the reasoning
-    token code changes.
+  why_distracting: The target test file (`test_enable_thinking.py`) already has a `register_amd_ci` line. If an agent tries to actively enforce this rule on the file, they might incorrectly delete the existing `register_amd_ci` statement, interfering with established CI matrices instead of focusing strictly on the reasoning token code changes.
   severity: medium
 - rule: Place tests inside test/registered/<category>/
   source:
     path: .claude/skills/write-sglang-test/SKILL.md
     lines: 14-14
-  source_text: 3. **Place tests in `test/registered/<category>/`** — except JIT kernel
-    tests and benchmarks, which live in `python/sglang/jit_kernel/tests/` and `python/sglang/jit_kernel/benchmark/`
-    (nested subfolders are allowed)
+  source_text: 3. **Place tests in `test/registered/<category>/`** — except JIT kernel tests and benchmarks, which live in `python/sglang/jit_kernel/tests/` and `python/sglang/jit_kernel/benchmark/` (nested subfolders are allowed)
   collision_type: architecture_boundary
-  why_distracting: The rule advises placing standard tests in `test/registered/`.
-    While the executed test classes indeed belong there, the mixin test logic module
-    (the kit) shouldn't be treated as a runnable test file. It correctly belongs in
-    `python/sglang/test/kits/`. Misinterpreting this could cause the agent to put
-    the mixin class file itself inside `test/registered/`.
+  why_distracting: The rule advises placing standard tests in `test/registered/`. While the executed test classes indeed belong there, the mixin test logic module (the kit) shouldn't be treated as a runnable test file. It correctly belongs in `python/sglang/test/kits/`. Misinterpreting this could cause the agent to put the mixin class file itself inside `test/registered/`.
   severity: medium

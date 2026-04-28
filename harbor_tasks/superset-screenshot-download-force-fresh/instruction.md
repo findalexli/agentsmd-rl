@@ -66,4 +66,7 @@ that gets POSTed to `cache_dashboard_screenshot`. They assert:
    under the right dashboard id.
 2. The URL includes a `force` flag set to `true` (`force:true`,
    `force:!t`, `force=true`, or any equivalent URL/rison encoding).
-3. The file retains its Apache 2.0 license header.
+3. The `force` flag is delivered as a rison-encoded `?q=<rison>` query
+   parameter (the standard Superset mechanism), not as bare
+   `?force=true`-style params.
+4. The file retains its Apache 2.0 license header.

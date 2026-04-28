@@ -287,3 +287,58 @@ def test_skill_polling_simplified():
         args = [a for a in parts[sh_idx + 1:] if not a.startswith("-")]
         assert len(args) == 2, \
             f"poll.sh should be invoked with 2 args, found {len(args)}: {line}"
+
+# === CI-mined tests (taskforge.ci_check_miner) ===
+def test_ci_unit_tests_run_fs2db_pytest_tests():
+    """pass_to_pass | CI job 'unit-tests' → step 'Run fs2db pytest tests'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'uv run pytest tests/store/fs2db'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Run fs2db pytest tests' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_build_build_ui():
+    """pass_to_pass | CI job 'build' → step 'Build UI'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'yarn && yarn build'], cwd=os.path.join(REPO, 'mlflow/server/js'),
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Build UI' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_build_test_installation_from_tarball():
+    """pass_to_pass | CI job 'build' → step 'Test installation from tarball'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'python -c "import mlflow; print(mlflow.__version__)" && python -c "from mlflow import *"'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Test installation from tarball' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_lint_run_pre_commit():
+    """pass_to_pass | CI job 'lint' → step 'Run pre-commit'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'uv run --no-sync pre-commit run --all-files'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Run pre-commit' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_lint_test_clint():
+    """pass_to_pass | CI job 'lint' → step 'Test clint'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'uv run --no-sync pytest dev/clint'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Test clint' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_lint_check_function_signatures():
+    """pass_to_pass | CI job 'lint' → step 'Check function signatures'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'uv run --no-project dev/check_function_signatures.py'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Check function signatures' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")

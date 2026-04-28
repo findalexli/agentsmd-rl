@@ -145,7 +145,7 @@ def test_terminal_probe_cleanup():
 # ---------------------------------------------------------------------------
 
 
-# [static] pass_to_pass
+# [pr_diff] fail_to_pass
 def test_terminal_probe_noop_without_window():
     """Probe methods are safe no-ops when window is undefined (Node env)."""
     result = _run_ts(
@@ -394,9 +394,9 @@ def test_agents_md_documents_terminal_helpers():
     assert agents_md.exists(), "packages/app/e2e/AGENTS.md must exist"
     content = agents_md.read_text()
     # Check for terminal testing section with helpers
-    has_wait_helper = "waitTerminalReady" in content or ("wait" in content.lower() and "terminal" in content.lower())
-    has_run_helper = "runTerminal" in content or ("run" in content.lower() and "terminal" in content.lower())
-    has_terminal_section = "terminal" in content.lower() and ("test" in content.lower() or "helper" in content.lower())
+    has_wait_helper = "waitTerminalReady" in content
+    has_run_helper = "runTerminal" in content
+    has_terminal_section = "Terminal Tests" in content
     assert has_wait_helper, "AGENTS.md should document a wait-for-terminal helper"
     assert has_run_helper, "AGENTS.md should document a run-terminal helper"
     assert has_terminal_section, "AGENTS.md should have a terminal testing section"
@@ -420,3 +420,17 @@ def test_agents_md_terminal_testing_guidelines():
     # Must warn against custom DOM readiness checks
     assert "dom" in lower or "data-" in content, \
         "Terminal testing section should warn against custom DOM checks"
+
+# === Scoped CI-mined test (taskforge.ci_check_miner) ===
+# Only tests scoped to the affected package (packages/app)
+def test_ci_app_unit_tests():
+    """pass_to_pass | CI job 'unit tests' scoped to packages/app"""
+    bun_path = _get_bun_path()
+    env = _bun_env()
+    r = subprocess.run(
+        [str(bun_path), "run", "test"],
+        capture_output=True, text=True, timeout=120, cwd=str(APP), env=env,
+    )
+    assert r.returncode == 0, (
+        f"CI step 'unit tests' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")

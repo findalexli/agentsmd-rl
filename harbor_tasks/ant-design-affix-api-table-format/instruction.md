@@ -28,6 +28,9 @@ For each existing prop (`offsetBottom`, `offsetTop`, `target`, `onChange`):
 - Leave the `Version` cell empty (these props all predate v6 and have no introduction-version annotation).
 - Mark the `Global Config` cell with `×` (none of these support global config).
 
+  For example, the `offsetTop` data row should read:
+  `| offsetTop | Offset from the top of the viewport (in pixels) | number | 0 |  | × |`
+
 While editing, also refresh the `target` prop's `Type` cell from `() => HTMLElement` to `() => Window \| HTMLElement \| null` (escape pipes inside markdown table cells with `\|`).
 
 ### 2. `components/affix/index.zh-CN.md`
@@ -39,6 +42,9 @@ Mirror the same change in Chinese. The header must be exactly:
 ```
 
 Note `config-provider-cn` (Chinese variant), not `config-provider`. Same `×` markers; same `target` type refresh to `() => Window \| HTMLElement \| null`.
+
+  For example, the `offsetTop` data row should read:
+  `| offsetTop | 距离窗口顶部达到指定偏移量后触发 | number | 0 |  | × |`
 
 ### 3. `components/config-provider/index.en-US.md`
 

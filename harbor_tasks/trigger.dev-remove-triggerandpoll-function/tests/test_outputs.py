@@ -571,3 +571,14 @@ def test_repo_trigger_config_valid():
         capture_output=True, text=True, timeout=30, cwd=REPO,
     )
     assert result.returncode == 0, f"trigger.config.ts syntax error: {result.stderr}"
+
+# === CI-mined tests (taskforge.ci_check_miner) ===
+def test_ci_check_broken_links_check_for_broken_links():
+    """pass_to_pass | CI job 'check-broken-links' -> step 'Check for broken links'"""
+    r = subprocess.run(
+        ["bash", "-lc", "npx mintlify@4.0.393 broken-links"],
+        cwd=f"{REPO}/docs", capture_output=True, text=True, timeout=300,
+    )
+    assert r.returncode == 0, (
+        f"CI step 'Check for broken links' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")

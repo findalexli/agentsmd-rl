@@ -89,12 +89,7 @@ def test_hostname_crash_fixed():
 
 # [pr_diff] fail_to_pass
 def test_unix_crash_fixed():
-    """Unix path assertf removed and replaced with proper error return.
-
-    Behavioral check: verifies no crash-inducing assertf pattern remains AND
-    the unix section contains an error-returning pattern (generalized to work
-    with any reasonable variable naming).
-    """
+    """Unix path assertf removed and replaced with proper error return."""
     code = Path(ZIG_FILE).read_text()
 
     lines = [l for l in code.splitlines()
@@ -116,9 +111,6 @@ def test_unix_crash_fixed():
     assert not has_crash, "unix assertf crash pattern still present in code"
 
     # Check that unix section has a return statement (error return pattern).
-    # Any correct fix will have an early return in the unix branch for empty strings.
-    # Use a generalized pattern: look for any variable bound from .get() in the
-    # unix section, then check that section has a 'return' statement.
     unix_section_pattern = re.compile(
         r'generated\.unix[_\s]*\.get\s*\(\s*\)\s*\|[^|]+\|\s*\{([^}]*)\}',
         re.DOTALL
@@ -131,18 +123,13 @@ def test_unix_crash_fixed():
             "Expected: some emptiness check followed by return ...;"
         )
     else:
-        # Fallback: if we can't find the pattern, at least verify no assertf crash remains
         assert not ('assertf' in code and 'length() > 0' in code), \
             "assertf with length() > 0 still present"
 
 
 # [pr_diff] fail_to_pass
 def test_throw_tests_added():
-    """Agent added tests verifying throw on truthy-but-empty hostname/unix.
-
-    Behavioral approach: verify the test code exists and actually throws correctly.
-    Checks for patterns that describe the throwing behavior, not gold-specific text.
-    """
+    """Agent added tests verifying throw on truthy-but-empty hostname/unix."""
     p = Path(TEST_FILE)
     assert p.exists(), f"{TEST_FILE} does not exist"
     lines = p.read_text().splitlines()
@@ -150,56 +137,34 @@ def test_throw_tests_added():
         f"socket.test.ts has only {len(lines)} lines -- likely truncated"
     )
 
-    # Check file contains test code for the new behavior
     text = p.read_text()
 
-    # Must have tests for hostname handling (descriptive patterns, not exact strings)
-    # Accept any descriptive test name that mentions throwing/empty/truthy/hostname
-    has_hostname_test = any(
-        pattern in text.lower()
-        for pattern in [
-            "throw",           # throwing behavior
-            "empty",           # empty value
-            "hostname",        # hostname option
-        ]
-    )
-    assert has_hostname_test, (
-        "No test for hostname throwing behavior found in socket.test.ts"
+    # The new test must contain the "Expected a non-empty" error message substring
+    # that the fix produces (named in the task instruction)
+    assert "Expected a non-empty" in text, (
+        "No test for 'Expected a non-empty' error message found in socket.test.ts. "
+        "Add tests verifying the descriptive error message."
     )
 
-    # Must have tests for unix path handling (if present, must throw correctly)
-    # Note: unix uses strict string type in bindgen, so non-string values are
-    # rejected with "SocketOptions.unix must be a string" rather than the
-    # "Expected a non-empty" message. We accept either message pattern.
-    has_unix_test = "unix" in text.lower()
-    if has_unix_test:
-        # If unix tests exist, verify they use throw patterns
-        assert "tothrow" in text.lower() or "throw" in text.lower(), (
-            "No throw assertion found in unix test code"
-        )
-
-    # Must reference Bun.listen and/or Bun.connect
+    # Must reference Bun.listen and Bun.connect
     lower = text.lower()
-    assert "bun.listen" in lower or "bun.connect" in lower, (
-        "No Bun.listen/Bun.connect usage found"
+    assert "bun.listen" in lower, "No Bun.listen usage found in test file"
+    assert "bun.connect" in lower, "No Bun.connect usage found in test file"
+
+    # Must use toThrow assertion patterns
+    assert "tothrow" in lower, (
+        "No toThrow assertion found in test file"
     )
 
-    # Must use toThrow/reject patterns
-    assert "tothrow" in lower or "throw" in lower, (
-        "No throw assertion found in test file"
-    )
-
-    # Behavioral verification: run inline test to verify the fix works
-    # This actually EXECUTES the code (subprocess) and checks behavior
+    # Behavioral verification: Bun.listen with [] hostname must throw (not crash)
     r = _run_bun(r"""
     const socket = { data() {}, open() {}, close() {} };
     try {
         Bun.listen({ hostname: [], port: 0, socket });
         console.log('NO_THROW');
     } catch (e) {
-        // Check for descriptive error about non-empty/empty hostname
         const msg = e.message.toLowerCase();
-        if (msg.includes('non-empty') || msg.includes('empty') || msg.includes('hostname')) {
+        if (msg.includes('non-empty') || (msg.includes('empty') && msg.includes('hostname'))) {
             console.log('THREW_CORRECT');
         } else {
             console.log('THREW_OTHER: ' + e.message);
@@ -207,7 +172,6 @@ def test_throw_tests_added():
     }
     """)
     output = (r.stdout + r.stderr).strip()
-    # The fix must produce a descriptive error (not crash)
     assert "THREW_CORRECT" in output, (
         f"Fix does not produce correct error. Output: {output}. "
         "Expected: descriptive error about non-empty hostname"
@@ -349,4 +313,104 @@ def test_no_panic_absence_tests():
     assert not has_panic_check, (
         "Tests check for absence of 'panic'/'uncaught exception' -- "
         "AGENTS.md says these tests will never fail in CI"
+    )
+
+
+# [agent_config] pass_to_pass - AGENTS.md:102 / CLAUDE.md:97
+def test_no_hardcoded_ports():
+    """New test code does not use hardcoded port numbers — uses port: 0 instead."""
+    p = Path(TEST_FILE)
+    assert p.exists(), f"{TEST_FILE} does not exist"
+    # Check the tail of the file (where new tests are added) for hardcoded ports
+    lines = p.read_text().splitlines()
+    tail = "\n".join(lines[-40:])
+    # Any port: <non-zero-number> in the tail is a hardcoded port violation
+    hardcoded = re.findall(r'port:\s*[1-9]\d*', tail)
+    assert not hardcoded, (
+        f"Hardcoded port(s) found in new test code (use port: 0): {hardcoded}"
+    )
+
+
+# [agent_config] pass_to_pass - AGENTS.md:102
+def test_no_settimeout_in_new_tests():
+    """New test code does not use setTimeout — awaits conditions instead."""
+    p = Path(TEST_FILE)
+    assert p.exists(), f"{TEST_FILE} does not exist"
+    lines = p.read_text().splitlines()
+    tail = "\n".join(lines[-40:]).lower()
+    assert "settimeout" not in tail, (
+        "setTimeout found in new test code. Use await + conditions instead."
+    )
+
+
+# === PR-added f2p tests (taskforge.test_patch_miner) ===
+
+# [pr_diff] fail_to_pass
+def test_pr_added_should_throw_on_empty_hostname_from_truthy_non_s():
+    """fail_to_pass | PR added test 'should throw on empty hostname from truthy non-string value' in socket.test.ts"""
+    p = Path(TEST_FILE)
+    assert p.exists(), f"{TEST_FILE} does not exist"
+    text = p.read_text()
+    test_name = "should throw on empty hostname from truthy non-string value"
+
+    # Test must exist in the file (agent added it)
+    assert test_name in text, (
+        f"PR-added test '{test_name}' not found in socket.test.ts. "
+        "Add a test with this description to the test file."
+    )
+
+    # Behavioral verification: Bun.listen with [] hostname throws correct error
+    r = _run_bun(r"""
+    const socket = { data() {}, open() {}, close() {} };
+    try {
+        Bun.listen({ hostname: [], port: 0, socket });
+        console.log('NO_THROW');
+    } catch (e) {
+        const msg = e.message;
+        if (msg.includes('non-empty') && msg.includes('hostname')) {
+            console.log('PASS');
+        } else {
+            console.log('FAIL:' + msg);
+        }
+    }
+    """)
+    output = (r.stdout + r.stderr).strip()
+    assert "PASS" in output, (
+        f"Hostname empty-array fix failed (rc={r.returncode}): {output}"
+    )
+
+
+# [pr_diff] fail_to_pass
+def test_pr_added_should_throw_on_empty_unix_path_from_truthy_non_():
+    """fail_to_pass | PR added test 'should throw on empty unix path from truthy non-string value' in socket.test.ts"""
+    p = Path(TEST_FILE)
+    assert p.exists(), f"{TEST_FILE} does not exist"
+    text = p.read_text()
+    test_name = "should throw on empty unix path from truthy non-string value"
+
+    # Test must exist in the file (agent added it)
+    assert test_name in text, (
+        f"PR-added test '{test_name}' not found in socket.test.ts. "
+        "Add a test with this description to the test file."
+    )
+
+    # Behavioral verification: Bun.listen with [] unix must throw (not crash)
+    # The bindgen layer rejects non-string unix values before reaching Zig code
+    r = _run_bun(r"""
+    const socket = { data() {}, open() {}, close() {} };
+    try {
+        Bun.listen({ unix: [], socket });
+        console.log('NO_THROW');
+    } catch (e) {
+        const msg = e.message;
+        if (msg.includes('unix') && msg.includes('string')) {
+            console.log('PASS');
+        } else {
+            console.log('FAIL:' + msg);
+        }
+    }
+    """)
+    output = (r.stdout + r.stderr).strip()
+    assert "PASS" in output, (
+        f"Unix empty-array fix failed (rc={r.returncode}): {output}"
     )

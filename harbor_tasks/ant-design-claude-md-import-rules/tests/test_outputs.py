@@ -179,3 +179,16 @@ def test_repo_git_clean_other_files():
     assert not unexpected, (
         f"Unexpected modifications to tracked files outside CLAUDE.md: {unexpected}"
     )
+
+# === CI-mined tests (taskforge.ci_check_miner) ===
+def test_ci_remark_lint_claude_md():
+    """pass_to_pass | CI: remark lint (`lint:md` job) — CLAUDE.md must pass markdown lint."""
+    r = subprocess.run(
+        ["bash", "-lc", "npx remark CLAUDE.md --no-stdout"],
+        cwd=str(REPO),
+        capture_output=True, text=True, timeout=120,
+    )
+    assert r.returncode == 0, (
+        f"remark lint failed on CLAUDE.md (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-2000:]}\nstderr: {r.stderr[-2000:]}"
+    )

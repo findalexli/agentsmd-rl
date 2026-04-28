@@ -1,16 +1,16 @@
 """Behavioral oracle for apache/superset#39504.
 
-The fail-to-pass test runs a small jest test (written out at runtime under
-the superset-frontend `spec/` directory) that exercises the public hook
-`useFilterDependencies` against a multi-level filter dependency chain. The
+The fail-to-pass tests run jest tests (written out at runtime under the
+superset-frontend `spec/` directory) that exercise the public hook
+`useFilterDependencies` against multi-level filter dependency chains. The
 buggy base implementation only walks the direct `cascadeParentIds` of a
-filter and so omits transitive ancestors from the merged
-`extra_form_data`. The corrected implementation walks the full transitive
-ancestor chain in topological order.
+filter and so omits transitive ancestors from the merged `extra_form_data`.
+The corrected implementation walks the full transitive ancestor chain in
+topological order.
 
-The pass-to-pass test runs the upstream test that already lived in this
-area of the codebase (`FilterControls.test.tsx`) to guard against
-regressions in adjacent behavior.
+The pass-to-pass tests guard against regressions and verify edge cases
+(cycle protection, scalar override precedence) that pass on both base and
+gold.
 """
 from __future__ import annotations
 
@@ -168,21 +168,28 @@ def _install_oracle() -> None:
     ORACLE_DST.write_text(ORACLE_TS_SOURCE)
 
 
-def _run_jest(test_path_pattern: str, timeout: int = 600) -> subprocess.CompletedProcess:
+def _run_jest(
+    test_path_pattern: str,
+    test_name_pattern: str | None = None,
+    timeout: int = 600,
+) -> subprocess.CompletedProcess:
     env = os.environ.copy()
     env["NODE_OPTIONS"] = "--max-old-space-size=4096"
     env["CI"] = "1"
     env["TZ"] = "America/New_York"
+    cmd = [
+        "npx",
+        "jest",
+        "--no-coverage",
+        "--colors=false",
+        "--runInBand",
+        "--testPathPatterns",
+        test_path_pattern,
+    ]
+    if test_name_pattern:
+        cmd.extend(["--testNamePattern", test_name_pattern])
     return subprocess.run(
-        [
-            "npx",
-            "jest",
-            "--no-coverage",
-            "--colors=false",
-            "--runInBand",
-            "--testPathPatterns",
-            test_path_pattern,
-        ],
+        cmd,
         cwd=str(FRONTEND),
         env=env,
         capture_output=True,
@@ -191,19 +198,97 @@ def _run_jest(test_path_pattern: str, timeout: int = 600) -> subprocess.Complete
     )
 
 
-def test_full_transitive_chain_oracle():
-    """Fail-to-pass: oracle jest tests for full ancestor chain merging."""
+# ---------------------------------------------------------------------------
+# Fail-to-pass tests
+# ---------------------------------------------------------------------------
+
+
+def test_transitive_chain_linear_merge():
+    """f2p: A->B->C->D linear chain must merge all ancestors into D.
+
+    The buggy implementation walks only direct cascadeParentIds, so D only
+    sees C's filter data. The fix must walk the full transitive chain so D
+    receives extra_form_data from A, B, and C on the first Apply.
+    """
     _install_oracle()
-    r = _run_jest("__oracle_transitive_chain", timeout=600)
+    r = _run_jest(
+        "__oracle_transitive_chain",
+        "linear A->B->C->D chain",
+        timeout=600,
+    )
     assert r.returncode == 0, (
-        "Oracle jest tests failed.\n"
+        "Oracle jest test (linear chain) failed.\n"
+        f"--- stdout (tail) ---\n{r.stdout[-3000:]}\n"
+        f"--- stderr (tail) ---\n{r.stderr[-2000:]}"
+    )
+
+
+def test_transitive_chain_diamond_merge():
+    """f2p: Diamond ancestor graph must deduplicate shared ancestors.
+
+    When D has parents B and C that both depend on A, A's data must appear
+    exactly once in D's merged extra_form_data, not twice. The buggy
+    implementation would miss A entirely if it only walks direct parents.
+    """
+    _install_oracle()
+    r = _run_jest(
+        "__oracle_transitive_chain",
+        "diamond ancestor",
+        timeout=600,
+    )
+    assert r.returncode == 0, (
+        "Oracle jest test (diamond merge) failed.\n"
+        f"--- stdout (tail) ---\n{r.stdout[-3000:]}\n"
+        f"--- stderr (tail) ---\n{r.stderr[-2000:]}"
+    )
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass tests
+# ---------------------------------------------------------------------------
+
+
+def test_scalar_override_precedence():
+    """p2p: Closest ancestor's scalar values must win over distant ancestors.
+
+    For chain A->B->C where both A and B set time_range, C must receive B's
+    time_range. This holds on both base (direct parent walk yields B) and
+    gold (topological walk visits A then B, B overwrites A).
+    """
+    _install_oracle()
+    r = _run_jest(
+        "__oracle_transitive_chain",
+        "closest ancestor wins",
+        timeout=600,
+    )
+    assert r.returncode == 0, (
+        "Oracle jest test (scalar override) failed.\n"
+        f"--- stdout (tail) ---\n{r.stdout[-3000:]}\n"
+        f"--- stderr (tail) ---\n{r.stderr[-2000:]}"
+    )
+
+
+def test_cycle_protection():
+    """p2p: Cyclic filter configs must not cause infinite loops.
+
+    A cycle A<->B must produce a finite ancestor set without looping forever.
+    Both base (single-hop walk) and gold (visited-guarded DFS) satisfy this.
+    """
+    _install_oracle()
+    r = _run_jest(
+        "__oracle_transitive_chain",
+        "cyclic config",
+        timeout=600,
+    )
+    assert r.returncode == 0, (
+        "Oracle jest test (cycle protection) failed.\n"
         f"--- stdout (tail) ---\n{r.stdout[-3000:]}\n"
         f"--- stderr (tail) ---\n{r.stderr[-2000:]}"
     )
 
 
 def test_filtercontrols_existing_jest_suite_passes():
-    """Pass-to-pass: the existing FilterControls jest suite must still pass.
+    """p2p: The existing FilterControls jest suite must still pass.
 
     This is a real upstream test in the same area of the codebase, present
     on the base commit. Guards against regressions in unrelated

@@ -7,6 +7,7 @@ These tests verify:
 3. drop_fks_for_table() still works after refactoring to use the helper
 """
 
+import ast
 import importlib.util
 import subprocess
 import sys
@@ -23,7 +24,6 @@ def load_utils_module():
     """Load the utils module directly without going through superset package."""
     spec = importlib.util.spec_from_file_location("utils", UTILS_PATH)
     module = importlib.util.module_from_spec(spec)
-    # Mock the imports that utils.py needs
     sys.modules['superset'] = MagicMock()
     sys.modules['superset.utils'] = MagicMock()
     sys.modules['superset.utils.core'] = MagicMock()
@@ -37,8 +37,7 @@ def load_utils_module():
 
 
 def test_get_foreign_key_names_exists():
-    """
-    Verify that the get_foreign_key_names() helper function exists.
+    """Verify that the get_foreign_key_names() helper function exists.
 
     (fail_to_pass) This function was added by the PR.
     """
@@ -51,14 +50,12 @@ def test_get_foreign_key_names_exists():
 
 
 def test_get_foreign_key_names_returns_set():
-    """
-    Verify that get_foreign_key_names() returns a set of FK names.
+    """Verify that get_foreign_key_names() returns a set of FK names.
 
     (fail_to_pass) The function must return a set[str].
     """
     utils = load_utils_module()
 
-    # Mock the alembic op and inspector
     mock_connection = MagicMock()
     mock_inspector = MagicMock()
     mock_inspector.get_foreign_keys.return_value = [
@@ -66,8 +63,6 @@ def test_get_foreign_key_names_returns_set():
         {"name": "fk_test_2", "constrained_columns": ["col2"]},
     ]
 
-    # Patch both Inspector.from_engine and inspect so the test works regardless
-    # of whether the implementation uses Inspector.from_engine() or inspect()
     with patch.object(utils, 'op') as mock_op, \
          patch.object(utils, 'Inspector') as mock_inspector_cls, \
          patch.object(utils, 'inspect', return_value=mock_inspector):
@@ -77,15 +72,12 @@ def test_get_foreign_key_names_returns_set():
 
         result = utils.get_foreign_key_names("test_table")
 
-        # Verify return type is set
         assert isinstance(result, set), f"Expected set, got {type(result)}"
-        # Verify contents
         assert result == {"fk_test_1", "fk_test_2"}, f"Unexpected result: {result}"
 
 
 def test_get_foreign_key_names_empty_table():
-    """
-    Verify get_foreign_key_names() returns empty set for table with no FKs.
+    """Verify get_foreign_key_names() returns empty set for table with no FKs.
 
     (fail_to_pass) Function must handle tables without foreign keys.
     """
@@ -108,8 +100,7 @@ def test_get_foreign_key_names_empty_table():
 
 
 def test_get_foreign_key_names_multiple_tables():
-    """
-    Verify get_foreign_key_names() works with different table names.
+    """Verify get_foreign_key_names() works with different table names.
 
     (fail_to_pass) Function must handle various table names.
     """
@@ -118,7 +109,6 @@ def test_get_foreign_key_names_multiple_tables():
     mock_connection = MagicMock()
     mock_inspector = MagicMock()
 
-    # Different tables have different FKs
     def mock_get_fks(table_name):
         if table_name == "table_a":
             return [{"name": "fk_a1"}, {"name": "fk_a2"}]
@@ -145,8 +135,7 @@ def test_get_foreign_key_names_multiple_tables():
 
 
 def test_create_fks_skips_existing_foreign_key():
-    """
-    Verify create_fks_for_table() skips creating FK if it already exists.
+    """Verify create_fks_for_table() skips creating FK if it already exists.
 
     (fail_to_pass) Before the fix, this would attempt to create a duplicate FK
     which would raise a database error.
@@ -158,7 +147,6 @@ def test_create_fks_skips_existing_foreign_key():
     type(mock_connection.dialect).__name__ = "PostgresDialect"
 
     mock_inspector = MagicMock()
-    # Simulate FK already exists
     mock_inspector.get_foreign_keys.return_value = [
         {"name": "existing_fk", "constrained_columns": ["user_id"]}
     ]
@@ -174,7 +162,6 @@ def test_create_fks_skips_existing_foreign_key():
         mock_op.get_context.return_value.bind = mock_connection
         mock_inspector_cls.from_engine.return_value = mock_inspector
 
-        # Call with FK name that already exists
         utils.create_fks_for_table(
             foreign_key_name="existing_fk",
             table_name="test_table",
@@ -183,18 +170,15 @@ def test_create_fks_skips_existing_foreign_key():
             remote_cols=["id"]
         )
 
-        # Verify create_foreign_key was NOT called (skipped due to existing FK)
         mock_op.create_foreign_key.assert_not_called()
 
-        # Verify a log message was emitted about skipping
         log_calls = [str(call) for call in mock_logger.info.call_args_list]
         assert any("already exists" in call or "Skipping" in call for call in log_calls), \
             f"Expected log message about skipping existing FK, got: {log_calls}"
 
 
 def test_create_fks_skips_various_existing_fks():
-    """
-    Verify create_fks_for_table() skips for different FK names.
+    """Verify create_fks_for_table() skips for different FK names.
 
     (fail_to_pass) The check should work for any FK name, not just hardcoded ones.
     """
@@ -232,14 +216,12 @@ def test_create_fks_skips_various_existing_fks():
 
 
 def test_drop_fks_uses_helper_function():
-    """
-    Verify drop_fks_for_table() uses get_foreign_key_names helper internally.
+    """Verify drop_fks_for_table() uses get_foreign_key_names helper internally.
 
     (fail_to_pass) After refactoring, drop_fks_for_table should call the helper.
     """
     utils = load_utils_module()
 
-    # The helper must exist for drop_fks to use it
     assert hasattr(utils, 'get_foreign_key_names'), \
         "get_foreign_key_names function not found - drop_fks_for_table should use the shared helper"
 
@@ -255,7 +237,6 @@ def test_drop_fks_uses_helper_function():
 
         utils.drop_fks_for_table("test_table")
 
-        # Verify the helper was called with the table name
         mock_helper.assert_called_with("test_table")
 
 
@@ -265,8 +246,7 @@ def test_drop_fks_uses_helper_function():
 
 
 def test_syntax_valid():
-    """
-    Verify the utils.py file is syntactically valid Python.
+    """Verify the utils.py file is syntactically valid Python.
 
     (pass_to_pass) Basic syntax check.
     """
@@ -280,8 +260,7 @@ def test_syntax_valid():
 
 
 def test_module_loads():
-    """
-    Verify the utils module can be loaded without errors.
+    """Verify the utils module can be loaded without errors.
 
     (pass_to_pass) Module should load cleanly.
     """
@@ -293,8 +272,7 @@ def test_module_loads():
 
 
 def test_has_table_function_exists():
-    """
-    Verify has_table helper function exists (used by create_fks_for_table).
+    """Verify has_table helper function exists (used by create_fks_for_table).
 
     (pass_to_pass) This function should exist in both versions.
     """
@@ -304,8 +282,7 @@ def test_has_table_function_exists():
 
 
 def test_create_fks_for_table_exists():
-    """
-    Verify create_fks_for_table function exists.
+    """Verify create_fks_for_table function exists.
 
     (pass_to_pass) Function should exist in both versions.
     """
@@ -315,8 +292,7 @@ def test_create_fks_for_table_exists():
 
 
 def test_drop_fks_for_table_exists():
-    """
-    Verify drop_fks_for_table function exists.
+    """Verify drop_fks_for_table function exists.
 
     (pass_to_pass) Function should exist in both versions.
     """
@@ -326,24 +302,20 @@ def test_drop_fks_for_table_exists():
 
 
 def test_type_hints_present():
-    """
-    Verify the modified functions have type hints.
+    """Verify the modified functions have type hints.
 
     (pass_to_pass) Type hints should be present per repo standards.
     """
     source = UTILS_PATH.read_text()
 
-    # Check for type hints in function signatures
     assert "def create_fks_for_table(" in source
     assert "def drop_fks_for_table(" in source
 
-    # Both functions should have return type annotation
     assert "-> None:" in source, "Functions should have return type hints"
 
 
 def test_logging_imported():
-    """
-    Verify logging functionality is available.
+    """Verify logging functionality is available.
 
     (pass_to_pass) Logger should be set up in both versions.
     """
@@ -353,19 +325,13 @@ def test_logging_imported():
         "Logging should be imported or configured"
 
 
-# =============================================================================
-# PASS-TO-PASS TESTS - Repo CI commands (actual subprocess.run tests)
-# =============================================================================
-
-
 def test_repo_ruff_lint():
-    """
-    Run ruff linter on the modified file.
+    """Run ruff linter on the modified file via bash -lc (CI-style invocation).
 
     (pass_to_pass) Ruff linting must pass per repo CI.
     """
     result = subprocess.run(
-        ["ruff", "check", str(UTILS_PATH), "--select=E,F,W", "--ignore=E501"],
+        ["bash", "-lc", f"ruff check {UTILS_PATH} --select=E,F,W --ignore=E501"],
         capture_output=True,
         text=True,
         timeout=60,
@@ -375,8 +341,7 @@ def test_repo_ruff_lint():
 
 
 def test_repo_ruff_format():
-    """
-    Run ruff format check on the modified file.
+    """Run ruff format check on the modified file.
 
     (pass_to_pass) Code must be properly formatted per repo CI.
     """
@@ -391,13 +356,10 @@ def test_repo_ruff_format():
 
 
 def test_repo_imports_valid():
-    """
-    Verify the utils.py has valid import statements.
+    """Verify the utils.py has valid import statements.
 
     (pass_to_pass) All imports at top of file must be parseable.
     """
-    import ast
-
     source = UTILS_PATH.read_text()
     try:
         tree = ast.parse(source)

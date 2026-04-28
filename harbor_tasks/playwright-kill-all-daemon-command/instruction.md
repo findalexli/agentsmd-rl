@@ -9,7 +9,7 @@ When Playwright CLI daemon processes become stale or unresponsive (zombie proces
 A new `kill-all` CLI command should:
 1. Find all running daemon processes (those started with `run-mcp-server` and `--daemon-session`)
 2. Forcefully kill them with `SIGKILL` (or equivalent on Windows)
-3. Report how many processes were killed, or indicate none were found
+3. Report how many processes were killed, or print `No daemon processes found.` if none are running
 
 The command should work cross-platform (Linux/macOS via `ps aux`, Windows via PowerShell).
 

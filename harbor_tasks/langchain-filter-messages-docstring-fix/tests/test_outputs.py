@@ -303,3 +303,13 @@ def test_repo_messages_imports():
         f"stdout: {r.stdout[-1000:]}\n"
         f"stderr: {r.stderr[-1000:]}"
     )
+
+# === CI-mined tests (taskforge.ci_check_miner) ===
+def test_ci___compute_test_matrix_generate_python_library_matrix():
+    """pass_to_pass | CI job '📋 Compute Test Matrix' → step '🔢 Generate Python & Library Matrix'"""
+    r = subprocess.run(
+        ["bash", "-lc", '# echo "matrix=..." where matrix is a json formatted str with keys python-version and working-directory\n# python-version should default to 3.10 and 3.13, but is overridden to [PYTHON_VERSION_FORCE] if set\n# working-directory should default to DEFAULT_LIBS, but is overridden to [WORKING_DIRECTORY_FORCE] if set\npython_version=\'["3.10", "3.13"]\'\npython_version_min_3_11=\'["3.11", "3.13"]\'\nworking_directory="$DEFAULT_LIBS"\nif [ -n "$PYTHON_VERSION_FORCE" ]; then\n  python_version="[\\"$PYTHON_VERSION_FORCE\\"]"\n  # Bound forced version to >= 3.11 for packages requiring it\n  if [ "$(echo "$PYTHON_VERSION_FORCE >= 3.11" | bc -l)" -eq 1 ]; then\n    python_version_min_3_11="[\\"$PYTHON_VERSION_FORCE\\"]"\n  else\n    python_version_min_3_11=\'["3.11"]\'\n  fi\nfi\nif [ -n "$WORKING_DIRECTORY_FORCE" ]; then\n  working_directory="[\\"$WORKING_DIRECTORY_FORCE\\"]"\nfi\nmatrix="{\\"python-version\\": $python_version, \\"working-directory\\": $working_directory}"\necho $matrix\necho "matrix=$matrix" >> $GITHUB_OUTPUT\necho "python-version-min-3-11=$python_version_min_3_11" >> $GITHUB_OUTPUT'], cwd=REPO,
+        capture_output=True, text=True, timeout=900)
+    assert r.returncode == 0, (
+        f"CI step '🔢 Generate Python & Library Matrix' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")

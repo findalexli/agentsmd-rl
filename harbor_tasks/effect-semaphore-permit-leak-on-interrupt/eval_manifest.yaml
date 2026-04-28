@@ -10,7 +10,11 @@ checks:
 - id: test_take_interruption_does_not_leak_permits
   type: fail_to_pass
   origin: pr_diff
-  description: 'Regression test: a fiber waiting on a permit that is granted then interrupted before resuming must not leak the permit'
+  description: 'Regression test (n=1): a fiber waiting on a permit that is granted then interrupted before resuming must not leak the permit'
+- id: test_take_interruption_does_not_leak_permits_multi
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'Regression test (n=2): a fiber waiting on two permits that are granted then interrupted before resuming must not leak the permits'
 - id: test_existing_semaphore_tests_still_pass
   type: pass_to_pass
   origin: repo_tests
@@ -19,6 +23,18 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: pnpm exec tsc --noEmit -p tsconfig.src.json from packages/effect must succeed
+- id: test_ci_lint_pnpm
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: pnpm circular check (detect circular imports)'
+- id: test_ci_lint_pnpm_2
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: pnpm lint (eslint)'
+- id: test_ci_lint_pnpm_3
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: pnpm codegen (code generation check)'
 config_edits: []
 rubric:
 - rule: Run `pnpm lint-fix` after editing files

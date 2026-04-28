@@ -201,9 +201,21 @@ try {
     process.exit(1);
   }
 
-  // Check for valid test.each syntax pattern
-  if (!/test\\.each\\s*\\(/.test(text)) {
-    console.error('FAIL: No test.each pattern found');
+  // Check that the file has essential structural elements, not a gutted stub
+  if (!/\\bimport\\b/.test(text)) {
+    console.error('FAIL: No import statements found; file appears gutted');
+    process.exit(1);
+  }
+  if (!/\\bdescribe\\b/.test(text)) {
+    console.error('FAIL: No describe blocks found; test structure missing');
+    process.exit(1);
+  }
+  if (!/(?:test|it)\\s*\\(/.test(text)) {
+    console.error('FAIL: No test() or it() calls found; test cases missing');
+    process.exit(1);
+  }
+  if (!/Bun\\.spawn/.test(text)) {
+    console.error('FAIL: No Bun.spawn calls found; test bodies may be stubs');
     process.exit(1);
   }
 

@@ -9,6 +9,7 @@ RUN apt-get update && apt-get install -y \
     python3-pip \
     clang-15 \
     curl \
+    file \
     && rm -rf /var/lib/apt/lists/*
 
 # Install pytest for test runner

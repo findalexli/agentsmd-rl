@@ -337,3 +337,116 @@ def test_no_sleep_for_race_conditions():
 if __name__ == "__main__":
     import pytest
     sys.exit(pytest.main([__file__, "-v", "--tb=short"]))
+
+# === Replacement pass-to-pass behavioral tests ===
+def test_behavioral_task_drain_on_exception():
+    """pass_to_pass | Behavioral: compile and run C++ program verifying RAII task-drain
+    pattern properly drains all scheduled tasks when an exception triggers scope exit.
+    This validates the environment and the correctness of the drain pattern independently
+    of whether it has been added to the target file."""
+    test_program = r'''
+#include <iostream>
+#include <vector>
+#include <memory>
+#include <stdexcept>
+#include <functional>
+
+template <typename F>
+struct ScopeGuard {
+    F func;
+    bool active;
+    ScopeGuard(F f) : func(std::move(f)), active(true) {}
+    ~ScopeGuard() { if (active) func(); }
+    ScopeGuard(ScopeGuard&& o) noexcept : func(std::move(o.func)), active(o.active) { o.active = false; }
+    ScopeGuard(const ScopeGuard&) = delete;
+};
+template <typename F>
+ScopeGuard<F> make_scope_guard(F&& f) { return ScopeGuard<F>(std::forward<F>(f)); }
+#define SCOPE_EXIT_CONCAT(n, ...) const auto scope_exit##n = make_scope_guard([&]{ __VA_ARGS__; })
+#define SCOPE_EXIT_FWD(n, ...) SCOPE_EXIT_CONCAT(n, __VA_ARGS__)
+#define SCOPE_EXIT(...) SCOPE_EXIT_FWD(__LINE__, __VA_ARGS__)
+
+struct FakeTask {
+    bool executed = false;
+    bool waited = false;
+    void tryExecute() { executed = true; }
+    void wait() { waited = true; }
+};
+
+int main() {
+    std::vector<std::shared_ptr<FakeTask>> tasks;
+
+    try {
+        SCOPE_EXIT(
+            for (const auto & task : tasks)
+                task->tryExecute();
+            for (const auto & task : tasks)
+                task->wait();
+        );
+
+        for (int i = 0; i < 5; ++i)
+            tasks.push_back(std::make_shared<FakeTask>());
+
+        throw std::runtime_error("simulated scheduling error");
+    } catch (const std::exception&) {
+    }
+
+    for (size_t i = 0; i < tasks.size(); ++i) {
+        if (!tasks[i]->executed) {
+            std::cerr << "TASK_NOT_EXECUTED " << i << std::endl;
+            return 1;
+        }
+        if (!tasks[i]->waited) {
+            std::cerr << "TASK_NOT_WAITED " << i << std::endl;
+            return 2;
+        }
+    }
+
+    std::cout << "DRAIN_OK " << tasks.size() << std::endl;
+    return 0;
+}
+'''
+    test_file = Path(REPO) / "_eval_behavioral_drain.cpp"
+    test_binary = Path(REPO) / "_eval_behavioral_drain"
+    try:
+        test_file.write_text(test_program)
+        compile_result = subprocess.run(
+            ["clang++", "-std=c++17", "-o", str(test_binary), str(test_file)],
+            capture_output=True, text=True, timeout=30, cwd=REPO,
+        )
+        assert compile_result.returncode == 0, (
+            f"Drain pattern compilation failed (returncode={compile_result.returncode}):\n"
+            f"stderr: {compile_result.stderr[-1500:]}")
+        run_result = subprocess.run(
+            [str(test_binary)],
+            capture_output=True, text=True, timeout=10, cwd=REPO,
+        )
+        assert run_result.returncode == 0, (
+            f"Drain pattern test failed (returncode={run_result.returncode}):\n"
+            f"stderr: {run_result.stderr[-1500:]}")
+        assert "DRAIN_OK" in run_result.stdout, (
+            f"Unexpected output, expected DRAIN_OK: {run_result.stdout[-500:]}")
+    finally:
+        test_file.unlink(missing_ok=True)
+        test_binary.unlink(missing_ok=True)
+
+
+def test_target_file_function_present():
+    """pass_to_pass | Verify target file contains the required function signature
+    and key variables referenced in the bug description. This guards against
+    accidental function deletion or renaming during the fix."""
+    with open(TARGET_FILE, 'r') as f:
+        content = f.read()
+
+    missing = []
+    for symbol in [
+        "deserializeBinaryBulkStatePrefix",
+        "task_size = std::max(",
+        "num_tasks",
+        "trySchedule",
+    ]:
+        if symbol not in content:
+            missing.append(symbol)
+
+    assert not missing, (
+        f"Required symbols missing from {TARGET_FILE}: {', '.join(missing)}")

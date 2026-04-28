@@ -17,7 +17,11 @@ checks:
 - id: test_refresh_non_preview_still_locks
   type: pass_to_pass
   origin: pr_diff
-  description: Refresh without PreviewOnly continues to acquire the state lock — guards against an over-broad fix that disables locking for all refresh calls.
+  description: Refresh without PreviewOnly continues to acquire the state lock
+- id: test_all_harbor_tests_pass
+  type: fail_to_pass
+  origin: pr_diff
+  description: Both Refresh harbor tests (preview skips lock + non-preview still locks) pass together. At base only the p2p test passes; at gold both are green.
 - id: test_diy_backend_package_tests_pass
   type: pass_to_pass
   origin: repo_tests

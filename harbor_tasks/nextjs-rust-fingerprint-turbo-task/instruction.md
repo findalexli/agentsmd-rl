@@ -66,6 +66,9 @@ Additionally, the root `turbo.json` does not pass through `SCCACHE_*` and `RUSTC
 
 ## Code Style Requirements
 
-Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+Your solution will be checked by the repository's existing linters/formatters:
 
-- `cargo clippy (Rust linter)`
+- `prettier` — all modified JSON/JSONC files must pass `prettier --check`
+- `node --check` — all scripts must have valid Node.js syntax
+- `python3 -m json.tool` — `turbo.json` must be valid JSON
+- The repository also uses `cargo clippy` and `cargo fmt` for Rust code, but this task only touches configuration files and JavaScript scripts.

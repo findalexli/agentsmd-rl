@@ -406,3 +406,4 @@ def test_changed_files_compile():
         capture_output=True, text=True, timeout=30, cwd="/tmp",
     )
     assert r.returncode == 0, f"py_compile failed:\n{r.stderr}"
+

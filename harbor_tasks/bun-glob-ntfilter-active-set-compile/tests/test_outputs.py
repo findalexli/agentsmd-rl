@@ -26,15 +26,15 @@ def get_setNameFilter_context(window=15):
 
 
 class TestCompilation:
-    """Verify the fix compiles correctly — this is the PRIMARY behavioral test."""
+    """Verify the fix compiles correctly — PRIMARY behavioral test."""
 
     def test_globwalker_zig_compiles(self):
-        """GlobWalker.zig must parse correctly (AST check), or skip if zig unavailable."""
+        """GlobWalker.zig must pass zig ast-check (syntax + basic semantic check)."""
         import shutil
         if not shutil.which("zig"):
             pytest.skip("zig not available in environment")
         parse_r = subprocess.run(
-            ["zig", "ast-check", GLOBWALKER_PATH],
+            ["bash", "-lc", "zig ast-check src/glob/GlobWalker.zig"],
             capture_output=True, text=True, timeout=30, cwd="/workspace/bun",
         )
         assert parse_r.returncode == 0, (
@@ -53,8 +53,7 @@ class TestBuggyPatternRemoved:
         _, context = get_setNameFilter_context()
         assert context is not None, "iterator.setNameFilter not found in Windows block"
 
-        # The exact buggy pattern from the gold solution's base
-        buggy_pattern = re.compile(r'computeNtFilter\s*\(\s*component_idx\s*\)')
+        buggy_pattern = re.compile(r"computeNtFilter\s*\(\s*component_idx\s*\)")
         assert not buggy_pattern.search(context), (
             "Buggy computeNtFilter(component_idx) still present"
         )
@@ -71,18 +70,15 @@ class TestFixDerivesIndexFromActiveBitSet:
         _, context = get_setNameFilter_context()
         assert context is not None, "iterator.setNameFilter not found in Windows block"
 
-        # Must NOT use the old buggy variable
-        buggy_pattern = re.compile(r'computeNtFilter\s*\(\s*component_idx\s*\)')
+        buggy_pattern = re.compile(r"computeNtFilter\s*\(\s*component_idx\s*\)")
         assert not buggy_pattern.search(context), (
             "Buggy component_idx still used in computeNtFilter"
         )
 
-        # Must USE the active BitSet to derive the index
-        assert re.search(r'\bactive\b', context), (
+        assert re.search(r"\bactive\b", context), (
             "active BitSet not found near setNameFilter — fix must use active to derive index"
         )
 
-        # Must call computeNtFilter (with a derived index, not component_idx)
         assert "computeNtFilter" in context, (
             "computeNtFilter must still be called near setNameFilter"
         )
@@ -99,9 +95,8 @@ class TestMultiActiveCaseHandled:
         _, context = get_setNameFilter_context()
         assert context is not None, "iterator.setNameFilter not found in Windows block"
 
-        # Conditional (if/else or ternary) must be present
-        has_if_else = re.search(r'\bif\s*\(', context) and re.search(r'\belse\b', context)
-        has_ternary = re.search(r'\?', context)
+        has_if_else = re.search(r"\bif\s*\(", context) and re.search(r"\belse\b", context)
+        has_ternary = re.search(r"\?", context)
         assert has_if_else or has_ternary, (
             "No conditional logic (if/else or ternary) found near setNameFilter"
         )
@@ -115,9 +110,8 @@ class TestMultiActiveCaseHandled:
         _, context = get_setNameFilter_context()
         assert context is not None, "iterator.setNameFilter not found in Windows block"
 
-        # Either null OR empty slice (&[_]u16{}) is valid for skipping filter
-        has_null = re.search(r'\bnull\b', context)
-        has_empty_slice = re.search(r'&\[\]_u16\{\}', context)
+        has_null = re.search(r"\bnull\b", context)
+        has_empty_slice = re.search(r"&\[\]_u16\{\}", context)
         assert has_null or has_empty_slice, (
             "Multi-active branch must pass null or empty slice &[_]u16{} to setNameFilter"
         )
@@ -137,3 +131,39 @@ class TestPassToPass:
         _, context = get_setNameFilter_context()
         assert context is not None, "iterator.setNameFilter not found in Windows block"
         assert "computeNtFilter" in context, "computeNtFilter must still be called"
+
+    def test_computeNtFilter_function_preserved(self):
+        """computeNtFilter function definition must still exist with u32 parameter."""
+        with open(GLOBWALKER_PATH, "r") as f:
+            source = f.read()
+        assert re.search(r"fn\s+computeNtFilter\s*\([^)]*u32[^)]*\)", source), (
+            "computeNtFilter function with u32 parameter not found"
+        )
+
+    def test_source_file_exists_balanced_braces(self):
+        """GlobWalker.zig file exists and has roughly balanced braces."""
+        with open(GLOBWALKER_PATH, "r") as f:
+            source = f.read()
+        open_count = source.count("{")
+        close_count = source.count("}")
+        assert open_count > 0, "File has no opening braces"
+        assert abs(open_count - close_count) <= 5, (
+            f"Brace imbalance: {open_count} open vs {close_count} close"
+        )
+
+    def test_no_std_usage_near_fix(self):
+        """No std.* API usage near the setNameFilter fix site."""
+        _, context = get_setNameFilter_context(window=20)
+        assert context is not None, "iterator.setNameFilter not found in Windows block"
+        # std.* on its own line or as a parameter (not in import paths like builtin.os)
+        assert not re.search(r"\bstd\.\w", context), (
+            "std.* API usage found near setNameFilter — use bun.* APIs instead"
+        )
+
+    def test_no_inline_import_near_fix(self):
+        """No inline @import() near the setNameFilter fix site."""
+        _, context = get_setNameFilter_context(window=20)
+        assert context is not None, "iterator.setNameFilter not found in Windows block"
+        assert "@import(" not in context, (
+            "Inline @import() found near setNameFilter — imports must be at file bottom"
+        )

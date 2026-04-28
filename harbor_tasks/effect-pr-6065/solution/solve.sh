@@ -1,0 +1,231 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+cd /workspace/effect
+
+# Check idempotency — already applied?
+if grep -q "defectSchema.*Schema.Schema<unknown, any>" packages/rpc/src/Rpc.ts; then
+  echo "Patch already applied"
+  exit 0
+fi
+
+git apply <<'PATCH'
+diff --git a/packages/rpc/src/Rpc.ts b/packages/rpc/src/Rpc.ts
+index 147c46be83e..57a04869fba 100644
+--- a/packages/rpc/src/Rpc.ts
++++ b/packages/rpc/src/Rpc.ts
+@@ -58,6 +58,7 @@ export interface Rpc<
+   readonly payloadSchema: Payload
+   readonly successSchema: Success
+   readonly errorSchema: Error
++  readonly defectSchema: Schema.Schema<unknown, any>
+   readonly annotations: Context_.Context<never>
+   readonly middlewares: ReadonlySet<Middleware>
+
+@@ -171,6 +172,7 @@ export interface AnyWithProps {
+   readonly payloadSchema: AnySchema
+   readonly successSchema: Schema.Schema.Any
+   readonly errorSchema: Schema.Schema.All
++  readonly defectSchema: Schema.Schema<unknown, any>
+   readonly annotations: Context_.Context<never>
+   readonly middlewares: ReadonlySet<RpcMiddleware.TagClassAnyWithProps>
+ }
+@@ -541,6 +543,7 @@ const Proto = {
+       payloadSchema: this.payloadSchema,
+       successSchema,
+       errorSchema: this.errorSchema,
++      defectSchema: this.defectSchema,
+       annotations: this.annotations,
+       middlewares: this.middlewares
+     })
+@@ -551,6 +554,7 @@ const Proto = {
+       payloadSchema: this.payloadSchema,
+       successSchema: this.successSchema,
+       errorSchema,
++      defectSchema: this.defectSchema,
+       annotations: this.annotations,
+       middlewares: this.middlewares
+     })
+@@ -561,6 +565,7 @@ const Proto = {
+       payloadSchema: Schema.isSchema(payloadSchema) ? payloadSchema as any : Schema.Struct(payloadSchema as any),
+       successSchema: this.successSchema,
+       errorSchema: this.errorSchema,
++      defectSchema: this.defectSchema,
+       annotations: this.annotations,
+       middlewares: this.middlewares
+     })
+@@ -571,6 +576,7 @@ const Proto = {
+       payloadSchema: this.payloadSchema,
+       successSchema: this.successSchema,
+       errorSchema: this.errorSchema,
++      defectSchema: this.defectSchema,
+       annotations: this.annotations,
+       middlewares: new Set([...this.middlewares, middleware])
+     })
+@@ -581,6 +587,7 @@ const Proto = {
+       payloadSchema: this.payloadSchema,
+       successSchema: this.successSchema,
+       errorSchema: this.errorSchema,
++      defectSchema: this.defectSchema,
+       annotations: this.annotations,
+       middlewares: this.middlewares
+     })
+@@ -591,6 +598,7 @@ const Proto = {
+       payloadSchema: this.payloadSchema,
+       successSchema: this.successSchema,
+       errorSchema: this.errorSchema,
++      defectSchema: this.defectSchema,
+       middlewares: this.middlewares,
+       annotations: Context_.add(this.annotations, tag, value)
+     })
+@@ -601,6 +609,7 @@ const Proto = {
+       payloadSchema: this.payloadSchema,
+       successSchema: this.successSchema,
+       errorSchema: this.errorSchema,
++      defectSchema: this.defectSchema,
+       middlewares: this.middlewares,
+       annotations: Context_.merge(this.annotations, context)
+     })
+@@ -618,6 +627,7 @@ const makeProto = <
+   readonly payloadSchema: Payload
+   readonly successSchema: Success
+   readonly errorSchema: Error
++  readonly defectSchema: Schema.Schema<unknown, any>
+   readonly annotations: Context_.Context<never>
+   readonly middlewares: ReadonlySet<Middleware>
+ }): Rpc<Tag, Payload, Success, Error, Middleware> => {
+@@ -643,6 +653,7 @@ export const make = <
+   readonly success?: Success
+   readonly error?: Error
+   readonly stream?: Stream
++  readonly defect?: Schema.Schema<unknown, any>
+   readonly primaryKey?: [Payload] extends [Schema.Struct.Fields] ?
+     ((payload: Schema.Simplify<Schema.Struct.Type<NoInfer<Payload>>>) => string) :
+     never
+@@ -678,6 +689,7 @@ export const make = <
+       }) :
+       successSchema,
+     errorSchema: options?.stream ? Schema.Never : errorSchema,
++    defectSchema: options?.defect ?? Schema.Defect,
+     annotations: Context_.empty(),
+     middlewares: new Set<never>()
+   }) as any
+@@ -719,6 +731,7 @@ export const fromTaggedRequest = <S extends AnyTaggedRequestSchema>(
+     payloadSchema: schema as any,
+     successSchema: schema.success as any,
+     errorSchema: schema.failure,
++    defectSchema: Schema.Defect,
+     annotations: Context_.empty(),
+     middlewares: new Set()
+   })
+@@ -747,7 +760,7 @@ export const exitSchema = <R extends Any>(
+   const schema = Schema.Exit({
+     success: Option.isSome(streamSchemas) ? Schema.Void : rpc.successSchema,
+     failure: Schema.Union(...failures),
+-    defect: Schema.Defect
++    defect: rpc.defectSchema
+   })
+   exitSchemaCache.set(self, schema)
+   return schema as any
+diff --git a/packages/rpc/src/RpcServer.ts b/packages/rpc/src/RpcServer.ts
+index ddb7493c515..f69bfb62121 100644
+--- a/packages/rpc/src/RpcServer.ts
++++ b/packages/rpc/src/RpcServer.ts
+@@ -510,6 +510,7 @@ export const make: <Rpcs extends Rpc.Any>(
+           return handleEncode(
+             client,
+             response.requestId,
++            schemas.encodeDefect,
+             schemas.collector,
+             Effect.provide(schemas.encodeChunk(response.values), schemas.context),
+             (values) => ({ _tag: "Chunk", requestId: String(response.requestId), values })
+@@ -522,6 +523,7 @@ export const make: <Rpcs extends Rpc.Any>(
+           return handleEncode(
+             client,
+             response.requestId,
++            schemas.encodeDefect,
+             schemas.collector,
+             Effect.provide(schemas.encodeExit(response.exit), schemas.context),
+             (exit) => ({ _tag: "Exit", requestId: String(response.requestId), exit })
+@@ -552,6 +554,7 @@ export const make: <Rpcs extends Rpc.Any>(
+     readonly decode: (u: unknown) => Effect.Effect<Rpc.Payload<Rpcs>, ParseError>
+     readonly encodeChunk: (u: ReadonlyArray<unknown>) => Effect.Effect<NonEmptyReadonlyArray<unknown>, ParseError>
+     readonly encodeExit: (u: unknown) => Effect.Effect<Schema.ExitEncoded<unknown, unknown, unknown>, ParseError>
++    readonly encodeDefect: (u: unknown) => Effect.Effect<unknown, ParseError>
+     readonly context: Context.Context<never>
+     readonly collector?: Transferable.CollectorService | undefined
+   }
+@@ -568,6 +571,7 @@ export const make: <Rpcs extends Rpc.Any>(
+           Schema.Array(Option.isSome(streamSchemas) ? streamSchemas.value.success : Schema.Any)
+         ) as any,
+         encodeExit: Schema.encodeUnknown(Rpc.exitSchema(rpc as any)) as any,
++        encodeDefect: Schema.encodeUnknown(rpc.defectSchema) as any,
+         context: entry.context
+       }
+       schemasCache.set(rpc, schemas)
+@@ -584,6 +588,7 @@ export const make: <Rpcs extends Rpc.Any>(
+   const handleEncode = <A, R>(
+     client: Client,
+     requestId: RequestId,
++    encodeDefect: (u: unknown) => Effect.Effect<unknown, ParseError>,
+     collector: Transferable.CollectorService | undefined,
+     effect: Effect.Effect<A, ParseError, R>,
+     onSuccess: (a: A) => FromServerEncoded
+@@ -594,7 +599,7 @@ export const make: <Rpcs extends Rpc.Any>(
+         client.schemas.delete(requestId)
+         const defect = Cause.squash(Cause.map(cause, TreeFormatter.formatErrorSync))
+         return Effect.zipRight(
+-          sendRequestDefect(client, requestId, defect),
++          sendRequestDefect(client, requestId, encodeDefect, defect),
+           server.write(client.id, { _tag: "Interrupt", requestId, interruptors: [] })
+         )
+       })
+@@ -602,19 +607,26 @@ export const make: <Rpcs extends Rpc.Any>(
+
+   const encodeDefect = Schema.encodeSync(Schema.Defect)
+
+-  const sendRequestDefect = (client: Client, requestId: RequestId, defect: unknown) =>
++  const sendRequestDefect = (
++    client: Client,
++    requestId: RequestId,
++    encodeDefect: (u: unknown) => Effect.Effect<unknown, ParseError>,
++    defect: unknown
++  ) =>
+     Effect.catchAllCause(
+-      send(client.id, {
+-        _tag: "Exit",
+-        requestId: String(requestId),
+-        exit: {
+-          _tag: "Failure",
+-          cause: {
+-            _tag: "Die",
+-            defect: encodeDefect(defect)
++      encodeDefect(defect).pipe(Effect.flatMap((encodedDefect) =>
++        send(client.id, {
++          _tag: "Exit",
++          requestId: String(requestId),
++          exit: {
++            _tag: "Failure",
++            cause: {
++              _tag: "Die",
++              defect: encodedDefect
++            }
+           }
+-        }
+-      }),
++        })
++      )),
+       (cause) => sendDefect(client, Cause.squash(cause))
+     )
+
+@@ -661,7 +673,8 @@ export const make: <Rpcs extends Rpc.Any>(
+         return Effect.matchEffect(
+           Effect.provide(schemas.decode(request.payload), schemas.context),
+           {
+-            onFailure: (error) => sendRequestDefect(client, requestId, TreeFormatter.formatErrorSync(error)),
++            onFailure: (error) =>
++              sendRequestDefect(client, requestId, schemas.encodeDefect, TreeFormatter.formatErrorSync(error)),
+             onSuccess: (payload) => {
+               client.schemas.set(
+                 requestId,
+PATCH

@@ -16,8 +16,7 @@ checks:
 - id: test_repo_syntax_test_insight_py
   type: pass_to_pass
   origin: repo_tests
-  description: 'Repo: posthog/api/test/test_insight.py passes Python syntax check
-    (pass_to_pass)'
+  description: 'Repo: posthog/api/test/test_insight.py passes Python syntax check (pass_to_pass)'
 - id: test_repo_ast_parse_insight_files
   type: pass_to_pass
   origin: repo_tests
@@ -25,8 +24,7 @@ checks:
 - id: test_repo_dependency_analysis
   type: pass_to_pass
   origin: repo_tests
-  description: 'Repo: Python dependency analysis tests pass (pass_to_pass) - runs
-    bin/test/test_find_python_dependencies.py'
+  description: 'Repo: Python dependency analysis tests pass (pass_to_pass) - runs bin/test/test_find_python_dependencies.py'
 - id: test_repo_insight_py_compiles
   type: pass_to_pass
   origin: repo_tests
@@ -50,8 +48,7 @@ checks:
 - id: test_repo_ruff_check_posthog_api
   type: pass_to_pass
   origin: repo_tests
-  description: 'Repo: posthog/api/ directory passes ruff lint check (pass_to_pass)
-    - validates all API module files conform to linting standards'
+  description: 'Repo: posthog/api/ directory passes ruff lint check (pass_to_pass) - validates all API module files conform to linting standards'
 - id: legacy_filters_flag_constant
   type: fail_to_pass
   origin: pr_diff
@@ -63,45 +60,45 @@ checks:
 - id: filters_blocked_delegates_to_feature_flag
   type: fail_to_pass
   origin: pr_diff
-  description: is_legacy_insight_filters_blocked calls posthoganalytics.feature_enabled
-    with correct flag name, distinct_id, and org/project groups
+  description: is_legacy_insight_filters_blocked calls posthoganalytics.feature_enabled with correct flag name, distinct_id, and org/project groups
 - id: filters_blocked_returns_feature_flag_result
   type: fail_to_pass
   origin: pr_diff
-  description: is_legacy_insight_filters_blocked returns whatever feature_enabled
-    returns (True or False)
+  description: is_legacy_insight_filters_blocked returns whatever feature_enabled returns (True or False)
 - id: serializer_validate_blocks_legacy_filters
   type: fail_to_pass
   origin: pr_diff
-  description: InsightSerializer.validate raises PermissionDenied for legacy filter
-    payloads when gate is active
+  description: InsightSerializer.validate raises PermissionDenied for legacy filter payloads when gate is active
 - id: serializer_validate_allows_query_insights
   type: fail_to_pass
   origin: pr_diff
-  description: InsightSerializer.validate does not block query-based insight writes
-    and calls super().validate()
+  description: InsightSerializer.validate does not block query-based insight writes and calls super().validate()
 - id: not_stub
-  type: pass_to_pass
+  type: fail_to_pass
   origin: static
   description: is_legacy_insight_filters_blocked has real logic, not just pass/return
 - id: new_function_has_type_hints
   type: fail_to_pass
   origin: agent_config
-  description: New function has type annotations on parameters and return type per
-    AGENTS.md style rule
+  description: New function has type annotations on parameters and return type per AGENTS.md style rule
   source:
     path: AGENTS.md
     lines: '92'
     commit: 011a93306e5dfe6e26464fba7c61680076df62c8
+- id: test_pr_added_test_creating_legacy_filter_insight_blocked_with
+  type: fail_to_pass
+  origin: pr_diff
+  description: PR added test for blocked legacy filter insight write — verifies test method exists in test_insight.py with 403 assertion
+- id: test_pr_added_test_creating_query_insight_not_blocked_by_legac
+  type: fail_to_pass
+  origin: pr_diff
+  description: PR added test for query insight not blocked by legacy filter flag — verifies test method exists in test_insight.py with 201 assertion
 rubric:
-- rule: Django serializers are the source of truth for frontend API types — validation
-    logic should be implemented in serializers rather than viewsets
+- rule: Django serializers are the source of truth for frontend API types — validation logic should be implemented in serializers rather than viewsets
   source:
     path: AGENTS.md
     lines: 65-68
-  evidence: The gold solution implements the new legacy filter validation logic directly
-    inside `InsightSerializer.validate` rather than in the viewset, adhering to the
-    principle that serializers are the source of truth for frontend API types
+  evidence: The gold solution implements the new legacy filter validation logic directly inside `InsightSerializer.validate` rather than in the viewset, adhering to the principle that serializers are the source of truth for frontend API types
   category: architecture
   reference: 'The validate method is added to InsightSerializer class, not the viewset,
 
@@ -114,22 +111,16 @@ rubric:
   source:
     path: AGENTS.md
     lines: '87'
-  source_text: '- Always filter querysets by `team_id` — in serializers, access the
-    team via `self.context["get_team"]()`'
-  evidence: The updated serializer's `validate` method explicitly accesses the team
-    via `self.context["get_team"]()` to pass it to the `is_legacy_insight_filters_blocked`
-    function.
+  source_text: '- Always filter querysets by `team_id` — in serializers, access the team via `self.context["get_team"]()`'
+  evidence: The updated serializer's `validate` method explicitly accesses the team via `self.context["get_team"]()` to pass it to the `is_legacy_insight_filters_blocked` function.
   category: architecture
   verification: llm_judge
 - rule: Reduce nesting with early returns and guard clauses
   source:
     path: AGENTS.md
     lines: '105'
-  source_text: '- Reduce nesting: Use early returns, guard clauses, and helper methods
-    to avoid deeply nested code'
-  evidence: 'The new `is_legacy_insight_filters_blocked` function uses an early return
-    guard clause (`if not distinct_id: return False`) instead of wrapping the main
-    logic in a nested if-block.'
+  source_text: '- Reduce nesting: Use early returns, guard clauses, and helper methods to avoid deeply nested code'
+  evidence: 'The new `is_legacy_insight_filters_blocked` function uses an early return guard clause (`if not distinct_id: return False`) instead of wrapping the main logic in a nested if-block.'
   category: style
   verification: llm_judge
 - rule: Python tests should not have doc comments
@@ -137,52 +128,36 @@ rubric:
     path: AGENTS.md
     lines: '101'
   source_text: '- Python tests: do not add doc comments'
-  evidence: The two new test methods (`test_creating_legacy_filter_insight_blocked_with_feature_flag`
-    and `test_creating_query_insight_not_blocked_by_legacy_filter_flag`) are written
-    without docstrings.
+  evidence: The two new test methods (`test_creating_legacy_filter_insight_blocked_with_feature_flag` and `test_creating_query_insight_not_blocked_by_legacy_filter_flag`) are written without docstrings.
   category: style
   verification: llm_judge
 - rule: Implement built-in error handling at the view level
   source:
     path: .cursor/rules/django-python.mdc
     lines: '23'
-  source_text: '- Implement error handling at the view level and use Django''s built-in
-    error handling mechanisms.'
-  evidence: The validation check raises `PermissionDenied(...)`, which is the built-in
-    exception mechanism in DRF/Django for permission errors, rather than returning
-    a custom error response format.
+  source_text: '- Implement error handling at the view level and use Django''s built-in error handling mechanisms.'
+  evidence: The validation check raises `PermissionDenied(...)`, which is the built-in exception mechanism in DRF/Django for permission errors, rather than returning a custom error response format.
   category: error handling
   verification: llm_judge
 - rule: Unit tests should focus on a single use-case
   source:
     path: .cursor/rules/django-python.mdc
     lines: 97-98
-  source_text: "- A good unit test should:\n    - focus on a single use-case at a\
-    \ time"
-  evidence: The patch adds two separate tests (`test_creating_legacy_filter_insight_blocked_with_feature_flag`
-    and `test_creating_query_insight_not_blocked_by_legacy_filter_flag`), testing
-    the blocked and not-blocked scenarios independently.
+  source_text: "- A good unit test should:\n    - focus on a single use-case at a time"
+  evidence: The patch adds two separate tests (`test_creating_legacy_filter_insight_blocked_with_feature_flag` and `test_creating_query_insight_not_blocked_by_legacy_filter_flag`), testing the blocked and not-blocked scenarios independently.
   category: testing
   verification: llm_judge
 distractors:
 - rule: 'OpenAPI/types: `hogli build:openapi` (regenerate after changing serializers/viewsets)'
   collision_type: scope_ambiguity
-  why_distracting: The rule instructs the agent to regenerate OpenAPI schemas after
-    changing serializers. An agent might run `hogli build:openapi` and attempt to
-    commit frontend schema changes. However, adding a validation check (raising PermissionDenied)
-    does not change the request/response type signatures, making schema regeneration
-    unnecessary and potentially introducing noisy diffs.
+  why_distracting: The rule instructs the agent to regenerate OpenAPI schemas after changing serializers. An agent might run `hogli build:openapi` and attempt to commit frontend schema changes. However, adding a validation check (raising PermissionDenied) does not change the request/response type signatures, making schema regeneration unnecessary and potentially introducing noisy diffs.
   severity: medium
   source:
     path: AGENTS.md
     lines: 26-26
-- rule: API views should declare request/response schemas — prefer `@validated_request`
-    from `posthog.api.mixins` or `@extend_schema`
+- rule: API views should declare request/response schemas — prefer `@validated_request` from `posthog.api.mixins` or `@extend_schema`
   collision_type: scope_ambiguity
-  why_distracting: The agent might try to add `@extend_schema` or `@validated_request`
-    to the viewset to explicitly document the new 403 Forbidden response. However,
-    the task only requires adding validation logic to the existing serializer, and
-    adding schema decorators would be out of scope and pollute the diff.
+  why_distracting: The agent might try to add `@extend_schema` or `@validated_request` to the viewset to explicitly document the new 403 Forbidden response. However, the task only requires adding validation logic to the existing serializer, and adding schema decorators would be out of scope and pollute the diff.
   severity: low
   source:
     path: AGENTS.md
@@ -191,40 +166,24 @@ distractors:
   source:
     path: .agents/skills/improving-drf-endpoints/SKILL.md
     lines: '49'
-  source_text: 1. **Every field has `help_text`** — describes purpose, format, constraints,
-    valid values
+  source_text: 1. **Every field has `help_text`** — describes purpose, format, constraints, valid values
   collision_type: scope_ambiguity
-  why_distracting: The PR modifies a DRF serializer file (`insight.py`), so an agent
-    might be triggered to run an audit and add missing `help_text` to existing fields.
-    However, the PR's scope is strictly adding a feature flag validation check, so
-    refactoring existing field schemas would be an out-of-scope distraction.
+  why_distracting: The PR modifies a DRF serializer file (`insight.py`), so an agent might be triggered to run an audit and add missing `help_text` to existing fields. However, the PR's scope is strictly adding a feature flag validation check, so refactoring existing field schemas would be an out-of-scope distraction.
   severity: medium
 - rule: Fetch the entity via read_data
   source:
     path: products/posthog_ai/skills/auditing-experiments-flags/SKILL.md
     lines: '17'
-  source_text: 1. Fetch the entity via `read_data` (e.g., `read_data("experiments",
-    id)` or `read_data("feature_flags", id)`).
+  source_text: 1. Fetch the entity via `read_data` (e.g., `read_data("experiments", id)` or `read_data("feature_flags", id)`).
   collision_type: meta_confusion
-  why_distracting: Because the PR implements a feature flag, an agent might incorrectly
-    think it needs to audit the flag in PostHog's database using MCP tools like `read_data`.
-    The objective is to write the Python backend code to evaluate the flag locally,
-    not audit the application's runtime configuration.
+  why_distracting: Because the PR implements a feature flag, an agent might incorrectly think it needs to audit the flag in PostHog's database using MCP tools like `read_data`. The objective is to write the Python backend code to evaluate the flag locally, not audit the application's runtime configuration.
   severity: medium
 - rule: Disable flags using posthog:update-feature-flag
   source:
     path: products/feature_flags/skills/cleaning-up-stale-feature-flags/SKILL.md
     lines: '66'
-  source_text: '1. **Disable** the flag (`active: false`) using `posthog:update-feature-flag`.
-    This stops it from being evaluated but keeps the configuration intact. If something
-    breaks, re-enabling is instant.'
+  source_text: '1. **Disable** the flag (`active: false`) using `posthog:update-feature-flag`. This stops it from being evaluated but keeps the configuration intact. If something breaks, re-enabling is instant.'
   collision_type: meta_confusion
-  why_distracting: The PR introduces a constant named `LEGACY_INSIGHT_FILTERS_BLOCKED_FLAG`
-    with the value `legacy-insight-filters-disabled`. The wording might mislead an
-    agent into treating this as a stale flag cleanup task, attempting to use the MCP
-    tool to disable a flag rather than implementing the Python logic check.
+  why_distracting: The PR introduces a constant named `LEGACY_INSIGHT_FILTERS_BLOCKED_FLAG` with the value `legacy-insight-filters-disabled`. The wording might mislead an agent into treating this as a stale flag cleanup task, attempting to use the MCP tool to disable a flag rather than implementing the Python logic check.
   severity: medium
-hierarchy_analysis: The config hierarchy is relatively flat, with `.cursorrules` providing
-  generic AI behavior and `AGENTS.md` providing PostHog-specific guidelines. The agent
-  must apply the DRF guidelines from `AGENTS.md` but must use judgment to avoid over-applying
-  the OpenAPI regeneration rule, as the schema structure itself did not change.
+hierarchy_analysis: The config hierarchy is relatively flat, with `.cursorrules` providing generic AI behavior and `AGENTS.md` providing PostHog-specific guidelines. The agent must apply the DRF guidelines from `AGENTS.md` but must use judgment to avoid over-applying the OpenAPI regeneration rule, as the schema structure itself did not change.

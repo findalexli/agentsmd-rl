@@ -5,44 +5,39 @@ source:
   base_commit: cccae29569c129e52178837d6d4662baa11f5986
   merge_commit: b9e83b25e1ba5d7135a4a608ad4cad926d6bd62a
 checks:
-- id: header_upgrade_button_component
+- id: test_header_upgrade_button_component
   type: fail_to_pass
   origin: pr_diff
-  description: HeaderUpgradeButton component exists with experiment gating and free-plan
-    check
-- id: header_upgrade_tracks_click_event
+  description: HeaderUpgradeButton component exists with experiment gating and free-plan check
+- id: test_header_upgrade_tracks_click_event
   type: fail_to_pass
   origin: pr_diff
-  description: HeaderUpgradeButton tracks header_upgrade_cta_clicked on click via
-    useTrack
-- id: upgrade_plan_button_accepts_onclick
+  description: HeaderUpgradeButton tracks header_upgrade_cta_clicked on click via useTrack
+- id: test_upgrade_plan_button_accepts_onclick
   type: fail_to_pass
   origin: pr_diff
-  description: UpgradePlanButton accepts an onClick callback prop and forwards it
-    to Button
-- id: telemetry_event_interface_defined
+  description: UpgradePlanButton accepts an onClick callback prop and forwards it to Button
+- id: test_telemetry_event_interface_defined
   type: fail_to_pass
   origin: pr_diff
-  description: HeaderUpgradeCtaClickedEvent interface defined with correct action
-    in telemetry-constants.ts
-- id: layout_header_renders_upgrade_button
+  description: HeaderUpgradeCtaClickedEvent interface defined with correct action in telemetry-constants.ts
+- id: test_layout_header_renders_upgrade_button
   type: fail_to_pass
   origin: pr_diff
   description: LayoutHeader imports and renders HeaderUpgradeButton
-- id: mobile_nav_renders_upgrade_button
+- id: test_mobile_nav_renders_upgrade_button
   type: fail_to_pass
   origin: pr_diff
   description: MobileNavigationBar imports and renders HeaderUpgradeButton
-- id: telemetry_event_naming_convention
+- id: test_telemetry_event_naming_convention
   type: fail_to_pass
   origin: agent_config
-  description: Telemetry event name follows [object]_[verb] snake_case with approved
-    verb
+  description: Telemetry event name follows [object]_[verb] snake_case with approved verb
   source:
     path: .claude/skills/telemetry-standards/SKILL.md
     lines: 15-19
     commit: cccae29569c129e52178837d6d4662baa11f5986
-- id: telemetry_event_in_union_type
+- id: test_telemetry_event_in_union_type
   type: fail_to_pass
   origin: agent_config
   description: HeaderUpgradeCtaClickedEvent added to TelemetryEvent union type
@@ -50,7 +45,7 @@ checks:
     path: .claude/skills/telemetry-standards/SKILL.md
     lines: '158'
     commit: cccae29569c129e52178837d6d4662baa11f5986
-- id: node_parses_modified_files
+- id: test_node_parses_modified_files
   type: pass_to_pass
   origin: static
   description: All modified TypeScript files are readable and non-empty
@@ -98,77 +93,56 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Repo's FloatingMobileToolbar utils tests pass (11 tests)
+# CI-mined checks intentionally omitted: Studio Docker Build (docker-in-docker),
+# E2E tests (needs Playwright blob reports), test:ci (flaky timeouts in Docker),
+# check-dashboard-prs (needs GitHub API + S3 + Slack tokens)
 rubric:
-- rule: 'Code convention: Co-locate sub-components with parent. Avoid barrel re-export
-    files.'
+- rule: 'Code convention: Co-locate sub-components with parent. Avoid barrel re-export files.'
   source:
     path: .claude/CLAUDE.md
     lines: '36'
     commit: cccae29569c129e52178837d6d4662baa11f5986
-  reference: N/A - No documentation changes needed. HeaderUpgradeButton.tsx co-located
-    with LayoutHeader.tsx.
+  reference: N/A - No documentation changes needed. HeaderUpgradeButton.tsx co-located with LayoutHeader.tsx.
 - rule: 'Code convention: Keep components under 200-300 lines.'
   source:
     path: .claude/skills/studio-best-practices/SKILL.md
     lines: 55-60
     commit: cccae29569c129e52178837d6d4662baa11f5986
-  reference: N/A - No documentation changes needed. HeaderUpgradeButton.tsx is 35
-    lines.
+  reference: N/A - No documentation changes needed. HeaderUpgradeButton.tsx is 35 lines.
 - rule: 'Code convention: Use descriptive boolean prefixes (is, has, can, should).'
   source:
     path: .claude/skills/studio-best-practices/SKILL.md
     lines: 13-20
     commit: cccae29569c129e52178837d6d4662baa11f5986
-  reference: N/A - No documentation changes needed. Uses isFreePlan, isInExperiment,
-    showButton.
-- rule: 'Code convention: Prop callbacks use on prefix, internal handlers use handle
-    prefix.'
+  reference: N/A - No documentation changes needed. Uses isFreePlan, isInExperiment, showButton.
+- rule: 'Code convention: Prop callbacks use on prefix, internal handlers use handle prefix.'
   source:
     path: .claude/skills/studio-best-practices/SKILL.md
     lines: 123-126
     commit: cccae29569c129e52178837d6d4662baa11f5986
-  reference: N/A - No documentation changes needed. Uses onClick prop and handleClick
-    handler.
+  reference: N/A - No documentation changes needed. Uses onClick prop and handleClick handler.
 - rule: Exception for Experiment Exposure Tracking
   source:
     path: .claude/skills/telemetry-standards/SKILL.md
     lines: 59-59
-  source_text: '**Exception:** `_exposed` events for A/B experiment exposure tracking
-    are valid even though they fire on render.'
-  evidence: The code calls `useTrackExperimentExposure(EXPERIMENT_ID, variant)` which
-    tracks an exposure event directly on render without requiring user interaction.
+  source_text: '**Exception:** `_exposed` events for A/B experiment exposure tracking are valid even though they fire on render.'
+  evidence: The code calls `useTrackExperimentExposure(EXPERIMENT_ID, variant)` which tracks an exposure event directly on render without requiring user interaction.
   category: rubric
   verification: llm_judge
 - rule: Event Definitions Pattern
   source:
     path: .claude/skills/telemetry-standards/SKILL.md
     lines: 87-107
-  source_text: "All events must be defined as TypeScript interfaces in `packages/common/telemetry-constants.ts`:\n\
-    \n```typescript\n/**\n * [Event description]\n *\n * @group Events\n * @source\
-    \ [what triggers this event]\n */\nexport interface MyFeatureClickedEvent {\n\
-    \  action: 'my_feature_clicked'\n  properties: {\n    /** Description of property\
-    \ */\n    featureType: string\n  }\n  groups: TelemetryGroups\n}\n```\n\nAdd the\
-    \ new interface to the `TelemetryEvent` union type so `useTrack` picks it up.\n\
-    `@group Events` and `@source` must be accurate."
-  evidence: The diff adds `HeaderUpgradeCtaClickedEvent` to `telemetry-constants.ts`
-    with the correct JSDoc tags (`@group Events` and `@source studio`), interface
-    name, and appends it to the `TelemetryEvent` union type.
+  source_text: "All events must be defined as TypeScript interfaces in `packages/common/telemetry-constants.ts`:\n\n```typescript\n/**\n * [Event description]\n *\n * @group Events\n * @source [what triggers this event]\n */\nexport interface MyFeatureClickedEvent {\n  action: 'my_feature_clicked'\n  properties: {\n    /** Description of property */\n    featureType: string\n  }\n  groups: TelemetryGroups\n}\n```\n\nAdd the new interface to the `TelemetryEvent` union type so `useTrack` picks it up.\n`@group Events` and `@source` must be accurate."
+  evidence: The diff adds `HeaderUpgradeCtaClickedEvent` to `telemetry-constants.ts` with the correct JSDoc tags (`@group Events` and `@source studio`), interface name, and appends it to the `TelemetryEvent` union type.
   category: rubric
   verification: llm_judge
 - rule: Required Telemetry Pattern
   source:
     path: .claude/skills/telemetry-standards/SKILL.md
     lines: 65-83
-  source_text: "Import `useTrack` from `lib/telemetry/track` (within `apps/studio/`).\
-    \ Never use `useSendEventMutation` (deprecated).\n\n```typescript\nimport { useTrack\
-    \ } from 'lib/telemetry/track'\n\nconst MyComponent = () => {\n  const track =\
-    \ useTrack()\n\n  const handleClick = () => {\n    track('product_card_clicked',\
-    \ {\n      productType: 'database',\n      planTier: 'pro',\n      source: 'dashboard',\n\
-    \    })\n  }\n\n  return <button onClick={handleClick}>Click me</button>\n}\n\
-    ```"
-  evidence: The code imports `useTrack` from `@/lib/telemetry/track`, calls `const
-    track = useTrack()`, and executes `track('header_upgrade_cta_clicked')` inside
-    `handleClick`.
+  source_text: "Import `useTrack` from `lib/telemetry/track` (within `apps/studio/`). Never use `useSendEventMutation` (deprecated).\n\n```typescript\nimport { useTrack } from 'lib/telemetry/track'\n\nconst MyComponent = () => {\n  const track = useTrack()\n\n  const handleClick = () => {\n    track('product_card_clicked', {\n      productType: 'database',\n      planTier: 'pro',\n      source: 'dashboard',\n    })\n  }\n\n  return <button onClick={handleClick}>Click me</button>\n}\n```"
+  evidence: The code imports `useTrack` from `@/lib/telemetry/track`, calls `const track = useTrack()`, and executes `track('header_upgrade_cta_clicked')` inside `handleClick`.
   category: rubric
   verification: llm_judge
 - rule: Conditional Rendering Early Returns
@@ -182,8 +156,7 @@ rubric:
     if (isError) return <Error />
 
     return <Content />'
-  evidence: The code uses early returns `if (!isFreePlan) return null` and `if (!showButton)
-    return null` instead of wrapping the return statement in a complex boolean condition.
+  evidence: The code uses early returns `if (!isFreePlan) return null` and `if (!showButton) return null` instead of wrapping the return statement in a complex boolean condition.
   category: rubric
   verification: llm_judge
 - rule: Event Handlers Prefixing
@@ -196,8 +169,7 @@ rubric:
     - Prop callbacks: `on` prefix (`onClose`, `onSave`)
 
     - Internal handlers: `handle` prefix (`handleSubmit`, `handleCancel`)'
-  evidence: The internal function is named `handleClick` and is passed to the prop
-    `onClick` in UpgradePlanButton.
+  evidence: The internal function is named `handleClick` and is passed to the prop `onClick` in UpgradePlanButton.
   category: rubric
   verification: llm_judge
 distractors:
@@ -218,13 +190,9 @@ distractors:
 
     - Utility: `ComponentName.utils.ts` next to the component
 
-    - Test: `tests/components/.../ComponentName.utils.test.ts` mirroring the source
-    path'
+    - Test: `tests/components/.../ComponentName.utils.test.ts` mirroring the source path'
   collision_type: wasted_effort
-  why_distracting: An agent might see the logic determining whether to show the button
-    (`isFreePlan && isInExperiment`, etc.) and unnecessarily extract these trivial
-    variable assignments into a separate `.utils.ts` file to test exhaustively, leading
-    to over-engineering.
+  why_distracting: An agent might see the logic determining whether to show the button (`isFreePlan && isInExperiment`, etc.) and unnecessarily extract these trivial variable assignments into a separate `.utils.ts` file to test exhaustively, leading to over-engineering.
   severity: medium
 - rule: What NOT to Track
   source:
@@ -233,17 +201,13 @@ distractors:
   source_text: '## What NOT to Track
 
 
-    - Passive views/renders on page load (`dashboard_viewed`, `sidebar_appeared`,
-    `page_loaded`)
+    - Passive views/renders on page load (`dashboard_viewed`, `sidebar_appeared`, `page_loaded`)
 
     - Component appearances without user interaction
 
     - Generic "viewed" or "seen" events — already captured by pageview events'
   collision_type: rule_conflict
-  why_distracting: An agent reviewing the PR might reject the `useTrackExperimentExposure`
-    hook because it fires on component render without user interaction, incorrectly
-    applying this general rule while missing the specific exception for experiment
-    exposure (`_exposed`) immediately below it.
+  why_distracting: An agent reviewing the PR might reject the `useTrackExperimentExposure` hook because it fires on component render without user interaction, incorrectly applying this general rule while missing the specific exception for experiment exposure (`_exposed`) immediately below it.
   severity: high
 - rule: Component Tests for Complex UI Only
   source:
@@ -266,8 +230,5 @@ distractors:
 
     in a component — extract to `.utils.ts` and unit test instead.'
   collision_type: scope_ambiguity
-  why_distracting: An agent might see the conditional rendering based on A/B testing
-    feature flags and mistakenly interpret it as "complex UI interaction logic" that
-    requires a full component test using `customRender`, significantly expanding the
-    scope of a simple PR.
+  why_distracting: An agent might see the conditional rendering based on A/B testing feature flags and mistakenly interpret it as "complex UI interaction logic" that requires a full component test using `customRender`, significantly expanding the scope of a simple PR.
   severity: medium

@@ -22,7 +22,7 @@ RUN pip install --no-cache-dir torch --index-url https://download.pytorch.org/wh
 RUN pip install --no-cache-dir pydantic pydantic-settings
 RUN pip install --no-cache-dir "pydantic-config @ git+https://github.com/samsja/pydantic_config.git@main"
 
-ENV PYTHONPATH="/workspace/prime-rl/src:${PYTHONPATH:-}"
+ENV PYTHONPATH=/workspace/prime-rl/src
 
 RUN mkdir -p /logs/verifier
 

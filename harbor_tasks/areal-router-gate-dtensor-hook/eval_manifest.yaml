@@ -12,8 +12,7 @@ checks:
 - id: gate_hook_fires
   type: fail_to_pass
   origin: pr_diff
-  description: Forward hooks on router.gate fire during router forward (core DTensor
-    bug)
+  description: Forward hooks on router.gate fire during router forward (core DTensor bug)
 - id: gate_hook_with_varied_inputs
   type: fail_to_pass
   origin: pr_diff
@@ -33,8 +32,7 @@ checks:
 - id: router_forward_shapes
   type: pass_to_pass
   origin: repo_tests
-  description: TokenChoiceTopKRouter forward produces correct output shapes and valid
-    values
+  description: TokenChoiceTopKRouter forward produces correct output shapes and valid values
 - id: repo_ruff_lint
   type: pass_to_pass
   origin: repo_tests
@@ -66,8 +64,7 @@ checks:
 - id: not_stub
   type: fail_to_pass
   origin: static
-  description: RouterGateLinear.forward has real logic — class absent on base, present
-    on fix
+  description: RouterGateLinear.forward has real logic — class absent on base, present on fix
 - id: no_wildcard_imports
   type: pass_to_pass
   origin: agent_config
@@ -146,41 +143,27 @@ rubric:
   source:
     path: CLAUDE.md
     lines: 47-47
-  evidence: The gold solution includes a comprehensive docstring for the new `RouterGateLinear`
-    class that uses the same Sphinx/reST cross-reference syntax (`:func:`, `:class:`)
-    and `Args:` block format as the existing code patterns.
+  evidence: The gold solution includes a comprehensive docstring for the new `RouterGateLinear` class that uses the same Sphinx/reST cross-reference syntax (`:func:`, `:class:`) and `Args:` block format as the existing code patterns.
   category: style
 - rule: Composition over inheritance -- keep hierarchies <= 2 levels
   source:
     path: AGENTS.md
     lines: '62'
-  evidence: The gold solution creates RouterGateLinear inheriting directly from nn.Linear,
-    keeping the hierarchy shallow (<= 2 levels) while satisfying the checkpoint compatibility
-    requirement.
+  evidence: The gold solution creates RouterGateLinear inheriting directly from nn.Linear, keeping the hierarchy shallow (<= 2 levels) while satisfying the checkpoint compatibility requirement.
   category: architecture
 distractors:
 - rule: Composition over inheritance -- keep hierarchies <= 2 levels; prefer delegation.
   collision_type: rule_conflict
-  why_distracting: The rule says 'prefer delegation'. If the agent follows this by
-    creating a wrapper class that delegates to an internal nn.Linear instance (e.g.,
-    self.linear = nn.Linear(...)), the state dict keys will change from gate.weight
-    to gate.linear.weight, breaking the checkpoint compatibility explicitly requested
-    in the prompt.
+  why_distracting: The rule says 'prefer delegation'. If the agent follows this by creating a wrapper class that delegates to an internal nn.Linear instance (e.g., self.linear = nn.Linear(...)), the state dict keys will change from gate.weight to gate.linear.weight, breaking the checkpoint compatibility explicitly requested in the prompt.
   severity: high
   source:
     path: AGENTS.md
     lines: '62'
 - rule: Add tests for new functionality.
   collision_type: scope_ambiguity
-  why_distracting: The rule says 'Add tests for new functionality.' The agent might
-    try to write a test for the DTensor hook fix. However, testing DTensor hooks requires
-    distributed setup, and the config notes 'Integration tests require multi-node
-    hardware'. Attempting to write a test would likely fail or waste time, as this
-    is a bug fix, not new functionality.
+  why_distracting: The rule says 'Add tests for new functionality.' The agent might try to write a test for the DTensor hook fix. However, testing DTensor hooks requires distributed setup, and the config notes 'Integration tests require multi-node hardware'. Attempting to write a test would likely fail or waste time, as this is a bug fix, not new functionality.
   severity: medium
   source:
     path: AGENTS.md
     lines: '31'
-hierarchy_analysis: Both AGENTS.md and CLAUDE.md are at the root level and contain
-  overlapping rules. The agent must synthesize guidance from both while prioritizing
-  the specific constraints in the prompt over general rules like 'prefer delegation'.
+hierarchy_analysis: Both AGENTS.md and CLAUDE.md are at the root level and contain overlapping rules. The agent must synthesize guidance from both while prioritizing the specific constraints in the prompt over general rules like 'prefer delegation'.

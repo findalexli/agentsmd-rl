@@ -26,6 +26,12 @@ unrecoverable failure — even when the issue is temporary and a simple retry wo
 4. **`HttpRTensorBackend` must use a module-level logger** for structured log output,
    and this logger name must be registered in the color map.
 
+## Code Style Requirements
+
+- Python code must pass `ruff` linting (`ruff check`) and formatting (`ruff format
+  --check`) as enforced by the project's pre-commit hooks. Follow existing code
+  patterns in the module — do not introduce new conventions.
+
 ## Files to Modify
 
 - `areal/infra/rpc/rtensor.py` — configure HTTP sessions properly for large transfers,

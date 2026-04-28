@@ -7,13 +7,21 @@ source:
 task:
   kind: code_with_config
 checks:
-- id: typescript_syntax_valid
+- id: typescript_compiles
   type: pass_to_pass
-  origin: static
-  description: TypeScript files parse without syntax errors
+  origin: repo_tests
+  description: TypeScript compilation (tsc --noEmit) succeeds without errors
+- id: build_succeeds
+  type: pass_to_pass
+  origin: repo_tests
+  description: npm run build succeeds without errors
+- id: eslint_passes
+  type: pass_to_pass
+  origin: repo_tests
+  description: ESLint passes on MCP source files shared between base and gold
 - id: terminal_command_category_exists
-  type: pass_to_pass
-  origin: static
+  type: fail_to_pass
+  origin: pr_diff
   description: The 'network' category type exists in command.ts
 - id: route_tools_file_exists
   type: fail_to_pass
@@ -26,7 +34,7 @@ checks:
 - id: context_has_route_entry_type
   type: fail_to_pass
   origin: pr_diff
-  description: Context has RouteEntry type and route management methods (routes, addRoute, removeRoute)
+  description: Context has RouteEntry type and route management methods (addRoute, removeRoute)
 - id: terminal_commands_defined
   type: fail_to_pass
   origin: pr_diff
@@ -71,14 +79,6 @@ checks:
     path: .claude/skills/playwright-mcp-dev/SKILL.md
     lines: 1-33
     commit: 824f63da57edf990c6eeab6301d5f1b65dcb4ca8
-- id: build_succeeds
-  type: pass_to_pass
-  origin: repo_tests
-  description: npm run build succeeds without errors
-- id: lint_succeeds
-  type: pass_to_pass
-  origin: repo_tests
-  description: npm run flint passes for modified files
 config_edits:
 - path: .claude/skills/playwright-mcp-dev/SKILL.md
   tier: 1

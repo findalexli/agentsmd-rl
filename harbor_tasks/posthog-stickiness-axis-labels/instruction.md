@@ -41,4 +41,6 @@ The line graph component must:
 
 Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
 
-- `stylelint (CSS linter)`
+- `oxlint` (JavaScript/TypeScript linter)
+- `stylelint` (CSS/SCSS linter)
+- `markdownlint-cli2` (Markdown linter)

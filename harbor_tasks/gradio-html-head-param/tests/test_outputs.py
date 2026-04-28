@@ -168,15 +168,26 @@ def test_repo_gradio_import():
 
 
 def test_head_param_in_init():
-    """HTML.__init__ must accept a head parameter and work correctly."""
+    """HTML.__init__ must accept a head parameter before server_functions."""
     r = _run_py("""
+import inspect
 from gradio.components.html import HTML
 
-# Test that head parameter is accepted
-html = HTML(value="<div>test</div>", head="<script src='test.js'></script>")
-print("PASS: head parameter accepted")
+sig = inspect.signature(HTML.__init__)
+params = list(sig.parameters.keys())
+
+# head must be an explicit named parameter (not just **kwargs)
+assert 'head' in params, f"head not in __init__ signature: {params}"
+
+# head must appear before server_functions
+head_idx = params.index('head')
+sf_idx = params.index('server_functions')
+assert head_idx < sf_idx, (
+    f"head at position {head_idx}, server_functions at {sf_idx}"
+)
+print("PASS: head parameter in correct position")
 """)
-    assert r.returncode == 0, f"head param not accepted: {r.stderr}"
+    assert r.returncode == 0, f"head param not in signature: {r.stderr}"
     assert "PASS" in r.stdout
 
 
@@ -349,3 +360,5 @@ def test_guide_documents_head_parameter():
     assert "<script" in content.lower(), (
         "Guide should show script tag loading example"
     )
+
+# === CI-mined tests (taskforge.ci_check_miner) ===

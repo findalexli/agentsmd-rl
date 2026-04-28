@@ -1,26 +1,32 @@
-# Fix: SpacesReloader does not re-assign config after swapping blocks
+# Fix: Jinja template rendering error in SpacesReloader after block swapping
 
 ## Problem
 
-When using the Gradio reload/hot-swap feature on Hugging Face Spaces, swapping blocks causes a Jinja template rendering error. The `SpacesReloader` class detects when a demo has changed and calls `swap_blocks`, but it does not regenerate the config file for the new demo. This causes the frontend to use the old config, leading to Jinja errors when the template tries to render with mismatched configuration.
+When using the Gradio reload/hot-swap feature on Hugging Face Spaces, swapping blocks causes a Jinja template rendering error. Users encounter broken pages because the frontend receives stale configuration after a demo change is detected and blocks are swapped.
 
-## Root Cause
+## Observed Symptom
 
-The `SpacesReloader` class in `gradio/utils.py` inherits from `ServerReloader`. When a demo change is detected in `postrun`, it calls `swap_blocks(demo)` inherited from the parent class. However, after the swap, `demo.config` is not regenerated to reflect the new demo's configuration. The `get_config_file()` method is available on demo objects and returns the current configuration, but it is not being invoked after block swapping.
+Users on Hugging Face Spaces see Jinja template errors when a Gradio demo is updated and the SpacesReloader hot-swaps the active demo. The error occurs because the frontend configuration used by templates is not refreshed to match the newly swapped demo's actual component structure. Fields present in the new demo are missing from the rendered config, causing Jinja to fail when it tries to access them.
 
-## Required Behavior
+## Expected Behavior
 
-After `swap_blocks(demo)` is called, the demo's configuration must be refreshed:
-- `demo.config` must be assigned the value returned by `demo.get_config_file()`
-- The `swap_blocks` method must still delegate to the parent class implementation (`super().swap_blocks(demo)`)
-- This must work correctly when called from `postrun` when a changed demo is detected
+After the reloader detects a demo change and initiates a block swap, the frontend must receive configuration that matches the new demo's current state. The demo object carries its configuration through a `config` attribute and exposes the up-to-date configuration via a `get_config_file()` method. These must be kept in sync so that any downstream consumer of the demo's configuration — including the Jinja template renderer — gets accurate data.
+
+The reloader must continue to correctly:
+
+- Detect when a watched demo has changed (returning `True` from `postrun`)
+- Detect when a watched demo has NOT changed (returning `False` from `postrun`)
+- Delegate block-swapping behavior to the parent class so existing swap logic is preserved
+- Keep the `swap_blocks` method body non-trivial — it must contain real logic, not just a pass-through
 
 ## Files to Investigate
 
-- `gradio/utils.py` -- the `SpacesReloader` class and its relationship to `ServerReloader`
+- `gradio/utils.py` — the `SpacesReloader` class and its parent class `ServerReloader`
 
 ## Code Style Requirements
 
-Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+Your solution will be checked by the repository's existing linters and tests. All modified files must pass:
 
-- `ruff format and ruff check`
+- `ruff check --select E9,F63,F7,F82` (syntax-level lint rules)
+- `ruff format --check` (code formatting)
+- Existing unit tests in `test/test_utils.py` and `test/test_reload.py`

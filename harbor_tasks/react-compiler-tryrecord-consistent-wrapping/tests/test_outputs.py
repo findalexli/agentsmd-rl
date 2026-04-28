@@ -187,34 +187,30 @@ def test_merged_validation_guard_blocks():
     content = Path(PIPELINE).read_text()
     lines = content.split("\n")
 
-    # Find line numbers for the two key functions
+    # Find line numbers for the two key function calls
     validate_line = None
     assert_line = None
     for i, line in enumerate(lines):
-        if "validateLocalsNotReassignedAfterRender" in line:
+        if "validateLocalsNotReassignedAfterRender(hir)" in line:
             validate_line = i
-        if "assertValidMutableRanges" in line:
+        if "assertValidMutableRanges(" in line:
             assert_line = i
 
     assert validate_line is not None and assert_line is not None, \
-        "Could not find both functions in Pipeline.ts"
+        "Could not find both function calls in Pipeline.ts"
 
-    # Look at the section between the two functions (inclusive of validate, exclusive of assert)
-    section = "\n".join(lines[validate_line:assert_line])
-
-    # Count how many if(env.enableValidations) open braces appear in this section
-    # In the buggy code: first guard opens, then close, then second guard opens
-    # In the fixed code: one guard opens and wraps both
+    # Count how many if(env.enableValidations) guard blocks with braces appear
+    # in a window around these two functions. Extend backwards from the validate
+    # line to capture the first guard that precedes it.
+    start = max(0, validate_line - 3)
     guard_opens = 0
-    for line in lines[validate_line:assert_line]:
+    for line in lines[start:assert_line]:
         stripped = line.strip()
         if "if (env.enableValidations)" in stripped and "{" in stripped:
             guard_opens += 1
 
-    # The bug has TWO guard openings (consecutive if statements with braces)
-    # The fix has ONE guard opening (merged into a single block)
     assert guard_opens <= 1, \
-        f"Found {guard_opens} if(env.enableValidations) blocks between " \
+        f"Found {guard_opens} if(env.enableValidations) guard blocks near " \
         "validateLocalsNotReassignedAfterRender and assertValidMutableRanges. " \
         "Two consecutive guard blocks should be merged into one."
 
@@ -350,3 +346,58 @@ def test_repo_build():
         capture_output=True, text=True, timeout=300, cwd=f"{REPO}/compiler",
     )
     assert r.returncode == 0, f"Build failed:\n{r.stderr[-500:]}{r.stdout[-500:]}"
+
+# === CI-mined tests (taskforge.ci_check_miner) ===
+def test_ci_check_license_yarn():
+    """pass_to_pass | CI job 'Check license' → step ''"""
+    r = subprocess.run(
+        ["bash", "-lc", 'yarn install --frozen-lockfile'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step '' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_check_license_scripts_ci_check_license_sh():
+    """pass_to_pass | CI job 'Check license' → step ''"""
+    r = subprocess.run(
+        ["bash", "-lc", './scripts/ci/check_license.sh'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step '' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_test_print_warnings_scripts_ci_test_print_warnings_sh():
+    """pass_to_pass | CI job 'Test print warnings' → step ''"""
+    r = subprocess.run(
+        ["bash", "-lc", './scripts/ci/test_print_warnings.sh'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step '' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_jest_babel_plugin_react_compil_yarn():
+    """pass_to_pass | CI job 'Jest babel-plugin-react-compiler' → step ''"""
+    r = subprocess.run(
+        ["bash", "-lc", 'yarn workspace babel-plugin-react-compiler jest --maxWorkers=2'], cwd=f"{REPO}/compiler",
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step '' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_lint_babel_plugin_react_compil_yarn():
+    """pass_to_pass | CI job 'Lint babel-plugin-react-compiler' → step ''"""
+    r = subprocess.run(
+        ["bash", "-lc", 'yarn workspace babel-plugin-react-compiler lint'], cwd=f"{REPO}/compiler",
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step '' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_check_flags_yarn():
+    """pass_to_pass | CI job 'Check flags' → step ''"""
+    r = subprocess.run(
+        ["bash", "-lc", 'yarn flags'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step '' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")

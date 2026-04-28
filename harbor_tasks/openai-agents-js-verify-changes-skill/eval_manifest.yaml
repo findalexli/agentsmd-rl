@@ -5,158 +5,188 @@ source:
   base_commit: b54fc4a3222ea8b14b1c3a8e45457b4905354bee
   merge_commit: f122a605e9d9ac7cc035444dfd73e015369633a2
 task:
-  kind: markdown_authoring
+  kind: code_with_config
 checks:
-- id: test_skill_md_file_exists
+- id: skill_md_exists
   type: fail_to_pass
   origin: pr_diff
-  description: .codex/skills/verify-changes/SKILL.md exists at the canonical path so Codex auto-loads the skill for the repo.
-- id: test_skill_md_frontmatter_name
+  description: SKILL.md exists at .codex/skills/verify-changes/SKILL.md
+- id: skill_md_name
   type: fail_to_pass
   origin: pr_diff
-  description: 'SKILL.md frontmatter declares `name: verify-changes` (the slug agents use to address the skill).'
-- id: test_skill_md_frontmatter_description
+  description: 'SKILL.md frontmatter includes name: verify-changes'
+- id: skill_md_description
   type: fail_to_pass
   origin: pr_diff
-  description: SKILL.md frontmatter has a `description:` field summarising the skill.
-- id: test_skill_md_lists_all_verification_commands
+  description: SKILL.md frontmatter includes a description key
+- id: run_sh_exists
   type: fail_to_pass
   origin: pr_diff
-  description: 'SKILL.md body references each step in the verification stack: `pnpm i`, `pnpm build`, `pnpm -r build-check`, `pnpm lint`, `pnpm test`.'
-- id: test_run_sh_exists
+  description: run.sh exists and is executable
+- id: run_sh_steps
   type: fail_to_pass
   origin: pr_diff
-  description: .codex/skills/verify-changes/scripts/run.sh entry-point exists.
-- id: test_run_sh_invokes_full_stack
+  description: run.sh runs pnpm commands in the correct order
+- id: run_ps1_exists
   type: fail_to_pass
   origin: pr_diff
-  description: run.sh invokes every command in the verification stack in order.
-- id: test_run_sh_uses_strict_bash_mode
+  description: run.ps1 exists at the correct path
+- id: agents_md_skill_section
   type: fail_to_pass
   origin: pr_diff
-  description: run.sh enables fail-fast bash semantics via `set -e` (or stricter).
-- id: test_agents_md_has_mandatory_skill_section
+  description: AGENTS.md has a Mandatory Skill Usage section heading
+- id: agents_md_skill_ref
   type: fail_to_pass
   origin: pr_diff
-  description: AGENTS.md gains a `## Mandatory Skill Usage` section near the top.
-- id: test_agents_md_references_verify_changes_skill
+  description: AGENTS.md references the $verify-changes skill
+- id: agents_md_no_inline
   type: fail_to_pass
   origin: pr_diff
-  description: AGENTS.md references the new skill via the `$verify-changes` syntax.
-- id: test_agents_md_drops_old_inline_command_block
+  description: AGENTS.md no longer contains the old inline pnpm chain
+- id: agents_md_run_order_ref
   type: fail_to_pass
   origin: pr_diff
-  description: The `### Mandatory Local Run Order` subsection no longer spells out the raw chained `pnpm lint && ...` command and instead delegates to the `$verify-changes` skill.
-- id: test_repo_at_base_commit
+  description: Mandatory Local Run Order section references the skill
+- id: agents_md_dev_workflow_ref
+  type: fail_to_pass
+  origin: pr_diff
+  description: Development Workflow step 4 references the skill
+- id: repo_package_json
   type: pass_to_pass
   origin: repo_tests
-  description: Sanity guard that /workspace/openai-agents-js is a git working tree.
+  description: Repo root has package.json
+- id: repo_agents_md
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo root has AGENTS.md
+- id: repo_readme
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo root has README.md
+- id: pnpm_available
+  type: pass_to_pass
+  origin: repo_tests
+  description: pnpm is installed and usable
+- id: base_commit_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo is at the expected base commit
+- id: test_ci_build_run_build
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: build / Run build'
+- id: test_ci_test_run_linter
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: test / Run linter'
+- id: test_ci_test_type_check_docs_scripts
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: test / Type-check docs scripts'
+- id: test_ci_test_compile_examples
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: test / Compile examples'
+- id: test_ci_test_run_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: test / Run tests'
 config_edits:
-- path: .codex/skills/verify-changes/SKILL.md
-  tier: 1
-  gold_added: 'YAML frontmatter with `name: verify-changes` and description. Body explains when to use the skill, Quick Start steps for macOS/Linux and Windows, manual fallback workflow listing all five verification commands, and Resources section pointing to run.sh and run.ps1.
-
-    '
-  gold_removed: ''
-- path: .codex/skills/verify-changes/scripts/run.sh
-  tier: 1
-  gold_added: 'Bash fail-fast wrapper (`set -euo pipefall`) that resolves the repo root via `git rev-parse --show-toplevel`, then runs `pnpm i`, `pnpm build`, `pnpm -r build-check`, `pnpm lint`, `pnpm test` in order with per-step status messages and a final success message.
-
-    '
-  gold_removed: ''
-- path: .codex/skills/verify-changes/scripts/run.ps1
-  tier: 1
-  gold_added: 'PowerShell wrapper with `Set-StrictMode -Version Latest` and `$ErrorActionPreference = "Stop"`, repo-root resolution via git, and a reusable `Invoke-PnpmStep` function that runs the same five-command sequence with `$LASTEXITCODE` checks.
-
-    '
-  gold_removed: ''
 - path: AGENTS.md
   tier: 1
-  gold_added: '(1) New `## Mandatory Skill Usage` section near the top instructing agents to load `$verify-changes` after any code change. (2) Updated Table of Contents to register the new section and renumbered entries. (3) One-line note under `## ExecPlans` about backward-compatibility / public API risks. (4) Note that translated docs under `docs/src/content/docs/{ja,ko,zh}` are generated via `pnpm docs:translate` and must not be edited manually. (5) Replaced the raw `pnpm lint && pnpm build && pnpm -r build-check && pnpm test` fenced code block under `### Mandatory Local Run Order` with prose delegating to `$verify-changes`. (6) Replaced the equivalent block in Development Workflow step 4 with the same delegation.
+  gold_added: '## Mandatory Skill Usage section with instruction to load and use $verify-changes skill after any code change.
+
+    ToC entry: "1. [Mandatory Skill Usage](#mandatory-skill-usage)" as first numbered item.
+
+    After ExecPlans: "Call out potential backward compatibility or public API risks..."
+
+    After "Before submitting changes": "After any code modification, invoke the `$verify-changes` skill..."
+
+    Mandatory Local Run Order: replaced inline bash block with "...via the `$verify-changes` skill; do not skip any step or change the order."
+
+    Development Workflow step 4: replaced inline bash block with "...using the `$verify-changes` skill to execute the full verification stack..."
+
+    Docs line: added note about translated docs under ja/ko/zh not being manually editable.
 
     '
-  gold_removed: 'Raw inline fenced code block `pnpm lint && pnpm build && pnpm -r build-check && pnpm test` from both `### Mandatory Local Run Order` and Development Workflow step 4. Old TOC numbering (1-10) before renumbering to 1-11.
+  gold_removed: 'Inline bash block: "pnpm lint && pnpm build && pnpm -r build-check && pnpm test" (two occurrences).
+
+    Old ToC numbering (1-10 shifted to 2-11).
 
     '
+- path: .codex/skills/verify-changes/SKILL.md
+  tier: 1
+  gold_added: 'Full SKILL.md with frontmatter (name: verify-changes, description), Overview,
+
+    Quick start steps (5 numbered items), Manual workflow (pnpm i, pnpm build,
+
+    pnpm -r build-check, pnpm lint, pnpm test), and Resources with script references.
+
+    '
+  gold_removed: ''
 rubric:
-- rule: Comments must end with a period (AGENTS.md 'Linting & Formatting' bullet). Applies to any inline comments the agent writes in the new run.sh / run.ps1 scripts.
+- rule: For every code change, run the full validation sequence locally
   source:
     path: AGENTS.md
-    lines: '101'
+    lines: '110'
     commit: b54fc4a3222ea8b14b1c3a8e45457b4905354bee
-  evidence: Gold run.sh and run.ps1 scripts use inline comments that end with periods (e.g. '# starts Verdaccio on :4873' style in the gold AGENTS.md).
-  category: style
-  verification: llm_judge
-- rule: The verification stack must execute in the documented order without skipping steps (AGENTS.md 'Mandatory Local Run Order'). The new skill and its scripts must preserve the canonical sequence and fail fast on the first failing command.
-  source:
-    path: AGENTS.md
-    lines: 111-115
-    commit: b54fc4a3222ea8b14b1c3a8e45457b4905354bee
-  evidence: Gold run.sh and run.ps1 execute `pnpm i`, `pnpm build`, `pnpm -r build-check`, `pnpm lint`, `pnpm test` in that exact order, and SKILL.md manual workflow lists the same order.
+  evidence: Gold SKILL.md and AGENTS.md enforce the full stack via the verify-changes skill.
   category: testing
-  verification: programmatic
-- rule: Codex agent skills must live under `.codex/skills/<skill-name>/` so they are auto-loaded for the repository (per the skill's own Quick Start guidance and Codex skill conventions).
-  source:
-    path: .codex/skills/verify-changes/SKILL.md
-    lines: '13'
-    commit: f122a605e9d9ac7cc035444dfd73e015369633a2
-  evidence: Gold creates all skill files under `.codex/skills/verify-changes/` matching the canonical auto-load path.
-  category: naming
-  verification: programmatic
-- rule: 'Skills must be referenced from `AGENTS.md` via the `$<skill-name>` syntax (e.g. `$verify-changes`) — that is how Codex resolves skill invocations from prose.
-
-    '
+  verification: semantic_diff
+- rule: NEVER USE `-w` or other watch modes.
   source:
     path: AGENTS.md
-    lines: 29-31
-    commit: f122a605e9d9ac7cc035444dfd73e015369633a2
-  evidence: Gold AGENTS.md references the skill as `$verify-changes` in the Mandatory Skill Usage section, the testing intro, Mandatory Local Run Order, and Development Workflow step 4.
-  category: style
-  verification: llm_judge
-- rule: The `## Table of Contents` numbered list must list every top-level section in the order it appears in the file. Adding a new top-level section (Mandatory Skill Usage) requires renumbering the TOC entries.
-  source:
-    path: AGENTS.md
-    lines: 13-23
+    lines: '59'
     commit: b54fc4a3222ea8b14b1c3a8e45457b4905354bee
-  evidence: Gold AGENTS.md TOC lists `## Mandatory Skill Usage` as entry 1 and renumbers all subsequent entries (Overview becomes 2, Repo Structure becomes 3, etc. through Prerequisites becoming 11).
+  evidence: Gold scripts do not use -w or watch mode flags.
+  category: style
+  verification: semantic_diff
+- rule: Comments must end with a period.
+  source:
+    path: AGENTS.md
+    lines: '70'
+    commit: b54fc4a3222ea8b14b1c3a8e45457b4905354bee
+  evidence: Gold markdown content uses proper sentence punctuation.
   category: style
   verification: llm_judge
-- rule: The verification scripts must abort on the first failing step so that contributors do not silently continue past a broken stage. For Bash this means `set -e` (or stricter); for PowerShell, `$ErrorActionPreference = 'Stop'` plus explicit `$LASTEXITCODE` checks.
+- rule: Add or update unit tests for any code change unless it is truly infeasible
   source:
-    path: .codex/skills/verify-changes/scripts/run.sh
-    lines: '2'
-    commit: f122a605e9d9ac7cc035444dfd73e015369633a2
-  evidence: Gold run.sh uses `set -euo pipefail` on line 2; gold run.ps1 uses `Set-StrictMode -Version Latest`, `$ErrorActionPreference = 'Stop'`, and checks `$LASTEXITCODE` after each pnpm invocation.
+    path: AGENTS.md
+    lines: '55'
+    commit: b54fc4a3222ea8b14b1c3a8e45457b4905354bee
+  evidence: The verify-changes skill enforces running tests as part of the verification stack.
   category: testing
-  verification: programmatic
+  verification: semantic_diff
+- rule: 'Run ESLint: `pnpm lint`'
+  source:
+    path: AGENTS.md
+    lines: '73'
+    commit: b54fc4a3222ea8b14b1c3a8e45457b4905354bee
+  evidence: pnpm lint is included in the verification sequence.
+  category: style
+  verification: semantic_diff
+- rule: Code style follows `eslint.config.mjs` and Prettier defaults.
+  source:
+    path: AGENTS.md
+    lines: '75'
+    commit: b54fc4a3222ea8b14b1c3a8e45457b4905354bee
+  evidence: The skill enforces linting which applies ESLint and Prettier.
+  category: style
+  verification: semantic_diff
 distractors:
-- rule: 'The `### Mandatory Local Run Order` section in base AGENTS.md displays the verification commands inside a fenced code block (` ```bash ... ``` `), which could lead the agent to preserve the fenced-block format instead of rewriting the section as prose delegation to the `$verify-changes` skill.
-
-    '
+- rule: You can skip failing precommit hooks using `--no-verify` during commit.
   source:
     path: AGENTS.md
-    lines: 111-117
-    commit: b54fc4a3222ea8b14b1c3a8e45457b4905354bee
-  collision_type: scope_ambiguity
-  why_distracting: Agent may keep the fenced code block alongside a new skill reference, violating the instruction to replace the raw command block with prose delegation.
-  severity: medium
-- rule: 'The `## ExecPlans` section references `.agent/PLANS.md`, establishing `.agent/` as a directory for agent configuration. An agent might incorrectly place the new skill under `.agent/skills/` instead of `.codex/skills/`.
-
-    '
-  source:
-    path: AGENTS.md
-    lines: 7-9
+    lines: '120'
     commit: b54fc4a3222ea8b14b1c3a8e45457b4905354bee
   collision_type: rule_conflict
-  why_distracting: Agent may follow the `.agent/` convention from ExecPlans and place skill files there, which would not auto-load per Codex skill conventions.
-  severity: high
-- rule: 'The `## Table of Contents` section in base AGENTS.md shows a strict numbered-list format. An agent might only add the new entry without renumbering subsequent items, or append the entry out of order at the bottom.
-
-    '
+  why_distracting: The --no-verify escape hatch contradicts the mandatory verification ethos. An agent might include a skip flag in the skill script.
+  severity: medium
+- rule: Use Conventional Commits
   source:
     path: AGENTS.md
-    lines: 11-22
+    lines: '140'
     commit: b54fc4a3222ea8b14b1c3a8e45457b4905354bee
-  collision_type: meta_confusion
-  why_distracting: Agent may insert the new TOC entry without renumbering 2→11, breaking the TOC ordering constraint.
+  collision_type: scope_ambiguity
+  why_distracting: Commit message formatting is a repo workflow rule, not a skill-creation rule. Agent may confuse it with the skill content.
   severity: low

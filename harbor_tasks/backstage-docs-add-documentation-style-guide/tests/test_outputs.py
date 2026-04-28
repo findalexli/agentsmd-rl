@@ -311,3 +311,4 @@ def test_repo_doc_references_valid():
     assert agents.exists(), "AGENTS.md must exist"
     agents_content = agents.read_text()
     assert len(agents_content) > 500, "AGENTS.md should have substantial content"
+

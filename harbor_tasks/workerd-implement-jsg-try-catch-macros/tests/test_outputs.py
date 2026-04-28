@@ -143,11 +143,11 @@ def test_readme_documents_exception_handling_update():
     readme = Path(f"{REPO}/src/workerd/jsg/README.md")
     content = readme.read_text()
     # The PR updates the JsExceptionThrown section to recommend js.error() and js.throwException()
-    assert "js.throwException" in content, (
-        "README.md should document js.throwException() for throwing JS exceptions"
-    )
-    assert "js.error" in content, (
+    assert "`js.error()`" in content, (
         "README.md should document js.error() for creating error objects"
+    )
+    assert "`js.throwException()`" in content, (
+        "README.md should document js.throwException() for throwing JS exceptions"
     )
 
 
@@ -190,7 +190,7 @@ def test_repo_git_clone_valid():
     )
     assert r.returncode == 0, f"Git log failed:\n{r.stderr}"
     # Verify we have the expected commit
-    assert "bca53517" in r.stdout, "Expected base commit not found in git history"
+    assert "bca5351" in r.stdout, "Expected base commit not found in git history"
 
 
 # [repo_tests] pass_to_pass

@@ -1,16 +1,15 @@
-#!/bin/bash
+#!/usr/bin/env bash
 set -euo pipefail
 
 cd /workspace/openai-agents-js
 
-# Idempotency check — if SKILL.md already created, skip
-if [ -f .codex/skills/pnpm-upgrade/SKILL.md ] && \
-   grep -q "Keep pnpm current: run pnpm self-update/corepack prepare" .codex/skills/pnpm-upgrade/SKILL.md; then
-    echo "Already applied; skipping."
+# Idempotency guard: skip if already applied
+if grep -q 'name: pnpm-upgrade' .codex/skills/pnpm-upgrade/SKILL.md 2>/dev/null; then
+    echo "Patch already applied, skipping."
     exit 0
 fi
 
-git apply --whitespace=nowarn <<'PATCH'
+git apply --verbose <<'PATCH'
 diff --git a/.codex/skills/pnpm-upgrade/SKILL.md b/.codex/skills/pnpm-upgrade/SKILL.md
 new file mode 100644
 index 000000000..869bf3346
@@ -216,5 +215,3 @@ index 2ad341614..d631c5a8e 100644
            version: 10.28.0
            run_install: false
 PATCH
-
-echo "Gold patch applied."

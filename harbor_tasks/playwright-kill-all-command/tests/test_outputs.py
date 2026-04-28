@@ -266,3 +266,42 @@ def test_repo_check_deps():
         capture_output=True, text=True, timeout=120, cwd=REPO,
     )
     assert r.returncode == 0, f"check-deps failed:\\n{r.stderr[-500:]}"
+
+# === PR-added f2p tests (taskforge.test_patch_miner) ===
+def test_pr_added_kill_all():
+    """fail_to_pass | PR added test 'kill-all' in 'tests/mcp/cli-session.spec.ts'."""
+    r = _run_node("""
+const fs = require('fs');
+const content = fs.readFileSync('tests/mcp/cli-session.spec.ts', 'utf-8');
+
+// Find the test('kill-all', ...) function block
+const testMatch = content.match(/test\\s*\\(\\s*['\"]kill-all['\"]\\s*,\\s*async\\s*\\([^)]*\\)\\s*=>\\s*\\{[\\s\\S]*?\\n\\}\\s*\\)/);
+if (!testMatch) {
+    console.error('kill-all test function not found in cli-session.spec.ts');
+    process.exit(1);
+}
+
+const body = testMatch[0];
+
+// Must invoke the kill-all CLI command inside the test
+if (!body.includes("cli('kill-all')") && !body.includes('cli("kill-all")')) {
+    console.error('kill-all test does not invoke the kill-all cli command');
+    process.exit(1);
+}
+
+// Must assert on killed daemon process output message
+if (!body.includes('Killed daemon process')) {
+    console.error('kill-all test missing assertion on killed daemon output');
+    process.exit(1);
+}
+
+// Must check sessions are cleaned up after kill-all
+if (!body.includes('.poll(') && !body.includes('not.toContain')) {
+    console.error('kill-all test missing session cleanup assertion');
+    process.exit(1);
+}
+
+console.log('OK: kill-all test verified');
+""")
+    assert r.returncode == 0, f"kill-all test not present or incomplete: {r.stderr}"
+    assert "OK" in r.stdout

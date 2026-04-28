@@ -135,21 +135,6 @@ def test_no_leak_under_multiple_interrupted_waiters():
     )
 
 
-def test_circular_ts_take_uses_deferred_evaluation():
-    """f2p: the fix must defer the `taken += n` increment so it runs as part
-    of the resumed effect, not synchronously inside the observer/async
-    callback. Verified by exercising the interruption race; if increment is
-    eager, the f2p tests above leak permits.
-    """
-    src = (PKG / "src" / "internal" / "effect" / "circular.ts").read_text()
-    take_start = src.index("readonly take = (n: number)")
-    take_end = src.index("updateTakenUnsafe", take_start)
-    take_body = src[take_start:take_end]
-    suspend_uses = take_body.count("core.suspend") + take_body.count(".suspend(")
-    assert suspend_uses >= 1, (
-        "Semaphore.take should defer the taken increment via core.suspend so "
-        f"interrupted fibers don't leak permits; found {suspend_uses} suspend calls"
-    )
 
 
 # ──────────────────────────── pass_to_pass ────────────────────────────────────

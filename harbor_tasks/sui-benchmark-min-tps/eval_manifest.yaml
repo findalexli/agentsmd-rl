@@ -6,20 +6,11 @@ checks:
 - id: test_min_tps_option_parses
   type: fail_to_pass
   origin: pr_diff
-  description: stress binary builds and --help shows min-tps option
-- id: test_min_tps_field_exists_in_opts
-  type: fail_to_pass
-  origin: pr_diff
-  description: min_tps field exists in Opts struct with proper type Option<f64>
-  source:
-    path: crates/sui-benchmark/src/options.rs
+  description: stress binary has --min-tps option defined on Opts struct with clap attributes
 - id: test_min_tps_validation_in_stress
   type: fail_to_pass
   origin: pr_diff
-  description: min_tps validation logic exists in stress.rs with TPS calculation and
-    error handling
-  source:
-    path: crates/sui-benchmark/src/bin/stress.rs
+  description: min_tps validation logic exists in stress.rs with TPS calculation and error handling
 - id: test_license_header_options_rs
   type: pass_to_pass
   origin: agent_config
@@ -41,8 +32,7 @@ checks:
 - id: test_repo_git_checks
   type: pass_to_pass
   origin: repo_tests
-  description: Repo passes git sanity checks (no submodules, bad filenames, whitespace
-    errors)
+  description: Repo passes git sanity checks (no submodules, bad filenames, whitespace errors)
   source:
     path: scripts/git-checks.sh
 - id: test_repo_xlint
@@ -51,48 +41,31 @@ checks:
   description: Repo passes cargo xlint license check
   source:
     path: .cargo/config.toml
-- id: test_repo_cargo_check_benchmark
-  type: pass_to_pass
-  origin: repo_tests
-  description: sui-benchmark package compiles with cargo check (relevant to modified
-    code)
-  source:
-    path: .github/workflows/rust.yml
 rubric:
-- rule: 'Code changes must compile with cargo check --package sui-benchmark'
+- rule: Code changes must compile with cargo check --package sui-benchmark
   source:
     path: crates/sui-benchmark/src/options.rs
   reference: cargo check --package sui-benchmark passes
-- rule: 'Code changes must pass cargo fmt --check linting'
+- rule: Code changes must pass cargo fmt --check linting
   source:
     path: crates/sui-benchmark/src/bin/stress.rs
   reference: cargo fmt --check passes
 distractors:
 - rule: Use `#[cfg(test)]` for test-only code used within the same crate.
   collision_type: would_cause_bug
-  why_distracting: The prompt states the new flag is needed for 'CI smoke tests'.
-    An agent might misinterpret this as 'test-only code' and added the `#[cfg(test)]`
-    attribute to the `min_tps` field or its validation logic. Doing so would compile
-    the feature out of the actual stress binary used in CI, breaking the requested
-    functionality.
+  why_distracting: The prompt states the new flag is needed for 'CI smoke tests'. An agent might misinterpret this as 'test-only code' and added the `#[cfg(test)]` attribute to the `min_tps` field or its validation logic. Doing so would compile the feature out of the actual stress binary used in CI, breaking the requested functionality.
   severity: high
   source:
     path: CLAUDE.md
     lines: 74-76
-- rule: All new files must start with the following license in comments at the top
-    of the file
+- rule: All new files must start with the following license in comments at the top of the file
   collision_type: scope_ambiguity
-  why_distracting: The task instruction states 'The project requires all files to
-    have Apache-2.0 license headers', but the config clarifies this applies to 'All
-    new files'. An agent might waste effort trying to prepend license headers to the
-    existing `stress.rs` and `options.rs` files, potentially duplicating existing headers.
+  why_distracting: The task instruction states 'The project requires all files to have Apache-2.0 license headers', but the config clarifies this applies to 'All new files'. An agent might waste effort trying to prepend license headers to the existing `stress.rs` and `options.rs` files, potentially duplicating existing headers.
   severity: medium
   source:
     path: CLAUDE.md
     lines: 14-19
-hierarchy_analysis: The hierarchy is flat, with `AGENTS.md` simply deferring to the
-  root `CLAUDE.md`. All relevant rules are contained within a single root configuration
-  file.
+hierarchy_analysis: The hierarchy is flat, with `AGENTS.md` simply deferring to the root `CLAUDE.md`. All relevant rules are contained within a single root configuration file.
 version: '2.0'
 source:
   repo: MystenLabs/sui

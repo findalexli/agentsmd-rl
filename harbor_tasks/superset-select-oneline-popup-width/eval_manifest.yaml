@@ -7,14 +7,22 @@ source:
 task:
   kind: code_fix
 checks:
-- id: test_dropdown_width_matches_collapsed_input_width
+- id: test_oneLine_dropdown_width_matches_collapsed_input_300
   type: fail_to_pass
   origin: repo_tests
-  description: In oneLine multi-select mode, after tags collapse to "+ N ...", the dropdown popup's inline style.width must equal the layout-measured width of the select element.
+  description: In oneLine multi-select mode, after tags collapse to "+ 3 ...", the dropdown popup inline style.width (in px) equals the measured width for a 300px container.
+- id: test_oneLine_dropdown_width_matches_collapsed_input_450
+  type: fail_to_pass
+  origin: repo_tests
+  description: In oneLine multi-select mode, after tags collapse to "+ 2 ...", the dropdown popup inline style.width (in px) equals the measured width for a 450px container.
 - id: test_select_existing_suite_still_passes
   type: pass_to_pass
   origin: repo_tests
   description: Full pre-existing Select.test.tsx suite (78 tests) still passes after the fix.
+- id: test_ci_jest_select_suite_via_shell
+  type: pass_to_pass
+  origin: repo_tests
+  description: CI-style shell invocation of jest on the Select test suite passes.
 config_edits: []
 rubric:
 - rule: '**NO `any` types** - Use proper TypeScript types'

@@ -14,7 +14,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 RUN pip install --break-system-packages --no-cache-dir \
-        pytest==8.3.4
+        pytest==8.3.4 \
+        pytest-json-ctrf==0.1.2
 
 WORKDIR /workspace
 

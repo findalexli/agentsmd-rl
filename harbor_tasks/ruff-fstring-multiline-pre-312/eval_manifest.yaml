@@ -36,13 +36,11 @@ checks:
 - id: fstring_no_multiline_expansion_pre312
   type: fail_to_pass
   origin: pr_diff
-  description: Non-triple-quoted f-string replacement fields must not expand to multiline
-    on pre-3.12
+  description: Non-triple-quoted f-string replacement fields must not expand to multiline on pre-3.12
 - id: fstring_mixed_fields_pre312
   type: fail_to_pass
   origin: pr_diff
-  description: Already-multiline fields preserved but compact fields stay flat on
-    pre-3.12
+  description: Already-multiline fields preserved but compact fields stay flat on pre-3.12
 - id: fstring_multiline_allowed_on_312
   type: pass_to_pass
   origin: pr_diff
@@ -55,6 +53,62 @@ checks:
     path: AGENTS.md
     lines: '79'
     commit: 9a55bc6568caeba0c78c6f3358cd2f9475006f72
+- id: test_ci_cargo_build_build_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: cargo build / Build tests'
+- id: test_ci_cargo_test_ty_mdtests_github_annotations
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: cargo test / ty mdtests (GitHub annotations)'
+- id: test_ci_cargo_test_run_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: cargo test / Run tests'
+- id: test_ci_cargo_test_dogfood_ty_on_py_fuzzer
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: cargo test / Dogfood ty on py-fuzzer'
+- id: test_ci_cargo_test_dogfood_ty_on_the_scripts_directory
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: cargo test / Dogfood ty on the scripts directory'
+- id: test_ci_cargo_test_dogfood_ty_on_ty_benchmark
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: cargo test / Dogfood ty on ty_benchmark'
+- id: test_ci_cargo_test_cargo
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: cargo test / '
+- id: test_ci_cargo_test_cargo
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: cargo test / '
+- id: test_ci_test_ruff_lsp_build_ruff_binary
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: test ruff-lsp / Build Ruff binary'
+- id: test_ci_test_ruff_lsp_run_ruff_lsp_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: test ruff-lsp / Run ruff-lsp tests'
+- id: test_ci_cargo_fuzz_build_cargo
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: cargo fuzz build / '
+- id: test_ci_test_scripts_python
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: test scripts / '
+- id: test_ci_cargo_test_cargo_2
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: cargo test / '
+- id: test_ci_test_scripts_python_2
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: test scripts / '
 rubric:
 - rule: Follow existing code style. Check neighboring files for patterns.
   source:
@@ -66,45 +120,29 @@ rubric:
     path: AGENTS.md
     lines: '76'
     commit: 9a55bc6568caeba0c78c6f3358cd2f9475006f72
-- rule: Use comments purposefully. Don't use comments to narrate code, but do use
-    them to explain invariants and why something unusual was done a particular way.
+- rule: Use comments purposefully. Don't use comments to narrate code, but do use them to explain invariants and why something unusual was done a particular way.
   source:
     path: AGENTS.md
     lines: '82'
     commit: 9a55bc6568caeba0c78c6f3358cd2f9475006f72
-- rule: All changes must be tested. If you're not testing your changes, you're not
-    done.
+- rule: All changes must be tested. If you're not testing your changes, you're not done.
   source:
     path: AGENTS.md
     lines: 63-63
-  evidence: The gold solution adds a new test fixture `fstring_multiline_replacement_field.py`
-    and its corresponding `.options.json` file to verify the formatting behavior across
-    different Python versions.
+  evidence: The gold solution adds a new test fixture `fstring_multiline_replacement_field.py` and its corresponding `.options.json` file to verify the formatting behavior across different Python versions.
   category: testing
-- rule: Avoid writing significant amounts of new code. Look for existing utilities
-    first.
+- rule: Avoid writing significant amounts of new code. Look for existing utilities first.
   source:
     path: AGENTS.md
     lines: 69-69
-  evidence: The gold solution keeps the fix concise by leveraging existing utility
-    methods like `supports_pep_701()`, `is_triple_quoted()`, and `contains_line_break()`
-    rather than writing custom parsing or versio
+  evidence: The gold solution keeps the fix concise by leveraging existing utility methods like `supports_pep_701()`, `is_triple_quoted()`, and `contains_line_break()` rather than writing custom parsing or versio
   category: architecture
 distractors:
-- rule: Look to see if your tests could go in an existing file before adding a new
-    file for your tests.
+- rule: Look to see if your tests could go in an existing file before adding a new file for your tests.
   collision_type: would_cause_bug
-  why_distracting: The agent might try to append the new f-string test cases to an
-    existing test file to follow this rule. However, because the fix specifically
-    depends on the `target_version` (Python 3.11 vs 3.12), it requires a dedicated
-    `.options.json` file to configure the formatter for this specific fixture. Adding
-    it to an existing file would either fail to test the version-specific behavior
-    or incorrectly apply the target version to other unrelated tests.
+  why_distracting: The agent might try to append the new f-string test cases to an existing test file to follow this rule. However, because the fix specifically depends on the `target_version` (Python 3.11 vs 3.12), it requires a dedicated `.options.json` file to configure the formatter for this specific fixture. Adding it to an existing file would either fail to test the version-specific behavior or incorrectly apply the target version to other unrelated tests.
   severity: high
   source:
     path: AGENTS.md
     lines: 69-69
-hierarchy_analysis: The configuration is essentially a flat single file (`AGENTS.md`
-  which is referenced by `CLAUDE.md`). The agent must balance the general directive
-  to reuse test files against the technical requirements of the testing framework
-  which necessitates a new file for specific formatter options.
+hierarchy_analysis: The configuration is essentially a flat single file (`AGENTS.md` which is referenced by `CLAUDE.md`). The agent must balance the general directive to reuse test files against the technical requirements of the testing framework which necessitates a new file for specific formatter options.

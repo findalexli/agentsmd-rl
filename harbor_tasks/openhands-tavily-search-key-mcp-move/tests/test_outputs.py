@@ -145,3 +145,18 @@ def test_repo_lint_passes():
         f"stdout tail:\n{proc.stdout[-1500:]}\n"
         f"stderr tail:\n{proc.stderr[-1500:]}"
     )
+
+# === bash -lc CI/CD-style test (Dimension 1) ===
+
+def test_repo_lint_via_bash():
+    """p2p: repo's lint must also pass when invoked through a login shell
+    (closer to what CI/CD `run:` steps actually execute)."""
+    proc = subprocess.run(
+        ["bash", "-lc", "npm run lint"], cwd=FRONTEND,
+        capture_output=True, text=True, timeout=600,
+    )
+    assert proc.returncode == 0, (
+        f"`bash -lc 'npm run lint'` failed (exit {proc.returncode}).\n"
+        f"stdout tail:\n{proc.stdout[-1500:]}\n"
+        f"stderr tail:\n{proc.stderr[-1500:]}"
+    )

@@ -40,8 +40,7 @@ checks:
 - id: commands_renamed_in_help
   type: fail_to_pass
   origin: pr_diff
-  description: help.json command keys use new unhyphenated names (press, keydown,
-    mousemove, etc.)
+  description: help.json command keys use new unhyphenated names (press, keydown, mousemove, etc.)
 - id: help_global_text_updated
   type: fail_to_pass
   origin: pr_diff
@@ -49,8 +48,7 @@ checks:
 - id: modal_state_dual_format
   type: fail_to_pass
   origin: pr_diff
-  description: renderModalStates accepts config and conditionally renders skill vs
-    tool name
+  description: renderModalStates accepts config and conditionally renders skill vs tool name
 - id: eval_auto_wraps_expression
   type: fail_to_pass
   origin: pr_diff
@@ -58,8 +56,7 @@ checks:
 - id: skill_md_documents_cli
   type: fail_to_pass
   origin: pr_diff
-  description: SKILL.md exists with frontmatter and documents CLI commands with new
-    names
+  description: SKILL.md exists with frontmatter and documents CLI commands with new names
 - id: build_copies_terminal_md
   type: fail_to_pass
   origin: pr_diff
@@ -67,58 +64,50 @@ checks:
 - id: clearedby_type_is_object
   type: fail_to_pass
   origin: pr_diff
-  description: 'ModalState clearedBy type is { tool: string; skill: string } not plain
-    string'
+  description: 'ModalState clearedBy type is { tool: string; skill: string } not plain string'
 rubric:
-- rule: All TypeScript source files must include the Microsoft copyright header (Copyright
-    (c) Microsoft Corporation.)
+- rule: All TypeScript source files must include the Microsoft copyright header (Copyright (c) Microsoft Corporation.)
   source:
     path: eslint.config.mjs
     lines: 202-208
     commit: 1e81675f850280d2cbaa0bbb01a7f066532d0e01
-  reference: |
-    /**
-     * Copyright (c) Microsoft Corporation.
-     *
-     * Licensed under the Apache License, Version 2.0 (the "License");
-     * ...
-     */
-- rule: TypeScript files in packages/playwright must not have floating promises -
-    all promises must be awaited or handled
+  reference: "/**\n * Copyright (c) Microsoft Corporation.\n *\n * Licensed under the Apache License, Version 2.0 (the \"License\");\n * ...\n */\n"
+- rule: TypeScript files in packages/playwright must not have floating promises - all promises must be awaited or handled
   source:
     path: eslint.config.mjs
     lines: 359-364
     commit: 1e81675f850280d2cbaa0bbb01a7f066532d0e01
-  reference: |
-    await tab.refLocator({ ref: params.ref, element: params.element || 'element' });
-- rule: 'Code must use 2-space indentation, single quotes (avoidEscape: true), and
-    1tbs brace style with allowSingleLine: true'
+  reference: 'await tab.refLocator({ ref: params.ref, element: params.element || ''element'' });
+
+    '
+- rule: 'Code must use 2-space indentation, single quotes (avoidEscape: true), and 1tbs brace style with allowSingleLine: true'
   source:
     path: eslint.config.mjs
     lines: 76-107, 188-192
     commit: 1e81675f850280d2cbaa0bbb01a7f066532d0e01
-  reference: |
-    if (!params.function.includes('=>'))
-      params.function = `() => (${params.function})`;
-- rule: Arrow functions must use 'as-needed' parentheses (omit when single param,
-    include when multiple)
+  reference: "if (!params.function.includes('=>'))\n  params.function = `() => (${params.function})`;\n"
+- rule: Arrow functions must use 'as-needed' parentheses (omit when single param, include when multiple)
   source:
     path: eslint.config.mjs
     lines: '109'
     commit: 1e81675f850280d2cbaa0bbb01a7f066532d0e01
-  reference: |
-    // Single param: no parentheses
+  reference: '// Single param: no parentheses
+
     el => el.textContent
+
     // Multiple params: parentheses required
+
     (a, b) => a + b
-- rule: TypeScript files in packages/ must not use console methods or process.exit/stdout/stderr
-    directly.
+
+    '
+- rule: TypeScript files in packages/ must not use console methods or process.exit/stdout/stderr directly.
   source:
     path: eslint.config.mjs
     lines: 336-350
     commit: 1e81675f850280d2cbaa0bbb01a7f066532d0e01
-  reference: |
-    // Use proper logging mechanisms, not console.log or process.stdout
+  reference: '// Use proper logging mechanisms, not console.log or process.stdout
+
+    '
 config_edits:
 - path: packages/playwright/src/mcp/terminal/SKILL.md
   tier: 1
@@ -126,10 +115,7 @@ config_edits:
 
     name: playwright-cli
 
-    description: Automates browser interactions for web testing, form filling, screenshots,
-    and data extraction. Use when the user needs to navigate websites, interact with
-    web pages, fill forms, take screenshots, test web applications, or extract information
-    from web pages.
+    description: Automates browser interactions for web testing, form filling, screenshots, and data extraction. Use when the user needs to navigate websites, interact with web pages, fill forms, take screenshots, test web applications, or extract information from web pages.
 
     allowed-tools: Bash(playwright-cli:*)
 
@@ -160,8 +146,7 @@ config_edits:
 
     1. Navigate: `playwright-cli open https://example.com`
 
-    2. Snapshot: `playwright-cli snapshot` (returns elements with refs like `ref=e1`,
-    `ref=e2`)
+    2. Snapshot: `playwright-cli snapshot` (returns elements with refs like `ref=e1`, `ref=e2`)
 
     3. Interact using refs from the snapshot
 

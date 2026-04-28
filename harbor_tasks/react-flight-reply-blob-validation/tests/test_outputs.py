@@ -7,24 +7,29 @@ can stash a large string in a FormData slot and reference it via `$B`,
 and `decodeReply` will silently return that string instead of a Blob.
 After the fix, decoding such a payload throws.
 
-These tests exercise the behavior end-to-end via Jest.  We drop a custom
-Jest spec into the React repo, run it through `yarn test`, and tear it
-down again so the working tree stays clean.
+These tests exercise the behavior end-to-end via Jest.  We drop custom
+Jest specs into the React repo, run them through `yarn test`, and tear
+them down again so the working tree stays clean.
 """
 
+import os
 import subprocess
 from pathlib import Path
 
 REPO = Path("/workspace/react")
 TESTS_DIR = REPO / "packages/react-server-dom-webpack/src/__tests__"
-FIXTURE_NAME = "ReactFlightReplyBlobValidation-task-test.js"
-FIXTURE_PATH = TESTS_DIR / FIXTURE_NAME
+
+# ---------------------------------------------------------------------------
+# Fixture helpers
+# ---------------------------------------------------------------------------
+
+FIXTURE_NAME_1 = "ReactFlightReplyBlobValidation-task-test.js"
+FIXTURE_PATH_1 = TESTS_DIR / FIXTURE_NAME_1
 
 # A standalone Jest spec that mirrors the setup boilerplate of the
 # existing ReactFlightDOMReply-test.js but only contains the security
-# behavior we care about. Assertions are deliberately loose so any
-# reasonable type-check fix passes, not just the gold patch.
-JEST_SPEC = r"""
+# behaviour we care about.
+JEST_SPEC_1 = r"""
 'use strict';
 
 import {patchMessageChannel} from '../../../../scripts/jest/patchMessageChannel';
@@ -85,6 +90,8 @@ describe('ReactFlightReplyBlobValidation', () => {
     }
     expect(error).toBeDefined();
     expect(error).toBeInstanceOf(Error);
+    expect(typeof error.message).toBe('string');
+    expect(error.message.length).toBeGreaterThan(0);
   });
 
   it('still decodes a $B reference when its backing entry is a real Blob', async () => {
@@ -102,25 +109,83 @@ describe('ReactFlightReplyBlobValidation', () => {
 });
 """
 
+# Second fixture: the PR author's own test case, extracted to a standalone
+# spec so it can serve as an independent fail-to-pass signal.
+FIXTURE_NAME_2 = "ReactFlightReplyPrAddedBlobTest-task-test.js"
+FIXTURE_PATH_2 = TESTS_DIR / FIXTURE_NAME_2
 
-def _write_fixture():
-    FIXTURE_PATH.write_text(JEST_SPEC)
+JEST_SPEC_2 = r"""
+'use strict';
+
+import {patchMessageChannel} from '../../../../scripts/jest/patchMessageChannel';
+
+global.ReadableStream =
+  require('web-streams-polyfill/ponyfill/es6').ReadableStream;
+global.TextEncoder = require('util').TextEncoder;
+global.TextDecoder = require('util').TextDecoder;
+
+let webpackServerMap;
+let ReactServerDOMServer;
+let ReactServerScheduler;
+
+describe('ReactFlightReplyPrAddedBlobTest', () => {
+  beforeEach(() => {
+    jest.resetModules();
+
+    ReactServerScheduler = require('scheduler');
+    patchMessageChannel(ReactServerScheduler);
+
+    jest.mock('react', () => require('react/react.react-server'));
+    jest.mock('react-server-dom-webpack/server', () =>
+      require('react-server-dom-webpack/server.browser'),
+    );
+    const WebpackMock = require('./utils/WebpackMock');
+    webpackServerMap = WebpackMock.webpackServerMap;
+    require('react');
+    ReactServerDOMServer = require('react-server-dom-webpack/server.browser');
+    jest.resetModules();
+    __unmockReact();
+  });
+
+  it('cannot deserialize a Blob reference backed by a string', async () => {
+    const formData = new FormData();
+    formData.set('1', '-'.repeat(50000));
+    formData.set('0', JSON.stringify(['$B1']));
+    let error;
+    try {
+      await ReactServerDOMServer.decodeReply(formData, webpackServerMap);
+    } catch (x) {
+      error = x;
+    }
+    expect(error).toBeDefined();
+    expect(error).toBeInstanceOf(Error);
+    expect(typeof error.message).toBe('string');
+    expect(error.message.length).toBeGreaterThan(0);
+  });
+});
+"""
 
 
-def _remove_fixture():
-    if FIXTURE_PATH.exists():
-        FIXTURE_PATH.unlink()
+def _write_fixtures():
+    FIXTURE_PATH_1.write_text(JEST_SPEC_1)
+    FIXTURE_PATH_2.write_text(JEST_SPEC_2)
+
+
+def _remove_fixtures():
+    for p in (FIXTURE_PATH_1, FIXTURE_PATH_2):
+        if p.exists():
+            p.unlink()
 
 
 def setup_module(module):
-    _write_fixture()
+    _write_fixtures()
 
 
 def teardown_module(module):
-    _remove_fixture()
+    _remove_fixtures()
 
 
-def _run_jest(pattern: str, timeout: int = 600) -> subprocess.CompletedProcess:
+def _run_jest(pattern, timeout=600):
     return subprocess.run(
         ["yarn", "test", "--silent", "--no-watchman", pattern],
         cwd=str(REPO),
@@ -130,20 +195,45 @@ def _run_jest(pattern: str, timeout: int = 600) -> subprocess.CompletedProcess:
     )
 
 
-def test_blob_string_reference_rejected():
-    """f2p: decoding a `$B` ref whose backing entry is a string must throw.
+# =========================================================================
+# f2p tests
+# =========================================================================
 
-    On the base commit, `decodeReply` silently returns the string. After a
-    correct fix it throws. We do not pin the exact error message so any
-    reasonable type guard passes.
+def test_blob_string_reference_rejected():
+    """f2p: decoding a $B ref whose backing entry is a string must throw.
+
+    On the base commit decodeReply silently returns the string, so the
+    two "throws" test cases in the spec fail and Jest exits non-zero.
+    After a correct fix all three cases pass.
     """
     r = _run_jest("ReactFlightReplyBlobValidation-task-test")
     assert r.returncode == 0, (
-        "Jest failed for the Blob validation spec:\n"
+        "Jest spec for Blob validation failed:\n"
         f"--- stdout (tail) ---\n{r.stdout[-2000:]}\n"
         f"--- stderr (tail) ---\n{r.stderr[-2000:]}"
     )
 
+
+def test_pr_added_blob_reference_rejected():
+    """f2p: PR author's test case — long string in a $B slot must throw.
+
+    The PR author added a test named 'cannot deserialize a Blob reference
+    backed by a string'.  We run it as a standalone spec so it exercises
+    the same decodeReply path with a 50 000-character string.  On base
+    no error is thrown → Jest fails.  On gold the validation rejects the
+    payload → Jest passes.
+    """
+    r = _run_jest("ReactFlightReplyPrAddedBlobTest-task-test")
+    assert r.returncode == 0, (
+        "Jest spec for PR-added Blob test failed:\n"
+        f"--- stdout (tail) ---\n{r.stdout[-2000:]}\n"
+        f"--- stderr (tail) ---\n{r.stderr[-2000:]}"
+    )
+
+
+# =========================================================================
+# p2p tests (regression guards)
+# =========================================================================
 
 def test_existing_reply_suite_still_passes():
     """p2p: the existing ReactFlightDOMReply-test suite still passes.
@@ -162,9 +252,8 @@ def test_existing_reply_suite_still_passes():
 def test_repo_lint_changed_files():
     """p2p: `yarn linc` (lint changed files) passes.
 
-    React's CI gates on lint of changed files. Catches style issues such
-    as missing semicolons, double quotes (single quotes are the rule),
-    or stray `console.log` calls in the agent's edits.
+    React's CI gates on lint of changed files.  Catches style issues such
+    as missing semicolons, double quotes, or stray console.log calls.
     """
     r = subprocess.run(
         ["yarn", "linc"],

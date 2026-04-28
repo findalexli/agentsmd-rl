@@ -32,3 +32,11 @@ Additionally, the repo is missing a `make-pr` skill to standardize how pull requ
 
 - `AGENTS.md` — existing agent instructions for the repo (read before modifying)
 - `skills/` — directory for skill definitions (does not yet exist at the base commit)
+
+## Code Style Requirements
+
+This repository enforces code style and type safety automatically. Your changes must pass:
+
+- **ESLint** (`pnpm lint`): JavaScript/TypeScript linting with zero warnings
+- **Prettier** (`pnpm format:check`): code formatting (check-only, does not modify files)
+- **TypeScript** (`pnpm typecheck`): strict type checking across all packages

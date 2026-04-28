@@ -110,3 +110,33 @@ def test_git_repo_intact():
     # The copilot dir's other files must still exist
     assert (COPILOT_DIR / "copilot-provider.ts").exists()
     assert (COPILOT_DIR / "index.ts").exists()
+
+# === pass_to_pass: regression guards ===
+
+
+def test_git_diff_only_copilot_docs_changed():
+    """p2p regression: only the two copilot doc files are modified; no source
+    files, build configs, or unrelated docs change."""
+    r = subprocess.run(
+        ["bash", "-lc",
+         "cd /workspace/opencode && git diff --name-only HEAD"],
+        capture_output=True, text=True, timeout=30,
+    )
+    assert r.returncode == 0, f"git diff failed: {r.stderr}"
+    changed = {line.strip() for line in r.stdout.splitlines() if line.strip()}
+    allowed = {
+        "packages/opencode/src/provider/sdk/copilot/AGENTS.md",
+        "packages/opencode/src/provider/sdk/copilot/README.md",
+    }
+    unexpected = changed - allowed
+    assert not unexpected, (
+        f"Unexpected files modified outside the Copilot docs dir: {unexpected}"
+    )
+
+
+def test_copilot_source_files_still_exist():
+    """p2p regression: TypeScript source files in the Copilot directory are
+    untouched and still present."""
+    for name in ["copilot-provider.ts", "index.ts", "openai-compatible-error.ts"]:
+        f = COPILOT_DIR / name
+        assert f.exists(), f"Source file {name} is missing from {COPILOT_DIR}"

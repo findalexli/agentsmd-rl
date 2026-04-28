@@ -20,23 +20,19 @@ checks:
 - id: test_p2p_results_utils_has_convertresultstocsv
   type: pass_to_pass
   origin: repo_tests
-  description: Results.utils.ts exports convertResultsToCSV function (verified with
-    grep)
+  description: Results.utils.ts exports convertResultsToCSV function (verified with grep)
 - id: test_p2p_results_utils_has_convertresultstomarkdown
   type: pass_to_pass
   origin: repo_tests
-  description: Results.utils.ts exports convertResultsToMarkdown function (verified
-    with grep)
+  description: Results.utils.ts exports convertResultsToMarkdown function (verified with grep)
 - id: test_p2p_results_utils_has_convertresultstojson
   type: pass_to_pass
   origin: repo_tests
-  description: Results.utils.ts exports convertResultsToJSON function (verified with
-    grep)
+  description: Results.utils.ts exports convertResultsToJSON function (verified with grep)
 - id: test_p2p_results_utils_has_getresultsheaders
   type: pass_to_pass
   origin: repo_tests
-  description: Results.utils.ts exports getResultsHeaders function (verified with
-    grep)
+  description: Results.utils.ts exports getResultsHeaders function (verified with grep)
 - id: test_p2p_results_utils_tests_exist
   type: pass_to_pass
   origin: repo_tests
@@ -68,31 +64,50 @@ checks:
 - id: single_context_menu_pattern
   type: fail_to_pass
   origin: pr_diff
-  description: Results.tsx uses single shared context menu instead of per-cell (prevents
-    1000s of keydown listeners)
+  description: Results.tsx uses single shared context menu instead of per-cell (prevents 1000s of keydown listeners)
 - id: results_utils_functions
   type: fail_to_pass
   origin: pr_diff
-  description: formatClipboardValue and formatCellValue utility functions work correctly
-    and are extracted to Results.utils.ts
+  description: formatClipboardValue and formatCellValue utility functions work correctly and are extracted to Results.utils.ts
 - id: queryblock_flex_layout
   type: fail_to_pass
   origin: pr_diff
-  description: QueryBlock uses flex layout instead of overflow-auto to fix double
-    scrollbar issue
+  description: QueryBlock uses flex layout instead of overflow-auto to fix double scrollbar issue
 - id: results_component_tests_pass
   type: pass_to_pass
   origin: repo_tests
   description: The Results component test for single context menu passes
+- id: test_ci_studio_docker_build_build
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: Studio Docker Build / Build'
+- id: test_ci_e2e_tests_reset_supabase
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: E2E tests / Reset supabase'
+- id: test_ci_e2e_reports_merge_playwright_reports
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: E2E reports / Merge Playwright reports'
+- id: test_ci_test_run_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: test / Run Tests'
+- id: test_pr_added_renders_a_single_context_menu_regardless_of_row_
+  type: fail_to_pass
+  origin: pr_diff
+  description: PR added test 'renders a single context menu regardless of row count' in apps/studio/tests/components/SQLEditor/Results.test.tsx
+- id: test_pr_added_shows_empty_state_when_no_rows_provided
+  type: fail_to_pass
+  origin: pr_diff
+  description: PR added test 'shows empty state when no rows provided' in apps/studio/tests/components/SQLEditor/Results.test.tsx
 rubric:
-- rule: 'Remove logic from components into .utils.ts files as pure functions: arguments
-    in, return value out.'
+- rule: 'Remove logic from components into .utils.ts files as pure functions: arguments in, return value out.'
   source:
     path: .claude/skills/studio-testing/SKILL.md
     lines: 47-51
     commit: 2af6b3eaec65971a8fa6986afad44d6581075ac5
-- rule: 'Test every permutation of utility functions: happy path, malformed input,
-    empty values, edge cases.'
+- rule: 'Test every permutation of utility functions: happy path, malformed input, empty values, edge cases.'
   source:
     path: ../.studio-testing/SKILL.md
     lines: 69-77
@@ -102,18 +117,15 @@ rubric:
     path: .claude/skills/studio-best-practices/SKILL.md
     lines: '175'
   source_text: Extract logic into `.utils.ts` pure functions and test exhaustively.
-  evidence: The diff extracts `formatClipboardValue` and adds `formatCellValue` to
-    `./Results.utils.ts` and imports them.
+  evidence: The diff extracts `formatClipboardValue` and adds `formatCellValue` to `./Results.utils.ts` and imports them.
   category: architecture
   verification: llm_judge
 - rule: Use useCallback for handlers passed to memoized children
   source:
     path: .claude/skills/studio-best-practices/SKILL.md
     lines: '128'
-  source_text: Use `useCallback` for handlers passed to memoized children; avoid unnecessary
-    inline arrow functions.
-  evidence: The diff wraps `handleContextMenu` in `useCallback` before passing it
-    to `columns` which is wrapped in `useMemo`.
+  source_text: Use `useCallback` for handlers passed to memoized children; avoid unnecessary inline arrow functions.
+  evidence: The diff wraps `handleContextMenu` in `useCallback` before passing it to `columns` which is wrapped in `useMemo`.
   category: performance
   verification: llm_judge
 - rule: Use handle prefix for internal handlers
@@ -128,11 +140,8 @@ rubric:
   source:
     path: .claude/skills/studio-best-practices/SKILL.md
     lines: '147'
-  source_text: '`useMemo` for genuinely expensive computations (measured, not assumed).
-    Don''t wrap everything — only optimize when you have a measured problem or are
-    passing values to memoized children.'
-  evidence: The `columns` array is wrapped in `useMemo` because it evaluates columns
-    conditionally and is passed down to the `DataGrid` component.
+  source_text: '`useMemo` for genuinely expensive computations (measured, not assumed). Don''t wrap everything — only optimize when you have a measured problem or are passing values to memoized children.'
+  evidence: The `columns` array is wrapped in `useMemo` because it evaluates columns conditionally and is passed down to the `DataGrid` component.
   category: performance
   verification: llm_judge
 distractors:
@@ -140,17 +149,13 @@ distractors:
   source:
     path: .claude/skills/vercel-composition-patterns/rules/patterns-children-over-render-props.md
     lines: 8-12
-  source_text: 'Use `children` for composition instead of `renderX` props. Children
-    are more
+  source_text: 'Use `children` for composition instead of `renderX` props. Children are more
 
     readable, compose naturally, and don''t require understanding callback
 
     signatures.'
   collision_type: rule_conflict
-  why_distracting: The diff uses `renderCell` and `renderHeaderCell` which are render
-    props. An AI might incorrectly flag this code or try to convert it to a children-based
-    composition, breaking the `react-data-grid` third-party API that explicitly requires
-    render props.
+  why_distracting: The diff uses `renderCell` and `renderHeaderCell` which are render props. An AI might incorrectly flag this code or try to convert it to a children-based composition, breaking the `react-data-grid` third-party API that explicitly requires render props.
   severity: high
 - rule: React 19 API Changes (no forwardRef, use())
   source:
@@ -159,11 +164,7 @@ distractors:
   source_text: '> **⚠️ React 19+ only.** Skip this if you''re on React 18 or earlier.
 
 
-    In React 19, `ref` is now a regular prop (no `forwardRef` wrapper needed), and
-    `use()` replaces `useContext()`.'
+    In React 19, `ref` is now a regular prop (no `forwardRef` wrapper needed), and `use()` replaces `useContext()`.'
   collision_type: scope_ambiguity
-  why_distracting: The diff relies on `useRef` and attaches `ref={triggerRef}` to
-    a standard DOM element. An agent might mistake this ref usage as an opportunity
-    to proactively apply React 19 ref conventions. However, the project is explicitly
-    on React 18 according to CLAUDE.md.
+  why_distracting: The diff relies on `useRef` and attaches `ref={triggerRef}` to a standard DOM element. An agent might mistake this ref usage as an opportunity to proactively apply React 19 ref conventions. However, the project is explicitly on React 18 according to CLAUDE.md.
   severity: medium

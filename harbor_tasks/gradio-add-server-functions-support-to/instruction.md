@@ -31,6 +31,10 @@ The `gr.HTML` component supports a `js_on_load` parameter for running JavaScript
 
 6. **Server object in `js_on_load`**: The `server` object must be propagated through the Svelte component hierarchy and made available as a parameter in the `js_on_load` function execution. The JavaScript function that runs `js_on_load` must receive `server` alongside the existing `element`, `trigger`, and `props` parameters so that code like `server.my_func(arg).then(result => ...)` or `const result = await server.my_func(arg)` works.
 
+### Code Style Requirements
+
+All Python code changes must pass `ruff check` and `ruff format --check` without errors. The repository uses ruff for both linting and formatting of Python source files.
+
 ### Agent Skill Documentation
 
 7. **Update SKILL.md HTML signature**: The HTML component signature in `.agents/skills/gradio/SKILL.md` must include the new `server_functions` parameter with type `list[Callable] | None = None`, placed between the `buttons` and `props` parameters in the function signature.

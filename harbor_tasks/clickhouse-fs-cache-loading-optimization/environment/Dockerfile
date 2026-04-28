@@ -10,6 +10,7 @@ RUN apt-get update && apt-get install -y \
     python3-pip \
     python3-pytest \
     clang-14 \
+    clang-format-14 \
     llvm-14 \
     libc++-dev \
     libc++abi-dev \
@@ -22,12 +23,12 @@ RUN apt-get update && apt-get install -y \
 # Install pytest
 RUN pip3 install pytest
 
-# Clone the repository at base commit with minimal history
-ARG BASE_COMMIT=d7c936ef1d4d82e0a33ab84a78f6a544a99846df
+# Clone the repository at the base commit of PR #101500
+ARG BASE_COMMIT=dd28467d2e3415a439b64f8a41864c1336a2170f
 RUN git init /workspace/ClickHouse && \
     cd /workspace/ClickHouse && \
     git remote add origin https://github.com/ClickHouse/ClickHouse.git && \
-    git fetch --depth=1 origin d7c936ef1d4d82e0a33ab84a78f6a544a99846df && \
+    git fetch --depth=1 origin dd28467d2e3415a439b64f8a41864c1336a2170f && \
     git checkout FETCH_HEAD
 
 WORKDIR /workspace/ClickHouse

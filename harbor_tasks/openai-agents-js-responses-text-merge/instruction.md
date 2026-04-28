@@ -57,15 +57,16 @@ When there is no `providerData` at all and `outputType` is structured,
 
 ## Where to look
 
-`packages/agents-openai/src/openaiResponsesModel.ts` is the package that
-serializes a `ModelRequest` into the OpenAI Responses API call. The fix
-lives entirely inside this file. Do not modify the public types in
-`@openai/agents-core`.
+The serialization from `ModelRequest` to the OpenAI Responses API body
+lives in the `@openai/agents-openai` package — look for the function
+that constructs the call to `client.responses.create`. Do not modify the
+public types in `@openai/agents-core`.
 
 ## Code Style Requirements
 
 The repository's contributor guide (`AGENTS.md`) requires:
 
+- `pnpm lint` (ESLint + Prettier) must pass with no new errors.
 - `pnpm -F @openai/agents-openai build-check` (TypeScript `--noEmit`)
   must pass — no new type errors.
 - Comments must end with a period.

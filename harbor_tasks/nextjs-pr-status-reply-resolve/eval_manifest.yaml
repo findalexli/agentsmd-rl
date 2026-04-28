@@ -80,18 +80,15 @@ checks:
 - id: test_reply_and_resolve_subcommand_exists
   type: fail_to_pass
   origin: pr_diff
-  description: reply-and-resolve-thread subcommand is handled in main() and shows
-    usage on missing args
+  description: reply-and-resolve-thread subcommand is handled in main() and shows usage on missing args
 - id: test_reply_to_thread_uses_rest_api
   type: fail_to_pass
   origin: pr_diff
-  description: replyToThread uses REST /comments/<id>/replies endpoint, not GraphQL
-    mutation
+  description: replyToThread uses REST /comments/<id>/replies endpoint, not GraphQL mutation
 - id: test_generate_thread_md_includes_combined
   type: fail_to_pass
   origin: pr_diff
-  description: generateThreadMd includes the reply-and-resolve one-step command in
-    thread MD files
+  description: generateThreadMd includes the reply-and-resolve one-step command in thread MD files
 - id: test_reply_to_thread_logs_html_url
   type: fail_to_pass
   origin: pr_diff
@@ -99,8 +96,7 @@ checks:
 - id: test_skill_md_documents_combined_command
   type: fail_to_pass
   origin: pr_diff
-  description: SKILL.md updated with Thread interaction section and reply-and-resolve-thread
-    command
+  description: SKILL.md updated with Thread interaction section and reply-and-resolve-thread command
 - id: test_skill_md_workflow_step_updated
   type: fail_to_pass
   origin: pr_diff
@@ -110,28 +106,22 @@ checks:
   origin: pr_diff
   description: workflow.md shows the one-step reply-and-resolve alternative
 rubric:
-- rule: Documentation updates are consistent with the existing style in SKILL.md and
-    workflow.md
+- rule: Documentation updates are consistent with the existing style in SKILL.md and workflow.md
   source:
     path: .agents/skills/pr-status-triage/SKILL.md
     lines: 31-38
     commit: fea754747872122d167dd8bf1fc5581044e50521
-- rule: When modifying skill documentation, update both SKILL.md (quick commands reference)
-    and workflow.md (detailed procedures) consistently
+- rule: When modifying skill documentation, update both SKILL.md (quick commands reference) and workflow.md (detailed procedures) consistently
   source:
     path: .agents/skills/pr-status-triage/workflow.md
     lines: 29-46
     commit: fea754747872122d167dd8bf1fc5581044e50521
-- rule: When adding a new CLI subcommand for skill tools, the documentation must include
-    ready-to-use command templates with correct arguments in SKILL.md quick commands
-    section
+- rule: When adding a new CLI subcommand for skill tools, the documentation must include ready-to-use command templates with correct arguments in SKILL.md quick commands section
   source:
     path: .agents/skills/pr-status-triage/SKILL.md
     lines: 34-40
     commit: fea754747872122d167dd8bf1fc5581044e50521
-- rule: GitHub API calls in scripts should prefer REST endpoints over GraphQL mutations
-    when the REST endpoint has more predictable behavior (e.g. always publishes immediately
-    vs attaching to pending reviews)
+- rule: GitHub API calls in scripts should prefer REST endpoints over GraphQL mutations when the REST endpoint has more predictable behavior (e.g. always publishes immediately vs attaching to pending reviews)
   source:
     path: scripts/pr-status.js
     lines: 253-285
@@ -140,41 +130,27 @@ rubric:
   source:
     path: scripts/pr-status.js
     lines: 1-50
-  evidence: The gold solution modifies `scripts/pr-status.js` to add the new command,
-    aligning with the documented codebase structure that designates the `scripts/`
-    directory for maintenance scripts.
+  evidence: The gold solution modifies `scripts/pr-status.js` to add the new command, aligning with the documented codebase structure that designates the `scripts/` directory for maintenance scripts.
   category: architecture
 - rule: scripts/ directory is used for build and maintenance scripts
   source:
     path: AGENTS.md
     lines: 17-18
-  evidence: The gold solution correctly locates and modifies the pr-status script
-    in the scripts/ directory, aligning with the documented codebase structure.
+  evidence: The gold solution correctly locates and modifies the pr-status script in the scripts/ directory, aligning with the documented codebase structure.
   category: architecture
 distractors:
-- rule: If you are changing Next.js source or integration tests, start `pnpm --filter=next
-    dev` in a separate terminal session before making edits
+- rule: If you are changing Next.js source or integration tests, start `pnpm --filter=next dev` in a separate terminal session before making edits
   collision_type: scope_ambiguity
-  why_distracting: The rule mandates starting the Next.js dev server when changing
-    source code. An agent might mistakenly apply this to `scripts/pr-status.js`,
-    wasting time starting a dev server that is irrelevant to a standalone Node script.
+  why_distracting: The rule mandates starting the Next.js dev server when changing source code. An agent might mistakenly apply this to `scripts/pr-status.js`, wasting time starting a dev server that is irrelevant to a standalone Node script.
   severity: high
   source:
     path: AGENTS.md
     lines: 60-62
-- rule: 'Always run a full bootstrap build after switching branches: git checkout
-    <branch> \n pnpm build-all'
+- rule: 'Always run a full bootstrap build after switching branches: git checkout <branch> \n pnpm build-all'
   collision_type: scope_ambiguity
-  why_distracting: The rule requires running a full bootstrap build (`pnpm build-all`)
-    after switching branches. An agent might run this heavy command before editing
-    the script, which is unnecessary since the script doesn't depend on the compiled
-    Next.js packages.
+  why_distracting: The rule requires running a full bootstrap build (`pnpm build-all`) after switching branches. An agent might run this heavy command before editing the script, which is unnecessary since the script doesn't depend on the compiled Next.js packages.
   severity: medium
   source:
     path: AGENTS.md
     lines: 82-85
-hierarchy_analysis: The root AGENTS.md provides instructions for Next.js core development.
-  However, the task involves modifying a standalone script (`scripts/pr-status.js`)
-  and agent skill documentation (`.agents/skills/`). The agent must recognize that
-  the scope of the root config (Next.js source) does not apply here, and avoid running
-  heavy build commands or dev servers.
+hierarchy_analysis: The root AGENTS.md provides instructions for Next.js core development. However, the task involves modifying a standalone script (`scripts/pr-status.js`) and agent skill documentation (`.agents/skills/`). The agent must recognize that the scope of the root config (Next.js source) does not apply here, and avoid running heavy build commands or dev servers.

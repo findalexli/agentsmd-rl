@@ -62,6 +62,14 @@ checks:
     in the walker contract that the migrated keybinds.ts now relies on.
 
     '
+- id: test_terminal_suspend_no_transform
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'terminal_suspend must be a plain ZodDefault after the migration;
+    the .transform() wrapper (which is dead code since tui.ts already
+    handles the win32 override) is removed so the zod type is no longer
+    ZodEffects.
+    '
 - id: test_unknown_keybind_keys_do_not_throw
   type: fail_to_pass
   origin: pr_diff

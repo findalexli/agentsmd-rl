@@ -22,12 +22,12 @@ The solution must satisfy all of the following structural requirements:
 
 4. **`NemotronHMamba2Mixer` in both files must have CUDA stream management guarded by a compile check** in its `forward` or `cuda_kernels_forward` method
 
-5. **The modular source file** (`src/transformers/models/nemotron_h/modular_nemotron_h.py`) **must also have a `forward` override for `NemotronHMamba2Mixer`** with stream management and compile guard
+5. **The modular source file** (`modular_nemotron_h.py`) **must also have a `forward` override for `NemotronHMamba2Mixer`** with stream management and compile guard
 
 ## Relevant Files
 
-- `src/transformers/models/nemotron_h/modeling_nemotron_h.py` — the generated modeling file; contains `NemotronHBlock` and `NemotronHMamba2Mixer`
-- `src/transformers/models/nemotron_h/modular_nemotron_h.py` — the modular source file (edits here regenerate the modeling file)
+- `modeling_nemotron_h.py` — the generated modeling file in the NemotronH model directory; contains `NemotronHBlock` and `NemotronHMamba2Mixer`
+- `modular_nemotron_h.py` — the modular source file in the same directory (edits here regenerate the modeling file)
 
 ## Approach Hints
 

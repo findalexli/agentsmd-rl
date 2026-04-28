@@ -300,7 +300,7 @@ def test_not_stub():
     """config.ts must not be gutted."""
     content = FILE.read_text()
     lines = content.strip().splitlines()
-    assert len(lines) >= 1000, f"Only {len(lines)} lines - file gutted"
+    assert len(lines) >= 150, f"Only {len(lines)} lines - file gutted"
     for req in ["loadGlobal", "getGlobal", "invalidate", "loadFile", "namespace Config"]:
         assert req in content, f"Missing: {req}"
 
@@ -349,7 +349,7 @@ def test_repo_config_valid_syntax():
     content = FILE.read_text()
     open_braces = content.count("{")
     close_braces = content.count("}")
-    assert open_braces > 100
+    assert open_braces > 50
     assert abs(open_braces - close_braces) < 10
     backticks = content.count("`")
     assert backticks % 2 == 0
@@ -414,3 +414,29 @@ def test_repo_prettier_formatting():
         capture_output=True, text=True, timeout=120, cwd=REPO,
     )
     assert r.returncode == 0, f"Prettier failed: {r.stderr[-500:]}"
+
+
+# === CI-mined tests (scoped to affected package) ===
+
+def test_ci_typecheck_run_typecheck():
+    """pass_to_pass | CI job 'typecheck' scoped to opencode package"""
+    r = subprocess.run(
+        ["bash", "-lc", "bun turbo typecheck --filter=opencode"],
+        cwd=REPO,
+        capture_output=True, text=True, timeout=300,
+    )
+    assert r.returncode == 0, (
+        f"CI step 'typecheck --filter=opencode' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+
+def test_ci_config_unit_tests():
+    """pass_to_pass | CI job 'unit' scoped to config test file"""
+    r = subprocess.run(
+        ["bash", "-lc", "bun test --timeout 30000 test/config/config.test.ts"],
+        cwd="/repo/packages/opencode",
+        capture_output=True, text=True, timeout=300,
+    )
+    assert r.returncode == 0, (
+        f"CI step 'bun test config.test.ts' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")

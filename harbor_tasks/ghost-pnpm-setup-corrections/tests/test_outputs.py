@@ -196,3 +196,4 @@ def test_codex_environment_toml_parses() -> None:
         data = tomllib.load(f)
     assert data.get("name") == "Ghost"
     assert "setup" in data and "script" in data["setup"]
+

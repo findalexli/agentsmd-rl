@@ -14,11 +14,9 @@ REPO = "/workspace/next.js"
 TEST_DIR = f"{REPO}/test/e2e/app-dir/segment-cache/staleness"
 PER_PAGE_DIR = f"{TEST_DIR}/app/per-page-config"
 
-
 # ---------------------------------------------------------------------------
 # Pass-to-pass (static) - existing infrastructure checks
 # ---------------------------------------------------------------------------
-
 
 def test_link_accordion_component_exists():
     """LinkAccordion component exists at the expected path (pre-existing fixture)."""
@@ -28,11 +26,9 @@ def test_link_accordion_component_exists():
     assert "LinkAccordion" in content, "LinkAccordion component must export the component"
     assert "data-link-accordion" in content, "LinkAccordion must use data-link-accordion attribute"
 
-
 # ---------------------------------------------------------------------------
 # Pass-to-pass (repo_tests) - repo CI/CD checks
 # ---------------------------------------------------------------------------
-
 
 def test_repo_prettier_segment_cache():
     """Repo's Prettier check passes on segment-cache test files (pass_to_pass)."""
@@ -42,7 +38,6 @@ def test_repo_prettier_segment_cache():
     )
     assert r.returncode == 0, f"Prettier check failed:\n{r.stderr[-500:]}"
 
-
 def test_repo_deps_install():
     """Repo dependencies install cleanly (pass_to_pass)."""
     r = subprocess.run(
@@ -50,7 +45,6 @@ def test_repo_deps_install():
         capture_output=True, text=True, timeout=180, cwd=REPO,
     )
     assert r.returncode == 0, f"Dependencies install failed:\n{r.stderr[-500:]}"
-
 
 def test_repo_ast_grep_segment_cache():
     """Repo's ast-grep static analysis passes on segment-cache files (pass_to_pass)."""
@@ -60,7 +54,6 @@ def test_repo_ast_grep_segment_cache():
     )
     assert r.returncode == 0, f"ast-grep scan failed:\n{r.stderr[-500:]}"
 
-
 def test_repo_prettier_segment_cache_src():
     """Repo's Prettier check passes on segment-cache source TSX files (pass_to_pass)."""
     r = subprocess.run(
@@ -68,7 +61,6 @@ def test_repo_prettier_segment_cache_src():
         capture_output=True, text=True, timeout=120, cwd=REPO,
     )
     assert r.returncode == 0, f"Prettier check on source files failed:\n{r.stderr[-500:]}"
-
 
 def test_repo_alex_next_docs():
     """Repo's language linting (alex) passes on Next.js documentation (pass_to_pass)."""
@@ -78,7 +70,6 @@ def test_repo_alex_next_docs():
     )
     assert r.returncode == 0, f"Alex language check failed:\n{r.stderr[-500:]}"
 
-
 def test_repo_check_error_codes():
     """Repo's error code check passes (pass_to_pass)."""
     r = subprocess.run(
@@ -86,7 +77,6 @@ def test_repo_check_error_codes():
         capture_output=True, text=True, timeout=60, cwd=REPO,
     )
     assert r.returncode == 0, f"Error code check failed:\n{r.stderr[-500:]}"
-
 
 def test_repo_eslint_segment_cache():
     """Repo's ESLint check passes on segment-cache test files (pass_to_pass)."""
@@ -96,7 +86,6 @@ def test_repo_eslint_segment_cache():
         capture_output=True, text=True, timeout=120, cwd=REPO,
     )
     assert r.returncode == 0, f"ESLint check failed:\n{r.stderr[-500:]}"
-
 
 def test_repo_prettier_src():
     """Repo's Prettier check passes on segment-cache source TSX files (pass_to_pass)."""
@@ -108,7 +97,6 @@ def test_repo_prettier_src():
     )
     assert r.returncode == 0, f"Prettier check on source files failed:\n{r.stderr[-500:]}"
 
-
 def test_repo_alex_docs():
     """Repo's language linting (alex) passes on Next.js docs (pass_to_pass)."""
     r = subprocess.run(
@@ -117,11 +105,9 @@ def test_repo_alex_docs():
     )
     assert r.returncode == 0, f"Alex language check failed:\n{r.stderr[-500:]}"
 
-
 # ---------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) - behavioral code tests
 # ---------------------------------------------------------------------------
-
 
 def test_hub_pages_valid_tsx():
     """New intermediate hub pages exist as valid TSX with correct imports and default export."""
@@ -209,7 +195,6 @@ console.log("OK: " + hubDirs.length + " hub pages validated");
     finally:
         script.unlink(missing_ok=True)
 
-
 def test_stale_pages_link_to_hub_pages():
     """Dynamic stale pages import LinkAccordion for controlled hub navigation."""
     script = Path(REPO) / "_eval_stale_check.js"
@@ -262,7 +247,6 @@ console.log("OK: stale pages updated with LinkAccordion imports");
         assert result.returncode == 0, f"Stale page validation failed:\n{result.stderr}"
     finally:
         script.unlink(missing_ok=True)
-
 
 def test_deflaked_test_forward_navigation():
     """The flaky test uses forward navigation to intermediate pages instead of browser.back()."""
@@ -339,11 +323,9 @@ console.log("OK: 0 browser.back() calls, " + intermediatePages.size + " intermed
     finally:
         script.unlink(missing_ok=True)
 
-
 # ---------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) - documentation tests
 # ---------------------------------------------------------------------------
-
 
 def test_agents_md_documents_pattern():
     """AGENTS.md documents the LinkAccordion/router-act testing pattern."""
@@ -358,7 +340,6 @@ def test_agents_md_documents_pattern():
         "AGENTS.md must warn about browser.back()/BFCache causing test flakiness"
     assert "router-act" in content_lower, \
         "AGENTS.md must reference the router-act skill"
-
 
 def test_router_act_skill():
     """Router-act skill exists with frontmatter and documents key testing patterns."""
@@ -433,3 +414,5 @@ console.log("OK: skill validated");
         assert result.returncode == 0, f"Skill validation failed:\n{result.stderr}"
     finally:
         script.unlink(missing_ok=True)
+
+

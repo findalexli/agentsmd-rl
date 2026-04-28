@@ -29,6 +29,14 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Unit tests for pkg/compose pass
+- id: test_ci_vet_e2e_package
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: go vet ./pkg/e2e/ passes'
+- id: test_ci_build_e2e_tags
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: go build -tags e2e ./pkg/e2e/ compiles'
 - id: publish_uses_fprintf
   type: fail_to_pass
   origin: pr_diff
@@ -46,23 +54,19 @@ checks:
   origin: pr_diff
   description: CLAUDE.md documents linting setup and fmt.Fprintf style preference
 rubric:
-- rule: Document how to run the linter with e2e tags in CLAUDE.md (golangci-lint run
-    --build-tags "e2e" ./...)
+- rule: Document how to run the linter with e2e tags in CLAUDE.md (golangci-lint run --build-tags "e2e" ./...)
   source:
     path: CLAUDE.md
     lines: '14'
     commit: 27d9d506306e808965d99b70c1f59308dcabca13
   reference: '- Run: `golangci-lint run --build-tags "e2e" ./...`'
-- rule: Document forbidden packages in CLAUDE.md (e.g., io/ioutil, github.com/pkg/errors,
-    gopkg.in/yaml.v2, golang.org/x/exp/maps, golang.org/x/exp/slices)
+- rule: Document forbidden packages in CLAUDE.md (e.g., io/ioutil, github.com/pkg/errors, gopkg.in/yaml.v2, golang.org/x/exp/maps, golang.org/x/exp/slices)
   source:
     path: CLAUDE.md
     lines: 23-24
     commit: 27d9d506306e808965d99b70c1f59308dcabca13
-  reference: '- No `io/ioutil`, `github.com/pkg/errors`, `gopkg.in/yaml.v2`, `golang.org/x/exp/maps`,
-    `golang.org/x/exp/slices`'
-- rule: Document the correct errdefs package in CLAUDE.md (Use github.com/containerd/errdefs
-    instead of github.com/docker/docker/errdefs)
+  reference: '- No `io/ioutil`, `github.com/pkg/errors`, `gopkg.in/yaml.v2`, `golang.org/x/exp/maps`, `golang.org/x/exp/slices`'
+- rule: Document the correct errdefs package in CLAUDE.md (Use github.com/containerd/errdefs instead of github.com/docker/docker/errdefs)
   source:
     path: CLAUDE.md
     lines: '25'
@@ -74,8 +78,7 @@ rubric:
     lines: '26'
     commit: 27d9d506306e808965d99b70c1f59308dcabca13
   reference: '- In tests: use `t.Context()` instead of `context.Background()` or `context.TODO()`'
-- rule: When writing to strings.Builder or other io.Writer, prefer fmt.Fprintf over
-    WriteString(fmt.Sprintf(...)) for efficiency
+- rule: When writing to strings.Builder or other io.Writer, prefer fmt.Fprintf over WriteString(fmt.Sprintf(...)) for efficiency
   source:
     path: CLAUDE.md
     lines: '27'
@@ -86,11 +89,7 @@ rubric:
     path: CLAUDE.md
     lines: '27'
   source_text: '- Prefer `fmt.Fprintf` over `WriteString(fmt.Sprintf(...))`'
-  evidence: '`pkg/compose/publish.go` applies this rule in all three touched builder
-    writes: `b.WriteString(fmt.Sprintf("%q: %s\n", val.Key, val.Value))` becomes `fmt.Fprintf(&b,
-    "%q: %s\n", val.Key, val.Value)`, `errorMsg.WriteString(fmt.Sprintf("%s\n", err))`
-    becomes `fmt.Fprintf(&errorMsg, "%s\n", err)`, and `errMsg.WriteString(fmt.Sprintf("-
-    %q\n", serviceInError))` becomes `fmt.Fprintf(&errMsg, "- %q\n", serviceInError)`.'
+  evidence: '`pkg/compose/publish.go` applies this rule in all three touched builder writes: `b.WriteString(fmt.Sprintf("%q: %s\n", val.Key, val.Value))` becomes `fmt.Fprintf(&b, "%q: %s\n", val.Key, val.Value)`, `errorMsg.WriteString(fmt.Sprintf("%s\n", err))` becomes `fmt.Fprintf(&errorMsg, "%s\n", err)`, and `errMsg.WriteString(fmt.Sprintf("- %q\n", serviceInError))` becomes `fmt.Fprintf(&errMsg, "- %q\n", serviceInError)`.'
   category: style
   verification: llm_judge
 config_edits:
@@ -120,11 +119,9 @@ config_edits:
 
     - Run: `golangci-lint run --build-tags "e2e" ./...`
 
-    - **After modifying any Go code, ALWAYS run the linter and fix all reported issues
-    before considering the task complete.**
+    - **After modifying any Go code, ALWAYS run the linter and fix all reported issues before considering the task complete.**
 
-    - Lint is also run via Docker: `docker buildx bake lint` (uses version pinned
-    in `Dockerfile`)
+    - Lint is also run via Docker: `docker buildx bake lint` (uses version pinned in `Dockerfile`)
 
 
     ## Code Style
@@ -138,8 +135,7 @@ config_edits:
 
     - Max cyclomatic complexity: 16
 
-    - No `io/ioutil`, `github.com/pkg/errors`, `gopkg.in/yaml.v2`, `golang.org/x/exp/maps`,
-    `golang.org/x/exp/slices`
+    - No `io/ioutil`, `github.com/pkg/errors`, `gopkg.in/yaml.v2`, `golang.org/x/exp/maps`, `golang.org/x/exp/slices`
 
     - Use `github.com/containerd/errdefs` instead of `github.com/docker/docker/errdefs`
 
@@ -154,20 +150,13 @@ distractors:
     lines: '25'
   source_text: '- Use `github.com/containerd/errdefs` instead of `github.com/docker/docker/errdefs`'
   collision_type: scope_ambiguity
-  why_distracting: '`pkg/compose/publish.go` is error-handling-heavy, so an agent
-    could mistakenly hunt for `errdefs` changes here. The gold diff does not add or
-    modify either import; it only rewrites string-builder formatting calls, so following
-    this rule in this change would create unrelated refactoring noise.'
+  why_distracting: '`pkg/compose/publish.go` is error-handling-heavy, so an agent could mistakenly hunt for `errdefs` changes here. The gold diff does not add or modify either import; it only rewrites string-builder formatting calls, so following this rule in this change would create unrelated refactoring noise.'
   severity: low
 - rule: Do not use the listed banned packages.
   source:
     path: CLAUDE.md
     lines: '24'
-  source_text: '- No `io/ioutil`, `github.com/pkg/errors`, `gopkg.in/yaml.v2`, `golang.org/x/exp/maps`,
-    `golang.org/x/exp/slices`'
+  source_text: '- No `io/ioutil`, `github.com/pkg/errors`, `gopkg.in/yaml.v2`, `golang.org/x/exp/maps`, `golang.org/x/exp/slices`'
   collision_type: meta_confusion
-  why_distracting: Because the gold diff also bumps the linter version, an agent might
-    overread this as a prompt for broader dependency cleanup. None of the touched
-    hunks introduce or modify any of these packages, so applying the rule here would
-    waste effort outside the scope of the change.
+  why_distracting: Because the gold diff also bumps the linter version, an agent might overread this as a prompt for broader dependency cleanup. None of the touched hunks introduce or modify any of these packages, so applying the rule here would waste effort outside the scope of the change.
   severity: medium

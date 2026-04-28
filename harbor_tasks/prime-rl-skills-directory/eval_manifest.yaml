@@ -65,15 +65,17 @@ checks:
   type: fail_to_pass
   origin: pr_diff
   description: The inference entry point must be defined in pyproject.toml and its module must exist
+- id: test_ci_ruff_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: Ruff check via bash -lc wrapper'
 rubric:
-- rule: Documentation should be sparse and targeted - avoid unnecessary explanatory
-    comments about the work process
+- rule: Documentation should be sparse and targeted - avoid unnecessary explanatory comments about the work process
   source:
     path: AGENTS.md
     lines: 7-8
     commit: 31b48b8b10db390d835909a6fd976f29d9880c81
-  reference: The gold solution removes verbose documentation from AGENTS.md and replaces
-    it with a reference to the skills directory, keeping AGENTS.md sparse.
+  reference: The gold solution removes verbose documentation from AGENTS.md and replaces it with a reference to the skills directory, keeping AGENTS.md sparse.
 - rule: All code should be runnable with `uv run` or `uv run <command>`.
   source:
     path: skills/inference-server/SKILL.md
@@ -85,77 +87,53 @@ rubric:
 - rule: Config files use `@` syntax and CLI flags can override config values.
   source:
     path: skills/toml-config/SKILL.md
-  reference: 'uv run inference @ config.toml --model.name Qwen/Qwen3-0.6B --server.port
-    8001
+  reference: 'uv run inference @ config.toml --model.name Qwen/Qwen3-0.6B --server.port 8001
 
     '
 - rule: 'Config files use `@` syntax: `uv run sft @ path/to/config.toml`'
   source:
     path: AGENTS.md
     lines: 38-39
-  evidence: The gold solution correctly documents the `@` syntax for loading configs
-    in both `inference-server/SKILL.md` and `toml-config/SKILL.md`.
+  evidence: The gold solution correctly documents the `@` syntax for loading configs in both `inference-server/SKILL.md` and `toml-config/SKILL.md`.
   category: documentation
 - rule: Config files use `@` syntax
   source:
     path: AGENTS.md
     lines: 42-42
-  evidence: The `skills/inference-server/SKILL.md` file documents the `@` syntax for
-    loading configs (`uv run inference @ path/to/config.toml`), adhering to the CLI
-    Usage rule defined in AGENTS.md.
+  evidence: The `skills/inference-server/SKILL.md` file documents the `@` syntax for loading configs (`uv run inference @ path/to/config.toml`), adhering to the CLI Usage rule defined in AGENTS.md.
   category: documentation
 config_edits:
 - path: AGENTS.md
   tier: 1
-  gold_added: '- See the `toml-config` skill in `skills/` for full details on TOML
-    structure, CLI overrides, and available commands.
+  gold_added: '- See the `toml-config` skill in `skills/` for full details on TOML structure, CLI overrides, and available commands.
 
 
     ## Skills
 
 
-    Skills live in `skills/` and are symlinked to `.claude/skills/`. They teach agents
-    how to handle specific workflows (e.g. starting the inference server, writing
-    configs). When you make changes to the codebase, check if any skills need to be
-    updated to stay accurate.
+    Skills live in `skills/` and are symlinked to `.claude/skills/`. They teach agents how to handle specific workflows (e.g. starting the inference server, writing configs). When you make changes to the codebase, check if any skills need to be updated to stay accurate.
 
 
-    You are responsible for maintaining the skills folder. When a workflow fails and
-    you fix it – whether with help from the user or through trial and error – you
-    must update the skills to make implicit knowledge explicit. You are also responsible
-    for keeping the skills up to date whenever you or anyone else modifies the code.'
-  gold_removed: '- Boolean flags don''t need `true`: use `--model.optim_cpu_offload`
-    not `--model.optim_cpu_offload true`, use `--no-model.optim_cpu_offload` to pass
-    False.
+    You are responsible for maintaining the skills folder. When a workflow fails and you fix it – whether with help from the user or through trial and error – you must update the skills to make implicit knowledge explicit. You are also responsible for keeping the skills up to date whenever you or anyone else modifies the code.'
+  gold_removed: '- Boolean flags don''t need `true`: use `--model.optim_cpu_offload` not `--model.optim_cpu_offload true`, use `--no-model.optim_cpu_offload` to pass False.
 
-    - Override config values with CLI flags: `--model.name Qwen/Qwen3-0.6B --training.max_steps
-    100`'
+    - Override config values with CLI flags: `--model.name Qwen/Qwen3-0.6B --training.max_steps 100`'
 - path: skills/inference-server/SKILL.md
   tier: 1
-  gold_added: '---\nname: inference-server\ndescription: Start and test the prime-rl
-    inference server...'
+  gold_added: '---\nname: inference-server\ndescription: Start and test the prime-rl inference server...'
   gold_removed: ''
 distractors:
-- rule: 'Boolean flags don''t need `true`: use `--model.optim_cpu_offload` not `--model.optim_cpu_offload
-    true`, use `--no-model.optim_cpu_offload` to pass False. Override config values
-    with CLI flags...'
+- rule: 'Boolean flags don''t need `true`: use `--model.optim_cpu_offload` not `--model.optim_cpu_offload true`, use `--no-model.optim_cpu_offload` to pass False. Override config values with CLI flags...'
   source:
     path: AGENTS.md
     lines: 33-34
   collision_type: meta_confusion
-  why_distracting: The agent is instructed to replace detailed bullet points in the
-    CLI Usage section with a reference to the new skill. Because these are existing
-    agent instructions, the agent might hesitate to delete them or might try to keep
-    them while adding the reference, leading to duplicated instructions.
+  why_distracting: The agent is instructed to replace detailed bullet points in the CLI Usage section with a reference to the new skill. Because these are existing agent instructions, the agent might hesitate to delete them or might try to keep them while adding the reference, leading to duplicated instructions.
   severity: high
-- rule: Write tests as plain functions with pytest fixtures. Don't use class-based
-    tests.
+- rule: Write tests as plain functions with pytest fixtures. Don't use class-based tests.
   source:
     path: AGENTS.md
     lines: 37-38
   collision_type: scope_ambiguity
-  why_distracting: The AGENTS.md file mandates writing tests as plain functions with
-    pytest fixtures. The task requires documenting how to test the inference server.
-    An agent might try to document a pytest approach instead of the requested `curl`
-    example.
+  why_distracting: The AGENTS.md file mandates writing tests as plain functions with pytest fixtures. The task requires documenting how to test the inference server. An agent might try to document a pytest approach instead of the requested `curl` example.
   severity: medium
