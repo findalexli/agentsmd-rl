@@ -1,0 +1,42 @@
+version: "2.0"
+
+task:
+  name: obsidian-wiki-fix-tag-formatting-in-skillmd
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: Ar9av/obsidian-wiki
+  pr: 4
+  base_commit: "6ecaec549ad9f56a833626817f40d43c1026d4aa"
+  merge_commit: "266b3238aebd3f7c09297d9fa62d3c11142717ea"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .skills/llm-wiki/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .skills/llm-wiki/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .skills/llm-wiki/SKILL.md."
+
+config_edits:
+  - path: .skills/llm-wiki/SKILL.md
+    tier: 1
+    gold_added: '- [[transformer-architecture]] — The dominant architecture for sequence modeling ( #ml #architecture)
+
+      - [[attention-mechanism]] — Core building block of transformers ( #ml #fundamentals)
+
+      - [[andrej-karpathy]] — AI researcher, educator, former Tesla AI director ( #person #ml)
+
+      **Format rule**: Add a space after the opening `(` and tags.
+
+      ❌ Don''t: `description (#tag)` — breaks tag parsing
+
+      ✅ Do: `description ( #tag)` — proper spacing and tag parsing'
+    gold_removed: ''

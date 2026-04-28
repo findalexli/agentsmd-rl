@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: redb-update-agentsmd
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: cberner/redb
+  pr: 1188
+  base_commit: "fe41b6d605a72e262fbe0cfabc1e6d1e2d0570ed"
+  merge_commit: "e824e2508cf4f3509a4bec18a3f7d13eaa666b34"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+
+config_edits:
+  - path: AGENTS.md
+    tier: 1
+    gold_added: "## Git commits\n1) git commits should use your human's name and email address for authorship. Add \"Assisted-by:\" and\n   your agent name at the end of the commit message. In the same style as the\n   [Linux Kernel's coding assistant guidelines](https://github.com/torvalds/linux/blob/master/Documentation/process/coding-assistants.rst).\n2) Make one commit per feature / bug fix when opening a PR. Multiple commits or \"fixup\" commits are\n   should not be merged to master.\n"
+    gold_removed: ''

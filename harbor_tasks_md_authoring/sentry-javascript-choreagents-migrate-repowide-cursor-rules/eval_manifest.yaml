@@ -1,0 +1,353 @@
+version: "2.0"
+
+task:
+  name: sentry-javascript-choreagents-migrate-repowide-cursor-rules
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: getsentry/sentry-javascript
+  pr: 19549
+  base_commit: "92694c1f2e53d9cece9c8eb8d20d59d9b4857411"
+  merge_commit: "619e8befa412fadffdd0d1388936895fe730d4d5"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .agents/skills/add-ai-integration/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .agents/skills/add-ai-integration/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .agents/skills/add-ai-integration/SKILL.md."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .agents/skills/release/SKILL.md."
+  - id: signal_04
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .agents/skills/release/SKILL.md."
+  - id: signal_05
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .agents/skills/release/SKILL.md."
+  - id: signal_06
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .agents/skills/upgrade-dep/SKILL.md."
+  - id: signal_07
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .agents/skills/upgrade-dep/SKILL.md."
+  - id: signal_08
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .agents/skills/upgrade-dep/SKILL.md."
+  - id: signal_09
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .agents/skills/upgrade-otel/SKILL.md."
+  - id: signal_10
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .agents/skills/upgrade-otel/SKILL.md."
+  - id: signal_11
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .agents/skills/upgrade-otel/SKILL.md."
+  - id: signal_12
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_13
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_14
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+
+config_edits:
+  - path: .agents/skills/add-ai-integration/SKILL.md
+    tier: 1
+    gold_added: "---\nname: add-ai-integration\ndescription: Add a new AI provider integration to the Sentry JavaScript SDK. Use when contributing a new AI instrumentation (OpenAI, Anthropic, Vercel AI, LangChain, etc.) or modifying an existing one.\nargument-hint: <provider-name>\n---\n\n# Adding a New AI Integration\n\n## Decision Tree\n\n```\nDoes the AI SDK have native OpenTelemetry support?\n|- YES -> Does it emit OTel spans automatically?\n|   |- YES (like Vercel AI) -> Pattern 1: OTel Span Processors\n|   +- NO -> Pattern 2: OTel Instrumentation (wrap client)\n+- NO -> Does the SDK provide hooks/callbacks?\n    |- YES (like LangChain) -> Pattern 3: Callback/Hook Based\n    +- NO -> Pattern 4: Client Wrapping\n```\n\n## Runtime-Specific Placement\n\nIf an AI SDK only works in one runtime, code lives exclusively in that runtime's package. Do NOT add it to `packages/core/`.\n\n- **Node.js-only** -> `packages/node/src/integrations/tracing/{provider}/`\n- **Cloudflare-only** -> `packages/cloudflare/src/integrations/tracing/{provider}.ts`\n- **Browser-only** -> `packages/browser/src/integrations/tracing/{provider}/`\n- **Multi-runtime** -> shared core in `packages/core/src/tracing/{provider}/` with runtime-specific wrappers\n\n## Span Hierarchy\n\n- `gen_ai.invoke_agent` — parent/pipeline spans (chains, agents, orchestration)\n- `gen_ai.chat`, `gen_ai.generate_text`, etc. — child spans (actual LLM calls)\n\n## Shared Utilities (`packages/core/src/tracing/ai/`)\n\n- `gen-ai-attributes.ts` — OTel Semantic Convention attribute constants. **Always use these, never hardcode.**\n- `utils.ts` — `setTokenUsageAttributes()`, `getTruncatedJsonString()`, `truncateGenAiMessages()`, `buildMethodPath()`\n- Only use attributes from [Sentry Gen AI Conventions](https://getsentry.github.io/sentry-conventions/attributes/gen_ai/).\n\n## Streaming\n\n- **Non-streaming:** `startSpan()`, set attributes from response\n- **Streaming:** `startSpanManual()`, accumulate state via async generator or event listeners, set `GEN_AI_RESPONSE_STREAMING_ATTRIBUTE: true`, call `span.end()` in finally block\n- Detect via `params.stream === true`\n- References: `openai/streaming.ts` (async generator), `anthropic-ai/streaming.ts` (event listeners)\n\n## Token Accumulation\n\n- **Child spans:** Set tokens directly from API response via `setTokenUsageAttributes()`\n- **Parent spans (`invoke_agent`):** Accumulate from children using event processor (see `vercel-ai/`)\n\n## Pattern 1: OTel Span Processors\n\n**Use when:** SDK emits OTel spans automatically (Vercel AI)\n\n1. **Core:** Create `add{Provider}Processors()` in `packages/core/src/tracing/{provider}/index.ts` — registers `spanStart` listener + event processor\n2. **Node.js:** Add `callWhenPatched()` optimization in `packages/node/src/integrations/tracing/{provider}/index.ts` — defers registration until package is imported\n3. **Edge:** Direct registration in `packages/cloudflare/src/integrations/tracing/{provider}.ts` — no OTel, call processors immediately\n\nReference: `packages/node/src/integrations/tracing/vercelai/`\n\n## Pattern 2: OTel Instrumentation (Client Wrapping)\n\n**Use when:** SDK has no native OTel support (OpenAI, Anthropic, Google GenAI)\n\n1. **Core:** Create `instrument{Provider}Client()` in `packages/core/src/tracing/{provider}/index.ts` — Proxy to wrap client methods, create spans manually\n2. **Node.js `instrumentation.ts`:** Patch module exports, wrap client constructor. Check `_INTERNAL_shouldSkipAiProviderWrapping()` for LangChain compatibility.\n3. **Node.js `index.ts`:** Export integration function using `generateInstrumentOnce()` helper\n\nReference: `packages/node/src/integrations/tracing/openai/`\n\n## Pattern 3: Callback/Hook Based\n\n**Use when:** SDK provides lifecycle hooks (LangChain, LangGraph)\n\n1. **Core:** Create `create{Provider}CallbackHandler()` — implement SDK's callback interface, create spans in callbacks\n2. **Node.js `instrumentation.ts`:** Auto-inject callbacks by patching runnable methods. Disable underlying AI provider wrapping.\n\nReference: `packages/node/src/integrations/tracing/langchain/`\n\n## Auto-Instrumentation (Node.js)\n\n**Mandatory** for Node.js AI integrations. OTel only patches when the package is imported (zero cost if unused).\n\n### Steps\n\n1. **Add to `getAutoPerformanceIntegrations()`** in `packages/node/src/integrations/tracing/index.ts` — LangChain MUST come first\n2. **Add to `getOpenTelemetryInstrumentationToPreload()`** for OTel-based integrations\n3. **Export from `packages/node/src/index.ts`**: integration function + options type\n4. **Add E2E tests:**\n   - Node.js: `dev-packages/node-integration-tests/suites/tracing/{provider}/`\n   - Cloudflare: `dev-packages/cloudflare-integration-tests/suites/tracing/{provider}/`\n   - Browser: `dev-packages/browser-integration-tests/suites/tracing/ai-providers/{provider}/`\n\n## Key Rules\n\n1. Respect `sendDefaultPii` for `recordInputs`/`recordOutputs`\n2. Set `SEMANTIC_ATTRIBUTE_SENTRY_ORIGIN = 'auto.ai.{provider}'` (alphanumerics, `_`, `.` only)\n3. Truncate large data with helper functions from `utils.ts`\n4. `gen_ai.invoke_agent` for parent ops, `gen_ai.chat` for child ops\n\n## Checklist\n\n- [ ] Runtime-specific code placed only in that runtime's package\n- [ ] Added to `getAutoPerformanceIntegrations()` in correct order (Node.js)\n- [ ] Added to `getOpenTelemetryInstrumentationToPreload()` (Node.js with OTel)\n- [ ] Exported from appropriate package index\n- [ ] E2E tests added and verifying auto-instrumentation\n- [ ] Only used attributes from [Sentry Gen AI Conventions](https://getsentry.github.io/sentry-conventions/attributes/gen_ai/)\n- [ ] JSDoc says \"enabled by default\" or \"not enabled by default\"\n- [ ] Documented how to disable (if auto-enabled)\n- [ ] Verified OTel only patches when package imported (Node.js)\n\n## Reference Implementations\n\n- **Pattern 1 (Span Processors):** `packages/node/src/integrations/tracing/vercelai/`\n- **Pattern 2 (Client Wrapping):** `packages/node/src/integrations/tracing/openai/`\n- **Pattern 3 (Callback/Hooks):** `packages/node/src/integrations/tracing/langchain/`\n\n**When in doubt, follow the pattern of the most similar existing integration.**"
+    gold_removed: ''
+  - path: .agents/skills/release/SKILL.md
+    tier: 1
+    gold_added: '---
+
+      name: release
+
+      description: Publish a new Sentry JavaScript SDK release. Use when preparing a release, updating the changelog, or creating a release branch.
+
+      argument-hint: [VERSION]
+
+      ---
+
+
+      # Release Process
+
+
+      See `docs/publishing-a-release.md` for full details.
+
+
+      ## Steps
+
+
+      1. Ensure you''re on `develop` with latest changes. Stash any unsaved work with `git stash -u` if needed.
+
+      2. Run `yarn changelog` (use `yarn changelog | pbcopy` to copy output).
+
+      3. Decide on a version per [semver](https://semver.org). Check the top of `CHANGELOG.md` for the current version.
+
+      4. Create branch `prepare-release/VERSION` off `develop`.
+
+      5. Update `CHANGELOG.md` — add the new version entry with the changelog output. See the "Updating the Changelog" section in `docs/publishing-a-release.md` for formatting details. Do not remove existing entries.
+
+      6. Commit: `meta(changelog): Update changelog for VERSION`
+
+      7. Push the branch and remind the user to open a PR targeting `master`.
+
+      8. If you were on a different branch, checkout back and `git stash pop` if needed.
+
+
+      ## First-time SDK releases
+
+
+      Follow `docs/new-sdk-release-checklist.md`. If anything doesn''t match the checklist, remind the user.
+
+
+      ## Key commands
+
+
+      - `yarn changelog` — generate changelog entries
+
+      - `yarn lint` — verify code quality
+
+      - `yarn test` — run test suite
+
+      - `yarn build:dev` — verify build'
+    gold_removed: ''
+  - path: .agents/skills/upgrade-dep/SKILL.md
+    tier: 1
+    gold_added: '---
+
+      name: upgrade-dep
+
+      description: Upgrade a dependency in the Sentry JavaScript SDK. Use when upgrading packages, bumping versions, or fixing security vulnerabilities via dependency updates.
+
+      argument-hint: <package-name>
+
+      ---
+
+
+      # Dependency Upgrade
+
+
+      **Only upgrade one package at a time.**
+
+
+      ## Upgrade command
+
+
+      ```bash
+
+      npx yarn-update-dependency@latest [package-name]
+
+      ```
+
+
+      If the dependency is not defined in any `package.json`, run the upgrade from the root workspace (the `yarn.lock` lives there).
+
+
+      Avoid upgrading top-level dependencies (especially test dependencies) without asking the user first.
+
+
+      Ensure updated `package.json` files end with a newline.
+
+
+      ## OpenTelemetry constraint
+
+
+      **STOP** if upgrading any `opentelemetry` package would introduce forbidden versions:
+
+
+      - `2.x.x` (e.g., `2.0.0`)
+
+      - `0.2xx.x` (e.g., `0.200.0`, `0.201.0`)
+
+
+      Verify before upgrading:
+
+
+      ```bash
+
+      yarn info <package-name>@<version> dependencies
+
+      ```
+
+
+      ## E2E test dependencies
+
+
+      Do **not** upgrade the major version of a dependency in `dev-packages/e2e-tests/test-applications/*` if the test directory name pins a version (e.g., `nestjs-8` must stay on NestJS 8).
+
+
+      ## Post-upgrade verification
+
+
+      ```bash
+
+      yarn install
+
+      yarn build:dev
+
+      yarn dedupe-deps:fix
+
+      yarn fix
+
+      yarn circularDepCheck
+
+      ```
+
+
+      ## Useful commands
+
+
+      ```bash
+
+      yarn list --depth=0          # Check dependency tree
+
+      yarn why [package-name]      # Find why a package is installed
+
+      yarn info <pkg> dependencies # Inspect package dependencies
+
+      yarn info <pkg> versions     # Check available versions
+
+      yarn outdated                # Check outdated dependencies
+
+      yarn audit                   # Check for security vulnerabilities
+
+      ```'
+    gold_removed: ''
+  - path: .agents/skills/upgrade-otel/SKILL.md
+    tier: 1
+    gold_added: '---
+
+      name: upgrade-otel
+
+      description: Upgrade OpenTelemetry instrumentations across the Sentry JavaScript SDK. Use when bumping OTel instrumentation packages to their latest versions.
+
+      argument-hint: ''''
+
+      ---
+
+
+      # Upgrading OpenTelemetry Instrumentations
+
+
+      **All upgrades must be free of breaking changes.** Read each changelog before proceeding.
+
+
+      ## 1. `packages/**`
+
+
+      Upgrade in this order:
+
+
+      1. **`@opentelemetry/instrumentation`** to latest. Check changelog: `https://github.com/open-telemetry/opentelemetry-js/blob/main/experimental/CHANGELOG.md`
+
+      2. **All `@opentelemetry/instrumentation-*` packages.** Check each changelog: `https://github.com/open-telemetry/opentelemetry-js-contrib/blob/main/packages/instrumentation-{name}/CHANGELOG.md`
+
+      3. **Third-party instrumentations** (currently `@prisma/instrumentation`). Check their changelogs.
+
+
+      **STOP** if any upgrade introduces breaking changes — fail with the reason.
+
+
+      ## 2. `dev-packages/**`
+
+
+      - If an app depends on `@opentelemetry/instrumentation` >= `0.200.x`, upgrade to latest.
+
+      - If an app depends on `@opentelemetry/instrumentation-http` >= `0.200.x`, upgrade to latest.
+
+
+      Same rule: no breaking changes allowed.
+
+
+      ## 3. Regenerate lock file
+
+
+      ```bash
+
+      yarn install
+
+      ```'
+    gold_removed: ''
+  - path: .cursor/rules/adding-a-new-ai-integration.mdc
+    tier: 1
+    gold_added: ''
+    gold_removed: ''
+  - path: .cursor/rules/fetch-docs/attributes.mdc
+    tier: 1
+    gold_added: ''
+    gold_removed: ''
+  - path: .cursor/rules/fetch-docs/scopes.mdc
+    tier: 1
+    gold_added: ''
+    gold_removed: ''
+  - path: .cursor/rules/publishing_release.mdc
+    tier: 1
+    gold_added: ''
+    gold_removed: ''
+  - path: .cursor/rules/sdk_dependency_upgrades.mdc
+    tier: 1
+    gold_added: ''
+    gold_removed: ''
+  - path: .cursor/rules/upgrade_opentelemetry_instrumentations.mdc
+    tier: 1
+    gold_added: ''
+    gold_removed: ''
+  - path: AGENTS.md
+    tier: 1
+    gold_added: '- Use `/add-ai-integration` skill when adding or modifying integrations
+
+      ## Reference Documentation
+
+
+      - [Span Attributes](https://develop.sentry.dev/sdk/telemetry/attributes.md)
+
+      - [Scopes (global, isolation, current)](https://develop.sentry.dev/sdk/telemetry/scopes.md)
+
+
+
+      ### Publishing a Release
+
+
+      Use `/release` skill. See `.claude/skills/release/SKILL.md`
+
+
+      ### Dependency Upgrades
+
+
+      Use `/upgrade-dep` skill. See `.claude/skills/upgrade-dep/SKILL.md`
+
+
+      ### OpenTelemetry Instrumentation Upgrades
+
+
+      Use `/upgrade-otel` skill. See `.claude/skills/upgrade-otel/SKILL.md`
+
+
+      ### AI Integration
+
+
+      Use `/add-ai-integration` skill. See `.claude/skills/add-ai-integration/SKILL.md`'
+    gold_removed: ''

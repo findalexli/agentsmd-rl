@@ -1,0 +1,24 @@
+version: "2.0"
+
+task:
+  name: marketingskills-update-seoauditskillmd
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: coreyhaines31/marketingskills
+  pr: 199
+  base_commit: "9d4d29a795113c492b22e01c9b48a8396e140b8d"
+  merge_commit: "cb4451c9a14f23fc979dae31ef878ff980f8667b"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/seo-audit/SKILL.md."
+
+config_edits:
+  - path: skills/seo-audit/SKILL.md
+    tier: 1
+    gold_added: '- No brand name placement (SERPs include brand name above title already)'
+    gold_removed: ''

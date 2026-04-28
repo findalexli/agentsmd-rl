@@ -1,0 +1,44 @@
+version: "2.0"
+
+task:
+  name: sui-update-claudemd-linting-instructions
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: MystenLabs/sui
+  pr: 26364
+  base_commit: "3b50577f52a42dee0564973400a724660561db77"
+  merge_commit: "9d7a86c64fc2d72b6189975c9c8a8ccaaf563d86"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+
+config_edits:
+  - path: CLAUDE.md
+    tier: 1
+    gold_added: '# Alternatively, run individual lints on specific crates (much faster than linting the whole repo):
+
+      # For crates in `crates/`: cd into the crate directory and run:
+
+      # For crates in `external-crates/`: cd into the crate directory and run:
+
+      cargo move-clippy
+
+      # For formatting:
+
+      cargo fmt --all -- --check
+
+      `cargo xclippy` does not recognize the `-p` option - cd into the crate directory instead.'
+    gold_removed: ''

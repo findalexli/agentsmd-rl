@@ -1,0 +1,40 @@
+version: "2.0"
+
+task:
+  name: mux-refactor-add-pullrequests-skill-and
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: coder/mux
+  pr: 1826
+  base_commit: "0d16a3851da25d850dd8879804504c62bf7bd990"
+  merge_commit: "ce06d38c0ecc2412970cce453035225b3391a537"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .mux/skills/pull-requests/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .mux/skills/pull-requests/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .mux/skills/pull-requests/SKILL.md."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in docs/AGENTS.md."
+
+config_edits:
+  - path: .mux/skills/pull-requests/SKILL.md
+    tier: 1
+    gold_added: "---\nname: pull-requests\ndescription: Guidelines for creating and managing Pull Requests in this repo\n---\n\n# Pull Request Guidelines\n\n## Attribution Footer\n\nPublic work (issues/PRs/commits) must use \U0001F916 in the title and include this footer in the body:\n\n```md\n---\n\n_Generated with `mux` • Model: `<modelString>` • Thinking: `<thinkingLevel>` • Cost: `$<costs>`_\n\n<!-- mux-attribution: model=<modelString> thinking=<thinkingLevel> costs=<costs> -->\n```\n\nAlways check `$MUX_MODEL_STRING`, `$MUX_THINKING_LEVEL`, and `$MUX_COSTS_USD` via bash before creating or updating PRs—include them in the footer if set.\n\n## Lifecycle Rules\n\n- Before submitting a PR, ensure the branch name reflects the work and the base branch is correct.\n  - PRs are always squash-merged into `main`.\n  - Often, work begins from another PR's merged state; rebase onto `main` before submitting a new PR.\n- Reuse existing PRs; never close or recreate without instruction.\n- Force-push minor PR updates; otherwise add a new commit to preserve the change timeline.\n- If a PR is already open for your change, keep it up to date with the latest commits; don't leave it stale.\n- Never enable auto-merge or merge into `main` yourself. The user must explicitly merge PRs.\n\n## CI & Validation\n\n- After pushing, you may use `./scripts/wait_pr_checks.sh <pr_number>` to wait for CI to pass.\n- Use `wait_pr_checks` only when there's no more useful work to do.\n- Waiting for PR checks can take 10+ minutes, so prefer local validation (e.g., run a subset of integration tests) to catch issues early.\n\n## Status Decoding\n\n| Field              | Value         | Meaning             |\n| ------------------ | ------------- | ------------------- |\n| `mergeable`        | `MERGEABLE`   | Clean, no conflicts |\n| `mergeable`        | `CONFLICTING` | Needs resolution    |\n| `mergeStateStatus` | `CLEAN`       | Ready to merge      |\n| `mergeStateStatus` | `BLOCKED`     | Waiting for CI      |\n| `mergeStateStatus` | `BEHIND`      | Needs rebase        |\n| `mergeStateStatus` | `DIRTY`       | Has conflicts       |\n\nIf behind: `git fetch origin && git rebase origin/main && git push --force-with-lease`.\n\n## Codex Review Workflow\n\nWhen posting multi-line comments with `gh` (e.g., `@codex review`), **do not** rely on `\\n` escapes inside quoted `--body` strings (they will be sent as literal text). Prefer `--body-file -` with a heredoc to preserve real newlines:\n\n```bash\ngh pr comment <pr_number> --body-file - <<'EOF'\n@codex review\n\n<message>\nEOF\n```\n\nIf Codex left review comments and you addressed them:\n\n1. Push your fixes\n2. Resolve the PR comment\n3. Comment `@codex review` to re-request review\n4. Re-run `./scripts/wait_pr_checks.sh <pr_number>` and `./scripts/check_codex_comments.sh <pr_number>`\n\n## PR Title Conventions\n\n- Title prefixes: `perf|refactor|fix|feat|ci|tests|bench`\n- Example: `\U0001F916 fix: handle workspace rename edge cases`\n- Use `tests:` for test-only changes (test helpers, flaky test fixes, storybook)\n- Use `ci:` for CI config changes\n\n## PR Bodies\n\n### Structure\n\nPR bodies should generally follow this structure; omit sections that are N/A or trivially inferable for the change.\n\n- Summary\n  - Single-paragraph executive summary of the change\n- Background\n  - The \"why\" behind the change\n  - What problem this solves\n  - Relevant commits, issues, or PRs that capture more context\n- Implementation\n- Validation\n  - Steps taken to prove the change works as intended\n  - Avoid boilerplate like `ran tests`; include this section only for novel, change-specific steps\n  - Do not include steps implied by passing PR checks\n- Risks\n  - PRs that touch intricate logic must include an assessment of regression risk\n  - Explain regression risk in terms of severity and affected product areas"
+    gold_removed: ''
+  - path: docs/AGENTS.md
+    tier: 1
+    gold_added: '- For PRs, commits, and public issues, consult the `pull-requests` skill for attribution footer requirements and workflow conventions.'
+    gold_removed: ''

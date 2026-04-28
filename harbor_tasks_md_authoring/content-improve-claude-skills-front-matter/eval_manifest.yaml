@@ -1,0 +1,44 @@
+version: "2.0"
+
+task:
+  name: content-improve-claude-skills-front-matter
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: ComplianceAsCode/content
+  pr: 14657
+  base_commit: "633e4bdde0d7ac338118bf433be6b4dae78cef9f"
+  merge_commit: "90ba38ec07339764c9fdf717ce2d5867a5334af2"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/find-rule/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/find-rule/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/manage-profile/SKILL.md."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/manage-profile/SKILL.md."
+
+config_edits:
+  - path: .claude/skills/find-rule/SKILL.md
+    tier: 1
+    gold_added: 'name: find-rule
+
+      description: Search for existing rules that match a given requirement text. Identify rules that implement a specific control.'
+    gold_removed: ''
+  - path: .claude/skills/manage-profile/SKILL.md
+    tier: 1
+    gold_added: 'name: manage-profile
+
+      description: Create or update a versioned profile pair (versioned + unversioned extends pattern).'
+    gold_removed: ''

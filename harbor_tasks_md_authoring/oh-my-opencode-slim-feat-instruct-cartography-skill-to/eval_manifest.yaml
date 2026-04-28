@@ -1,0 +1,69 @@
+version: "2.0"
+
+task:
+  name: oh-my-opencode-slim-feat-instruct-cartography-skill-to
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: alvinunreal/oh-my-opencode-slim
+  pr: 175
+  base_commit: "acc366318b7c6572106be42a621ec5a03e265191"
+  merge_commit: "9715c3d36b7fd57decb7511593287213515897b6"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in src/skills/cartography/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in src/skills/cartography/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in src/skills/cartography/SKILL.md."
+
+config_edits:
+  - path: src/skills/cartography/SKILL.md
+    tier: 1
+    gold_added: '### Step 5: Register Codemap in AGENTS.md
+
+
+      **OpenCode auto-loads `AGENTS.md` into agent context on every session.** To ensure agents automatically discover and use the codemap, update (or create) `AGENTS.md` at the repo root:
+
+
+      1. If `AGENTS.md` already exists and already contains a `## Repository Map` section, **skip this step** — the reference is already set up.
+
+      2. If `AGENTS.md` exists but has no `## Repository Map` section, **append** the section below.
+
+      3. If `AGENTS.md` doesn''t exist, **create** it with the section below.
+
+
+      ```markdown
+
+      ## Repository Map
+
+
+      A full codemap is available at `codemap.md` in the project root.
+
+
+      Before working on any task, read `codemap.md` to understand:
+
+      - Project architecture and entry points
+
+      - Directory responsibilities and design patterns
+
+      - Data flow and integration points between modules
+
+
+      For deep work on a specific folder, also read that folder''s `codemap.md`.
+
+      ```
+
+
+      This is idempotent — repeated cartography runs will detect the existing section and skip. No duplication.
+
+      '
+    gold_removed: ''

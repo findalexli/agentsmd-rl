@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: flyai-skill-feat-add-error-handling-guidance
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: alibaba-flyai/flyai-skill
+  pr: 19
+  base_commit: "1638b7f4fa8781223f851db9258aea78343c9d1f"
+  merge_commit: "8b61f5e611007325bc37af02428595fe11cab695"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/flyai/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/flyai/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/flyai/SKILL.md."
+
+config_edits:
+  - path: skills/flyai/SKILL.md
+    tier: 1
+    gold_added: "## Error Handling\n\n1. **Validate** — before running a command, check that the inputs are reasonable.\n   - Dates should not be in the past and should match the expected format per the command's reference doc. Use `date +%Y-%m-%d` (see \"Time and context support\" above) as the baseline.\n   - Ambiguous or vague parameters (e.g. city names) should be confirmed with the user before searching.\n   - Do not guess missing required parameters — ask the user.\n2. **Diagnose** — when a command fails or returns unexpected results, check the output for error messages or status codes. Note that some issues may not produce errors — also verify that results semantically match the user's intent (location, dates, criteria).\n   - Parameter error → re-read the corresponding file in `references/` (see the References table below), fix the parameters, and retry.\n   - Service or network error → retry the command.\n   - Quota or permission error → inform the user and guide them to resolve the access issue.\n3. **Adapt** — if the command succeeds but results are empty or insufficient:\n   - Broaden the search: relax filters, or try `ai-search` / `keyword-search` with the user's original intent as a natural language query.\n   - Do not retry indefinitely — one fallback attempt is enough. If still no results, inform the user and suggest adjusting search criteria.\n4. **Be transparent** — when results appear incomplete or inconsistent with user expectations:\n   - Present available results and let the user know that results may not match the intended location or criteria.\n   - Suggest verifying through other channels if accuracy is critical.\n"
+    gold_removed: ''

@@ -1,0 +1,96 @@
+version: "2.0"
+
+task:
+  name: shokoserver-docs-update-claudemd-1318-no
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: ShokoAnime/ShokoServer
+  pr: 1318
+  base_commit: "6a55c72fdaf6bf91fffeee668bd94983f1c15284"
+  merge_commit: "bcfe8657281fdd26da2ea18f7c6c5c1779036336"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+
+config_edits:
+  - path: CLAUDE.md
+    tier: 1
+    gold_added: '- **`var` preferred everywhere** — `csharp_style_var_elsewhere`, `csharp_style_var_for_built_in_types`, and `csharp_style_var_when_type_is_apparent` all set to `true` (enforced as warnings in `src/` paths)
+
+      - Braces on new lines (`csharp_new_line_before_open_brace = all`)
+
+      - Naming: `_camelCase` for instance fields, `_camelCase` for static fields, `PascalCase` for methods/classes/properties, `camelCase` for locals/parameters
+
+      - **`Shoko.CLI`** — Headless server entry point. Instantiates and manages `SystemService` directly.
+
+      Entry points: `Shoko.CLI/Program.cs` (headless) or `Shoko.TrayService/Program.cs` (tray app). Both instantiate `new SystemService()` directly, which internally builds and starts the `IHost`.
+
+
+      **Note:** `LateStart()` is skipped during first-run setup mode (`InSetupMode == true`). It runs either on normal startup or when `CompleteSetup()` transitions out of setup mode.
+
+
+      **API versioning**: `v0` (version-less: auth + legacy Plex webhooks + index redirect), `v1` (legacy REST, off by default), `v2` (legacy REST, can be kill-switched), `v3` (current, all new endpoints). Version can be resolved from query string, `api-version` header, or custom `ShokoApiReader`. `ApiVersionControllerFeatureProvider` excludes disabled versions at startup via individual flags (`EnableAPIv1`, `EnableAPIv2`, `EnableAPIv3`, `EnableLegacyPlexAPI`, `EnableAuthAPI`).
+
+
+      **Serialization**: MVC uses `AddNewtonsoftJson()` (not `System.Text.Json`) with: `MaxDepth = 10`, `DefaultContractResolver`, `NullValueHandling.Include`, `DefaultValueHandling.Populate`. SignalR also uses `AddNewtonsoftJsonProtocol()`.
+
+      **Access pattern**: Repositories are accessed via the `RepoFactory` static class (e.g., `RepoFactory.AnimeSeries.GetByID(id)`). `RepoFactory` is DI-registered but exposes static fields for convenience — this is a legacy pattern similar to `Utils.ServiceContainer`. This exists for compatibility where DI is unavailable, but DI should be used if possible.
+
+
+      **Note:** Quartz is referenced as local DLLs from `Dependencies/Quartz/` (not a NuGet package), using a custom/forked build.
+
+
+      Plugins can also implement `IPluginApplicationRegistration` to register custom middleware via `RegisterServices(IApplicationBuilder, ApplicationPaths)` — invoked during `UseAPI()` after SignalR but before CORS.
+
+
+      Plugin controllers are registered via `AddPluginControllers` during API setup.
+
+
+      ### Configuration System
+
+
+      **No `appsettings.json`** exists in the repo. Configuration is code-based:
+
+      - **`ServerSettings`** — primary settings class, persisted to `settings-server.json` via `[StorageLocation]` attribute
+
+      - **`ConfigurationProvider<T>`** — generic provider using `INewtonsoftJsonConfiguration` for JSON serialization
+
+      - **`SettingsProvider`** — singleton accessor (`Utils.SettingsProvider`) for runtime settings access
+
+      - `appsettings.json` is configured as an **optional** overlay in the host builder but is not shipped
+
+
+      ### Testing
+
+
+      - **Framework**: xUnit 2.7.0 with `Xunit.DependencyInjection` 9.1.0 for DI in tests
+
+      - **Mocking**: Moq 4.20.70
+
+      - **Coverage**: coverlet 6.0.2
+
+      - **Test SDK**: Microsoft.NET.Test.Sdk 17.9.0
+
+      - Unit tests in `Shoko.Tests/`, integration tests in `Shoko.IntegrationTests/`
+
+
+      **Note:** `VideoLocal.MediaInfo` is serialized using **MessagePack** via a custom NHibernate type (`MessagePackConverter<MediaContainer>`), not JSON.
+
+
+      **Note:** `FilterPreset.Expression` and `FilterPreset.SortingExpression` use a custom NHibernate type (`FilterExpressionConverter`) for JSON serialization.
+
+      '
+    gold_removed: ''

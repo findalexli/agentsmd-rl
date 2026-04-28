@@ -1,0 +1,64 @@
+version: "2.0"
+
+task:
+  name: purchases-ios-document-tuist-environment-variables-in
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: RevenueCat/purchases-ios
+  pr: 6689
+  base_commit: "3ae356616b7e749b597ca85bab6e9b5a8274363d"
+  merge_commit: "de3e2502f32958c1b6747ad5b80ddba0a9d23400"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+
+config_edits:
+  - path: AGENTS.md
+    tier: 1
+    gold_added: '**Tuist environment variables** (prefix all with `TUIST_` when passing to `tuist generate`):
+
+
+      | Variable | Purpose | Default |
+
+      |----------|---------|---------|
+
+      | `TUIST_RC_REMOTE=true` | Use remote instead of local RevenueCat dependency | local |
+
+      | `TUIST_RC_XCODE_PROJECT=true` | Use Xcode project instead of Swift Package dependency | SPM |
+
+      | `TUIST_INCLUDE_TEST_DEPENDENCIES=false` | Skip test/dev dependencies (Nimble, OHHTTPStubs, etc.) to speed up `tuist install` | `true` |
+
+      | `TUIST_INCLUDE_XCFRAMEWORK_INSTALLATION_TESTS=true` | Include XCFrameworkInstallationTests project | `false` |
+
+      | `TUIST_SK_CONFIG_PATH=/path/to/file.storekit` | Custom StoreKit config for PaywallsTester scheme | — |
+
+      | `TUIST_RC_API_KEY=appl_xxxxx` | RevenueCat API key written to `Local.xcconfig` at generation time | — |
+
+      | `TUIST_LAUNCH_ARGUMENTS="-Flag1 -Flag2"` | Space-separated launch arguments injected into PaywallsTester scheme run action (enabled by default) | — |
+
+      | `TUIST_SWIFT_CONDITIONS="FLAG1 FLAG2"` | Space-separated Swift compilation conditions injected into all targets | — |
+
+
+      Example combining multiple variables:
+
+      ```bash
+
+      TUIST_RC_API_KEY=appl_xxxxx TUIST_LAUNCH_ARGUMENTS="-EnableWorkflowsEndpoint" tuist generate PaywallsTester
+
+      ```
+
+      '
+    gold_removed: ''

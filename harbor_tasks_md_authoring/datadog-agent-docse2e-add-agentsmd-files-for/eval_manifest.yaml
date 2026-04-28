@@ -1,0 +1,100 @@
+version: "2.0"
+
+task:
+  name: datadog-agent-docse2e-add-agentsmd-files-for
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: DataDog/datadog-agent
+  pr: 47585
+  base_commit: "3898ac78927c310d7c965e3cb2aee858f33566bf"
+  merge_commit: "c5d77f2aabd73f4879f51c5f7a5b582588119808"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/write-e2e/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/write-e2e/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/write-e2e/SKILL.md."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_04
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_05
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_06
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in test/e2e-framework/AGENTS.md."
+  - id: signal_07
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in test/e2e-framework/AGENTS.md."
+  - id: signal_08
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in test/e2e-framework/AGENTS.md."
+  - id: signal_09
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in test/e2e-framework/CLAUDE.md."
+  - id: signal_10
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in test/fakeintake/AGENTS.md."
+  - id: signal_11
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in test/fakeintake/AGENTS.md."
+  - id: signal_12
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in test/fakeintake/AGENTS.md."
+  - id: signal_13
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in test/fakeintake/CLAUDE.md."
+
+config_edits:
+  - path: .claude/skills/write-e2e/SKILL.md
+    tier: 1
+    gold_added: "---\nname: write-e2e\ndescription: Write E2E tests for the Datadog Agent using the new-e2e framework with fakeintake assertions\nallowed-tools: Read, Write, Edit, Glob, Grep, Bash, Agent\nargument-hint: \"<feature-or-check-name> [--platform linux|windows|both] [--env host|docker|k8s]\"\n---\n\nWrite end-to-end tests for the Datadog Agent using the `test/e2e-framework/` framework.\nParse `$ARGUMENTS` to determine what to test.\n\n## Where to find what you need\n\n| What | Where |\n|------|-------|\n| Framework API (environments, provisioners, agentparams) | `test/e2e-framework/AGENTS.md` |\n| Fakeintake API (payload types, client methods, extending) | `test/fakeintake/AGENTS.md` |\n| Setup, prerequisites, running tests | `docs/public/how-to/test/e2e.md` |\n| Real tests to use as patterns | `test/new-e2e/tests/` (see lookup table in e2e-framework AGENTS.md) |\n| Check system overview | root `AGENTS.md` § \"Check System\" |\n| Test placement / team ownership | `CODEOWNERS` |\n| CI job definitions | `.gitlab/test/e2e/e2e.yml`, `.gitlab/windows/test/e2e/windows.yml` |\n| CI trigger rules | `.gitlab-ci.yml` (search for `.on_*_or_e2e_changes`) |\n| Examples | `test/new-e2e/examples/` |\n\nRead the first two files before writing any test. Browse examples and a few real tests\nthat match your use case.\n\n## Checklist\n\n1. Read the feature's implementation to understand what payloads it sends\n2. Check if E2E tests already exist under `test/new-e2e/tests/`\n3. Place tests in the right `<area>` directory (check `CODEOWNERS`);\n   one file per platform target (e.g., `disk_nix_test.go`, `disk_win_test.go`)\n4. Verify compilation: `cd test/new-e2e && go vet ./tests/<area>/...`\n5. **Run the test locally before pushing** — compilation alone is not enough:\n   `dda inv new-e2e-tests.run --targets=./tests/<area>/...`\n   See `test/e2e-framework/AGENTS.md` § \"Validating E2E tests\" if it fails\n6. Check CI wiring: `grep -n 'TARGETS:.*<area>' .gitlab/test/e2e/e2e.yml`\n\n## Output\n\nShow the user: files created, how to compile-check, how to run locally\n(`dda inv new-e2e-tests.run --targets=./tests/<area>/...`), and whether\nCI changes are needed."
+    gold_removed: ''
+  - path: AGENTS.md
+    tier: 1
+    gold_added: "- E2E tests live in `test/new-e2e/tests/` and use the framework in `test/e2e-framework/`\n- Tests provision real AWS, GCP or Azure infrastructure, deploy the agent, and assert payloads\n  arrive in **fakeintake** (a mock Datadog intake). By default the fakeintake forwards payloads to `dddev` org account.\n- Key docs: `test/e2e-framework/AGENTS.md` (framework), `test/fakeintake/AGENTS.md`\n  (intake mock), `docs/public/how-to/test/e2e.md` (setup & running)\n- Use `/write-e2e` skill or read those docs directly to write new E2E tests\n- Run locally: `dda inv new-e2e-tests.run --targets=./tests/<area>/...`\n## Keeping AI context accurate\nAI agents read `AGENTS.md`, `CLAUDE.md`, and skill files to understand the\ncodebase. These files must stay accurate — stale guidance causes recurring\nmistakes across sessions.\n### File hierarchy\n```\nAGENTS.md                          ← repo-wide: architecture, workflow, review guidelines\n├── test/e2e-framework/AGENTS.md   ← E2E framework: environments, provisioners, agentparams\n├── test/fakeintake/AGENTS.md      ← fakeintake: endpoints, client API, extension guide\n├── pkg/.../AGENTS.md              ← package-level: structure, patterns, pitfalls\n└── .claude/skills/*/SKILL.md      ← task-specific: step-by-step procedures\n```\n\nEach level inherits context from its parent via `CLAUDE.md` (`@../../CLAUDE.md`\n→ `@AGENTS.md`). Keep information at the right level — don't duplicate\nrepo-wide rules in sub-project files.\n\n### What to update and when\n\n| File | Update when |\n|------|-------------|\n| `AGENTS.md` (root) | Architecture, workflow, build commands, or review guidelines change |\n| Sub-project `AGENTS.md` | APIs, conventions, or extension patterns in that sub-project change |\n| `.claude/skills/*/SKILL.md` | A skill's steps, examples, or recommendations become outdated |\n\nKeep rules generalizable. A good guideline covers a class of bugs, not a single\nincident. Think bias/variance: too specific and it only catches one bug; too\ngeneric and it's noise.\n\n### Self-improvement expectation\n\n**AI agents:** when working on any task (reviewing, writing code, running\ntests), if you notice a gap or inaccuracy in an `AGENTS.md` or skill file, fix\nit — either in the same PR or as a follow-up. Small, incremental improvements\nare preferred over large rewrites. This creates a feedback loop where every\nsession leaves the context more accurate for the next one."
+    gold_removed: ''
+  - path: test/e2e-framework/AGENTS.md
+    tier: 1
+    gold_added: "# E2E Framework\n\n## Overview\n\nThe E2E framework provides infrastructure-as-code test harnesses using Pulumi.\nIt provisions real cloud infrastructure (AWS, Azure, GCP), deploys the Datadog\nAgent, and exposes typed environments for tests to interact with.\n\nTests live in `test/new-e2e/tests/` and import this framework.\n\n## Structure\n\n```\ntest/e2e-framework/\n├── testing/\n│   ├── e2e/              # Test harness: BaseSuite, Run(), SuiteOption\n│   ├── environments/     # Environment types: Host, DockerHost, Kubernetes, ECS\n│   ├── provisioners/     # Provisioner interfaces + cloud-specific implementations\n│   │   ├── aws/          # host, docker, ecs, kubernetes (eks, kindvm)\n│   │   ├── azure/        # host (linux, windows), kubernetes (aks)\n│   │   ├── gcp/          # host (linux), kubernetes (gke, openshiftvm)\n│   │   └── local/        # host (podman), kubernetes (kind)\n│   └── components/       # Test-side wrappers: RemoteHost, Agent, FakeIntake\n├── scenarios/\n│   └── aws/              # Pulumi programs: ec2, ec2docker, ecs, eks, kindvm\n├── components/\n│   ├── datadog/          # Pulumi components: agent, agentparams, fakeintake\n│   │   ├── agentparams/  # Agent configuration options (WithAgentConfig, etc.)\n│   │   └── fakeintake/   # Fakeintake deployment component\n│   ├── os/               # OS descriptors (Ubuntu, Windows, etc.)\n│   ├── kubernetes/       # K8s components (KinD, OpenShift, Helm addons)\n│   ├── docker/           # Docker compose components\n│   └── remote/           # Remote host SSH management\n├── resources/\n│   └── aws/              # Low-level Pulumi resources (EC2, ECS, EKS, IAM)\n├── common/\n│   └── config/           # Configuration (AWS account, key pairs, agent params)\n└── README.md             # Full setup and troubleshooting guide\n```\n\n## Key concepts\n\n### Environments\n\nAn environment defines what infrastructure a test needs:\n\n| Type | Components | Provisioner | Use when |\n|------|-----------|-------------|----------|\n| `environments.Host` | VM + Agent + FakeIntake | `awshost.Provisioner()` | System checks, agent commands, file-based config |\n| `environments.DockerHost` | VM + Docker + FakeIntake | `awsdocker.Provisioner()` | Container checks, Docker integrations |\n| `environments.Kubernetes` | K8s cluster + Agent + FakeIntake | `awskubernetes.Provisioner()` | K8s checks, DaemonSet, Cluster Agent |\n| `environments.ECS` | ECS cluster + Agent + FakeIntake | `awsecs.Provisioner()` | ECS-specific tests |\n| custom environment | user-defined struct | `e2e.WithPulumiProvisioner()` | Agent on host + workloads on docker, multi-VM, extra services |\n\n### Provisioners\n\nProvisioners create the environment's infrastructure. Built-in provisioners\nlive in `testing/provisioners/` organized by cloud provider (aws, azure, gcp, local).\n\n```go\n// Host on AWS EC2\nawshost.Provisioner(\n    awshost.WithRunOptions(\n        ec2.WithEC2InstanceOptions(ec2.WithOS(e2eos.Ubuntu2204)),\n        ec2.WithAgentOptions(\n            agentparams.WithAgentConfig(config),\n            agentparams.WithIntegration(\"check.d\", checkConfig),\n        ),\n    ),\n)\n```\n\n### BaseSuite\n\nAll E2E tests embed `e2e.BaseSuite[Env]` and use `e2e.Run()`:\n\n```go\ntype mySuite struct {\n    e2e.BaseSuite[environments.Host]\n}\n\nfunc TestMySuite(t *testing.T) {\n    t.Parallel()\n    e2e.Run(t, &mySuite{}, e2e.WithProvisioner(awshost.Provisioner()))\n}\n```\n\nKey helpers on BaseSuite:\n- `s.Env()` — access the provisioned environment\n- `s.UpdateEnv(provisioner)` — change agent config mid-suite\n- `s.EventuallyWithT(fn, timeout, interval)` — retry assertions until they pass;\n  use `require` (not `assert`) inside the callback so failures short-circuit the\n  current retry iteration instead of accumulating silently\n\n## Agent configuration\n\nUse `agentparams` to configure the agent on provisioned infrastructure:\n\n- `WithAgentConfig(yaml)` — override `datadog.yaml`\n- `WithIntegration(name, yaml)` — add check config under `conf.d/`\n- `WithLogs()` — enable log collection\n- `WithSystemProbeConfig(yaml)` — system-probe config\n- `WithFile(path, content, useSudo)` — place arbitrary files on the host\n\n## Beyond out of the box environments\n\nThe stock environments are highly customizable via provisioner options (OS,\nagent config, with/without fakeintake, etc.) — explore the `With*` options on\neach provisioner before creating a custom environment.\n\nWhen that's not enough, common advanced patterns:\n\n- **Custom environment structs** — define your own struct with extra components\n  (e.g., a second `RemoteHost`, multiple fakeintakes, an HTTPBin service).\n  Use `e2e.WithPulumiProvisioner()` to wire it up with inline Pulumi code.\n  Start from the examples in `test/new-e2e/examples/customenv_*` and see\n  `test/new-e2e/tests/npm/` and `test/new-e2e/tests/ha-agent/` for real usage.\n- **Custom provisioners** — environments also support custom provisioners beyond\n  the stock ones. Implement the `provisioners.Provisioner` interface to\n  target different infrastructure.\n- **`e2e.WithUntypedPulumiProvisioner()`** — escape hatch for fully custom Pulumi\n  programs when no typed environment fits.\n- **`s.UpdateEnv(provisioner)`** — re-provision the agent mid-suite (e.g., change\n  config, toggle features) without destroying the underlying infra. Widely used\n  but error-prone; may be removed in the future.\n\n### Useful suite options\n\n- **`e2e.WithDevMode()`** — keep infrastructure alive after test for faster iteration.\n- **`e2e.WithStackName(name)`** — custom Pulumi stack naming for parameterized tests.\n\n### Example tests by pattern\n\n| Pattern | Look at |\n|---------|---------|\n| Stock host test | `test/new-e2e/tests/agent-runtimes/` |\n| Custom environment (extra hosts/services) | `test/new-e2e/tests/npm/`, `test/new-e2e/tests/ha-agent/` |\n| K8s + Helm | `test/new-e2e/tests/ssi/` |\n| Multi-fakeintake | `test/new-e2e/tests/agent-runtimes/forwarder/` |\n| GPU / specialized hardware | `test/new-e2e/tests/gpu/` |\n| Windows | `test/new-e2e/tests/windows/` |\n| Docker Compose | `test/new-e2e/tests/agent-health/` |\n| ECS / Fargate | `test/new-e2e/tests/cws/` |\n\n## Validating E2E tests\n\nE2E tests provision real cloud infrastructure (~10 min per run). **Always run\nthe test locally before pushing** — `go vet` catches compilation errors but not\nruntime failures:\n\n```bash\ndda inv new-e2e-tests.run --targets=./tests/<area>/...\n```\n\nUse `e2e.WithDevMode()` to keep infrastructure alive after a failure so you can\nSSH in and inspect the agent directly.\n\n## Key files\n\n- `testing/e2e/suite.go` — `BaseSuite` and `Run()` (test entry point)\n- `testing/e2e/suite_params.go` — `SuiteOption` (WithProvisioner, WithDevMode, etc.)\n- `testing/environments/host.go` — Host environment definition\n- `testing/provisioners/aws/host/host.go` — AWS host provisioner\n- `components/datadog/agentparams/params.go` — agent configuration options\n- `scenarios/aws/ec2/run.go` — EC2 + Agent + FakeIntake Pulumi program\n- `common/config/environment.go` — Pulumi config management\n- `README.md` — setup guide, troubleshooting, examples\n\n## Keeping this file accurate\n\nThis file is part of the `AGENTS.md` hierarchy (see root `AGENTS.md` §\n\"Keeping AI context accurate\"). Update it when environments, provisioners,\nagentparams, or key APIs change. AI agents should fix inaccuracies they\nencounter during tasks."
+    gold_removed: ''
+  - path: test/e2e-framework/CLAUDE.md
+    tier: 1
+    gold_added: '@../../CLAUDE.md
+
+      @AGENTS.md'
+    gold_removed: ''
+  - path: test/fakeintake/AGENTS.md
+    tier: 1
+    gold_added: "# Fakeintake\n\n## Overview\n\nFakeintake is a mock Datadog intake server used by E2E tests. It captures all\npayloads the agent sends (metrics, logs, traces, check runs, etc.) and exposes\nthem via a query API so tests can assert on agent output.\n\n## Structure\n\n```\ntest/fakeintake/\n├── api/              # Shared types (Payload, ResponseOverride)\n├── aggregator/       # Payload parsers — one per Datadog endpoint\n├── client/           # Go client library used by E2E tests\n├── server/           # HTTP server + in-memory store\n│   └── serverstore/  # Storage layer and payload parsers\n└── cmd/\n    ├── server/       # Server binary entry point\n    └── client/       # CLI tool (fakeintakectl)\n```\n\n## Supported endpoints\n\n| Route | Aggregator | Client method |\n|-------|-----------|---------------|\n| `/api/v2/series` | MetricAggregator | `FilterMetrics()` |\n| `/api/v1/check_run` | CheckRunAggregator | `FilterCheckRuns()` |\n| `/api/v2/logs` | LogAggregator | `FilterLogs()` |\n| `/intake/` | EventAggregator | `FilterEvents()` |\n| `/api/v0.2/traces` | TraceAggregator | `GetTraces()` |\n| `/api/v0.2/stats` | APMStatsAggregator | `GetAPMStats()` |\n| `/api/v1/collector` | ProcessAggregator | `GetProcesses()` |\n| `/api/v1/connections` | ConnectionsAggregator | `GetConnections()` |\n| `/api/v1/container` | ContainerAggregator | `GetContainers()` |\n| `/api/v2/contimage` | ContainerImageAggregator | `GetContainerImages()` |\n| `/api/v2/contlcycle` | ContainerLifecycleAggregator | `GetContainerLifecycleEvents()` |\n| `/api/v2/sbom` | SBOMAggregator | `GetSBOMs()` |\n| `/api/v2/orch` | OrchestratorAggregator | `GetOrchestratorResources()` |\n| `/api/v2/ndmflow` | NDMFlowAggregator | GetNDMFlows() |\n| `/api/v2/netpath` | NetpathAggregator | `GetLatestNetpathEvents()` |\n| `/api/v2/agenthealth` | AgentHealthAggregator | GetAgentHealth() |\n| `/support/flare` | Flare parser | `GetLatestFlare()` |\n\n## Client usage\n\n```go\nimport (\n    \"github.com/DataDog/datadog-agent/test/fakeintake/client\"\n    \"github.com/DataDog/datadog-agent/test/fakeintake/aggregator\"\n)\n\nfakeintake := s.Env().FakeIntake.Client()\n\n// Filter metrics by name + tags\nmetrics, err := fakeintake.FilterMetrics(\"system.cpu.user\",\n    client.WithTags[*aggregator.MetricSeries]([]string{\"env:prod\"}),\n    client.WithMetricValueHigherThan(0),\n)\n\n// Filter logs by service\nlogs, err := fakeintake.FilterLogs(\"myservice\",\n    client.WithMessageContaining(\"error\"),\n)\n\n// Filter check runs\nchecks, err := fakeintake.FilterCheckRuns(\"ntp.in_sync\")\n\n// Reset state between tests\nfakeintake.FlushServerAndResetAggregators()\n\n// Debug: list all received metric names\nnames, _ := fakeintake.GetMetricNames()\n```\n\n## Adding a new payload type\n\nWhen the agent starts sending a new type of data to a new endpoint:\n\n1. **Create an aggregator** in `aggregator/<type>Aggregator.go`:\n   - Define a struct implementing the `PayloadItem` interface (`name()`,\n     `GetTags()`, `GetCollectedTime()`)\n   - Write a `Parse<Type>(payload api.Payload) ([]*<Type>, error)` function\n   - Create a `<Type>Aggregator` wrapping `Aggregator[*<Type>]`\n\n2. **Register the parser** in `server/serverstore/parser.go`:\n   - Add the route → parser mapping to `parserMap`\n\n3. **Add client methods** in `client/client.go`:\n   - Add the aggregator field to the `Client` struct\n   - Create `get<Type>()` to fetch from the endpoint\n   - Create public `Filter<Type>()` / `Get<Type>()` methods\n   - Add filter options (`MatchOpt[*<Type>]`) as needed\n\n4. **Add tests** for the new aggregator and client methods\n\n## Key files\n\n- `client/client.go` — main client API (filter methods, match options)\n- `aggregator/common.go` — generic `Aggregator[T]` base (compression, storage)\n- `server/server.go` — HTTP handler routing\n- `server/serverstore/in_memory.go` — payload storage\n- `api/api.go` — shared types (`Payload`, `ResponseOverride`)\n\n## Keeping this file accurate\n\nThis file is part of the `AGENTS.md` hierarchy (see root `AGENTS.md` §\n\"Keeping AI context accurate\"). Update it when endpoints, client methods, or\nextension patterns change. AI agents should fix inaccuracies they encounter\nduring tasks."
+    gold_removed: ''
+  - path: test/fakeintake/CLAUDE.md
+    tier: 1
+    gold_added: '@../../CLAUDE.md
+
+      @AGENTS.md'
+    gold_removed: ''

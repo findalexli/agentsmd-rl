@@ -1,0 +1,42 @@
+version: "2.0"
+
+task:
+  name: isaaclab-forbid-pushing-to-origin-in
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: isaac-sim/IsaacLab
+  pr: 5344
+  base_commit: "0c565d63a9e6c6169cdec1ae13eaf000487dc666"
+  merge_commit: "a0e07b43522b7818502bd522865a22e413a1cc79"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+
+config_edits:
+  - path: AGENTS.md
+    tier: 1
+    gold_added: '**CRITICAL: Always run pre-commit hooks BEFORE committing and BEFORE pushing.**
+
+      7. Verify pre-commit still passes before pushing — never push commits that haven''t been checked
+
+      **Common mistakes to avoid:**
+
+      - Don''t push before running pre-commit (pushes broken code to the remote)
+
+      - Do run pre-commit before committing and before pushing (clean workflow)
+
+      - **Never push to `origin` (`isaac-sim/IsaacLab`).** The `origin` remote is the public upstream repository. Push to your own fork remote (e.g., `antoine`, `alex`) or to the remote of the PR you are working on. If the correct remote is unclear, ask the user before pushing.'
+    gold_removed: ''

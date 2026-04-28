@@ -1,0 +1,36 @@
+version: "2.0"
+
+task:
+  name: claude-code-plugins-plus-skills-fix-add-missing-yaml-frontma
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: jeremylongshore/claude-code-plugins-plus-skills
+  pr: 535
+  base_commit: "f84d3abde0e3637e94c0b8cdbd50a8f08f107f9e"
+  merge_commit: "d2614d1257c8d2a8635149788821dcd34b341fa0"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/agents/skill-auditor.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/agents/skill-auditor.md."
+
+config_edits:
+  - path: .claude/agents/skill-auditor.md
+    tier: 1
+    gold_added: '---
+
+      name: skill-auditor
+
+      description: Audit and fix Claude Code SKILL.md files to meet enterprise compliance standards. Analyzes frontmatter, required sections, and style. Use when you need to validate or repair skills in a plugin directory.
+
+      ---
+
+      '
+    gold_removed: ''

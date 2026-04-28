@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: ledger-live-chorecursor-streamline-testing-skill-with
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: LedgerHQ/ledger-live
+  pr: 15231
+  base_commit: "834c7efbb32488892e2467ec57241dbfaac203ab"
+  merge_commit: "b6efabb7a1036a53a28956f6afc47aea482002b5"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .cursor/skills/testing/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .cursor/skills/testing/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .cursor/skills/testing/SKILL.md."
+
+config_edits:
+  - path: .cursor/skills/testing/SKILL.md
+    tier: 1
+    gold_added: "> Jest + MSW + React Testing Library (Desktop) / React Native Testing Library (Mobile)\n> ❌ E2E tests → Use `e2e` skill\n---\n## Golden Rules\n1. **`toBeVisible()` over `toBeInTheDocument()`** — Always. `toBeInTheDocument` only checks DOM presence; elements can be hidden. Use `toBeInTheDocument` only when testing explicitly hidden elements.\n2. **Search before you create** — Before writing any mock, fixture, or helper, `rg` the codebase. If it exists, import it. If your new mock is reusable (2+ files), put it in a shared location.\n3. **Mock external deps only** — Never mock child components. Test integration.\n4. **One behavior per test** — Name: `it(\"should <behavior> when <condition>\")`.\n5. **Query priority**: `getByRole` > `getByLabelText` > `getByText` > `getByTestId` (last resort).\n6. **Feature flags via store, never mocked** — Use `overriddenFeatureFlags` in `initialState.settings`.\n7. **Use existing factories** — `genAccount()` from `@ledgerhq/coin-framework/mocks/account`, `getCryptoCurrencyById()` from `@ledgerhq/live-common/currencies`. Never recreate account/currency data from scratch.\n\n# Coin modules (libs/coin-modules)\npnpm coin:<name> test              # Unit tests\npnpm coin:<name> test \"filename\"   # Specific file\npnpm coin:<name> test-integ        # Integration tests (slow)\n  beforeEach(() => jest.clearAllMocks());\n  it(\"should render title\", () => {\n    expect(screen.getByText(\"Test\")).toBeVisible();\n  it(\"should call onClick when button pressed\", async () => {\n  it(\"should display fetched data\", async () => {\n    server.use(http.get(\"/api/data\", () => HttpResponse.json({ name: \"Bitcoin\" })));\n    await waitFor(() => expect(screen.getByText(\"Bitcoin\")).toBeVisible());\nconst { result } = renderHook(() => useMyHook());\nawait act(async () => result.current.increment());\nexpect(result.current.value).toBe(1);\n## Redux Store\n**Desktop** — plain object merged with defaults:\n    settings: { theme: \"dark\" },\n    accounts: { active: [mockAccount] },\n**Mobile** — function receiving default state:\n    settings: { ...state.settings, blacklistedTokenIds: [\"ethereum/erc20/usdt\"] },\n```\n**Feature flags** (both platforms):\n\n```typescript\nrender(<MyComponent />, {\n  initialState: {\n        myFlag: { enabled: true, params: { key: \"value\" } },\n  },\n// External dependency\nconst mockedFn = jest.mocked(getMainAccount);\nmockedFn.mockReturnValue(mockAccount);\n// ViewModel (MVVM)\njest.mock(\"../useMyViewModel\", () => ({ useMyViewModel: jest.fn() }));\n// MSW override for error case\nserver.use(\n  http.get(\"/api/data\", () => HttpResponse.json({ error: \"Not found\" }, { status: 404 }))\n);\n## Shared Resources — Search Here First\nBefore creating anything, check these locations:\n| Location | What's there |\n| `@ledgerhq/coin-framework/mocks/account` | `genAccount()`, `genTokenAccount()` |\n| `tests/fixtures/` | `mockedAccountList`, `expectedCurrencyList` |\n| `tests/mocks/` | Mock components, assets, countervalues |\n# Run BEFORE writing new mocks\nrg \"yourMockName|yourHelper\" tests/ __tests__/ src/ libs/ --type ts\nNew reusable mocks go in `tests/mocks/`, new handlers in `tests/handlers/`, new fixtures in `tests/handlers/fixtures/`.\n1. Search for existing mocks → 2. Write test → 3. Run test → 4. Fix if fail → 5. Next file\nStart with the simplest units (utils, hooks), then work up to components with side effects (API, navigation). This order catches foundational bugs early and builds confidence incrementally."
+    gold_removed: ''

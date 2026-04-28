@@ -1,0 +1,30 @@
+version: "2.0"
+
+task:
+  name: gitea-update-agentsmd
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: go-gitea/gitea
+  pr: 37420
+  base_commit: "9e0f692f28775c0f0cd344684a31c91d74e751c0"
+  merge_commit: "f2a7f6c99971c281d3dd00d0c29d0f3ecda83e71"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+
+config_edits:
+  - path: AGENTS.md
+    tier: 1
+    gold_added: '- Run single go tests with `go test -tags ''sqlite sqlite_unlock_notify'' -run ''^TestName$'' ./modulepath/`
+
+      - Run single js test files with `pnpm exec vitest <path-filter>`'
+    gold_removed: ''

@@ -1,0 +1,40 @@
+version: "2.0"
+
+task:
+  name: k6-rename-claudemd-to-agentsmd-symlink
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: grafana/k6
+  pr: 5781
+  base_commit: "9f850ee2d128ee87794866da1767bc6d3b6dacb1"
+  merge_commit: "aed121ee39ffd271b733f5f169c400e9f31fea8e"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+
+config_edits:
+  - path: AGENTS.md
+    tier: 1
+    gold_added: "## Project Overview\n\nk6 is a modern load testing tool built in Go. It allows developers to write JavaScript test scripts to simulate user behavior and measure system performance. The tool features configurable load generation, multiple protocol support (HTTP, WebSockets, gRPC, Browser), and flexible metrics output.\n\n## Common Development Commands\n\n### Building and Testing\n```bash\n# Build the k6 binary\nmake build\n# or\ngo build\n\n# Run all tests with race detection  \nmake tests\n# or\ngo test -race -timeout 210s ./...\n\n# Run linting\nmake lint\n\n# Run both linting and tests\nmake check\n\n# Format code\nmake format\n```\n\n### Single Test Execution\n```bash\n# Run tests for a specific package\ngo test ./lib/executor/\ngo test ./internal/js/modules/k6/http/\ngo test -v -run TestSpecificFunction ./path/to/package/\n\n# Run browser tests (requires special setup)\ngo test ./internal/js/modules/k6/browser/tests/\n```\n\n### Code Generation\n```bash\n# Install tools and regenerate generated code\nmake generate-tools-installs\nmake generate\n```\n\n### Working with Examples\n```bash\n# Run gRPC server example\nmake grpc-server-run\n\n# Test scripts are in examples/ directory\n./k6 run examples/http_get.js\n./k6 run examples/browser/querying.js\n```\n\n## Architecture Overview\n\n### Core Components\n\n**Main Entry Point**: `main.go` → `cmd/execute.go` → `internal/cmd/root.go`\n- The CLI is built with Cobra and organized into subcommands in `internal/cmd/`\n- Key commands: `run`, `archive`, `cloud`, `inspect`, `new`, `pause`, `resume`, `scale`, `stats`, `status`, `version`\n\n**JavaScript Runtime**: `internal/js/` and `js/`\n- `internal/js/`: Core JavaScript execution engine using Sobek (Goja fork)\n- `js/modules/`: Built-in k6 modules (http, browser, crypto, etc.)\n- `js/common/`: Shared JavaScript runtime utilities\n\n**Load Testing Core**: `lib/`\n- `lib/executor/`: Different execution strategies (constant VUs, ramping, arrival rate, etc.)\n- `lib/netext/`: Network extensions and HTTP transport\n- `lib/types/`: Core type definitions\n- `lib/options.go`: Test configuration options\n\n**Outputs**: `internal/output/` and `output/`\n- Multiple output formats: JSON, CSV, InfluxDB, Prometheus, Cloud, OpenTelemetry\n- Each output has its own package with config and implementation\n\n**Browser Testing**: `internal/js/modules/k6/browser/`\n- CDP-based browser automation using chromium\n- Page, frame, element handle abstractions\n- Browser context and session management\n\n### Key Patterns\n\n**Module System**: k6 modules are Go packages that expose JavaScript APIs\n- `internal/js/modules/k6/`: Built-in k6 modules  \n- Modules follow a mapping pattern to bridge Go and JavaScript\n- Example: `k6/http` module maps HTTP functionality\n\n**Executor Pattern**: Different load testing strategies implemented as executors\n- `constant-vus`: Fixed number of virtual users\n- `ramping-vus`: Gradually increasing/decreasing VUs  \n- `constant-arrival-rate`: Fixed rate of iterations\n- `per-vu-iterations`: Fixed iterations per VU\n\n**Extension System**: `ext/` package allows extending k6 with custom functionality\n- Extensions can add new JavaScript modules\n- Used by xk6 ecosystem for community extensions\n\n## Testing Structure\n\n**Unit Tests**: Co-located with source code (`*_test.go`)\n**Integration Tests**: `internal/cmd/tests/` for CLI integration tests  \n**Browser E2E Tests**: `internal/js/modules/k6/browser/tests/` with static HTML fixtures\n**TC39/WPT Conformance**: `internal/js/tc39/` and modules with WPT test suites\n\n## Important Configuration Files\n\n- `.golangci.yml`: Linter configuration (version pinned at top)\n- `Makefile`: Build targets and development commands\n- `go.mod`: Go module dependencies (use Go 1.23+)\n- `Dependencies.md`: Dependency update policy and guidelines\n- `modtools_frozen.yml`: Dependencies that should not be auto-updated\n\n## Development Guidelines\n\n**Code Style**: \n- Use `gofmt -s` for formatting\n- Follow golangci-lint rules (run `make lint`)\n- Comments should wrap at 100 characters\n\n**Dependencies**:\n- Update direct dependencies only after releases\n- Some dependencies are intentionally frozen (see Dependencies.md)\n- Use `modtools check --direct-only` to check for updates\n\n**Testing**:\n- All new code should have tests\n- Use `go test -race` for concurrency testing\n- Browser tests require additional setup and fixtures\n\n**Generated Code**: \n- Several files are auto-generated (look for `*_gen.go`)\n- Run `make generate` after modifying source templates\n- Protobuf definitions in `internal/cloudapi/insights/proto/`\n\n## Git Workflow and Branching Strategy\n\n**Branching Strategy**:\n- Create a new branch for each feature or bugfix\n- Branch names must be descriptive and reflect the problem being solved\n- Examples: `fix-http-timeout-handling`, `add-websocket-compression`, `improve-browser-element-selection`\n- Base new branches off the `master` branch\n\n**Allowed Git Commands**:\n```bash\n# Create and switch to new branch\ngit checkout -b descriptive-branch-name\ngit switch -c descriptive-branch-name\n\n# Regular commits (using user from git config)\ngit add .\ngit commit -m \"descriptive commit message\"\n\n# Push branch to remote\ngit push origin branch-name\ngit push -u origin branch-name  # first push with upstream\n\n# Check status and view changes\ngit status\ngit diff\ngit log\n```\n\n**Strictly Forbidden Git Operations**:\n- **NO force pushes**: `git push --force`, `git push -f`\n- **NO history modification**: `git reset --hard`, `git rebase`, `git rebase -i`\n- **NO direct pushes to master**: `git push origin master`\n- **NO commit author overrides**: Always use the default git config user\n\n**Commit Guidelines**:\n- All commits must be created on behalf of the user listed in Git config (default behavior)\n- Write clear, descriptive commit messages that could be included in a changelog\n- Close related issues with commit messages: `Closes #123`, `Fixes #456`\n- Follow existing commit message style in the repository\n\n**Pull Request Process**:\n- Create pull requests from feature branches to `master`\n- Ensure all tests pass before creating PR\n- Follow the existing PR template and guidelines\n\n## Common File Locations\n\n**CLI Commands**: `internal/cmd/` (run.go, cloud.go, etc.)\n**HTTP Module**: `js/modules/k6/http/` and `internal/js/modules/k6/http/`  \n**Browser Module**: `internal/js/modules/k6/browser/`\n**Metrics**: `metrics/` package for metric definitions\n**Examples**: `examples/` directory with various test script examples\n**Test Data**: `internal/cmd/testdata/` and module-specific test fixtures"
+    gold_removed: ''
+  - path: CLAUDE.md
+    tier: 1
+    gold_added: ''
+    gold_removed: ''
+  - path: CLAUDE.md
+    tier: 1
+    gold_added: AGENTS.md
+    gold_removed: ''

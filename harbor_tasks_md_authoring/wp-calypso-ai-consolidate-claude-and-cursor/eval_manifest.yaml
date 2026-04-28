@@ -1,0 +1,125 @@
+version: "2.0"
+
+task:
+  name: wp-calypso-ai-consolidate-claude-and-cursor
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: Automattic/wp-calypso
+  pr: 108787
+  base_commit: "d5a9673cdd015f43fb28ab86ddb4aaaf5bcabffd"
+  merge_commit: "24e96f4abd2de227ebcd1f2ce15ea25bb5ef6a6e"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in client/dashboard/AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in client/dashboard/AGENTS.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in client/dashboard/AGENTS.md."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in test/e2e/AGENTS.md."
+  - id: signal_04
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in test/e2e/AGENTS.md."
+  - id: signal_05
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in test/e2e/AGENTS.md."
+
+config_edits:
+  - path: .claude/rules/e2e-testing.md
+    tier: 1
+    gold_added: ''
+    gold_removed: ''
+  - path: .cursor/rules/a4a.mdc
+    tier: 1
+    gold_added: ''
+    gold_removed: ''
+  - path: .cursor/rules/calypso-client.mdc
+    tier: 1
+    gold_added: ''
+    gold_removed: ''
+  - path: .cursor/rules/dashboard.mdc
+    tier: 1
+    gold_added: ''
+    gold_removed: ''
+  - path: CLAUDE.md
+    tier: 1
+    gold_added: '@AGENTS.md'
+    gold_removed: ''
+  - path: client/AGENTS.md
+    tier: 1
+    gold_added: ''
+    gold_removed: ''
+  - path: client/CLAUDE.md
+    tier: 1
+    gold_added: '@AGENTS.md'
+    gold_removed: ''
+  - path: client/a8c-for-agencies/AGENTS.md
+    tier: 1
+    gold_added: ''
+    gold_removed: ''
+  - path: client/a8c-for-agencies/CLAUDE.md
+    tier: 1
+    gold_added: '@AGENTS.md'
+    gold_removed: ''
+  - path: client/dashboard/AGENTS.md
+    tier: 1
+    gold_added: "\n- docs/data-library.md - TanStack Query usage, loaders, caching\n- docs/ui-components.md - WordPress components, placeholders, DataViews\n- docs/router.md - TanStack Router patterns, lazy loading\n- docs/i18n.md - Translation patterns, CSS logical properties\n- docs/typography-and-copy.md - Capitalization, snackbar messages\n- docs/testing.md - Testing strategies\n    - **Import**: Use `import { wpcomLink } from '@automattic/dashboard/utils/link'`\n    - **Purpose**: Ensures proper environment configuration (dev vs production hostnames)\n    - **Purpose**: Ensures correct behaviour when exiting the checkout screen\n    - **Purpose**: Ensures correct behaviour when exiting the upgrade screen"
+    gold_removed: ''
+  - path: client/dashboard/CLAUDE.md
+    tier: 1
+    gold_added: '@AGENTS.md'
+    gold_removed: ''
+  - path: test/e2e/AGENTS.md
+    tier: 1
+    gold_added: '
+
+      - docs/ - Legacy framework documentation
+
+      - docs-new/ - New Playwright Test framework documentation
+
+
+      - docs-new/overview.md
+
+      - docs-new/setup.md
+
+      - docs-new/running_debugging_tests.md
+
+      - docs-new/creating_reliable_tests.md
+
+      - docs-new/new_style_guide.md
+
+      - docs-new/custom_fixtures.md
+
+      ### Legacy Framework (Playwright + Jest runner)
+
+
+      - Documentation: docs/
+
+      ### New Framework (Playwright Test)
+
+
+      - Documentation: docs-new/
+
+      - Follow the patterns and style guide in docs-new/
+
+
+
+      '
+    gold_removed: ''
+  - path: test/e2e/CLAUDE.md
+    tier: 1
+    gold_added: '@AGENTS.md'
+    gold_removed: ''

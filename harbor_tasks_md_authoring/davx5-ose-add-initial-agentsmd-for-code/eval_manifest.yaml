@@ -1,0 +1,81 @@
+version: "2.0"
+
+task:
+  name: davx5-ose-add-initial-agentsmd-for-code
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: bitfireAT/davx5-ose
+  pr: 2160
+  base_commit: "b330ccf1ed0690cb57d3b9e104e66e90617ee623"
+  merge_commit: "b95f3b7784a02545da892fa9ff866d36c1eefe9d"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+
+config_edits:
+  - path: AGENTS.md
+    tier: 1
+    gold_added: 'This file contains instructions for AI agents.
+
+
+
+      # Automated PR reviews
+
+
+      Take this section into account for automated code reviews for pull requests.
+
+
+      Automated reviews shall assist in catching functional bugs, logic errors, and architectural concerns. They complement (not replace) human review by the core team.
+
+
+      ## Review focus
+
+
+      For automated reviews focus on:
+
+
+      - **Functional bugs & logic errors** – incorrect behavior, missing edge cases, null/type safety issues
+
+      - **Architectural concerns** – design patterns, maintainability, API contracts
+
+      - **Security issues** – unsafe patterns, injection risks, credential exposure
+
+      - **Code quality** – clarity, testability, redundancy
+
+
+      ## Conventional Comments
+
+
+      Use [Conventional Comments](https://conventionalcomments.org/) to label review feedback. Especially make a difference between more critical labels like `issue` or `todo` and less critical ones like `suggestion`, `typo` or `polish`. Use `quibble` instead of `nitpick`. You may use the `(non-blocking)`, `(blocking)` and `(if-minor)` decorations after the label.
+
+
+
+      # Auto-generating PR descriptions
+
+
+      When asked to generate PR descriptions, follow the structure from `.github/pull_request_template.md`.
+
+
+      - Write for reviewers and future maintainers, not for code navigation
+
+      - Focus on *what changed and why*, not on specific file/line locations
+
+      - Include helpful links (issues, specs, docs) but avoid code references
+
+      - Keep descriptions clear and concise
+
+      '
+    gold_removed: ''

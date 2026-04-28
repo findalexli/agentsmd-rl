@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: detekt-clarify-prerequisites-in-agentsmd
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: detekt/detekt
+  pr: 9277
+  base_commit: "5dc2a589910989e5c2e306e5d319aa7990145ede"
+  merge_commit: "82214cc8ecd663ad2a42c65ffe9d8de75b7b26d2"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+
+config_edits:
+  - path: AGENTS.md
+    tier: 1
+    gold_added: "- JDK 17+ required for the build\n  - Note that some detekt-gradle-plugin tests only run on JDK 19 or lower\n  - JDK 17 must be available for build-logic JVM toolchain\n- Android SDK must be installed to execute certain tests. They will be skipped if the SDK is not installed. This is only an issue if making changes to detekt-gradle-plugin."
+    gold_removed: ''

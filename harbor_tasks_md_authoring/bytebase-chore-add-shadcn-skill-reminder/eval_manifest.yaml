@@ -1,0 +1,33 @@
+version: "2.0"
+
+task:
+  name: bytebase-chore-add-shadcn-skill-reminder
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: bytebase/bytebase
+  pr: 19952
+  base_commit: "4f3413886ac859267e3c40f40a9711bbf100a428"
+  merge_commit: "1c94fd066544588a51562e7dadb6ebb7fea6c8d5"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in frontend/AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in frontend/AGENTS.md."
+
+config_edits:
+  - path: frontend/AGENTS.md
+    tier: 1
+    gold_added: '## shadcn Skill
+
+
+      When working on React UI, invoke the `shadcn` skill before writing or modifying components. The skill provides component selection guidance, critical rules, and best practices. Always check the skill when unsure which component to use.
+
+      '
+    gold_removed: ''

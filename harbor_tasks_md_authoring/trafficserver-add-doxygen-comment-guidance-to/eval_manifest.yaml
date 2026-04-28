@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: trafficserver-add-doxygen-comment-guidance-to
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: apache/trafficserver
+  pr: 13112
+  base_commit: "450d3f3bfe2f0853ed98738e6783287a51809176"
+  merge_commit: "da5f4407dc8c1a37d90d8dc3b4b88b52e6d2ec15"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+
+config_edits:
+  - path: AGENTS.md
+    tier: 1
+    gold_added: "**Doxygen Comments:**\n\nWhen adding doxygen comments:\n\n- `@brief` is assumed for the first sentence, so give a brief summary right\n  after `/** ` without using `@brief`.\n- In the description of classes, functions, and member variables, convey the\n  responsibility of the item being described (its role and intent), not just\n  what the code obviously does.\n- Use `@a <name>` to reference a function argument by name in prose\n  (e.g. \"If @a size is zero...\"). Use `@c <text>` for inline code or\n  constants (e.g. `@c true`, `@c NULL`, `@c MyEnum::VALUE`).\n- Use `@ref`, `@see`, or `@sa` to cross-reference related types or functions\n  when that helps convey how items interact.\n- Use `@param` with `[in]`, `[out]`, or `[in,out]` to indicate the\n  parameter's direction, followed by a description of its meaning.\n- Use `@return` to describe the semantics of the returned value. Don't\n  restate the type; that is obvious from the signature and rendered docs.\n- Use `@note` for non-obvious caveats and `@warning` for hazards (e.g. lock\n  ordering, lifetime, or threading constraints).\n- Use `@code` ... `@endcode` for embedded usage examples.\n- For templates, document type parameters with `@tparam`.\n\nConventions specific to this codebase:\n\n- Every new header file should start with a `/** @file` block (see existing\n  headers in `include/` for the standard license/section layout).\n- Prefer trailing briefs for data members and enumerators, e.g.\n  `int max_conns{0}; ///< Maximum concurrent connections.`\n- Use single-line `///` briefs for short function or type docs where a full\n  `/** ... */` block would be overkill.\n"
+    gold_removed: ''

@@ -1,0 +1,2401 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+cd /workspace/formbricks
+
+# Idempotency guard
+if grep -qF ".cursor/rules/build-and-deployment.mdc" ".cursor/rules/build-and-deployment.mdc" && grep -qF ".cursor/rules/cache-optimization.mdc" ".cursor/rules/cache-optimization.mdc" && grep -qF ".cursor/rules/database-performance.mdc" ".cursor/rules/database-performance.mdc" && grep -qF ".cursor/rules/database.mdc" ".cursor/rules/database.mdc" && grep -qF ".cursor/rules/documentations.mdc" ".cursor/rules/documentations.mdc" && grep -qF ".cursor/rules/formbricks-architecture.mdc" ".cursor/rules/formbricks-architecture.mdc" && grep -qF ".cursor/rules/github-actions-security.mdc" ".cursor/rules/github-actions-security.mdc" && grep -qF ".cursor/rules/i18n-management.mdc" ".cursor/rules/i18n-management.mdc" && grep -qF ".cursor/rules/react-context-patterns.mdc" ".cursor/rules/react-context-patterns.mdc" && grep -qF ".cursor/rules/review-and-refine.mdc" ".cursor/rules/review-and-refine.mdc" && grep -qF ".cursor/rules/storybook-component-migration.mdc" ".cursor/rules/storybook-component-migration.mdc" && grep -qF ".cursor/rules/storybook-create-new-story.mdc" ".cursor/rules/storybook-create-new-story.mdc" && grep -qF "- Next.js app router lives in `apps/web/app` with route groups like `(app)` and " "AGENTS.md"; then
+  echo "Gold patch already applied."
+  exit 0
+fi
+
+git apply --whitespace=nowarn <<'PATCH'
+diff --git a/.cursor/rules/build-and-deployment.mdc b/.cursor/rules/build-and-deployment.mdc
+@@ -1,61 +0,0 @@
+----
+-description: 
+-globs: 
+-alwaysApply: false
+----
+-# Build & Deployment Best Practices
+-
+-## Build Process
+-
+-### Running Builds
+-- Use `pnpm build` from project root for full build
+-- Monitor for React hooks warnings and fix them immediately
+-- Ensure all TypeScript errors are resolved before deployment
+-
+-### Common Build Issues & Fixes
+-
+-#### React Hooks Warnings
+-- Capture ref values in variables within useEffect cleanup
+-- Avoid accessing `.current` directly in cleanup functions
+-- Pattern for fixing ref cleanup warnings:
+-```typescript
+-useEffect(() => {
+-  const currentRef = myRef.current;
+-  return () => {
+-    if (currentRef) {
+-      currentRef.cleanup();
+-    }
+-  };
+-}, []);
+-```
+-
+-#### Test Failures During Build
+-- Ensure all test mocks include required constants like `SESSION_MAX_AGE`
+-- Mock Next.js navigation hooks properly: `useParams`, `useRouter`, `useSearchParams`
+-- Remove unused imports and constants from test files
+-- Use literal values instead of imported constants when the constant isn't actually needed
+-
+-### Test Execution
+-- Run `pnpm test` to execute all tests
+-- Use `pnpm test -- --run filename.test.tsx` for specific test files
+-- Fix test failures before merging code
+-- Ensure 100% test coverage for new components
+-
+-### Performance Monitoring
+-- Monitor build times and optimize if necessary
+-- Watch for memory usage during builds
+-- Use proper caching strategies for faster rebuilds
+-
+-### Deployment Checklist
+-1. All tests passing
+-2. Build completes without warnings
+-3. TypeScript compilation successful
+-4. No linter errors
+-5. Database migrations applied (if any)
+-6. Environment variables configured
+-
+-### EKS Deployment Considerations
+-- Ensure latest code is deployed to all pods
+-- Monitor AWS RDS Performance Insights for database issues
+-- Verify environment-specific configurations
+-- Check pod health and resource usage
+diff --git a/.cursor/rules/cache-optimization.mdc b/.cursor/rules/cache-optimization.mdc
+@@ -1,415 +0,0 @@
+----
+-description: Caching rules for performance improvements
+-globs: 
+-alwaysApply: false
+----
+-# Cache Optimization Patterns for Formbricks
+-
+-## Cache Strategy Overview
+-
+-Formbricks uses a **hybrid caching approach** optimized for enterprise scale:
+-
+-- **Redis** for persistent cross-request caching  
+-- **React `cache()`** for request-level deduplication
+-- **NO Next.js `unstable_cache()`** - avoid for reliability
+-
+-## Key Files
+-
+-### Core Cache Infrastructure
+-- [packages/cache/src/service.ts](mdc:packages/cache/src/service.ts) - Redis cache service
+-- [packages/cache/src/client.ts](mdc:packages/cache/src/client.ts) - Cache client initialization and singleton management  
+-- [apps/web/lib/cache/index.ts](mdc:apps/web/lib/cache/index.ts) - Cache service proxy for web app
+-- [packages/cache/src/index.ts](mdc:packages/cache/src/index.ts) - Cache package exports and utilities
+-
+-### Environment State Caching (Critical Endpoint)
+-- [apps/web/app/api/v1/client/[environmentId]/environment/route.ts](mdc:apps/web/app/api/v1/client/[environmentId]/environment/route.ts) - Main endpoint serving hundreds of thousands of SDK clients
+-- [apps/web/app/api/v1/client/[environmentId]/environment/lib/data.ts](mdc:apps/web/app/api/v1/client/[environmentId]/environment/lib/data.ts) - Optimized data layer with caching
+-
+-## Enterprise-Grade Cache Key Patterns
+-
+-**Always use** the `createCacheKey` utilities from the cache package:
+-
+-```typescript
+-// ✅ Correct patterns
+-createCacheKey.environment.state(environmentId)     // "fb:env:abc123:state"
+-createCacheKey.organization.billing(organizationId) // "fb:org:xyz789:billing"
+-createCacheKey.license.status(organizationId)       // "fb:license:org123:status"
+-createCacheKey.user.permissions(userId, orgId)      // "fb:user:456:org:123:permissions"
+-
+-// ❌ Never use flat keys - collision-prone
+-"environment_abc123"
+-"user_data_456"
+-```
+-
+-## When to Use Each Cache Type
+-
+-### Use React `cache()` for Request Deduplication
+-```typescript
+-// ✅ Prevents multiple calls within same request
+-export const getEnterpriseLicense = reactCache(async () => {
+-  // Complex license validation logic
+-});
+-```
+-
+-### Use `cache.withCache()` for Simple Database Queries
+-```typescript
+-// ✅ Simple caching with automatic fallback (TTL in milliseconds)
+-export const getActionClasses = (environmentId: string) => {
+-  return cache.withCache(() => fetchActionClassesFromDB(environmentId), 
+-    createCacheKey.environment.actionClasses(environmentId),
+-    60 * 30 * 1000 // 30 minutes in milliseconds
+-  );
+-};
+-```
+-
+-### Use Explicit Redis Cache for Complex Business Logic
+-```typescript
+-// ✅ Full control for high-stakes endpoints
+-export const getEnvironmentState = async (environmentId: string) => {
+-  const cached = await environmentStateCache.getEnvironmentState(environmentId);
+-  if (cached) return cached;
+-  
+-  const fresh = await buildComplexState(environmentId);
+-  await environmentStateCache.setEnvironmentState(environmentId, fresh);
+-  return fresh;
+-};
+-```
+-
+-## Caching Decision Framework
+-
+-### When TO Add Caching
+-
+-```typescript
+-// ✅ Expensive operations that benefit from caching
+-- Database queries (>10ms typical)
+-- External API calls (>50ms typical)  
+-- Complex computations (>5ms)
+-- File system operations
+-- Heavy data transformations
+-
+-// Example: Database query with complex joins (TTL in milliseconds)
+-export const getEnvironmentWithDetails = withCache(
+-  async (environmentId: string) => {
+-    return prisma.environment.findUnique({
+-      where: { id: environmentId },
+-      include: { /* complex joins */ }
+-    });
+-  },
+-  { key: createCacheKey.environment.details(environmentId), ttl: 60 * 30 * 1000 } // 30 minutes
+-)();
+-```
+-
+-### When NOT to Add Caching
+-
+-```typescript
+-// ❌ Don't cache these operations - minimal overhead
+-- Simple property access (<0.1ms)
+-- Basic transformations (<1ms)
+-- Functions that just call already-cached functions
+-- Pure computation without I/O
+-
+-// ❌ Bad example: Redundant caching
+-const getCachedLicenseFeatures = withCache(
+-  async () => {
+-    const license = await getEnterpriseLicense(); // Already cached!
+-    return license.active ? license.features : null; // Just property access
+-  },
+-  { key: "license-features", ttl: 1800 * 1000 } // 30 minutes in milliseconds
+-);
+-
+-// ✅ Good example: Simple and efficient
+-const getLicenseFeatures = async () => {
+-  const license = await getEnterpriseLicense(); // Already cached
+-  return license.active ? license.features : null; // 0.1ms overhead
+-};
+-```
+-
+-### Computational Overhead Analysis
+-
+-Before adding caching, analyze the overhead:
+-
+-```typescript
+-// ✅ High overhead - CACHE IT
+-- Database queries: ~10-100ms
+-- External APIs: ~50-500ms  
+-- File I/O: ~5-50ms
+-- Complex algorithms: >5ms
+-
+-// ❌ Low overhead - DON'T CACHE
+-- Property access: ~0.001ms
+-- Simple lookups: ~0.1ms
+-- Basic validation: ~1ms
+-- Type checks: ~0.01ms
+-
+-// Example decision tree:
+-const expensiveOperation = async () => {
+-  return prisma.query(); // 50ms - CACHE IT
+-};
+-
+-const cheapOperation = (data: any) => {
+-  return data.property; // 0.001ms - DON'T CACHE
+-};
+-```
+-
+-### Avoid Cache Wrapper Anti-Pattern
+-
+-```typescript
+-// ❌ Don't create wrapper functions just for caching
+-const getCachedUserPermissions = withCache(
+-  async (userId: string) => getUserPermissions(userId),
+-  { key: createCacheKey.user.permissions(userId), ttl: 3600 * 1000 } // 1 hour in milliseconds
+-);
+-
+-// ✅ Add caching directly to the original function
+-export const getUserPermissions = withCache(
+-  async (userId: string) => {
+-    return prisma.user.findUnique({
+-      where: { id: userId },
+-      include: { permissions: true }
+-    });
+-  },
+-  { key: createCacheKey.user.permissions(userId), ttl: 3600 * 1000 } // 1 hour in milliseconds
+-);
+-```
+-
+-## TTL Coordination Strategy
+-
+-### Multi-Layer Cache Coordination
+-For endpoints serving client SDKs, coordinate TTLs across layers:
+-
+-```typescript
+-// Client SDK cache (expiresAt) - longest TTL for fewer requests
+-const CLIENT_TTL = 60;           // 1 minute (seconds for client)
+-
+-// Server Redis cache - shorter TTL ensures fresh data for clients  
+-const SERVER_TTL = 60 * 1000;   // 1 minutes in milliseconds
+-
+-// HTTP cache headers (seconds)
+-const BROWSER_TTL = 60;         // 1 minute (max-age)
+-const CDN_TTL = 60;             // 1 minute (s-maxage)
+-const CORS_TTL = 60 * 60;            // 1 hour (balanced approach)
+-```
+-
+-### Standard TTL Guidelines (in milliseconds for cache-manager + Keyv)
+-```typescript
+-// Configuration data - rarely changes
+-const CONFIG_TTL = 60 * 60 * 24 * 1000;     // 24 hours
+-
+-// User data - moderate frequency  
+-const USER_TTL = 60 * 60 * 2 * 1000;        // 2 hours
+-
+-// Survey data - changes moderately
+-const SURVEY_TTL = 60 * 15 * 1000;          // 15 minutes
+-
+-// Billing data - expensive to compute
+-const BILLING_TTL = 60 * 30 * 1000;         // 30 minutes
+-
+-// Action classes - infrequent changes
+-const ACTION_CLASS_TTL = 60 * 30 * 1000;    // 30 minutes
+-```
+-
+-## High-Frequency Endpoint Optimization
+-
+-### Performance Patterns for High-Volume Endpoints
+-
+-```typescript
+-// ✅ Optimized high-frequency endpoint pattern
+-export const GET = async (request: NextRequest, props: { params: Promise<{ id: string }> }) => {
+-  const params = await props.params;
+-
+-  try {
+-    // Simple validation (avoid Zod for high-frequency)
+-    if (!params.id || typeof params.id !== 'string') {
+-      return responses.badRequestResponse("ID is required", undefined, true);
+-    }
+-
+-    // Single optimized query with caching
+-    const data = await getOptimizedData(params.id);
+-
+-    return responses.successResponse(
+-      {
+-        data,
+-        expiresAt: new Date(Date.now() + CLIENT_TTL * 1000), // SDK cache duration
+-      },
+-      true,
+-      "public, s-maxage=1800, max-age=3600, stale-while-revalidate=1800, stale-if-error=3600"
+-    );
+-  } catch (err) {
+-    // Simplified error handling for performance
+-    if (err instanceof ResourceNotFoundError) {
+-      return responses.notFoundResponse(err.resourceType, err.resourceId);
+-    }
+-    logger.error({ error: err, url: request.url }, "Error in high-frequency endpoint");
+-    return responses.internalServerErrorResponse(err.message, true);
+-  }
+-};
+-```
+-
+-### Avoid These Performance Anti-Patterns
+-
+-```typescript
+-// ❌ Avoid for high-frequency endpoints
+-const inputValidation = ZodSchema.safeParse(input);     // Too slow
+-const startTime = Date.now(); logger.debug(...);       // Logging overhead
+-const { data, revalidateEnvironment } = await get();   // Complex return types
+-```
+-
+-### CORS Optimization
+-```typescript
+-// ✅ Balanced CORS caching (not too aggressive)
+-export const OPTIONS = async (): Promise<Response> => {
+-  return responses.successResponse(
+-    {},
+-    true,
+-    "public, s-maxage=3600, max-age=3600" // 1 hour balanced approach
+-  );
+-};
+-```
+-
+-## Redis Cache Migration from Next.js
+-
+-### Avoid Legacy Next.js Patterns
+-```typescript
+-// ❌ Old Next.js unstable_cache pattern (avoid)
+-const getCachedData = unstable_cache(
+-  async (id) => fetchData(id),
+-  ['cache-key'],
+-  { tags: ['environment'], revalidate: 900 }
+-);
+-
+-// ❌ Don't use revalidateEnvironment flags with Redis
+-return { data, revalidateEnvironment: true }; // This gets cached incorrectly!
+-
+-// ✅ New Redis pattern with withCache (TTL in milliseconds)
+-export const getCachedData = (id: string) => 
+-  withCache(
+-    () => fetchData(id),
+-    {
+-      key: createCacheKey.environment.data(id),
+-      ttl: 60 * 15 * 1000, // 15 minutes in milliseconds
+-    }
+-  )();
+-```
+-
+-### Remove Revalidation Logic
+-When migrating from Next.js `unstable_cache`:
+-- Remove `revalidateEnvironment` or similar flags
+-- Remove tag-based invalidation logic  
+-- Use TTL-based expiration instead
+-- Handle one-time updates (like `appSetupCompleted`) directly in cache
+-
+-## Data Layer Optimization
+-
+-### Single Query Pattern
+-```typescript
+-// ✅ Optimize with single database query
+-export const getOptimizedEnvironmentData = async (environmentId: string) => {
+-  return prisma.environment.findUniqueOrThrow({
+-    where: { id: environmentId },
+-    include: {
+-      project: { 
+-        select: { id: true, recontactDays: true, /* ... */ }
+-      },
+-      organization: {
+-        select: { id: true, billing: true }
+-      },
+-      surveys: {
+-        where: { status: "inProgress" },
+-        select: { id: true, name: true, /* ... */ }
+-      },
+-      actionClasses: {
+-        select: { id: true, name: true, /* ... */ }
+-      }
+-    }
+-  });
+-};
+-
+-// ❌ Avoid multiple separate queries
+-const environment = await getEnvironment(id);
+-const organization = await getOrganization(environment.organizationId);  
+-const surveys = await getSurveys(id);
+-const actionClasses = await getActionClasses(id);
+-```
+-
+-## Invalidation Best Practices
+-
+-**Always use explicit key-based invalidation:**
+-
+-```typescript
+-// ✅ Clear and debuggable
+-await invalidateCache(createCacheKey.environment.state(environmentId));
+-await invalidateCache([
+-  createCacheKey.environment.surveys(environmentId),
+-  createCacheKey.environment.actionClasses(environmentId)
+-]);
+-
+-// ❌ Avoid complex tag systems
+-await invalidateByTags(["environment", "survey"]); // Don't do this
+-```
+-
+-## Critical Performance Targets
+-
+-### High-Frequency Endpoint Goals
+-- **Cache hit ratio**: >85%
+-- **Response time P95**: <200ms  
+-- **Database load reduction**: >60%
+-- **HTTP cache duration**: 1hr browser, 30min Cloudflare
+-- **SDK refresh interval**: 1 hour with 30min server cache
+-
+-### Performance Monitoring
+-- Use **existing elastic cache analytics** for metrics
+-- Log cache errors and warnings (not debug info)
+-- Track database query reduction
+-- Monitor response times for cached endpoints
+-- **Avoid performance logging** in high-frequency endpoints
+-
+-## Error Handling Pattern
+-
+-Always provide fallback to fresh data on cache errors:
+-
+-```typescript
+-try {
+-  const cached = await cache.get(key);
+-  if (cached) return cached;
+-  
+-  const fresh = await fetchFresh();
+-  await cache.set(key, fresh, ttl); // ttl in milliseconds
+-  return fresh;
+-} catch (error) {
+-  // ✅ Always fallback to fresh data
+-  logger.warn("Cache error, fetching fresh", { key, error });
+-  return fetchFresh();
+-}
+-```
+-
+-## Common Pitfalls to Avoid
+-
+-1. **Never use Next.js `unstable_cache()`** - unreliable in production
+-2. **Don't use revalidation flags with Redis** - they get cached incorrectly
+-3. **Avoid Zod validation** for simple parameters in high-frequency endpoints
+-4. **Don't add performance logging** to high-frequency endpoints
+-5. **Coordinate TTLs** between client and server caches
+-6. **Don't over-engineer** with complex tag systems  
+-7. **Avoid caching rapidly changing data** (real-time metrics)
+-8. **Always validate cache keys** to prevent collisions
+-9. **Don't add redundant caching layers** - analyze computational overhead first
+-10. **Avoid cache wrapper functions** - add caching directly to expensive operations
+-11. **Don't cache property access or simple transformations** - overhead is negligible
+-12. **Analyze the full call chain** before adding caching to avoid double-caching
+-13. **Remember TTL is in milliseconds** for cache-manager + Keyv stack (not seconds)
+-
+-## Monitoring Strategy
+-
+-- Use **existing elastic cache analytics** for metrics
+-- Log cache errors and warnings  
+-- Track database query reduction
+-- Monitor response times for cached endpoints
+-- **Don't add custom metrics** that duplicate existing monitoring
+-
+-## Important Notes
+-
+-### TTL Units
+-- **cache-manager + Keyv**: TTL in **milliseconds**
+-- **Direct Redis commands**: TTL in **seconds** (EXPIRE, SETEX) or **milliseconds** (PEXPIRE, PSETEX)
+-- **HTTP cache headers**: TTL in **seconds** (max-age, s-maxage)
+-- **Client SDK**: TTL in **seconds** (expiresAt calculation)
+diff --git a/.cursor/rules/database-performance.mdc b/.cursor/rules/database-performance.mdc
+@@ -1,41 +0,0 @@
+----
+-description: 
+-globs: 
+-alwaysApply: false
+----
+-# Database Performance & Prisma Best Practices
+-
+-## Critical Performance Rules
+-
+-### Response Count Queries
+-- **NEVER** use `skip`/`offset` with `prisma.response.count()` - this causes expensive subqueries with OFFSET
+-- Always use only `where` clauses for count operations: `prisma.response.count({ where: { ... } })`
+-- For pagination, separate count queries from data queries
+-- Reference: [apps/web/lib/response/service.ts](mdc:apps/web/lib/response/service.ts) line 654-686
+-
+-### Prisma Query Optimization
+-- Use proper indexes defined in [packages/database/schema.prisma](mdc:packages/database/schema.prisma)
+-- Leverage existing indexes: `@@index([surveyId, createdAt])`, `@@index([createdAt])`
+-- Use cursor-based pagination for large datasets instead of offset-based
+-- Cache frequently accessed data using React Cache and custom cache tags
+-
+-### Date Range Filtering
+-- When filtering by `createdAt`, always use indexed queries
+-- Combine with `surveyId` for optimal performance: `{ surveyId, createdAt: { gte: start, lt: end } }`
+-- Avoid complex WHERE clauses that can't utilize indexes
+-
+-### Count vs Data Separation
+-- Always separate count queries from data fetching queries
+-- Use `Promise.all()` to run count and data queries in parallel
+-- Example pattern from [apps/web/modules/api/v2/management/responses/lib/response.ts](mdc:apps/web/modules/api/v2/management/responses/lib/response.ts):
+-```typescript
+-const [responses, totalCount] = await Promise.all([
+-  prisma.response.findMany(query),
+-  prisma.response.count({ where: whereClause }),
+-]);
+-```
+-
+-### Monitoring & Debugging
+-- Monitor AWS RDS Performance Insights for problematic queries
+-- Look for queries with OFFSET in count operations - these indicate performance issues
+-- Use proper error handling with `DatabaseError` for Prisma exceptions
+diff --git a/.cursor/rules/database.mdc b/.cursor/rules/database.mdc
+@@ -1,105 +0,0 @@
+----
+-description: >
+-globs: schema.prisma
+-alwaysApply: false
+----
+-# Formbricks Database Schema Reference
+-
+-This rule provides a reference to the Formbricks database structure. For the most up-to-date and complete schema definitions, please refer to the schema.prisma file directly.
+-
+-## Database Overview
+-
+-Formbricks uses PostgreSQL with Prisma ORM. The schema is designed for multi-tenancy with strong data isolation between organizations.
+-
+-### Core Hierarchy
+-
+-```
+-Organization
+-└── Project
+-    └── Environment (production/development)
+-        ├── Survey
+-        ├── Contact
+-        ├── ActionClass
+-        └── Integration
+-```
+-
+-## Schema Reference
+-
+-For the complete and up-to-date database schema, please refer to:
+-
+-- Main schema: `packages/database/schema.prisma`
+-- JSON type definitions: `packages/database/json-types.ts`
+-
+-The schema.prisma file contains all model definitions, relationships, enums, and field types. The json-types.ts file contains TypeScript type definitions for JSON fields.
+-
+-## Data Access Patterns
+-
+-### Multi-tenancy
+-
+-- All data is scoped by Organization
+-- Environment-level isolation for surveys and contacts
+-- Project-level grouping for related surveys
+-
+-### Soft Deletion
+-
+-Some models use soft deletion patterns:
+-
+-- Check `isActive` fields where present
+-- Use proper filtering in queries
+-
+-### Cascading Deletes
+-
+-Configured cascade relationships:
+-
+-- Organization deletion cascades to all child entities
+-- Survey deletion removes responses, displays, triggers
+-- Contact deletion removes attributes and responses
+-
+-## Common Query Patterns
+-
+-### Survey with Responses
+-
+-```typescript
+-// Include response count and latest responses
+-const survey = await prisma.survey.findUnique({
+-  where: { id: surveyId },
+-  include: {
+-    responses: {
+-      take: 10,
+-      orderBy: { createdAt: "desc" },
+-    },
+-    _count: {
+-      select: { responses: true },
+-    },
+-  },
+-});
+-```
+-
+-### Environment Scoping
+-
+-```typescript
+-// Always scope by environment
+-const surveys = await prisma.survey.findMany({
+-  where: {
+-    environmentId: environmentId,
+-    // Additional filters...
+-  },
+-});
+-```
+-
+-### Contact with Attributes
+-
+-```typescript
+-const contact = await prisma.contact.findUnique({
+-  where: { id: contactId },
+-  include: {
+-    attributes: {
+-      include: {
+-        attributeKey: true,
+-      },
+-    },
+-  },
+-});
+-```
+-
+-This schema supports Formbricks' core functionality: multi-tenant survey management, user targeting, response collection, and analysis, all while maintaining strict data isolation and security.
+diff --git a/.cursor/rules/documentations.mdc b/.cursor/rules/documentations.mdc
+@@ -1,28 +0,0 @@
+----
+-description: Guideline for writing end-user facing documentation in the apps/docs folder
+-globs:
+-alwaysApply: false
+----
+-
+-Follow these instructions and guidelines when asked to write documentation in the apps/docs folder
+-
+-Follow this structure to write the title, describtion and pick a matching icon and insert it at the top of the MDX file:
+-
+----
+-
+-title: "FEATURE NAME"
+-description: "1 concise sentence to describe WHEN the feature is being used and FOR WHAT BENEFIT."
+-icon: "link"
+-
+----
+-
+-- Description: 1 concise sentence to describe WHEN the feature is being used and FOR WHAT BENEFIT.
+-- Make ample use of the Mintlify components you can find here https://mintlify.com/docs/llms.txt - e.g. if docs describe consecutive steps, always use Mintlify Step component.
+-- In all Headlines, only capitalize the current feature and nothing else, to Camel Case.
+-- The page should never start with H1 headline, because it's already part of the template.
+-- Tonality: Keep it concise and to the point. Avoid Jargon where possible.
+-- If a feature is part of the Enterprise Edition, use this note:
+-
+-<Note>
+-  FEATURE NAME is part of the [Enterprise Edition](/self-hosting/advanced/license) 
+-</Note>
+diff --git a/.cursor/rules/formbricks-architecture.mdc b/.cursor/rules/formbricks-architecture.mdc
+@@ -1,332 +0,0 @@
+----
+-description: 
+-globs: 
+-alwaysApply: false
+----
+-# Formbricks Architecture & Patterns
+-
+-## Monorepo Structure
+-
+-### Apps Directory
+-- `apps/web/` - Main Next.js web application
+-- `packages/` - Shared packages and utilities
+-
+-### Key Directories in Web App
+-```
+-apps/web/
+-├── app/                    # Next.js 13+ app directory
+-│   ├── (app)/             # Main application routes
+-│   ├── (auth)/            # Authentication routes
+-│   ├── api/               # API routes
+-├── components/            # Shared components
+-├── lib/                   # Utility functions and services
+-└── modules/               # Feature-specific modules
+-```
+-
+-## Routing Patterns
+-
+-### App Router Structure
+-The application uses Next.js 13+ app router with route groups:
+-
+-```
+-(app)/environments/[environmentId]/
+-├── surveys/[surveyId]/
+-│   ├── (analysis)/        # Analysis views
+-│   │   ├── responses/     # Response management
+-│   │   ├── summary/       # Survey summary
+-│   │   └── hooks/         # Analysis-specific hooks
+-│   ├── edit/              # Survey editing
+-│   └── settings/          # Survey settings
+-```
+-
+-### Dynamic Routes
+-- `[environmentId]` - Environment-specific routes
+-- `[surveyId]` - Survey-specific routes
+-
+-## Service Layer Pattern
+-
+-### Service Organization
+-Services are organized by domain in `apps/web/lib/`:
+-
+-```typescript
+-// Example: Response service
+-// apps/web/lib/response/service.ts
+-export const getResponseCountAction = async ({
+-  surveyId,
+-  filterCriteria,
+-}: {
+-  surveyId: string;
+-  filterCriteria: any;
+-}) => {
+-  // Service implementation
+-};
+-```
+-
+-### Action Pattern
+-Server actions follow a consistent pattern:
+-
+-```typescript
+-// Action wrapper for service calls
+-export const getResponseCountAction = async (params) => {
+-  try {
+-    const result = await responseService.getCount(params);
+-    return { data: result };
+-  } catch (error) {
+-    return { error: error.message };
+-  }
+-};
+-```
+-
+-## Context Patterns
+-
+-### Provider Structure
+-Context providers follow a consistent pattern:
+-
+-```typescript
+-// Provider component
+-export const ResponseFilterProvider = ({ children }: { children: React.ReactNode }) => {
+-  const [selectedFilter, setSelectedFilter] = useState(defaultFilter);
+-  
+-  const value = {
+-    selectedFilter,
+-    setSelectedFilter,
+-    // ... other state and methods
+-  };
+-
+-  return (
+-    <ResponseFilterContext.Provider value={value}>
+-      {children}
+-    </ResponseFilterContext.Provider>
+-  );
+-};
+-
+-// Hook for consuming context
+-export const useResponseFilter = () => {
+-  const context = useContext(ResponseFilterContext);
+-  if (!context) {
+-    throw new Error('useResponseFilter must be used within ResponseFilterProvider');
+-  }
+-  return context;
+-};
+-```
+-
+-### Context Composition
+-Multiple contexts are often composed together:
+-
+-```typescript
+-// Layout component with multiple providers
+-export default function AnalysisLayout({ children }: { children: React.ReactNode }) {
+-  return (
+-    <ResponseFilterProvider>
+-      <ResponseCountProvider>
+-        {children}
+-      </ResponseCountProvider>
+-    </ResponseFilterProvider>
+-  );
+-}
+-```
+-
+-## Component Patterns
+-
+-### Page Components
+-Page components are located in the app directory and follow this pattern:
+-
+-```typescript
+-// apps/web/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/responses/page.tsx
+-export default function ResponsesPage() {
+-  return (
+-    <div>
+-      <ResponsesTable />
+-      <ResponsesPagination />
+-    </div>
+-  );
+-}
+-```
+-
+-### Component Organization
+-- **Pages** - Route components in app directory
+-- **Components** - Reusable UI components
+-- **Modules** - Feature-specific components and logic
+-
+-### Shared Components
+-Common components are in `apps/web/components/`:
+-- UI components (buttons, inputs, modals)
+-- Layout components (headers, sidebars)
+-- Data display components (tables, charts)
+-
+-## Hook Patterns
+-
+-### Custom Hook Structure
+-Custom hooks follow consistent patterns:
+-
+-```typescript
+-export const useResponseCount = ({ 
+-  survey, 
+-  initialCount 
+-}: {
+-  survey: TSurvey;
+-  initialCount?: number;
+-}) => {
+-  const [responseCount, setResponseCount] = useState(initialCount ?? 0);
+-  const [isLoading, setIsLoading] = useState(false);
+-  
+-  // Hook logic...
+-  
+-  return {
+-    responseCount,
+-    isLoading,
+-    refetch,
+-  };
+-};
+-```
+-
+-### Hook Dependencies
+-- Use context hooks for shared state
+-- Implement proper cleanup with AbortController
+-- Optimize dependency arrays to prevent unnecessary re-renders
+-
+-## Data Fetching Patterns
+-
+-### Server Actions
+-The app uses Next.js server actions for data fetching:
+-
+-```typescript
+-// Server action
+-export async function getResponsesAction(params: GetResponsesParams) {
+-  const responses = await getResponses(params);
+-  return { data: responses };
+-}
+-
+-// Client usage
+-const { data } = await getResponsesAction(params);
+-```
+-
+-### Error Handling
+-Consistent error handling across the application:
+-
+-```typescript
+-try {
+-  const result = await apiCall();
+-  return { data: result };
+-} catch (error) {
+-  console.error("Operation failed:", error);
+-  return { error: error.message };
+-}
+-```
+-
+-## Type Safety
+-
+-### Type Organization
+-Types are organized in packages:
+-- `@formbricks/types` - Shared type definitions
+-- Local types in component/hook files
+-
+-### Common Types
+-```typescript
+-import { TSurvey } from "@formbricks/types/surveys/types";
+-import { TResponse } from "@formbricks/types/responses";
+-import { TEnvironment } from "@formbricks/types/environment";
+-```
+-
+-## State Management
+-
+-### Local State
+-- Use `useState` for component-specific state
+-- Use `useReducer` for complex state logic
+-- Use refs for mutable values that don't trigger re-renders
+-
+-### Global State
+-- React Context for feature-specific shared state
+-- URL state for filters and pagination
+-- Server state through server actions
+-
+-## Performance Considerations
+-
+-### Code Splitting
+-- Dynamic imports for heavy components
+-- Route-based code splitting with app router
+-- Lazy loading for non-critical features
+-
+-### Caching Strategy
+-- Server-side caching for database queries
+-- Client-side caching with React Query (where applicable)
+-- Static generation for public pages
+-
+-## Testing Strategy
+-
+-### Test Organization
+-```
+-component/
+-├── Component.tsx
+-├── Component.test.tsx
+-└── hooks/
+-    ├── useHook.ts
+-    └── useHook.test.tsx
+-```
+-
+-### Test Patterns
+-- Unit tests for utilities and services
+-- Integration tests for components with context
+-- Hook tests with proper mocking
+-
+-## Build & Deployment
+-
+-### Build Process
+-- TypeScript compilation
+-- Next.js build optimization
+-- Asset optimization and bundling
+-
+-### Environment Configuration
+-- Environment-specific configurations
+-- Feature flags for gradual rollouts
+-- Database connection management
+-
+-## Security Patterns
+-
+-### Authentication
+-- Session-based authentication
+-- Environment-based access control
+-- API route protection
+-
+-### Data Validation
+-- Input validation on both client and server
+-- Type-safe API contracts
+-- Sanitization of user inputs
+-
+-## Monitoring & Observability
+-
+-### Error Tracking
+-- Client-side error boundaries
+-- Server-side error logging
+-- Performance monitoring
+-
+-### Analytics
+-- User interaction tracking
+-- Performance metrics
+-- Database query monitoring
+-
+-## Best Practices Summary
+-
+-### Code Organization
+-- ✅ Follow the established directory structure
+-- ✅ Use consistent naming conventions
+-- ✅ Separate concerns (UI, logic, data)
+-- ✅ Keep components focused and small
+-
+-### Performance
+-- ✅ Implement proper loading states
+-- ✅ Use AbortController for async operations
+-- ✅ Optimize database queries
+-- ✅ Implement proper caching strategies
+-
+-### Type Safety
+-- ✅ Use TypeScript throughout
+-- ✅ Define proper interfaces for props
+-- ✅ Use type guards for runtime validation
+-- ✅ Leverage shared type packages
+-
+-### Testing
+-- ✅ Write tests for critical functionality
+-- ✅ Mock external dependencies properly
+-- ✅ Test error scenarios and edge cases
+-- ✅ Maintain good test coverage
+diff --git a/.cursor/rules/github-actions-security.mdc b/.cursor/rules/github-actions-security.mdc
+@@ -1,232 +0,0 @@
+----
+-description: Security best practices and guidelines for writing GitHub Actions and workflows
+-globs: .github/workflows/*.yml,.github/workflows/*.yaml,.github/actions/*/action.yml,.github/actions/*/action.yaml
+----
+-
+-# GitHub Actions Security Best Practices
+-
+-## Required Security Measures
+-
+-### 1. Set Minimum GITHUB_TOKEN Permissions
+-
+-Always explicitly set the minimum required permissions for GITHUB_TOKEN:
+-
+-```yaml
+-permissions:
+-  contents: read
+-  # Only add additional permissions if absolutely necessary:
+-  # pull-requests: write  # for commenting on PRs
+-  # issues: write         # for creating/updating issues
+-  # checks: write         # for publishing check results
+-```
+-
+-### 2. Add Harden-Runner as First Step
+-
+-For **every job** on `ubuntu-latest`, add Harden-Runner as the first step:
+-
+-```yaml
+-- name: Harden the runner
+-  uses: step-security/harden-runner@ec9f2d5744a09debf3a187a3f4f675c53b671911 # v2.13.0
+-  with:
+-    egress-policy: audit # or 'block' for stricter security
+-```
+-
+-### 3. Pin Actions to Full Commit SHA
+-
+-**Always** pin third-party actions to their full commit SHA, not tags:
+-
+-```yaml
+-# ❌ BAD - uses mutable tag
+-- uses: actions/checkout@v4
+-
+-# ✅ GOOD - pinned to immutable commit SHA
+-- uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+-```
+-
+-### 4. Secure Variable Handling
+-
+-Prevent command injection by properly quoting variables:
+-
+-```yaml
+-# ❌ BAD - potential command injection
+-run: echo "Processing ${{ inputs.user_input }}"
+-
+-# ✅ GOOD - properly quoted
+-env:
+-  USER_INPUT: ${{ inputs.user_input }}
+-run: echo "Processing ${USER_INPUT}"
+-```
+-
+-Use `${VARIABLE}` syntax in shell scripts instead of `$VARIABLE`.
+-
+-### 5. Environment Variables for Secrets
+-
+-Store sensitive data in environment variables, not inline:
+-
+-```yaml
+-# ❌ BAD
+-run: curl -H "Authorization: Bearer ${{ secrets.TOKEN }}" api.example.com
+-
+-# ✅ GOOD
+-env:
+-  API_TOKEN: ${{ secrets.TOKEN }}
+-run: curl -H "Authorization: Bearer ${API_TOKEN}" api.example.com
+-```
+-
+-## Workflow Structure Best Practices
+-
+-### Required Workflow Elements
+-
+-```yaml
+-name: "Descriptive Workflow Name"
+-
+-on:
+-  # Define specific triggers
+-  push:
+-    branches: [main]
+-  pull_request:
+-    branches: [main]
+-
+-# Always set explicit permissions
+-permissions:
+-  contents: read
+-
+-jobs:
+-  job-name:
+-    name: "Descriptive Job Name"
+-    runs-on: ubuntu-latest
+-    timeout-minutes: 30 # tune per job; standardize repo-wide
+-
+-    # Set job-level permissions if different from workflow level
+-    permissions:
+-      contents: read
+-
+-    steps:
+-      # Always start with Harden-Runner on ubuntu-latest
+-      - name: Harden the runner
+-        uses: step-security/harden-runner@v2
+-        with:
+-          egress-policy: audit
+-
+-      # Pin all actions to commit SHA
+-      - name: Checkout code
+-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+-```
+-
+-### Input Validation for Actions
+-
+-For composite actions, always validate inputs:
+-
+-```yaml
+-inputs:
+-  user_input:
+-    description: "User provided input"
+-    required: true
+-
+-runs:
+-  using: "composite"
+-  steps:
+-    - name: Validate input
+-      shell: bash
+-      run: |
+-        # Harden shell and validate input format/content before use
+-        set -euo pipefail
+-
+-        USER_INPUT="${{ inputs.user_input }}"
+-
+-        if [[ ! "${USER_INPUT}" =~ ^[A-Za-z0-9._-]+$ ]]; then
+-          echo "❌ Invalid input format"
+-          exit 1
+-        fi
+-```
+-
+-## Docker Security in Actions
+-
+-### Pin Docker Images to Digests
+-
+-```yaml
+-# ❌ BAD - mutable tag
+-container: node:18
+-
+-# ✅ GOOD - pinned to digest
+-container: node:18@sha256:a1ba21bf0c92931d02a8416f0a54daad66cb36a85d6a37b82dfe1604c4c09cad
+-```
+-
+-## Common Patterns
+-
+-### Secure File Operations
+-
+-```yaml
+-- name: Process files securely
+-  shell: bash
+-  env:
+-    FILE_PATH: ${{ inputs.file_path }}
+-  run: |
+-    set -euo pipefail  # Fail on errors, undefined vars, pipe failures
+-
+-    # Use absolute paths and validate
+-    SAFE_PATH=$(realpath "${FILE_PATH}")
+-    if [[ "$SAFE_PATH" != "${GITHUB_WORKSPACE}"/* ]]; then
+-      echo "❌ Path outside workspace"
+-      exit 1
+-    fi
+-```
+-
+-### Artifact Handling
+-
+-```yaml
+-- name: Upload artifacts securely
+-  uses: actions/upload-artifact@50769540e7f4bd5e21e526ee35c689e35e0d6874 # v4.4.0
+-  with:
+-    name: build-artifacts
+-    path: |
+-      dist/
+-      !dist/**/*.log  # Exclude sensitive files
+-    retention-days: 30
+-```
+-
+-### GHCR authentication for pulls/scans
+-
+-```yaml
+-# Minimal permissions required for GHCR pulls/scans
+-permissions:
+-  contents: read
+-  packages: read
+-
+-steps:
+-  - name: Log in to GitHub Container Registry
+-    uses: docker/login-action@184bdaa0721073962dff0199f1fb9940f07167d1 # v3.5.0
+-    with:
+-      registry: ghcr.io
+-      username: ${{ github.actor }}
+-      password: ${{ secrets.GITHUB_TOKEN }}
+-```
+-
+-## Security Checklist
+-
+-- [ ] Minimum GITHUB_TOKEN permissions set
+-- [ ] Harden-Runner added to all ubuntu-latest jobs
+-- [ ] All third-party actions pinned to commit SHA
+-- [ ] Input validation implemented for custom actions
+-- [ ] Variables properly quoted in shell scripts
+-- [ ] Secrets stored in environment variables
+-- [ ] Docker images pinned to digests (if used)
+-- [ ] Error handling with `set -euo pipefail`
+-- [ ] File paths validated and sanitized
+-- [ ] No sensitive data in logs or outputs
+-- [ ] GHCR login performed before pulls/scans (packages: read)
+-- [ ] Job timeouts configured (`timeout-minutes`)
+-
+-## Recommended Additional Workflows
+-
+-Consider adding these security-focused workflows to your repository:
+-
+-1. **CodeQL Analysis** - Static Application Security Testing (SAST)
+-2. **Dependency Review** - Scan for vulnerable dependencies in PRs
+-3. **Dependabot Configuration** - Automated dependency updates
+-
+-## Resources
+-
+-- [GitHub Security Hardening Guide](https://docs.github.com/en/actions/security-guides/security-hardening-for-github-actions)
+-- [Step Security Harden-Runner](https://github.com/step-security/harden-runner)
+-- [Secure-Repo Best Practices](https://github.com/step-security/secure-repo)
+diff --git a/.cursor/rules/i18n-management.mdc b/.cursor/rules/i18n-management.mdc
+@@ -1,457 +0,0 @@
+----
+-title: i18n Management with Lingo.dev
+-description: Guidelines for managing internationalization (i18n) with Lingo.dev, including translation workflow, key validation, and best practices
+----
+-
+-# i18n Management with Lingo.dev
+-
+-This rule defines the workflow and best practices for managing internationalization (i18n) in the Formbricks project using Lingo.dev.
+-
+-## Overview
+-
+-Formbricks uses [Lingo.dev](https://lingo.dev) for managing translations across multiple languages. The translation workflow includes:
+-
+-1. **Translation Keys**: Defined in code using the `t()` function from `react-i18next`
+-2. **Translation Files**: JSON files stored in `apps/web/locales/` for each supported language
+-3. **Validation**: Automated scanning to detect missing and unused translation keys
+-4. **CI/CD**: Pre-commit hooks and GitHub Actions to enforce translation quality
+-
+-## Translation Workflow
+-
+-### 1. Using Translations in Code
+-
+-When adding translatable text in the web app, use the `t()` function or `<Trans>` component:
+-
+-**Using the `t()` function:**
+-```tsx
+-import { useTranslate } from "@/lib/i18n/translate";
+-
+-const MyComponent = () => {
+-  const { t } = useTranslate();
+-  
+-  return (
+-    <div>
+-      <h1>{t("common.welcome")}</h1>
+-      <p>{t("pages.dashboard.description")}</p>
+-    </div>
+-  );
+-};
+-```
+-
+-**Using the `<Trans>` component (for text with HTML elements):**
+-```tsx
+-import { Trans } from "react-i18next";
+-
+-const MyComponent = () => {
+-  return (
+-    <div>
+-      <p>
+-        <Trans
+-          i18nKey="auth.terms_agreement"
+-          components={{ 
+-            link: <a href="/terms" />,
+-            b: <b />
+-          }}
+-        />
+-      </p>
+-    </div>
+-  );
+-};
+-```
+-
+-**Key Naming Conventions:**
+-- Use dot notation for nested keys: `section.subsection.key`
+-- Use descriptive names: `auth.login.success_message` not `auth.msg1`
+-- Group related keys together: `auth.*`, `errors.*`, `common.*`
+-- Use lowercase with underscores: `user_profile_settings` not `UserProfileSettings`
+-
+-### 2. Translation File Structure
+-
+-Translation files are located in `apps/web/locales/` and use the following naming convention:
+-- `en-US.json` (English - United States, default)
+-- `de-DE.json` (German)
+-- `fr-FR.json` (French)
+-- `pt-BR.json` (Portuguese - Brazil)
+-- etc.
+-
+-**File Structure:**
+-```json
+-{
+-  "common": {
+-    "welcome": "Welcome",
+-    "save": "Save",
+-    "cancel": "Cancel"
+-  },
+-  "auth": {
+-    "login": {
+-      "title": "Login",
+-      "email_placeholder": "Enter your email",
+-      "password_placeholder": "Enter your password"
+-    }
+-  }
+-}
+-```
+-
+-### 3. Adding New Translation Keys
+-
+-When adding new translation keys:
+-
+-1. **Add the key in your code** using `t("your.new.key")`
+-2. **Add translation for that key in en-US.json file**
+-3. **Run the translation workflow:**
+-   ```bash
+-   pnpm i18n
+-   ```
+-   This will:
+-   - Generate translations for all languages using Lingo.dev
+-   - Validate that all keys are present and used
+-
+-4. **Review and commit** the generated translation files
+-
+-### 4. Available Scripts
+-
+-```bash
+-# Generate translations using Lingo.dev
+-pnpm generate-translations
+-
+-# Scan and validate translation keys
+-pnpm scan-translations
+-
+-# Full workflow: generate + validate
+-pnpm i18n
+-
+-# Validate only (without generation)
+-pnpm i18n:validate
+-```
+-
+-## Translation Key Validation
+-
+-### Automated Validation
+-
+-The project includes automated validation that runs:
+-- **Pre-commit hook**: Validates translations before allowing commits (when `LINGODOTDEV_API_KEY` is set)
+-- **GitHub Actions**: Validates translations on every PR and push to main
+-
+-### Validation Rules
+-
+-The validation script (`scan-translations.ts`) checks for:
+-
+-1. **Missing Keys**: Translation keys used in code but not present in translation files
+-2. **Unused Keys**: Translation keys present in translation files but not used in code
+-3. **Incomplete Translations**: Keys that exist in the default language (`en-US`) but are missing in target languages
+-
+-**What gets scanned:**
+-- All `.ts` and `.tsx` files in `apps/web/`
+-- Both `t()` function calls and `<Trans i18nKey="">` components
+-- All locale files (`de-DE.json`, `fr-FR.json`, `ja-JP.json`, etc.)
+-
+-**What gets excluded:**
+-- Test files (`*.test.ts`, `*.test.tsx`, `*.spec.ts`, `*.spec.tsx`)
+-- Build directories (`node_modules`, `dist`, `build`, `.next`, `coverage`)
+-- Locale files themselves (from code scanning)
+-
+-**Note:** Test files are excluded because they often use mock or example translation keys for testing purposes that don't need to exist in production translation files.
+-
+-### Fixing Validation Errors
+-
+-#### Missing Keys
+-
+-If you encounter missing key errors:
+-
+-```
+-❌ MISSING KEYS (2):
+-
+-   These keys are used in code but not found in translation files:
+-
+-   • auth.signup.email_required
+-   • settings.profile.update_success
+-```
+-
+-**Resolution:**
+-1. Ensure that translations for those keys are present in en-US.json .  
+-2. Run `pnpm generate-translations` to have Lingo.dev generate the missing translations
+-3. OR manually add the keys to `apps/web/locales/en-US.json`:
+-   ```json
+-   {
+-     "auth": {
+-       "signup": {
+-         "email_required": "Email is required"
+-       }
+-     },
+-     "settings": {
+-       "profile": {
+-         "update_success": "Profile updated successfully"
+-       }
+-     }
+-   }
+-   ```
+-3. Run `pnpm scan-translations` to verify
+-4. Commit the changes
+-
+-#### Unused Keys
+-
+-If you encounter unused key errors:
+-
+-```
+-⚠️  UNUSED KEYS (1):
+-
+-   These keys exist in translation files but are not used in code:
+-
+-   • old.deprecated.key
+-```
+-
+-**Resolution:**
+-1. If the key is truly unused, remove it from all translation files
+-2. If the key should be used, add it to your code using `t("old.deprecated.key")`
+-3. Run `pnpm scan-translations` to verify
+-4. Commit the changes
+-
+-#### Incomplete Translations
+-
+-If you encounter incomplete translation errors:
+-
+-```
+-⚠️  INCOMPLETE TRANSLATIONS:
+-
+-   Some keys from en-US are missing in target languages:
+-
+-   📝 de-DE (5 missing keys):
+-      • auth.new_feature.title
+-      • auth.new_feature.description
+-      • settings.advanced.option
+-      ... and 2 more
+-```
+-
+-**Resolution:**
+-1. **Recommended:** Run `pnpm generate-translations` to have Lingo.dev automatically translate the missing keys
+-2. **Manual:** Add the missing keys to the target language files:
+-   ```bash
+-   # Copy the structure from en-US.json and translate the values
+-   # For example, in de-DE.json:
+-   {
+-     "auth": {
+-       "new_feature": {
+-         "title": "Neues Feature",
+-         "description": "Beschreibung des neuen Features"
+-       }
+-     }
+-   }
+-   ```
+-3. Run `pnpm scan-translations` to verify all translations are complete
+-4. Commit the changes
+-
+-## Pre-commit Hook Behavior
+-
+-The pre-commit hook will:
+-
+-1. Run `lint-staged` for code formatting
+-2. If `LINGODOTDEV_API_KEY` is set:
+-   - Generate translations using Lingo.dev
+-   - Validate translation keys
+-   - Auto-add updated locale files to the commit
+-   - **Block the commit** if validation fails
+-3. If `LINGODOTDEV_API_KEY` is not set:
+-   - Skip translation validation (for community contributors)
+-   - Show a warning message
+-
+-## Environment Variables
+-
+-### LINGODOTDEV_API_KEY
+-
+-This is the API key for Lingo.dev integration.
+-
+-**For Core Team:**
+-- Add to your local `.env` file
+-- Required for running translation generation
+-
+-**For Community Contributors:**
+-- Not required for local development
+-- Translation validation will be skipped
+-- The CI will still validate translations
+-
+-## Best Practices
+-
+-### 1. Keep Keys Organized
+-
+-Group related keys together:
+-```json
+-{
+-  "auth": {
+-    "login": { ... },
+-    "signup": { ... },
+-    "forgot_password": { ... }
+-  },
+-  "dashboard": {
+-    "header": { ... },
+-    "sidebar": { ... }
+-  }
+-}
+-```
+-
+-### 2. Avoid Hardcoded Strings
+-
+-**❌ Bad:**
+-```tsx
+-<button>Click here</button>
+-```
+-
+-**✅ Good:**
+-```tsx
+-<button>{t("common.click_here")}</button>
+-```
+-
+-### 3. Use Interpolation for Dynamic Content
+-
+-**❌ Bad:**
+-```tsx
+-{t("welcome")} {userName}!
+-```
+-
+-**✅ Good:**
+-```tsx
+-{t("auth.welcome_message", { userName })}
+-```
+-
+-With translation:
+-```json
+-{
+-  "auth": {
+-    "welcome_message": "Welcome, {userName}!"
+-  }
+-}
+-```
+-
+-### 4. Avoid Dynamic Key Construction
+-
+-**❌ Bad:**
+-```tsx
+-const key = `errors.${errorCode}`;
+-t(key);
+-```
+-
+-**✅ Good:**
+-```tsx
+-switch (errorCode) {
+-  case "401":
+-    return t("errors.unauthorized");
+-  case "404":
+-    return t("errors.not_found");
+-  default:
+-    return t("errors.unknown");
+-}
+-```
+-
+-### 5. Test Translation Keys
+-
+-When adding new features:
+-1. Add translation keys
+-2. Test in multiple languages using the language switcher
+-3. Ensure text doesn't overflow in longer translations (German, French)
+-4. Run `pnpm scan-translations` before committing
+-
+-## Troubleshooting
+-
+-### Issue: Pre-commit hook fails with validation errors
+-
+-**Solution:**
+-```bash
+-# Run the full i18n workflow
+-pnpm i18n
+-
+-# Fix any missing or unused keys
+-# Then commit again
+-git add .
+-git commit -m "your message"
+-```
+-
+-### Issue: Translation validation passes locally but fails in CI
+-
+-**Solution:**
+-- Ensure all translation files are committed
+-- Check that `scan-translations.ts` hasn't been modified
+-- Verify that locale files are properly formatted JSON
+-
+-### Issue: Cannot commit because of missing translations
+-
+-**Solution:**
+-```bash
+-# If you have LINGODOTDEV_API_KEY:
+-pnpm generate-translations
+-
+-# If you don't have the API key (community contributor):
+-# Manually add the missing keys to en-US.json
+-# Then run validation:
+-pnpm scan-translations
+-```
+-
+-### Issue: Getting "unused keys" for keys that are used
+-
+-**Solution:**
+-- The script scans `.ts` and `.tsx` files only
+-- If keys are used in other file types, they may be flagged
+-- Verify the key is actually used with `grep -r "your.key" apps/web/`
+-- If it's a false positive, consider updating the scanning patterns in `scan-translations.ts`
+-
+-## AI Assistant Guidelines
+-
+-When assisting with i18n-related tasks, always:
+-
+-1. **Use the `t()` function** for all user-facing text
+-2. **Follow key naming conventions** (lowercase, dots for nesting)
+-3. **Run validation** after making changes: `pnpm scan-translations`
+-4. **Fix missing keys** by adding them to `en-US.json`
+-5. **Remove unused keys** from all translation files
+-6. **Test the pre-commit hook** if making changes to translation workflow
+-7. **Update this rule file** if translation workflow changes
+-
+-### Fixing Missing Translation Keys
+-
+-When the AI encounters missing translation key errors:
+-
+-1. Identify the missing keys from the error output
+-2. Determine the appropriate section and naming for each key
+-3. Add the keys to `apps/web/locales/en-US.json` with meaningful English text
+-4. Ensure proper JSON structure and nesting
+-5. Run `pnpm scan-translations` to verify
+-6. Inform the user that other language files will be updated via Lingo.dev
+-
+-**Example:**
+-```typescript
+-// Error: Missing key "settings.api.rate_limit_exceeded"
+-
+-// Add to en-US.json:
+-{
+-  "settings": {
+-    "api": {
+-      "rate_limit_exceeded": "API rate limit exceeded. Please try again later."
+-    }
+-  }
+-}
+-```
+-
+-### Removing Unused Translation Keys
+-
+-When the AI encounters unused translation key errors:
+-
+-1. Verify the keys are truly unused by searching the codebase
+-2. Remove the keys from `apps/web/locales/en-US.json`
+-3. Note that removal from other language files can be handled via Lingo.dev
+-4. Run `pnpm scan-translations` to verify
+-
+-## Migration Notes
+-
+-This project previously used Tolgee for translations. As of this migration:
+-
+-- **Old scripts**: `tolgee-pull` is deprecated (kept for reference)
+-- **New scripts**: Use `pnpm i18n` or `pnpm generate-translations`
+-- **Old workflows**: `tolgee.yml` and `tolgee-missing-key-check.yml` removed
+-- **New workflow**: `translation-check.yml` handles all validation
+-
+----
+-
+-**Last Updated:** October 14, 2025
+-**Related Files:**
+-- `scan-translations.ts` - Translation validation script
+-- `.husky/pre-commit` - Pre-commit hook with i18n validation
+-- `.github/workflows/translation-check.yml` - CI workflow for translation validation
+-- `apps/web/locales/*.json` - Translation files
+diff --git a/.cursor/rules/react-context-patterns.mdc b/.cursor/rules/react-context-patterns.mdc
+@@ -1,52 +0,0 @@
+----
+-description: 
+-globs: 
+-alwaysApply: false
+----
+-# React Context & Provider Patterns
+-
+-## Context Provider Best Practices
+-
+-### Provider Implementation
+-- Use TypeScript interfaces for provider props with optional `initialCount` for testing
+-- Implement proper cleanup in `useEffect` to avoid React hooks warnings
+-- Reference: [apps/web/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/components/ResponseCountProvider.tsx](mdc:apps/web/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/components/ResponseCountProvider.tsx)
+-
+-### Cleanup Pattern for Refs
+-```typescript
+-useEffect(() => {
+-  const currentPendingRequests = pendingRequests.current;
+-  const currentAbortController = abortController.current;
+-  
+-  return () => {
+-    if (currentAbortController) {
+-      currentAbortController.abort();
+-    }
+-    currentPendingRequests.clear();
+-  };
+-}, []);
+-```
+-
+-### Testing Context Providers
+-- Always wrap components using context in the provider during tests
+-- Use `initialCount` prop for predictable test scenarios
+-- Mock context dependencies like `useParams`, `useResponseFilter`
+-- Example from [apps/web/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/SurveyAnalysisCTA.test.tsx](mdc:apps/web/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/SurveyAnalysisCTA.test.tsx):
+-
+-```typescript
+-render(
+-  <ResponseCountProvider survey={dummySurvey} initialCount={5}>
+-    <ComponentUnderTest />
+-  </ResponseCountProvider>
+-);
+-```
+-
+-### Required Mocks for Context Testing
+-- Mock `next/navigation` with `useParams` returning environment and survey IDs
+-- Mock response filter context and actions
+-- Mock API actions that the provider depends on
+-
+-### Context Hook Usage
+-- Create custom hooks like `useResponseCountContext()` for consuming context
+-- Provide meaningful error messages when context is used outside provider
+-- Use context for shared state that multiple components need to access
+diff --git a/.cursor/rules/review-and-refine.mdc b/.cursor/rules/review-and-refine.mdc
+@@ -1,179 +0,0 @@
+----
+-description: Apply these quality standards before finalizing code changes to ensure DRY principles, React best practices, TypeScript conventions, and maintainable code.
+-globs:
+-alwaysApply: false
+----
+-
+-# Review & Refine
+-
+-Before finalizing any code changes, review your implementation against these quality standards:
+-
+-## Core Principles
+-
+-### DRY (Don't Repeat Yourself)
+-
+-- Extract duplicated logic into reusable functions or hooks
+-- If the same code appears in multiple places, consolidate it
+-- Create helper functions at appropriate scope (component-level, module-level, or utility files)
+-- Avoid copy-pasting code blocks
+-
+-### Code Reduction
+-
+-- Remove unnecessary code, comments, and abstractions
+-- Prefer built-in solutions over custom implementations
+-- Consolidate similar logic
+-- Remove dead code and unused imports
+-- Question if every line of code is truly needed
+-
+-## React Best Practices
+-
+-### Component Design
+-
+-- Keep components focused on a single responsibility
+-- Extract complex logic into custom hooks
+-- Prefer composition over prop drilling
+-- Use children props and render props when appropriate
+-- Keep component files under 300 lines when possible
+-
+-### Hooks Usage
+-
+-- Follow Rules of Hooks (only call at top level, only in React functions)
+-- Extract complex `useEffect` logic into custom hooks
+-- Use `useMemo` and `useCallback` only when you have a measured performance issue
+-- Declare dependencies arrays correctly - don't ignore exhaustive-deps warnings
+-- Keep `useEffect` focused on a single concern
+-
+-### State Management
+-
+-- Colocate state as close as possible to where it's used
+-- Lift state only when necessary
+-- Use `useReducer` for complex state logic with multiple sub-values
+-- Avoid derived state - compute values during render instead
+-- Don't store values in state that can be computed from props
+-
+-### Event Handlers
+-
+-- Name event handlers with `handle` prefix (e.g., `handleClick`, `handleSubmit`)
+-- Extract complex event handler logic into separate functions
+-- Avoid inline arrow functions in JSX when they contain complex logic
+-
+-## TypeScript Best Practices
+-
+-### Type Safety
+-
+-- Prefer type inference over explicit types when possible
+-- Use `const` assertions for literal types
+-- Avoid `any` - use `unknown` if type is truly unknown
+-- Use discriminated unions for complex conditional logic
+-- Leverage type guards and narrowing
+-
+-### Interface & Type Usage
+-
+-- Use existing types from `@formbricks/types` - don't recreate them
+-- Prefer `interface` for object shapes that might be extended
+-- Prefer `type` for unions, intersections, and mapped types
+-- Define types close to where they're used unless they're shared
+-- Export types from index files for shared types
+-
+-### Type Assertions
+-
+-- Avoid type assertions (`as`) when possible
+-- Use type guards instead of assertions
+-- Only assert when you have more information than TypeScript
+-
+-## Code Organization
+-
+-### Separation of Concerns
+-
+-- Separate business logic from UI rendering
+-- Extract API calls into separate functions or modules
+-- Keep data transformation separate from component logic
+-- Use custom hooks for stateful logic that doesn't render UI
+-
+-### Function Clarity
+-
+-- Functions should do one thing well
+-- Name functions clearly and descriptively
+-- Keep functions small (aim for under 20 lines)
+-- Extract complex conditionals into named boolean variables or functions
+-- Avoid deep nesting (max 3 levels)
+-
+-### File Structure
+-
+-- Group related functions together
+-- Order declarations logically (types → hooks → helpers → component)
+-- Keep imports organized (external → internal → relative)
+-- Consider splitting large files by concern
+-
+-## Additional Quality Checks
+-
+-### Performance
+-
+-- Don't optimize prematurely - measure first
+-- Avoid creating new objects/arrays/functions in render unnecessarily
+-- Use keys properly in lists (stable, unique identifiers)
+-- Lazy load heavy components when appropriate
+-
+-### Accessibility
+-
+-- Use semantic HTML elements
+-- Include ARIA labels where needed
+-- Ensure keyboard navigation works
+-- Check color contrast and focus states
+-
+-### Error Handling
+-
+-- Handle error states in components
+-- Provide user feedback for failed operations
+-- Use error boundaries for component errors
+-- Log errors appropriately (avoid swallowing errors silently)
+-
+-### Naming Conventions
+-
+-- Use descriptive names (avoid abbreviations unless very common)
+-- Boolean variables/props should sound like yes/no questions (`isLoading`, `hasError`, `canEdit`)
+-- Arrays should be plural (`users`, `choices`, `items`)
+-- Event handlers: `handleX` in components, `onX` for props
+-- Constants in UPPER_SNAKE_CASE only for true constants
+-
+-### Code Readability
+-
+-- Prefer early returns to reduce nesting
+-- Use destructuring to make code clearer
+-- Break complex expressions into named variables
+-- Add comments only when code can't be made self-explanatory
+-- Use whitespace to group related code
+-
+-### Testing Considerations
+-
+-- Write code that's easy to test (pure functions, clear inputs/outputs)
+-- Avoid hard-to-mock dependencies when possible
+-- Keep side effects at the edges of your code
+-
+-## Review Checklist
+-
+-Before submitting your changes, ask yourself:
+-
+-1. **DRY**: Is there any duplicated logic I can extract?
+-2. **Clarity**: Would another developer understand this code easily?
+-3. **Simplicity**: Is this the simplest solution that works?
+-4. **Types**: Am I using TypeScript effectively?
+-5. **React**: Am I following React idioms and best practices?
+-6. **Performance**: Are there obvious performance issues?
+-7. **Separation**: Are concerns properly separated?
+-8. **Testing**: Is this code testable?
+-9. **Maintenance**: Will this be easy to change in 6 months?
+-10. **Deletion**: Can I remove any code and still accomplish the goal?
+-
+-## When to Apply This Rule
+-
+-Apply this rule:
+-
+-- After implementing a feature but before marking it complete
+-- When you notice your code feels "messy" or complex
+-- Before requesting code review
+-- When you see yourself copy-pasting code
+-- After receiving feedback about code quality
+-
+-Don't let perfect be the enemy of good, but always strive for:
+-**Simple, readable, maintainable code that does one thing well.**
+diff --git a/.cursor/rules/storybook-component-migration.mdc b/.cursor/rules/storybook-component-migration.mdc
+@@ -1,216 +0,0 @@
+----
+-description: Migrate deprecated UI components to a unified component
+-globs: 
+-alwaysApply: false
+----
+-# Component Migration Automation Rule
+-
+-## Overview
+-This rule automates the migration of deprecated components to new component systems in React/TypeScript codebases.
+-
+-## Trigger
+-When the user requests component migration (e.g., "migrate [DeprecatedComponent] to [NewComponent]" or "component migration").
+-
+-## Process
+-
+-### Step 1: Discovery and Planning
+-1. **Identify migration parameters:**
+-   - Ask user for deprecated component name (e.g., "Modal")
+-   - Ask user for new component name(s) (e.g., "Dialog")
+-   - Ask for any components to exclude (e.g., "ModalWithTabs")
+-   - Ask for specific import paths if needed
+-
+-2. **Scan codebase** for deprecated components:
+-   - Search for `import.*[DeprecatedComponent]` patterns
+-   - Exclude specified components that should not be migrated
+-   - List all found components with file paths
+-   - Present numbered list to user for confirmation
+-
+-### Step 2: Component-by-Component Migration
+-For each component, follow this exact sequence:
+-
+-#### 2.1 Component Migration
+-- **Import changes:**
+-  - Ask user to provide the new import structure
+-  - Example transformation pattern:
+-  ```typescript
+-  // FROM:
+-  import { [DeprecatedComponent] } from "@/components/ui/[DeprecatedComponent]"
+-  
+-  // TO:
+-  import {
+-    [NewComponent],
+-    [NewComponentPart1],
+-    [NewComponentPart2],
+-    // ... other parts
+-  } from "@/components/ui/[NewComponent]"
+-  ```
+-
+-- **Props transformation:**
+-  - Ask user for prop mapping rules (e.g., `open` → `open`, `setOpen` → `onOpenChange`)
+-  - Ask for props to remove (e.g., `noPadding`, `closeOnOutsideClick`, `size`)
+-  - Apply transformations based on user specifications
+-
+-- **Structure transformation:**
+-  - Ask user for the new component structure pattern
+-  - Apply the transformation maintaining all functionality
+-  - Preserve all existing logic, state management, and event handlers
+-
+-#### 2.2 Wait for User Approval
+-- Present the migration changes
+-- Wait for explicit user approval before proceeding
+-- If rejected, ask for specific feedback and iterate
+-#### 2.3 Re-read and Apply Additional Changes
+-- Re-read the component file to capture any user modifications
+-- Apply any additional improvements the user made
+-- Ensure all changes are incorporated
+-
+-#### 2.4 Test File Updates
+-- **Find corresponding test file** (same name with `.test.tsx` or `.test.ts`)
+-- **Update test mocks:**
+-  - Ask user for new component mock structure
+-  - Replace old component mocks with new ones
+-  - Example pattern:
+-  ```typescript
+-  // Add to test setup:
+-  jest.mock("@/components/ui/[NewComponent]", () => ({
+-    [NewComponent]: ({ children, [props] }: any) => ([mock implementation]),
+-    [NewComponentPart1]: ({ children }: any) => <div data-testid="[new-component-part1]">{children}</div>,
+-    [NewComponentPart2]: ({ children }: any) => <div data-testid="[new-component-part2]">{children}</div>,
+-    // ... other parts
+-  }));
+-  ```
+-- **Update test expectations:**
+-  - Change test IDs from old component to new component
+-  - Update any component-specific assertions
+-  - Ensure all new component parts used in the component are mocked
+-
+-#### 2.5 Run Tests and Optimize
+-- Execute `Node package manager test -- ComponentName.test.tsx`
+-- Fix any failing tests
+-- Optimize code quality (imports, formatting, etc.)
+-- Re-run tests until all pass
+-- **Maximum 3 iterations** - if still failing, ask user for guidance
+-
+-#### 2.6 Wait for Final Approval
+-- Present test results and any optimizations made
+-- Wait for user approval of the complete migration
+-- If rejected, iterate based on feedback
+-
+-#### 2.7 Git Commit
+-- Run: `git add .`
+-- Run: `git commit -m "migrate [ComponentName] from [DeprecatedComponent] to [NewComponent]"`
+-- Confirm commit was successful
+-
+-### Step 3: Final Report Generation
+-After all components are migrated, generate a comprehensive GitHub PR report:
+-
+-#### PR Title
+-```
+-feat: migrate [DeprecatedComponent] components to [NewComponent] system
+-```
+-
+-#### PR Description Template
+-```markdown
+-## 🔄 [DeprecatedComponent] to [NewComponent] Migration
+-
+-### Overview
+-Migrated [X] [DeprecatedComponent] components to the new [NewComponent] component system to modernize the UI architecture and improve consistency.
+-
+-### Components Migrated
+-[List each component with file path]
+-
+-### Technical Changes
+-- **Imports:** Replaced `[DeprecatedComponent]` with `[NewComponent], [NewComponentParts...]`
+-- **Props:** [List prop transformations]
+-- **Structure:** Implemented proper [NewComponent] component hierarchy
+-- **Styling:** [Describe styling changes]
+-- **Tests:** Updated all test mocks and expectations
+-
+-### Migration Pattern
+-```typescript
+-// Before
+-<[DeprecatedComponent] [oldProps]>
+-  [oldStructure]
+-</[DeprecatedComponent]>
+-
+-// After
+-<[NewComponent] [newProps]>
+-  [newStructure]
+-</[NewComponent]>
+-```
+-
+-### Testing
+-- ✅ All existing tests updated and passing
+-- ✅ Component functionality preserved
+-- ✅ UI/UX behavior maintained
+-
+-### How to Test This PR
+-1. **Functional Testing:**
+-   - Navigate to each migrated component's usage
+-   - Verify [component] opens and closes correctly
+-   - Test all interactive elements within [components]
+-   - Confirm styling and layout are preserved
+-
+-2. **Automated Testing:**
+-   ```bash
+-   Node package manager test
+-   ```
+-
+-3. **Visual Testing:**
+-   - Check that all [components] maintain proper styling
+-   - Verify responsive behavior
+-   - Test keyboard navigation and accessibility
+-
+-### Breaking Changes
+-[List any breaking changes or state "None - this is a drop-in replacement maintaining all existing functionality."]
+-
+-### Notes
+-- [Any excluded components] were preserved as they already use [NewComponent] internally
+-- All form validation and complex state management preserved
+-- Enhanced code quality with better imports and formatting
+-```
+-
+-## Special Considerations
+-
+-### Excluded Components
+-- **DO NOT MIGRATE** components specified by user as exclusions
+-- They may already use the new component internally or have other reasons
+-- Inform user these are skipped and why
+-
+-### Complex Components
+-- Preserve all existing functionality (forms, validation, state management)
+-- Maintain prop interfaces
+-- Keep all event handlers and callbacks
+-- Preserve accessibility features
+-
+-### Test Coverage
+-- Ensure all new component parts are mocked when used
+-- Mock all new component parts that appear in the component
+-- Update test IDs from old component to new component
+-- Maintain all existing test scenarios
+-
+-### Error Handling
+-- If tests fail after 3 iterations, stop and ask user for guidance
+-- If component is too complex, ask user for specific guidance
+-- If unsure about functionality preservation, ask for clarification
+-
+-### Migration Patterns
+-- Always ask user for specific migration patterns before starting
+-- Confirm import structures, prop mappings, and component hierarchies
+-- Adapt to different component architectures (simple replacements, complex restructuring, etc.)
+-
+-## Success Criteria
+-- All deprecated components successfully migrated to new components
+-- All tests passing
+-- No functionality lost
+-- Code quality maintained or improved
+-- User approval on each component
+-- Successful git commits for each migration
+-- Comprehensive PR report generated
+-
+-## Usage Examples
+-- "migrate Modal to Dialog"
+-- "migrate Button to NewButton" 
+-- "migrate Card to ModernCard"
+-- "component migration" (will prompt for details) 
+diff --git a/.cursor/rules/storybook-create-new-story.mdc b/.cursor/rules/storybook-create-new-story.mdc
+@@ -1,177 +0,0 @@
+----
+-description: Create a story in Storybook for a given component
+-globs:
+-alwaysApply: false
+----
+-
+-# Formbricks Storybook Stories
+-
+-## When generating Storybook stories for Formbricks components:
+-
+-### 1. **File Structure**
+-- Create `stories.tsx` (not `.stories.tsx`) in component directory
+-- Use exact import: `import { Meta, StoryObj } from "@storybook/react-vite";`
+-- Import component from `"./index"`
+-
+-### 2. **Story Structure Template**
+-```tsx
+-import { Meta, StoryObj } from "@storybook/react-vite";
+-import { ComponentName } from "./index";
+-
+-// For complex components with configurable options
+-// consider this as an example the options need to reflect the props types
+-interface StoryOptions {
+-  showIcon: boolean;
+-  numberOfElements: number;
+-  customLabels: string[];
+-}
+-
+-type StoryProps = React.ComponentProps<typeof ComponentName> & StoryOptions;
+-
+-const meta: Meta<StoryProps> = {
+-  title: "UI/ComponentName",
+-  component: ComponentName,
+-  tags: ["autodocs"],
+-  parameters: {
+-    layout: "centered",
+-    controls: { sort: "alpha", exclude: [] },
+-    docs: {
+-      description: {
+-        component: "The **ComponentName** component provides [description].",
+-      },
+-    },
+-  },
+-  argTypes: {
+-    // Organize in exactly these categories: Behavior, Appearance, Content
+-  },
+-};
+-
+-export default meta;
+-type Story = StoryObj<typeof ComponentName> & { args: StoryOptions };
+-```
+-
+-### 3. **ArgTypes Organization**
+-Organize ALL argTypes into exactly three categories:
+-- **Behavior**: disabled, variant, onChange, etc.
+-- **Appearance**: size, color, layout, styling, etc.  
+-- **Content**: text, icons, numberOfElements, etc.
+-
+-Format:
+-```tsx
+-argTypes: {
+-  propName: {
+-    control: "select" | "boolean" | "text" | "number",
+-    options: ["option1", "option2"], // for select
+-    description: "Clear description",
+-    table: {
+-      category: "Behavior" | "Appearance" | "Content",
+-      type: { summary: "string" },
+-      defaultValue: { summary: "default" },
+-    },
+-    order: 1,
+-  },
+-}
+-```
+-
+-### 4. **Required Stories**
+-Every component must include:
+-- `Default`: Most common use case
+-- `Disabled`: If component supports disabled state
+-- `WithIcon`: If component supports icons
+-- Variant stories for each variant (Primary, Secondary, Error, etc.)
+-- Edge case stories (ManyElements, LongText, CustomStyling)
+-
+-### 5. **Story Format**
+-```tsx
+-export const Default: Story = {
+-  args: {
+-    // Props with realistic values
+-  },
+-};
+-
+-export const EdgeCase: Story = {
+-  args: { /* ... */ },
+-  parameters: {
+-    docs: {
+-      description: {
+-        story: "Use this when [specific scenario].",
+-      },
+-    },
+-  },
+-};
+-```
+-
+-### 6. **Dynamic Content Pattern**
+-For components with dynamic content, create render function:
+-```tsx
+-const renderComponent = (args: StoryProps) => {
+-  const { numberOfElements, showIcon, customLabels } = args;
+-  
+-  // Generate dynamic content
+-  const elements = Array.from({ length: numberOfElements }, (_, i) => ({
+-    id: `element-${i}`,
+-    label: customLabels[i] || `Element ${i + 1}`,
+-    icon: showIcon ? <IconComponent /> : undefined,
+-  }));
+-  
+-  return <ComponentName {...args} elements={elements} />;
+-};
+-
+-export const Dynamic: Story = {
+-  render: renderComponent,
+-  args: {
+-    numberOfElements: 3,
+-    showIcon: true,
+-    customLabels: ["First", "Second", "Third"],
+-  },
+-};
+-```
+-
+-### 7. **State Management**
+-For interactive components:
+-```tsx
+-import { useState } from "react";
+-
+-const ComponentWithState = (args: any) => {
+-  const [value, setValue] = useState(args.defaultValue);
+-  
+-  return (
+-    <ComponentName
+-      {...args}
+-      value={value}
+-      onChange={(newValue) => {
+-        setValue(newValue);
+-        args.onChange?.(newValue);
+-      }}
+-    />
+-  );
+-};
+-
+-export const Interactive: Story = {
+-  render: ComponentWithState,
+-  args: { defaultValue: "initial" },
+-};
+-```
+-
+-### 8. **Quality Requirements**
+-- Include component description in parameters.docs
+-- Add story documentation for non-obvious use cases
+-- Test edge cases (overflow, empty states, many elements)
+-- Ensure no TypeScript errors
+-- Use realistic prop values
+-- Include at least 3-5 story variants
+-- Example values need to be in the context of survey application
+-
+-### 9. **Naming Conventions**
+-- **Story titles**: "UI/ComponentName"
+-- **Story exports**: PascalCase (Default, WithIcon, ManyElements)
+-- **Categories**: "Behavior", "Appearance", "Content" (exact spelling)
+-- **Props**: camelCase matching component props
+-
+-### 10. **Special Cases**
+-- **Generic components**: Remove `component` from meta if type conflicts
+-- **Form components**: Include Invalid, WithValue stories
+-- **Navigation**: Include ManyItems stories
+-- **Modals, Dropdowns and Popups **: Include trigger and content structure
+-
+-## Generate stories that are comprehensive, well-documented, and reflect all component states and edge cases. 
+diff --git a/AGENTS.md b/AGENTS.md
+@@ -18,11 +18,65 @@ Formbricks runs as a pnpm/turbo monorepo. `apps/web` is the Next.js product surf
+ ## Coding Style & Naming Conventions
+ 
+ TypeScript, React, and Prisma are the primary languages. Use the shared ESLint presets (`@formbricks/eslint-config`) and Prettier preset (110-char width, semicolons, double quotes, sorted import groups). Two-space indentation is standard; prefer `PascalCase` for React components and folders under `modules/`, `camelCase` for functions/variables, and `SCREAMING_SNAKE_CASE` only for constants. When adding mocks, place them inside `__mocks__` so import ordering stays stable.
++We are using SonarQube to identify code smells and security hotspots.
++
++## Architecture & Patterns
++
++- Next.js app router lives in `apps/web/app` with route groups like `(app)` and `(auth)`. Services live in `apps/web/lib`, feature modules in `apps/web/modules`.
++- Server actions wrap service calls and return `{ data }` or `{ error }` consistently.
++- Context providers should guard against missing provider usage and use cleanup patterns that snapshot refs inside `useEffect` to avoid React hooks warnings
++
++## Caching
++
++- Use React `cache()` for request-level dedupe and `cache.withCache()` or explicit Redis for expensive data.
++- Do not use Next.js `unstable_cache()`.
++- Always use `createCacheKey.*` utilities for cache keys.
++
++## i18n (Internationalization)
++
++- All user-facing text must use the `t()` function from `react-i18next`.
++- Key naming: use lowercase with dots for nesting (e.g., `common.welcome`).
++- Translations are in `apps/web/locales/`. Default is `en-US.json`.
++- Lingo.dev is automatically translating strings from en-US into other languages on commit. Run `pnpm i18n` to generate missing translations and validate keys.
++
++## Database & Prisma Performance
++
++- Multi-tenancy: All data must be scoped by Organization or Environment.
++- Soft Deletion: Check for `isActive` or `deletedAt` fields; use proper filtering.
++- Never use `skip`/`offset` with `prisma.response.count()`; only use `where`.
++- Separate count and data queries and run in parallel (`Promise.all`).
++- Prefer cursor pagination for large datasets.
++- When filtering by `createdAt`, include indexed fields (e.g., `surveyId` + `createdAt`).
+ 
+ ## Testing Guidelines
+ 
+ Prefer Vitest with Testing Library for logic in `.ts` files, keeping specs colocated with the code they exercise (`utility.test.ts`). Do not write tests for `.tsx` files—React components are covered by Playwright E2E tests instead. Mock network and storage boundaries through helpers from `@formbricks/*`. Run `pnpm test` before opening a PR and `pnpm test:coverage` when touching critical flows; keep coverage from regressing. End-to-end scenarios belong in `apps/web/playwright`, using descriptive filenames (`billing.spec.ts`) and tagging slow suites with `@slow` when necessary.
+ 
++## Documentation (apps/docs)
++
++- Add frontmatter with `title`, `description`, and `icon` at the top of the MDX file.
++- Do not start with an H1; use Camel Case headings (only capitalize the feature name).
++- Use Mintlify components for steps and callouts.
++- If Enterprise-only, add the Enterprise note block described in docs.
++
++## Storybook
++
++- Stories live in `stories.tsx` in the component folder and import from `"./index"`.
++- Use `@storybook/react-vite` and organize argTypes into `Behavior`, `Appearance`, `Content`.
++- Include Default, Disabled (if supported), WithIcon (if supported), all variants, and edge cases.
++
++## GitHub Actions
++
++- Always set minimal `permissions` for `GITHUB_TOKEN`.
++- On `ubuntu-latest`, add `step-security/harden-runner` as the first step.
++
++## Quality Checklist
++
++- Keep code DRY and small; remove dead code and unused imports.
++- Follow React hooks rules, keep effects focused, and avoid unnecessary `useMemo`/`useCallback`.
++- Prefer type inference, avoid `any`, and use shared types from `@formbricks/types`.
++- Keep components focused, avoid deep nesting, and ensure basic accessibility.
++
+ ## Commit & Pull Request Guidelines
+ 
+ Commits follow a lightweight Conventional Commit format (`fix:`, `chore:`, `feat:`) and usually append the PR number, e.g. `fix: update OpenAPI schema (#6617)`. Keep commits scoped and lint-clean. Pull requests should outline the problem, summarize the solution, and link to issues or product specs. Attach screenshots or gifs for UI-facing work, list any migrations or env changes, and paste the output of relevant commands (`pnpm test`, `pnpm lint`, `pnpm db:migrate:dev`) so reviewers can verify readiness.
+PATCH
+
+echo "Gold patch applied."

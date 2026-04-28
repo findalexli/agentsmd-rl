@@ -1,0 +1,133 @@
+version: "2.0"
+
+task:
+  name: huggingface_hub-internal-update-agentsmd
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: huggingface/huggingface_hub
+  pr: 4110
+  base_commit: "b3a8eb58e4931bd6124e684fe1c4cf6cc1209b5a"
+  merge_commit: "0cbf4dcbd9e0a88b358952ab3873d6038de6b202"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+
+config_edits:
+  - path: AGENTS.md
+    tier: 1
+    gold_added: '### CLI (`src/huggingface_hub/cli/`)
+
+      Entry point: `hf.py` (Typer app). Subcommands split into modules: `auth.py`, `repos.py`, `spaces.py`, `models.py`, `datasets.py`, `buckets.py`, `jobs.py`, `collections.py`, `webhooks.py`, etc.
+
+      #### Adding CLI commands
+
+
+      **Structure & naming conventions:**
+
+
+      - Commands are organized as **Typer groups** registered in `hf.py` (e.g. `app.add_typer(spaces_cli, name="spaces")`).
+
+      - Each module creates its app with `typer_factory(help="...")` and defines commands with `@app.command("name")`.
+
+      - Use **pipe-separated aliases**: `@app.command("list | ls")` registers both `list` and `ls`.
+
+      - Use standard **verb names**: `ls`/`list`, `info`, `create`, `set`, `delete`, `update`.
+
+      - For **sub-resources** with multiple operations, create a nested subgroup: `volumes_cli = typer_factory(...)` then `spaces_cli.add_typer(volumes_cli, name="volumes")` → gives `hf spaces volumes ls/set/delete`. See `repos.py` for examples (`tag_cli`, `branch_cli`).
+
+
+      **Reusable option types** (from `_cli_utils.py` — import and use these, don''t reinvent):
+
+
+      - `TokenOpt`, `RepoIdArg`, `RepoTypeOpt`, `RevisionOpt` — standard auth/repo options.
+
+      - `SearchOpt`, `AuthorOpt`, `FilterOpt`, `LimitOpt` — list/search options.
+
+      - `FormatWithAutoOpt` / `FormatOpt` — output format (`auto|json|human|quiet|agent`).
+
+      - `VolumesOpt` + `parse_volumes()` — `-v`/`--volume` flag with `hf://[TYPE/]SOURCE:/MOUNT_PATH[:ro]` syntax.
+
+      - `get_hf_api(token=token)` — creates an `HfApi` instance with token.
+
+      - `api_object_to_dict(obj)` — converts dataclass API objects to dicts for output.
+
+
+      **Output** (from `_output.py` — use the `out` singleton):
+
+      Convention: stderr for prompts/warnings, stdout for data. Warnings go to stderr even in quiet/json modes.
+
+      - `out.table(items)` — list results (auto-formats as padded table / TSV / JSON depending on `--format`).
+
+      - `out.dict(data)` — single-item detail view.
+
+      - `out.result("Message", key=value, ...)` — success summary with green checkmark.
+
+      - `out.confirm("Prompt?", yes=yes)` — confirmation for destructive operations. Pair with a `-y`/`--yes` flag.
+
+      - `out.hint("...")` — actionable follow-up suggestion. Try to add hints when adding new commands or refactoring a command. Hints should preferably reuse the input args to be specific to the current use case. Example: `out.hint(f"Use ''hf buckets ls {bucket_id}'' to list files from the bucket.")` after a bucket creation.
+
+      - `out.text()`, `out.warning()`, `out.error()` — free-form output.
+
+      **Destructive operations** should use `out.confirm()` with a `yes: Annotated[bool, typer.Option("-y", "--yes", help="Answer Yes to prompt automatically.")]` parameter.
+
+      **Errors**: raise `CLIError("message")` for user-facing errors. Never wrap API calls with try/except for `RepositoryNotFoundError`, `RevisionNotFoundError`, etc. (already done globally)
+
+      **Generated docs**: `make style` auto-regenerates `docs/source/en/package_reference/cli.md` via `utils/generate_cli_reference.py`. Don''t edit that file by hand.
+
+      **Guides**: update the CLI guide `docs/sources/en/guides/cli.md` when adding / updating CLI commands. If the command is specific to a topic which has its own guide in `docs/sources/en/guides`, add a mention in the guide as well, using the same tone as the existing guide.
+
+
+      **CLI tests**: add tests in `tests/test_cli.py`. Try to group tests into classes when relevant. Do not add a test for each specific use case / parameter set. Usually testing the 1-2 main use cases is enough.
+
+      ## Commits & PRs
+
+
+      - **Commit message prefix**: use `[Area]` prefix matching the scope, e.g. `[CLI] Add ...`, `[CLI] Fix ...`, `[Inference] ...`.
+
+      - **PR title**: short (under 70 chars), same `[Area]` prefix convention.
+
+      - **PR description**: keep it casual. Include a `## Summary` with a few bullet points and real CLI/code **examples** from manual testing (copy-paste terminal output). No need for a formal "Test plan" section. Call out breaking changes explicitly if any. It is important to document any decision taken in the PR or instructions provided in the prompt while working on the PR, ideally with the rationale behind it.
+
+
+      ## Code conventions
+
+
+      ### Simplicity is the #1 priority
+
+
+      - No premature abstractions. No unnecessary generalization.
+
+      - Don''t implement features until they''re actually needed.
+
+      - Don''t accept parameters without a use case.
+
+      - No redundant `try`/`except` - don''t catch errors already handled up the call stack.
+
+      - Prefer strictness now, relax later.
+
+
+      ### Follow Python 3.10+ idioms
+
+      - `match`/`case` over `if`/`elif` chains when dispatching on a value.
+
+      - `str | None` not `Optional[str]`.
+
+      - f-strings over `.format()` or `%`.
+
+      - Walrus operator (`:=`) when it improves readability.
+
+      - Comprehensions over `map`/`filter` with lambdas.'
+    gold_removed: ''

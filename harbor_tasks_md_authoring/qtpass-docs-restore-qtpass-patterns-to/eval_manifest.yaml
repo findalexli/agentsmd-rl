@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: qtpass-docs-restore-qtpass-patterns-to
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: IJHack/QtPass
+  pr: 1153
+  base_commit: "d0684a5f105d08f4bafcf736dc5e65f2d07a4c74"
+  merge_commit: "188d0c99298f2b12b0014e1c7c37fc2ce4705ff0"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+
+config_edits:
+  - path: AGENTS.md
+    tier: 1
+    gold_added: "### Profile Git Settings\n\nGit options (useGit, autoPush, autoPull) are stored per-profile:\n\n```cpp\nbool useGit = QtPassSettings::getProfileUseGit(profileName, false);\nQtPassSettings::setProfileUseGit(profileName, true);\nQtPassSettings::setProfileAutoPush(profileName, true);\nQtPassSettings::setProfileAutoPull(profileName, false);\n```\n\nIn ConfigDialog, use `getProfiles()`/`setProfiles()` to preserve non-selected profile settings:\n\n```cpp\nsetProfiles(QtPassSettings::getProfiles(), QtPassSettings::getProfile());\nQtPassSettings::setProfiles(getProfiles());\n```\n\n### QSettings Singleton Pattern\n\nQtPass uses `QtPassSettings::getInstance()` instead of raw `QSettings`:\n\n```cpp\nQtPassSettings::getInstance()->setValue(\"key\", value);\nQtPassSettings::getInstance()->beginGroup(\"profile\");\nQtPassSettings::getInstance()->remove(profileName);\nQtPassSettings::getInstance()->endGroup();\n```\n\nAlways match the settings backend used by QtPass in tests.\n\n### MainWindow Add Entry Pattern\n\n```cpp\nvoid MainWindow::addPassword() {\n    bool ok;\n    QString dir =\n        Util::getDir(ui->treeView->currentIndex(), true, model, proxyModel);\n    QString file =\n        QInputDialog::getText(this, tr(\"New file\"),\n                              tr(\"New password file: \\n(Will be placed in %1 )\")\n                                  .arg(QtPassSettings::getPassStore() +\n                                       Util::getDir(ui->treeView->currentIndex(),\n                                                    true, model, proxyModel)),\n                              QLineEdit::Normal, \"\", &ok);\n    if (!ok || file.isEmpty()) {\n        return;\n    }\n    file = dir + file;\n    setPassword(file);\n}\n```\n\n### ConfigDialog Profile Table Selection\n\n```cpp\nvoid ConfigDialog::onProfileTableSelectionChanged() {\n    QList<QTableWidgetItem *> selected = ui->profileTable->selectedItems();\n    if (selected.isEmpty()) return;\n    QString profileName = ui->profileTable->item(selected.first()->row(), 0)->text();\n    loadGitSettingsForProfile(profileName, m_profiles);\n}\n```\n\nCache profiles in `m_profiles` member and update on `getProfiles()`.\n\n### Avoid Setter Side Effects in Loops\n\n```cpp\n// Bad - triggers update logic for each profile\nfor (const auto &profile : profiles) {\n    setUseGit(profile.useGit);  // Side effects!\n}\n// Good\nfor (const auto &profile : profiles) {\n    ui->checkBoxUseGit->setChecked(profile.useGit);\n}\nuseGit(selected.useGit);\n```\n"
+    gold_removed: ''

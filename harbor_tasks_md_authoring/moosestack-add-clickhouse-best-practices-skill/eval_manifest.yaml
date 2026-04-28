@@ -1,0 +1,50 @@
+version: "2.0"
+
+task:
+  name: moosestack-add-clickhouse-best-practices-skill
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: 514-labs/moosestack
+  pr: 3582
+  base_commit: "2ac6a5363f38bd8c89361f7f5b4442008b1680e8"
+  merge_commit: "4f0333b9eeaf02395970e797bd958e79f4ed501f"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+
+config_edits:
+  - path: AGENTS.md
+    tier: 1
+    gold_added: 'Rust (CLI), TypeScript (libs/web), Python (lib), ClickHouse (OLAP), Redpanda/Kafka (streaming), Temporal (workflows), Redis (state)
+
+
+      ## ClickHouse Best Practices
+
+
+      When working with MooseStack data models, ClickHouse schemas, queries, or configurations, reference the `moosestack-clickhouse-best-practices` skill. It contains rules covering:
+
+      - Schema design (primary keys, data types, partitioning)
+
+      - Query optimization (JOINs, materialized views, indices)
+
+      - Insert strategy (batching, async inserts, avoiding mutations)
+
+
+      Each rule includes MooseStack TypeScript/Python examples. When reviewing or implementing ClickHouse-related code, read relevant rule files and cite specific rules in your guidance.
+
+
+      To install the skill: `npx skills add 514-labs/agent-skills`'
+    gold_removed: ''

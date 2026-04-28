@@ -1,0 +1,42 @@
+version: "2.0"
+
+task:
+  name: openroad-flow-scripts-doc-add-agentsmd
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: The-OpenROAD-Project/OpenROAD-flow-scripts
+  pr: 4193
+  base_commit: "6cc99179b5f852b45686cf204ada7e4062b9b05a"
+  merge_commit: "e5ce907f878490bf9947347f4cd4b73e97451c80"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+
+config_edits:
+  - path: AGENTS.md
+    tier: 1
+    gold_added: '# OpenROAD-flow-scripts (ORFS) agent context
+
+
+      See `README.md` for the general ORFS guide.
+
+
+      The OpenROAD (OR) engine source resides in `tools/OpenROAD/` (git submodule). For C++/Tcl development, refer to `tools/OpenROAD/AGENTS.md`.'
+    gold_removed: ''
+  - path: CLAUDE.md
+    tier: 1
+    gold_added: AGENTS.md
+    gold_removed: ''

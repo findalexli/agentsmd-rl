@@ -1,0 +1,43 @@
+version: "2.0"
+
+task:
+  name: prefect-update-agentsmd-files-for-9551bb8
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: PrefectHQ/prefect
+  pr: 21554
+  base_commit: "9551bb8a02c248a56875e201cae6461877876567"
+  merge_commit: "48e7dda62864c789f31901957cfac9401c90e5bb"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in src/prefect/runner/AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in src/prefect/runner/AGENTS.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in src/prefect/server/AGENTS.md."
+
+config_edits:
+  - path: src/prefect/runner/AGENTS.md
+    tier: 1
+    gold_added: '## Work Pool Clearing in `add_flow`
+
+
+      `Runner.add_flow()` explicitly assigns `deployment.work_pool_name = None` and `deployment.work_queue_name = None` *after* the `RunnerDeployment` is constructed, not via constructor kwargs. This is intentional: post-construction assignment adds the fields to Pydantic''s `model_fields_set`, which `server/models/deployments.py:update_deployment` checks to detect "explicitly cleared" vs. "not provided." Constructing with `work_pool_name=None` in kwargs does *not* trigger clearing — `RunnerDeployment` factory methods now omit `None`-valued work pool fields from the constructor. If you ever need another field to signal "clear this on the server side," follow the same post-construction-assignment pattern.
+
+      '
+    gold_removed: ''
+  - path: src/prefect/server/AGENTS.md
+    tier: 1
+    gold_added: '- **`update_deployment` uses `model_fields_set` to distinguish explicit `None` from "not provided" for `work_pool_name`.** In `models/deployments.py`, when `deployment.work_pool_name is None` AND `"work_pool_name" in deployment.model_fields_set`, the work queue association is cleared (`work_queue_id = None`). If `work_pool_name` is simply absent from `model_fields_set`, the existing work pool association is left intact. This is the intentional counterpart to the Pydantic v2 null-overwrite pitfall above — here the explicit `model_fields_set` entry signals *desired* clearing. `RunnerDeployment` factory methods omit `None`-valued work pool fields from constructor kwargs; `Runner.add_flow()` then post-assigns `None` to opt into clearing. Follow this same pattern for any future field that should distinguish "clear it" from "leave it alone."
+
+      '
+    gold_removed: ''

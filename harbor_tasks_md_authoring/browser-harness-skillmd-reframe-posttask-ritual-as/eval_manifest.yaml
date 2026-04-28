@@ -1,0 +1,80 @@
+version: "2.0"
+
+task:
+  name: browser-harness-skillmd-reframe-posttask-ritual-as
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: browser-use/browser-harness
+  pr: 61
+  base_commit: "dd95b5c4596a08f25ce860a7f6d32ea3b9c0ccba"
+  merge_commit: "f014990f84fdddc408edc3556eb65a3bc876a6ff"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in SKILL.md."
+
+config_edits:
+  - path: SKILL.md
+    tier: 1
+    gold_added: '## Always contribute back
+
+      **If you learned anything non-obvious about how a site works, open a PR to `domain-skills/<site>/` before you finish. Default to contributing.** The harness gets better only because agents file what they learn. If figuring something out cost you a few steps, the next run should not pay the same tax.
+
+      Examples of what''s worth a PR:
+
+
+      - A **private API** the page calls (XHR/fetch endpoint, request shape, auth) — often 10× faster than DOM scraping.
+
+      - A **stable selector** that beats the obvious one, or an obfuscated CSS-module class to avoid.
+
+      - A **framework quirk** — "the dropdown is a React combobox that only commits on Escape", "this Vue list only renders rows inside its own scroll container, so `scrollIntoView` on the row doesn''t work — you have to scroll the container".
+
+      - A **URL pattern** — direct route, required query params (`?lang=en`, `?th=1`), a variant that skips a loader.
+
+      - A **wait** that `wait_for_load()` misses, with the reason.
+
+      - A **trap** — stale drafts, legacy IDs that now return null, unicode quirks, beforeunload dialogs, CAPTCHA surfaces.
+
+
+      ### What a domain skill should capture
+
+
+      The *durable* shape of the site — the map, not the diary. Focus on what the next agent on this site needs to know before it starts:
+
+
+      - URL patterns and query params.
+
+      - Private APIs and their payload shape.
+
+      - Stable selectors (`data-*`, `aria-*`, `role`, semantic classes).
+
+      - Site structure — containers, items per page, framework, where state lives.
+
+      - Framework/interaction quirks unique to this site.
+
+      - Waits and the reasons they''re needed.
+
+      - Traps and the selectors that *don''t* work.
+
+
+      ### Do not write
+
+
+      - **Raw pixel coordinates.** They break on viewport, zoom, and layout changes. Describe how to *locate* the target (selector, `scrollIntoView`, `aria-label`, visible text) — never where it happened to be on your screen.
+
+      - **Run narration** or step-by-step of the specific task you just did.
+
+      - **Secrets, cookies, session tokens, user-specific state.** `domain-skills/` is shared and public.'
+    gold_removed: ''

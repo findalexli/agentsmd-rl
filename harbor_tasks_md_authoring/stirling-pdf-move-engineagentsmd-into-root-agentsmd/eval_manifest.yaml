@@ -1,0 +1,36 @@
+version: "2.0"
+
+task:
+  name: stirling-pdf-move-engineagentsmd-into-root-agentsmd
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: Stirling-Tools/Stirling-PDF
+  pr: 6151
+  base_commit: "3b2afe0deb1c50e1e8544ccb7f1ff5d98aa61eb7"
+  merge_commit: "975f1352170ea400cfea599fa7ff9bf82b962da1"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+
+config_edits:
+  - path: AGENTS.md
+    tier: 1
+    gold_added: "### Python Development (AI Engine)\n\nThe engine is a Python reasoning service for Stirling: it plans and interprets work, but it does not own durable state, and it does not execute Stirling PDF operations directly. Keep the service narrow: typed contracts in, typed contracts out, with AI only where it adds reasoning value. The frontend calls the Python engine via Java as a proxy.\n\n#### Python Commands\nAll engine commands run from the repo root using Task:\n- `task engine:check` — run all checks (typecheck + lint + format-check + test)\n- `task engine:fix` — auto-fix lint + formatting\n- `task engine:install` — install Python dependencies via uv\n- `task engine:dev` — start FastAPI with hot reload (localhost:5001)\n- `task engine:test` — run pytest\n- `task engine:lint` — run ruff linting\n- `task engine:typecheck` — run pyright\n- `task engine:format` — format code with ruff\n- `task engine:tool-models` — generate `tool_models.py` from the Java OpenAPI spec\n\nThe project structure is defined in `engine/pyproject.toml`. Any new dependencies should be listed there, followed by running `task engine:install`.\n\n#### Python Code Style\n- Keep `task engine:check` passing.\n- Use modern Python when it improves clarity.\n- Prefer explicit names to cleverness.\n- Avoid nested functions and nested classes unless the language construct requires them.\n- Prefer composition to inheritance when combining concepts.\n- Avoid speculative abstractions. Add a layer only when it removes real duplication or clarifies lifecycle.\n- Add comments sparingly and only when they explain non-obvious intent.\n\n#### Python Typing and Models\n- Deserialize into Pydantic models as early as possible.\n- Serialize from Pydantic models as late as possible.\n- Do not pass raw `dict[str, Any]` or `dict[str, object]` across important boundaries when a typed model can exist instead.\n- Avoid `Any` wherever possible.\n- Avoid `cast()` wherever possible (reconsider the structure first).\n- All shared models should subclass `stirling.models.ApiModel` so the service behaves consistently.\n- Do not use string literals for any type annotations, including `cast()`.\n\n#### Python Configuration\n- Keep application-owned configuration in `stirling.config`.\n- Only add `STIRLING_*` environment variables that the engine itself truly owns.\n- Do not mirror third-party provider environment variables unless the engine is actually interpreting them.\n- Let `pydantic-ai` own provider authentication configuration when possible.\n\n#### Python Architecture\n\n**Package roles:**\n- `stirling.contracts`: request/response models and shared typed workflow contracts. If a shape crosses a module or service boundary, it probably belongs here.\n- `stirling.models`: shared model primitives and generated tool models.\n- `stirling.agents`: reasoning modules for individual capabilities.\n- `stirling.api`: HTTP layer, dependency access, and app startup wiring.\n- `stirling.services`: shared runtime and non-AI infrastructure.\n- `stirling.config`: application-owned settings.\n\n**Source of truth:**\n- `stirling.models.tool_models` is the source of truth for operation IDs and parameter models.\n- Do not duplicate operation lists if they can be derived from `tool_models.OPERATIONS`.\n- Do not hand-maintain parallel parameter schemas when the generated tool models already define them.\n- If a tool ID must match a parameter model, validate that relationship explicitly in code.\n\n**Boundaries:**\n- Keep the API layer thin. Route modules should bind requests, resolve dependencies, and call agents or services. They should not contain business logic.\n- Keep agents focused on one reasoning domain. They should not own FastAPI routing, persistence, or execution of Stirling operations.\n- Build long-lived runtime objects centrally at startup when possible rather than reconstructing heavy AI objects per request.\n- If an agent delegates to another agent, the delegated agent should remain the source of truth for its own domain output.\n\n#### Python AI Usage\n- The system must work with any AI, including self-hosted models. We require that the models support structured outputs, but should minimise model-specific code beyond that.\n- Use AI for reasoning-heavy outputs, not deterministic glue.\n- Do not ask the model to invent data that Python can derive safely.\n- Do not fabricate fallback user-facing copy in code to hide incomplete model output.\n- AI output schemas should be impossible to instantiate incorrectly.\n  - Do not require the model to keep separate structures in sync. For example, instead of generating two lists which must be the same length, generate one list of a model containing the same data.\n  - Prefer Python to derive deterministic follow-up structure from a valid AI result.\n- Use `NativeOutput(...)` for structured model outputs.\n- Use `ToolOutput(...)` when the model should select and call delegate functions.\n\n#### Python Testing\n- Test contracts directly.\n- Test agents directly where behaviour matters.\n- Test API routes as thin integration points.\n- Prefer dependency overrides or startup-state seams to monkeypatching random globals."
+    gold_removed: ''
+  - path: engine/AGENTS.md
+    tier: 1
+    gold_added: ''
+    gold_removed: ''

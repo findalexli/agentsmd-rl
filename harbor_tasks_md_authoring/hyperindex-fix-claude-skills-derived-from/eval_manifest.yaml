@@ -1,0 +1,80 @@
+version: "2.0"
+
+task:
+  name: hyperindex-fix-claude-skills-derived-from
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: enviodev/hyperindex
+  pr: 1023
+  base_commit: "0423bf5c52868bb7b10db57fc20861bac85f20c4"
+  merge_commit: "9e4e03d3372622c82df644de36df71522d0b47ec"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in packages/cli/templates/static/shared/.claude/skills/indexing-handler-syntax/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in packages/cli/templates/static/shared/.claude/skills/indexing-handler-syntax/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in packages/cli/templates/static/shared/.claude/skills/indexing-handler-syntax/SKILL.md."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in packages/cli/templates/static/shared/.claude/skills/indexing-schema/SKILL.md."
+  - id: signal_04
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in packages/cli/templates/static/shared/.claude/skills/indexing-schema/SKILL.md."
+  - id: signal_05
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in packages/cli/templates/static/shared/.claude/skills/indexing-schema/SKILL.md."
+  - id: signal_06
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in packages/cli/templates/static/shared/AGENTS.md."
+  - id: signal_07
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in packages/cli/templates/static/shared/CLAUDE.md."
+
+config_edits:
+  - path: packages/cli/templates/static/shared/.claude/skills/indexing-handler-syntax/SKILL.md
+    tier: 1
+    gold_added: '**Entity relationships** — schema uses entity references; handlers use the `_id` suffix that codegen adds:
+
+      // Schema:   token0: Token!       ← entity reference, field name is "token0"
+
+      // Handler:  { token0_id: token0.id }  ← codegen adds _id; NEVER write "token0" here
+
+
+      // Schema:   collection: NftCollection!
+
+      // Handler:  { collection_id: collectionEntity.id }
+
+
+      // WRONG:  { token0: token0.id }  ← "token0" is not a valid TypeScript field
+
+      // WRONG:  { collection_id: String! } in schema  ← _id belongs in handlers, not schema
+
+      // CORRECT: { token0_id: token0.id }  in handler'
+    gold_removed: ''
+  - path: packages/cli/templates/static/shared/.claude/skills/indexing-schema/SKILL.md
+    tier: 1
+    gold_added: "- Relationship fields use the **entity type directly**: `collection: NftCollection!` — **never** add `_id` in the schema field name\n- The `_id` suffix only appears in TypeScript handlers (added by codegen): schema field `collection` → handler field `collection_id`\n  pool: Pool!  # entity reference — field name matches @derivedFrom \"field\" arg\n**Critical rules:**\n- The `field` argument must match the **schema field name** on the child entity — which is the entity reference name (`\"pool\"`), **not** `\"pool_id\"`\n- In TypeScript handlers, set this relationship using the `_id` suffix: `pool_id: poolEntity.id` — codegen transforms `pool: Pool!` → `pool_id` in the TypeScript type\n- **Never write `pool_id: String!` in the schema when using `@derivedFrom(field: \"pool\")`.** The schema field must be `pool: Pool!`; the `_id` is a codegen artifact for handlers only\ntype Token {\n  id: ID!\n  symbol: String!\n}\n\ntype Pool @index(fields: [\"token0\", \"token1\"]) {\n  token0: Token!   # entity reference — handler uses token0_id\n  token1: Token!   # entity reference — handler uses token1_id\n  swaps: [Swap!]! @derivedFrom(field: \"pool\")  # \"pool\" matches Swap.pool field name\n  pool: Pool! @index   # entity reference — handler uses pool_id; @derivedFrom field arg = \"pool\"\n**Schema vs handler field names:**\n\n| Schema field | Schema type | TypeScript handler field |\n|---|---|---|\n| `pool` | `Pool!` | `pool_id: string` |\n| `token0` | `Token!` | `token0_id: string` |\n| `collection` | `NftCollection!` | `collection_id: string` |\n\nCodegen always appends `_id` to entity reference field names in the TypeScript types. Do **not** add `_id` yourself in the schema.\n"
+    gold_removed: ''
+  - path: packages/cli/templates/static/shared/AGENTS.md
+    tier: 1
+    gold_added: '- **Entity references in schema, `_id` in handlers** — Schema uses `collection: NftCollection!` (entity reference, no `_id`). Handlers use `collection_id: value` (codegen adds `_id`). `@derivedFrom(field: "collection")` matches the schema field name, not the handler field name. No entity arrays without `@derivedFrom`.'
+    gold_removed: ''
+  - path: packages/cli/templates/static/shared/CLAUDE.md
+    tier: 1
+    gold_added: '- Schema uses entity references (`collection: NftCollection!`); handlers use `_id` suffix (`collection_id: value`); never add `_id` to schema field names'
+    gold_removed: ''

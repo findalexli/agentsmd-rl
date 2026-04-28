@@ -1,0 +1,39 @@
+version: "2.0"
+
+task:
+  name: redb-add-release-note-instructions-to
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: cberner/redb
+  pr: 1158
+  base_commit: "b171221bb8d7565b086a7e5481e603b6fec603c5"
+  merge_commit: "98e976ac30c664d2833be0141ec74115f87e168f"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+
+config_edits:
+  - path: AGENTS.md
+    tier: 1
+    gold_added: '## Release notes
+
+
+      Changes that are significant to users should be documented in `CHANGELOG.md`. Entries should be
+
+      brief and focus on the user-facing impact of the change, not on implementation details.
+
+      '
+    gold_removed: ''

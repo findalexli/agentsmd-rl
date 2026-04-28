@@ -1,0 +1,85 @@
+version: "2.0"
+
+task:
+  name: zen-desktop-agentsmd-add-agent-instructions-to
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: irbis-sh/zen-desktop
+  pr: 655
+  base_commit: "7a24112c3d02434fcfca208e8d8d7e09d7b03292"
+  merge_commit: "eba2da59edc272ce87a48ce8ae457c98d69ab57d"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+
+config_edits:
+  - path: AGENTS.md
+    tier: 1
+    gold_added: '# AGENTS.md
+
+
+      ## About
+
+
+      This is the source for Zen - a system-wide proxy-based ad-blocker and privacy guard. Built using Wails as the application framework, Go for core logic, and TS/React for the UI.
+
+
+      ## Commands
+
+
+      Use `task` commands when available.
+
+
+      - Build: `task build-dev`
+
+      - Tests (Go only): `task test`
+
+      - Lint (Go and frontend): `task lint`
+
+      - Lint (frontend only): `task frontend:lint`
+
+      - Format (Go): `task fmt-go`
+
+      - Format check (frontend): `task frontend:fmt`
+
+
+      ## File structure
+
+
+      - `main.go` - main application entrypoint
+
+      - `internal/` - core Go application logic
+
+      - `frontend/` - UI
+
+
+      ## Working conventions
+
+
+      - Prefer `task` commands over manual shell commands
+
+      - Run `task lint` after changes
+
+      - Run `task test` after Go changes
+
+
+      ## Issue and PR guidelines
+
+
+      - Never create an issue
+
+      - Never create a PR'
+    gold_removed: ''

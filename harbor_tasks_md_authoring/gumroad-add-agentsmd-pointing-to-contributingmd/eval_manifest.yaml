@@ -1,0 +1,24 @@
+version: "2.0"
+
+task:
+  name: gumroad-add-agentsmd-pointing-to-contributingmd
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: antiwork/gumroad
+  pr: 4685
+  base_commit: "a16beeff6653b2c622dca6d35f2ecd85855b0b71"
+  merge_commit: "e7403bcc0a9bf851a4346716927d732951453a01"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+
+config_edits:
+  - path: AGENTS.md
+    tier: 1
+    gold_added: '@CONTRIBUTING.md'
+    gold_removed: ''

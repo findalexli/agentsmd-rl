@@ -1,0 +1,64 @@
+version: "2.0"
+
+task:
+  name: ledger-live-docs-add-cursor-rules-for
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: LedgerHQ/ledger-live
+  pr: 13939
+  base_commit: "947fec16c7db0d97715350a20b886b7b88f78667"
+  merge_commit: "56386c5a34c1cffe2a322bd7aaa249bd4ec7d21c"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .cursor/rules/redux-slice.mdc."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .cursor/rules/redux-slice.mdc."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .cursor/rules/redux-slice.mdc."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .cursor/rules/rtk-query-api.mdc."
+  - id: signal_04
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .cursor/rules/rtk-query-api.mdc."
+  - id: signal_05
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .cursor/rules/rtk-query-api.mdc."
+  - id: signal_06
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .cursor/rules/zod-schemas.mdc."
+  - id: signal_07
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .cursor/rules/zod-schemas.mdc."
+  - id: signal_08
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .cursor/rules/zod-schemas.mdc."
+
+config_edits:
+  - path: .cursor/rules/redux-slice.mdc
+    tier: 1
+    gold_added: "---\ndescription: Redux Toolkit createSlice best practices\nalwaysApply: true\n---\n\n# Redux Toolkit - createSlice\n\n## Structure\n\n- Use descriptive `name` for action type prefixes\n- Define typed `initialState` with `satisfies`\n- Export actions and reducer separately\n\n```typescript\n// ✅ GOOD\nimport { createSlice, PayloadAction } from \"@reduxjs/toolkit\";\n\ninterface MyState {\n  value: number;\n  status: \"idle\" | \"loading\" | \"error\";\n}\n\nconst initialState: MyState = {\n  value: 0,\n  status: \"idle\",\n};\n\nconst mySlice = createSlice({\n  name: \"myFeature\",\n  initialState,\n  reducers: {\n    setValue: (state, action: PayloadAction<number>) => {\n      state.value = action.payload;\n    },\n    setStatus: (state, action: PayloadAction<MyState[\"status\"]>) => {\n      state.status = action.payload;\n    },\n  },\n});\n\nexport const { setValue, setStatus } = mySlice.actions;\nexport default mySlice.reducer;\n```\n\n## Registration\n\nAdd the slice to `reducers/index.ts`:\n\n```typescript\n// 1. Import the reducer and state type\nimport myFeature, { MyFeatureState } from \"./myFeature\";\n\n// 2. Add to State type\nexport type State = {\n  // ...existing\n  myFeature: MyFeatureState;\n};\n\n// 3. Add to combineReducers\nconst appReducer = combineReducers({\n  // ...existing\n  myFeature,\n});\n```\n\n## Reducers\n\n- Use Immer's mutable syntax safely\n- Type `PayloadAction<T>` for actions with payloads\n- Keep reducers focused on single state changes\n\n## Selectors\n\n- Define selectors with the slice\n- Use `createSelector` for derived data\n\n```typescript\n// Colocate selectors with slice\nexport const selectValue = (state: RootState) => state.myFeature.value;\nexport const selectStatus = (state: RootState) => state.myFeature.status;\n```\n\n## extraReducers\n\n- Use builder callback for external actions\n- Handle async thunk states (pending/fulfilled/rejected)\n\n```typescript\nextraReducers: (builder) => {\n  builder\n    .addCase(fetchData.pending, (state) => {\n      state.status = \"loading\";\n    })\n    .addCase(fetchData.fulfilled, (state, action) => {\n      state.status = \"idle\";\n      state.data = action.payload;\n    })\n    .addCase(fetchData.rejected, (state) => {\n      state.status = \"error\";\n    });\n},\n```"
+    gold_removed: ''
+  - path: .cursor/rules/rtk-query-api.mdc
+    tier: 1
+    gold_added: "---\ndescription: RTK Query createApi best practices\nalwaysApply: true\n---\n\n# RTK Query - createApi\n\n## Structure\n\n- One API slice per base URL / data source\n- Define API slices in `state-manager/api.ts` files\n- Export generated hooks alongside the API\n\n```typescript\n// ✅ GOOD - state-manager/api.ts\nimport { createApi, fetchBaseQuery } from \"@reduxjs/toolkit/query/react\";\nimport { EntityTags } from \"./types\";\n\nexport const myApi = createApi({\n  reducerPath: \"myApi\",\n  baseQuery: fetchBaseQuery({ baseUrl: \"/api\" }),\n  tagTypes: [EntityTags.Entity, EntityTags.Entities],\n  endpoints: (build) => ({\n    getEntity: build.query<Entity, string>({\n      query: (id) => `entities/${id}`,\n      providesTags: [EntityTags.Entity],\n    }),\n  }),\n});\n\nexport const { useGetEntityQuery } = myApi;\n```\n\nDefine tags as enums in `state-manager/types.ts`:\n\n```typescript\nexport enum EntityTags {\n  Entity = \"Entity\",\n  Entities = \"Entities\",\n}\n```\n\n## Endpoints\n\n- Use `build.query` for GET requests\n- Use `build.mutation` for POST/PUT/DELETE\n- Type both response and argument: `build.query<ResponseType, ArgType>`\n- Use `void` for no arguments: `build.query<Data[], void>`\n\n## Caching & Tags\n\n- Define tags as **enums** in `types.ts`\n- Use `providesTags` on queries for cache invalidation\n- Use `invalidatesTags` on mutations to trigger refetch\n- Use `keepUnusedDataFor` for custom cache duration\n\n```typescript\nendpoints: (build) => ({\n  getItems: build.query<Item[], void>({\n    query: () => \"items\",\n    providesTags: [ItemTags.Items],\n    keepUnusedDataFor: 60, // seconds\n  }),\n  addItem: build.mutation<Item, Partial<Item>>({\n    query: (body) => ({ url: \"items\", method: \"POST\", body }),\n    invalidatesTags: [ItemTags.Items],\n  }),\n}),\n```\n\n## Transform Responses\n\n- Use `transformResponse` to reshape API data\n- Use `transformErrorResponse` for custom error handling\n\n```typescript\ngetItems: build.query<Item[], void>({\n  query: () => \"items\",\n  transformResponse: (response: ApiResponse) => response.data.items,\n}),\n```\n\n## Error Handling\n\n- Always catch errors in custom `baseQuery` or `queryFn`\n- Return `{ data }` on success, `{ error }` on failure\n\n```typescript\n// ✅ GOOD - errors are caught and returned\nqueryFn: async (arg) => {\n  try {\n    const data = await fetchData(arg);\n    return { data };\n  } catch (error) {\n    return { error: { status: \"CUSTOM_ERROR\", data: error } };\n  }\n},\n```\n\n## Registration\n\nRegister APIs in `reducers/rtkQueryApi.ts`:\n\n```typescript\nconst APIs = {\n  [myApi.reducerPath]: myApi,\n};\n```"
+    gold_removed: ''
+  - path: .cursor/rules/zod-schemas.mdc
+    tier: 1
+    gold_added: "---\ndescription: Zod schema validation patterns for API types\nalwaysApply: true\n---\n\n# Zod Schema Validation\n\nDefine types in `state-manager/types.ts` using Zod schemas for runtime validation.\n\n## Structure\n\n- Define Zod schemas first, then infer TypeScript types\n- Use enums for tag types\n- Export both schemas and inferred types\n\n```typescript\n// ✅ GOOD - state-manager/types.ts\nimport { z } from \"zod\";\n\n// 1. Define tag types as enum\nexport enum MyDataTags {\n  Items = \"Items\",\n  Item = \"Item\",\n}\n\n// 2. Define Zod schemas with validation rules\nconst ItemSchema = z.object({\n  id: z.string().uuid(),\n  name: z.string().min(1),\n  value: z.number().min(0),\n  status: z.enum([\"active\", \"inactive\"]),\n  createdAt: z.string().datetime(),\n});\n\nconst ItemResponseSchema = z.object({\n  data: ItemSchema,\n  meta: z.object({\n    timestamp: z.string(),\n    version: z.string(),\n  }),\n});\n\nconst ItemListResponseSchema = z.object({\n  items: z.array(ItemSchema),\n  pagination: z.object({\n    nextCursor: z.string().optional(),\n    total: z.number(),\n  }),\n});\n\n// 3. Infer TypeScript types from schemas\nexport type Item = z.infer<typeof ItemSchema>;\nexport type ItemResponse = z.infer<typeof ItemResponseSchema>;\nexport type ItemListResponse = z.infer<typeof ItemListResponseSchema>;\n\n// 4. Define query params as interfaces\nexport interface GetItemsParams {\n  search?: string;\n  limit?: number;\n  cursor?: string;\n}\n\n// 5. Export schemas for runtime validation\nexport { ItemSchema, ItemResponseSchema, ItemListResponseSchema };\n```\n\n## Using Schemas in API\n\n```typescript\n// state-manager/api.ts\nimport { ItemListResponseSchema, type ItemListResponse } from \"./types\";\n\nendpoints: (build) => ({\n  getItems: build.query<ItemListResponse, GetItemsParams>({\n    query: (params) => ({ url: \"items\", params }),\n    transformResponse: (response: unknown) => {\n      // Runtime validation\n      return ItemListResponseSchema.parse(response);\n    },\n  }),\n}),\n```\n\n## Best Practices\n\n- Use `.min()`, `.max()`, `.uuid()`, `.email()` for field validation\n- Use `z.enum()` for fixed string values\n- Use `z.union()` for multiple possible types\n- Use `.optional()` for nullable fields\n- Always infer types with `z.infer<typeof Schema>`"
+    gold_removed: ''

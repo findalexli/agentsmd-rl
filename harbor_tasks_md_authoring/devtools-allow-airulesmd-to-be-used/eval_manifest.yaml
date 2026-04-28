@@ -1,0 +1,60 @@
+version: "2.0"
+
+task:
+  name: devtools-allow-airulesmd-to-be-used
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: flutter/devtools
+  pr: 9764
+  base_commit: "a5edb165c43f4966f1226d67a4b8382d5e8cbfa8"
+  merge_commit: "45577fa332c25fd75a4bc402440b6ae01b05f79f"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .cursor/rules/ai_rules.mdc."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .cursor/rules/ai_rules.mdc."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .cursor/rules/ai_rules.mdc."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_04
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+
+config_edits:
+  - path: .cursor/rules/ai_rules.mdc
+    tier: 1
+    gold_added: '---
+
+      description: Apply rules from AI_RULES.md to all interactions.
+
+      globs: "*"
+
+      alwaysApply: true
+
+      ---
+
+      # AI Rules
+
+
+      Follow the rules defined in [AI_RULES.md](../../AI_RULES.md).'
+    gold_removed: ''
+  - path: CLAUDE.md
+    tier: 1
+    gold_added: '# Claude Code Guidelines
+
+
+      Refer to the shared [AI Rules](AI_RULES.md) for guidelines when working in this repository.'
+    gold_removed: ''
