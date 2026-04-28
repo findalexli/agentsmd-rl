@@ -101,6 +101,4 @@ RUN cd /workspace/calculator && \
 # Install Python dependencies including linting tools
 RUN pip install --no-cache-dir pytest black flake8 mypy ruff
 
-# Copy test runner script
-COPY test.sh /tests/test.sh
-RUN chmod +x /tests/test.sh
+# /tests is bind-mounted by the harbor verifier; no static COPY needed.

@@ -1,3 +1,4 @@
+# syntax=docker/dockerfile:1.4
 FROM mcr.microsoft.com/dotnet/sdk:8.0
 
 # System tools for tests + git for cloning

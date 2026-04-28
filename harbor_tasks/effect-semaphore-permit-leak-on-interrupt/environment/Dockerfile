@@ -30,6 +30,5 @@ RUN pnpm config set store-dir /pnpm-store && \
 # Drop a regression test file that exercises the bug.
 # It lives in the existing test directory so vitest discovers it.
 COPY leak_regression.test.ts /workspace/effect/packages/effect/test/Effect/leak_regression.test.ts
-COPY leak_regression_multi.test.ts /workspace/effect/packages/effect/test/Effect/leak_regression_multi.test.ts
 
 RUN mkdir -p /logs/verifier

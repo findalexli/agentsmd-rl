@@ -42,7 +42,6 @@ RUN mkdir -p /workspace/opencode/node_modules \
  && ln -sf /test-sandbox/node_modules/zod /workspace/opencode/node_modules/zod
 
 COPY validate_schemas.ts /test-sandbox/validate_schemas.ts
-COPY smoke.test.ts /test-sandbox/smoke.test.ts
 
 RUN mkdir -p /logs/verifier
 

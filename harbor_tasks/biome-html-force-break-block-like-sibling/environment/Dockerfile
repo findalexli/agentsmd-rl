@@ -42,8 +42,6 @@ COPY fixtures/force-break-nontext-and-non-sensitive-sibling.html crates/biome_ht
 COPY fixtures/force-break-nontext-and-non-sensitive-sibling.html.snap crates/biome_html_formatter/tests/specs/html/whitespace/
 COPY fixtures/no-break-display-none.html crates/biome_html_formatter/tests/specs/html/whitespace/
 COPY fixtures/no-break-display-none.html.snap crates/biome_html_formatter/tests/specs/html/whitespace/
-COPY fixtures/force-break-nontext-and-non-sensitive-sibling-2.html crates/biome_html_formatter/tests/specs/html/whitespace/
-COPY fixtures/force-break-nontext-and-non-sensitive-sibling-2.html.snap crates/biome_html_formatter/tests/specs/html/whitespace/
 
 # Warm up the cache. First invocation inside a fresh container otherwise
 # forces a full re-link (~55s) due to docker layer timestamp behaviour;

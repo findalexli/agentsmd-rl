@@ -23,15 +23,11 @@ RUN git init /workspace/pytorch && \
 RUN pip install --no-cache-dir numpy sympy dill typing_extensions 2>/dev/null || true
 
 # Create the missing torch/version.py stub required by torch.torch_version
-RUN python3 << 'PYEOF'
-import os
-ver_dir = '/workspace/pytorch/torch'
-ver_file = os.path.join(ver_dir, 'version.py')
-if not os.path.exists(ver_file):
-    with open(ver_file, 'w') as f:
-        f.write('__version__ = "2.5.0+dev"\ninternal_version = __version__\n')
-    print('Created version.py stub')
-PYEOF
+RUN if [ ! -f /workspace/pytorch/torch/version.py ]; then \
+        printf '__version__ = "2.5.0+dev"\ninternal_version = __version__\n' \
+            > /workspace/pytorch/torch/version.py; \
+        echo 'Created version.py stub'; \
+    fi
 
 # Disable loading of libtorch_global_deps.so which is not present in sparse checkout
 RUN sed -i 's/USE_GLOBAL_DEPS = True/USE_GLOBAL_DEPS = False/' /workspace/pytorch/torch/_utils_internal.py
