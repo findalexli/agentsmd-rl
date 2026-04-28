@@ -185,3 +185,31 @@ def test_repo_prettier_check_bash():
         capture_output=True, text=True, timeout=120, cwd=REPO,
     )
     assert r.returncode == 0, f"Prettier check via bash failed:\n{r.stderr[-500:]}"
+
+# === CI-mined tests (taskforge.ci_check_miner) ===
+def test_ci_build_wasm_pnpm():
+    """pass_to_pass | CI job 'build-wasm' → step ''"""
+    r = subprocess.run(
+        ["bash", "-lc", 'pnpm install'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step '' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_build_wasm_pnpm_2():
+    """pass_to_pass | CI job 'build-wasm' → step ''"""
+    r = subprocess.run(
+        ["bash", "-lc", 'pnpm run build'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step '' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_validate_docs_links_run_link_checker():
+    """pass_to_pass | CI job 'validate-docs-links' → step 'Run link checker'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'node ./.github/actions/validate-docs-links/dist/index.js'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Run link checker' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")

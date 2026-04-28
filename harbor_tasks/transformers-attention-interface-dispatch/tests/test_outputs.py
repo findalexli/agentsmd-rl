@@ -143,3 +143,13 @@ def test_attention_modules_importable():
         assert r.returncode == 0, f"pytest dispatch tests failed:\nSTDOUT:\n{r.stdout}\nSTDERR:\n{r.stderr}"
     finally:
         os.unlink(tmp_path)
+
+# === CI-mined tests (taskforge.ci_check_miner) ===
+def test_ci_check_timestamps_verify_merge_commit_timestamp_is_older_t():
+    """pass_to_pass | CI job 'Check timestamps' → step 'Verify `merge_commit` timestamp is older than the issue comment timestamp'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'COMMENT_TIMESTAMP=$(date -d "${COMMENT_DATE}" +"%s")\necho "COMMENT_DATE: $COMMENT_DATE"\necho "COMMENT_TIMESTAMP: $COMMENT_TIMESTAMP"\nif [ $COMMENT_TIMESTAMP -le $PR_MERGE_COMMIT_TIMESTAMP ]; then\n  echo "Last commit on the pull request is newer than the issue comment triggering this run! Abort!";\n  exit -1;\nfi'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Verify `merge_commit` timestamp is older than the issue comment timestamp' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")

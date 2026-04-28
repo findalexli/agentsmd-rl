@@ -421,7 +421,7 @@ def test_agno_infra_import_check():
 def test_ci_style_check_cookbook_ruff_check():
     """pass_to_pass | CI job 'style-check-cookbook' → step 'Ruff check'"""
     r = subprocess.run(
-        ["bash", "-lc", 'ruff check .'], cwd=f"{REPO}/cookbook",
+        ["bash", "-lc", 'ruff check .'], cwd=REPO,
         capture_output=True, text=True, timeout=300)
     assert r.returncode == 0, (
         f"CI step 'Ruff check' failed (returncode={r.returncode}):\n"
@@ -430,7 +430,7 @@ def test_ci_style_check_cookbook_ruff_check():
 def test_ci_style_check_agno_mypy():
     """pass_to_pass | CI job 'style-check-agno' → step 'Mypy'"""
     r = subprocess.run(
-        ["bash", "-lc", 'mypy . --config-file pyproject.toml'], cwd=f"{REPO}/libs/agno",
+        ["bash", "-lc", 'mypy . --config-file pyproject.toml'], cwd=REPO,
         capture_output=True, text=True, timeout=300)
     assert r.returncode == 0, (
         f"CI step 'Mypy' failed (returncode={r.returncode}):\n"

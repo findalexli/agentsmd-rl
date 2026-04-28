@@ -462,12 +462,47 @@ def test_repo_precommit_whitespace():
     assert r.returncode == 0, f"Pre-commit whitespace check failed:\n{r.stdout}\n{r.stderr}"
 
 # === CI-mined tests (taskforge.ci_check_miner) ===
-def test_ci_install_test_set_up_python():
-    """pass_to_pass | CI job 'Install test' → step 'Set up Python'"""
+def test_ci_install_test_verify_package_import():
+    """pass_to_pass | CI job 'Install test' → step 'Verify package import'"""
     r = subprocess.run(
-        ["python3", "--version"], cwd=REPO,
-        capture_output=True, text=True, timeout=30)
+        ["bash", "-lc", 'uv run python -c "import areal; print(f\'areal version: {areal.__version__}\')"'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
     assert r.returncode == 0, (
-        f"CI step 'Set up Python' failed (returncode={r.returncode}):\n"
+        f"CI step 'Verify package import' failed (returncode={r.returncode}):\n"
         f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
-    assert "3.12" in r.stdout, f"Expected Python 3.12, got: {r.stdout}"
+
+def test_ci_install_test_verify_core_modules_are_importable():
+    """pass_to_pass | CI job 'Install test' → step 'Verify core modules are importable'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'uv run python -c "'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Verify core modules are importable' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_install_test_build_wheel():
+    """pass_to_pass | CI job 'Install test' → step 'Build wheel'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'uv build --wheel'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Build wheel' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_install_test_verify_wheel_artifact():
+    """pass_to_pass | CI job 'Install test' → step 'Verify wheel artifact'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'python -m zipfile -l dist/*.whl | head -20'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Verify wheel artifact' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_build_build_the_book():
+    """pass_to_pass | CI job 'build' → step 'Build the book'"""
+    r = subprocess.run(
+        ["bash", "-lc", './build_all.sh'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Build the book' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")

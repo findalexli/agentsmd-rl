@@ -260,47 +260,56 @@ def test_repo_typecheck():
         f"tsc --noEmit failed.\nstdout:\n{proc.stdout[-2000:]}\nstderr:\n{proc.stderr[-2000:]}"
     )
 
-# === CI-mined tests scoped to the affected package (@remix-run/component) ===
+# === CI-mined tests (taskforge.ci_check_miner) ===
 def test_ci_build_build_packages():
-    """pass_to_pass | CI job 'build' → scoped build for @remix-run/component"""
+    """pass_to_pass | CI job 'build' → step 'Build packages'"""
     r = subprocess.run(
-        ["bash", "-lc", 'pnpm --filter @remix-run/component build'], cwd=REPO,
+        ["bash", "-lc", 'pnpm build'], cwd=REPO,
         capture_output=True, text=True, timeout=300)
     assert r.returncode == 0, (
         f"CI step 'Build packages' failed (returncode={r.returncode}):\n"
         f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
 
 def test_ci_check_lint():
-    """pass_to_pass | CI job 'check' → scoped lint for vdom.ts"""
+    """pass_to_pass | CI job 'check' → step 'Lint'"""
     r = subprocess.run(
-        ["bash", "-lc", 'pnpm --filter @remix-run/component exec eslint src/lib/vdom.ts --max-warnings=0'], cwd=REPO,
+        ["bash", "-lc", 'pnpm lint'], cwd=REPO,
         capture_output=True, text=True, timeout=300)
     assert r.returncode == 0, (
         f"CI step 'Lint' failed (returncode={r.returncode}):\n"
         f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
 
 def test_ci_check_typecheck():
-    """pass_to_pass | CI job 'check' → scoped typecheck for @remix-run/component"""
+    """pass_to_pass | CI job 'check' → step 'Typecheck'"""
     r = subprocess.run(
-        ["bash", "-lc", 'pnpm --filter @remix-run/component typecheck'], cwd=REPO,
+        ["bash", "-lc", 'pnpm typecheck'], cwd=REPO,
         capture_output=True, text=True, timeout=300)
     assert r.returncode == 0, (
         f"CI step 'Typecheck' failed (returncode={r.returncode}):\n"
         f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
 
-def test_ci_format_format():
-    """pass_to_pass | CI job 'format' → scoped prettier check for vdom.ts"""
+def test_ci_check_check_change_files():
+    """pass_to_pass | CI job 'check' → step 'Check change files'"""
     r = subprocess.run(
-        ["bash", "-lc", 'pnpm --filter @remix-run/component exec prettier --check src/lib/vdom.ts'], cwd=REPO,
+        ["bash", "-lc", 'pnpm changes:validate'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Check change files' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_format_format():
+    """pass_to_pass | CI job 'format' → step 'Format'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'pnpm format'], cwd=REPO,
         capture_output=True, text=True, timeout=300)
     assert r.returncode == 0, (
         f"CI step 'Format' failed (returncode={r.returncode}):\n"
         f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
 
 def test_ci_test_run_tests():
-    """pass_to_pass | CI job 'test' → scoped test run for @remix-run/component"""
+    """pass_to_pass | CI job 'test' → step 'Run tests'"""
     r = subprocess.run(
-        ["bash", "-lc", 'pnpm --filter @remix-run/component test'], cwd=REPO,
+        ["bash", "-lc", 'pnpm test'], cwd=REPO,
         capture_output=True, text=True, timeout=300)
     assert r.returncode == 0, (
         f"CI step 'Run tests' failed (returncode={r.returncode}):\n"

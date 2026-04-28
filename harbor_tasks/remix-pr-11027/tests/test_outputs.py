@@ -151,37 +151,57 @@ def test_prettier_format():
         )
         assert r.returncode == 0, f"Prettier check failed for {f}:\n{r.stderr[-300:]}"
 
-
-# === CI-mined tests scoped to @remix-run/route-pattern ===
-
-def test_ci_build_route_pattern():
-    """pass_to_pass | CI job 'build' scoped to @remix-run/route-pattern"""
+# === CI-mined tests (taskforge.ci_check_miner) ===
+def test_ci_build_build_packages():
+    """pass_to_pass | CI job 'build' → step 'Build packages'"""
     r = subprocess.run(
-        ["bash", "-lc", "pnpm --filter @remix-run/route-pattern build"],
-        cwd=REPO,
+        ["bash", "-lc", 'pnpm build'], cwd=REPO,
         capture_output=True, text=True, timeout=300)
     assert r.returncode == 0, (
-        f"Build route-pattern failed (returncode={r.returncode}):\n"
+        f"CI step 'Build packages' failed (returncode={r.returncode}):\n"
         f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
 
-
-def test_ci_test_route_pattern():
-    """pass_to_pass | CI job 'test' scoped to @remix-run/route-pattern"""
+def test_ci_format_format():
+    """pass_to_pass | CI job 'format' → step 'Format'"""
     r = subprocess.run(
-        ["bash", "-lc", "pnpm --filter @remix-run/route-pattern test"],
-        cwd=REPO,
+        ["bash", "-lc", 'pnpm format'], cwd=REPO,
         capture_output=True, text=True, timeout=300)
     assert r.returncode == 0, (
-        f"Test route-pattern failed (returncode={r.returncode}):\n"
+        f"CI step 'Format' failed (returncode={r.returncode}):\n"
         f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
 
-
-def test_ci_typecheck_route_pattern():
-    """pass_to_pass | CI job 'typecheck' scoped to @remix-run/route-pattern"""
+def test_ci_test_run_tests():
+    """pass_to_pass | CI job 'test' → step 'Run tests'"""
     r = subprocess.run(
-        ["bash", "-lc", "pnpm --filter @remix-run/route-pattern typecheck"],
-        cwd=REPO,
+        ["bash", "-lc", 'pnpm test'], cwd=REPO,
         capture_output=True, text=True, timeout=300)
     assert r.returncode == 0, (
-        f"Typecheck route-pattern failed (returncode={r.returncode}):\n"
+        f"CI step 'Run tests' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_check_lint():
+    """pass_to_pass | CI job 'check' → step 'Lint'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'pnpm lint'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Lint' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_check_typecheck():
+    """pass_to_pass | CI job 'check' → step 'Typecheck'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'pnpm typecheck'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Typecheck' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_check_check_change_files():
+    """pass_to_pass | CI job 'check' → step 'Check change files'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'pnpm changes:validate'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Check change files' failed (returncode={r.returncode}):\n"
         f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")

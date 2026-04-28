@@ -438,3 +438,77 @@ def test_ci_precommit_ruff():
         capture_output=True, text=True, timeout=300, env=os.environ,
     )
     assert r.returncode == 0, f"ruff (bash -lc) failed:\n{r.stderr[-500:]}{r.stdout[-500:]}"
+
+# === PR-added f2p tests (taskforge.test_patch_miner) ===
+def test_pr_added_test_reasoning_tokens_thinking():
+    """fail_to_pass | PR added test 'test_reasoning_tokens_thinking' in 'python/sglang/test/kits/reasoning_tokens_kit.py' (pytest)"""
+    r = subprocess.run(
+        ["bash", "-lc", 'python3 -m pytest -x --no-header -p no:cacheprovider "python/sglang/test/kits/reasoning_tokens_kit.py::test_reasoning_tokens_thinking" 2>&1 | tail -50'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"PR-added test 'test_reasoning_tokens_thinking' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_pr_added_test_reasoning_tokens_non_thinking():
+    """fail_to_pass | PR added test 'test_reasoning_tokens_non_thinking' in 'python/sglang/test/kits/reasoning_tokens_kit.py' (pytest)"""
+    r = subprocess.run(
+        ["bash", "-lc", 'python3 -m pytest -x --no-header -p no:cacheprovider "python/sglang/test/kits/reasoning_tokens_kit.py::test_reasoning_tokens_non_thinking" 2>&1 | tail -50'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"PR-added test 'test_reasoning_tokens_non_thinking' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_pr_added_test_reasoning_tokens_thinking_stream():
+    """fail_to_pass | PR added test 'test_reasoning_tokens_thinking_stream' in 'python/sglang/test/kits/reasoning_tokens_kit.py' (pytest)"""
+    r = subprocess.run(
+        ["bash", "-lc", 'python3 -m pytest -x --no-header -p no:cacheprovider "python/sglang/test/kits/reasoning_tokens_kit.py::test_reasoning_tokens_thinking_stream" 2>&1 | tail -50'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"PR-added test 'test_reasoning_tokens_thinking_stream' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_pr_added_test_reasoning_tokens_non_thinking_stream():
+    """fail_to_pass | PR added test 'test_reasoning_tokens_non_thinking_stream' in 'python/sglang/test/kits/reasoning_tokens_kit.py' (pytest)"""
+    r = subprocess.run(
+        ["bash", "-lc", 'python3 -m pytest -x --no-header -p no:cacheprovider "python/sglang/test/kits/reasoning_tokens_kit.py::test_reasoning_tokens_non_thinking_stream" 2>&1 | tail -50'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"PR-added test 'test_reasoning_tokens_non_thinking_stream' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_pr_added_test_reasoning_tokens_generate_exact_count():
+    """fail_to_pass | PR added test 'test_reasoning_tokens_generate_exact_count' in 'python/sglang/test/kits/reasoning_tokens_kit.py' (pytest)"""
+    r = subprocess.run(
+        ["bash", "-lc", 'python3 -m pytest -x --no-header -p no:cacheprovider "python/sglang/test/kits/reasoning_tokens_kit.py::test_reasoning_tokens_generate_exact_count" 2>&1 | tail -50'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"PR-added test 'test_reasoning_tokens_generate_exact_count' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+# === CI-mined tests (taskforge.ci_check_miner) ===
+def test_ci_stage_b_test_16_npu_a3_run_test():
+    """pass_to_pass | CI job 'stage-b-test-16-npu-a3' → step 'Run test'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'python3 run_suite.py --hw npu --suite stage-b-test-16-npu-a3 --timeout-per-file 3600'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Run test' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_stage_b_test_4_npu_a3_run_test():
+    """pass_to_pass | CI job 'stage-b-test-4-npu-a3' → step 'Run test'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'python3 run_suite.py --hw npu --suite stage-b-test-4-npu-a3 --timeout-per-file 3600'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Run test' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_stage_a_test_1_gpu_small_amd_start_ci_container():
+    """pass_to_pass | CI job 'stage-a-test-1-gpu-small-amd' → step 'Start CI container'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'bash scripts/ci/amd/amd_ci_start_container.sh'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Start CI container' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")

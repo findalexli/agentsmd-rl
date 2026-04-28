@@ -276,10 +276,9 @@ def test_config_format_migrated_to_json5():
         "json5 should be declared as a dependency in playground package.json"
     )
 
-
 # === CI-mined tests (taskforge.ci_check_miner) ===
 def test_ci_jest_babel_plugin_react_compil_yarn():
-    """pass_to_pass | CI job 'Jest babel-plugin-react-compiler' -> step ''"""
+    """pass_to_pass | CI job 'Jest babel-plugin-react-compiler' → step ''"""
     r = subprocess.run(
         ["bash", "-lc", 'yarn install --frozen-lockfile'], cwd=REPO,
         capture_output=True, text=True, timeout=300)
@@ -287,9 +286,35 @@ def test_ci_jest_babel_plugin_react_compil_yarn():
         f"CI step '' failed (returncode={r.returncode}):\n"
         f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
 
+def test_ci_jest_babel_plugin_react_compil_yarn_2():
+    """pass_to_pass | CI job 'Jest babel-plugin-react-compiler' → step ''"""
+    r = subprocess.run(
+        ["bash", "-lc", 'yarn workspace babel-plugin-react-compiler jest'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step '' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_lint_babel_plugin_react_compil_yarn():
+    """pass_to_pass | CI job 'Lint babel-plugin-react-compiler' → step ''"""
+    r = subprocess.run(
+        ["bash", "-lc", 'yarn workspace babel-plugin-react-compiler lint'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step '' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_check_license_ensure_clean_build_directory():
+    """pass_to_pass | CI job 'Check license' → step 'Ensure clean build directory'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'rm -rf build'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Ensure clean build directory' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
 
 def test_ci_check_license_scripts_ci_check_license_sh():
-    """pass_to_pass | CI job 'Check license' -> step ''"""
+    """pass_to_pass | CI job 'Check license' → step ''"""
     r = subprocess.run(
         ["bash", "-lc", './scripts/ci/check_license.sh'], cwd=REPO,
         capture_output=True, text=True, timeout=300)
@@ -297,9 +322,8 @@ def test_ci_check_license_scripts_ci_check_license_sh():
         f"CI step '' failed (returncode={r.returncode}):\n"
         f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
 
-
 def test_ci_test_print_warnings_scripts_ci_test_print_warnings_sh():
-    """pass_to_pass | CI job 'Test print warnings' -> step ''"""
+    """pass_to_pass | CI job 'Test print warnings' → step ''"""
     r = subprocess.run(
         ["bash", "-lc", './scripts/ci/test_print_warnings.sh'], cwd=REPO,
         capture_output=True, text=True, timeout=300)
@@ -307,9 +331,17 @@ def test_ci_test_print_warnings_scripts_ci_test_print_warnings_sh():
         f"CI step '' failed (returncode={r.returncode}):\n"
         f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
 
+def test_ci_test_playground_check_playwright_version():
+    """pass_to_pass | CI job 'Test playground' → step 'Check Playwright version'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'echo "playwright_version=$(npm ls @playwright/test | grep @playwright | sed \'s/.*@//\' | head -1)" >> "$GITHUB_OUTPUT"'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Check Playwright version' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
 
 def test_ci_test_playground_npx():
-    """pass_to_pass | CI job 'Test playground' -> step ''"""
+    """pass_to_pass | CI job 'Test playground' → step ''"""
     r = subprocess.run(
         ["bash", "-lc", 'npx playwright install --with-deps chromium'], cwd=REPO,
         capture_output=True, text=True, timeout=300)
@@ -317,9 +349,8 @@ def test_ci_test_playground_npx():
         f"CI step '' failed (returncode={r.returncode}):\n"
         f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
 
-
 def test_ci_test_eslint_plugin_react_hooks_scripts_react_compiler_build_compiler_sh():
-    """pass_to_pass | CI job 'Test eslint-plugin-react-hooks' -> step ''"""
+    """pass_to_pass | CI job 'Test eslint-plugin-react-hooks' → step ''"""
     r = subprocess.run(
         ["bash", "-lc", './scripts/react-compiler/build-compiler.sh && ./scripts/react-compiler/link-compiler.sh'], cwd=REPO,
         capture_output=True, text=True, timeout=300)
@@ -327,9 +358,8 @@ def test_ci_test_eslint_plugin_react_hooks_scripts_react_compiler_build_compiler
         f"CI step '' failed (returncode={r.returncode}):\n"
         f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
 
-
 def test_ci_test_eslint_plugin_react_hooks_yarn():
-    """pass_to_pass | CI job 'Test eslint-plugin-react-hooks' -> step ''"""
+    """pass_to_pass | CI job 'Test eslint-plugin-react-hooks' → step ''"""
     r = subprocess.run(
         ["bash", "-lc", 'yarn workspace eslint-plugin-react-hooks test'], cwd=REPO,
         capture_output=True, text=True, timeout=300)
@@ -337,9 +367,8 @@ def test_ci_test_eslint_plugin_react_hooks_yarn():
         f"CI step '' failed (returncode={r.returncode}):\n"
         f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
 
-
 def test_ci_yarn_build_and_lint_yarn():
-    """pass_to_pass | CI job 'yarn build and lint' -> step ''"""
+    """pass_to_pass | CI job 'yarn build and lint' → step ''"""
     r = subprocess.run(
         ["bash", "-lc", 'yarn --cwd compiler install --frozen-lockfile'], cwd=REPO,
         capture_output=True, text=True, timeout=300)
@@ -347,12 +376,165 @@ def test_ci_yarn_build_and_lint_yarn():
         f"CI step '' failed (returncode={r.returncode}):\n"
         f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
 
-
 def test_ci_yarn_build_and_lint_lint_build():
-    """pass_to_pass | CI job 'yarn build and lint' -> step 'Lint build'"""
+    """pass_to_pass | CI job 'yarn build and lint' → step 'Lint build'"""
     r = subprocess.run(
         ["bash", "-lc", 'yarn lint-build'], cwd=REPO,
         capture_output=True, text=True, timeout=300)
     assert r.returncode == 0, (
         f"CI step 'Lint build' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+# === PR-added f2p tests (taskforge.test_patch_miner) ===
+def test_pr_added_empty_string_returns_empty_object():
+    """fail_to_pass | PR added test 'empty string returns empty object' in 'compiler/apps/playground/__tests__/parseConfigOverrides.test.mjs' (vitest_or_jest)"""
+    r = subprocess.run(
+        ["bash", "-lc", '(pnpm vitest run "compiler/apps/playground/__tests__/parseConfigOverrides.test.mjs" -t "empty string returns empty object" 2>&1 || npx vitest run "compiler/apps/playground/__tests__/parseConfigOverrides.test.mjs" -t "empty string returns empty object" 2>&1 || pnpm jest "compiler/apps/playground/__tests__/parseConfigOverrides.test.mjs" -t "empty string returns empty object" 2>&1 || npx jest "compiler/apps/playground/__tests__/parseConfigOverrides.test.mjs" -t "empty string returns empty object" 2>&1) | tail -50'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"PR-added test 'empty string returns empty object' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_pr_added_default_config_parses_correctly():
+    """fail_to_pass | PR added test 'default config parses correctly' in 'compiler/apps/playground/__tests__/parseConfigOverrides.test.mjs' (vitest_or_jest)"""
+    r = subprocess.run(
+        ["bash", "-lc", '(pnpm vitest run "compiler/apps/playground/__tests__/parseConfigOverrides.test.mjs" -t "default config parses correctly" 2>&1 || npx vitest run "compiler/apps/playground/__tests__/parseConfigOverrides.test.mjs" -t "default config parses correctly" 2>&1 || pnpm jest "compiler/apps/playground/__tests__/parseConfigOverrides.test.mjs" -t "default config parses correctly" 2>&1 || npx jest "compiler/apps/playground/__tests__/parseConfigOverrides.test.mjs" -t "default config parses correctly" 2>&1) | tail -50'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"PR-added test 'default config parses correctly' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_pr_added_compilationMode():
+    """fail_to_pass | PR added test 'compilationMode ' in 'compiler/apps/playground/__tests__/parseConfigOverrides.test.mjs' (vitest_or_jest)"""
+    r = subprocess.run(
+        ["bash", "-lc", '(pnpm vitest run "compiler/apps/playground/__tests__/parseConfigOverrides.test.mjs" -t "compilationMode " 2>&1 || npx vitest run "compiler/apps/playground/__tests__/parseConfigOverrides.test.mjs" -t "compilationMode " 2>&1 || pnpm jest "compiler/apps/playground/__tests__/parseConfigOverrides.test.mjs" -t "compilationMode " 2>&1 || npx jest "compiler/apps/playground/__tests__/parseConfigOverrides.test.mjs" -t "compilationMode " 2>&1) | tail -50'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"PR-added test 'compilationMode ' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_pr_added_config_with_single_line_and_block_comments_parse():
+    """fail_to_pass | PR added test 'config with single-line and block comments parses correctly' in 'compiler/apps/playground/__tests__/parseConfigOverrides.test.mjs' (vitest_or_jest)"""
+    r = subprocess.run(
+        ["bash", "-lc", '(pnpm vitest run "compiler/apps/playground/__tests__/parseConfigOverrides.test.mjs" -t "config with single-line and block comments parses correctly" 2>&1 || npx vitest run "compiler/apps/playground/__tests__/parseConfigOverrides.test.mjs" -t "config with single-line and block comments parses correctly" 2>&1 || pnpm jest "compiler/apps/playground/__tests__/parseConfigOverrides.test.mjs" -t "config with single-line and block comments parses correctly" 2>&1 || npx jest "compiler/apps/playground/__tests__/parseConfigOverrides.test.mjs" -t "config with single-line and block comments parses correctly" 2>&1) | tail -50'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"PR-added test 'config with single-line and block comments parses correctly' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_pr_added_config_with_trailing_commas_parses_correctly():
+    """fail_to_pass | PR added test 'config with trailing commas parses correctly' in 'compiler/apps/playground/__tests__/parseConfigOverrides.test.mjs' (vitest_or_jest)"""
+    r = subprocess.run(
+        ["bash", "-lc", '(pnpm vitest run "compiler/apps/playground/__tests__/parseConfigOverrides.test.mjs" -t "config with trailing commas parses correctly" 2>&1 || npx vitest run "compiler/apps/playground/__tests__/parseConfigOverrides.test.mjs" -t "config with trailing commas parses correctly" 2>&1 || pnpm jest "compiler/apps/playground/__tests__/parseConfigOverrides.test.mjs" -t "config with trailing commas parses correctly" 2>&1 || npx jest "compiler/apps/playground/__tests__/parseConfigOverrides.test.mjs" -t "config with trailing commas parses correctly" 2>&1) | tail -50'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"PR-added test 'config with trailing commas parses correctly' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_pr_added_nested_environment_options_parse_correctly():
+    """fail_to_pass | PR added test 'nested environment options parse correctly' in 'compiler/apps/playground/__tests__/parseConfigOverrides.test.mjs' (vitest_or_jest)"""
+    r = subprocess.run(
+        ["bash", "-lc", '(pnpm vitest run "compiler/apps/playground/__tests__/parseConfigOverrides.test.mjs" -t "nested environment options parse correctly" 2>&1 || npx vitest run "compiler/apps/playground/__tests__/parseConfigOverrides.test.mjs" -t "nested environment options parse correctly" 2>&1 || pnpm jest "compiler/apps/playground/__tests__/parseConfigOverrides.test.mjs" -t "nested environment options parse correctly" 2>&1 || npx jest "compiler/apps/playground/__tests__/parseConfigOverrides.test.mjs" -t "nested environment options parse correctly" 2>&1) | tail -50'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"PR-added test 'nested environment options parse correctly' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_pr_added_multiple_options_parse_correctly():
+    """fail_to_pass | PR added test 'multiple options parse correctly' in 'compiler/apps/playground/__tests__/parseConfigOverrides.test.mjs' (vitest_or_jest)"""
+    r = subprocess.run(
+        ["bash", "-lc", '(pnpm vitest run "compiler/apps/playground/__tests__/parseConfigOverrides.test.mjs" -t "multiple options parse correctly" 2>&1 || npx vitest run "compiler/apps/playground/__tests__/parseConfigOverrides.test.mjs" -t "multiple options parse correctly" 2>&1 || pnpm jest "compiler/apps/playground/__tests__/parseConfigOverrides.test.mjs" -t "multiple options parse correctly" 2>&1 || npx jest "compiler/apps/playground/__tests__/parseConfigOverrides.test.mjs" -t "multiple options parse correctly" 2>&1) | tail -50'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"PR-added test 'multiple options parse correctly' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_pr_added_rejects_malicious_IIFE_injection():
+    """fail_to_pass | PR added test 'rejects malicious IIFE injection' in 'compiler/apps/playground/__tests__/parseConfigOverrides.test.mjs' (vitest_or_jest)"""
+    r = subprocess.run(
+        ["bash", "-lc", '(pnpm vitest run "compiler/apps/playground/__tests__/parseConfigOverrides.test.mjs" -t "rejects malicious IIFE injection" 2>&1 || npx vitest run "compiler/apps/playground/__tests__/parseConfigOverrides.test.mjs" -t "rejects malicious IIFE injection" 2>&1 || pnpm jest "compiler/apps/playground/__tests__/parseConfigOverrides.test.mjs" -t "rejects malicious IIFE injection" 2>&1 || npx jest "compiler/apps/playground/__tests__/parseConfigOverrides.test.mjs" -t "rejects malicious IIFE injection" 2>&1) | tail -50'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"PR-added test 'rejects malicious IIFE injection' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_pr_added_rejects_malicious_comma_operator_injection():
+    """fail_to_pass | PR added test 'rejects malicious comma operator injection' in 'compiler/apps/playground/__tests__/parseConfigOverrides.test.mjs' (vitest_or_jest)"""
+    r = subprocess.run(
+        ["bash", "-lc", '(pnpm vitest run "compiler/apps/playground/__tests__/parseConfigOverrides.test.mjs" -t "rejects malicious comma operator injection" 2>&1 || npx vitest run "compiler/apps/playground/__tests__/parseConfigOverrides.test.mjs" -t "rejects malicious comma operator injection" 2>&1 || pnpm jest "compiler/apps/playground/__tests__/parseConfigOverrides.test.mjs" -t "rejects malicious comma operator injection" 2>&1 || npx jest "compiler/apps/playground/__tests__/parseConfigOverrides.test.mjs" -t "rejects malicious comma operator injection" 2>&1) | tail -50'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"PR-added test 'rejects malicious comma operator injection' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_pr_added_rejects_function_call_in_value():
+    """fail_to_pass | PR added test 'rejects function call in value' in 'compiler/apps/playground/__tests__/parseConfigOverrides.test.mjs' (vitest_or_jest)"""
+    r = subprocess.run(
+        ["bash", "-lc", '(pnpm vitest run "compiler/apps/playground/__tests__/parseConfigOverrides.test.mjs" -t "rejects function call in value" 2>&1 || npx vitest run "compiler/apps/playground/__tests__/parseConfigOverrides.test.mjs" -t "rejects function call in value" 2>&1 || pnpm jest "compiler/apps/playground/__tests__/parseConfigOverrides.test.mjs" -t "rejects function call in value" 2>&1 || npx jest "compiler/apps/playground/__tests__/parseConfigOverrides.test.mjs" -t "rejects function call in value" 2>&1) | tail -50'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"PR-added test 'rejects function call in value' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_pr_added_rejects_variable_references():
+    """fail_to_pass | PR added test 'rejects variable references' in 'compiler/apps/playground/__tests__/parseConfigOverrides.test.mjs' (vitest_or_jest)"""
+    r = subprocess.run(
+        ["bash", "-lc", '(pnpm vitest run "compiler/apps/playground/__tests__/parseConfigOverrides.test.mjs" -t "rejects variable references" 2>&1 || npx vitest run "compiler/apps/playground/__tests__/parseConfigOverrides.test.mjs" -t "rejects variable references" 2>&1 || pnpm jest "compiler/apps/playground/__tests__/parseConfigOverrides.test.mjs" -t "rejects variable references" 2>&1 || npx jest "compiler/apps/playground/__tests__/parseConfigOverrides.test.mjs" -t "rejects variable references" 2>&1) | tail -50'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"PR-added test 'rejects variable references' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_pr_added_rejects_template_literals():
+    """fail_to_pass | PR added test 'rejects template literals' in 'compiler/apps/playground/__tests__/parseConfigOverrides.test.mjs' (vitest_or_jest)"""
+    r = subprocess.run(
+        ["bash", "-lc", '(pnpm vitest run "compiler/apps/playground/__tests__/parseConfigOverrides.test.mjs" -t "rejects template literals" 2>&1 || npx vitest run "compiler/apps/playground/__tests__/parseConfigOverrides.test.mjs" -t "rejects template literals" 2>&1 || pnpm jest "compiler/apps/playground/__tests__/parseConfigOverrides.test.mjs" -t "rejects template literals" 2>&1 || npx jest "compiler/apps/playground/__tests__/parseConfigOverrides.test.mjs" -t "rejects template literals" 2>&1) | tail -50'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"PR-added test 'rejects template literals' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_pr_added_rejects_constructor_calls():
+    """fail_to_pass | PR added test 'rejects constructor calls' in 'compiler/apps/playground/__tests__/parseConfigOverrides.test.mjs' (vitest_or_jest)"""
+    r = subprocess.run(
+        ["bash", "-lc", '(pnpm vitest run "compiler/apps/playground/__tests__/parseConfigOverrides.test.mjs" -t "rejects constructor calls" 2>&1 || npx vitest run "compiler/apps/playground/__tests__/parseConfigOverrides.test.mjs" -t "rejects constructor calls" 2>&1 || pnpm jest "compiler/apps/playground/__tests__/parseConfigOverrides.test.mjs" -t "rejects constructor calls" 2>&1 || npx jest "compiler/apps/playground/__tests__/parseConfigOverrides.test.mjs" -t "rejects constructor calls" 2>&1) | tail -50'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"PR-added test 'rejects constructor calls' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_pr_added_rejects_arbitrary_JS_code():
+    """fail_to_pass | PR added test 'rejects arbitrary JS code' in 'compiler/apps/playground/__tests__/parseConfigOverrides.test.mjs' (vitest_or_jest)"""
+    r = subprocess.run(
+        ["bash", "-lc", '(pnpm vitest run "compiler/apps/playground/__tests__/parseConfigOverrides.test.mjs" -t "rejects arbitrary JS code" 2>&1 || npx vitest run "compiler/apps/playground/__tests__/parseConfigOverrides.test.mjs" -t "rejects arbitrary JS code" 2>&1 || pnpm jest "compiler/apps/playground/__tests__/parseConfigOverrides.test.mjs" -t "rejects arbitrary JS code" 2>&1 || npx jest "compiler/apps/playground/__tests__/parseConfigOverrides.test.mjs" -t "rejects arbitrary JS code" 2>&1) | tail -50'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"PR-added test 'rejects arbitrary JS code' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_pr_added_config_with_array_values_parses_correctly():
+    """fail_to_pass | PR added test 'config with array values parses correctly' in 'compiler/apps/playground/__tests__/parseConfigOverrides.test.mjs' (vitest_or_jest)"""
+    r = subprocess.run(
+        ["bash", "-lc", '(pnpm vitest run "compiler/apps/playground/__tests__/parseConfigOverrides.test.mjs" -t "config with array values parses correctly" 2>&1 || npx vitest run "compiler/apps/playground/__tests__/parseConfigOverrides.test.mjs" -t "config with array values parses correctly" 2>&1 || pnpm jest "compiler/apps/playground/__tests__/parseConfigOverrides.test.mjs" -t "config with array values parses correctly" 2>&1 || npx jest "compiler/apps/playground/__tests__/parseConfigOverrides.test.mjs" -t "config with array values parses correctly" 2>&1) | tail -50'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"PR-added test 'config with array values parses correctly' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_pr_added_config_with_null_values_parses_correctly():
+    """fail_to_pass | PR added test 'config with null values parses correctly' in 'compiler/apps/playground/__tests__/parseConfigOverrides.test.mjs' (vitest_or_jest)"""
+    r = subprocess.run(
+        ["bash", "-lc", '(pnpm vitest run "compiler/apps/playground/__tests__/parseConfigOverrides.test.mjs" -t "config with null values parses correctly" 2>&1 || npx vitest run "compiler/apps/playground/__tests__/parseConfigOverrides.test.mjs" -t "config with null values parses correctly" 2>&1 || pnpm jest "compiler/apps/playground/__tests__/parseConfigOverrides.test.mjs" -t "config with null values parses correctly" 2>&1 || npx jest "compiler/apps/playground/__tests__/parseConfigOverrides.test.mjs" -t "config with null values parses correctly" 2>&1) | tail -50'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"PR-added test 'config with null values parses correctly' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_pr_added_config_with_numeric_values_parses_correctly():
+    """fail_to_pass | PR added test 'config with numeric values parses correctly' in 'compiler/apps/playground/__tests__/parseConfigOverrides.test.mjs' (vitest_or_jest)"""
+    r = subprocess.run(
+        ["bash", "-lc", '(pnpm vitest run "compiler/apps/playground/__tests__/parseConfigOverrides.test.mjs" -t "config with numeric values parses correctly" 2>&1 || npx vitest run "compiler/apps/playground/__tests__/parseConfigOverrides.test.mjs" -t "config with numeric values parses correctly" 2>&1 || pnpm jest "compiler/apps/playground/__tests__/parseConfigOverrides.test.mjs" -t "config with numeric values parses correctly" 2>&1 || npx jest "compiler/apps/playground/__tests__/parseConfigOverrides.test.mjs" -t "config with numeric values parses correctly" 2>&1) | tail -50'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"PR-added test 'config with numeric values parses correctly' failed (returncode={r.returncode}):\n"
         f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")

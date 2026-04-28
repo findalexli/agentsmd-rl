@@ -206,3 +206,112 @@ def test_agent_go_fmt():
         cwd=REPO,
     )
     assert result.returncode == 0, f"go fmt failed: {result.stderr}"
+
+# === CI-mined tests (taskforge.ci_check_miner) ===
+def test_ci_ui_tests_make():
+    """pass_to_pass | CI job 'UI tests' → step ''"""
+    r = subprocess.run(
+        ["bash", "-lc", 'make assets-tarball'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step '' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_ui_tests_make_2():
+    """pass_to_pass | CI job 'UI tests' → step ''"""
+    r = subprocess.run(
+        ["bash", "-lc", 'make ui-lint'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step '' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_ui_tests_make_3():
+    """pass_to_pass | CI job 'UI tests' → step ''"""
+    r = subprocess.run(
+        ["bash", "-lc", 'make ui-test'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step '' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_golangci_lint_get_golangci_lint_version():
+    """pass_to_pass | CI job 'golangci-lint' → step 'Get golangci-lint version'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'echo "version=$(make print-golangci-lint-version)" >> $GITHUB_OUTPUT'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Get golangci-lint version' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_go_tests_on_windows_make():
+    """pass_to_pass | CI job 'Go tests on Windows' → step ''"""
+    r = subprocess.run(
+        ["bash", "-lc", 'make GO_ONLY=1 SKIP_GOLANGCI_LINT=1'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step '' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_go_tests_on_windows_go():
+    """pass_to_pass | CI job 'Go tests on Windows' → step ''"""
+    r = subprocess.run(
+        ["bash", "-lc", 'go test ./tsdb/ -test.tsdb-isolation=false'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step '' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_go_tests_on_windows_make_2():
+    """pass_to_pass | CI job 'Go tests on Windows' → step ''"""
+    r = subprocess.run(
+        ["bash", "-lc", 'make -C documentation/examples/remote_storage'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step '' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_go_tests_on_windows_make_3():
+    """pass_to_pass | CI job 'Go tests on Windows' → step ''"""
+    r = subprocess.run(
+        ["bash", "-lc", 'make -C documentation/examples'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step '' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_check_generated_parser_make():
+    """pass_to_pass | CI job 'Check generated parser' → step ''"""
+    r = subprocess.run(
+        ["bash", "-lc", 'make install-goyacc check-generated-parser'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step '' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_check_generated_parser_make_2():
+    """pass_to_pass | CI job 'Check generated parser' → step ''"""
+    r = subprocess.run(
+        ["bash", "-lc", 'make check-generated-promql-functions'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step '' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_mixins_tests_make():
+    """pass_to_pass | CI job 'Mixins tests' → step ''"""
+    r = subprocess.run(
+        ["bash", "-lc", 'make -C documentation/prometheus-mixin clean'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step '' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_mixins_tests_make_2():
+    """pass_to_pass | CI job 'Mixins tests' → step ''"""
+    r = subprocess.run(
+        ["bash", "-lc", 'make -C documentation/prometheus-mixin jb_install'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step '' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")

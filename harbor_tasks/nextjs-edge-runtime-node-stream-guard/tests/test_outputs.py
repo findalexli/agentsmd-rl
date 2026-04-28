@@ -305,28 +305,39 @@ def test_repo_import_paths_valid():
         )
         assert r.returncode == 0, f"Import check failed for {fpath}:\n{r.stderr[-500:]}"
 
-
 # === CI-mined tests (taskforge.ci_check_miner) ===
-
-# [repo_tests] pass_to_pass
-def test_ci_pnpm_check_error_codes():
-    """pass_to_pass | CI-mined: pnpm run check-error-codes (scoped validation)."""
+def test_ci_build_pnpm():
+    """pass_to_pass | CI job 'build' → step ''"""
     r = subprocess.run(
-        ["bash", "-lc", "pnpm run check-error-codes"],
-        capture_output=True, text=True, timeout=120, cwd=REPO,
-    )
+        ["bash", "-lc", 'pnpm install'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
     assert r.returncode == 0, (
-        f"pnpm check-error-codes failed (returncode={r.returncode}):\n"
+        f"CI step '' failed (returncode={r.returncode}):\n"
         f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
 
-
-# [repo_tests] pass_to_pass
-def test_ci_pnpm_prettier_scoped():
-    """pass_to_pass | CI-mined: pnpm exec prettier --check scoped to node-web-streams-helper.ts."""
+def test_ci_build_pnpm_2():
+    """pass_to_pass | CI job 'build' → step ''"""
     r = subprocess.run(
-        ["bash", "-lc", "pnpm exec prettier --check packages/next/src/server/stream-utils/node-web-streams-helper.ts"],
-        capture_output=True, text=True, timeout=120, cwd=REPO,
-    )
+        ["bash", "-lc", 'pnpm run build'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
     assert r.returncode == 0, (
-        f"pnpm prettier check failed (returncode={r.returncode}):\n"
+        f"CI step '' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_validate_docs_links_run_link_checker():
+    """pass_to_pass | CI job 'validate-docs-links' → step 'Run link checker'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'node ./.github/actions/validate-docs-links/dist/index.js'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Run link checker' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_fetch_test_timings_ensure_test_timings_file_exists():
+    """pass_to_pass | CI job 'fetch test timings' → step 'Ensure test timings file exists'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'if [ ! -f test-timings.json ]; then\n  echo "No timings fetched, creating empty timings file"\n  echo \'{}\' > test-timings.json\nfi'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Ensure test timings file exists' failed (returncode={r.returncode}):\n"
         f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")

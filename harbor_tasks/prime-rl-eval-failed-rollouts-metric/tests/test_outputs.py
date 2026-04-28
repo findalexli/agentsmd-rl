@@ -484,47 +484,11 @@ def test_repo_py_syntax():
             raise AssertionError(f"Syntax error in {py_file.name}: {e}")
 
 # === CI-mined tests (taskforge.ci_check_miner) ===
-def test_ci_pytest_orchestrator_tests():
-    """pass_to_pass | Scoped orchestrator unit tests via pytest (real test runner).
-
-    Runs pytest via bash -lc on a temp test file that exercises the orchestrator
-    modules using the standard mock preamble. Validates that both eval_utils and
-    vf_utils import and that compute_eval_ckpt_step works correctly.
-    This is a pass_to_pass regression guard — must pass on both base and gold.
-    """
-    test_code = _MOCK_PREAMBLE + r'''
-import importlib
-import sys
-import pytest
-
-def test_compute_eval_ckpt_step_known_pairs():
-    eu = importlib.import_module("prime_rl.orchestrator.eval_utils")
-    assert eu.compute_eval_ckpt_step(25, 24, 0, 25) == 25
-    assert eu.compute_eval_ckpt_step(26, 24, 0, 25) == 25
-    assert eu.compute_eval_ckpt_step(23, 22, 0, 25) is None
-    assert eu.compute_eval_ckpt_step(0, -1, -1, 25, eval_base_model=True) == 0
-    assert eu.compute_eval_ckpt_step(25, 25, 0, 25) is None
-    assert eu.compute_eval_ckpt_step(76, 24, 0, 25) == 75
-
-def test_eval_utils_has_required_functions():
-    eu = importlib.import_module("prime_rl.orchestrator.eval_utils")
-    assert callable(eu.evaluate_env)
-    assert callable(eu.compute_eval_ckpt_step)
-
-def test_vf_utils_has_required_functions():
-    # vf_utils is mocked by the preamble; delete the mock to import real module
-    del sys.modules["prime_rl.orchestrator.vf_utils"]
-    vu = importlib.import_module("prime_rl.orchestrator.vf_utils")
-    assert callable(vu.generate)
-    assert callable(vu.evaluate)
-'''
-    test_path = Path("/tmp/_pytest_orch_test.py")
-    test_path.write_text(test_code)
+def test_ci_unit_tests_run_tests():
+    """pass_to_pass | CI job 'Unit tests' → step 'Run tests'"""
     r = subprocess.run(
-        ["bash", "-lc", f"cd {REPO} && python3 -m pytest {test_path} -x -q"],
-        capture_output=True, text=True, timeout=120,
-        env={**os.environ, "PYTHONPATH": f"{REPO}/src"},
-    )
+        ["bash", "-lc", 'PYTEST_OUTPUT_DIR=/tmp/outputs uv run pytest tests/unit -m "not gpu"'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
     assert r.returncode == 0, (
-        f"pytest orchestrator tests failed (returncode={r.returncode}):\n"
+        f"CI step 'Run tests' failed (returncode={r.returncode}):\n"
         f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")

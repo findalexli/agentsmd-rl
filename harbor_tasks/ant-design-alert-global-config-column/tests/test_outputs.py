@@ -133,5 +133,29 @@ def test_config_provider_en_other_rows_intact():
     assert "| anchor | Set Anchor common props" in text, "ConfigProvider en-US anchor row must remain intact."
 
 # === CI-mined tests (taskforge.ci_check_miner) ===
-# Dropped: test_ci_test_image_generate_image_snapshots requires Node.js,
-# puppeteer, and a headless browser — not available in this Docker env.
+def test_ci_test_image_generate_image_snapshots():
+    """pass_to_pass | CI job 'test image' → step 'generate image snapshots'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'node node_modules/puppeteer/install.mjs'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'generate image snapshots' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_build_build():
+    """pass_to_pass | CI job 'build' → step 'Build'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'ut build'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Build' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_test_lib_es_module_compile():
+    """pass_to_pass | CI job 'test lib/es module' → step 'compile'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'ut compile'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'compile' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")

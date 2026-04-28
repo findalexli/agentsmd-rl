@@ -85,10 +85,18 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Pre-commit end-of-file-fixer hook passes on modified files
-# Removed checks (cannot execute in Docker without heavy deps):
-# - test_ci_build_build_the_book (needs Node.js + jupyter-book)
-# - test_pr_added_test_grpo / test_pr_added_test_sft (need full AReaL deps: uvloop, hydra-core, torch)
-# The 7 core f2p AST-based tests comprehensively cover the PR diff.
+- id: test_pr_added_test_grpo
+  type: fail_to_pass
+  origin: pr_diff
+  description: PR added test 'test_grpo' in areal/tests/grpo/test_grpo.py
+- id: test_pr_added_test_sft
+  type: fail_to_pass
+  origin: pr_diff
+  description: PR added test 'test_sft' in areal/tests/sft/test_sft.py
+- id: test_ci_build_build_the_book
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: build / Build the book'
 rubric:
 - rule: Tests parametrized for multiple backends (fsdp/megatron) must use @pytest.mark.parametrize decorator, not ad-hoc loops
   source:

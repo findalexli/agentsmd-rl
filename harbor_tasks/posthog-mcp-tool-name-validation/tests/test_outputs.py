@@ -307,3 +307,112 @@ def test_ci_mcp_build():
     assert r.returncode == 0, (
         f"CI MCP build failed (returncode={r.returncode}):\n"
         f"stdout: {r.stdout[-800:]}\nstderr: {r.stderr[-800:]}")
+
+# === CI-mined tests (taskforge.ci_check_miner) ===
+def test_ci_node_js_build_check_builds_correctly():
+    """pass_to_pass | CI job 'Node.js Build' → step 'Check builds correctly'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'pnpm --filter=@posthog/nodejs build'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Check builds correctly' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_node_js_build_sanity_check_output():
+    """pass_to_pass | CI job 'Node.js Build' → step 'Sanity check output'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'cd nodejs\n# We expect it to fail but check that the error isn\'t "MODULE_NOT_FOUND"\nif node dist/index.js 2>&1 | grep "MODULE_NOT_FOUND"; then\n    echo "❌ Build is invalid - failed with \'MODULE_NOT_FOUND\' error"\n    exit 1\nelse\n    echo "✅ Build is valid - failed as expected without module errors"\nfi'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Sanity check output' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_node_js_tests_check_for_migrations_in_this_pr():
+    """pass_to_pass | CI job 'Node.js Tests' → step 'Check for migrations in this PR'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'if git diff --name-only "origin/$BASE_REF..HEAD" | grep -E \'(migrations/|rust/.*migrate)\'; then\n  echo "has_migrations=true" >> $GITHUB_OUTPUT\nelse\n  echo "has_migrations=false" >> $GITHUB_OUTPUT\nfi'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Check for migrations in this PR' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_node_js_tests_set_up_databases_fast_path_restore_schem():
+    """pass_to_pass | CI job 'Node.js Tests' → step 'Set up databases (fast path - restore schema)'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'pnpm run setup:test:rust && pnpm run setup:test:persons-parity'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Set up databases (fast path - restore schema)' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_node_js_tests_set_up_databases_slow_path_run_migration():
+    """pass_to_pass | CI job 'Node.js Tests' → step 'Set up databases (slow path - run migrations)'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'pnpm --filter=@posthog/nodejs setup:test && pnpm run setup:test:persons-parity'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Set up databases (slow path - run migrations)' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_node_js_tests_test_with_jest():
+    """pass_to_pass | CI job 'Node.js Tests' → step 'Test with Jest'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'bin/turbo run test --filter=@posthog/nodejs'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Test with Jest' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_node_js_tests_test_postgres_parity_isolated_db():
+    """pass_to_pass | CI job 'Node.js Tests' → step 'Test postgres-parity (isolated DB)'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'pnpm run test:postgres-parity'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Test postgres-parity (isolated DB)' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_dagster_tests_run_migrations():
+    """pass_to_pass | CI job 'Dagster tests' → step 'Run migrations'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'python manage.py migrate'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Run migrations' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_dagster_tests_run_clickhouse_migrations():
+    """pass_to_pass | CI job 'Dagster tests' → step 'Run clickhouse migrations'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'python manage.py migrate_clickhouse'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Run clickhouse migrations' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_dagster_tests_run_dagster_tests():
+    """pass_to_pass | CI job 'Dagster tests' → step 'Run Dagster tests'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'pytest posthog/dags --junitxml=junit-dagster.xml'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Run Dagster tests' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_dagster_tests_run_products_dagster_tests():
+    """pass_to_pass | CI job 'Dagster tests' → step 'Run products Dagster tests'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'pytest products/**/dags --junitxml=junit-products.xml'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Run products Dagster tests' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_check_for_breaking_changes_check_for_breaking_changes():
+    """pass_to_pass | CI job 'Check for breaking changes' → step 'Check for breaking changes'"""
+    r = subprocess.run(
+        ["bash", "-lc", "buf breaking proto/ --against 'https://github.com/PostHog/posthog.git#branch=master,subdir=proto'"], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Check for breaking changes' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")

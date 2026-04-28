@@ -277,3 +277,49 @@ def test_repo_cargo_fmt_clean():
         "rustfmt --check reported formatting issues in the touched parser file:\n"
         f"{r.stdout[-2000:]}\n{r.stderr[-2000:]}"
     )
+
+# === CI-mined tests (taskforge.ci_check_miner) ===
+def test_ci_test_with__swc_cli_prepare():
+    """pass_to_pass | CI job 'Test with @swc/cli' → step 'Prepare'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'rustup target add wasm32-wasip1 && yarn && yarn build:dev && cargo clean && cargo clean) && npm install -g @swc/cli@0.1.56 && npm link && npm install -g file:$PWD'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Prepare' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_test_with__swc_cli_print_info():
+    """pass_to_pass | CI job 'Test with @swc/cli' → step 'Print info'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'npm list -g'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Print info' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_test_with__swc_cli_swc_redux():
+    """pass_to_pass | CI job 'Test with @swc/cli' → step '(swc) redux'"""
+    r = subprocess.run(
+        ["bash", "-lc", "yarn) && npx jest '.*.js' --modulePathIgnorePatterns 'typescript')"], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step '(swc) redux' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_test_with__swc_cli_swcpack_example_react_app():
+    """pass_to_pass | CI job 'Test with @swc/cli' → step '(swcpack) example react app'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'npm install && npx spack)'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step '(swcpack) example react app' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_check_license_of_dependencies_check_licenses():
+    """pass_to_pass | CI job 'Check license of dependencies' → step 'Check licenses'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'cargo deny check'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Check licenses' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")

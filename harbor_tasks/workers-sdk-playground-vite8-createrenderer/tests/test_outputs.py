@@ -244,3 +244,21 @@ def test_changeset_for_workers_playground():
         "AGENTS.md requires changesets for all published package changes"
     )
 
+# === CI-mined tests (taskforge.ci_check_miner) ===
+def test_ci_build_build():
+    """pass_to_pass | CI job 'build' → step 'Build'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'pnpm build --filter="./packages/*"'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Build' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_build_upload_packages():
+    """pass_to_pass | CI job 'build' → step 'Upload packages'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'node -r esbuild-register .github/prereleases/upload.mjs'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Upload packages' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")

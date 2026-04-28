@@ -103,3 +103,22 @@ def test_automerge_status_clarified():
         "SKILL.md does not clarify the new merge status — expected one of "
         f"{indicators} to appear after the rewrite"
     )
+
+# === CI-mined tests (taskforge.ci_check_miner) ===
+def test_ci_test_grammars_build_grammar():
+    """pass_to_pass | CI job 'test-grammars' → step 'Build grammar'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'bun run build'], cwd=os.path.join(REPO, 'grammars/prql-lezer/'),
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Build grammar' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_test_grammars_test_grammar():
+    """pass_to_pass | CI job 'test-grammars' → step 'Test grammar'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'bun run test'], cwd=os.path.join(REPO, 'grammars/prql-lezer/'),
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Test grammar' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")

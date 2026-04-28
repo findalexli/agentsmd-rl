@@ -356,31 +356,31 @@ def test_p2p_repo_validate_string_unit_test():
     )
 
 # === CI-mined tests (taskforge.ci_check_miner) ===
-def test_ci_lint_run_lint_check():
-    """pass_to_pass | CI job 'Lint' → step 'Run lint check'"""
+def test_ci_validate_db_schemas_apply_migrations():
+    """pass_to_pass | CI job 'Validate DB schemas' → step 'Apply migrations'"""
     r = subprocess.run(
-        ["bash", "-lc", 'npm run lint'], cwd=os.path.join(REPO, 'backend'),
+        ["bash", "-lc", 'npm run migration:latest-dev'], cwd=os.path.join(REPO, 'backend'),
         capture_output=True, text=True, timeout=300)
     assert r.returncode == 0, (
-        f"CI step 'Run lint check' failed (returncode={r.returncode}):\n"
+        f"CI step 'Apply migrations' failed (returncode={r.returncode}):\n"
         f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
 
-def test_ci_type_check_run_type_check():
-    """pass_to_pass | CI job 'Type Check' → step 'Run type check'"""
+def test_ci_validate_db_schemas_run_schema_generation():
+    """pass_to_pass | CI job 'Validate DB schemas' → step 'Run schema generation'"""
     r = subprocess.run(
-        ["bash", "-lc", 'npm run type:check'], cwd=os.path.join(REPO, 'backend'),
+        ["bash", "-lc", 'npm run generate:schema'], cwd=os.path.join(REPO, 'backend'),
         capture_output=True, text=True, timeout=300)
     assert r.returncode == 0, (
-        f"CI step 'Run type check' failed (returncode={r.returncode}):\n"
+        f"CI step 'Run schema generation' failed (returncode={r.returncode}):\n"
         f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
 
-def test_ci_run_bdd_tests_run_bdd_tests():
-    """pass_to_pass | CI job 'Run BDD tests' → step 'Run bdd tests'"""
+def test_ci_validate_db_schemas_check_for_schema_changes():
+    """pass_to_pass | CI job 'Validate DB schemas' → step 'Check for schema changes'"""
     r = subprocess.run(
-        ["bash", "-lc", 'npm run test:bdd'], cwd=os.path.join(REPO, 'backend'),
+        ["bash", "-lc", 'if ! git diff --exit-code --quiet src/db/schemas; then\n  echo "❌ Generated schemas differ from committed schemas!"\n  echo "Run \'npm run generate:schema\' locally and commit the changes."\n  git diff src/db/schemas\n  exit 1\nfi\necho "✅ Schemas are up to date"'], cwd=os.path.join(REPO, 'backend'),
         capture_output=True, text=True, timeout=300)
     assert r.returncode == 0, (
-        f"CI step 'Run bdd tests' failed (returncode={r.returncode}):\n"
+        f"CI step 'Check for schema changes' failed (returncode={r.returncode}):\n"
         f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
 
 def test_ci_run_integration_test_run_unit_test():
@@ -401,20 +401,65 @@ def test_ci_run_integration_test_run_integration_test():
         f"CI step 'Run integration test' failed (returncode={r.returncode}):\n"
         f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
 
-def test_ci_validate_db_schemas_apply_migrations():
-    """pass_to_pass | CI job 'Validate DB schemas' → step 'Apply migrations'"""
+def test_ci_check_api_changes_wait_for_container_to_be_stable_and_chec():
+    """pass_to_pass | CI job 'Check API Changes' → step 'Wait for container to be stable and check logs'"""
     r = subprocess.run(
-        ["bash", "-lc", 'npm run migration:latest-dev'], cwd=os.path.join(REPO, 'backend'),
+        ["bash", "-lc", 'SECONDS=0\nHEALTHY=0\nwhile [ $SECONDS -lt 60 ]; do\n  # Check if container is running\n  if docker ps | grep infisical-api; then\n    # Try to access the API endpoint\n    if curl -s -f http://localhost:4000/api/docs/json > /dev/null 2>&1; then\n      echo "API endpoint is responding. Container seems healthy."\n      HEALTHY=1\n      break\n    fi\n  else\n    echo "Container is not running!"\n    docker ps -a | grep infisical-api\n    break\n  fi\n  \n  echo "Waiting for container to be healthy... ($SECONDS seconds elapsed)"\n  sleep 5\n  SECONDS=$((SECONDS+5))\ndone\n\nif [ $HEALTHY -ne 1 ]; then\n  echo "Container did not become healthy in time"\n  echo "Container status:"\n  docker ps -a | grep infisical-api\n  echo "Container logs (if any):"\n  docker logs infisical-api || echo "No logs available"\n  echo "Container inspection:"\n  docker inspect infisical-api | grep -A 5 "State"\n  exit 1\nfi'], cwd=REPO,
         capture_output=True, text=True, timeout=300)
     assert r.returncode == 0, (
-        f"CI step 'Apply migrations' failed (returncode={r.returncode}):\n"
+        f"CI step 'Wait for container to be stable and check logs' failed (returncode={r.returncode}):\n"
         f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
 
-def test_ci_validate_db_schemas_run_schema_generation():
-    """pass_to_pass | CI job 'Validate DB schemas' → step 'Run schema generation'"""
+def test_ci_check_api_changes_running_openapi_spec_diff_action():
+    """pass_to_pass | CI job 'Check API Changes' → step 'Running OpenAPI Spec diff action'"""
     r = subprocess.run(
-        ["bash", "-lc", 'npm run generate:schema'], cwd=os.path.join(REPO, 'backend'),
+        ["bash", "-lc", 'oasdiff breaking https://app.infisical.com/api/docs/json http://localhost:4000/api/docs/json --fail-on ERR'], cwd=REPO,
         capture_output=True, text=True, timeout=300)
     assert r.returncode == 0, (
-        f"CI step 'Run schema generation' failed (returncode={r.returncode}):\n"
+        f"CI step 'Running OpenAPI Spec diff action' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_type_check_run_type_check():
+    """pass_to_pass | CI job 'Type Check' → step 'Run type check'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'npm run type:check'], cwd=os.path.join(REPO, 'backend'),
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Run type check' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_lint_run_lint_check():
+    """pass_to_pass | CI job 'Lint' → step 'Run lint check'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'npm run lint'], cwd=os.path.join(REPO, 'backend'),
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Run lint check' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_run_bdd_tests_install_sscep_scep_client_for_bdd_tests():
+    """pass_to_pass | CI job 'Run BDD tests' → step 'Install sscep (SCEP client for BDD tests)'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'sudo apt-get update && sudo apt-get install -y cmake libssl-dev build-essential\ngit clone https://github.com/certnanny/sscep.git /tmp/sscep-build\ncmake -S /tmp/sscep-build -B /tmp/sscep-build/build\nmake -C /tmp/sscep-build/build -j$(nproc)\nsudo cp /tmp/sscep-build/build/sscep /usr/local/bin/sscep'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Install sscep (SCEP client for BDD tests)' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_run_bdd_tests_output_env_file_and_enable_feature_flags():
+    """pass_to_pass | CI job 'Run BDD tests' → step 'Output .env file and enable feature flags for BDD tests'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'cp .env.dev.example .env\necho "ACME_DEVELOPMENT_MODE=true" >> .env\necho "ACME_DEVELOPMENT_HTTP01_CHALLENGE_HOST_OVERRIDES={\\"localhost\\": \\"host.docker.internal:8087\\", \\"infisical.com\\": \\"host.docker.internal:8087\\", \\"example.com\\": \\"host.docker.internal:8087\\"}" >> .env\necho "BDD_NOCK_API_ENABLED=true" >> .env\n# use Technitium DNS server for BDD tests\necho "ACME_DNS_RESOLVE_RESOLVER_SERVERS_HOST_ENABLED=true" >> .env\necho "ACME_DNS_RESOLVER_SERVERS=technitium" >> .env\n# Skip upstream validation, otherwise the ACME client for the upstream will try to\n# validate the DNS records, which will fail because the DNS records are not actually created.\necho "ACME_SKIP_UPSTREAM_VALIDATION=true" >> .env\n# We are not using FIPS mode, need a different encryption key for BDD tests\nNEW_ENCRYPTION_KEY=6c1fe4e407b8911c104518103505b218\nsed -i "s#ENCRYPTION_KEY=.*#ENCRYPTION_KEY=$NEW_ENCRYPTION_KEY#" .env\n# Disable SMTP so email sends don\'t fail in CI (no Mailhog available)\nsed -i "s#SMTP_HOST=.*#SMTP_HOST=#" .env\nsed -i "s#SMTP_PORT=.*#SMTP_PORT=#" .env\nsed -i "s#SMTP_FROM_ADDRESS=.*#SMTP_FROM_ADDRESS=#" .env\nsed -i "s#SMTP_FROM_NAME=.*#SMTP_FROM_NAME=#" .env\nsed -i "s#SMTP_REQUIRE_TLS=.*#SMTP_REQUIRE_TLS=#" .env\nsed -i "s#SMTP_USERNAME=.*#SMTP_USERNAME=#" .env\nsed -i "s#SMTP_PASSWORD=.*#SMTP_PASSWORD=#" .env\n# Enable ACME and SCEP features in license for BDD tests\nsed -i \'s/pkiAcme: .*/pkiAcme: true,/g\' backend/src/ee/services/license/license-fns.ts\nsed -i \'s/pkiScep: .*/pkiScep: true,/g\' backend/src/ee/services/license/license-fns.ts'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Output .env file and enable feature flags for BDD tests' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_run_bdd_tests_run_bdd_tests():
+    """pass_to_pass | CI job 'Run BDD tests' → step 'Run bdd tests'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'npm run test:bdd'], cwd=os.path.join(REPO, 'backend'),
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Run bdd tests' failed (returncode={r.returncode}):\n"
         f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")

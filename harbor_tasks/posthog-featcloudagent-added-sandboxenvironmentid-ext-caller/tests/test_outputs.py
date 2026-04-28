@@ -566,3 +566,112 @@ def test_tasks_backend_python_files_parse():
         assert r.returncode == 0, f"Pytest scoped test failed:\\n{r.stdout}\\n{r.stderr}"
     finally:
         _os.unlink(tmp)
+
+# === CI-mined tests (taskforge.ci_check_miner) ===
+def test_ci_hog_tests_check_if_antlr_definitions_are_up_to_dat():
+    """pass_to_pass | CI job 'Hog tests' → step 'Check if ANTLR definitions are up to date'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'antlr | grep "Version" && npm run grammar:build'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Check if ANTLR definitions are up to date' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_hog_tests_check_if_stl_bytecode_is_up_to_date():
+    """pass_to_pass | CI job 'Hog tests' → step 'Check if STL bytecode is up to date'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'python -m common.hogvm.stl.compile'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Check if STL bytecode is up to date' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_hog_tests_run_hogvm_python_tests():
+    """pass_to_pass | CI job 'Hog tests' → step 'Run HogVM Python tests'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'pytest common/hogvm'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Run HogVM Python tests' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_hog_tests_run_hogvm_typescript_tests():
+    """pass_to_pass | CI job 'Hog tests' → step 'Run HogVM TypeScript tests'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'pnpm --filter=@posthog/hogvm install --frozen-lockfile && pnpm --filter=@posthog/hogvm test'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Run HogVM TypeScript tests' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_hog_tests_run_hog_tests():
+    """pass_to_pass | CI job 'Hog tests' → step 'Run Hog tests'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'pnpm --filter=@posthog/hogvm install --frozen-lockfile && pnpm --filter=@posthog/hogvm compile:stl && ./test.sh'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Run Hog tests' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_test_run_tests():
+    """pass_to_pass | CI job 'test' → step 'Run tests'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'go test -v ./...'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Run tests' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_build_package_build_package():
+    """pass_to_pass | CI job 'Build Package' → step 'Build package'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'pnpm build'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Build package' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_build_package_type_check():
+    """pass_to_pass | CI job 'Build Package' → step 'Type check'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'pnpm typecheck'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Type check' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_build_package_check_mcp_schema_is_up_to_date():
+    """pass_to_pass | CI job 'Build Package' → step 'Check MCP schema is up to date'"""
+    r = subprocess.run(
+        ["bash", "-lc", './bin/hogli build:schema-mcp\nif ! git diff --exit-code services/mcp/schema/tool-inputs.json; then\n  echo ""\n  echo "::error::MCP tool-inputs.json is out of date. Run \'hogli build:schema-mcp\' and commit the result."\n  exit 1\nfi'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Check MCP schema is up to date' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_build_package_check_generated_ui_apps_are_up_to_date():
+    """pass_to_pass | CI job 'Build Package' → step 'Check generated UI apps are up to date'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'pnpm run generate:ui-apps'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Check generated UI apps are up to date' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_build_package_lint_tool_names():
+    """pass_to_pass | CI job 'Build Package' → step 'Lint tool names'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'pnpm lint-tool-names'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Lint tool names' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_unit_tests_run_unit_tests():
+    """pass_to_pass | CI job 'Unit Tests' → step 'Run unit tests'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'pnpm --filter=@posthog/mcp run test -u'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Run unit tests' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")

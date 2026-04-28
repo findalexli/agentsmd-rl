@@ -192,5 +192,20 @@ def test_skill_md_basic_structure_preserved():
     assert "## 写法要求" in text, "## 写法要求 section missing"
 
 # === CI-mined tests (taskforge.ci_check_miner) ===
-# Dropped: test_ci_build_zip_builds requires Node.js + scripts not available
-# in the sparse checkout (only .agents + .github are present).
+def test_ci_build_build():
+    """pass_to_pass | CI job 'build' → step 'Build'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'ut build'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Build' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_test_lib_es_module_compile():
+    """pass_to_pass | CI job 'test lib/es module' → step 'compile'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'ut compile'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'compile' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")

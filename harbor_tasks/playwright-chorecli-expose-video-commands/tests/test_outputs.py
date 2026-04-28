@@ -345,7 +345,7 @@ def test_skill_md_preserves_existing_commands():
 
 # === CI-mined tests (taskforge.ci_check_miner) ===
 def test_ci_lint_snippets_npm():
-    """pass_to_pass | CI job 'Lint snippets' -> step ''"""
+    """pass_to_pass | CI job 'Lint snippets' → step ''"""
     r = subprocess.run(
         ["bash", "-lc", 'npm ci'], cwd=REPO,
         capture_output=True, text=True, timeout=300)
@@ -353,8 +353,35 @@ def test_ci_lint_snippets_npm():
         f"CI step '' failed (returncode={r.returncode}):\n"
         f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
 
+def test_ci_lint_snippets_pip():
+    """pass_to_pass | CI job 'Lint snippets' → step ''"""
+    r = subprocess.run(
+        ["bash", "-lc", 'pip install -r utils/doclint/linting-code-snippets/python/requirements.txt'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step '' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_lint_snippets_mvn():
+    """pass_to_pass | CI job 'Lint snippets' → step ''"""
+    r = subprocess.run(
+        ["bash", "-lc", 'mvn package'], cwd=os.path.join(REPO, 'utils/doclint/linting-code-snippets/java'),
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step '' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_lint_snippets_node():
+    """pass_to_pass | CI job 'Lint snippets' → step ''"""
+    r = subprocess.run(
+        ["bash", "-lc", 'node utils/doclint/linting-code-snippets/cli.js'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step '' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
 def test_ci_docs___lint_npm():
-    """pass_to_pass | CI job 'docs & lint' -> step ''"""
+    """pass_to_pass | CI job 'docs & lint' → step ''"""
     r = subprocess.run(
         ["bash", "-lc", 'npm run build'], cwd=REPO,
         capture_output=True, text=True, timeout=300)
@@ -363,10 +390,74 @@ def test_ci_docs___lint_npm():
         f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
 
 def test_ci_docs___lint_npx():
-    """pass_to_pass | CI job 'docs & lint' -> step ''"""
+    """pass_to_pass | CI job 'docs & lint' → step ''"""
     r = subprocess.run(
         ["bash", "-lc", 'npx playwright install --with-deps'], cwd=REPO,
         capture_output=True, text=True, timeout=300)
     assert r.returncode == 0, (
         f"CI step '' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_docs___lint_npm_2():
+    """pass_to_pass | CI job 'docs & lint' → step ''"""
+    r = subprocess.run(
+        ["bash", "-lc", 'npm run lint'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step '' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_docs___lint_verify_clean_tree():
+    """pass_to_pass | CI job 'docs & lint' → step 'Verify clean tree'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'if [[ -n $(git status -s) ]]; then\n  echo "ERROR: tree is dirty after npm run build:"\n  git diff\n  exit 1\nfi'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Verify clean tree' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_docs___lint_audit_prod_npm_dependencies():
+    """pass_to_pass | CI job 'docs & lint' → step 'Audit prod NPM dependencies'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'node utils/check_audit.js'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Audit prod NPM dependencies' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+# === PR-added f2p tests (taskforge.test_patch_miner) ===
+def test_pr_added_run_code():
+    """fail_to_pass | PR added test 'run-code' in 'tests/mcp/cli.spec.ts' (vitest_or_jest)"""
+    r = subprocess.run(
+        ["bash", "-lc", '(pnpm vitest run "tests/mcp/cli.spec.ts" -t "run-code" 2>&1 || npx vitest run "tests/mcp/cli.spec.ts" -t "run-code" 2>&1 || pnpm jest "tests/mcp/cli.spec.ts" -t "run-code" 2>&1 || npx jest "tests/mcp/cli.spec.ts" -t "run-code" 2>&1) | tail -50'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"PR-added test 'run-code' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_pr_added_screenshot_filename():
+    """fail_to_pass | PR added test 'screenshot --filename' in 'tests/mcp/cli.spec.ts' (vitest_or_jest)"""
+    r = subprocess.run(
+        ["bash", "-lc", '(pnpm vitest run "tests/mcp/cli.spec.ts" -t "screenshot --filename" 2>&1 || npx vitest run "tests/mcp/cli.spec.ts" -t "screenshot --filename" 2>&1 || pnpm jest "tests/mcp/cli.spec.ts" -t "screenshot --filename" 2>&1 || npx jest "tests/mcp/cli.spec.ts" -t "screenshot --filename" 2>&1) | tail -50'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"PR-added test 'screenshot --filename' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_pr_added_pdf_filename():
+    """fail_to_pass | PR added test 'pdf --filename' in 'tests/mcp/cli.spec.ts' (vitest_or_jest)"""
+    r = subprocess.run(
+        ["bash", "-lc", '(pnpm vitest run "tests/mcp/cli.spec.ts" -t "pdf --filename" 2>&1 || npx vitest run "tests/mcp/cli.spec.ts" -t "pdf --filename" 2>&1 || pnpm jest "tests/mcp/cli.spec.ts" -t "pdf --filename" 2>&1 || npx jest "tests/mcp/cli.spec.ts" -t "pdf --filename" 2>&1) | tail -50'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"PR-added test 'pdf --filename' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_pr_added_video_start_stop():
+    """fail_to_pass | PR added test 'video-start-stop' in 'tests/mcp/cli.spec.ts' (vitest_or_jest)"""
+    r = subprocess.run(
+        ["bash", "-lc", '(pnpm vitest run "tests/mcp/cli.spec.ts" -t "video-start-stop" 2>&1 || npx vitest run "tests/mcp/cli.spec.ts" -t "video-start-stop" 2>&1 || pnpm jest "tests/mcp/cli.spec.ts" -t "video-start-stop" 2>&1 || npx jest "tests/mcp/cli.spec.ts" -t "video-start-stop" 2>&1) | tail -50'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"PR-added test 'video-start-stop' failed (returncode={r.returncode}):\n"
         f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")

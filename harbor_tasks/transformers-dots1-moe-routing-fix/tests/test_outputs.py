@@ -174,27 +174,48 @@ def test_modular_dots1_in_sync_with_modeling_dots1():
         )
         raise AssertionError(msg)
 
-# === CI-mined tests (ruff lint + format checks sourced from repo CI) ===
-def test_ci_ruff_check_on_dots1():
-    """pass_to_pass | ruff lint check passes on dots1 modular + modeling files."""
-    mod_file = "src/transformers/models/dots1/modular_dots1.py"
-    gen_file = "src/transformers/models/dots1/modeling_dots1.py"
+# === CI-mined tests (taskforge.ci_check_miner) ===
+def test_ci_check_timestamps_verify_merge_commit_timestamp_is_older_t():
+    """pass_to_pass | CI job 'Check timestamps' → step 'Verify `merge_commit` timestamp is older than the issue comment timestamp'"""
     r = subprocess.run(
-        ["ruff", "check", mod_file, gen_file],
-        capture_output=True, text=True, timeout=120, cwd=REPO,
-    )
+        ["bash", "-lc", 'COMMENT_TIMESTAMP=$(date -d "${COMMENT_DATE}" +"%s")\necho "COMMENT_DATE: $COMMENT_DATE"\necho "COMMENT_TIMESTAMP: $COMMENT_TIMESTAMP"\nif [ $COMMENT_TIMESTAMP -le $PR_MERGE_COMMIT_TIMESTAMP ]; then\n  echo "Last commit on the pull request is newer than the issue comment triggering this run! Abort!";\n  exit -1;\nfi'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
     assert r.returncode == 0, (
-        f"ruff check failed on dots1 files (returncode={r.returncode}):\n"
+        f"CI step 'Verify `merge_commit` timestamp is older than the issue comment timestamp' failed (returncode={r.returncode}):\n"
         f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
 
-def test_ci_ruff_format_check_on_dots1():
-    """pass_to_pass | ruff format --check passes on dots1 modular + modeling files."""
-    mod_file = "src/transformers/models/dots1/modular_dots1.py"
-    gen_file = "src/transformers/models/dots1/modeling_dots1.py"
+def test_ci_get_tests_verify_merge_commit_sha():
+    """pass_to_pass | CI job 'get-tests' → step 'Verify merge commit SHA'"""
     r = subprocess.run(
-        ["ruff", "format", "--check", mod_file, gen_file],
-        capture_output=True, text=True, timeout=120, cwd=REPO,
-    )
+        ["bash", "-lc", 'PR_MERGE_SHA=$(git log -1 --format=%H)\nif [ $PR_MERGE_SHA != $VERIFIED_PR_MERGE_SHA ]; then\n  echo "The merged commit SHA is not the same as the verified one! Security issue detected, abort the workflow!";\n  exit -1;\nfi'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
     assert r.returncode == 0, (
-        f"ruff format --check failed on dots1 files (returncode={r.returncode}):\n"
+        f"CI step 'Verify merge commit SHA' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_get_tests_get_models_to_test():
+    """pass_to_pass | CI job 'get-tests' → step 'Get models to test'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'python -m pip install GitPython'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Get models to test' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_get_tests_show_models_to_test():
+    """pass_to_pass | CI job 'get-tests' → step 'Show models to test'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'echo "$models"\necho "models=$models" >> $GITHUB_OUTPUT\necho "$quantizations"\necho "quantizations=$quantizations" >> $GITHUB_OUTPUT'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Show models to test' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_check___report_process_and_filter_reports():
+    """pass_to_pass | CI job 'Check & Report' → step 'Process and filter reports'"""
+    r = subprocess.run(
+        ["bash", "-lc", "python3 << 'PYTHON_SCRIPT'"], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Process and filter reports' failed (returncode={r.returncode}):\n"
         f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")

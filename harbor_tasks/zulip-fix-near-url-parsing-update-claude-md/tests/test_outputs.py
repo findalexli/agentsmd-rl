@@ -322,3 +322,22 @@ def test_ci_bash_ruff_lint():
         capture_output=True, text=True, timeout=60, cwd=REPO,
     )
     assert r.returncode == 0, f"Ruff CI lint (bash -lc) failed:\n{r.stdout[-500:]}"
+
+# === CI-mined tests (taskforge.ci_check_miner) ===
+def test_ci_ubuntu_22_04_production_build_build_production_tarball():
+    """pass_to_pass | CI job 'Ubuntu 22.04 production build' → step 'Build production tarball'"""
+    r = subprocess.run(
+        ["bash", "-lc", './tools/ci/production-build'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Build production tarball' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_ubuntu_22_04_production_build_verify_pnpm_store_path():
+    """pass_to_pass | CI job 'Ubuntu 22.04 production build' → step 'Verify pnpm store path'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'set -x\npath="$(pnpm store path)"\n[[ "$path" == /__w/.pnpm-store/* ]]'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Verify pnpm store path' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")

@@ -183,3 +183,112 @@ def test_ty_check_clean_python_file(tmp_path: Path) -> None:
     assert "panicked" not in combined.lower(), (
         f"ty panicked on a trivial file: {combined[-500:]}"
     )
+
+# === CI-mined tests (taskforge.ci_check_miner) ===
+def test_ci_test_scripts_python():
+    """pass_to_pass | CI job 'test scripts' → step ''"""
+    r = subprocess.run(
+        ["bash", "-lc", 'python crates/ruff_python_ast/generate.py'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step '' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_test_scripts_python_2():
+    """pass_to_pass | CI job 'test scripts' → step ''"""
+    r = subprocess.run(
+        ["bash", "-lc", 'python crates/ruff_python_formatter/generate.py'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step '' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_test_scripts_scripts_add_rule_py():
+    """pass_to_pass | CI job 'test scripts' → step ''"""
+    r = subprocess.run(
+        ["bash", "-lc", './scripts/add_rule.py --name DoTheThing --prefix F --code 999 --linter pyflakes'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step '' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_test_scripts_cargo():
+    """pass_to_pass | CI job 'test scripts' → step ''"""
+    r = subprocess.run(
+        ["bash", "-lc", 'cargo check'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step '' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_test_scripts_scripts_add_plugin_py():
+    """pass_to_pass | CI job 'test scripts' → step ''"""
+    r = subprocess.run(
+        ["bash", "-lc", './scripts/add_plugin.py test --url https://pypi.org/project/-test/0.1.0/ --prefix TST && ./scripts/add_rule.py --name FirstRule --prefix TST --code 001 --linter test'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step '' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_test_scripts_uv():
+    """pass_to_pass | CI job 'test scripts' → step ''"""
+    r = subprocess.run(
+        ["bash", "-lc", 'uv run --directory=./python/py-fuzzer mypy'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step '' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_test_scripts_uv_2():
+    """pass_to_pass | CI job 'test scripts' → step ''"""
+    r = subprocess.run(
+        ["bash", "-lc", 'uv run --directory=./python/py-fuzzer ruff format --check'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step '' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_test_scripts_uv_3():
+    """pass_to_pass | CI job 'test scripts' → step ''"""
+    r = subprocess.run(
+        ["bash", "-lc", 'uv run --directory=./python/py-fuzzer ruff check'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step '' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_cargo_build_build_tests():
+    """pass_to_pass | CI job 'cargo build' → step 'Build tests'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'cargo "+${MSRV}" test --no-run --all-features'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Build tests' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_cargo_fuzz_build_cargo():
+    """pass_to_pass | CI job 'cargo fuzz build' → step ''"""
+    r = subprocess.run(
+        ["bash", "-lc", 'cargo fuzz build -s none'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step '' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_cargo_test_ty_mdtests_github_annotations():
+    """pass_to_pass | CI job 'cargo test' → step 'ty mdtests (GitHub annotations)'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'cargo test -p ty_python_semantic --test mdtest'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'ty mdtests (GitHub annotations)' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_cargo_test_run_tests():
+    """pass_to_pass | CI job 'cargo test' → step 'Run tests'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'cargo insta test --all-features --unreferenced reject --test-runner nextest --disable-nextest-doctest'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Run tests' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")

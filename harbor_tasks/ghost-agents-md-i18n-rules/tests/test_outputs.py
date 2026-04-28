@@ -134,3 +134,67 @@ def test_new_content_inside_i18n_architecture_section():
         "The translation rules must be inside the `### i18n Architecture` section."
     )
     assert "Never split sentences across multiple `t()` calls" in section
+
+# === CI-mined tests (taskforge.ci_check_miner) ===
+def test_ci_build_e2e_public_app_assets_build_public_apps_for_e2e():
+    """pass_to_pass | CI job 'Build E2E Public App Assets' → step 'Build public apps for E2E'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'yarn workspace @tryghost/e2e build:apps'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Build public apps for E2E' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_e2e_tests_prepare_e2e_ci_job():
+    """pass_to_pass | CI job 'E2E Tests' → step 'Prepare E2E CI job'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'bash ./e2e/scripts/prepare-ci-e2e-job.sh'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Prepare E2E CI job' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_e2e_tests_run_e2e_tests_in_playwright_container():
+    """pass_to_pass | CI job 'E2E Tests' → step 'Run e2e tests in Playwright container'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'bash ./e2e/scripts/run-playwright-container.sh'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Run e2e tests in Playwright container' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_e2e_tests_dump_e2e_docker_logs():
+    """pass_to_pass | CI job 'E2E Tests' → step 'Dump E2E docker logs'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'bash ./e2e/scripts/dump-e2e-docker-logs.sh'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Dump E2E docker logs' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_e2e_tests_stop_e2e_infra():
+    """pass_to_pass | CI job 'E2E Tests' → step 'Stop E2E infra'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'yarn workspace @tryghost/e2e infra:down'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Stop E2E infra' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_all_required_tests_passed_or_s_pass_on_tag_pushes_tests_already_ran_on():
+    """pass_to_pass | CI job 'All required tests passed or skipped' → step 'Pass on tag pushes (tests already ran on branch)'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'echo "Tag push — tests skipped (already tested on branch commit)"'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Pass on tag pushes (tests already ran on branch)' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_all_required_tests_passed_or_s_check_if_any_required_jobs_failed_or_bee():
+    """pass_to_pass | CI job 'All required tests passed or skipped' → step 'Check if any required jobs failed or been cancelled'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'echo "One of the dependent jobs have failed or been cancelled. You may need to re-run it." && exit 1'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Check if any required jobs failed or been cancelled' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")

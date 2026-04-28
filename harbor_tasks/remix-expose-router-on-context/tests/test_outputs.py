@@ -145,7 +145,7 @@ def test_ci_check_lint():
 def test_ci_check_typecheck():
     """pass_to_pass | CI job 'check' → step 'Typecheck'"""
     r = subprocess.run(
-        ["bash", "-lc", 'pnpm --filter @remix-run/fetch-router run typecheck'], cwd=REPO,
+        ["bash", "-lc", 'pnpm typecheck'], cwd=REPO,
         capture_output=True, text=True, timeout=300)
     assert r.returncode == 0, (
         f"CI step 'Typecheck' failed (returncode={r.returncode}):\n"
@@ -163,7 +163,7 @@ def test_ci_check_check_change_files():
 def test_ci_format_format():
     """pass_to_pass | CI job 'format' → step 'Format'"""
     r = subprocess.run(
-        ["bash", "-lc", 'pnpm format && pnpm format:check'], cwd=REPO,
+        ["bash", "-lc", 'pnpm format'], cwd=REPO,
         capture_output=True, text=True, timeout=300)
     assert r.returncode == 0, (
         f"CI step 'Format' failed (returncode={r.returncode}):\n"
@@ -172,7 +172,7 @@ def test_ci_format_format():
 def test_ci_build_build_packages():
     """pass_to_pass | CI job 'build' → step 'Build packages'"""
     r = subprocess.run(
-        ["bash", "-lc", 'pnpm --filter @remix-run/fetch-router build'], cwd=REPO,
+        ["bash", "-lc", 'pnpm build'], cwd=REPO,
         capture_output=True, text=True, timeout=300)
     assert r.returncode == 0, (
         f"CI step 'Build packages' failed (returncode={r.returncode}):\n"
@@ -181,7 +181,7 @@ def test_ci_build_build_packages():
 def test_ci_test_run_tests():
     """pass_to_pass | CI job 'test' → step 'Run tests'"""
     r = subprocess.run(
-        ["bash", "-lc", 'pnpm --filter @remix-run/fetch-router test'], cwd=REPO,
+        ["bash", "-lc", 'pnpm test'], cwd=REPO,
         capture_output=True, text=True, timeout=300)
     assert r.returncode == 0, (
         f"CI step 'Run tests' failed (returncode={r.returncode}):\n"

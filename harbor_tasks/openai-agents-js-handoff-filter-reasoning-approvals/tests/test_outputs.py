@@ -132,6 +132,15 @@ def test_repo_agents_core_typecheck():
     )
 
 # === CI-mined tests (taskforge.ci_check_miner) ===
+def test_ci_test_build_all_packages():
+    """pass_to_pass | CI job 'test' → step 'Build all packages'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'pnpm build:ci'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Build all packages' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
 def test_ci_test_check_generated_declarations():
     """pass_to_pass | CI job 'test' → step 'Check generated declarations'"""
     r = subprocess.run(
@@ -159,10 +168,19 @@ def test_ci_test_type_check_docs_scripts():
         f"CI step 'Type-check docs scripts' failed (returncode={r.returncode}):\n"
         f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
 
-def test_ci_test_run_tests():
-    """pass_to_pass | CI job 'test' → step 'Run tests', scoped to agents-core"""
+def test_ci_test_compile_examples():
+    """pass_to_pass | CI job 'test' → step 'Compile examples'"""
     r = subprocess.run(
-        ["bash", "-lc", 'pnpm -F @openai/agents-core test'], cwd=REPO,
+        ["bash", "-lc", 'pnpm -r build-check'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Compile examples' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_test_run_tests():
+    """pass_to_pass | CI job 'test' → step 'Run tests'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'pnpm test'], cwd=REPO,
         capture_output=True, text=True, timeout=300)
     assert r.returncode == 0, (
         f"CI step 'Run tests' failed (returncode={r.returncode}):\n"

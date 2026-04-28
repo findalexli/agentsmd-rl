@@ -171,3 +171,13 @@ def test_ruff_check_on_touched_files():
     assert r.returncode == 0, (
         f"ruff check failed on touched files:\nstdout:\n{r.stdout}\nstderr:\n{r.stderr}"
     )
+
+# === CI-mined tests (taskforge.ci_check_miner) ===
+def test_ci_check_tiny_models_create_all_tiny_models_locally():
+    """pass_to_pass | CI job 'Check tiny models' → step 'Create all tiny models (locally)'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'python utils/create_dummy_models.py tiny_local_models --all --num_workers 4'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Create all tiny models (locally)' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")

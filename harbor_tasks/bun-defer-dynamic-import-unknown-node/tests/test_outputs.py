@@ -316,3 +316,31 @@ def test_pr_added_dynamic_import_of_non_existent_node_module_in_CJ():
     assert r.returncode == 0, (
         f"PR-added test failed (returncode={r.returncode}):\n"
         f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+# === PR-added f2p tests (taskforge.test_patch_miner) ===
+def test_pr_added_require_of_CJS_file_containing_dynamic_import_of():
+    """fail_to_pass | PR added test 'require() of CJS file containing dynamic import of non-existent node: module does not fail at load time' in 'test/regression/issue/25707.test.ts' (vitest_or_jest)"""
+    r = subprocess.run(
+        ["bash", "-lc", '(pnpm vitest run "test/regression/issue/25707.test.ts" -t "require() of CJS file containing dynamic import of non-existent node: module does not fail at load time" 2>&1 || npx vitest run "test/regression/issue/25707.test.ts" -t "require() of CJS file containing dynamic import of non-existent node: module does not fail at load time" 2>&1 || pnpm jest "test/regression/issue/25707.test.ts" -t "require() of CJS file containing dynamic import of non-existent node: module does not fail at load time" 2>&1 || npx jest "test/regression/issue/25707.test.ts" -t "require() of CJS file containing dynamic import of non-existent node: module does not fail at load time" 2>&1) | tail -50'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"PR-added test 'require() of CJS file containing dynamic import of non-existent node: module does not fail at load time' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_pr_added_require_of_CJS_file_with_bare_dynamic_import_of_():
+    """fail_to_pass | PR added test 'require() of CJS file with bare dynamic import of non-existent node: module does not fail at load time' in 'test/regression/issue/25707.test.ts' (vitest_or_jest)"""
+    r = subprocess.run(
+        ["bash", "-lc", '(pnpm vitest run "test/regression/issue/25707.test.ts" -t "require() of CJS file with bare dynamic import of non-existent node: module does not fail at load time" 2>&1 || npx vitest run "test/regression/issue/25707.test.ts" -t "require() of CJS file with bare dynamic import of non-existent node: module does not fail at load time" 2>&1 || pnpm jest "test/regression/issue/25707.test.ts" -t "require() of CJS file with bare dynamic import of non-existent node: module does not fail at load time" 2>&1 || npx jest "test/regression/issue/25707.test.ts" -t "require() of CJS file with bare dynamic import of non-existent node: module does not fail at load time" 2>&1) | tail -50'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"PR-added test 'require() of CJS file with bare dynamic import of non-existent node: module does not fail at load time' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_pr_added_dynamic_import_of_non_existent_node_module_in_CJ():
+    """fail_to_pass | PR added test 'dynamic import of non-existent node: module in CJS rejects at runtime with correct error' in 'test/regression/issue/25707.test.ts' (vitest_or_jest)"""
+    r = subprocess.run(
+        ["bash", "-lc", '(pnpm vitest run "test/regression/issue/25707.test.ts" -t "dynamic import of non-existent node: module in CJS rejects at runtime with correct error" 2>&1 || npx vitest run "test/regression/issue/25707.test.ts" -t "dynamic import of non-existent node: module in CJS rejects at runtime with correct error" 2>&1 || pnpm jest "test/regression/issue/25707.test.ts" -t "dynamic import of non-existent node: module in CJS rejects at runtime with correct error" 2>&1 || npx jest "test/regression/issue/25707.test.ts" -t "dynamic import of non-existent node: module in CJS rejects at runtime with correct error" 2>&1) | tail -50'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"PR-added test 'dynamic import of non-existent node: module in CJS rejects at runtime with correct error' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")

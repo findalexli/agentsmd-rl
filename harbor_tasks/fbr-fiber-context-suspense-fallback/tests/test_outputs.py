@@ -325,3 +325,48 @@ def test_repo_reconciler_tests():
         f"{r.stdout.decode()[-3000:]}\n{r.stderr.decode()[-500:]}"
     )
 
+# === CI-mined tests (taskforge.ci_check_miner) ===
+def test_ci_jest_babel_plugin_react_compil_yarn():
+    """pass_to_pass | CI job 'Jest babel-plugin-react-compiler' → step ''"""
+    r = subprocess.run(
+        ["bash", "-lc", 'yarn install --frozen-lockfile'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step '' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_jest_babel_plugin_react_compil_yarn_2():
+    """pass_to_pass | CI job 'Jest babel-plugin-react-compiler' → step ''"""
+    r = subprocess.run(
+        ["bash", "-lc", 'yarn workspace babel-plugin-react-compiler jest'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step '' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_lint_babel_plugin_react_compil_yarn():
+    """pass_to_pass | CI job 'Lint babel-plugin-react-compiler' → step ''"""
+    r = subprocess.run(
+        ["bash", "-lc", 'yarn workspace babel-plugin-react-compiler lint'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step '' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_check_flags_ensure_clean_build_directory():
+    """pass_to_pass | CI job 'Check flags' → step 'Ensure clean build directory'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'rm -rf build'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Ensure clean build directory' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_check_flags_yarn():
+    """pass_to_pass | CI job 'Check flags' → step ''"""
+    r = subprocess.run(
+        ["bash", "-lc", 'yarn flags'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step '' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")

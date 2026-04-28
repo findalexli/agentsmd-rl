@@ -637,3 +637,39 @@ def test_no_multiple_create_signals():
     assert count <= 1, \
         f"Pacing function uses {count} createSignal calls; use createStore for multiple signals (packages/app/AGENTS.md:15)"
 
+# === CI-mined tests (taskforge.ci_check_miner) ===
+def test_ci_unit_run_unit_tests():
+    """pass_to_pass | CI job 'unit' → step 'Run unit tests'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'bun turbo test'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Run unit tests' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_e2e_run_app_e2e_tests():
+    """pass_to_pass | CI job 'e2e' → step 'Run app e2e tests'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'bun --cwd packages/app test:e2e:local'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Run app e2e tests' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_storybook_build_build_storybook():
+    """pass_to_pass | CI job 'storybook build' → step 'Build Storybook'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'bun --cwd packages/storybook build'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Build Storybook' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_typecheck_run_typecheck():
+    """pass_to_pass | CI job 'typecheck' → step 'Run typecheck'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'bun typecheck'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Run typecheck' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")

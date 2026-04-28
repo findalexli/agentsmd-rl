@@ -181,14 +181,11 @@ def test_repo_git_clean_other_files():
     )
 
 # === CI-mined tests (taskforge.ci_check_miner) ===
-def test_ci_remark_lint_claude_md():
-    """pass_to_pass | CI: remark lint (`lint:md` job) — CLAUDE.md must pass markdown lint."""
+def test_ci_check_if_workflow_run_is_trust_check_trust():
+    """pass_to_pass | CI job 'Check if workflow run is trusted' → step 'Check trust'"""
     r = subprocess.run(
-        ["bash", "-lc", "npx remark CLAUDE.md --no-stdout"],
-        cwd=str(REPO),
-        capture_output=True, text=True, timeout=120,
-    )
+        ["bash", "-lc", 'if [[ "$REPO" == "ant-design/ant-design" && \\\n      "$EVENT" == "push" && \\\n      ( "$BRANCH" == "master" || \\\n        "$BRANCH" == "feature" || \\\n        "$BRANCH" == "next" ) ]]; then\n  echo "trusted=true" >> $GITHUB_OUTPUT\nelse\n  echo "trusted=false" >> $GITHUB_OUTPUT\nfi'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
     assert r.returncode == 0, (
-        f"remark lint failed on CLAUDE.md (returncode={r.returncode}):\n"
-        f"stdout: {r.stdout[-2000:]}\nstderr: {r.stderr[-2000:]}"
-    )
+        f"CI step 'Check trust' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")

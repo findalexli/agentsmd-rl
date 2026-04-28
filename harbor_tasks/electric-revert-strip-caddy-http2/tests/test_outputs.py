@@ -396,3 +396,39 @@ def test_repo_tanstack_plugin_format():
     )
     assert r.returncode == 0, f"Plugin format check failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
 
+# === CI-mined tests (taskforge.ci_check_miner) ===
+def test_ci_test_ts_packages_against_sync__pnpm():
+    """fail_to_pass | CI job 'Test TS packages against sync-service' → step ''"""
+    r = subprocess.run(
+        ["bash", "-lc", 'pnpm install --frozen-lockfile'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step '' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_test_ts_packages_against_sync__compile_sync_service():
+    """fail_to_pass | CI job 'Test TS packages against sync-service' → step 'Compile sync-service'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'mix compile'], cwd=os.path.join(REPO, 'packages/sync-service'),
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Compile sync-service' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_test_ts_packages_against_sync__build_dependencies_if_any():
+    """fail_to_pass | CI job 'Test TS packages against sync-service' → step 'build dependencies, if any'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'pnpm -r --filter "$(jq \'.name\' -r package.json)^..." build'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'build dependencies, if any' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_test_ts_packages_against_sync__pnpm_2():
+    """fail_to_pass | CI job 'Test TS packages against sync-service' → step ''"""
+    r = subprocess.run(
+        ["bash", "-lc", 'pnpm coverage'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step '' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")

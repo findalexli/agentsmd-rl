@@ -281,6 +281,15 @@ def test_ci_docs___lint_npm_2():
         f"CI step '' failed (returncode={r.returncode}):\n"
         f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
 
+def test_ci_docs___lint_verify_clean_tree():
+    """pass_to_pass | CI job 'docs & lint' → step 'Verify clean tree'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'if [[ -n $(git status -s) ]]; then\n  echo "ERROR: tree is dirty after npm run build:"\n  git diff\n  exit 1\nfi'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Verify clean tree' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
 def test_ci_docs___lint_audit_prod_npm_dependencies():
     """pass_to_pass | CI job 'docs & lint' → step 'Audit prod NPM dependencies'"""
     r = subprocess.run(

@@ -656,6 +656,15 @@ def test_ci_typecheck_run_typecheck():
         f"CI step 'Run typecheck' failed (returncode={r.returncode}):\n"
         f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
 
+def test_ci_build_cli_build():
+    """pass_to_pass | CI job 'build-cli' → step 'Build'"""
+    r = subprocess.run(
+        ["bash", "-lc", './packages/opencode/script/build.ts'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Build' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
 def test_ci_build_electron_prepare():
     """pass_to_pass | CI job 'build-electron' → step 'Prepare'"""
     r = subprocess.run(
@@ -672,6 +681,15 @@ def test_ci_build_electron_build():
         capture_output=True, text=True, timeout=300)
     assert r.returncode == 0, (
         f"CI step 'Build' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_build_tauri_verify_certificate():
+    """pass_to_pass | CI job 'build-tauri' → step 'Verify Certificate'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'CERT_INFO=$(security find-identity -v -p codesigning build.keychain | grep "Developer ID Application")\nCERT_ID=$(echo "$CERT_INFO" | awk -F\'"\' \'{print $2}\')\necho "CERT_ID=$CERT_ID" >> $GITHUB_ENV\necho "Certificate imported."'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Verify Certificate' failed (returncode={r.returncode}):\n"
         f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
 
 def test_ci_build_tauri_show_tauri_cli_version():

@@ -194,3 +194,85 @@ def test_skill_md_has_both_mcp_and_cli_sections():
     assert building_count >= 2, (
         f"Should have Building sections for both MCP and CLI (found {building_count})"
     )
+
+# === CI-mined tests (taskforge.ci_check_miner) ===
+def test_ci_build_playwright_driver_npm():
+    """pass_to_pass | CI job 'build-playwright-driver' → step ''"""
+    r = subprocess.run(
+        ["bash", "-lc", 'npm ci'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step '' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_build_playwright_driver_npm_2():
+    """pass_to_pass | CI job 'build-playwright-driver' → step ''"""
+    r = subprocess.run(
+        ["bash", "-lc", 'npm run build'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step '' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_lint_snippets_pip():
+    """pass_to_pass | CI job 'Lint snippets' → step ''"""
+    r = subprocess.run(
+        ["bash", "-lc", 'pip install -r utils/doclint/linting-code-snippets/python/requirements.txt'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step '' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_lint_snippets_mvn():
+    """pass_to_pass | CI job 'Lint snippets' → step ''"""
+    r = subprocess.run(
+        ["bash", "-lc", 'mvn package'], cwd=os.path.join(REPO, 'utils/doclint/linting-code-snippets/java'),
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step '' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_lint_snippets_node():
+    """pass_to_pass | CI job 'Lint snippets' → step ''"""
+    r = subprocess.run(
+        ["bash", "-lc", 'node utils/doclint/linting-code-snippets/cli.js'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step '' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_docs___lint_npx():
+    """pass_to_pass | CI job 'docs & lint' → step ''"""
+    r = subprocess.run(
+        ["bash", "-lc", 'npx playwright install --with-deps'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step '' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_docs___lint_npm():
+    """pass_to_pass | CI job 'docs & lint' → step ''"""
+    r = subprocess.run(
+        ["bash", "-lc", 'npm run lint'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step '' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_docs___lint_verify_clean_tree():
+    """pass_to_pass | CI job 'docs & lint' → step 'Verify clean tree'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'if [[ -n $(git status -s) ]]; then\n  echo "ERROR: tree is dirty after npm run build:"\n  git diff\n  exit 1\nfi'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Verify clean tree' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_docs___lint_audit_prod_npm_dependencies():
+    """pass_to_pass | CI job 'docs & lint' → step 'Audit prod NPM dependencies'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'node utils/check_audit.js'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Audit prod NPM dependencies' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")

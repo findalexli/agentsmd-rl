@@ -197,13 +197,49 @@ def test_testing_codegen_skill_updated():
     assert has_html_parser, "Must reference biome_html_parser"
 
 # === CI-mined tests (taskforge.ci_check_miner) ===
-def test_ci_validate_rules_documentation_run_rules_check():
-    """pass_to_pass | CI job 'Validate rules documentation' → step 'Run rules check'"""
+def test_ci_build__biomejs_wasm_web_build_wasm_module_for_the_web():
+    """pass_to_pass | CI job 'Build @biomejs/wasm-web' → step 'Build WASM module for the web'"""
     r = subprocess.run(
-        ["bash", "-lc", 'cargo run -p rules_check'], cwd=REPO,
+        ["bash", "-lc", 'just build-wasm-web'], cwd=REPO,
         capture_output=True, text=True, timeout=300)
     assert r.returncode == 0, (
-        f"CI step 'Run rules check' failed (returncode={r.returncode}):\n"
+        f"CI step 'Build WASM module for the web' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_build__biomejs_wasm_web_verify_wasm_artifact_exists():
+    """pass_to_pass | CI job 'Build @biomejs/wasm-web' → step 'Verify WASM artifact exists'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'test -f biome_wasm_bg.wasm && echo "Found wasm artifact biome_wasm_bg.wasm"'], cwd=os.path.join(REPO, 'packages/@biomejs/wasm-web'),
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Verify WASM artifact exists' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_end_to_end_tests_run_tests():
+    """pass_to_pass | CI job 'End-to-end tests' → step 'Run tests'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'cargo test --workspace --features=js_plugin'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Run tests' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_check_dependencies_detect_unused_dependencies_using_udeps():
+    """pass_to_pass | CI job 'Check Dependencies' → step 'Detect unused dependencies using udeps'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'cargo +nightly udeps --all-targets'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Detect unused dependencies using udeps' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_lint_project_run_clippy():
+    """pass_to_pass | CI job 'Lint project' → step 'Run clippy'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'cargo lint'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Run clippy' failed (returncode={r.returncode}):\n"
         f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
 
 def test_ci_test_node_js_api_build_main_binary():
@@ -233,38 +269,11 @@ def test_ci_test_node_js_api_run_js_tests():
         f"CI step 'Run JS tests' failed (returncode={r.returncode}):\n"
         f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
 
-def test_ci_lint_project_run_clippy():
-    """pass_to_pass | CI job 'Lint project' → step 'Run clippy'"""
+def test_ci_validate_rules_documentation_run_rules_check():
+    """pass_to_pass | CI job 'Validate rules documentation' → step 'Run rules check'"""
     r = subprocess.run(
-        ["bash", "-lc", 'cargo lint'], cwd=REPO,
+        ["bash", "-lc", 'cargo run -p rules_check'], cwd=REPO,
         capture_output=True, text=True, timeout=300)
     assert r.returncode == 0, (
-        f"CI step 'Run clippy' failed (returncode={r.returncode}):\n"
-        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
-
-def test_ci_test_run_tests():
-    """pass_to_pass | CI job 'Test' → step 'Run tests'"""
-    r = subprocess.run(
-        ["bash", "-lc", 'cargo test --workspace --features=js_plugin'], cwd=REPO,
-        capture_output=True, text=True, timeout=300)
-    assert r.returncode == 0, (
-        f"CI step 'Run tests' failed (returncode={r.returncode}):\n"
-        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
-
-def test_ci_check_dependencies_detect_unused_dependencies_using_udeps():
-    """pass_to_pass | CI job 'Check Dependencies' → step 'Detect unused dependencies using udeps'"""
-    r = subprocess.run(
-        ["bash", "-lc", 'cargo +nightly udeps --all-targets'], cwd=REPO,
-        capture_output=True, text=True, timeout=300)
-    assert r.returncode == 0, (
-        f"CI step 'Detect unused dependencies using udeps' failed (returncode={r.returncode}):\n"
-        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
-
-def test_ci_build__biomejs_wasm_web_build_wasm_module_for_the_web():
-    """pass_to_pass | CI job 'Build @biomejs/wasm-web' → step 'Build WASM module for the web'"""
-    r = subprocess.run(
-        ["bash", "-lc", 'just build-wasm-web'], cwd=REPO,
-        capture_output=True, text=True, timeout=300)
-    assert r.returncode == 0, (
-        f"CI step 'Build WASM module for the web' failed (returncode={r.returncode}):\n"
+        f"CI step 'Run rules check' failed (returncode={r.returncode}):\n"
         f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")

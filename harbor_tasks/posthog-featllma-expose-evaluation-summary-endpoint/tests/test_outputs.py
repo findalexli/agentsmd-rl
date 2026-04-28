@@ -444,3 +444,112 @@ print("PASS")
     )
     assert r.returncode == 0, f"Failed: {r.stderr}"
     assert "PASS" in r.stdout
+
+# === CI-mined tests (taskforge.ci_check_miner) ===
+def test_ci_lint_proto_definitions_lint_protos():
+    """pass_to_pass | CI job 'Lint proto definitions' → step 'Lint protos'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'buf lint proto/'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Lint protos' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_check_for_breaking_changes_check_for_breaking_changes():
+    """pass_to_pass | CI job 'Check for breaking changes' → step 'Check for breaking changes'"""
+    r = subprocess.run(
+        ["bash", "-lc", "buf breaking proto/ --against 'https://github.com/PostHog/posthog.git#branch=master,subdir=proto'"], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Check for breaking changes' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_check_python_proto_stubs_are_u_check_for_diff():
+    """pass_to_pass | CI job 'Check Python proto stubs are up to date' → step 'Check for diff'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'if ! git diff --exit-code posthog/personhog_client/proto/generated/; then\n  echo ""\n  echo "ERROR: Generated Python proto stubs are out of date."\n  echo "Run \'bash bin/generate_personhog_proto.sh\' and commit the result."\n  exit 1\nfi\necho "Generated Python proto stubs are up to date."'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Check for diff' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_openapi_codegen_tests_run_tests():
+    """pass_to_pass | CI job 'OpenAPI codegen tests' → step 'Run tests'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'pnpm --filter=@posthog/openapi-codegen test'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Run tests' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_build_agent_skills_from_source_run_migrations():
+    """pass_to_pass | CI job 'Build agent skills from source' → step 'Run migrations'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'python manage.py migrate --noinput && python manage.py setup_dev --no-data'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Run migrations' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_build_agent_skills_from_source_build_skills():
+    """pass_to_pass | CI job 'Build agent skills from source' → step 'Build skills'"""
+    r = subprocess.run(
+        ["bash", "-lc", './bin/hogli build:skills'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Build skills' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_jest_test_test_with_jest():
+    """pass_to_pass | CI job 'Jest test' → step 'Test with Jest'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'bin/turbo run test --filter=@posthog/frontend -- --maxWorkers=2'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Test with Jest' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_build_rust_services_run_cargo_build():
+    """pass_to_pass | CI job 'Build Rust services' → step 'Run cargo build'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'cargo build --all --locked --release'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Run cargo build' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_test_rust_set_up_databases():
+    """pass_to_pass | CI job 'Test Rust' → step 'Set up databases'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'python manage.py setup_test_environment'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Set up databases' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_lint_rust_services_check_format():
+    """pass_to_pass | CI job 'Lint Rust services' → step 'Check format'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'cargo fmt -- --check'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Check format' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_lint_rust_services_run_clippy():
+    """pass_to_pass | CI job 'Lint Rust services' → step 'Run clippy'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'cargo clippy --all-targets --all-features -- -D warnings'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Run clippy' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_lint_rust_services_run_cargo_check():
+    """pass_to_pass | CI job 'Lint Rust services' → step 'Run cargo check'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'cargo check --all-features'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Run cargo check' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")

@@ -122,6 +122,15 @@ def test_ci_lint_pnpm_3():
         f"CI step '' failed (returncode={r.returncode}):\n"
         f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
 
+def test_ci_lint_check_for_codegen_changes():
+    """pass_to_pass | CI job 'Lint' → step 'Check for codegen changes'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'git diff --exit-code'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Check for codegen changes' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
 def test_ci_build_pnpm():
     """pass_to_pass | CI job 'Build' → step ''"""
     r = subprocess.run(
@@ -133,12 +142,10 @@ def test_ci_build_pnpm():
 
 # === PR-added f2p tests (taskforge.test_patch_miner) ===
 def test_pr_added_is_built_synchronously_with_runFork():
-    """fail_to_pass | PR added test 'is built synchronously with runFork' must exist in ManagedRuntime.test.ts and pass."""
+    """fail_to_pass | PR added test 'is built synchronously with runFork' in 'packages/effect/test/ManagedRuntime.test.ts' (vitest_or_jest)"""
     r = subprocess.run(
-        ["pnpm", "--silent", "vitest", "run", "--reporter=verbose", "test/ManagedRuntime.test.ts"],
-        cwd=str(PKG), capture_output=True, text=True, timeout=240)
-    assert r.returncode == 0, _format_failure("ManagedRuntime suite (PR test)", r)
-    combined = r.stdout + r.stderr
-    assert "is built synchronously with runFork" in combined, (
-        "PR-added test 'is built synchronously with runFork' not found in vitest output. "
-        "The test may not have been added to ManagedRuntime.test.ts.")
+        ["bash", "-lc", '(pnpm vitest run "packages/effect/test/ManagedRuntime.test.ts" -t "is built synchronously with runFork" 2>&1 || npx vitest run "packages/effect/test/ManagedRuntime.test.ts" -t "is built synchronously with runFork" 2>&1 || pnpm jest "packages/effect/test/ManagedRuntime.test.ts" -t "is built synchronously with runFork" 2>&1 || npx jest "packages/effect/test/ManagedRuntime.test.ts" -t "is built synchronously with runFork" 2>&1) | tail -50'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"PR-added test 'is built synchronously with runFork' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")

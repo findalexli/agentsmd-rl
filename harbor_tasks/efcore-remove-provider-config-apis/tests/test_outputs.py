@@ -415,3 +415,31 @@ def test_p2p_efcore_src_builds():
         f"src/EFCore build failed (exit {r.returncode}):\n"
         f"{(r.stdout + r.stderr)[-3000:]}"
     )
+
+# === CI-mined tests (taskforge.ci_check_miner) ===
+def test_ci_build_test_on_cosmos():
+    """pass_to_pass | CI job 'build' → step 'Test on Cosmos'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'dotnet test test/EFCore.Cosmos.FunctionalTests/EFCore.Cosmos.FunctionalTests.csproj'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Test on Cosmos' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_test_restore():
+    """pass_to_pass | CI job 'test' → step 'Restore'"""
+    r = subprocess.run(
+        ["bash", "-lc", './restore.sh'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Restore' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_test_test_on_sql_server():
+    """pass_to_pass | CI job 'test' → step 'Test on SQL Server'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'dotnet test test/EFCore.SqlServer.FunctionalTests'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Test on SQL Server' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")

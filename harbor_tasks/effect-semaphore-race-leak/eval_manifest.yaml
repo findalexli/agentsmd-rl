@@ -1,4 +1,4 @@
-version: "2.0"
+version: '2.0'
 source:
   repo: effect-ts/effect
   pr: 6081
@@ -22,44 +22,48 @@ checks:
 - id: test_ci_lint_pnpm
   type: pass_to_pass
   origin: repo_tests
-  description: "CI: Lint / pnpm circular"
+  description: 'CI: Lint / pnpm circular'
 - id: test_ci_lint_pnpm_2
   type: pass_to_pass
   origin: repo_tests
-  description: "CI: Lint / pnpm lint"
+  description: 'CI: Lint / pnpm lint'
 - id: test_ci_lint_pnpm_3
   type: pass_to_pass
   origin: repo_tests
-  description: "CI: Lint / pnpm codegen"
+  description: 'CI: Lint / pnpm codegen'
+- id: test_ci_lint_check_for_codegen_changes
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: Lint / Check for codegen changes'
 rubric:
-- rule: "Zero Tolerance for Errors: All automated checks must pass"
+- rule: 'Zero Tolerance for Errors: All automated checks must pass'
   source:
     path: AGENTS.md
-    lines: "9"
+    lines: '9'
     commit: 4eb5c008dfc7d2a97b191ca608948d994a2cce4c
   evidence: The fix preserves existing semaphore test behavior and the new race-condition test passes
   category: testing
   verification: programmatic
-- rule: "Clarity over Cleverness: Choose clear, maintainable solutions"
+- rule: 'Clarity over Cleverness: Choose clear, maintainable solutions'
   source:
     path: AGENTS.md
-    lines: "10"
+    lines: '10'
     commit: 4eb5c008dfc7d2a97b191ca608948d994a2cce4c
   evidence: The fix wraps resume logic in core.suspend() with a re-check rather than introducing complex synchronization primitives
   category: architecture
   verification: llm_judge
-- rule: "Conciseness: Keep code and wording concise and to the point"
+- rule: 'Conciseness: Keep code and wording concise and to the point'
   source:
     path: AGENTS.md
-    lines: "11"
+    lines: '11'
     commit: 4eb5c008dfc7d2a97b191ca608948d994a2cce4c
   evidence: The fix is minimal - only wrapping existing logic in core.suspend() with a guard re-check
   category: style
   verification: llm_judge
-- rule: "Reduce comments: Avoid comments unless absolutely required to explain unusual or complex logic"
+- rule: 'Reduce comments: Avoid comments unless absolutely required to explain unusual or complex logic'
   source:
     path: AGENTS.md
-    lines: "12"
+    lines: '12'
     commit: 4eb5c008dfc7d2a97b191ca608948d994a2cce4c
   evidence: The fix adds no comments, relying on clear code structure to convey the suspend/retry pattern
   category: style
@@ -76,15 +80,15 @@ distractors:
 - rule: Run `pnpm lint-fix` after editing files
   source:
     path: AGENTS.md
-    lines: "13"
+    lines: '13'
     commit: 4eb5c008dfc7d2a97b191ca608948d994a2cce4c
   collision_type: rule_conflict
   why_distracting: pnpm lint-fix may reformat unrelated code in the file, creating noise. The fix should focus on correctness first.
   severity: low
-- rule: "Build the project: `pnpm build`"
+- rule: 'Build the project: `pnpm build`'
   source:
     path: AGENTS.md
-    lines: "16"
+    lines: '16'
     commit: 4eb5c008dfc7d2a97b191ca608948d994a2cce4c
   collision_type: scope_ambiguity
   why_distracting: Building the full monorepo is slow and unnecessary for verifying the circular.ts fix; running the specific test file is sufficient.

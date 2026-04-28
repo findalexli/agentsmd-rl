@@ -117,6 +117,29 @@ def test_p2p_cp_en_unchanged_neighbours_intact():
         "ConfigProvider EN avatar row should be unchanged."
 
 # === CI-mined tests (taskforge.ci_check_miner) ===
-# test_ci_test_image_generate_image_snapshots: dropped — requires Node.js,
-# puppeteer, and full node_modules not available in the sparse-checkout Docker.
-# This is a markdown-only PR; image snapshot tests are irrelevant.
+def test_ci_test_image_generate_image_snapshots():
+    """pass_to_pass | CI job 'test image' → step 'generate image snapshots'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'node node_modules/puppeteer/install.mjs'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'generate image snapshots' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_build_compile():
+    """pass_to_pass | CI job 'build' → step 'compile'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'ut compile'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'compile' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_build_check_build_files():
+    """pass_to_pass | CI job 'build' → step 'check build files'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'ut test:dekko'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'check build files' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")

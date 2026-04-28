@@ -311,17 +311,21 @@ def test_help_text_mentions_positional_files():
         "Help text should explain bare files are treated as --run arguments"
     )
 
-
 # === CI-mined tests (taskforge.ci_check_miner) ===
-def test_ci_compile_create_node_modules_archive():
-    """pass_to_pass | CI job 'Compile' -> step 'Create node_modules archive'"""
-    build_dir = Path(REPO) / ".build"
-    build_dir.mkdir(exist_ok=True)
+def test_ci_compile_install_build_tools():
+    """pass_to_pass | CI job 'Compile' → step 'Install build tools'"""
     r = subprocess.run(
-        ["bash", "-lc", 'node build/azure-pipelines/common/listNodeModules.ts .build/node_modules_list.txt'],
-        cwd=REPO,
-        capture_output=True, text=True, timeout=300,
-    )
+        ["bash", "-lc", 'sudo apt update -y && sudo apt install -y build-essential pkg-config libx11-dev libx11-xcb-dev libxkbfile-dev libnotify-bin libkrb5-dev'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Install build tools' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_compile_create_node_modules_archive():
+    """pass_to_pass | CI job 'Compile' → step 'Create node_modules archive'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'node build/azure-pipelines/common/listNodeModules.ts .build/node_modules_list.txt'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
     assert r.returncode == 0, (
         f"CI step 'Create node_modules archive' failed (returncode={r.returncode}):\n"
         f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")

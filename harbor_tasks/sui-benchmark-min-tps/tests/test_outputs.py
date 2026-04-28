@@ -123,3 +123,112 @@ def test_repo_xlint():
         cwd=REPO,
     )
     assert r.returncode == 0, f"cargo xlint failed:\n{r.stderr[-500:]}"
+
+# === CI-mined tests (taskforge.ci_check_miner) ===
+def test_ci_external_crates_test_external_crates_tests():
+    """pass_to_pass | CI job 'external-crates-test' → step 'External crates tests'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'cargo xtest'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'External crates tests' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_move_formatter___run_tests_npm():
+    """pass_to_pass | CI job 'Move Formatter - run tests' → step ''"""
+    r = subprocess.run(
+        ["bash", "-lc", 'npm i && npm test'], cwd=os.path.join(REPO, 'external-crates/move/tooling/prettier-move'),
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step '' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_tree_sitter___run_tests_run_tests_sh():
+    """pass_to_pass | CI job 'Tree Sitter - run tests' → step ''"""
+    r = subprocess.run(
+        ["bash", "-lc", './run-tests.sh'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step '' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_move_formatter___check_formatt_npx():
+    """pass_to_pass | CI job 'Move Formatter - check formatting' → step ''"""
+    r = subprocess.run(
+        ["bash", "-lc", 'npx prettier-move -c **/*.move'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step '' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_lint__build__and_test_manypkg_check():
+    """pass_to_pass | CI job 'Lint, Build, and Test' → step 'Manypkg Check'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'pnpm manypkg check'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Manypkg Check' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_lint__build__and_test_lint():
+    """pass_to_pass | CI job 'Lint, Build, and Test' → step 'Lint'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'pnpm turbo lint'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Lint' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_lint__build__and_test_build():
+    """pass_to_pass | CI job 'Lint, Build, and Test' → step 'Build'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'pnpm turbo build'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Build' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_lint__build__and_test_test():
+    """pass_to_pass | CI job 'Lint, Build, and Test' → step 'Test'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'pnpm turbo test'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Test' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_test_cargo_test():
+    """pass_to_pass | CI job 'test' → step 'cargo test'"""
+    r = subprocess.run(
+        ["bash", "-lc", "cargo nextest run --profile ci --cargo-quiet -E 'package(sui-bridge) | package(sui-bridge-indexer)'"], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'cargo test' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_license_check_run_license_check():
+    """pass_to_pass | CI job 'license-check' → step 'Run license check'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'cargo xlint'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Run license check' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_windows_cli_tests_cargo_test():
+    """pass_to_pass | CI job 'windows-cli-tests' → step 'cargo test'"""
+    r = subprocess.run(
+        ["bash", "-lc", "cargo nextest run --profile ci --cargo-quiet -E '!package(sui-bridge) and !package(sui-bridge-indexer)'"], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'cargo test' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_windows_build_cargo_build():
+    """pass_to_pass | CI job 'windows-build' → step 'cargo build'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'cargo build --all-features'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'cargo build' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")

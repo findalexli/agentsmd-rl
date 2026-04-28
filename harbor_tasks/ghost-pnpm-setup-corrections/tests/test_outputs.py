@@ -197,3 +197,111 @@ def test_codex_environment_toml_parses() -> None:
     assert data.get("name") == "Ghost"
     assert "setup" in data and "script" in data["setup"]
 
+# === CI-mined tests (taskforge.ci_check_miner) ===
+def test_ci_acceptance_tests_e2e_tests():
+    """pass_to_pass | CI job 'Acceptance tests' → step 'E2E tests'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'pnpm nx run ghost:test:ci:e2e'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'E2E tests' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_acceptance_tests_integration_tests():
+    """pass_to_pass | CI job 'Acceptance tests' → step 'Integration tests'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'pnpm nx run ghost:test:ci:integration'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Integration tests' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_admin_tests___chrome_pnpm():
+    """pass_to_pass | CI job 'Admin tests - Chrome' → step ''"""
+    r = subprocess.run(
+        ["bash", "-lc", 'pnpm nx run ghost-admin:test'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step '' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_admin_tests___chrome_merge_admin_test_coverage():
+    """pass_to_pass | CI job 'Admin tests - Chrome' → step 'Merge Admin test coverage'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'pnpm ember coverage-merge'], cwd=os.path.join(REPO, 'ghost/admin'),
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Merge Admin test coverage' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_activitypub_tests_pnpm():
+    """pass_to_pass | CI job 'ActivityPub tests' → step ''"""
+    r = subprocess.run(
+        ["bash", "-lc", 'pnpm nx run @tryghost/activitypub:test:acceptance'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step '' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_legacy_tests_legacy_tests():
+    """pass_to_pass | CI job 'Legacy tests' → step 'Legacy tests'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'pnpm nx run ghost:test:ci:legacy'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Legacy tests' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_signup_form_tests_pnpm():
+    """pass_to_pass | CI job 'Signup-form tests' → step ''"""
+    r = subprocess.run(
+        ["bash", "-lc", 'pnpm nx run @tryghost/signup-form:test:e2e'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step '' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_admin_x_settings_tests_pnpm():
+    """pass_to_pass | CI job 'Admin-X Settings tests' → step ''"""
+    r = subprocess.run(
+        ["bash", "-lc", 'pnpm nx run @tryghost/admin-x-settings:test:acceptance'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step '' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_comments_ui_tests_pnpm():
+    """pass_to_pass | CI job 'Comments-UI tests' → step ''"""
+    r = subprocess.run(
+        ["bash", "-lc", 'pnpm nx run @tryghost/comments-ui:test'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step '' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_build_e2e_public_app_assets_build_public_apps_for_e2e():
+    """pass_to_pass | CI job 'Build E2E Public App Assets' → step 'Build public apps for E2E'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'pnpm --filter @tryghost/e2e build:apps'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Build public apps for E2E' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_ghost_cli_tests_node():
+    """pass_to_pass | CI job 'Ghost-CLI tests' → step ''"""
+    r = subprocess.run(
+        ["bash", "-lc", 'node .github/scripts/bump-version.js canary'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step '' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_ghost_cli_tests_pnpm():
+    """pass_to_pass | CI job 'Ghost-CLI tests' → step ''"""
+    r = subprocess.run(
+        ["bash", "-lc", 'pnpm archive'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step '' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")

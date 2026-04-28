@@ -188,21 +188,21 @@ def test_ci_build_build_packages():
         f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
 
 def test_ci_test_run_tests():
-    """pass_to_pass | CI job 'test' → step 'Run tests' (scoped to packages excluding browser-dependent tests)"""
+    """pass_to_pass | CI job 'test' → step 'Run tests'"""
     r = subprocess.run(
-        ["bash", "-lc", 'pnpm --filter "./packages/*" --filter "!@remix-run/component" --filter "!@remix-run/interaction" --filter "!@remix-run/headers" test'],
-        cwd=REPO, capture_output=True, text=True, timeout=300)
+        ["bash", "-lc", 'pnpm test'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
     assert r.returncode == 0, (
         f"CI step 'Run tests' failed (returncode={r.returncode}):\n"
         f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
 
 def test_ci_format_format():
-    """pass_to_pass | CI job 'format' → step 'Format check'"""
+    """pass_to_pass | CI job 'format' → step 'Format'"""
     r = subprocess.run(
-        ["bash", "-lc", 'pnpm format:check'], cwd=REPO,
+        ["bash", "-lc", 'pnpm format'], cwd=REPO,
         capture_output=True, text=True, timeout=300)
     assert r.returncode == 0, (
-        f"CI step 'Format check' failed (returncode={r.returncode}):\n"
+        f"CI step 'Format' failed (returncode={r.returncode}):\n"
         f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
 
 def test_ci_check_lint():

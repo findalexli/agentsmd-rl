@@ -153,16 +153,6 @@ def test_typescript_compiles():
     )
 
 # === CI-mined tests (taskforge.ci_check_miner) ===
-def test_package_vitest():
-    """pass_to_pass | vitest run scoped to the openrouter package."""
-    r = subprocess.run(
-        ["bash", "-lc", 'pnpm exec vitest run --passWithNoTests --project @effect/ai-openrouter'],
-        cwd=REPO,
-        capture_output=True, text=True, timeout=300)
-    assert r.returncode == 0, (
-        f"vitest failed (returncode={r.returncode}):\n"
-        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
-
 def test_ci_lint_pnpm():
     """pass_to_pass | CI job 'Lint' → step ''"""
     r = subprocess.run(
@@ -185,6 +175,24 @@ def test_ci_lint_pnpm_3():
     """pass_to_pass | CI job 'Lint' → step ''"""
     r = subprocess.run(
         ["bash", "-lc", 'pnpm codegen'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step '' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_lint_check_for_codegen_changes():
+    """pass_to_pass | CI job 'Lint' → step 'Check for codegen changes'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'git diff --exit-code'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Check for codegen changes' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_build_pnpm():
+    """pass_to_pass | CI job 'Build' → step ''"""
+    r = subprocess.run(
+        ["bash", "-lc", 'pnpm docgen'], cwd=REPO,
         capture_output=True, text=True, timeout=300)
     assert r.returncode == 0, (
         f"CI step '' failed (returncode={r.returncode}):\n"

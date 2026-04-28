@@ -114,44 +114,30 @@ def test_no_new_tsc_errors_outside_known_baseline():
         + "\n".join(unexpected[:30])
     )
 
-
-# === CI-mined tests ===
-
-def test_ci_lint_eslint_changed_files():
-    """pass_to_pass | CI: lint / eslint on files touched by the fix.
-
-    The gold patch changes components/upload/index.tsx and tests/utils.tsx.
-    Both files must pass eslint cleanly on base and after the fix.
-    """
+# === CI-mined tests (taskforge.ci_check_miner) ===
+def test_ci_test_image_generate_image_snapshots():
+    """pass_to_pass | CI job 'test image' → step 'generate image snapshots'"""
     r = subprocess.run(
-        ["bash", "-lc", "npx eslint components/upload/index.tsx tests/utils.tsx"],
-        cwd=str(REPO),
-        capture_output=True,
-        text=True,
-        timeout=120,
-        env=TSC_ENV,
-    )
+        ["bash", "-lc", 'node node_modules/puppeteer/install.mjs'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
     assert r.returncode == 0, (
-        f"eslint must pass on the files touched by the fix. "
-        f"returncode={r.returncode}\nstdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}"
-    )
+        f"CI step 'generate image snapshots' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
 
-
-def test_ci_lint_biome_changed_files():
-    """pass_to_pass | CI: lint / biome lint on files touched by the fix.
-
-    The gold patch changes components/upload/index.tsx and tests/utils.tsx.
-    Both files must pass biome lint cleanly on base and after the fix.
-    """
+def test_ci_test_lib_es_module_compile():
+    """pass_to_pass | CI job 'test lib/es module' → step 'compile'"""
     r = subprocess.run(
-        ["bash", "-lc", "npx biome lint components/upload/index.tsx tests/utils.tsx"],
-        cwd=str(REPO),
-        capture_output=True,
-        text=True,
-        timeout=120,
-        env=TSC_ENV,
-    )
+        ["bash", "-lc", 'ut compile'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
     assert r.returncode == 0, (
-        f"biome lint must pass on the files touched by the fix. "
-        f"returncode={r.returncode}\nstdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}"
-    )
+        f"CI step 'compile' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_build_check_build_files():
+    """pass_to_pass | CI job 'build' → step 'check build files'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'ut test:dekko'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'check build files' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")

@@ -557,90 +557,10 @@ def test_no_process_comments():
 
 # === CI-mined tests (taskforge.ci_check_miner) ===
 def test_ci_unit_tests_run_tests():
-    """pass_to_pass | CI job 'Unit tests' → run orchestrator eval test via subprocess."""
-    test_script = """
-import sys, types, asyncio
-from unittest.mock import AsyncMock, MagicMock
-
-# --- mock verifiers (ZMQ infrastructure unavailable in test) ---
-vf = types.ModuleType("verifiers")
-vf.Environment = type("Env", (), {})
-vf.ClientConfig = type("CC", (), {})
-vf.RolloutOutput = dict
-sys.modules["verifiers"] = vf
-sys.modules["verifiers.workers"] = types.ModuleType("verifiers.workers")
-sys.modules["verifiers.workers"].ZMQEnvClient = MagicMock
-sys.modules["verifiers.workers"].ZMQEnvServer = MagicMock
-sys.modules["verifiers.envs"] = types.ModuleType("verifiers.envs")
-sys.modules["verifiers.envs.environment"] = types.ModuleType("verifiers.envs.environment")
-sys.modules["verifiers.envs.environment"].EnvClient = MagicMock
-sys.modules["verifiers.utils"] = types.ModuleType("verifiers.utils")
-sys.modules["verifiers.utils.worker_utils"] = types.ModuleType("verifiers.utils.worker_utils")
-sys.modules["verifiers.utils.worker_utils"].get_free_port_pair = lambda: 12345
-
-# --- mock prime_rl internals ---
-for pkg in ["prime_rl", "prime_rl.utils", "prime_rl.orchestrator",
-            "prime_rl.configs", "prime_rl.utils.pathing"]:
-    m = types.ModuleType(pkg)
-    m.__path__ = ["/workspace/src/" + pkg.replace(".", "/")]
-    sys.modules[pkg] = m
-
-sys.modules["prime_rl.configs.orchestrator"] = types.ModuleType("prime_rl.configs.orchestrator")
-sys.modules["prime_rl.configs.orchestrator"].EvalSamplingConfig = MagicMock
-
-mock_logger = MagicMock()
-logger_mod = types.ModuleType("prime_rl.utils.logger")
-logger_mod.get_logger = lambda: mock_logger
-logger_mod.InterceptHandler = MagicMock
-logger_mod.ProgressTracker = MagicMock
-sys.modules["prime_rl.utils.logger"] = logger_mod
-
-sys.modules["prime_rl.utils.monitor"] = types.ModuleType("prime_rl.utils.monitor")
-sys.modules["prime_rl.utils.monitor"].get_monitor = lambda: MagicMock()
-
-utils_mod = types.ModuleType("prime_rl.utils.utils")
-utils_mod.capitalize = lambda s: s.capitalize()
-sys.modules["prime_rl.utils.utils"] = utils_mod
-
-sys.path.insert(0, "/workspace/src")
-
-# --- import actual on-disk modules ---
-import prime_rl.orchestrator.vf_utils as vf_utils
-import prime_rl.orchestrator.eval_utils as eval_utils
-
-# === test 1: compute_eval_ckpt_step regression (unchanged by fix) ===
-f = eval_utils.compute_eval_ckpt_step
-assert f(ckpt_step=25, prev_ckpt_step=24, last_eval_step=0, interval=25) == 25
-assert f(ckpt_step=26, prev_ckpt_step=24, last_eval_step=0, interval=25) == 25
-assert f(ckpt_step=23, prev_ckpt_step=22, last_eval_step=0, interval=25) is None
-assert f(ckpt_step=0, prev_ckpt_step=-1, last_eval_step=-1, interval=25, eval_base_model=True) == 0
-assert f(ckpt_step=25, prev_ckpt_step=25, last_eval_step=0, interval=25) is None
-assert f(ckpt_step=76, prev_ckpt_step=24, last_eval_step=0, interval=25) == 75
-print("TEST1_PASS: compute_eval_ckpt_step regression OK")
-
-# === test 2: generate() all-success path works on both base and gold ===
-async def mock_run_group_ok(env, client, model_name, example,
-                             rollouts_per_example, max_retries,
-                             state_columns, sampling_args):
-    return [{"example_id": example["id"], "reward": 1.0}]
-
-vf_utils.run_group = mock_run_group_ok
-results = asyncio.run(vf_utils.generate(
-    env=MagicMock(), model_name="m",
-    examples=[{"id": 0}, {"id": 1}],
-    rollouts_per_example=1, sampling_args={},
-    get_client=AsyncMock(return_value=MagicMock()),
-))
-assert len(results) == 2, f"Expected 2 results, got {len(results)}"
-result_ids = {r["example_id"] for r in results}
-assert result_ids == {0, 1}, f"Expected {{0,1}}, got {result_ids}"
-print("TEST2_PASS: generate() all-success path OK")
-print("ALL_TESTS_PASSED")
-"""
+    """pass_to_pass | CI job 'Unit tests' → step 'Run tests'"""
     r = subprocess.run(
-        ["python", "-c", test_script],
-        cwd=REPO, capture_output=True, text=True, timeout=60,
-    )
+        ["bash", "-lc", 'PYTEST_OUTPUT_DIR=/tmp/outputs uv run pytest tests/unit -m "not gpu"'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
     assert r.returncode == 0, (
-        f"CI subprocess test failed (returncode={r.returncode}):\n"
+        f"CI step 'Run tests' failed (returncode={r.returncode}):\n"
         f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")

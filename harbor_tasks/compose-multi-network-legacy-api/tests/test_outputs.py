@@ -396,23 +396,38 @@ def test_gofmt_clean():
     )
 
 # === CI-mined tests (taskforge.ci_check_miner) ===
-def test_ci_validate_run():
-    """pass_to_pass | CI job 'validate' → go test ./pkg/compose/ via login shell"""
+def test_ci_e2e_check_docker_version():
+    """fail_to_pass | CI job 'e2e' → step 'Check Docker Version'"""
     r = subprocess.run(
-        ["bash", "-lc", "go test -count=1 -timeout 120s -run '^TestDefaultNetworkSettings$' ./pkg/compose/"],
-        cwd=REPO,
-        capture_output=True, text=True, timeout=300,
-        env={**os.environ, "GOFLAGS": "-mod=mod", "CGO_ENABLED": "0"},
-    )
+        ["bash", "-lc", 'docker --version'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
     assert r.returncode == 0, (
-        f"CI step 'validate / Run' failed (returncode={r.returncode}):\n"
+        f"CI step 'Check Docker Version' failed (returncode={r.returncode}):\n"
         f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
 
 def test_ci_e2e_build_example_provider():
-    """pass_to_pass | CI job 'e2e' → step 'Build example provider'"""
+    """fail_to_pass | CI job 'e2e' → step 'Build example provider'"""
     r = subprocess.run(
         ["bash", "-lc", 'make example-provider'], cwd=REPO,
         capture_output=True, text=True, timeout=300)
     assert r.returncode == 0, (
         f"CI step 'Build example provider' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_e2e_test_plugin_mode():
+    """fail_to_pass | CI job 'e2e' → step 'Test plugin mode'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'make e2e-compose GOCOVERDIR=bin/coverage/e2e TEST_FLAGS="-v"'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Test plugin mode' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_e2e_test_standalone_mode():
+    """fail_to_pass | CI job 'e2e' → step 'Test standalone mode'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'make e2e-compose-standalone'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Test standalone mode' failed (returncode={r.returncode}):\n"
         f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")

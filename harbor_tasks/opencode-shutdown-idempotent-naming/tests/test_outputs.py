@@ -251,6 +251,24 @@ def test_ci_e2e_run_app_e2e_tests():
         f"CI step 'Run app e2e tests' failed (returncode={r.returncode}):\n"
         f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
 
+def test_ci_build_cli_build():
+    """pass_to_pass | CI job 'build-cli' → step 'Build'"""
+    r = subprocess.run(
+        ["bash", "-lc", './packages/opencode/script/build.ts'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Build' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_build_tauri_verify_certificate():
+    """pass_to_pass | CI job 'build-tauri' → step 'Verify Certificate'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'CERT_INFO=$(security find-identity -v -p codesigning build.keychain | grep "Developer ID Application")\nCERT_ID=$(echo "$CERT_INFO" | awk -F\'"\' \'{print $2}\')\necho "CERT_ID=$CERT_ID" >> $GITHUB_ENV\necho "Certificate imported."'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Verify Certificate' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
 def test_ci_build_tauri_prepare():
     """pass_to_pass | CI job 'build-tauri' → step 'Prepare'"""
     r = subprocess.run(

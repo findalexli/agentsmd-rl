@@ -98,7 +98,7 @@ def test_skill_markdown_is_well_formed():
 def test_ci_test_grammars_build_grammar():
     """pass_to_pass | CI job 'test-grammars' → step 'Build grammar'"""
     r = subprocess.run(
-        ["bash", "-lc", 'npm run build'], cwd=os.path.join(REPO, 'grammars/prql-lezer/'),
+        ["bash", "-lc", 'bun run build'], cwd=os.path.join(REPO, 'grammars/prql-lezer/'),
         capture_output=True, text=True, timeout=300)
     assert r.returncode == 0, (
         f"CI step 'Build grammar' failed (returncode={r.returncode}):\n"
@@ -107,7 +107,7 @@ def test_ci_test_grammars_build_grammar():
 def test_ci_test_grammars_test_grammar():
     """pass_to_pass | CI job 'test-grammars' → step 'Test grammar'"""
     r = subprocess.run(
-        ["bash", "-lc", 'npm run test'], cwd=os.path.join(REPO, 'grammars/prql-lezer/'),
+        ["bash", "-lc", 'bun run test'], cwd=os.path.join(REPO, 'grammars/prql-lezer/'),
         capture_output=True, text=True, timeout=300)
     assert r.returncode == 0, (
         f"CI step 'Test grammar' failed (returncode={r.returncode}):\n"

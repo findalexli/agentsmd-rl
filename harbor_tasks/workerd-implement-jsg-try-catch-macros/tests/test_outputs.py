@@ -208,3 +208,40 @@ def test_repo_jsg_module_exists():
             if len(parts) >= 5:
                 size = int(parts[4])
                 assert size > 10000, f"JSG source file seems too small ({size} bytes)"
+
+# === CI-mined tests (taskforge.ci_check_miner) ===
+def test_ci_lint_lint():
+    """pass_to_pass | CI job 'lint' → step 'Lint'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'python3 ./tools/cross/format.py --check'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Lint' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_run_miniflare_tests_build_miniflare_and_dependencies():
+    """pass_to_pass | CI job 'Run Miniflare tests' → step 'Build Miniflare and dependencies'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'pnpm turbo build --filter miniflare'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Build Miniflare and dependencies' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_run_miniflare_tests_run_miniflare_tests():
+    """pass_to_pass | CI job 'Run Miniflare tests' → step 'Run Miniflare tests'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'pnpm --filter miniflare test'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Run Miniflare tests' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_check_snapshot_check_snapshot_diff():
+    """pass_to_pass | CI job 'check-snapshot' → step 'Check snapshot diff'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'diff -r types/generated-snapshot/latest bazel-bin/types/definitions/latest > types.diff\ndiff -r types/generated-snapshot/experimental bazel-bin/types/definitions/experimental >> types.diff'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Check snapshot diff' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")

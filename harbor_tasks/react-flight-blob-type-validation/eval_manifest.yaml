@@ -77,27 +77,62 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: 'CI: yarn build and lint / Lint build'
+- id: test_pr_added_cannot_deserialize_a_Blob_reference_backed_by_a_
+  type: fail_to_pass
+  origin: pr_diff
+  description: PR added test 'cannot deserialize a Blob reference backed by a string' in packages/react-server-dom-webpack/src/__tests__/ReactFlightDOMReply-test.js
+- id: test_ci_test_playground_yarn
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: Test playground / '
+- id: test_ci_test_playground_check_playwright_version
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: Test playground / Check Playwright version'
+- id: test_ci_test_playground_npx
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: Test playground / '
+- id: test_ci_check_license_ensure_clean_build_directory
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: Check license / Ensure clean build directory'
+- id: test_ci_jest_babel_plugin_react_compil_yarn
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: Jest babel-plugin-react-compiler / '
+- id: test_ci_lint_babel_plugin_react_compil_yarn
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: Lint babel-plugin-react-compiler / '
+- id: test_ci_test_eslint_plugin_react_hooks_scripts_react_compiler_build_compiler_sh
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: Test eslint-plugin-react-hooks / '
+- id: test_ci_test_eslint_plugin_react_hooks_yarn
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: Test eslint-plugin-react-hooks / '
+- id: test_ci_yarn_build_and_lint_yarn
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: yarn build and lint / '
 rubric:
-- rule: 'Scope: React Server Actions are part of React core (outside /compiler/), so changes should be in packages/react-server/,
-    not in compiler/'
-  reference: Gold solution correctly modifies packages/react-server/src/ReactFlightReplyServer.js and packages/react-server-dom-webpack/src/__tests__/ReactFlightDOMReply-test.js,
-    demonstrating correct scope understanding that this is a React core issue, not React Compiler.
+- rule: 'Scope: React Server Actions are part of React core (outside /compiler/), so changes should be in packages/react-server/, not in compiler/'
+  reference: Gold solution correctly modifies packages/react-server/src/ReactFlightReplyServer.js and packages/react-server-dom-webpack/src/__tests__/ReactFlightDOMReply-test.js, demonstrating correct scope understanding that this is a React core issue, not React Compiler.
   category: architecture
 - rule: Extract Error Codes
   source:
     path: /workspace/react/.claude/skills/extract-errors/SKILL.md
     lines: '10'
   source_text: 1. Run `yarn extract-errors`
-  evidence: The gold diff adds a new Error with a message 'Referenced Blob is not a Blob.', and simultaneously includes a
-    modification to scripts/error-codes/codes.json mapping '582' to that exact message. This is the output of correctly running
-    the error extraction script.
+  evidence: The gold diff adds a new Error with a message 'Referenced Blob is not a Blob.', and simultaneously includes a modification to scripts/error-codes/codes.json mapping '582' to that exact message. This is the output of correctly running the error extraction script.
   category: error_handling
   verification: llm_judge
 distractors:
 - rule: 'React Compiler: `/compiler/` directory (has its own instructions)'
   collision_type: scope_ambiguity
-  why_distracting: The issue mentions 'React Server Actions payload deserialization'. An agent might mistakenly associate
-    'Server Actions' with the React Compiler, but the fix belongs in `packages/react-server/`.
+  why_distracting: The issue mentions 'React Server Actions payload deserialization'. An agent might mistakenly associate 'Server Actions' with the React Compiler, but the fix belongs in `packages/react-server/`.
   severity: low
   source:
     path: CLAUDE.md
@@ -108,12 +143,9 @@ distractors:
     lines: 12-13
   source_text: '### Step 1: Create Test Fixture
 
-    Create a new fixture file at `packages/babel-plugin-react-compiler/src/__tests__/fixtures/compiler/<fixture-name>.js`
-    containing the problematic code. Use a descriptive name that reflects the issue (e.g., `bug-optional-chain-in-effect.js`).'
+    Create a new fixture file at `packages/babel-plugin-react-compiler/src/__tests__/fixtures/compiler/<fixture-name>.js` containing the problematic code. Use a descriptive name that reflects the issue (e.g., `bug-optional-chain-in-effect.js`).'
   collision_type: architecture_boundary
-  why_distracting: The prompt asks to fix a bug regarding React Server Actions payload deserialization. An agent might mistake
-    'bug' for a compiler bug and erroneously place the test in the babel-plugin-react-compiler fixtures directory instead
-    of packages/react-server-dom-webpack/src/__tests__/.
+  why_distracting: The prompt asks to fix a bug regarding React Server Actions payload deserialization. An agent might mistake 'bug' for a compiler bug and erroneously place the test in the babel-plugin-react-compiler fixtures directory instead of packages/react-server-dom-webpack/src/__tests__/.
   severity: high
 - rule: Gate tests with @gate or gate()
   source:
@@ -121,8 +153,7 @@ distractors:
     lines: '52'
   source_text: 4. Gate tests with `@gate flagName` or inline `gate()`
   collision_type: rule_conflict
-  why_distracting: The PR fixes a security vulnerability without any feature flag dependencies. An agent might see this rule
-    and improperly gate the test, believing all new React tests require gating.
+  why_distracting: The PR fixes a security vulnerability without any feature flag dependencies. An agent might see this rule and improperly gate the test, believing all new React tests require gating.
   severity: medium
 - rule: Check if $FlowFixMe comments are masking real issues
   source:
@@ -130,19 +161,14 @@ distractors:
     lines: '29'
   source_text: '- **Ignoring suppressions** - Check if `$FlowFixMe` comments are masking real issues'
   collision_type: meta_confusion
-  why_distracting: 'The diff removes an existing flow cast `( ... : any)` to enforce a runtime `instanceof Blob` check. An
-    agent might see the flow issues, look at this rule, and add a `$FlowFixMe` comment rather than implementing the runtime
-    validation correctly.'
+  why_distracting: 'The diff removes an existing flow cast `( ... : any)` to enforce a runtime `instanceof Blob` check. An agent might see the flow issues, look at this rule, and add a `$FlowFixMe` comment rather than implementing the runtime validation correctly.'
   severity: low
 - rule: Read compiler pass documentation
   source:
     path: /workspace/react/compiler/CLAUDE.md
     lines: '7'
-  source_text: When modifying the compiler, you MUST read the documentation about that pass in `compiler/packages/babel-plugin-react-compiler/docs/passes/`
-    to learn more about the role of that pass within the compiler.
+  source_text: When modifying the compiler, you MUST read the documentation about that pass in `compiler/packages/babel-plugin-react-compiler/docs/passes/` to learn more about the role of that pass within the compiler.
   collision_type: scope_ambiguity
-  why_distracting: The user request mentions a 'security gap'. An agent might incorrectly think they are modifying the compiler
-    (since it's a major part of the repo) and waste time reading compiler docs, when the actual fix is in react-server.
+  why_distracting: The user request mentions a 'security gap'. An agent might incorrectly think they are modifying the compiler (since it's a major part of the repo) and waste time reading compiler docs, when the actual fix is in react-server.
   severity: low
-hierarchy_analysis: The hierarchy consists of a single root CLAUDE.md file that defines the high-level monorepo structure,
-  separating React core from the React Compiler.
+hierarchy_analysis: The hierarchy consists of a single root CLAUDE.md file that defines the high-level monorepo structure, separating React core from the React Compiler.

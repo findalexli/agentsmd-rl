@@ -93,9 +93,9 @@ def test_repo_typecheck():
 
 # === CI-mined tests (taskforge.ci_check_miner) ===
 def test_ci_test_run_tests():
-    """pass_to_pass | CI job 'test' → step 'Run tests' (scoped to component package)"""
+    """pass_to_pass | CI job 'test' → step 'Run tests'"""
     r = subprocess.run(
-        ["bash", "-lc", "pnpm --filter @remix-run/component test"], cwd=REPO,
+        ["bash", "-lc", 'pnpm test'], cwd=REPO,
         capture_output=True, text=True, timeout=300)
     assert r.returncode == 0, (
         f"CI step 'Run tests' failed (returncode={r.returncode}):\n"
@@ -135,4 +135,13 @@ def test_ci_check_check_change_files():
         capture_output=True, text=True, timeout=300)
     assert r.returncode == 0, (
         f"CI step 'Check change files' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_format_format():
+    """pass_to_pass | CI job 'format' → step 'Format'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'pnpm format'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Format' failed (returncode={r.returncode}):\n"
         f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")

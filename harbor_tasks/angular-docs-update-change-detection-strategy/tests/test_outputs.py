@@ -462,157 +462,65 @@ def test_angular20_mdc_no_onpush_instruction():
         "angular-20.mdc should not have the Always set OnPush instruction"
 
 # === CI-mined tests (taskforge.ci_check_miner) ===
-# Replaced pnpm-based commands with lightweight static checks that work
-# without the full Angular toolchain. Each test validates the repo
-# structure and configuration files that the original CI step would use.
-
-def test_ci_test_run_ci_tests_for_framework():
-    """pass_to_pass | CI job 'test' -> step 'Run CI tests for framework'"""
-    test_dirs = [
-        "packages/core/src/change_detection",
-        "packages/core/test",
-    ]
-    for d in test_dirs:
-        p = Path(REPO) / d
-        assert p.is_dir(), f"Test directory {d} must exist"
-    assert (Path(REPO) / "packages/core/package.json").exists(), "core package.json must exist"
-    print("PASS")
-
-def test_ci_integration_tests_run_ci_tests_for_framework():
-    """pass_to_pass | CI job 'integration-tests' -> step 'Run CI tests for framework'"""
-    integration_dir = Path(REPO) / "integration"
-    assert integration_dir.is_dir(), "integration directory must exist"
-    # Verify integration test infrastructure exists
-    build_file = integration_dir / "BUILD.bazel"
-    assert build_file.exists(), "BUILD.bazel must exist in integration directory"
-    content = build_file.read_text()
-    assert len(content) > 50, "integration BUILD.bazel must be non-trivial"
-    # Check for at least one integration test subdirectory
-    subdirs = [d for d in integration_dir.iterdir() if d.is_dir() and not d.name.startswith('.')]
-    assert len(subdirs) >= 5, f"Expected at least 5 integration test subdirectories, found {len(subdirs)}"
-    print("PASS")
-
 def test_ci_lint_check_code_lint():
-    """pass_to_pass | CI job 'lint' -> step 'Check code lint'"""
-    p = Path(REPO) / "tslint.json"
-    assert p.exists(), "tslint.json must exist"
-    content = p.read_text()
-    assert len(content) > 100, "tslint.json must be non-trivial"
-    assert '"rules"' in content, "tslint.json must define rules"
-    print("PASS")
+    """pass_to_pass | CI job 'lint' → step 'Check code lint'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'pnpm tslint'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Check code lint' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
 
 def test_ci_lint_check_for_circular_dependencies():
-    """pass_to_pass | CI job 'lint' -> step 'Check for circular dependencies'"""
-    p = Path(REPO) / "packages/circular-deps-test.conf.cjs"
-    assert p.exists(), "circular-deps-test.conf.cjs must exist"
-    content = p.read_text()
-    assert len(content) > 50, "circular deps config must be non-trivial"
-    print("PASS")
+    """pass_to_pass | CI job 'lint' → step 'Check for circular dependencies'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'pnpm ts-circular-deps:check'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Check for circular dependencies' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
 
 def test_ci_lint_validate_pull_approve_configuration():
-    """pass_to_pass | CI job 'lint' -> step 'Validate pull approve configuration'"""
-    p = Path(REPO) / ".pullapprove.yml"
-    assert p.exists(), ".pullapprove.yml must exist"
-    content = p.read_text()
-    assert len(content) > 10, ".pullapprove.yml must be non-empty"
-    print("PASS")
+    """pass_to_pass | CI job 'lint' → step 'Validate pull approve configuration'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'pnpm ng-dev pullapprove verify'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Validate pull approve configuration' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
 
 def test_ci_lint_validate_angular_robot_configuration():
-    """pass_to_pass | CI job 'lint' -> step 'Validate angular robot configuration'"""
-    agent_dir = Path(REPO) / ".agent"
-    assert agent_dir.is_dir(), ".agent directory must exist"
-    rules_dir = agent_dir / "rules"
-    assert rules_dir.is_dir(), ".agent/rules directory must exist"
-    print("PASS")
+    """pass_to_pass | CI job 'lint' → step 'Validate angular robot configuration'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'pnpm ng-dev ngbot verify'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Validate angular robot configuration' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
 
 def test_ci_lint_validate_agent_skills():
-    """pass_to_pass | CI job 'lint' -> step 'Validate agent skills'"""
-    skills_dir = Path(REPO) / ".agent/skills"
-    assert skills_dir.is_dir(), ".agent/skills directory must exist"
-    skill_files = list(skills_dir.glob("*/SKILL.md"))
-    assert len(skill_files) > 0, "At least one SKILL.md must exist in .agent/skills/"
-    for sf in skill_files:
-        content = sf.read_text(encoding="utf-8")
-        assert len(content) > 50, f"{sf} must be non-trivial"
-    print("PASS")
+    """pass_to_pass | CI job 'lint' → step 'Validate agent skills'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'pnpm ng-dev ai skills validate'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Validate agent skills' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
 
 def test_ci_lint_confirm_code_builds_with_typescript_as_e():
-    """pass_to_pass | CI job 'lint' -> step 'Confirm code builds with typescript as expected'"""
-    tsconfig_paths = [
-        "packages/core/tsconfig.json",
-        "adev/src/context/tsconfig.json",
-    ]
-    found = False
-    for tp in tsconfig_paths:
-        p = Path(REPO) / tp
-        if p.exists():
-            found = True
-            content = p.read_text()
-            assert len(content) > 20, f"{tp} must be non-trivial"
-    assert found, "At least one tsconfig.json must exist"
-    print("PASS")
-
-def test_ci_lint_node_markdown_typescript_validate():
-    """pass_to_pass | CI: Run node-based structural validation on modified files"""
+    """pass_to_pass | CI job 'lint' → step 'Confirm code builds with typescript as expected'"""
     r = subprocess.run(
-        ["node", "-e", """
-const fs = require('fs');
-const path = require('path');
-const repo = '/workspace/angular';
+        ["bash", "-lc", 'pnpm check-tooling-setup'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Confirm code builds with typescript as expected' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
 
-const files = [
-    'packages/core/src/change_detection/constants.ts',
-    'packages/core/src/metadata/directives.ts',
-    'adev/src/content/best-practices/runtime-performance/skipping-subtrees.md',
-    'adev/src/content/guide/components/advanced-configuration.md',
-    'adev/src/content/tutorials/signals/steps/1-creating-your-first-signal/README.md',
-    'adev/src/context/airules.md',
-    'adev/src/context/angular-20.mdc',
-    'adev/src/context/guidelines.md',
-];
-
-let allPassed = true;
-for (const f of files) {
-    const fp = path.join(repo, f);
-    if (!fs.existsSync(fp)) {
-        console.error(f + ': file not found');
-        allPassed = false;
-        continue;
-    }
-    const content = fs.readFileSync(fp, 'utf8');
-    if (content.length < 10) {
-        console.error(f + ': file too short');
-        allPassed = false;
-    }
-    // Check balanced code fences in markdown files
-    if (f.endsWith('.md') || f.endsWith('.mdc')) {
-        const fences = (content.match(/```/g) || []).length;
-        if (fences % 2 !== 0) {
-            console.error(f + ': unbalanced code fences (' + fences + ')');
-            allPassed = false;
-        }
-    }
-    // Check for null bytes in all files
-    if (content.includes('\\x00')) {
-        console.error(f + ': contains null bytes');
-        allPassed = false;
-    }
-    // Check valid UTF-8
-    try {
-        Buffer.from(content, 'utf8').toString('utf8');
-    } catch(e) {
-        console.error(f + ': not valid UTF-8');
-        allPassed = false;
-    }
-}
-
-if (!allPassed) {
-    process.exit(1);
-}
-console.log('PASS');
-"""],
-        capture_output=True, text=True, timeout=30, cwd=REPO,
-    )
-    assert r.returncode == 0, f"Node validation failed: {r.stderr}"
-    assert "PASS" in r.stdout
-    print("PASS")
+def test_ci_integration_tests_run_ci_tests_for_framework():
+    """pass_to_pass | CI job 'integration-tests' → step 'Run CI tests for framework'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'pnpm test:ci'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Run CI tests for framework' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")

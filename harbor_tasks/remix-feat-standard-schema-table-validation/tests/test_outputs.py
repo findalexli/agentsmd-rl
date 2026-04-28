@@ -545,17 +545,44 @@ def test_repo_data_schema_typecheck():
     assert r.returncode == 0, f"Data-schema typecheck failed:\n{r.stderr[-500:]}"
 
 # === CI-mined tests (taskforge.ci_check_miner) ===
-def test_ci_unit_and_build_run_data_table_package_checks():
-    """pass_to_pass | CI job 'Unit and Build' -> step 'Run data-table package checks'"""
+def test_ci_build_build_packages():
+    """pass_to_pass | CI job 'build' → step 'Build packages'"""
     r = subprocess.run(
-        ["bash", "-lc", 'pnpm --filter @remix-run/data-table run typecheck && pnpm --filter @remix-run/data-table run test && pnpm --filter @remix-run/data-table run build && pnpm --filter @remix-run/data-table-sqlite run typecheck && pnpm --filter @remix-run/data-table-sqlite run test && pnpm --filter @remix-run/data-table-sqlite run build'], cwd=REPO,
+        ["bash", "-lc", 'pnpm build'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Build packages' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_test_run_tests():
+    """pass_to_pass | CI job 'test' → step 'Run tests'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'pnpm test'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Run tests' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_mysql_integration_run_mysql_integration_tests():
+    """pass_to_pass | CI job 'MySQL Integration' → step 'Run mysql integration tests'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'pnpm --filter @remix-run/data-table-mysql run test'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Run mysql integration tests' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_unit_and_build_run_data_table_package_checks():
+    """pass_to_pass | CI job 'Unit and Build' → step 'Run data-table package checks'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'pnpm --filter @remix-run/data-table run typecheck && pnpm --filter @remix-run/data-table run test && pnpm --filter @remix-run/data-table run build && pnpm --filter @remix-run/data-table-postgres run typecheck && pnpm --filter @remix-run/data-table-postgres run test && pnpm --filter @remix-run/data-table-postgres run build && pnpm --filter @remix-run/data-table-mysql run typecheck && pnpm --filter @remix-run/data-table-mysql run test && pnpm --filter @remix-run/data-table-mysql run build && pnpm --filter @remix-run/data-table-sqlite run typecheck && pnpm --filter @remix-run/data-table-sqlite run test && pnpm --filter @remix-run/data-table-sqlite run build'], cwd=REPO,
         capture_output=True, text=True, timeout=300)
     assert r.returncode == 0, (
         f"CI step 'Run data-table package checks' failed (returncode={r.returncode}):\n"
         f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
 
 def test_ci_sqlite_integration_build_sqlite_native_module():
-    """pass_to_pass | CI job 'SQLite Integration' -> step 'Build sqlite native module'"""
+    """pass_to_pass | CI job 'SQLite Integration' → step 'Build sqlite native module'"""
     r = subprocess.run(
         ["bash", "-lc", 'pnpm rebuild better-sqlite3'], cwd=REPO,
         capture_output=True, text=True, timeout=300)
@@ -564,7 +591,7 @@ def test_ci_sqlite_integration_build_sqlite_native_module():
         f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
 
 def test_ci_sqlite_integration_run_sqlite_adapter_tests():
-    """pass_to_pass | CI job 'SQLite Integration' -> step 'Run sqlite adapter tests'"""
+    """pass_to_pass | CI job 'SQLite Integration' → step 'Run sqlite adapter tests'"""
     r = subprocess.run(
         ["bash", "-lc", 'pnpm --filter @remix-run/data-table-sqlite run test'], cwd=REPO,
         capture_output=True, text=True, timeout=300)
@@ -572,8 +599,17 @@ def test_ci_sqlite_integration_run_sqlite_adapter_tests():
         f"CI step 'Run sqlite adapter tests' failed (returncode={r.returncode}):\n"
         f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
 
+def test_ci_postgres_integration_run_postgres_integration_tests():
+    """pass_to_pass | CI job 'Postgres Integration' → step 'Run postgres integration tests'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'pnpm --filter @remix-run/data-table-postgres run test'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Run postgres integration tests' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
 def test_ci_check_lint():
-    """pass_to_pass | CI job 'check' -> step 'Lint'"""
+    """pass_to_pass | CI job 'check' → step 'Lint'"""
     r = subprocess.run(
         ["bash", "-lc", 'pnpm lint'], cwd=REPO,
         capture_output=True, text=True, timeout=300)
@@ -581,8 +617,17 @@ def test_ci_check_lint():
         f"CI step 'Lint' failed (returncode={r.returncode}):\n"
         f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
 
+def test_ci_check_typecheck():
+    """pass_to_pass | CI job 'check' → step 'Typecheck'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'pnpm typecheck'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Typecheck' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
 def test_ci_check_check_change_files():
-    """pass_to_pass | CI job 'check' -> step 'Check change files'"""
+    """pass_to_pass | CI job 'check' → step 'Check change files'"""
     r = subprocess.run(
         ["bash", "-lc", 'pnpm changes:validate'], cwd=REPO,
         capture_output=True, text=True, timeout=300)
@@ -591,7 +636,7 @@ def test_ci_check_check_change_files():
         f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
 
 def test_ci_format_format():
-    """pass_to_pass | CI job 'format' -> step 'Format'"""
+    """pass_to_pass | CI job 'format' → step 'Format'"""
     r = subprocess.run(
         ["bash", "-lc", 'pnpm format'], cwd=REPO,
         capture_output=True, text=True, timeout=300)
@@ -601,15 +646,10 @@ def test_ci_format_format():
 
 # === PR-added f2p tests (taskforge.test_patch_miner) ===
 def test_pr_added_is_standard_schema_compatible_with_create_style_():
-    """fail_to_pass | PR added test 'is standard-schema compatible with create-style validation semantics' in 'packages/data-table/src/lib/table.test.ts'"""
+    """fail_to_pass | PR added test 'is standard-schema compatible with create-style validation semantics' in 'packages/data-table/src/lib/table.test.ts' (vitest_or_jest)"""
     r = subprocess.run(
-        ["node", "--experimental-strip-types", "--test", "./src/lib/table.test.ts"],
-        cwd=f"{REPO}/packages/data-table",
-        capture_output=True, text=True, timeout=120,
-    )
+        ["bash", "-lc", '(pnpm vitest run "packages/data-table/src/lib/table.test.ts" -t "is standard-schema compatible with create-style validation semantics" 2>&1 || npx vitest run "packages/data-table/src/lib/table.test.ts" -t "is standard-schema compatible with create-style validation semantics" 2>&1 || pnpm jest "packages/data-table/src/lib/table.test.ts" -t "is standard-schema compatible with create-style validation semantics" 2>&1 || npx jest "packages/data-table/src/lib/table.test.ts" -t "is standard-schema compatible with create-style validation semantics" 2>&1) | tail -50'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
     assert r.returncode == 0, (
-        f"PR-added test failed (returncode={r.returncode}):\n"
+        f"PR-added test 'is standard-schema compatible with create-style validation semantics' failed (returncode={r.returncode}):\n"
         f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
-    assert "is standard-schema compatible with create-style validation semantics" in r.stdout, (
-        "PR-added test not found or did not pass in test output"
-    )

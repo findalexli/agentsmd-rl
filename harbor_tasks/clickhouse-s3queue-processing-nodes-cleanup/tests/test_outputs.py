@@ -333,3 +333,40 @@ def test_no_simple_strings_vector():
 if __name__ == "__main__":
     import pytest
     sys.exit(pytest.main([__file__, "-v"]))
+
+# === CI-mined tests (taskforge.ci_check_miner) ===
+def test_ci_build_run():
+    """pass_to_pass | CI job 'Build' → step 'Run'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'python3 -m praktika run \'Dockers Build (amd)\' --workflow "ReleaseBranchCI" --ci |& ts \'[%Y-%m-%d %H:%M:%S]\' | tee ./ci/tmp/job.log && python3 -m praktika run \'Dockers Build (amd)\' --workflow "ReleaseBranchCI" --ci |& tee ./ci/tmp/job.log'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Run' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_integration_tests_run():
+    """pass_to_pass | CI job 'Integration tests' → step 'Run'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'python3 -m praktika run \'Integration tests (amd_asan, db disk, 1/4)\' --workflow "ReleaseBranchCI" --ci |& ts \'[%Y-%m-%d %H:%M:%S]\' | tee ./ci/tmp/job.log && python3 -m praktika run \'Integration tests (amd_asan, db disk, 1/4)\' --workflow "ReleaseBranchCI" --ci |& tee ./ci/tmp/job.log'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Run' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_stress_test_run():
+    """pass_to_pass | CI job 'Stress test' → step 'Run'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'python3 -m praktika run \'Stress test (amd_debug)\' --workflow "ReleaseBranchCI" --ci |& ts \'[%Y-%m-%d %H:%M:%S]\' | tee ./ci/tmp/job.log && python3 -m praktika run \'Stress test (amd_debug)\' --workflow "ReleaseBranchCI" --ci |& tee ./ci/tmp/job.log'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Run' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_stateless_tests_run():
+    """pass_to_pass | CI job 'Stateless tests' → step 'Run'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'python3 -m praktika run \'Stateless tests (amd_asan, distributed plan, parallel, 1/2)\' --workflow "ReleaseBranchCI" --ci |& ts \'[%Y-%m-%d %H:%M:%S]\' | tee ./ci/tmp/job.log && python3 -m praktika run \'Stateless tests (amd_asan, distributed plan, parallel, 1/2)\' --workflow "ReleaseBranchCI" --ci |& tee ./ci/tmp/job.log'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Run' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")

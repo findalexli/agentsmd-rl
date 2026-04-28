@@ -384,3 +384,49 @@ def test_repo_unit_utils_function_params():
         cwd=REPO,
     )
     assert r.returncode == 0, f"Utils function params tests failed:\n{r.stdout[-500:]}\n{r.stderr[-500:]}"
+
+# === CI-mined tests (taskforge.ci_check_miner) ===
+def test_ci_hygiene_test_generate_notebooks():
+    """pass_to_pass | CI job 'hygiene-test' → step 'Generate Notebooks'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'python3 -m venv venv && pip install nbformat && python scripts/generate_notebooks.py'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Generate Notebooks' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_website_build_build_client():
+    """pass_to_pass | CI job 'website-build' → step 'build client'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'pnpm --filter @gradio/client build'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'build client' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_website_build_build_packages():
+    """pass_to_pass | CI job 'website-build' → step 'build packages'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'pnpm package'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'build packages' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_website_build_build_website():
+    """pass_to_pass | CI job 'website-build' → step 'build website'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'VERCEL=1 pnpm --filter website build'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'build website' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_website_build_upload_docs_json_to_hf_dataset():
+    """pass_to_pass | CI job 'website-build' → step 'Upload docs.json to HF dataset'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'python scripts/upload_docs_json.py'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Upload docs.json to HF dataset' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")

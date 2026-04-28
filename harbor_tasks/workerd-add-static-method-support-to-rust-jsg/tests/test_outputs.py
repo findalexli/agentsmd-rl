@@ -259,50 +259,37 @@ def test_review_checklist_instance_static():
 
 # === CI-mined tests (taskforge.ci_check_miner) ===
 def test_ci_lint_lint():
-    """pass_to_pass | CI job 'lint' → scoped rustfmt check on jsg-macros + jsg crates"""
+    """pass_to_pass | CI job 'lint' → step 'Lint'"""
     r = subprocess.run(
-        ["bash", "-lc",
-         'PATH="/usr/local/cargo/bin:$PATH"; '
-         'for f in src/rust/jsg-macros/lib.rs src/rust/jsg/v8.rs; do '
-         'rustfmt --check --edition 2021 "$f"; rc=$?; if [ $rc -eq 2 ]; then exit 2; fi; done'],
-        cwd=REPO, capture_output=True, text=True, timeout=60)
-    assert r.returncode != 2, (
-        f"CI lint: parse error in jsg-macros or jsg crate (returncode={r.returncode}):\n"
+        ["bash", "-lc", 'python3 ./tools/cross/format.py --check'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Lint' failed (returncode={r.returncode}):\n"
         f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
 
 def test_ci_run_miniflare_tests_build_miniflare_and_dependencies():
-    """pass_to_pass | Validate proc-macro crate has required infrastructure for the change."""
+    """pass_to_pass | CI job 'Run Miniflare tests' → step 'Build Miniflare and dependencies'"""
     r = subprocess.run(
-        ["python3", "-c", """
-lib_rs = open('/workspace/workerd/src/rust/jsg-macros/lib.rs').read()
-# The proc-macro crate must import the syn and quote crates to manipulate
-# Rust AST and generate token streams for both instance and static methods.
-assert 'use syn::' in lib_rs or 'syn::' in lib_rs, "lib.rs is missing syn crate usage"
-assert 'use quote::' in lib_rs or 'quote::' in lib_rs or 'quote!' in lib_rs, "lib.rs is missing quote crate usage"
-# Must reference proc_macro for the attribute macro entry point.
-assert 'proc_macro' in lib_rs, "lib.rs is missing proc_macro reference"
-# Must have the two main entry points: jsg_method and jsg_resource
-assert 'fn jsg_method(' in lib_rs, "lib.rs missing jsg_method entry point"
-assert 'fn jsg_resource(' in lib_rs or 'fn jsg_resource' in lib_rs, "lib.rs missing jsg_resource entry point"
-print("PASS")
-"""],
-        capture_output=True, text=True, timeout=30, cwd=REPO)
-    assert r.returncode == 0, f"Proc-macro infrastructure check failed: {r.stderr}"
-    assert "PASS" in r.stdout
+        ["bash", "-lc", 'pnpm turbo build --filter miniflare'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Build Miniflare and dependencies' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
 
 def test_ci_run_miniflare_tests_run_miniflare_tests():
-    """pass_to_pass | Validate test file has JSG test harness infrastructure for method tests."""
+    """pass_to_pass | CI job 'Run Miniflare tests' → step 'Run Miniflare tests'"""
     r = subprocess.run(
-        ["python3", "-c", """
-test_rs = open('/workspace/workerd/src/rust/jsg-test/tests/resource_callback.rs').read()
-# The test file must have the JSG harness imports and test infrastructure
-# to run resource method callback tests.
-assert 'jsg_test' in test_rs or 'crate::Harness' in test_rs, "missing jsg test harness import"
-assert '#[test]' in test_rs, "missing #[test] annotations"
-assert 'fn resource_method_' in test_rs, "missing existing resource method tests"
-assert 'run_in_context' in test_rs, "missing run_in_context test pattern"
-print("PASS")
-"""],
-        capture_output=True, text=True, timeout=30, cwd=REPO)
-    assert r.returncode == 0, f"Test infrastructure check failed: {r.stderr}"
-    assert "PASS" in r.stdout
+        ["bash", "-lc", 'pnpm --filter miniflare test'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Run Miniflare tests' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_check_snapshot_check_snapshot_diff():
+    """pass_to_pass | CI job 'check-snapshot' → step 'Check snapshot diff'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'diff -r types/generated-snapshot/latest bazel-bin/types/definitions/latest > types.diff\ndiff -r types/generated-snapshot/experimental bazel-bin/types/definitions/experimental >> types.diff'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Check snapshot diff' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")

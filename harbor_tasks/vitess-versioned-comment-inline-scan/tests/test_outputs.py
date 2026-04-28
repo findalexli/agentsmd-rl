@@ -277,3 +277,103 @@ def test_p2p_gofumpt_check():
     assert r.stdout.strip() == "", (
         f"gofumpt found unformatted files:\n{r.stdout[-1500:]}"
     )
+
+# === CI-mined tests (taskforge.ci_check_miner) ===
+def test_ci_unit_test_record_test_results_in_launchable():
+    """pass_to_pass | CI job 'Unit Test' → step 'Record test results in launchable'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'launchable record tests --build "$GITHUB_RUN_ID" go-test . || true'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Record test results in launchable' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_unit_test_slowest_tests():
+    """pass_to_pass | CI job 'Unit Test' → step 'Slowest Tests'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'echo \'## Slowest Tests\' >> "$GITHUB_STEP_SUMMARY"\necho \'```\' >> "$GITHUB_STEP_SUMMARY"\ngo tool gotestsum tool slowest --num 20 --jsonfile report.json | tee -a "$GITHUB_STEP_SUMMARY"\necho \'```\' >> "$GITHUB_STEP_SUMMARY"'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Slowest Tests' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_end_to_end_test_run_make_minimaltools():
+    """pass_to_pass | CI job 'End-to-End Test' → step 'Run make minimaltools'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'make minimaltools'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Run make minimaltools' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_end_to_end_test_build():
+    """pass_to_pass | CI job 'End-to-End Test' → step 'Build'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'NOVTADMINBUILD=1 make build'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Build' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_run_upgrade_downgrade_test___q_run_query_serving_tests_vtgate_n_1_vttab():
+    """pass_to_pass | CI job 'Run Upgrade Downgrade Test - Query Serving' → step 'Run query serving tests (vtgate=N-1, vttablet=N, vtctld=N)'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'go run test.go -skip-build -keep-data=false -docker=false -print-log -follow -tag upgrade_downgrade_query_serving_queries'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Run query serving tests (vtgate=N-1, vttablet=N, vtctld=N)' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_run_upgrade_downgrade_test___r_run_reparent_tests_vtctl_n_vttablet_n_1():
+    """pass_to_pass | CI job 'Run Upgrade Downgrade Test - Reparent New VTTablet' → step 'Run reparent tests (vtctl=N, vttablet=N+1)'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'go run test.go -skip-build -keep-data=false -docker=false -print-log -follow -tag upgrade_downgrade_reparent'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Run reparent tests (vtctl=N, vttablet=N+1)' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_run_semi_sync_upgrade_downgrad_run_semi_sync_tests():
+    """pass_to_pass | CI job 'Run Semi Sync Upgrade Downgrade Test' → step 'Run semi sync tests'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'go test -v -count=1 -run="" ./go/test/endtoend/reparent/semisync'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Run semi sync tests' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_run_endtoend_tests_on_vitess_t_run_cluster_endtoend_test():
+    """pass_to_pass | CI job 'Run endtoend tests on Vitess Tester' → step 'Run cluster endtoend test'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'make build'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Run cluster endtoend test' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_run_endtoend_tests_on_vitess_t_record_test_results_in_launchable_if_pr():
+    """pass_to_pass | CI job 'Run endtoend tests on Vitess Tester' → step 'Record test results in launchable if PR is not a draft'"""
+    r = subprocess.run(
+        ["bash", "-lc", '# send recorded tests to launchable\nlaunchable record tests --build "$GITHUB_RUN_ID" go-test . || true'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Record test results in launchable if PR is not a draft' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_run_endtoend_tests_on_vitess_t_print_test_output():
+    """pass_to_pass | CI job 'Run endtoend tests on Vitess Tester' → step 'Print test output'"""
+    r = subprocess.run(
+        ["bash", "-lc", '# print test output\ncat report*.xml'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Print test output' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_run_upgrade_downgrade_test___o_run_online_ddl_tests_primary_n_replica_n():
+    """pass_to_pass | CI job 'Run Upgrade Downgrade Test - Online DDL flow' → step 'Run Online DDL tests (primary=N, replica=N-1)'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'go run test.go -skip-build -keep-data=false -docker=false -print-log -follow -tag upgrade_downgrade_onlineddl_flow'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Run Online DDL tests (primary=N, replica=N-1)' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")

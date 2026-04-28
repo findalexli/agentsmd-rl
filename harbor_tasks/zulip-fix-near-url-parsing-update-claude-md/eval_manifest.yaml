@@ -81,9 +81,16 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Ruff linter check invoked through bash -lc (CI-style)
+- id: test_ci_ubuntu_22_04_production_build_build_production_tarball
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: Ubuntu 22.04 production build / Build production tarball'
+- id: test_ci_ubuntu_22_04_production_build_verify_pnpm_store_path
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: Ubuntu 22.04 production build / Verify pnpm store path'
 rubric:
-- rule: CLAUDE.md must include a "Zulip Chat Links" section documenting that agents
-    should use the /fetch-zulip-messages skill for Zulip URLs, not WebFetch
+- rule: CLAUDE.md must include a "Zulip Chat Links" section documenting that agents should use the /fetch-zulip-messages skill for Zulip URLs, not WebFetch
   source:
     path: .claude/CLAUDE.md
     lines: 378-383
@@ -98,21 +105,17 @@ rubric:
     to read the conversation. Do not use `WebFetch` — it cannot access Zulip
 
     message content.'
-- rule: Be consistent with existing code. Look at surrounding code and follow the
-    same patterns.
+- rule: Be consistent with existing code. Look at surrounding code and follow the same patterns.
   source:
     path: .claude/CLAUDE.md
     lines: 70-71
-  evidence: The gold solution updates the regex by changing `(?:/with/(\d+))?` to
-    `(?:/(?:with|near)/(\d+))?` and updates the error message by changing `[/with/MSG_ID]`
-    to `[/with|near/MSG_ID]`, perfectly matchin
+  evidence: The gold solution updates the regex by changing `(?:/with/(\d+))?` to `(?:/(?:with|near)/(\d+))?` and updates the error message by changing `[/with/MSG_ID]` to `[/with|near/MSG_ID]`, perfectly matchin
   category: style
 - rule: Comments should have a line to themself except for CSS px math.
   source:
     path: .claude/CLAUDE.md
     lines: 74-75
-  evidence: 'The updated comment `# Parse the narrow fragment: narrow/channel/ID-slug/topic/encoded-topic[/with|near/ID]`
-    is kept on its own line, rather than being moved to an inline comment.'
+  evidence: 'The updated comment `# Parse the narrow fragment: narrow/channel/ID-slug/topic/encoded-topic[/with|near/ID]` is kept on its own line, rather than being moved to an inline comment.'
   category: style
 config_edits:
 - path: .claude/CLAUDE.md
@@ -129,24 +132,16 @@ config_edits:
     message content.'
   gold_removed: ''
 distractors:
-- rule: Backend and API changes (with tests and API doc changes documented fully using
-    the tools/create-api-changelog double-entry changelog system)
+- rule: Backend and API changes (with tests and API doc changes documented fully using the tools/create-api-changelog double-entry changelog system)
   collision_type: scope_ambiguity
-  why_distracting: The rule requires backend and API changes to be documented using
-    the `tools/create-api-changelog` system. An agent might mistakenly classify the
-    URL parser update as a backend/API change and attempt to generate a changelog,
-    but this script is an internal Claude skill tool, not part of the Zulip public
-    API.
+  why_distracting: The rule requires backend and API changes to be documented using the `tools/create-api-changelog` system. An agent might mistakenly classify the URL parser update as a backend/API change and attempt to generate a changelog, but this script is an internal Claude skill tool, not part of the Zulip public API.
   severity: high
   source:
     path: .claude/CLAUDE.md
     lines: 46-48
 - rule: Run tests before making a commit... ./tools/test-backend zerver.tests.test_relevant_module
   collision_type: architecture_boundary
-  why_distracting: The rule instructs running specific test collections like `./tools/test-backend
-    zerver.tests.test_relevant_module`. An agent might waste time trying to find or
-    write tests in the `zerver` Django app for this script, but the script lives in
-    `.claude/skills/` and is completely separate from the main backend architecture.
+  why_distracting: The rule instructs running specific test collections like `./tools/test-backend zerver.tests.test_relevant_module`. An agent might waste time trying to find or write tests in the `zerver` Django app for this script, but the script lives in `.claude/skills/` and is completely separate from the main backend architecture.
   severity: medium
   source:
     path: .claude/CLAUDE.md
@@ -156,11 +151,6 @@ distractors:
     path: .claude/skills/fix-backend-coverage/SKILL.md
     lines: 1-2
   collision_type: scope_ambiguity
-  why_distracting: The agent might try to write backend tests for the modified `fetch-zulip-web-public-messages`
-    script to ensure test coverage, but this is an AI skill script outside the main
-    backend test suite.
+  why_distracting: The agent might try to write backend tests for the modified `fetch-zulip-web-public-messages` script to ensure test coverage, but this is an AI skill script outside the main backend test suite.
   severity: medium
-hierarchy_analysis: The task involves a flat single-file config (`.claude/CLAUDE.md`),
-  but it is highly meta-referential because the agent is explicitly instructed to
-  edit this exact config file to update its own future instructions. The agent must
-  apply the rules from the file while simultaneously modifying it.
+hierarchy_analysis: The task involves a flat single-file config (`.claude/CLAUDE.md`), but it is highly meta-referential because the agent is explicitly instructed to edit this exact config file to update its own future instructions. The agent must apply the rules from the file while simultaneously modifying it.

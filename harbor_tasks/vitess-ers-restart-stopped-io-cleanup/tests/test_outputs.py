@@ -119,3 +119,112 @@ def test_ers_restarts_on_relay_log_timeout():
         f"TestEmergencyReparenterRestartsStoppedIOThreadsOnFailure failed:\n"
         f"--- stdout ---\n{r.stdout[-3000:]}\n--- stderr ---\n{r.stderr[-1500:]}"
     )
+
+# === CI-mined tests (taskforge.ci_check_miner) ===
+def test_ci_run_upgrade_downgrade_test___r_run_reparent_tests_vtctl_n_1_vttablet_n():
+    """pass_to_pass | CI job 'Run Upgrade Downgrade Test - Reparent Old Vtctl' → step 'Run reparent tests (vtctl=N-1, vttablet=N)'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'go run test.go -skip-build -keep-data=false -docker=false -print-log -follow -tag upgrade_downgrade_reparent'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Run reparent tests (vtctl=N-1, vttablet=N)' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_run_upgrade_downgrade_test___o_building_last_release_s_binaries():
+    """pass_to_pass | CI job 'Run Upgrade Downgrade Test - Online DDL flow' → step "Building last release's binaries""""
+    r = subprocess.run(
+        ["bash", "-lc", 'make build'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step "Building last release's binaries" failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_run_upgrade_downgrade_test___o_run_online_ddl_tests_primary_n_replica_n():
+    """pass_to_pass | CI job 'Run Upgrade Downgrade Test - Online DDL flow' → step 'Run Online DDL tests (primary=N, replica=N-1)'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'go run test.go -skip-build -keep-data=false -docker=false -print-log -follow -tag upgrade_downgrade_onlineddl_flow'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Run Online DDL tests (primary=N, replica=N-1)' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_run_upgrade_downgrade_test___q_run_query_serving_tests_vtgate_n_1_vttab():
+    """pass_to_pass | CI job 'Run Upgrade Downgrade Test - Query Serving' → step 'Run query serving tests (vtgate=N-1, vttablet=N, vtctld=N)'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'go run test.go -skip-build -keep-data=false -docker=false -print-log -follow -tag upgrade_downgrade_query_serving_queries'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Run query serving tests (vtgate=N-1, vttablet=N, vtctld=N)' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_end_to_end_test_run_make_minimaltools():
+    """pass_to_pass | CI job 'End-to-End Test' → step 'Run make minimaltools'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'make minimaltools'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Run make minimaltools' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_run_semi_sync_upgrade_downgrad_run_semi_sync_tests():
+    """pass_to_pass | CI job 'Run Semi Sync Upgrade Downgrade Test' → step 'Run semi sync tests'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'go test -v -count=1 -run="" ./go/test/endtoend/reparent/semisync'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Run semi sync tests' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_run_upgrade_downgrade_test___b_run_backups_tests_vttablet_n_1_vtbackup():
+    """pass_to_pass | CI job 'Run Upgrade Downgrade Test - Backups - E2E' → step 'Run backups tests (vttablet=N-1, vtbackup=N)'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'go run test.go -skip-build -docker=false -print-log -follow -tag upgrade_downgrade_backups'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Run backups tests (vttablet=N-1, vtbackup=N)' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_run_upgrade_downgrade_test___b_run_backups_tests_vttablet_n_vtbackup_n():
+    """pass_to_pass | CI job 'Run Upgrade Downgrade Test - Backups - E2E' → step 'Run backups tests (vttablet=N, vtbackup=N-1)'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'go run test.go -skip-build -keep-data -docker=false -print-log -follow -tag upgrade_downgrade_backups'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Run backups tests (vttablet=N, vtbackup=N-1)' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_run_upgrade_downgrade_test___b_create_the_example_vitess_cluster_with_a():
+    """pass_to_pass | CI job 'Run Upgrade Downgrade Test - Backups - Manual' → step 'Create the example Vitess cluster with all components using version N'"""
+    r = subprocess.run(
+        ["bash", "-lc", './start_cluster.sh'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Create the example Vitess cluster with all components using version N' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_run_upgrade_downgrade_test___b_take_a_backup_of_all_the_shards():
+    """pass_to_pass | CI job 'Run Upgrade Downgrade Test - Backups - Manual' → step 'Take a backup of all the shards'"""
+    r = subprocess.run(
+        ["bash", "-lc", './take_backups.sh'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Take a backup of all the shards' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_run_upgrade_downgrade_test___b_stop_tablets():
+    """pass_to_pass | CI job 'Run Upgrade Downgrade Test - Backups - Manual' → step 'Stop tablets'"""
+    r = subprocess.run(
+        ["bash", "-lc", './stop_tablets.sh'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Stop tablets' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_run_upgrade_downgrade_test___b_start_new_tablets_and_restore():
+    """pass_to_pass | CI job 'Run Upgrade Downgrade Test - Backups - Manual' → step 'Start new tablets and restore'"""
+    r = subprocess.run(
+        ["bash", "-lc", './restart_tablets.sh'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Start new tablets and restore' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")

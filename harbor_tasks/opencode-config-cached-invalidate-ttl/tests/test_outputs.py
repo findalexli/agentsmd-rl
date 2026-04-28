@@ -415,28 +415,93 @@ def test_repo_prettier_formatting():
     )
     assert r.returncode == 0, f"Prettier failed: {r.stderr[-500:]}"
 
-
-# === CI-mined tests (scoped to affected package) ===
-
-def test_ci_typecheck_run_typecheck():
-    """pass_to_pass | CI job 'typecheck' scoped to opencode package"""
+# === CI-mined tests (taskforge.ci_check_miner) ===
+def test_ci_storybook_build_build_storybook():
+    """pass_to_pass | CI job 'storybook build' → step 'Build Storybook'"""
     r = subprocess.run(
-        ["bash", "-lc", "bun turbo typecheck --filter=opencode"],
-        cwd=REPO,
-        capture_output=True, text=True, timeout=300,
-    )
+        ["bash", "-lc", 'bun --cwd packages/storybook build'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
     assert r.returncode == 0, (
-        f"CI step 'typecheck --filter=opencode' failed (returncode={r.returncode}):\n"
+        f"CI step 'Build Storybook' failed (returncode={r.returncode}):\n"
         f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
 
-
-def test_ci_config_unit_tests():
-    """pass_to_pass | CI job 'unit' scoped to config test file"""
+def test_ci_unit_run_unit_tests():
+    """pass_to_pass | CI job 'unit' → step 'Run unit tests'"""
     r = subprocess.run(
-        ["bash", "-lc", "bun test --timeout 30000 test/config/config.test.ts"],
-        cwd="/repo/packages/opencode",
-        capture_output=True, text=True, timeout=300,
-    )
+        ["bash", "-lc", 'bun turbo test'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
     assert r.returncode == 0, (
-        f"CI step 'bun test config.test.ts' failed (returncode={r.returncode}):\n"
+        f"CI step 'Run unit tests' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_e2e_run_app_e2e_tests():
+    """pass_to_pass | CI job 'e2e' → step 'Run app e2e tests'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'bun --cwd packages/app test:e2e:local'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Run app e2e tests' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_build_cli_build():
+    """pass_to_pass | CI job 'build-cli' → step 'Build'"""
+    r = subprocess.run(
+        ["bash", "-lc", './packages/opencode/script/build.ts'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Build' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_build_electron_prepare():
+    """pass_to_pass | CI job 'build-electron' → step 'Prepare'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'bun ./scripts/prepare.ts'], cwd=os.path.join(REPO, 'packages/desktop-electron'),
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Prepare' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_build_electron_build():
+    """pass_to_pass | CI job 'build-electron' → step 'Build'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'bun run build'], cwd=os.path.join(REPO, 'packages/desktop-electron'),
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Build' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_build_tauri_verify_certificate():
+    """pass_to_pass | CI job 'build-tauri' → step 'Verify Certificate'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'CERT_INFO=$(security find-identity -v -p codesigning build.keychain | grep "Developer ID Application")\nCERT_ID=$(echo "$CERT_INFO" | awk -F\'"\' \'{print $2}\')\necho "CERT_ID=$CERT_ID" >> $GITHUB_ENV\necho "Certificate imported."'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Verify Certificate' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_build_tauri_show_tauri_cli_version():
+    """pass_to_pass | CI job 'build-tauri' → step 'Show tauri-cli version'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'cargo tauri --version'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Show tauri-cli version' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_typecheck_run_typecheck():
+    """pass_to_pass | CI job 'typecheck' → step 'Run typecheck'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'bun typecheck'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Run typecheck' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_build_build_and_push_containers():
+    """pass_to_pass | CI job 'build' → step 'Build and push containers'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'bun ./packages/containers/script/build.ts --push'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Build and push containers' failed (returncode={r.returncode}):\n"
         f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")

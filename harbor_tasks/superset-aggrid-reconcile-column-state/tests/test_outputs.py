@@ -435,3 +435,122 @@ def test_pr_added_drops_stale_order_when_a_dynamic_group_by_swaps_():
     text = TEST_FILE.read_text(encoding="utf-8")
     assert "drops stale order when a dynamic group by swaps the dimension column" in text, (
         "test file missing required test case")
+
+# === CI-mined tests (taskforge.ci_check_miner) ===
+def test_ci_check_python_deps_run_uv():
+    """pass_to_pass | CI job 'check-python-deps' → step 'Run uv'"""
+    r = subprocess.run(
+        ["bash", "-lc", './scripts/uv-pip-compile.sh'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Run uv' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_check_python_deps_check_for_uncommitted_changes():
+    """pass_to_pass | CI job 'check-python-deps' → step 'Check for uncommitted changes'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'echo "Full diff (for logging/debugging):"\ngit diff\n\necho "Filtered diff (excluding comments and whitespace):"\nfiltered_diff=$(git diff -U0 | grep \'^[-+]\' | grep -vE \'^[-+]{3}\' | grep -vE \'^[-+][[:space:]]*#\' | grep -vE \'^[-+][[:space:]]*$\' || true)\necho "$filtered_diff"\n\nif [[ -n "$filtered_diff" ]]; then\n  echo\n  echo "ERROR: The pinned dependencies are not up-to-date."\n  echo "Please run \'./scripts/uv-pip-compile.sh\' and commit the changes."\n  echo "More info: https://github.com/apache/superset/tree/master/requirements"\n  exit 1\nelse\n  echo "Pinned dependencies are up-to-date."\nfi'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Check for uncommitted changes' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_frontend_check_translations_lint():
+    """pass_to_pass | CI job 'frontend-check-translations' → step 'lint'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'npm run build-translation'], cwd=os.path.join(REPO, './superset-frontend'),
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'lint' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_test_postgres_presto_python_unit_tests_postgresql():
+    """pass_to_pass | CI job 'test-postgres-presto' → step 'Python unit tests (PostgreSQL)'"""
+    r = subprocess.run(
+        ["bash", "-lc", "./scripts/python_tests.sh -m 'chart_data_flow or sql_json_flow'"], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Python unit tests (PostgreSQL)' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_test_postgres_hive_python_unit_tests_postgresql():
+    """pass_to_pass | CI job 'test-postgres-hive' → step 'Python unit tests (PostgreSQL)'"""
+    r = subprocess.run(
+        ["bash", "-lc", "pip install -e .[hive] && ./scripts/python_tests.sh -m 'chart_data_flow or sql_json_flow'"], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Python unit tests (PostgreSQL)' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_test_load_examples_superset_init():
+    """pass_to_pass | CI job 'test-load-examples' → step 'superset init'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'pip install -e .'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'superset init' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_unit_tests_python_unit_tests():
+    """pass_to_pass | CI job 'unit-tests' → step 'Python unit tests'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'pytest --durations-min=0.5 --cov-report= --cov=superset ./tests/common ./tests/unit_tests --cache-clear --maxfail=50'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Python unit tests' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_unit_tests_python_100_coverage_unit_tests():
+    """pass_to_pass | CI job 'unit-tests' → step 'Python 100% coverage unit tests'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'pytest --durations-min=0.5 --cov=superset/sql/ ./tests/unit_tests/sql/ --cache-clear --cov-fail-under=100'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Python 100% coverage unit tests' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_build_npm():
+    """pass_to_pass | CI job 'build' → step ''"""
+    r = subprocess.run(
+        ["bash", "-lc", 'npm ci'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step '' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_build_npm_2():
+    """pass_to_pass | CI job 'build' → step ''"""
+    r = subprocess.run(
+        ["bash", "-lc", 'npm run ci:release'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step '' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+# === PR-added f2p tests (taskforge.test_patch_miner) ===
+def test_pr_added_getLeafColumnIds_flattens_grouped_column_defs_in():
+    """fail_to_pass | PR added test 'getLeafColumnIds flattens grouped column defs in visual order' in 'superset-frontend/plugins/plugin-chart-ag-grid-table/src/utils/reconcileColumnState.test.ts' (vitest_or_jest)"""
+    r = subprocess.run(
+        ["bash", "-lc", '(pnpm vitest run "superset-frontend/plugins/plugin-chart-ag-grid-table/src/utils/reconcileColumnState.test.ts" -t "getLeafColumnIds flattens grouped column defs in visual order" 2>&1 || npx vitest run "superset-frontend/plugins/plugin-chart-ag-grid-table/src/utils/reconcileColumnState.test.ts" -t "getLeafColumnIds flattens grouped column defs in visual order" 2>&1 || pnpm jest "superset-frontend/plugins/plugin-chart-ag-grid-table/src/utils/reconcileColumnState.test.ts" -t "getLeafColumnIds flattens grouped column defs in visual order" 2>&1 || npx jest "superset-frontend/plugins/plugin-chart-ag-grid-table/src/utils/reconcileColumnState.test.ts" -t "getLeafColumnIds flattens grouped column defs in visual order" 2>&1) | tail -50'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"PR-added test 'getLeafColumnIds flattens grouped column defs in visual order' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_pr_added_preserves_saved_order_when_the_current_column_se():
+    """fail_to_pass | PR added test 'preserves saved order when the current column set is unchanged' in 'superset-frontend/plugins/plugin-chart-ag-grid-table/src/utils/reconcileColumnState.test.ts' (vitest_or_jest)"""
+    r = subprocess.run(
+        ["bash", "-lc", '(pnpm vitest run "superset-frontend/plugins/plugin-chart-ag-grid-table/src/utils/reconcileColumnState.test.ts" -t "preserves saved order when the current column set is unchanged" 2>&1 || npx vitest run "superset-frontend/plugins/plugin-chart-ag-grid-table/src/utils/reconcileColumnState.test.ts" -t "preserves saved order when the current column set is unchanged" 2>&1 || pnpm jest "superset-frontend/plugins/plugin-chart-ag-grid-table/src/utils/reconcileColumnState.test.ts" -t "preserves saved order when the current column set is unchanged" 2>&1 || npx jest "superset-frontend/plugins/plugin-chart-ag-grid-table/src/utils/reconcileColumnState.test.ts" -t "preserves saved order when the current column set is unchanged" 2>&1) | tail -50'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"PR-added test 'preserves saved order when the current column set is unchanged' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_pr_added_drops_stale_order_when_a_dynamic_group_by_swaps_():
+    """fail_to_pass | PR added test 'drops stale order when a dynamic group by swaps the dimension column' in 'superset-frontend/plugins/plugin-chart-ag-grid-table/src/utils/reconcileColumnState.test.ts' (vitest_or_jest)"""
+    r = subprocess.run(
+        ["bash", "-lc", '(pnpm vitest run "superset-frontend/plugins/plugin-chart-ag-grid-table/src/utils/reconcileColumnState.test.ts" -t "drops stale order when a dynamic group by swaps the dimension column" 2>&1 || npx vitest run "superset-frontend/plugins/plugin-chart-ag-grid-table/src/utils/reconcileColumnState.test.ts" -t "drops stale order when a dynamic group by swaps the dimension column" 2>&1 || pnpm jest "superset-frontend/plugins/plugin-chart-ag-grid-table/src/utils/reconcileColumnState.test.ts" -t "drops stale order when a dynamic group by swaps the dimension column" 2>&1 || npx jest "superset-frontend/plugins/plugin-chart-ag-grid-table/src/utils/reconcileColumnState.test.ts" -t "drops stale order when a dynamic group by swaps the dimension column" 2>&1) | tail -50'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"PR-added test 'drops stale order when a dynamic group by swaps the dimension column' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")

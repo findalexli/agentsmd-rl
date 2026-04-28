@@ -343,6 +343,51 @@ def test_code_style_consistency():
         "Import style inconsistent"
 
 # === CI-mined tests (taskforge.ci_check_miner) ===
+def test_ci_build_lint():
+    """pass_to_pass | CI job 'build' → step 'Lint'"""
+    r = subprocess.run(
+        ["bash", "-lc", './scripts/lint_backend.sh'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Lint' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_build_typecheck():
+    """pass_to_pass | CI job 'build' → step 'Typecheck'"""
+    r = subprocess.run(
+        ["bash", "-lc", './scripts/type_check_backend.sh'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Typecheck' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_build_build_wheel():
+    """pass_to_pass | CI job 'build' → step 'Build wheel'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'uv pip install build && python -m build'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Build wheel' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_build_build_gradio_client_wheel():
+    """pass_to_pass | CI job 'build' → step 'Build gradio_client wheel'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'python -m build'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Build gradio_client wheel' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci__storybook_build_build_client():
+    """pass_to_pass | CI job ':storybook-build' → step 'build client'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'pnpm --filter @gradio/client build'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'build client' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
 def test_ci__storybook_build_generate_theme_css():
     """pass_to_pass | CI job ':storybook-build' → step 'generate theme.css'"""
     r = subprocess.run(
@@ -352,6 +397,24 @@ def test_ci__storybook_build_generate_theme_css():
         f"CI step 'generate theme.css' failed (returncode={r.returncode}):\n"
         f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
 
+def test_ci__storybook_build_pnpm():
+    """pass_to_pass | CI job ':storybook-build' → step ''"""
+    r = subprocess.run(
+        ["bash", "-lc", 'pnpm exec playwright install chromium'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step '' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci__storybook_build_build_storybook():
+    """pass_to_pass | CI job ':storybook-build' → step 'build storybook'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'pnpm build-storybook --quiet --stats-json'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'build storybook' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
 def test_ci_hygiene_test_generate_notebooks():
     """pass_to_pass | CI job 'hygiene-test' → step 'Generate Notebooks'"""
     r = subprocess.run(
@@ -359,4 +422,31 @@ def test_ci_hygiene_test_generate_notebooks():
         capture_output=True, text=True, timeout=300)
     assert r.returncode == 0, (
         f"CI step 'Generate Notebooks' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_hygiene_test_generate_skill():
+    """pass_to_pass | CI job 'hygiene-test' → step 'Generate Skill'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'pip install -e . && python scripts/generate_skill.py --check'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Generate Skill' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_js_test_format_check():
+    """pass_to_pass | CI job 'js-test' → step 'format check'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'pnpm format:check'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'format check' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_js_test_unit_tests():
+    """pass_to_pass | CI job 'js-test' → step 'unit tests'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'pnpm test:run'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'unit tests' failed (returncode={r.returncode}):\n"
         f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")

@@ -1,115 +1,130 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "microsoft/playwright"
+  repo: microsoft/playwright
   pr: 38517
-  base_commit: "703996071cb3a7ec642b30a2b428c369c3ebb7c7"
-  merge_commit: "c9bfd527ad32c485079b03f6153a3fd2849a421c"
-
+  base_commit: 703996071cb3a7ec642b30a2b428c369c3ebb7c7
+  merge_commit: c9bfd527ad32c485079b03f6153a3fd2849a421c
 checks:
-  # Code behavior tests (fail-to-pass)
-  - id: run_code_ts_uses_function_format
-    type: fail_to_pass
-    origin: pr_diff
-    description: "runCode.ts should describe function-based code parameter"
-
-  - id: run_code_invokes_as_function
-    type: fail_to_pass
-    origin: pr_diff
-    description: "runCode.ts should invoke code as a function with page"
-
-  - id: run_code_ts_no_direct_injection
-    type: fail_to_pass
-    origin: pr_diff
-    description: "runCode.ts should not directly inject code into IIFE"
-
-  # Config/instruction file update tests (fail-to-pass)
-  - id: claude_agents_has_browser_run_code
-    type: fail_to_pass
-    origin: pr_diff
-    description: ".claude/agents/playwright-test-planner.md should include browser_run_code tool"
-
-  - id: github_agents_has_browser_run_code
-    type: fail_to_pass
-    origin: pr_diff
-    description: ".github/agents/playwright-test-planner.agent.md should include browser_run_code tool"
-
-  - id: packages_agents_has_browser_run_code
-    type: fail_to_pass
-    origin: pr_diff
-    description: "packages/playwright/src/agents/playwright-test-planner.agent.md should include browser_run_code tool"
-
-  # Pass-to-pass tests
-  - id: typescript_compiles
-    type: pass_to_pass
-    origin: repo_tests
-    description: "TypeScript should compile without errors"
-
-  - id: run_code_test_discovery
-    type: pass_to_pass
-    origin: repo_tests
-    description: "run-code.spec.ts tests should be discoverable by Playwright"
-
-# Track 2: Gold config edits - extracted deterministically at scaffold time
+- id: run_code_ts_uses_function_format
+  type: fail_to_pass
+  origin: pr_diff
+  description: runCode.ts should describe function-based code parameter
+- id: run_code_invokes_as_function
+  type: fail_to_pass
+  origin: pr_diff
+  description: runCode.ts should invoke code as a function with page
+- id: run_code_ts_no_direct_injection
+  type: fail_to_pass
+  origin: pr_diff
+  description: runCode.ts should not directly inject code into IIFE
+- id: claude_agents_has_browser_run_code
+  type: fail_to_pass
+  origin: pr_diff
+  description: .claude/agents/playwright-test-planner.md should include browser_run_code tool
+- id: github_agents_has_browser_run_code
+  type: fail_to_pass
+  origin: pr_diff
+  description: .github/agents/playwright-test-planner.agent.md should include browser_run_code tool
+- id: packages_agents_has_browser_run_code
+  type: fail_to_pass
+  origin: pr_diff
+  description: packages/playwright/src/agents/playwright-test-planner.agent.md should include browser_run_code tool
+- id: typescript_compiles
+  type: pass_to_pass
+  origin: repo_tests
+  description: TypeScript should compile without errors
+- id: run_code_test_discovery
+  type: pass_to_pass
+  origin: repo_tests
+  description: run-code.spec.ts tests should be discoverable by Playwright
+- id: test_ci_docs___lint_npm
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: docs & lint / '
+- id: test_ci_docs___lint_npm_2
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: docs & lint / '
+- id: test_ci_docs___lint_npx
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: docs & lint / '
+- id: test_ci_docs___lint_npm_3
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: docs & lint / '
+- id: test_ci_docs___lint_verify_clean_tree
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: docs & lint / Verify clean tree'
+- id: test_ci_docs___lint_audit_prod_npm_dependencies
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: docs & lint / Audit prod NPM dependencies'
+- id: test_ci_lint_snippets_pip
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: Lint snippets / '
+- id: test_ci_lint_snippets_mvn
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: Lint snippets / '
+- id: test_ci_lint_snippets_node
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: Lint snippets / '
 config_edits:
-  - path: "examples/todomvc/.claude/agents/playwright-test-planner.md"
-    tier: 1
-    gold_added: "mcp__playwright-test__browser_run_code"
-    gold_removed: ""
-  - path: "examples/todomvc/.github/agents/playwright-test-planner.agent.md"
-    tier: 1
-    gold_added: "playwright-test/browser_run_code"
-    gold_removed: ""
-  - path: "packages/playwright/src/agents/playwright-test-planner.agent.md"
-    tier: 1
-    gold_added: "playwright-test/browser_run_code"
-    gold_removed: ""
-
-# Track 3: Positive rubric - conventions the gold solution follows
+- path: examples/todomvc/.claude/agents/playwright-test-planner.md
+  tier: 1
+  gold_added: mcp__playwright-test__browser_run_code
+  gold_removed: ''
+- path: examples/todomvc/.github/agents/playwright-test-planner.agent.md
+  tier: 1
+  gold_added: playwright-test/browser_run_code
+  gold_removed: ''
+- path: packages/playwright/src/agents/playwright-test-planner.agent.md
+  tier: 1
+  gold_added: playwright-test/browser_run_code
+  gold_removed: ''
 rubric:
-  - rule: "Agent tool definitions should list tools in alphabetical order"
-    source:
-      path: "examples/todomvc/.github/agents/playwright-test-planner.agent.md"
-      lines: "1-35"
-      commit: "703996071cb3a7ec642b30a2b428c369c3ebb7c7"
-    evidence: "browser_run_code is inserted between browser_press_key and browser_select_option maintaining alphabetical order"
-    category: "organization"
-    verification: programmatic
-
-  - rule: "New MCP tools should be added to all relevant agent definitions"
-    source:
-      path: "packages/playwright/src/agents/playwright-test-planner.agent.md"
-      lines: "1-30"
-      commit: "703996071cb3a7ec642b30a2b428c369c3ebb7c7"
-    evidence: "browser_run_code added to all three agent files that define playwright-test-planner"
-    category: "completeness"
-    verification: programmatic
-
-  - rule: "Code parameter descriptions should show usage examples with realistic code patterns"
-    source:
-      path: "packages/playwright/src/mcp/browser/tools/runCode.ts"
-      lines: "25-28"
-      commit: "703996071cb3a7ec642b30a2b428c369c3ebb7c7"
-    evidence: "New description shows async (page) => function pattern with realistic Playwright code"
-    category: "documentation"
-    verification: llm_judge
-
-# Track 4: Distractors - conventions that create collisions
+- rule: Agent tool definitions should list tools in alphabetical order
+  source:
+    path: examples/todomvc/.github/agents/playwright-test-planner.agent.md
+    lines: 1-35
+    commit: 703996071cb3a7ec642b30a2b428c369c3ebb7c7
+  evidence: browser_run_code is inserted between browser_press_key and browser_select_option maintaining alphabetical order
+  category: organization
+  verification: programmatic
+- rule: New MCP tools should be added to all relevant agent definitions
+  source:
+    path: packages/playwright/src/agents/playwright-test-planner.agent.md
+    lines: 1-30
+    commit: 703996071cb3a7ec642b30a2b428c369c3ebb7c7
+  evidence: browser_run_code added to all three agent files that define playwright-test-planner
+  category: completeness
+  verification: programmatic
+- rule: Code parameter descriptions should show usage examples with realistic code patterns
+  source:
+    path: packages/playwright/src/mcp/browser/tools/runCode.ts
+    lines: 25-28
+    commit: 703996071cb3a7ec642b30a2b428c369c3ebb7c7
+  evidence: New description shows async (page) => function pattern with realistic Playwright code
+  category: documentation
+  verification: llm_judge
 distractors:
-  - rule: "Keep code snippets simple - avoid complex function wrappers"
-    source:
-      path: "packages/playwright/src/mcp/browser/tools/runCode.ts"
-      lines: "25-28"
-      commit: "703996071cb3a7ec642b30a2b428c369c3ebb7c7"
-    collision_type: rule_conflict
-    why_distracting: "The old API used simple code snippets; the new API requires function wrappers. Old documentation patterns suggest simplicity."
-    severity: medium
-
-  - rule: "Single source of truth - only define tools in the primary agent file"
-    source:
-      path: "packages/playwright/src/agents/playwright-test-planner.agent.md"
-      lines: "1-10"
-      commit: "703996071cb3a7ec642b30a2b428c369c3ebb7c7"
-    collision_type: scope_ambiguity
-    why_distracting: "Could mislead to only updating one agent definition instead of all three locations"
-    severity: medium
+- rule: Keep code snippets simple - avoid complex function wrappers
+  source:
+    path: packages/playwright/src/mcp/browser/tools/runCode.ts
+    lines: 25-28
+    commit: 703996071cb3a7ec642b30a2b428c369c3ebb7c7
+  collision_type: rule_conflict
+  why_distracting: The old API used simple code snippets; the new API requires function wrappers. Old documentation patterns suggest simplicity.
+  severity: medium
+- rule: Single source of truth - only define tools in the primary agent file
+  source:
+    path: packages/playwright/src/agents/playwright-test-planner.agent.md
+    lines: 1-10
+    commit: 703996071cb3a7ec642b30a2b428c369c3ebb7c7
+  collision_type: scope_ambiguity
+  why_distracting: Could mislead to only updating one agent definition instead of all three locations
+  severity: medium

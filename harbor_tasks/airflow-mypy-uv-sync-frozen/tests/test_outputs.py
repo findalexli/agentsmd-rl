@@ -277,3 +277,13 @@ def test_script_py_compile_bash():
         timeout=30,
     )
     assert r.returncode == 0, f"py_compile via bash failed:\n{r.stderr}"
+
+# === CI-mined tests (taskforge.ci_check_miner) ===
+def test_ci_go_sdk_tests_run_go_tests():
+    """pass_to_pass | CI job 'Go SDK tests' → step 'Run Go tests'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'gotestsum --format github-actions ./...'], cwd=os.path.join(REPO, './go-sdk'),
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Run Go tests' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")

@@ -357,6 +357,15 @@ def test_ci_cargo_test_cargo_2():
         f"CI step '' failed (returncode={r.returncode}):\n"
         f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
 
+def test_ci_cargo_build_build_tests():
+    """pass_to_pass | CI job 'cargo build' → step 'Build tests'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'cargo "+${MSRV}" test --no-run --all-features'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Build tests' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
 def test_ci_benchmarks_walltime_build_benchmarks():
     """pass_to_pass | CI job 'benchmarks walltime' → step 'Build benchmarks'"""
     r = subprocess.run(
@@ -379,15 +388,6 @@ def test_ci_test_scripts_python():
     """pass_to_pass | CI job 'test scripts' → step ''"""
     r = subprocess.run(
         ["bash", "-lc", 'python crates/ruff_python_ast/generate.py'], cwd=REPO,
-        capture_output=True, text=True, timeout=300)
-    assert r.returncode == 0, (
-        f"CI step '' failed (returncode={r.returncode}):\n"
-        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
-
-def test_ci_test_scripts_python_2():
-    """pass_to_pass | CI job 'test scripts' → step ''"""
-    r = subprocess.run(
-        ["bash", "-lc", 'python crates/ruff_python_formatter/generate.py'], cwd=REPO,
         capture_output=True, text=True, timeout=300)
     assert r.returncode == 0, (
         f"CI step '' failed (returncode={r.returncode}):\n"

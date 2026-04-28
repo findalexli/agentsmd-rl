@@ -129,3 +129,67 @@ def test_skill_keeps_existing_generators():
             f"Pre-existing generator command `{snippet}` is missing — "
             "this test should pass at base and after the fix."
         )
+
+# === CI-mined tests (taskforge.ci_check_miner) ===
+def test_ci_integration_tests_run_ci_tests_for_framework():
+    """pass_to_pass | CI job 'integration-tests' → step 'Run CI tests for framework'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'pnpm test:ci'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Run CI tests for framework' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_lint_check_code_lint():
+    """pass_to_pass | CI job 'lint' → step 'Check code lint'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'pnpm tslint'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Check code lint' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_lint_check_for_circular_dependencies():
+    """pass_to_pass | CI job 'lint' → step 'Check for circular dependencies'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'pnpm ts-circular-deps:check'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Check for circular dependencies' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_lint_validate_pull_approve_configuration():
+    """pass_to_pass | CI job 'lint' → step 'Validate pull approve configuration'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'pnpm ng-dev pullapprove verify'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Validate pull approve configuration' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_lint_validate_angular_robot_configuration():
+    """pass_to_pass | CI job 'lint' → step 'Validate angular robot configuration'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'pnpm ng-dev ngbot verify'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Validate angular robot configuration' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_lint_validate_agent_skills():
+    """pass_to_pass | CI job 'lint' → step 'Validate agent skills'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'pnpm ng-dev ai skills validate'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Validate agent skills' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_lint_confirm_code_builds_with_typescript_as_e():
+    """pass_to_pass | CI job 'lint' → step 'Confirm code builds with typescript as expected'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'pnpm check-tooling-setup'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Confirm code builds with typescript as expected' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")

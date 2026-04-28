@@ -209,3 +209,94 @@ def test_repo_existing_format_time_delta_passes():
     )
     tail = (proc.stdout + "\n" + proc.stderr)[-1500:]
     assert proc.returncode == 0, f"existing repo test failed:\n{tail}"
+
+# === CI-mined tests (taskforge.ci_check_miner) ===
+def test_ci_build_openhands_ui_build_package():
+    """pass_to_pass | CI job 'Build openhands-ui' → step 'Build package'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'bun run build'], cwd=os.path.join(REPO, './openhands-ui'),
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Build package' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_enterprise_python_unit_tests_run_unit_tests():
+    """pass_to_pass | CI job 'Enterprise Python Unit Tests' → step 'Run Unit Tests'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'PYTHONPATH=".:$PYTHONPATH" poetry run --project=enterprise pytest --forked -n auto -s -p no:ddtrace -p no:ddtrace.pytest_bdd -p no:ddtrace.pytest_benchmark ./enterprise/tests/unit --cov=enterprise --cov-branch'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Run Unit Tests' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_python_tests_on_linux_build_environment():
+    """pass_to_pass | CI job 'Python Tests on Linux' → step 'Build Environment'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'make build'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Build Environment' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_python_tests_on_linux_run_unit_tests():
+    """pass_to_pass | CI job 'Python Tests on Linux' → step 'Run Unit Tests'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'PYTHONPATH=".:$PYTHONPATH" poetry run pytest --forked -n auto -s ./tests/unit --cov=openhands --cov-branch'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Run Unit Tests' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_python_tests_on_linux_run_runtime_tests_with_cliruntime():
+    """pass_to_pass | CI job 'Python Tests on Linux' → step 'Run Runtime Tests with CLIRuntime'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'PYTHONPATH=".:$PYTHONPATH" TEST_RUNTIME=cli poetry run pytest -n 5 --reruns 2 --reruns-delay 3 -s tests/runtime/test_bash.py --cov=openhands --cov-branch'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Run Runtime Tests with CLIRuntime' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_fe_unit_tests_run_typescript_compilation():
+    """pass_to_pass | CI job 'FE Unit Tests' → step 'Run TypeScript compilation'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'npm run build'], cwd=os.path.join(REPO, './frontend'),
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Run TypeScript compilation' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_fe_unit_tests_run_tests_and_collect_coverage():
+    """pass_to_pass | CI job 'FE Unit Tests' → step 'Run tests and collect coverage'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'npm run test:coverage'], cwd=os.path.join(REPO, './frontend'),
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Run tests and collect coverage' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_check_package_versions_check_for_any_rev_fields_in_pyproject_to():
+    """pass_to_pass | CI job 'check-package-versions' → step "Check for any 'rev' fields in pyproject.toml""""
+    r = subprocess.run(
+        ["bash", "-lc", "python - <<'PY'"], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step "Check for any 'rev' fields in pyproject.toml" failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_fe_e2e_tests_run_playwright_tests():
+    """pass_to_pass | CI job 'FE E2E Tests' → step 'Run Playwright tests'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'npx playwright test --project=chromium'], cwd=os.path.join(REPO, './frontend'),
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Run Playwright tests' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_lint_frontend_lint_typescript_compilation_and_translat():
+    """pass_to_pass | CI job 'Lint frontend' → step 'Lint, TypeScript compilation, and translation checks'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'npm run lint && npm run make-i18n && npx tsc && npm run check-translation-completeness'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Lint, TypeScript compilation, and translation checks' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")

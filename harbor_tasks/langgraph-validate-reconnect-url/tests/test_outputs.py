@@ -362,11 +362,11 @@ if __name__ == "__main__":
     sys.exit(pytest.main([__file__, "-v"]))
 
 # === CI-mined tests (taskforge.ci_check_miner) ===
-def test_ci_build_build_project_for_distribution():
-    """pass_to_pass | CI job 'build' → step 'Build project for distribution'"""
+def test_ci_check_sdk_methods_matching_run_check_sdk_methods_script():
+    """pass_to_pass | CI job 'Check SDK methods matching' → step 'Run check_sdk_methods script'"""
     r = subprocess.run(
-        ["bash", "-lc", 'uv build'], cwd=REPO,
+        ["bash", "-lc", 'python .github/scripts/check_sdk_methods.py'], cwd=REPO,
         capture_output=True, text=True, timeout=300)
     assert r.returncode == 0, (
-        f"CI step 'Build project for distribution' failed (returncode={r.returncode}):\n"
+        f"CI step 'Run check_sdk_methods script' failed (returncode={r.returncode}):\n"
         f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")

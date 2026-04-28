@@ -250,3 +250,31 @@ def test_pr_added_TestTemplateSelectionFirstMediaTypeSuffix():
     assert "no tests to run" not in r.stdout, (
         "TestTemplateSelectionFirstMediaTypeSuffix was not found — the fix must add this test.\n"
         f"stdout: {r.stdout[-1500:]}")
+
+# === CI-mined tests (taskforge.ci_check_miner) ===
+def test_ci_test_check():
+    """pass_to_pass | CI job 'test' → step 'Check'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'mage -v check'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Check' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_test_test():
+    """pass_to_pass | CI job 'test' → step 'Test'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'mage -v test'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Test' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_test_build_for_dragonfly():
+    """pass_to_pass | CI job 'test' → step 'Build for dragonfly'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'go install\ngo clean -i -cache'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Build for dragonfly' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")

@@ -32,46 +32,61 @@ checks:
 - id: test_justfile_new_changeset_empty_recipe
   type: fail_to_pass
   origin: pr_diff
-  description: justfile defines new-changeset-empty recipe invoking pnpm changeset
-    --empty
+  description: justfile defines new-changeset-empty recipe invoking pnpm changeset --empty
 - id: test_changeset_skill_valid_frontmatter
   type: fail_to_pass
   origin: pr_diff
-  description: changeset/SKILL.md exists with valid YAML frontmatter and references
-    just new-changeset-empty
+  description: changeset/SKILL.md exists with valid YAML frontmatter and references just new-changeset-empty
 - id: test_pull_request_skill_valid_frontmatter
   type: fail_to_pass
   origin: pr_diff
-  description: pull-request/SKILL.md exists with valid YAML frontmatter and required
-    sections
+  description: pull-request/SKILL.md exists with valid YAML frontmatter and required sections
 - id: test_changeset_skill_has_writing_guidelines
   type: fail_to_pass
   origin: pr_diff
-  description: changeset/SKILL.md includes writing guidelines covering change types
-    and format
+  description: changeset/SKILL.md includes writing guidelines covering change types and format
 - id: test_biome_developer_code_comments_section
   type: fail_to_pass
   origin: pr_diff
-  description: biome-developer/SKILL.md has Code Comments section with DO/DON'T guidance
-    and examples
+  description: biome-developer/SKILL.md has Code Comments section with DO/DON'T guidance and examples
 - id: test_testing_codegen_changeset_section_removed
   type: fail_to_pass
   origin: pr_diff
-  description: testing-codegen/SKILL.md no longer has Create Changeset section and
-    references new skill
+  description: testing-codegen/SKILL.md no longer has Create Changeset section and references new skill
 - id: test_readme_lists_new_skills
   type: fail_to_pass
   origin: pr_diff
-  description: Skills README.md lists changeset and pull-request skills with updated
-    testing-codegen description
+  description: Skills README.md lists changeset and pull-request skills with updated testing-codegen description
 - id: test_justfile_recipe_runs
   type: fail_to_pass
   origin: pr_diff
-  description: new-changeset-empty recipe is registered in just --list and invokes
-    pnpm changeset --empty
+  description: new-changeset-empty recipe is registered in just --list and invokes pnpm changeset --empty
+- id: test_ci_check_dependencies_run_udeps
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: Check Dependencies / Run udeps'
+- id: test_ci_lint_rust_files_run_cargo_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: Lint Rust Files / Run cargo check'
+- id: test_ci_lint_rust_files_run_clippy
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: Lint Rust Files / Run clippy'
+- id: test_ci_test_run_tests_on_matrix_os
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: Test / Run tests on ${{ matrix.os }}'
+- id: test_ci_format_rust_files_run_rustfmt
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: Format Rust Files / Run rustfmt'
+- id: test_ci_format_rust_files_format_toml_files
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: Format Rust Files / Format TOML files'
 rubric:
-- rule: New skill files follow the established frontmatter format (name, description,
-    compatibility)
+- rule: New skill files follow the established frontmatter format (name, description, compatibility)
   source:
     path: .claude/skills/README.md
     lines: 150-165
@@ -111,8 +126,7 @@ rubric:
     path: .claude/skills/testing-codegen/SKILL.md
     lines: '425'
     commit: 9e3df0c40f45297fad3321344353b135e8d36f75
-- rule: 'Changeset change types: patch for bug fixes, minor for new features (targets
-    next), major for breaking changes (targets next).'
+- rule: 'Changeset change types: patch for bug fixes, minor for new features (targets next), major for breaking changes (targets next).'
   source:
     path: .claude/skills/changeset/SKILL.md
     lines: 45-50
@@ -136,8 +150,7 @@ rubric:
 
     ```markdown
 
-    Fixed [#4444](https://github.com/biomejs/biome/issues/4444): [`useOptionalChain`](https://biomejs.dev/linter/rules/use-optional-chain/)
-    now detects negated logical OR chains.
+    Fixed [#4444](https://github.com/biomejs/biome/issues/4444): [`useOptionalChain`](https://biomejs.dev/linter/rules/use-optional-chain/) now detects negated logical OR chains.
 
     ```
 
@@ -171,8 +184,7 @@ rubric:
 
     '
   category: documentation
-- rule: Document the requirement to write concise PR summaries and reject verbose
-    ones.
+- rule: Document the requirement to write concise PR summaries and reject verbose ones.
   source:
     path: .claude/skills/pull-request/SKILL.md
     lines: 100-110
@@ -185,8 +197,7 @@ rubric:
 
     '
   category: documentation
-- rule: Changeset guidelines (types, formatting, user-facing requirement) must be
-    accurately documented for agents.
+- rule: Changeset guidelines (types, formatting, user-facing requirement) must be accurately documented for agents.
   source:
     path: .claude/skills/changeset/SKILL.md
     lines: 1-50
@@ -234,11 +245,9 @@ rubric:
 config_edits:
 - path: .claude/skills/README.md
   tier: 2
-  gold_added: '| **[changeset](./changeset/SKILL.md)** | Create and write proper changesets
-    for the CHANGELOG | Any agent |
+  gold_added: '| **[changeset](./changeset/SKILL.md)** | Create and write proper changesets for the CHANGELOG | Any agent |
 
-    | **[pull-request](./pull-request/SKILL.md)** | Create PRs with proper titles,
-    descriptions, and branch targeting | Any agent |
+    | **[pull-request](./pull-request/SKILL.md)** | Create PRs with proper titles, descriptions, and branch targeting | Any agent |
 
     '
   gold_removed: ''
@@ -340,25 +349,16 @@ config_edits:
 distractors:
 - rule: Create a changeset for user-facing changes, assume YES if unsure.
   collision_type: meta_confusion
-  why_distracting: The rule states 'If UNSURE -> Assume YES and create changeset'.
-    An agent might blindly create a `.changeset/*.md` file for this PR. However, this
-    PR only updates agent skills and internal documentation, which is explicitly 'NOT
-    User-Facing' (lines 85-89) and does not require a changeset.
+  why_distracting: The rule states 'If UNSURE -> Assume YES and create changeset'. An agent might blindly create a `.changeset/*.md` file for this PR. However, this PR only updates agent skills and internal documentation, which is explicitly 'NOT User-Facing' (lines 85-89) and does not require a changeset.
   severity: high
   source:
     path: AGENTS.md
     lines: 68-75
 - rule: Always follow the structure in .github/PULL_REQUEST_TEMPLATE.md.
   collision_type: meta_confusion
-  why_distracting: The rule emphasizes following the structure in `.github/PULL_REQUEST_TEMPLATE.md`.
-    An agent might mistakenly try to modify the actual PR template file or create
-    a dummy PR description file, rather than creating the requested `.claude/skills/pull-request/SKILL.md`
-    documentation.
+  why_distracting: The rule emphasizes following the structure in `.github/PULL_REQUEST_TEMPLATE.md`. An agent might mistakenly try to modify the actual PR template file or create a dummy PR description file, rather than creating the requested `.claude/skills/pull-request/SKILL.md` documentation.
   severity: medium
   source:
     path: AGENTS.md
     lines: 18-20
-hierarchy_analysis: The agent must read Level 0 guidelines (AGENTS.md, CLAUDE.md)
-  and synthesize them into Level 1/2 skill files (.claude/skills/*). It must understand
-  that it is writing instructions for future agents, not executing the instructions
-  for the current PR.
+hierarchy_analysis: The agent must read Level 0 guidelines (AGENTS.md, CLAUDE.md) and synthesize them into Level 1/2 skill files (.claude/skills/*). It must understand that it is writing instructions for future agents, not executing the instructions for the current PR.

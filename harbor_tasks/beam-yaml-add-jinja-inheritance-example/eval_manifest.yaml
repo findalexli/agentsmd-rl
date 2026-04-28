@@ -52,18 +52,15 @@ checks:
 - id: test_base_pipeline_renders_valid_yaml
   type: fail_to_pass
   origin: pr_diff
-  description: Base pipeline YAML renders via Jinja2 to valid YAML with ReadFromText,
-    MapToFields, Explode, WriteToText
+  description: Base pipeline YAML renders via Jinja2 to valid YAML with ReadFromText, MapToFields, Explode, WriteToText
 - id: test_child_pipeline_renders_with_inheritance
   type: fail_to_pass
   origin: pr_diff
-  description: Child pipeline extends base via Jinja2 inheritance and injects Combine
-    transform with group_by
+  description: Child pipeline extends base via Jinja2 inheritance and injects Combine transform with group_by
 - id: test_preprocessor_registers_inheritance
   type: fail_to_pass
   origin: pr_diff
-  description: examples_test.py registers test_wordCountInheritance_yaml in all three
-    jinja preprocessors
+  description: examples_test.py registers test_wordCountInheritance_yaml in all three jinja preprocessors
 - id: test_input_data_returns_base_pipeline
   type: fail_to_pass
   origin: pr_diff
@@ -72,15 +69,37 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: 'CI-scoped: Jinja YAML template validation via pytest'
+- id: test_ci_typescript_unit_tests_npm
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: TypeScript Unit Tests / '
+- id: test_ci_typescript_unit_tests_npm_2
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: TypeScript Unit Tests / '
+- id: test_ci_typescript_unit_tests_npm_3
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: TypeScript Unit Tests / '
+- id: test_ci_typescript_unit_tests_npm_4
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: TypeScript Unit Tests / '
+- id: test_ci_build_python_source_distributi_build_source
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: Build python source distribution / Build source'
+- id: test_ci_check_environment_variables_check_are_gcp_variables_set
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: Check environment variables / Check are GCP variables set'
 rubric:
-- rule: README follows the style and structure of sibling jinja example READMEs (include/,
-    import/)
+- rule: README follows the style and structure of sibling jinja example READMEs (include/, import/)
   source:
     path: sdks/python/apache_beam/yaml/examples/transforms/jinja/include/README.md
     lines: 1-10
     commit: b9d48fa1750f6427cb86fa1de9d52e4d1849a433
-- rule: YAML pipeline files follow the same formatting conventions as existing jinja
-    examples
+- rule: YAML pipeline files follow the same formatting conventions as existing jinja examples
   source:
     path: sdks/python/apache_beam/yaml/examples/transforms/jinja/include
     lines: '1'
@@ -98,41 +117,5 @@ rubric:
 config_edits:
 - path: sdks/python/apache_beam/yaml/examples/transforms/jinja/inheritance/README.md
   tier: 2
-  gold_added: "<!--\n    Licensed to the Apache Software Foundation (ASF) under one\n\
-    \    or more contributor license agreements.  See the NOTICE file\n    distributed\
-    \ with this work for additional information\n    regarding copyright ownership.\
-    \  The ASF licenses this file\n    to you under the Apache License, Version 2.0\
-    \ (the\n    \"License\"); you may not use this file except in compliance\n   \
-    \ with the License.  You may obtain a copy of the License at\n\n      http://www.apache.org/licenses/LICENSE-2.0\n\
-    \n    Unless required by applicable law or agreed to in writing,\n    software\
-    \ distributed under the License is distributed on an\n    \"AS IS\" BASIS, WITHOUT\
-    \ WARRANTIES OR CONDITIONS OF ANY\n    KIND, either express or implied.  See the\
-    \ License for the\n    specific language governing permissions and limitations\n\
-    \    under the License.\n-->\n\n# Jinja Inheritance Example\n\nThis folder contains\
-    \ an example of how to use Jinja2 inheritance in Beam YAML pipelines.\n\n## Files\n\
-    \n*   **base/base_pipeline.yaml**: A complete WordCount pipeline (Read -> Split\
-    \ -> Explode -> Combine -> MapToFields -> Write). It defines a block `extra_steps`\
-    \ between `Explode` and `MapToFields` to allow child pipelines to inject additional\
-    \ transforms.\n*   **wordCountInheritance.yaml**: Extends `base/base_pipeline.yaml`\
-    \ and injects a `Combine` transform into the `extra_steps` block to combine words.\n\
-    \n## Running the Example\n\nTo run the child pipeline (which includes the inherited\
-    \ base pipeline logic + the new filter):\n\nGeneral setup:\n```sh\nexport PIPELINE_FILE=apache_beam/yaml/examples/transforms/jinja/inheritance/wordCountInheritance.yaml\n\
-    export KINGLEAR=\"gs://dataflow-samples/shakespeare/kinglear.txt\"\nexport TEMP_LOCATION=\"\
-    gs://MY-BUCKET/wordCounts/\"\nexport PROJECT=\"MY-PROJECT\"\nexport REGION=\"\
-    MY-REGION\"\n\ncd <PATH_TO_BEAM_REPO>/beam/sdks/python\n```\n\nMultiline Run Example:\n\
-    ```sh\npython -m apache_beam.yaml.main \\\n  --project=${PROJECT} \\\n  --region=${REGION}\
-    \ \\\n  --yaml_pipeline_file=\"${PIPELINE_FILE}\" \\\n  --jinja_variables='{\n\
-    \    \"readFromTextTransform\": {\"path\": \"'\"${KINGLEAR}\"'\"},\n    \"mapToFieldsSplitConfig\":\
-    \ {\"language\": \"python\", \"fields\":{\"value\":\"1\"}}, \"explodeTransform\":{\"fields\":\"word\"},\
-    \ \"combineTransform\":{\"group_by\":\"word\", \"combine\":{\"value\":\"sum\"}},\
-    \ \"mapToFieldsCountConfig\":{\"language\": \"python\", \"fields\":{\"output\":\"word\\\
-    \ \\\"- \\\"+ str(value)\"}}, \"writeToTextTransform\":{\"path\":\"'\"${TEMP_LOCATION}\"'\"}}'\n\
-    ```\n\nSingle Line Run Example:\n```sh\npython -m apache_beam.yaml.main --project=${PROJECT}\
-    \ --region=${REGION} \\\n--yaml_pipeline_file=\"${PIPELINE_FILE}\" --jinja_variables='{\"readFromTextTransform\":\
-    \n{\"path\": \"'\"${KINGLEAR}\"'\"}, \"mapToFieldsSplitConfig\": {\"language\": \"python\",\
-    \ \"fields\":{\"value\":\"1\"}}, \"explodeTransform\":{\"fields\":\"word\"},\
-    \ \"combineTransform\":{\"group_by\":\"word\", \"combine\":{\"value\":\"sum\"}},\
-    \ \"mapToFieldsCountConfig\":{\"language\": \"python\", \"fields\":{\"output\":\"word\\\
-    \ + \\\"- \\\"+ str(value)\"}}, \"writeToTextTransform\":{\"path\":\"'\"${TEMP_LOCATION}\"'\"}}'\n\
-    ```\n"
+  gold_added: "<!--\n    Licensed to the Apache Software Foundation (ASF) under one\n    or more contributor license agreements.  See the NOTICE file\n    distributed with this work for additional information\n    regarding copyright ownership.  The ASF licenses this file\n    to you under the Apache License, Version 2.0 (the\n    \"License\"); you may not use this file except in compliance\n    with the License.  You may obtain a copy of the License at\n\n      http://www.apache.org/licenses/LICENSE-2.0\n\n    Unless required by applicable law or agreed to in writing,\n    software distributed under the License is distributed on an\n    \"AS IS\" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY\n    KIND, either express or implied.  See the License for the\n    specific language governing permissions and limitations\n    under the License.\n-->\n\n# Jinja Inheritance Example\n\nThis folder contains an example of how to use Jinja2 inheritance in Beam YAML pipelines.\n\n## Files\n\n*   **base/base_pipeline.yaml**: A complete WordCount pipeline (Read -> Split -> Explode -> Combine -> MapToFields -> Write). It defines a block `extra_steps` between `Explode` and `MapToFields` to allow child pipelines to inject additional transforms.\n*   **wordCountInheritance.yaml**: Extends `base/base_pipeline.yaml` and injects a `Combine` transform into the `extra_steps` block to combine words.\n\n## Running the Example\n\nTo run the child pipeline (which includes the inherited base pipeline logic + the new filter):\n\nGeneral setup:\n```sh\nexport PIPELINE_FILE=apache_beam/yaml/examples/transforms/jinja/inheritance/wordCountInheritance.yaml\nexport KINGLEAR=\"gs://dataflow-samples/shakespeare/kinglear.txt\"\nexport TEMP_LOCATION=\"gs://MY-BUCKET/wordCounts/\"\nexport PROJECT=\"MY-PROJECT\"\nexport REGION=\"MY-REGION\"\n\ncd <PATH_TO_BEAM_REPO>/beam/sdks/python\n```\n\nMultiline Run Example:\n```sh\npython -m apache_beam.yaml.main \\\n  --project=${PROJECT} \\\n  --region=${REGION} \\\n  --yaml_pipeline_file=\"${PIPELINE_FILE}\" \\\n  --jinja_variables='{\n    \"readFromTextTransform\": {\"path\": \"'\"${KINGLEAR}\"'\"},\n    \"mapToFieldsSplitConfig\": {\"language\": \"python\", \"fields\":{\"value\":\"1\"}}, \"explodeTransform\":{\"fields\":\"word\"}, \"combineTransform\":{\"group_by\":\"word\", \"combine\":{\"value\":\"sum\"}}, \"mapToFieldsCountConfig\":{\"language\": \"python\", \"fields\":{\"output\":\"word\\ \\\"- \\\"+ str(value)\"}}, \"writeToTextTransform\":{\"path\":\"'\"${TEMP_LOCATION}\"'\"}}'\n```\n\nSingle Line Run Example:\n```sh\npython -m apache_beam.yaml.main --project=${PROJECT} --region=${REGION} \\\n--yaml_pipeline_file=\"${PIPELINE_FILE}\" --jinja_variables='{\"readFromTextTransform\":\n{\"path\": \"'\"${KINGLEAR}\"'\"}, \"mapToFieldsSplitConfig\": {\"language\": \"python\", \"fields\":{\"value\":\"1\"}}, \"explodeTransform\":{\"fields\":\"word\"}, \"combineTransform\":{\"group_by\":\"word\", \"combine\":{\"value\":\"sum\"}}, \"mapToFieldsCountConfig\":{\"language\": \"python\", \"fields\":{\"output\":\"word\\ + \\\"- \\\"+ str(value)\"}}, \"writeToTextTransform\":{\"path\":\"'\"${TEMP_LOCATION}\"'\"}}'\n```\n"
   gold_removed: ''

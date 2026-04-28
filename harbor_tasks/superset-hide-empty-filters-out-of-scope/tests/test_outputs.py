@@ -192,3 +192,95 @@ def test_pr_added_renders() -> None:
         f"Expected at least 1 passing test matching 'renders' "
         f"in FiltersDropdownContent.test.tsx, got {result.get('numPassedTests', 0)}."
     )
+
+# === CI-mined tests (taskforge.ci_check_miner) ===
+def test_ci_test_mysql_python_integration_tests_mysql():
+    """pass_to_pass | CI job 'test-mysql' → step 'Python integration tests (MySQL)'"""
+    r = subprocess.run(
+        ["bash", "-lc", './scripts/python_tests.sh'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Python integration tests (MySQL)' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_test_mysql_generate_database_diagnostics_for_docs():
+    """pass_to_pass | CI job 'test-mysql' → step 'Generate database diagnostics for docs'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'python -c "'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Generate database diagnostics for docs' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_check_python_deps_run_uv():
+    """pass_to_pass | CI job 'check-python-deps' → step 'Run uv'"""
+    r = subprocess.run(
+        ["bash", "-lc", './scripts/uv-pip-compile.sh'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Run uv' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_check_python_deps_check_for_uncommitted_changes():
+    """pass_to_pass | CI job 'check-python-deps' → step 'Check for uncommitted changes'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'echo "Full diff (for logging/debugging):"\ngit diff\n\necho "Filtered diff (excluding comments and whitespace):"\nfiltered_diff=$(git diff -U0 | grep \'^[-+]\' | grep -vE \'^[-+]{3}\' | grep -vE \'^[-+][[:space:]]*#\' | grep -vE \'^[-+][[:space:]]*$\' || true)\necho "$filtered_diff"\n\nif [[ -n "$filtered_diff" ]]; then\n  echo\n  echo "ERROR: The pinned dependencies are not up-to-date."\n  echo "Please run \'./scripts/uv-pip-compile.sh\' and commit the changes."\n  echo "More info: https://github.com/apache/superset/tree/master/requirements"\n  exit 1\nelse\n  echo "Pinned dependencies are up-to-date."\nfi'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Check for uncommitted changes' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_build_npm():
+    """pass_to_pass | CI job 'build' → step ''"""
+    r = subprocess.run(
+        ["bash", "-lc", 'npm ci'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step '' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_build_npm_2():
+    """pass_to_pass | CI job 'build' → step ''"""
+    r = subprocess.run(
+        ["bash", "-lc", 'npm run ci:release'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step '' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_test_superset_extensions_cli_p_run_pytest_with_coverage():
+    """pass_to_pass | CI job 'test-superset-extensions-cli-package' → step 'Run pytest with coverage'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'pytest --cov=superset_extensions_cli --cov-report=xml --cov-report=term-missing --cov-report=html -v --tb=short'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Run pytest with coverage' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+# === PR-added f2p tests (taskforge.test_patch_miner) ===
+def test_pr_added_does_not_render():
+    """fail_to_pass | PR added test 'does not render ' in 'superset-frontend/src/dashboard/components/nativeFilters/FilterBar/FilterControls/FilterControls.test.tsx' (vitest_or_jest)"""
+    r = subprocess.run(
+        ["bash", "-lc", '(pnpm vitest run "superset-frontend/src/dashboard/components/nativeFilters/FilterBar/FilterControls/FilterControls.test.tsx" -t "does not render " 2>&1 || npx vitest run "superset-frontend/src/dashboard/components/nativeFilters/FilterBar/FilterControls/FilterControls.test.tsx" -t "does not render " 2>&1 || pnpm jest "superset-frontend/src/dashboard/components/nativeFilters/FilterBar/FilterControls/FilterControls.test.tsx" -t "does not render " 2>&1 || npx jest "superset-frontend/src/dashboard/components/nativeFilters/FilterBar/FilterControls/FilterControls.test.tsx" -t "does not render " 2>&1) | tail -50'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"PR-added test 'does not render ' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_pr_added_does_not_render_2():
+    """fail_to_pass | PR added test 'does not render ' in 'superset-frontend/src/dashboard/components/nativeFilters/FilterBar/FiltersDropdownContent/FiltersDropdownContent.test.tsx' (vitest_or_jest)"""
+    r = subprocess.run(
+        ["bash", "-lc", '(pnpm vitest run "superset-frontend/src/dashboard/components/nativeFilters/FilterBar/FiltersDropdownContent/FiltersDropdownContent.test.tsx" -t "does not render " 2>&1 || npx vitest run "superset-frontend/src/dashboard/components/nativeFilters/FilterBar/FiltersDropdownContent/FiltersDropdownContent.test.tsx" -t "does not render " 2>&1 || pnpm jest "superset-frontend/src/dashboard/components/nativeFilters/FilterBar/FiltersDropdownContent/FiltersDropdownContent.test.tsx" -t "does not render " 2>&1 || npx jest "superset-frontend/src/dashboard/components/nativeFilters/FilterBar/FiltersDropdownContent/FiltersDropdownContent.test.tsx" -t "does not render " 2>&1) | tail -50'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"PR-added test 'does not render ' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_pr_added_renders():
+    """fail_to_pass | PR added test 'renders ' in 'superset-frontend/src/dashboard/components/nativeFilters/FilterBar/FiltersDropdownContent/FiltersDropdownContent.test.tsx' (vitest_or_jest)"""
+    r = subprocess.run(
+        ["bash", "-lc", '(pnpm vitest run "superset-frontend/src/dashboard/components/nativeFilters/FilterBar/FiltersDropdownContent/FiltersDropdownContent.test.tsx" -t "renders " 2>&1 || npx vitest run "superset-frontend/src/dashboard/components/nativeFilters/FilterBar/FiltersDropdownContent/FiltersDropdownContent.test.tsx" -t "renders " 2>&1 || pnpm jest "superset-frontend/src/dashboard/components/nativeFilters/FilterBar/FiltersDropdownContent/FiltersDropdownContent.test.tsx" -t "renders " 2>&1 || npx jest "superset-frontend/src/dashboard/components/nativeFilters/FilterBar/FiltersDropdownContent/FiltersDropdownContent.test.tsx" -t "renders " 2>&1) | tail -50'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"PR-added test 'renders ' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")

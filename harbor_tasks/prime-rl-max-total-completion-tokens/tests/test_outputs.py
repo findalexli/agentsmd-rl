@@ -226,48 +226,11 @@ def test_pyproject_verifiers_rev_is_short_hash():
     assert re.fullmatch(r"[0-9a-f]{7}", rev), f"rev must be hex, got {rev!r}"
 
 # === CI-mined tests (taskforge.ci_check_miner) ===
-def test_ci_orchestrator_config_invariants():
-    """pass_to_pass: Run orchestrator config invariant tests via pytest in subprocess."""
-    test_code = textwrap.dedent('''\
-        import sys
-        sys.path.insert(0, "/workspace/prime-rl/src")
-
-        def test_env_config_defaults():
-            from prime_rl.configs.orchestrator import EnvConfig
-            cfg = EnvConfig()
-            assert cfg.id == "reverse-text"
-            assert cfg.num_workers == "auto"
-            assert cfg.max_retries == 0
-
-        def test_validate_env_name_rejects_all():
-            from prime_rl.configs.orchestrator import EnvConfig
-            import pytest
-            with pytest.raises(Exception):
-                EnvConfig(id="test", name="all")
-
-        def test_sampling_config_legacy_input_works():
-            from prime_rl.configs.orchestrator import SamplingConfig
-            cfg = SamplingConfig(max_tokens=512)
-            d = cfg.model_dump()
-            assert 512 in d.values(), f"Value 512 not found in model dump: {d}"
-
-        def test_module_exports_intact():
-            from prime_rl.configs import orchestrator
-            assert hasattr(orchestrator, "EnvConfig")
-            assert hasattr(orchestrator, "SamplingConfig")
-            assert hasattr(orchestrator, "EvalSamplingConfig")
-    ''')
-    with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False) as f:
-        f.write(test_code)
-        tmp = f.name
-    try:
-        r = subprocess.run(
-            [sys.executable, "-m", "pytest", tmp, "-v", "--tb=short"],
-            capture_output=True, text=True, timeout=60,
-        )
-        assert r.returncode == 0, (
-            f"pytest failed (rc={r.returncode}):\n"
-            f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}"
-        )
-    finally:
-        Path(tmp).unlink(missing_ok=True)
+def test_ci_unit_tests_run_tests():
+    """pass_to_pass | CI job 'Unit tests' → step 'Run tests'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'PYTEST_OUTPUT_DIR=/tmp/outputs uv run pytest tests/unit -m "not gpu"'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Run tests' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")

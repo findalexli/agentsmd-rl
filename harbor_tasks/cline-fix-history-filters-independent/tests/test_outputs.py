@@ -279,3 +279,112 @@ console.log('OK: all sort options in VSCodeRadioGroup');
 """ % HISTORY_VIEW
     )
     assert result.returncode == 0, f"Sort options check failed: {result.stdout}"
+
+# === CI-mined tests (taskforge.ci_check_miner) ===
+def test_ci_e2e_run_e2e_tests_linux():
+    """pass_to_pass | CI job 'e2e' → step 'Run E2E tests - Linux'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'xvfb-run -a npm run test:e2e:optimal'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Run E2E tests - Linux' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_e2e_run_e2e_tests_non_linux():
+    """pass_to_pass | CI job 'e2e' → step 'Run E2E tests - Non-Linux'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'npm run test:e2e:optimal'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Run E2E tests - Non-Linux' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_test_platform_integration_build_cli_binaries():
+    """pass_to_pass | CI job 'test-platform-integration' → step 'Build CLI binaries'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'npm run compile-cli-all-platforms'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Build CLI binaries' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_test_platform_integration_compile_npm_package():
+    """pass_to_pass | CI job 'test-platform-integration' → step 'Compile NPM package'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'npm run compile-standalone-npm'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Compile NPM package' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_test_platform_integration_running_testing_platform_integration_spe():
+    """pass_to_pass | CI job 'test-platform-integration' → step 'Running testing platform integration spec tests'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'npm run test:tp-orchestrator -- tests/specs/ --count=1 --coverage'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Running testing platform integration spec tests' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_test_set_up_npm_on_windows():
+    """pass_to_pass | CI job 'test' → step 'Set up NPM on Windows'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'npm config set script-shell "C:\\\\Program Files\\\\Git\\\\bin\\\\bash.exe"'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Set up NPM on Windows' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_test_build_tests_and_extension():
+    """pass_to_pass | CI job 'test' → step 'Build Tests and Extension'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'npm run ci:build'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Build Tests and Extension' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_test_unit_tests_with_coverage_linux():
+    """pass_to_pass | CI job 'test' → step 'Unit Tests with coverage - Linux'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'npx nyc --nycrc-path .nycrc.unit.json --reporter=lcov npm run test:unit'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Unit Tests with coverage - Linux' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_test_unit_tests_non_linux():
+    """pass_to_pass | CI job 'test' → step 'Unit Tests - Non-Linux'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'npm run test:unit'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Unit Tests - Non-Linux' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_test_extension_integration_tests_linux():
+    """pass_to_pass | CI job 'test' → step 'Extension Integration Tests - Linux'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'xvfb-run -a npm run test:coverage'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Extension Integration Tests - Linux' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_test_extension_integration_tests_non_linux():
+    """pass_to_pass | CI job 'test' → step 'Extension Integration Tests - Non-Linux'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'npm run test:integration'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Extension Integration Tests - Non-Linux' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_test_webview_tests_with_coverage():
+    """pass_to_pass | CI job 'test' → step 'Webview Tests with Coverage'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'npm run test:coverage'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Webview Tests with Coverage' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")

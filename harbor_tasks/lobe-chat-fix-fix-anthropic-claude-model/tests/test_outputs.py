@@ -221,15 +221,6 @@ def test_repo_agent_tools_engine_tests():
     assert r.returncode == 0, f"AgentToolsEngine tests failed: {r.stdout[-500:]}"
 
 # === CI-mined tests (taskforge.ci_check_miner) ===
-def test_ci_build_desktop_app_build_artifact_on_macos():
-    """pass_to_pass | CI job 'Build Desktop App' → step 'Build artifact on macOS'"""
-    r = subprocess.run(
-        ["bash", "-lc", 'npm run desktop:package:app'], cwd=REPO,
-        capture_output=True, text=True, timeout=300)
-    assert r.returncode == 0, (
-        f"CI step 'Build artifact on macOS' failed (returncode={r.returncode}):\n"
-        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
-
 def test_ci_code_quality_check_lint():
     """pass_to_pass | CI job 'Code quality check' → step 'Lint'"""
     r = subprocess.run(
@@ -237,6 +228,24 @@ def test_ci_code_quality_check_lint():
         capture_output=True, text=True, timeout=300)
     assert r.returncode == 0, (
         f"CI step 'Lint' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_build_desktop_app_clean_previous_build_artifacts_macos():
+    """pass_to_pass | CI job 'Build Desktop App' → step 'Clean previous build artifacts (macOS)'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'sudo rm -rf apps/desktop/release || true\nsudo rm -rf apps/desktop/dist || true\nsudo rm -rf /tmp/electron-builder* || true'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Clean previous build artifacts (macOS)' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_build_desktop_app_build_artifact_on_macos():
+    """pass_to_pass | CI job 'Build Desktop App' → step 'Build artifact on macOS'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'npm run desktop:package:app'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Build artifact on macOS' failed (returncode={r.returncode}):\n"
         f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
 
 def test_ci_test_web_app_run_database_migrations():

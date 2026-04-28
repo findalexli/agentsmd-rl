@@ -153,6 +153,15 @@ def test_ci_test_build_all_packages():
         f"CI step 'Build all packages' failed (returncode={r.returncode}):\n"
         f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
 
+def test_ci_test_run_linter():
+    """pass_to_pass | CI job 'test' → step 'Run linter'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'pnpm lint'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Run linter' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
 def test_ci_test_compile_examples():
     """pass_to_pass | CI job 'test' → step 'Compile examples'"""
     r = subprocess.run(

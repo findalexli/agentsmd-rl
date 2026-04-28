@@ -297,3 +297,31 @@ def test_repo_lint_urlutils_files():
         f"--- stdout ---\n{r.stdout[-2000:]}\n"
         f"--- stderr ---\n{r.stderr[-2000:]}"
     )
+
+# === CI-mined tests (taskforge.ci_check_miner) ===
+def test_ci_check_python_deps_run_uv():
+    """pass_to_pass | CI job 'check-python-deps' → step 'Run uv'"""
+    r = subprocess.run(
+        ["bash", "-lc", './scripts/uv-pip-compile.sh'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Run uv' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_check_python_deps_check_for_uncommitted_changes():
+    """pass_to_pass | CI job 'check-python-deps' → step 'Check for uncommitted changes'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'echo "Full diff (for logging/debugging):"\ngit diff\n\necho "Filtered diff (excluding comments and whitespace):"\nfiltered_diff=$(git diff -U0 | grep \'^[-+]\' | grep -vE \'^[-+]{3}\' | grep -vE \'^[-+][[:space:]]*#\' | grep -vE \'^[-+][[:space:]]*$\' || true)\necho "$filtered_diff"\n\nif [[ -n "$filtered_diff" ]]; then\n  echo\n  echo "ERROR: The pinned dependencies are not up-to-date."\n  echo "Please run \'./scripts/uv-pip-compile.sh\' and commit the changes."\n  echo "More info: https://github.com/apache/superset/tree/master/requirements"\n  exit 1\nelse\n  echo "Pinned dependencies are up-to-date."\nfi'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Check for uncommitted changes' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_test_sqlite_python_integration_tests_sqlite():
+    """pass_to_pass | CI job 'test-sqlite' → step 'Python integration tests (SQLite)'"""
+    r = subprocess.run(
+        ["bash", "-lc", './scripts/python_tests.sh'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Python integration tests (SQLite)' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")

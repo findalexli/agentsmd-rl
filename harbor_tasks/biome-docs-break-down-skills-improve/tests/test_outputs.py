@@ -455,7 +455,56 @@ print(f"OK: table has {len(table_skills)} skills, directory tree updated")
     assert r.returncode == 0, f"README skills check failed: {r.stderr}"
 
 # === CI-mined tests (taskforge.ci_check_miner) ===
-# Dropped: cargo fmt/check/test/clippy/udeps — all require Rust toolchain
-# (cargo: not found in slim image). These PR changes only touch .claude/skills/
-# markdown files + justfile — no Rust code changed, so full workspace cargo
-# commands are irrelevant and constitute unavailable infra.
+def test_ci_check_dependencies_run_udeps():
+    """pass_to_pass | CI job 'Check Dependencies' → step 'Run udeps'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'cargo +nightly udeps --all-targets'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Run udeps' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_lint_rust_files_run_cargo_check():
+    """pass_to_pass | CI job 'Lint Rust Files' → step 'Run cargo check'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'cargo check --workspace --all-targets --release'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Run cargo check' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_lint_rust_files_run_clippy():
+    """pass_to_pass | CI job 'Lint Rust Files' → step 'Run clippy'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'cargo lint'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Run clippy' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_test_run_tests_on_matrix_os():
+    """pass_to_pass | CI job 'Test' → step 'Run tests on ${{ matrix.os }}'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'cargo test --workspace --features=js_plugin'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Run tests on ${{ matrix.os }}' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_format_rust_files_run_rustfmt():
+    """pass_to_pass | CI job 'Format Rust Files' → step 'Run rustfmt'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'cargo fmt --all --verbose -- --check'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Run rustfmt' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_format_rust_files_format_toml_files():
+    """pass_to_pass | CI job 'Format Rust Files' → step 'Format TOML files'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'tombi format --check'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Format TOML files' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")

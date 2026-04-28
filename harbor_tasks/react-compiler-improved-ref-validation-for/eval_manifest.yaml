@@ -77,9 +77,16 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: 'CI: yarn build and lint / Lint build'
+- id: test_ci_yarn_build_and_lint_ensure_clean_build_directory
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: yarn build and lint / Ensure clean build directory'
+- id: test_ci_yarn_build_and_lint_display_structure_of_build
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: yarn build and lint / Display structure of build'
 rubric:
-- rule: 'New Linting and Formatting sections in CLAUDE.md follow the existing style: ## heading, ```bash code block with a descriptive comment, consistent with Running Tests / Compiling Arbitrary Files
-    sections'
+- rule: 'New Linting and Formatting sections in CLAUDE.md follow the existing style: ## heading, ```bash code block with a descriptive comment, consistent with Running Tests / Compiling Arbitrary Files sections'
   source:
     path: compiler/CLAUDE.md
     lines: 1-36
@@ -88,29 +95,25 @@ rubric:
   source:
     path: compiler/CLAUDE.md
     lines: 82-85
-  evidence: The gold solution accesses `instr.effects` and iterates over them to check for specific aliasing effects (like `ImmutableCapture`) to determine the appropriate validation, directly applying
-    the docume
+  evidence: The gold solution accesses `instr.effects` and iterates over them to check for specific aliasing effects (like `ImmutableCapture`) to determine the appropriate validation, directly applying the docume
   category: architecture
 - rule: Update fixture outputs using `yarn snap -u`
   source:
     path: compiler/CLAUDE.md
     lines: 34-35
-  evidence: The gold solution includes modifications to `*.expect.md` files (e.g., `error.validate-mutate-ref-arg-in-render.expect.md`), which are the expected outputs generated and updated by running the
-    `yarn s
+  evidence: The gold solution includes modifications to `*.expect.md` files (e.g., `error.validate-mutate-ref-arg-in-render.expect.md`), which are the expected outputs generated and updated by running the `yarn s
   category: testing
 - rule: React Compiler has its own instructions in the `/compiler/` directory, separate from the root React project.
   source:
     path: CLAUDE.md
     lines: 6-7
-  evidence: The gold solution adds the linting and formatting documentation specifically to `compiler/CLAUDE.md` and explicitly notes that the prettier command must be run 'from the react root directory,
-    not comp
+  evidence: The gold solution adds the linting and formatting documentation specifically to `compiler/CLAUDE.md` and explicitly notes that the prettier command must be run 'from the react root directory, not comp
   category: documentation
 - rule: Respect the monorepo boundary between React (root) and React Compiler (/compiler/).
   source:
     path: CLAUDE.md
     lines: 5-8
-  evidence: The formatting command added to compiler/CLAUDE.md explicitly notes to run `yarn prettier-all` 'from the react root directory, not compiler/', respecting the monorepo boundary defined in the
-    root conf
+  evidence: The formatting command added to compiler/CLAUDE.md explicitly notes to run `yarn prettier-all` 'from the react root directory, not compiler/', respecting the monorepo boundary defined in the root conf
   category: tooling
 - rule: Use the AliasingEffects system (`instr.effects`) to describe data flow and operations.
   source:
@@ -153,19 +156,16 @@ config_edits:
 distractors:
 - rule: When modifying the compiler, you MUST read the documentation about that pass in `compiler/packages/babel-plugin-react-compiler/docs/passes/`
   collision_type: scope_ambiguity
-  why_distracting: The config states 'you MUST read the documentation about that pass in compiler/packages/babel-plugin-react-compiler/docs/passes/'. An agent might waste time trying to read or update documentation
-    for `ValidateNoRefAccessInRender` in that directory, which is out of scope for this PR.
+  why_distracting: The config states 'you MUST read the documentation about that pass in compiler/packages/babel-plugin-react-compiler/docs/passes/'. An agent might waste time trying to read or update documentation for `ValidateNoRefAccessInRender` in that directory, which is out of scope for this PR.
   severity: medium
   source:
     path: compiler/CLAUDE.md
     lines: 6-8
 - rule: This repository uses Sapling (`sl`) for version control.
   collision_type: meta_confusion
-  why_distracting: The config instructs the use of Sapling (`sl`) for version control. An agent might try to use `sl commit` or `sl addremove` to save its work, which could fail or cause confusion in a
-    standard git-based evaluation environment.
+  why_distracting: The config instructs the use of Sapling (`sl`) for version control. An agent might try to use `sl commit` or `sl addremove` to save its work, which could fail or cause confusion in a standard git-based evaluation environment.
   severity: low
   source:
     path: compiler/CLAUDE.md
     lines: 46-61
-hierarchy_analysis: The workspace uses a two-level hierarchy where the root `CLAUDE.md` explicitly delegates React Compiler instructions to `compiler/CLAUDE.md`. The agent must navigate to the child config
-  to understand the AliasingEffects architecture, and uniquely, must also edit this child config file as part of the task requirements.
+hierarchy_analysis: The workspace uses a two-level hierarchy where the root `CLAUDE.md` explicitly delegates React Compiler instructions to `compiler/CLAUDE.md`. The agent must navigate to the child config to understand the AliasingEffects architecture, and uniquely, must also edit this child config file as part of the task requirements.

@@ -160,3 +160,76 @@ def test_claude_md_documents_lint_style():
     assert "golangci-lint" in content.lower(), "CLAUDE.md should mention golangci-lint"
     assert "fmt.Fprintf" in content, "CLAUDE.md should document the fmt.Fprintf preference"
     assert ".golangci.yml" in content, "CLAUDE.md should reference the linter config file"
+
+# === CI-mined tests (taskforge.ci_check_miner) ===
+def test_ci_e2e_check_docker_version():
+    """fail_to_pass | CI job 'e2e' → step 'Check Docker Version'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'docker --version'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Check Docker Version' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_e2e_build_example_provider():
+    """fail_to_pass | CI job 'e2e' → step 'Build example provider'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'make example-provider'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Build example provider' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_e2e_test_plugin_mode():
+    """fail_to_pass | CI job 'e2e' → step 'Test plugin mode'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'make e2e-compose GOCOVERDIR=bin/coverage/e2e TEST_FLAGS="-v"'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Test plugin mode' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_e2e_test_standalone_mode():
+    """fail_to_pass | CI job 'e2e' → step 'Test standalone mode'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'make e2e-compose-standalone'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Test standalone mode' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_build_and_test_unit_tests():
+    """pass_to_pass | CI job 'Build and test' → step 'Unit tests'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'make test'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Unit tests' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_build_and_test_build_binaries():
+    """pass_to_pass | CI job 'Build and test' → step 'Build binaries'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'make'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Build binaries' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_build_and_test_check_arch_of_go_compose_binary():
+    """pass_to_pass | CI job 'Build and test' → step 'Check arch of go compose binary'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'file ./bin/build/docker-compose'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Check arch of go compose binary' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_build_and_test_test_plugin_mode():
+    """pass_to_pass | CI job 'Build and test' → step 'Test plugin mode'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'make e2e-compose'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Test plugin mode' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")

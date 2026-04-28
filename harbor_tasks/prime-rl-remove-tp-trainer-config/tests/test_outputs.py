@@ -486,3 +486,13 @@ def test_no_excessive_try_except():
         assert try_count <= 2, (
             f"{Path(path).name} has {try_count} try/except blocks (excessive)"
         )
+
+# === CI-mined tests (taskforge.ci_check_miner) ===
+def test_ci_unit_tests_run_tests():
+    """pass_to_pass | CI job 'Unit tests' → step 'Run tests'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'PYTEST_OUTPUT_DIR=/tmp/outputs uv run pytest tests/unit -m "not gpu"'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Run tests' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")

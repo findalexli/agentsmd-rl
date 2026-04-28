@@ -463,3 +463,32 @@ print("PASS")
 # - test_ci_build_build_the_book: requires Node.js + jupyter-book + heavy docs build
 # - test_pr_added_test_grpo/sft: require full AReaL deps (uvloop, hydra-core, torch)
 #   just to collect tests; the 7 core f2p AST-based tests comprehensively cover the PR diff.
+
+# === PR-added f2p tests (taskforge.test_patch_miner) ===
+def test_pr_added_test_grpo():
+    """fail_to_pass | PR added test 'test_grpo' in 'areal/tests/grpo/test_grpo.py' (pytest)"""
+    r = subprocess.run(
+        ["bash", "-lc", 'python3 -m pytest -x --no-header -p no:cacheprovider "areal/tests/grpo/test_grpo.py::test_grpo" 2>&1 | tail -50'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"PR-added test 'test_grpo' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_pr_added_test_sft():
+    """fail_to_pass | PR added test 'test_sft' in 'areal/tests/sft/test_sft.py' (pytest)"""
+    r = subprocess.run(
+        ["bash", "-lc", 'python3 -m pytest -x --no-header -p no:cacheprovider "areal/tests/sft/test_sft.py::test_sft" 2>&1 | tail -50'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"PR-added test 'test_sft' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+# === CI-mined tests (taskforge.ci_check_miner) ===
+def test_ci_build_build_the_book():
+    """pass_to_pass | CI job 'build' → step 'Build the book'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'jupyter-book build docs'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Build the book' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")

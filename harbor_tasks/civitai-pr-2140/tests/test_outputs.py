@@ -197,3 +197,13 @@ def test_eslint_modified_files():
         f"ESLint (no-cache) failed on notification files (returncode={r.returncode}):\n"
         f"stdout: {r.stdout[-2000:]}\nstderr: {r.stderr[-2000:]}"
     )
+
+# === CI-mined tests (taskforge.ci_check_miner) ===
+def test_ci_type_check_run_typecheck():
+    """pass_to_pass | CI job 'Type Check' → step 'Run typecheck'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'pnpm run typecheck'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Run typecheck' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")

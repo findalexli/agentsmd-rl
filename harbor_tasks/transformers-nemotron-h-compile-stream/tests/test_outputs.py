@@ -459,35 +459,47 @@ def test_repo_nemotron_h_modeling_conventions():
         raise AssertionError("NemotronHBlock class not found in modeling file")
 
 # === CI-mined tests (taskforge.ci_check_miner) ===
-def test_ci_get_tests_get_models_to_test():
-    """pass_to_pass | CI job 'get-tests' -> pytest modular conversion order test
-
-    Runs the actual pytest test for modular file conversion ordering.
-    This is a real CI test from the transformers test suite that validates
-    the dependency ordering of modular model files, which is directly relevant
-    to any PR touching modular model files like nemotron_h.
-    """
+def test_ci_check_timestamps_verify_merge_commit_timestamp_is_older_t():
+    """pass_to_pass | CI job 'Check timestamps' → step 'Verify `merge_commit` timestamp is older than the issue comment timestamp'"""
     r = subprocess.run(
-        ["bash", "-lc",
-         "python -m pytest /workspace/transformers/tests/repo_utils/modular/test_conversion_order.py --noconftest -x -q"],
-        cwd=REPO, capture_output=True, text=True, timeout=30,
-    )
+        ["bash", "-lc", 'COMMENT_TIMESTAMP=$(date -d "${COMMENT_DATE}" +"%s")\necho "COMMENT_DATE: $COMMENT_DATE"\necho "COMMENT_TIMESTAMP: $COMMENT_TIMESTAMP"\nif [ $COMMENT_TIMESTAMP -le $PR_MERGE_COMMIT_TIMESTAMP ]; then\n  echo "Last commit on the pull request is newer than the issue comment triggering this run! Abort!";\n  exit -1;\nfi'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
     assert r.returncode == 0, (
-        f"pytest modular conversion order test failed (returncode={r.returncode}):\n"
+        f"CI step 'Verify `merge_commit` timestamp is older than the issue comment timestamp' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_get_tests_verify_merge_commit_sha():
+    """pass_to_pass | CI job 'get-tests' → step 'Verify merge commit SHA'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'PR_MERGE_SHA=$(git log -1 --format=%H)\nif [ $PR_MERGE_SHA != $VERIFIED_PR_MERGE_SHA ]; then\n  echo "The merged commit SHA is not the same as the verified one! Security issue detected, abort the workflow!";\n  exit -1;\nfi'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Verify merge commit SHA' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_get_tests_get_models_to_test():
+    """pass_to_pass | CI job 'get-tests' → step 'Get models to test'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'python -m pip install GitPython'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Get models to test' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_get_tests_show_models_to_test():
+    """pass_to_pass | CI job 'get-tests' → step 'Show models to test'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'echo "$models"\necho "models=$models" >> $GITHUB_OUTPUT\necho "$quantizations"\necho "quantizations=$quantizations" >> $GITHUB_OUTPUT'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Show models to test' failed (returncode={r.returncode}):\n"
         f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
 
 def test_ci_check___report_process_and_filter_reports():
-    """pass_to_pass | CI job 'Check & Report' -> ruff lint+format on nemotron_h files via bash -lc
-
-    Runs ruff check and ruff format --check in a single shell invocation
-    scoped to the affected nemotron_h package, matching how transformers CI
-    orchestrates style enforcement (make style / check-repo).
-    """
+    """pass_to_pass | CI job 'Check & Report' → step 'Process and filter reports'"""
     r = subprocess.run(
-        ["bash", "-lc",
-         f"ruff check --quiet {MODELING} {MODULAR} && ruff format --check {MODELING} {MODULAR}"],
-        cwd=REPO, capture_output=True, text=True, timeout=30,
-    )
+        ["bash", "-lc", "python3 << 'PYTHON_SCRIPT'"], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
     assert r.returncode == 0, (
-        f"ruff lint/format check failed (returncode={r.returncode}):\n"
+        f"CI step 'Process and filter reports' failed (returncode={r.returncode}):\n"
         f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")

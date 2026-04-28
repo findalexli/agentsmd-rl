@@ -233,3 +233,31 @@ def test_repo_effect_zod_unit_tests():
         f"effect-zod tests failed (rc={r.returncode})\n"
         f"STDOUT:\n{r.stdout}\nSTDERR:\n{r.stderr}"
     )
+
+# === CI-mined tests (taskforge.ci_check_miner) ===
+def test_ci_e2e_run_app_e2e_tests():
+    """pass_to_pass | CI job 'e2e' → step 'Run app e2e tests'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'bun --cwd packages/app test:e2e:local'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Run app e2e tests' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_unit_run_unit_tests():
+    """pass_to_pass | CI job 'unit' → step 'Run unit tests'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'bun turbo test:ci'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Run unit tests' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_typecheck_run_typecheck():
+    """pass_to_pass | CI job 'typecheck' → step 'Run typecheck'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'bun typecheck'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Run typecheck' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")

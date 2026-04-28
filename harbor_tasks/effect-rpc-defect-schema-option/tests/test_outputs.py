@@ -203,6 +203,15 @@ def test_ci_lint_pnpm_3():
         f"CI step '' failed (returncode={r.returncode}):\n"
         f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
 
+def test_ci_lint_check_for_codegen_changes():
+    """pass_to_pass | CI job 'Lint' → step 'Check for codegen changes'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'git diff --exit-code'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Check for codegen changes' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
 # === PR-added f2p tests (taskforge.test_patch_miner) ===
 def test_pr_added_exitSchema_uses_custom_defect_schema():
     """fail_to_pass | PR added test 'exitSchema uses custom defect schema' in 'packages/rpc/test/Rpc.test.ts' (vitest_or_jest)"""

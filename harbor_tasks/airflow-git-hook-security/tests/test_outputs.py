@@ -369,4 +369,11 @@ def test_proxy_command_formatting():
     assert "ProxyCommand='ssh -W %h:%p bastion.example.com'" in cmd
 
 # === CI-mined tests (taskforge.ci_check_miner) ===
-# test_ci_build_info_cleanup_repo removed — requires Docker-in-Docker infra not available in test container
+def test_ci_go_sdk_tests_run_go_tests():
+    """pass_to_pass | CI job 'Go SDK tests' → step 'Run Go tests'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'gotestsum --format github-actions ./...'], cwd=os.path.join(REPO, './go-sdk'),
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Run Go tests' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")

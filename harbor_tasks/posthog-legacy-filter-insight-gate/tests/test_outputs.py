@@ -440,3 +440,112 @@ def test_pr_added_test_creating_query_insight_not_blocked_by_legac():
     assert "201" in test_src or "201_CREATED" in test_src, (
         "Test must assert HTTP 201 Created for query-based insight writes"
     )
+
+# === CI-mined tests (taskforge.ci_check_miner) ===
+def test_ci_build_and_validate_ui_apps_check_generated_ui_apps_are_up_to_date():
+    """pass_to_pass | CI job 'Build and validate UI Apps' → step 'Check generated UI apps are up to date'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'pnpm run generate:ui-apps'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Check generated UI apps are up to date' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_build_and_validate_ui_apps_build_ui_apps():
+    """pass_to_pass | CI job 'Build and validate UI Apps' → step 'Build UI Apps'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'pnpm run build:ui-apps'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Build UI Apps' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_build_and_validate_ui_apps_validate_build_output():
+    """pass_to_pass | CI job 'Build and validate UI Apps' → step 'Validate build output'"""
+    r = subprocess.run(
+        ["bash", "-lc", '# Each app should produce main.js and styles.css\n# Use find to recurse into wrapper dirs like generated/\nmissing=0\nfor app_dir in $(find services/mcp/public/ui-apps -mindepth 1 -type d ! -name generated | sort); do\n  app=$(basename "$app_dir")\n  if [ ! -f "$app_dir/main.js" ]; then\n    echo "::error::Missing main.js for $app"\n    missing=1\n  fi\n  if [ ! -f "$app_dir/styles.css" ]; then\n    echo "::error::Missing styles.css for $app"\n    missing=1\n  fi\ndone\nif [ "$missing" -eq 1 ]; then\n  exit 1\nfi\necho "All UI Apps built successfully."'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Validate build output' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_jest_test_test_with_jest():
+    """pass_to_pass | CI job 'Jest test' → step 'Test with Jest'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'bin/turbo run test --filter=@posthog/frontend -- --maxWorkers=2'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Test with Jest' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_hog_tests_check_if_antlr_definitions_are_up_to_dat():
+    """pass_to_pass | CI job 'Hog tests' → step 'Check if ANTLR definitions are up to date'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'antlr | grep "Version" && npm run grammar:build'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Check if ANTLR definitions are up to date' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_hog_tests_check_if_stl_bytecode_is_up_to_date():
+    """pass_to_pass | CI job 'Hog tests' → step 'Check if STL bytecode is up to date'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'python -m common.hogvm.stl.compile'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Check if STL bytecode is up to date' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_hog_tests_run_hogvm_python_tests():
+    """pass_to_pass | CI job 'Hog tests' → step 'Run HogVM Python tests'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'pytest common/hogvm'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Run HogVM Python tests' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_hog_tests_run_hogvm_typescript_tests():
+    """pass_to_pass | CI job 'Hog tests' → step 'Run HogVM TypeScript tests'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'pnpm --filter=@posthog/hogvm install --frozen-lockfile && pnpm --filter=@posthog/hogvm test'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Run HogVM TypeScript tests' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_hog_tests_run_hog_tests():
+    """pass_to_pass | CI job 'Hog tests' → step 'Run Hog tests'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'pnpm --filter=@posthog/hogvm install --frozen-lockfile && pnpm --filter=@posthog/hogvm compile:stl && ./test.sh'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Run Hog tests' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_test_run_tests():
+    """pass_to_pass | CI job 'test' → step 'Run tests'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'go test -v ./...'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Run tests' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_build___test_type_check():
+    """pass_to_pass | CI job 'Build & Test' → step 'Type check'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'pnpm typecheck'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Type check' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_build___test_run_tests():
+    """pass_to_pass | CI job 'Build & Test' → step 'Run tests'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'pnpm test'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Run tests' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")

@@ -281,3 +281,59 @@ def test_p2p_repo_global_setup_tests():
         f"stdout:\n{r.stdout[-2000:]}\n"
         f"stderr:\n{r.stderr[-2000:]}"
     )
+
+# === PR-added f2p tests (taskforge.test_patch_miner) ===
+def test_pr_added_should_show_a_Guardrails_field_in_the_Advanced_S():
+    """fail_to_pass | PR added test 'should show a Guardrails field in the Advanced Settings section' in 'ui/litellm-dashboard/src/components/Projects/ProjectModals/ProjectBaseForm.test.tsx' (vitest_or_jest)"""
+    r = subprocess.run(
+        ["bash", "-lc", '(pnpm vitest run "ui/litellm-dashboard/src/components/Projects/ProjectModals/ProjectBaseForm.test.tsx" -t "should show a Guardrails field in the Advanced Settings section" 2>&1 || npx vitest run "ui/litellm-dashboard/src/components/Projects/ProjectModals/ProjectBaseForm.test.tsx" -t "should show a Guardrails field in the Advanced Settings section" 2>&1 || pnpm jest "ui/litellm-dashboard/src/components/Projects/ProjectModals/ProjectBaseForm.test.tsx" -t "should show a Guardrails field in the Advanced Settings section" 2>&1 || npx jest "ui/litellm-dashboard/src/components/Projects/ProjectModals/ProjectBaseForm.test.tsx" -t "should show a Guardrails field in the Advanced Settings section" 2>&1) | tail -50'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"PR-added test 'should show a Guardrails field in the Advanced Settings section' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_pr_added_should_include_guardrails_as_a_top_level_field_w():
+    """fail_to_pass | PR added test 'should include guardrails as a top-level field when provided' in 'ui/litellm-dashboard/src/components/Projects/ProjectModals/projectFormUtils.test.ts' (vitest_or_jest)"""
+    r = subprocess.run(
+        ["bash", "-lc", '(pnpm vitest run "ui/litellm-dashboard/src/components/Projects/ProjectModals/projectFormUtils.test.ts" -t "should include guardrails as a top-level field when provided" 2>&1 || npx vitest run "ui/litellm-dashboard/src/components/Projects/ProjectModals/projectFormUtils.test.ts" -t "should include guardrails as a top-level field when provided" 2>&1 || pnpm jest "ui/litellm-dashboard/src/components/Projects/ProjectModals/projectFormUtils.test.ts" -t "should include guardrails as a top-level field when provided" 2>&1 || npx jest "ui/litellm-dashboard/src/components/Projects/ProjectModals/projectFormUtils.test.ts" -t "should include guardrails as a top-level field when provided" 2>&1) | tail -50'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"PR-added test 'should include guardrails as a top-level field when provided' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_pr_added_should_omit_guardrails_when_the_array_is_empty():
+    """fail_to_pass | PR added test 'should omit guardrails when the array is empty' in 'ui/litellm-dashboard/src/components/Projects/ProjectModals/projectFormUtils.test.ts' (vitest_or_jest)"""
+    r = subprocess.run(
+        ["bash", "-lc", '(pnpm vitest run "ui/litellm-dashboard/src/components/Projects/ProjectModals/projectFormUtils.test.ts" -t "should omit guardrails when the array is empty" 2>&1 || npx vitest run "ui/litellm-dashboard/src/components/Projects/ProjectModals/projectFormUtils.test.ts" -t "should omit guardrails when the array is empty" 2>&1 || pnpm jest "ui/litellm-dashboard/src/components/Projects/ProjectModals/projectFormUtils.test.ts" -t "should omit guardrails when the array is empty" 2>&1 || npx jest "ui/litellm-dashboard/src/components/Projects/ProjectModals/projectFormUtils.test.ts" -t "should omit guardrails when the array is empty" 2>&1) | tail -50'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"PR-added test 'should omit guardrails when the array is empty' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+# === CI-mined tests (taskforge.ci_check_miner) ===
+def test_ci_unit_test_install_helm_unit_test_plugin():
+    """pass_to_pass | CI job 'unit-test' → step 'Install Helm Unit Test Plugin'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'helm plugin install https://github.com/helm-unittest/helm-unittest --version v0.4.4'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Install Helm Unit Test Plugin' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_unit_test_verify_helm_unit_test_plugin_integrity():
+    """pass_to_pass | CI job 'unit-test' → step 'Verify Helm Unit Test Plugin integrity'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'EXPECTED_SHA="e251ba198448629678ff2168e1a469249d998155"\nPLUGIN_DIR="$(helm env HELM_PLUGINS)/helm-unittest"\nACTUAL_SHA="$(git -C "$PLUGIN_DIR" rev-parse HEAD)"\nif [ "$ACTUAL_SHA" != "$EXPECTED_SHA" ]; then\n  echo "::error::Helm unittest plugin checksum mismatch! Expected $EXPECTED_SHA but got $ACTUAL_SHA"\n  exit 1\nfi\necho "Helm unittest plugin integrity verified: $ACTUAL_SHA"'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Verify Helm Unit Test Plugin integrity' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_unit_test_run_unit_tests():
+    """pass_to_pass | CI job 'unit-test' → step 'Run unit tests'"""
+    r = subprocess.run(
+        ["bash", "-lc", "helm unittest -f 'tests/*.yaml' deploy/charts/litellm-helm"], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Run unit tests' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")

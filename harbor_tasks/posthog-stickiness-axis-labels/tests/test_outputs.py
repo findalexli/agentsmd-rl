@@ -254,3 +254,131 @@ def test_repo_build_products():
         capture_output=True, text=True, timeout=120, cwd=REPO,
     )
     assert r.returncode == 0, f"Product build failed:\n{r.stderr[-500:]}{r.stdout[-500:]}"
+
+# === PR-added f2p tests (taskforge.test_patch_miner) ===
+def test_pr_added_returns_raw_value_when_days_are_numbers_and_no_p():
+    """fail_to_pass | PR added test 'returns raw value when days are numbers and no prefix is provided' in 'frontend/src/lib/charts/utils/dates.test.ts' (vitest_or_jest)"""
+    r = subprocess.run(
+        ["bash", "-lc", '(pnpm vitest run "frontend/src/lib/charts/utils/dates.test.ts" -t "returns raw value when days are numbers and no prefix is provided" 2>&1 || npx vitest run "frontend/src/lib/charts/utils/dates.test.ts" -t "returns raw value when days are numbers and no prefix is provided" 2>&1 || pnpm jest "frontend/src/lib/charts/utils/dates.test.ts" -t "returns raw value when days are numbers and no prefix is provided" 2>&1 || npx jest "frontend/src/lib/charts/utils/dates.test.ts" -t "returns raw value when days are numbers and no prefix is provided" 2>&1) | tail -50'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"PR-added test 'returns raw value when days are numbers and no prefix is provided' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_pr_added_formats_numbers_with_a_prefix_when_provided():
+    """fail_to_pass | PR added test 'formats numbers with a prefix when provided' in 'frontend/src/lib/charts/utils/dates.test.ts' (vitest_or_jest)"""
+    r = subprocess.run(
+        ["bash", "-lc", '(pnpm vitest run "frontend/src/lib/charts/utils/dates.test.ts" -t "formats numbers with a prefix when provided" 2>&1 || npx vitest run "frontend/src/lib/charts/utils/dates.test.ts" -t "formats numbers with a prefix when provided" 2>&1 || pnpm jest "frontend/src/lib/charts/utils/dates.test.ts" -t "formats numbers with a prefix when provided" 2>&1 || npx jest "frontend/src/lib/charts/utils/dates.test.ts" -t "formats numbers with a prefix when provided" 2>&1) | tail -50'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"PR-added test 'formats numbers with a prefix when provided' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+# === CI-mined tests (taskforge.ci_check_miner) ===
+def test_ci_dagster_tests_run_migrations():
+    """pass_to_pass | CI job 'Dagster tests' → step 'Run migrations'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'python manage.py migrate'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Run migrations' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_dagster_tests_run_clickhouse_migrations():
+    """pass_to_pass | CI job 'Dagster tests' → step 'Run clickhouse migrations'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'python manage.py migrate_clickhouse'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Run clickhouse migrations' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_dagster_tests_run_dagster_tests():
+    """pass_to_pass | CI job 'Dagster tests' → step 'Run Dagster tests'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'pytest posthog/dags --junitxml=junit-dagster.xml'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Run Dagster tests' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_dagster_tests_run_products_dagster_tests():
+    """pass_to_pass | CI job 'Dagster tests' → step 'Run products Dagster tests'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'pytest products/**/dags --junitxml=junit-products.xml'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Run products Dagster tests' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_lint_proto_definitions_lint_protos():
+    """pass_to_pass | CI job 'Lint proto definitions' → step 'Lint protos'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'buf lint proto/'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Lint protos' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_check_python_proto_stubs_are_u_check_for_diff():
+    """pass_to_pass | CI job 'Check Python proto stubs are up to date' → step 'Check for diff'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'if ! git diff --exit-code posthog/personhog_client/proto/generated/; then\n  echo ""\n  echo "ERROR: Generated Python proto stubs are out of date."\n  echo "Run \'bash bin/generate_personhog_proto.sh\' and commit the result."\n  exit 1\nfi\necho "Generated Python proto stubs are up to date."'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Check for diff' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_check_for_breaking_changes_check_for_breaking_changes():
+    """pass_to_pass | CI job 'Check for breaking changes' → step 'Check for breaking changes'"""
+    r = subprocess.run(
+        ["bash", "-lc", "buf breaking proto/ --against 'https://github.com/PostHog/posthog.git#branch=master,subdir=proto'"], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Check for breaking changes' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_llm_gateway_tests_run_tests():
+    """pass_to_pass | CI job 'LLM Gateway Tests' → step 'Run tests'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'uv run pytest tests/ -v --tb=short --junitxml=junit.xml'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Run tests' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_validate_migrations_and_openap_check_migrations():
+    """pass_to_pass | CI job 'Validate migrations and OpenAPI types' → step 'Check migrations'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'python manage.py makemigrations --check --dry-run'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Check migrations' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_validate_migrations_and_openap_check_ch_migrations():
+    """pass_to_pass | CI job 'Validate migrations and OpenAPI types' → step 'Check CH migrations'"""
+    r = subprocess.run(
+        ["bash", "-lc", '# Same as above, except now for CH looking at files that were added in posthog/clickhouse/migrations/\ngit diff --name-status origin/master..HEAD | grep "A\\sposthog/clickhouse/migrations/" | grep -v README | awk \'{print $2}\' | python manage.py test_ch_migrations_are_safe'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Check CH migrations' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_validate_migrations_and_openap_check_and_update_openapi_types():
+    """pass_to_pass | CI job 'Validate migrations and OpenAPI types' → step 'Check and update OpenAPI types'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'pnpm --filter=@posthog/mcp run scaffold-yaml -- --sync-all'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Check and update OpenAPI types' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_discover_product_tests_discover_products_to_test():
+    """pass_to_pass | CI job 'Discover product tests' → step 'Discover products to test'"""
+    r = subprocess.run(
+        ["bash", "-lc", '# turbo-discover.js diffs backend:test vs backend:contract-check\n# to detect isolated products. Non-isolated product changes trigger\n# the full suite (all products + Django).\nRESULT=$(node .github/scripts/turbo-discover.js)\necho "Result: $RESULT"\necho "matrix=$(echo "$RESULT" | jq -c \'.matrix\')" >> $GITHUB_OUTPUT\necho "run_legacy=$(echo "$RESULT" | jq -r \'.run_legacy\')" >> $GITHUB_OUTPUT\n\n# Keep contract-check remote cache warm for future runs\n./node_modules/.bin/turbo run backend:contract-check --output-logs=errors-only 2>/dev/null || true'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Discover products to test' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")

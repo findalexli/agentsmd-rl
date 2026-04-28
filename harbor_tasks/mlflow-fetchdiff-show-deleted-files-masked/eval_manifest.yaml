@@ -28,13 +28,11 @@ checks:
 - id: deleted_file_included_in_output
   type: fail_to_pass
   origin: pr_diff
-  description: Deleted files appear in filter_diff output instead of being silently
-    dropped
+  description: Deleted files appear in filter_diff output instead of being silently dropped
 - id: deleted_file_uses_deleted_mask_message
   type: fail_to_pass
   origin: pr_diff
-  description: Deleted files show '[Deleted file - diff masked]' not the auto-generated
-    message
+  description: Deleted files show '[Deleted file - diff masked]' not the auto-generated message
 - id: deleted_file_pattern_filter
   type: fail_to_pass
   origin: pr_diff
@@ -54,27 +52,69 @@ checks:
 - id: skill_md_documents_deleted_files
   type: fail_to_pass
   origin: pr_diff
-  description: SKILL.md documents the deleted file output format with mask message
-    example
+  description: SKILL.md documents the deleted file output format with mask message example
+- id: test_ci_lint_run_pre_commit
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: lint / Run pre-commit'
+- id: test_ci_lint_test_clint
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: lint / Test clint'
+- id: test_ci_lint_check_function_signatures
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: lint / Check function signatures'
+- id: test_ci_lint_check_whitespace_only_changes
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: lint / Check whitespace-only changes'
+- id: test_ci_lint_check_uv_lock_changes
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: lint / Check uv.lock changes'
+- id: test_ci_lint_check_unused_media
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: lint / Check unused media'
+- id: test_ci_build_build_ui
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: build / Build UI'
+- id: test_ci_build_build_distribution_files
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: build / Build distribution files'
+- id: test_ci_build_run_twine_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: build / Run twine check'
+- id: test_ci_build_test_installation_from_tarball
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: build / Test installation from tarball'
+- id: test_ci_build_test_installation_from_github
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: build / Test installation from GitHub'
+- id: test_ci_build_test_dev_install_skinny_sh
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: build / Test dev/install-skinny.sh'
 rubric:
 - rule: Maintain consistent formatting for masked file examples in the skill documentation
   source:
     path: .claude/skills/fetch-diff/SKILL.md
     lines: 58-63
-  evidence: The gold solution adds a new section `**Deleted file (masked):**` with
-    a markdown code block showing the diff format, perfectly mirroring the structure
-    and formatting of the existing `**Auto-generated file (masked):**` section.
+  evidence: The gold solution adds a new section `**Deleted file (masked):**` with a markdown code block showing the diff format, perfectly mirroring the structure and formatting of the existing `**Auto-generated file (masked):**` section.
   category: documentation
   verification: llm_judge
 - rule: Only add comments that explain non-obvious logic or provide additional context
   source:
     path: CLAUDE.md
     lines: '13'
-  source_text: '- Only add comments that explain non-obvious logic or provide additional
-    context'
-  evidence: 'The diff adds a comment explaining the non-obvious fallback logic for
-    deleted files: ''# For deleted files, use the old path (a/ side) for pattern matching\n#
-    since new_path is /dev/null''.'
+  source_text: '- Only add comments that explain non-obvious logic or provide additional context'
+  evidence: 'The diff adds a comment explaining the non-obvious fallback logic for deleted files: ''# For deleted files, use the old path (a/ side) for pattern matching\n# since new_path is /dev/null''.'
   category: Documentation/Style
   verification: llm_judge
 config_edits:
@@ -98,10 +138,7 @@ config_edits:
 distractors:
 - rule: Run Python tests using `uv run pytest tests/`
   collision_type: scope_ambiguity
-  why_distracting: The agent might try to run the main MLflow test suite (`uv run
-    pytest tests/`) to verify its changes to the Claude skill. This would waste time
-    and not actually test the skill code, as the skill is located in `.claude/skills/`
-    and is separate from the main MLflow application.
+  why_distracting: The agent might try to run the main MLflow test suite (`uv run pytest tests/`) to verify its changes to the Claude skill. This would waste time and not actually test the skill code, as the skill is located in `.claude/skills/` and is separate from the main MLflow application.
   severity: medium
   source:
     path: CLAUDE.md
@@ -110,18 +147,9 @@ distractors:
   source:
     path: .claude/rules/python.md
     lines: 149-165
-  source_text: "## Use Pattern Matching When Dispatching on Structure\n\nPattern matching\
-    \ is preferred for string splitting (replaces unsafe unpacking), nested dict access\
-    \ (replaces chained `.get()` calls), and list length dispatch (replaces verbose\
-    \ length checks).\n\n### String Splitting\n\n```python\n# Bad\na, b = some_str.split(\"\
-    .\")\n\n# Good\nmatch some_str.split(\".\"):\n    case [a, b]:\n        ...\n\
-    \    case _:\n        raise ValueError(f\"Invalid format: {some_str!r}\")\n```"
+  source_text: "## Use Pattern Matching When Dispatching on Structure\n\nPattern matching is preferred for string splitting (replaces unsafe unpacking), nested dict access (replaces chained `.get()` calls), and list length dispatch (replaces verbose length checks).\n\n### String Splitting\n\n```python\n# Bad\na, b = some_str.split(\".\")\n\n# Good\nmatch some_str.split(\".\"):\n    case [a, b]:\n        ...\n    case _:\n        raise ValueError(f\"Invalid format: {some_str!r}\")\n```"
   collision_type: would_cause_bug
-  why_distracting: 'An agent might attempt to refactor the `re.match(r"diff --git
-    a/(.*?) b/(.*?)$", line)` code into Python 3.10 pattern matching combined with
-    string splitting (e.g. `match line.split(): case ["diff", "--git", old, new]:`).
-    This seems to follow the rule but would break parsing for file paths containing
-    spaces, which the original regex safely handles.'
+  why_distracting: 'An agent might attempt to refactor the `re.match(r"diff --git a/(.*?) b/(.*?)$", line)` code into Python 3.10 pattern matching combined with string splitting (e.g. `match line.split(): case ["diff", "--git", old, new]:`). This seems to follow the rule but would break parsing for file paths containing spaces, which the original regex safely handles.'
   severity: high
 - rule: Use pathlib Methods Instead of os Module Functions
   source:
@@ -130,9 +158,7 @@ distractors:
   source_text: '## Use `pathlib` Methods Instead of `os` Module Functions
 
 
-    When you have a `pathlib.Path` object, use its built-in methods instead of `os`
-    module functions. This is more readable, type-safe, and follows object-oriented
-    principles.
+    When you have a `pathlib.Path` object, use its built-in methods instead of `os` module functions. This is more readable, type-safe, and follows object-oriented principles.
 
 
     ```python
@@ -161,12 +187,6 @@ distractors:
 
     ```'
   collision_type: scope_ambiguity
-  why_distracting: The diff processes file paths extracted from git diff strings (`effective_path`,
-    `old_path`, `new_path`). An agent might mistakenly believe these should be converted
-    to `pathlib.Path` objects to evaluate `new_path == "dev/null"` or for pattern
-    matching. However, these are strictly string paths from a diff header, not actual
-    filesystem interactions, making pathlib overhead unnecessary and out of scope.
+  why_distracting: The diff processes file paths extracted from git diff strings (`effective_path`, `old_path`, `new_path`). An agent might mistakenly believe these should be converted to `pathlib.Path` objects to evaluate `new_path == "dev/null"` or for pattern matching. However, these are strictly string paths from a diff header, not actual filesystem interactions, making pathlib overhead unnecessary and out of scope.
   severity: medium
-hierarchy_analysis: The repository has a single `CLAUDE.md` file at the root. However,
-  the rules in this file are scoped to the main MLflow project and do not provide
-  specific guidance for the `.claude/skills` directory, creating a scope disconnect.
+hierarchy_analysis: The repository has a single `CLAUDE.md` file at the root. However, the rules in this file are scoped to the main MLflow project and do not provide specific guidance for the `.claude/skills` directory, creating a scope disconnect.

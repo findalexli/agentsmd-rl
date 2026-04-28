@@ -163,72 +163,67 @@ def test_changeset_present():
         "fix to getPropertySignatures / Transformation / optionalWith."
     )
 
-
 # === CI-mined tests (taskforge.ci_check_miner) ===
 def test_ci_lint_pnpm():
-    """pass_to_pass | CI job 'Lint' — pnpm circular"""
+    """pass_to_pass | CI job 'Lint' → step ''"""
     r = subprocess.run(
         ["bash", "-lc", 'pnpm circular'], cwd=REPO,
         capture_output=True, text=True, timeout=300)
     assert r.returncode == 0, (
-        f"pnpm circular failed (returncode={r.returncode}):\n"
+        f"CI step '' failed (returncode={r.returncode}):\n"
         f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
 
-
 def test_ci_lint_pnpm_2():
-    """pass_to_pass | CI job 'Lint' — pnpm lint"""
+    """pass_to_pass | CI job 'Lint' → step ''"""
     r = subprocess.run(
         ["bash", "-lc", 'pnpm lint'], cwd=REPO,
         capture_output=True, text=True, timeout=300)
     assert r.returncode == 0, (
-        f"pnpm lint failed (returncode={r.returncode}):\n"
+        f"CI step '' failed (returncode={r.returncode}):\n"
         f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
 
-
 def test_ci_lint_pnpm_3():
-    """pass_to_pass | CI job 'Lint' — pnpm codegen"""
+    """pass_to_pass | CI job 'Lint' → step ''"""
     r = subprocess.run(
         ["bash", "-lc", 'pnpm codegen'], cwd=REPO,
         capture_output=True, text=True, timeout=300)
     assert r.returncode == 0, (
-        f"pnpm codegen failed (returncode={r.returncode}):\n"
+        f"CI step '' failed (returncode={r.returncode}):\n"
         f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
 
+def test_ci_lint_check_for_codegen_changes():
+    """pass_to_pass | CI job 'Lint' → step 'Check for codegen changes'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'git diff --exit-code'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Check for codegen changes' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_build_pnpm():
+    """pass_to_pass | CI job 'Build' → step ''"""
+    r = subprocess.run(
+        ["bash", "-lc", 'pnpm docgen'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step '' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
 
 # === PR-added f2p tests (taskforge.test_patch_miner) ===
 def test_pr_added_Transformation_Struct_with_optionalWith_default():
-    """fail_to_pass | PR added test must exist in test file and pass."""
-    test_file = EFFECT_PKG / "test" / "Schema" / "SchemaAST" / "getPropertySignatures.test.ts"
-    assert test_file.is_file(), "getPropertySignatures.test.ts is missing"
-    test_name = "Transformation (Struct with optionalWith default)"
-    content = test_file.read_text()
-    assert test_name in content, (
-        f"Test '{test_name}' not found in getPropertySignatures.test.ts — the PR test patch must be applied"
-    )
-    rc, out, err = _run_vitest(
-        "test/Schema/SchemaAST/getPropertySignatures.test.ts",
-        name_filter=test_name,
-    )
-    assert rc == 0, (
-        f"PR-added test '{test_name}' failed.\n"
-        f"--- stdout ---\n{out[-2000:]}\n--- stderr ---\n{err[-2000:]}"
-    )
-
+    """fail_to_pass | PR added test 'Transformation (Struct with optionalWith default)' in 'packages/effect/test/Schema/SchemaAST/getPropertySignatures.test.ts' (vitest_or_jest)"""
+    r = subprocess.run(
+        ["bash", "-lc", '(pnpm vitest run "packages/effect/test/Schema/SchemaAST/getPropertySignatures.test.ts" -t "Transformation (Struct with optionalWith default)" 2>&1 || npx vitest run "packages/effect/test/Schema/SchemaAST/getPropertySignatures.test.ts" -t "Transformation (Struct with optionalWith default)" 2>&1 || pnpm jest "packages/effect/test/Schema/SchemaAST/getPropertySignatures.test.ts" -t "Transformation (Struct with optionalWith default)" 2>&1 || npx jest "packages/effect/test/Schema/SchemaAST/getPropertySignatures.test.ts" -t "Transformation (Struct with optionalWith default)" 2>&1) | tail -50'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"PR-added test 'Transformation (Struct with optionalWith default)' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
 
 def test_pr_added_Transformation_Struct_with_optionalWith_as_Optio():
-    """fail_to_pass | PR added test must exist in test file and pass."""
-    test_file = EFFECT_PKG / "test" / "Schema" / "SchemaAST" / "getPropertySignatures.test.ts"
-    assert test_file.is_file(), "getPropertySignatures.test.ts is missing"
-    test_name = "Transformation (Struct with optionalWith as Option)"
-    content = test_file.read_text()
-    assert test_name in content, (
-        f"Test '{test_name}' not found in getPropertySignatures.test.ts — the PR test patch must be applied"
-    )
-    rc, out, err = _run_vitest(
-        "test/Schema/SchemaAST/getPropertySignatures.test.ts",
-        name_filter=test_name,
-    )
-    assert rc == 0, (
-        f"PR-added test '{test_name}' failed.\n"
-        f"--- stdout ---\n{out[-2000:]}\n--- stderr ---\n{err[-2000:]}"
-    )
+    """fail_to_pass | PR added test 'Transformation (Struct with optionalWith as Option)' in 'packages/effect/test/Schema/SchemaAST/getPropertySignatures.test.ts' (vitest_or_jest)"""
+    r = subprocess.run(
+        ["bash", "-lc", '(pnpm vitest run "packages/effect/test/Schema/SchemaAST/getPropertySignatures.test.ts" -t "Transformation (Struct with optionalWith as Option)" 2>&1 || npx vitest run "packages/effect/test/Schema/SchemaAST/getPropertySignatures.test.ts" -t "Transformation (Struct with optionalWith as Option)" 2>&1 || pnpm jest "packages/effect/test/Schema/SchemaAST/getPropertySignatures.test.ts" -t "Transformation (Struct with optionalWith as Option)" 2>&1 || npx jest "packages/effect/test/Schema/SchemaAST/getPropertySignatures.test.ts" -t "Transformation (Struct with optionalWith as Option)" 2>&1) | tail -50'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"PR-added test 'Transformation (Struct with optionalWith as Option)' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")

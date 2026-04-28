@@ -239,13 +239,10 @@ def test_pointsEqual_function_imported():
 
 # === CI-mined tests (taskforge.ci_check_miner) ===
 def test_ci_test_install_and_test():
-    """pass_to_pass | CI scoped vitest run: binding + drag create tests"""
+    """pass_to_pass | CI job 'test' → step 'Install and test'"""
     r = subprocess.run(
-        ["bash", "-lc",
-         "yarn test:app run packages/element/tests/binding.test.tsx"
-         " packages/excalidraw/tests/dragCreate.test.tsx"],
-        cwd=REPO,
-        capture_output=True, text=True, timeout=120)
+        ["bash", "-lc", 'yarn install && yarn test:app'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
     assert r.returncode == 0, (
-        f"CI scoped test run failed (returncode={r.returncode}):\n"
+        f"CI step 'Install and test' failed (returncode={r.returncode}):\n"
         f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")

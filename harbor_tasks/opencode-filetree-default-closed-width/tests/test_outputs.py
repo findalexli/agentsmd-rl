@@ -121,12 +121,18 @@ def test_fix_claude_md_guidance():
 # === CI-mined tests (taskforge.ci_check_miner) ===
 def test_ci_build_sdist_build_sdist():
     """pass_to_pass | CI job 'Build sdist' → step 'Build sdist'"""
-    import os
-    env = os.environ.copy()
-    env["GITHUB_OUTPUT"] = "/dev/null"
     r = subprocess.run(
-        ["bash", "-lc", 'python -m build --sdist && python ci/export_sdist_name.py'],
-        cwd=REPO, capture_output=True, text=True, timeout=300, env=env)
+        ["bash", "-lc", 'python -m build --sdist && python ci/export_sdist_name.py'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
     assert r.returncode == 0, (
         f"CI step 'Build sdist' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_build_sdist_check_readme_rendering_for_pypi():
+    """pass_to_pass | CI job 'Build sdist' → step 'Check README rendering for PyPI'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'twine check dist/*'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Check README rendering for PyPI' failed (returncode={r.returncode}):\n"
         f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")

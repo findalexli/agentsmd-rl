@@ -251,49 +251,31 @@ def test_only_if_expr_trait_method_exists():
     )
 
 # === CI-mined tests (taskforge.ci_check_miner) ===
-def test_ci_lint_format_check():
-    """pass_to_pass | CI job 'Lint' → step 'Format check'"""
-    r = subprocess.run(
-        ["bash", "-lc", 'ruff format --check .'], cwd=REPO,
-        capture_output=True, text=True, timeout=300)
-    assert r.returncode == 0, (
-        f"CI step 'Format check' failed (returncode={r.returncode}):\n"
-        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
-
-def test_ci_lint_lint():
-    """pass_to_pass | CI job 'Lint' → step 'Lint'"""
-    r = subprocess.run(
-        ["bash", "-lc", 'ruff check .'], cwd=REPO,
-        capture_output=True, text=True, timeout=300)
-    assert r.returncode == 0, (
-        f"CI step 'Lint' failed (returncode={r.returncode}):\n"
-        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
-
-def test_ci_build_build_python():
-    """pass_to_pass | CI job 'build' → step 'Build Python'"""
-    r = subprocess.run(
-        ["bash", "-lc", 'python -m pip install --extra-index-url https://pypi.fury.io/lance-format/ --extra-index-url https://pypi.fury.io/lancedb/ -e . && python -m pip install --extra-index-url https://pypi.fury.io/lance-format/ --extra-index-url https://pypi.fury.io/lancedb/ -r ../docs/requirements.txt'], cwd=os.path.join(REPO, 'python'),
-        capture_output=True, text=True, timeout=300)
-    assert r.returncode == 0, (
-        f"CI step 'Build Python' failed (returncode={r.returncode}):\n"
-        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
-
-def test_ci_build_no_lock_build_all():
-    """pass_to_pass | CI job 'build-no-lock' → step 'Build all'"""
-    r = subprocess.run(
-        ["bash", "-lc", 'cargo build --profile ci --benches --all-features --tests'], cwd=REPO,
-        capture_output=True, text=True, timeout=300)
-    assert r.returncode == 0, (
-        f"CI step 'Build all' failed (returncode={r.returncode}):\n"
-        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
-
-def test_ci_lint_run_format():
-    """pass_to_pass | CI job 'lint' → step 'Run format'"""
+def test_ci_lint_format_rust():
+    """pass_to_pass | CI job 'Lint' → step 'Format Rust'"""
     r = subprocess.run(
         ["bash", "-lc", 'cargo fmt --all -- --check'], cwd=REPO,
         capture_output=True, text=True, timeout=300)
     assert r.returncode == 0, (
-        f"CI step 'Run format' failed (returncode={r.returncode}):\n"
+        f"CI step 'Format Rust' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_lint_lint_rust():
+    """pass_to_pass | CI job 'Lint' → step 'Lint Rust'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'cargo clippy --profile ci --all --all-features -- -D warnings'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Lint Rust' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_lint_lint_typescript():
+    """pass_to_pass | CI job 'Lint' → step 'Lint Typescript'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'npm ci && npm run lint-ci'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Lint Typescript' failed (returncode={r.returncode}):\n"
         f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
 
 def test_ci_lint_run_clippy():
@@ -312,4 +294,67 @@ def test_ci_lint_run_clippy_without_remote_feature():
         capture_output=True, text=True, timeout=300)
     assert r.returncode == 0, (
         f"CI step 'Run clippy (without remote feature)' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_build_no_lock_build_all():
+    """pass_to_pass | CI job 'build-no-lock' → step 'Build all'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'cargo build --profile ci --benches --all-features --tests'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Build all' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_build_build_python():
+    """pass_to_pass | CI job 'build' → step 'Build Python'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'python -m pip install --extra-index-url https://pypi.fury.io/lance-format/ --extra-index-url https://pypi.fury.io/lancedb/ -e . && python -m pip install --extra-index-url https://pypi.fury.io/lance-format/ --extra-index-url https://pypi.fury.io/lancedb/ -r ../docs/requirements.txt'], cwd=os.path.join(REPO, 'python'),
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Build Python' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_build_build_docs():
+    """pass_to_pass | CI job 'build' → step 'Build docs'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'PYTHONPATH=. mkdocs build'], cwd=os.path.join(REPO, 'docs'),
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Build docs' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_check_licenses_check_license_headers_rust():
+    """pass_to_pass | CI job 'check-licenses' → step 'Check license headers (rust)'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'license-header-checker -a -v ./rust/license_header.txt ./ rs && [[ -z `git status -s` ]]'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Check license headers (rust)' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_check_licenses_check_license_headers_python():
+    """pass_to_pass | CI job 'check-licenses' → step 'Check license headers (python)'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'license-header-checker -a -v ./python/license_header.txt python py && [[ -z `git status -s` ]]'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Check license headers (python)' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_check_licenses_check_license_headers_typescript():
+    """pass_to_pass | CI job 'check-licenses' → step 'Check license headers (typescript)'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'license-header-checker -a -v ./nodejs/license_header.txt nodejs ts && [[ -z `git status -s` ]]'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Check license headers (typescript)' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_check_licenses_check_license_headers_java():
+    """pass_to_pass | CI job 'check-licenses' → step 'Check license headers (java)'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'license-header-checker -a -v ./nodejs/license_header.txt java java && [[ -z `git status -s` ]]'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Check license headers (java)' failed (returncode={r.returncode}):\n"
         f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")

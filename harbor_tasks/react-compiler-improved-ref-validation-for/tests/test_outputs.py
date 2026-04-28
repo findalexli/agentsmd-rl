@@ -343,7 +343,7 @@ def test_ci_jest_babel_plugin_react_compil_yarn():
 def test_ci_jest_babel_plugin_react_compil_yarn_2():
     """pass_to_pass | CI job 'Jest babel-plugin-react-compiler' → step ''"""
     r = subprocess.run(
-        ["bash", "-lc", 'yarn workspace babel-plugin-react-compiler jest'], cwd=COMPILER,
+        ["bash", "-lc", 'yarn workspace babel-plugin-react-compiler jest'], cwd=REPO,
         capture_output=True, text=True, timeout=300)
     assert r.returncode == 0, (
         f"CI step '' failed (returncode={r.returncode}):\n"
@@ -352,7 +352,7 @@ def test_ci_jest_babel_plugin_react_compil_yarn_2():
 def test_ci_lint_babel_plugin_react_compil_yarn():
     """pass_to_pass | CI job 'Lint babel-plugin-react-compiler' → step ''"""
     r = subprocess.run(
-        ["bash", "-lc", 'yarn workspace babel-plugin-react-compiler lint'], cwd=COMPILER,
+        ["bash", "-lc", 'yarn workspace babel-plugin-react-compiler lint'], cwd=REPO,
         capture_output=True, text=True, timeout=300)
     assert r.returncode == 0, (
         f"CI step '' failed (returncode={r.returncode}):\n"
@@ -376,6 +376,15 @@ def test_ci_test_eslint_plugin_react_hooks_yarn():
         f"CI step '' failed (returncode={r.returncode}):\n"
         f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
 
+def test_ci_yarn_build_and_lint_ensure_clean_build_directory():
+    """pass_to_pass | CI job 'yarn build and lint' → step 'Ensure clean build directory'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'rm -rf build'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Ensure clean build directory' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
 def test_ci_yarn_build_and_lint_yarn():
     """pass_to_pass | CI job 'yarn build and lint' → step ''"""
     r = subprocess.run(
@@ -392,4 +401,13 @@ def test_ci_yarn_build_and_lint_lint_build():
         capture_output=True, text=True, timeout=300)
     assert r.returncode == 0, (
         f"CI step 'Lint build' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_yarn_build_and_lint_display_structure_of_build():
+    """pass_to_pass | CI job 'yarn build and lint' → step 'Display structure of build'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'ls -R build'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Display structure of build' failed (returncode={r.returncode}):\n"
         f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")

@@ -65,11 +65,7 @@ checks:
 - id: test_terminal_suspend_no_transform
   type: fail_to_pass
   origin: pr_diff
-  description: 'terminal_suspend must be a plain ZodDefault after the migration;
-    the .transform() wrapper (which is dead code since tui.ts already
-    handles the win32 override) is removed so the zod type is no longer
-    ZodEffects.
-    '
+  description: 'terminal_suspend must be a plain ZodDefault after the migration; the .transform() wrapper (which is dead code since tui.ts already handles the win32 override) is removed so the zod type is no longer ZodEffects. '
 - id: test_unknown_keybind_keys_do_not_throw
   type: fail_to_pass
   origin: pr_diff
@@ -78,6 +74,18 @@ checks:
     .strict() is dropped because KeybindOverride is already strict upstream.
 
     '
+- id: test_ci_e2e_run_app_e2e_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: e2e / Run app e2e tests'
+- id: test_ci_unit_run_unit_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: unit / Run unit tests'
+- id: test_ci_typecheck_run_typecheck
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: typecheck / Run typecheck'
 rubric:
 - id: avoid_try_catch
   weight: 1

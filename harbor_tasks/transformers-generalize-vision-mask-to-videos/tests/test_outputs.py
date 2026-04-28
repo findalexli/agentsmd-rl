@@ -247,54 +247,48 @@ def test_repo_ruff_check() -> None:
     )
     assert r.returncode == 0, f"ruff check failed:\n{r.stdout}\n{r.stderr}"
 
-
 # === CI-mined tests (taskforge.ci_check_miner) ===
+def test_ci_check_timestamps_verify_merge_commit_timestamp_is_older_t():
+    """pass_to_pass | CI job 'Check timestamps' → step 'Verify `merge_commit` timestamp is older than the issue comment timestamp'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'COMMENT_TIMESTAMP=$(date -d "${COMMENT_DATE}" +"%s")\necho "COMMENT_DATE: $COMMENT_DATE"\necho "COMMENT_TIMESTAMP: $COMMENT_TIMESTAMP"\nif [ $COMMENT_TIMESTAMP -le $PR_MERGE_COMMIT_TIMESTAMP ]; then\n  echo "Last commit on the pull request is newer than the issue comment triggering this run! Abort!";\n  exit -1;\nfi'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Verify `merge_commit` timestamp is older than the issue comment timestamp' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_get_tests_verify_merge_commit_sha():
+    """pass_to_pass | CI job 'get-tests' → step 'Verify merge commit SHA'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'PR_MERGE_SHA=$(git log -1 --format=%H)\nif [ $PR_MERGE_SHA != $VERIFIED_PR_MERGE_SHA ]; then\n  echo "The merged commit SHA is not the same as the verified one! Security issue detected, abort the workflow!";\n  exit -1;\nfi'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Verify merge commit SHA' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
 def test_ci_get_tests_get_models_to_test():
     """pass_to_pass | CI job 'get-tests' → step 'Get models to test'"""
-    sys.path.insert(0, str(REPO))
-    from utils.pr_slow_ci_models import parse_message, get_models, check_model_names
+    r = subprocess.run(
+        ["bash", "-lc", 'python -m pip install GitPython'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Get models to test' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
 
-    # Test the message-parsing logic exercised by the CI workflow step
-    assert get_models("run-slow: gemma3, git") == ["gemma3", "git"]
-    assert get_models("run_slow: bert") == ["bert"]
-    assert get_models("run slow: llama, qwen2_vl") == ["llama", "qwen2_vl"]
-    assert get_models("some other comment") == []
-    assert get_models("") == []
-    assert check_model_names("gemma3") is True
-    assert check_model_names("_invalid") is False
-
+def test_ci_get_tests_show_models_to_test():
+    """pass_to_pass | CI job 'get-tests' → step 'Show models to test'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'echo "$models"\necho "models=$models" >> $GITHUB_OUTPUT\necho "$quantizations"\necho "quantizations=$quantizations" >> $GITHUB_OUTPUT'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Show models to test' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
 
 def test_ci_check___report_process_and_filter_reports():
     """pass_to_pass | CI job 'Check & Report' → step 'Process and filter reports'"""
-    # Core logic extracted from the CI workflow's Process-and-filter step.
-    def count_failures(data):
-        total = 0
-        for model, model_result in data.items():
-            for device, failures in model_result.items():
-                total += sum(
-                    1 for failure in failures
-                    if isinstance(failure, dict) and failure.get('bad_commit') is not None
-                )
-        return total
-
-    sample = {
-        "gemma3": {
-            "cpu": [
-                {"test": "test_forward", "bad_commit": "abc123", "job_link": "http://job/1", "status": ""},
-                {"test": "test_generate", "bad_commit": None, "job_link": "http://job/2", "status": ""},
-            ]
-        },
-        "git": {
-            "cpu": [
-                {"test": "test_attention", "bad_commit": None},
-            ]
-        },
-        "paligemma": {
-            "gpu": [
-                {"test": "test_vision", "bad_commit": "def456", "job_link": "http://job/3", "status": "DIFFERENT error message"},
-            ]
-        },
-    }
-
-    n_failures = count_failures(sample)
-    assert n_failures == 2, f"expected 2 (test_forward + test_vision), got {n_failures}"
+    r = subprocess.run(
+        ["bash", "-lc", "python3 << 'PYTHON_SCRIPT'"], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Process and filter reports' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")

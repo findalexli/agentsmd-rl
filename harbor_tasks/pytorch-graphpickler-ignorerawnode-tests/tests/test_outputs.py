@@ -454,6 +454,15 @@ def test_ci_test__run_test_py__is_usable_w_run_run_test_py_nonretryable():
         f"CI step 'Run run_test.py (nonretryable)' failed (returncode={r.returncode}):\n"
         f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
 
+def test_ci_doc_redirects_check_doc_redirects_check_nonretryable():
+    """pass_to_pass | CI job 'doc-redirects-check' → step 'Doc redirects check (nonretryable)'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'set -euo pipefail\n\n# Run the check with auto-fix to generate suggestions\npython3 .github/scripts/check_doc_redirects.py \\\n  --base-ref "origin/${BASE_REF}" \\\n  --auto-fix\n\n# If redirects.py was modified, show the diff and fail\nif ! git diff --quiet docs/source/redirects.py 2>/dev/null; then\n  echo ""\n  echo "📋 The following redirects were auto-generated:"\n  echo ""\n  git diff docs/source/redirects.py\n  echo ""\n  echo "Please add these changes to your PR by running locally:"\n  echo ""\n  echo "    python3 .github/scripts/check_doc_redirects.py --base-ref origin/main --auto-fix"\n  echo "    git add docs/source/redirects.py"\n  echo "    git commit --amend --no-edit  # or create a new commit"\n  echo ""\n  exit 1\nfi'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Doc redirects check (nonretryable)' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
 # === PR-added f2p tests (taskforge.test_patch_miner) ===
 def test_pr_added_test_raw_node_in_meta_raises_by_default():
     """fail_to_pass | PR added test 'test_raw_node_in_meta_raises_by_default' in 'test/fx/test_graph_pickler.py' (pytest)"""

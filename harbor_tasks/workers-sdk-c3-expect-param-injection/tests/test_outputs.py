@@ -268,3 +268,67 @@ def test_type_only_vitest_import():
     assert expect_import is None, (
         "mocks.ts still imports 'expect' from vitest — should only import { vi }"
     )
+
+# === CI-mined tests (taskforge.ci_check_miner) ===
+def test_ci_local_explorer_ui_e2e_build_wrangler():
+    """pass_to_pass | CI job 'Local Explorer UI E2E' → step 'Build wrangler'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'pnpm turbo build --filter wrangler'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Build wrangler' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_local_explorer_ui_e2e_run_local_explorer_ui_e2e_tests():
+    """pass_to_pass | CI job 'Local Explorer UI E2E' → step 'Run Local Explorer UI E2E tests'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'pnpm test:e2e -F @cloudflare/local-explorer-ui --log-order=stream'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Run Local Explorer UI E2E tests' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_tests_bump_package_versions():
+    """pass_to_pass | CI job 'Tests' → step 'Bump package versions'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'node .github/changeset-version.js'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Bump package versions' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_tests_run_tests_tools_only():
+    """pass_to_pass | CI job 'Tests' → step 'Run tests (tools only)'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'pnpm run test:ci --log-order=stream --filter="@cloudflare/tools"'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Run tests (tools only)' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_wrangler_e2e_run_wrangler_e2e_tests():
+    """pass_to_pass | CI job 'Wrangler E2E' → step 'Run Wrangler E2E tests'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'pnpm run test:e2e:wrangler'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Run Wrangler E2E tests' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_wrangler_e2e_run_getplatformproxy_remote_bindings_e2e():
+    """pass_to_pass | CI job 'Wrangler E2E' → step 'Run getPlatformProxy() remote-bindings e2e tests'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'pnpm run test:e2e -F @fixture/get-platform-proxy-remote-bindings'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Run getPlatformProxy() remote-bindings e2e tests' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_vite_plugin_e2e_run_vite_plugin_e2e_tests():
+    """pass_to_pass | CI job 'Vite Plugin E2E' → step 'Run Vite plugin E2E tests'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'pnpm test:e2e -F @cloudflare/vite-plugin --log-order=stream'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Run Vite plugin E2E tests' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")

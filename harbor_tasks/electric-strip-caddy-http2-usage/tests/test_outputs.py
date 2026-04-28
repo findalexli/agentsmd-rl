@@ -370,3 +370,76 @@ def test_repo_lockfile_valid():
         capture_output=True, text=True, timeout=300, cwd=str(REPO),
     )
     assert r.returncode == 0, f"pnpm install failed:\n{r.stderr[-500:]}"
+
+# === CI-mined tests (taskforge.ci_check_miner) ===
+def test_ci_build_and_test_elixir_client_run_tests():
+    """pass_to_pass | CI job 'Build and test elixir-client' → step 'Run tests'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'mix coveralls.json'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Run tests' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_check_formatting_for_sync_serv_check_formatting():
+    """pass_to_pass | CI job 'Check formatting for sync-service' → step 'Check formatting'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'mix format --check-formatted'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Check formatting' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_run_lux_integration_tests_compile():
+    """pass_to_pass | CI job 'Run Lux integration tests' → step 'Compile'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'mix compile --force --all-warnings --warnings-as-errors'], cwd=os.path.join(REPO, 'packages/sync-service'),
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Compile' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_run_lux_integration_tests_run_integration_tests():
+    """pass_to_pass | CI job 'Run Lux integration tests' → step 'Run integration tests'"""
+    r = subprocess.run(
+        ["bash", "-lc", './run.sh'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Run integration tests' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_test_ts_packages_against_sync__pnpm():
+    """pass_to_pass | CI job 'Test TS packages against sync-service' → step ''"""
+    r = subprocess.run(
+        ["bash", "-lc", 'pnpm install --frozen-lockfile'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step '' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_test_ts_packages_against_sync__compile_sync_service():
+    """pass_to_pass | CI job 'Test TS packages against sync-service' → step 'Compile sync-service'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'mix compile'], cwd=os.path.join(REPO, 'packages/sync-service'),
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Compile sync-service' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_test_ts_packages_against_sync__build_dependencies_if_any():
+    """pass_to_pass | CI job 'Test TS packages against sync-service' → step 'build dependencies, if any'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'pnpm -r --filter "$(jq \'.name\' -r package.json)^..." build'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'build dependencies, if any' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_test_ts_packages_against_sync__pnpm_2():
+    """pass_to_pass | CI job 'Test TS packages against sync-service' → step ''"""
+    r = subprocess.run(
+        ["bash", "-lc", 'pnpm coverage'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step '' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")

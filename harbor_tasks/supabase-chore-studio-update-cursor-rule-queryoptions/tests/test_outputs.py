@@ -276,18 +276,10 @@ def test_repo_prettier():
 
 # === CI-mined tests (taskforge.ci_check_miner) ===
 def test_ci_test_run_tests():
-    """pass_to_pass | CI job 'test' step 'Run Tests'"""
-    # Install dependencies first (idempotent)
+    """pass_to_pass | CI job 'test' → step 'Run Tests'"""
     r = subprocess.run(
-        ["bash", "-c", "corepack enable && pnpm install --frozen-lockfile"],
-        capture_output=True, text=True, timeout=600, cwd=REPO,
-    )
-    assert r.returncode == 0, f"pnpm install failed:\n{r.stderr[-500:] if r.stderr else r.stdout[-500:]}"
-    # Run tests (mirrors Studio Unit Tests CI workflow)
-    r = subprocess.run(
-        ["bash", "-lc", "NODE_OPTIONS='--max_old_space_size=3072' pnpm run test:ci -- --testTimeout=30000"],
-        cwd=os.path.join(REPO, 'apps/studio'),
-        capture_output=True, text=True, timeout=600)
+        ["bash", "-lc", 'pnpm run test:ci'], cwd=os.path.join(REPO, './apps/studio'),
+        capture_output=True, text=True, timeout=300)
     assert r.returncode == 0, (
         f"CI step 'Run Tests' failed (returncode={r.returncode}):\n"
         f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")

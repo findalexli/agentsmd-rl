@@ -408,11 +408,18 @@ def test_changelog_documents_changes():
 # === CI-mined tests (taskforge.ci_check_miner) ===
 def test_ci_type_check_run_mypy_type_checking():
     """pass_to_pass | CI job 'type-check' → step 'Run MyPy Type Checking'"""
-    # CI workflow uses "mypy . --ignore-missing-imports || true" with
-    # continue-on-error: true — type warnings are informational, not blocking.
     r = subprocess.run(
-        ["bash", "-lc", 'mypy . --ignore-missing-imports || true'], cwd=REPO,
+        ["bash", "-lc", 'mypy . --ignore-missing-imports'], cwd=REPO,
         capture_output=True, text=True, timeout=300)
     assert r.returncode == 0, (
         f"CI step 'Run MyPy Type Checking' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_flutter_test_on_linux_run_flutter_tests():
+    """pass_to_pass | CI job 'Flutter Test on Linux' → step 'Run Flutter tests'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'very_good test --coverage'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Run Flutter tests' failed (returncode={r.returncode}):\n"
         f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")

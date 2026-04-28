@@ -308,3 +308,67 @@ def test_ci_gotest_bash_lc():
         f"go test ./dagql/idtui via bash -lc failed (returncode={r.returncode}):\n"
         f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}"
     )
+
+# === CI-mined tests (taskforge.ci_check_miner) ===
+def test_ci_test_sdk_provision___go___linu_test_go_sdk():
+    """pass_to_pass | CI job 'Test SDK Provision / go / linux / x86_64' → step 'Test Go SDK'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'go test -v -run TestProvision ./...'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Test Go SDK' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_test_sdk_provision___go___linu_test_go_sdk_module_load():
+    """pass_to_pass | CI job 'Test SDK Provision / go / linux / x86_64' → step 'Test Go SDK Module Load'"""
+    r = subprocess.run(
+        ["bash", "-lc", '# verify we can load a go module (the dagger-dev module has multiple go modules)\ncurl -sL $_INTERNAL_DAGGER_TEST_CLI_URL | tar -xz dagger\n./dagger call --help'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Test Go SDK Module Load' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_test_sdk_provision___macos_test_python_sdk():
+    """pass_to_pass | CI job 'Test SDK Provision / macos' → step 'Test Python SDK'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'uv run pytest -xm provision'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Test Python SDK' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_test_sdk_provision___macos_test_typescript_sdk_node():
+    """pass_to_pass | CI job 'Test SDK Provision / macos' → step 'Test TypeScript SDK (Node)'"""
+    r = subprocess.run(
+        ["bash", "-lc", "yarn install && yarn test:node -g 'Automatic Provisioned CLI Binary'"], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Test TypeScript SDK (Node)' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_test_sdk_provision___macos_test_typescript_sdk_bun():
+    """pass_to_pass | CI job 'Test SDK Provision / macos' → step 'Test TypeScript SDK (Bun)'"""
+    r = subprocess.run(
+        ["bash", "-lc", "yarn install && yarn test:bun -g 'Automatic Provisioned CLI Binary'"], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Test TypeScript SDK (Bun)' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_test_sdk_provision___typescrip_test_typescript_module_load():
+    """pass_to_pass | CI job 'Test SDK Provision / TypeScript / linux / x86_64' → step 'Test TypeScript Module Load'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'curl -sL $_INTERNAL_DAGGER_TEST_CLI_URL | tar -xz dagger\n./dagger core version\necho "FIXME: test loading a typescript module"'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Test TypeScript Module Load' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_test_sdk_provision___python____test_python_module_load():
+    """pass_to_pass | CI job 'Test SDK Provision / python / linux / x86_64' → step 'Test Python module Load'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'curl -sL $_INTERNAL_DAGGER_TEST_CLI_URL | tar -xz dagger\n./dagger core version\necho "FIXME: test loading a python module"'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Test Python module Load' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")

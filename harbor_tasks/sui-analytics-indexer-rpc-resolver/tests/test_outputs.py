@@ -293,3 +293,12 @@ def test_ci_lint__build__and_test_build():
     assert r.returncode == 0, (
         f"CI step 'Build' failed (returncode={r.returncode}):\n"
         f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_check_docs_run_afdocs_check():
+    """pass_to_pass | CI job 'check-docs' → step 'Run afdocs check'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'OUTPUT=$(npx --yes afdocs@0.6.0 check "$URL" --max-links 1000 2>&1) || true\necho "result<<EOF" >> $GITHUB_OUTPUT\necho "$OUTPUT" >> $GITHUB_OUTPUT\necho "EOF" >> $GITHUB_OUTPUT'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Run afdocs check' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")

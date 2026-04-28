@@ -340,27 +340,56 @@ def test_p2p_team_models_helpers():
     )
 
 # === CI-mined tests (taskforge.ci_check_miner) ===
-def test_ci_test_generate_prisma_client():
-    """pass_to_pass | CI job 'test' -> step 'Generate Prisma client'"""
+def test_ci_validate_model_prices_json_validate_model_prices_and_context_window():
+    """pass_to_pass | CI job 'validate-model-prices-json' → step 'Validate model_prices_and_context_window.json'"""
     r = subprocess.run(
-        ["bash", "-lc", "prisma generate --schema litellm/proxy/schema.prisma"],
-        cwd=REPO,
-        capture_output=True, text=True, timeout=900,
-    )
+        ["bash", "-lc", 'jq empty model_prices_and_context_window.json'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
     assert r.returncode == 0, (
-        f"CI step 'Generate Prisma client' failed (returncode={r.returncode}):\n"
+        f"CI step 'Validate model_prices_and_context_window.json' failed (returncode={r.returncode}):\n"
         f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
 
-
-def test_ci_test_run_tests_team_endpoints():
-    """pass_to_pass | CI job 'test' -> scoped test run for team_endpoints module"""
+def test_ci_build_ui_build():
+    """pass_to_pass | CI job 'build-ui' → step 'Build'"""
     r = subprocess.run(
-        ["bash", "-lc",
-         "python -m pytest tests/test_litellm/proxy/management_endpoints/test_team_endpoints.py"
-         " -q --no-header --tb=short"],
-        cwd=REPO,
-        capture_output=True, text=True, timeout=900,
-    )
+        ["bash", "-lc", 'npm run build'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
     assert r.returncode == 0, (
-        f"CI step 'Run team_endpoints tests' failed (returncode={r.returncode}):\n"
-        f"stdout: {r.stdout[-2000:]}\nstderr: {r.stderr[-1500:]}")
+        f"CI step 'Build' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_test_run_mcp_tests():
+    """pass_to_pass | CI job 'test' → step 'Run MCP tests'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'poetry run pytest tests/mcp_tests -x -vv -n 4 --cov=litellm --cov-report=xml --durations=5'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Run MCP tests' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_unit_test_install_helm_unit_test_plugin():
+    """pass_to_pass | CI job 'unit-test' → step 'Install Helm Unit Test Plugin'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'helm plugin install https://github.com/helm-unittest/helm-unittest --version v0.4.4'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Install Helm Unit Test Plugin' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_unit_test_verify_helm_unit_test_plugin_integrity():
+    """pass_to_pass | CI job 'unit-test' → step 'Verify Helm Unit Test Plugin integrity'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'EXPECTED_SHA="e251ba198448629678ff2168e1a469249d998155"\nPLUGIN_DIR="$(helm env HELM_PLUGINS)/helm-unittest"\nACTUAL_SHA="$(git -C "$PLUGIN_DIR" rev-parse HEAD)"\nif [ "$ACTUAL_SHA" != "$EXPECTED_SHA" ]; then\n  echo "::error::Helm unittest plugin checksum mismatch! Expected $EXPECTED_SHA but got $ACTUAL_SHA"\n  exit 1\nfi\necho "Helm unittest plugin integrity verified: $ACTUAL_SHA"'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Verify Helm Unit Test Plugin integrity' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_unit_test_run_unit_tests():
+    """pass_to_pass | CI job 'unit-test' → step 'Run unit tests'"""
+    r = subprocess.run(
+        ["bash", "-lc", "helm unittest -f 'tests/*.yaml' deploy/charts/litellm-helm"], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Run unit tests' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")

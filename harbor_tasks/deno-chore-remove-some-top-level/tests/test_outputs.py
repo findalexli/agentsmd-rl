@@ -377,3 +377,39 @@ def test_cargo_lock_updated():
     assert "tests/bench_util" in manifest_path, \
         f"deno_bench_util manifest_path not at tests/bench_util: {manifest_path}"
 
+# === CI-mined tests (taskforge.ci_check_miner) ===
+def test_ci_build_libs_cargo_check_deno_resolver():
+    """pass_to_pass | CI job 'build libs' → step 'Cargo check (deno_resolver)'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'cargo check --target wasm32-unknown-unknown -p deno_resolver && cargo check --target wasm32-unknown-unknown -p deno_resolver --features graph && cargo check --target wasm32-unknown-unknown -p deno_resolver --features graph --features deno_ast'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Cargo check (deno_resolver)' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_build_libs_cargo_check_deno_npm_installer():
+    """pass_to_pass | CI job 'build libs' → step 'Cargo check (deno_npm_installer)'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'cargo check --target wasm32-unknown-unknown -p deno_npm_installer'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Cargo check (deno_npm_installer)' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_build_libs_cargo_check_deno_config():
+    """pass_to_pass | CI job 'build libs' → step 'Cargo check (deno_config)'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'cargo check --no-default-features -p deno_config && cargo check --no-default-features --features workspace -p deno_config && cargo check --no-default-features --features package_json -p deno_config && cargo check --no-default-features --features workspace --features sync -p deno_config && cargo check --target wasm32-unknown-unknown --all-features -p deno_config && cargo check -p deno --features=lsp-tracing'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Cargo check (deno_config)' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_test_run_tests():
+    """pass_to_pass | CI job 'test' → step 'Run tests'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'deno -A tools/ecosystem_compat_tests.ts'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Run tests' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")

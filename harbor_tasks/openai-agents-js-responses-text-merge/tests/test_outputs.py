@@ -267,8 +267,7 @@ def test_typecheck_agents_openai():
     tail = (r.stdout or "")[-2000:] + "\n--- STDERR ---\n" + (r.stderr or "")[-1500:]
     assert r.returncode == 0, f"build-check failed:\n{tail}"
 
-
-# === CI-mined tests ===
+# === CI-mined tests (taskforge.ci_check_miner) ===
 def test_ci_build_run_build():
     """pass_to_pass | CI job 'build' → step 'Run build'"""
     r = subprocess.run(
@@ -277,7 +276,6 @@ def test_ci_build_run_build():
     assert r.returncode == 0, (
         f"CI step 'Run build' failed (returncode={r.returncode}):\n"
         f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
-
 
 def test_ci_test_run_linter():
     """pass_to_pass | CI job 'test' → step 'Run linter'"""
@@ -288,7 +286,6 @@ def test_ci_test_run_linter():
         f"CI step 'Run linter' failed (returncode={r.returncode}):\n"
         f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
 
-
 def test_ci_test_compile_examples():
     """pass_to_pass | CI job 'test' → step 'Compile examples'"""
     r = subprocess.run(
@@ -297,7 +294,6 @@ def test_ci_test_compile_examples():
     assert r.returncode == 0, (
         f"CI step 'Compile examples' failed (returncode={r.returncode}):\n"
         f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
-
 
 def test_ci_test_run_tests():
     """pass_to_pass | CI job 'test' → step 'Run tests'"""

@@ -333,3 +333,22 @@ print("PASS")
 """)
     assert r.returncode == 0, f"Failed:\n{r.stderr}\n{r.stdout}"
     assert "PASS" in r.stdout
+
+# === CI-mined tests (taskforge.ci_check_miner) ===
+def test_ci_multimodal_gen_test_1_npu_a3_run_test():
+    """pass_to_pass | CI job 'multimodal-gen-test-1-npu-a3' → step 'Run test'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'python3 sglang/multimodal_gen/test/run_suite.py --suite 1-npu'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Run test' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_multimodal_gen_test_8_npu_a3_run_test():
+    """pass_to_pass | CI job 'multimodal-gen-test-8-npu-a3' → step 'Run test'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'python3 sglang/multimodal_gen/test/run_suite.py --suite 8-npu'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Run test' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")

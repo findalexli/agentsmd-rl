@@ -624,3 +624,40 @@ def test_repo_vitest_run_cancel_functionality():
         capture_output=True, text=True, timeout=300, cwd=REPO,
     )
     assert r.returncode == 0, f"Cancel functionality tests failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
+
+# === CI-mined tests (taskforge.ci_check_miner) ===
+def test_ci_test_packages_test_packages_with_coverage():
+    """pass_to_pass | CI job 'Test Packages' → step 'Test packages with coverage'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'bun run --filter $package test:coverage'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Test packages with coverage' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_test_desktop_app_typecheck_desktop():
+    """pass_to_pass | CI job 'Test Desktop App' → step 'Typecheck Desktop'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'pnpm type-check'], cwd=os.path.join(REPO, 'apps/desktop'),
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Typecheck Desktop' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_test_desktop_app_test_desktop_client():
+    """pass_to_pass | CI job 'Test Desktop App' → step 'Test Desktop Client'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'pnpm test'], cwd=os.path.join(REPO, 'apps/desktop'),
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Test Desktop Client' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_code_quality_check_lint():
+    """pass_to_pass | CI job 'Code quality check' → step 'Lint'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'bun run lint'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Lint' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")

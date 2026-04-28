@@ -372,3 +372,31 @@ def test_pr_added_removes_reserved_keys_without_touching_other_val():
     assert test_name in r.stdout, (
         f"PR-added test '{test_name}' not found in vitest output.\n"
         f"stdout: {r.stdout[-2000:]}")
+
+# === PR-added f2p tests (taskforge.test_patch_miner) ===
+def test_pr_added_extractAllUserContent_preserves_extras_but_ignor():
+    """fail_to_pass | PR added test 'extractAllUserContent preserves extras but ignores reserved providerData fields' in 'packages/agents-openai/test/openaiChatCompletionsConverter.test.ts' (vitest_or_jest)"""
+    r = subprocess.run(
+        ["bash", "-lc", '(pnpm vitest run "packages/agents-openai/test/openaiChatCompletionsConverter.test.ts" -t "extractAllUserContent preserves extras but ignores reserved providerData fields" 2>&1 || npx vitest run "packages/agents-openai/test/openaiChatCompletionsConverter.test.ts" -t "extractAllUserContent preserves extras but ignores reserved providerData fields" 2>&1 || pnpm jest "packages/agents-openai/test/openaiChatCompletionsConverter.test.ts" -t "extractAllUserContent preserves extras but ignores reserved providerData fields" 2>&1 || npx jest "packages/agents-openai/test/openaiChatCompletionsConverter.test.ts" -t "extractAllUserContent preserves extras but ignores reserved providerData fields" 2>&1) | tail -50'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"PR-added test 'extractAllUserContent preserves extras but ignores reserved providerData fields' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_pr_added_preserves_extra_providerData_without_letting_it_():
+    """fail_to_pass | PR added test 'preserves extra providerData without letting it overwrite canonical envelopes' in 'packages/agents-openai/test/openaiChatCompletionsConverter.test.ts' (vitest_or_jest)"""
+    r = subprocess.run(
+        ["bash", "-lc", '(pnpm vitest run "packages/agents-openai/test/openaiChatCompletionsConverter.test.ts" -t "preserves extra providerData without letting it overwrite canonical envelopes" 2>&1 || npx vitest run "packages/agents-openai/test/openaiChatCompletionsConverter.test.ts" -t "preserves extra providerData without letting it overwrite canonical envelopes" 2>&1 || pnpm jest "packages/agents-openai/test/openaiChatCompletionsConverter.test.ts" -t "preserves extra providerData without letting it overwrite canonical envelopes" 2>&1 || npx jest "packages/agents-openai/test/openaiChatCompletionsConverter.test.ts" -t "preserves extra providerData without letting it overwrite canonical envelopes" 2>&1) | tail -50'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"PR-added test 'preserves extra providerData without letting it overwrite canonical envelopes' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_pr_added_removes_reserved_keys_without_touching_other_val():
+    """fail_to_pass | PR added test 'removes reserved keys without touching other values' in 'packages/agents-openai/test/utils/providerData.test.ts' (vitest_or_jest)"""
+    r = subprocess.run(
+        ["bash", "-lc", '(pnpm vitest run "packages/agents-openai/test/utils/providerData.test.ts" -t "removes reserved keys without touching other values" 2>&1 || npx vitest run "packages/agents-openai/test/utils/providerData.test.ts" -t "removes reserved keys without touching other values" 2>&1 || pnpm jest "packages/agents-openai/test/utils/providerData.test.ts" -t "removes reserved keys without touching other values" 2>&1 || npx jest "packages/agents-openai/test/utils/providerData.test.ts" -t "removes reserved keys without touching other values" 2>&1) | tail -50'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"PR-added test 'removes reserved keys without touching other values' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")

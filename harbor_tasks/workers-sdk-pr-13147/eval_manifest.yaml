@@ -22,144 +22,99 @@ checks:
 - id: test_start_from_triggering_comment_step
   type: fail_to_pass
   origin: pr_diff
-  description: The implementation workflow starts with a step to parse the triggering
-    comment
+  description: The implementation workflow starts with a step to parse the triggering comment
 - id: test_negative_examples_plural
   type: fail_to_pass
   origin: pr_diff
   description: The examples section heading uses plural form 'Negative examples'
+- id: test_ci_build_build
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: build / Build'
+- id: test_ci_build_upload_packages
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: build / Upload packages'
+- id: test_ci_cleanup_test_projects_cleanup_e2e_test_projects
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: Cleanup Test Projects / Cleanup E2E test projects'
 config_edits:
 - path: .opencode/agents/bonk.md
   tier: 1
-  gold_added: '- **Triggering comment is the task:** The comment that invoked you
-    (`/bonk` or `@ask-bonk`) is your primary instruction. Read it first, before reading
-    the PR description or any other context. Parse exactly what it asks for, then
-    gather only the context needed to execute that request. Do not fall back to a
-    generic PR review when a specific action was requested.
+  gold_added: '- **Triggering comment is the task:** The comment that invoked you (`/bonk` or `@ask-bonk`) is your primary instruction. Read it first, before reading the PR description or any other context. Parse exactly what it asks for, then gather only the context needed to execute that request. Do not fall back to a generic PR review when a specific action was requested.
 
-    - **No re-reviewing on fixup requests:** If you previously reviewed the PR and
-    the maintainer now asks you to fix something, do not review again. Act on the
-    specific request in the triggering comment.
+    - **No re-reviewing on fixup requests:** If you previously reviewed the PR and the maintainer now asks you to fix something, do not review again. Act on the specific request in the triggering comment.
 
     '
   gold_removed: ''
 - path: .opencode/agents/bonk.md
   tier: 1
-  gold_added: "1. **Start from the triggering comment.** Parse what it asks for. Identify\
-    \ the concrete action(s) requested \u2014 e.g., \"fix the formatting\", \"address\
-    \ the review comments\", \"add a changeset\". This is your task; everything else\
-    \ is context-gathering in service of this task.\n2. **Gather only the context\
-    \ you need** to execute the task identified in step 1:\n   - If the triggering\
-    \ comment references review feedback, read the existing review comments and inline\
-    \ comments (`gh api repos/cloudflare/workers-sdk/pulls/$PR_NUMBER/comments`).\n\
-    \   - If the request is self-contained (e.g., \"run the formatter\"), you may\
-    \ not need to read the full PR at all.\n   - On issues: read the body and relevant\
-    \ comments for reproduction details.\n"
-  gold_removed: '1. Read the full issue or PR first. On issues: read the body and
-    all comments. On PRs: read the description, all review comments, all inline file
-    comments (`gh api repos/cloudflare/workers-sdk/pulls/$PR_NUMBER/comments`), and
-    the triggering thread.
+  gold_added: "1. **Start from the triggering comment.** Parse what it asks for. Identify the concrete action(s) requested — e.g., \"fix the formatting\", \"address the review comments\", \"add a changeset\". This is your task; everything else is context-gathering in service of this task.\n2. **Gather only the context you need** to execute the task identified in step 1:\n   - If the triggering comment references review feedback, read the existing review comments and inline comments (`gh api repos/cloudflare/workers-sdk/pulls/$PR_NUMBER/comments`).\n   - If the request is self-contained (e.g., \"run the formatter\"), you may not need to read the full PR at all.\n   - On issues: read the body and relevant comments for reproduction details.\n"
+  gold_removed: '1. Read the full issue or PR first. On issues: read the body and all comments. On PRs: read the description, all review comments, all inline file comments (`gh api repos/cloudflare/workers-sdk/pulls/$PR_NUMBER/comments`), and the triggering thread.
 
     2. Read the full source files you will touch, not just the diff.
 
     '
 - path: .opencode/agents/bonk.md
   tier: 1
-  gold_added: '**Make the requested change directly.** Do not leave a review that
-    merely describes the fix unless the user explicitly asked for suggestions only.
-    Do not re-review the PR when the request is to fix something.
+  gold_added: '**Make the requested change directly.** Do not leave a review that merely describes the fix unless the user explicitly asked for suggestions only. Do not re-review the PR when the request is to fix something.
 
     '
-  gold_removed: 'Make the requested change directly. Do not leave a review that merely
-    describes the fix unless the user explicitly asked for suggestions only.
+  gold_removed: 'Make the requested change directly. Do not leave a review that merely describes the fix unless the user explicitly asked for suggestions only.
 
     '
 - path: .opencode/agents/bonk.md
   tier: 1
-  gold_added: "Negative examples:\n\n- Trigger: \"/bonk can you fix the formatting\
-    \ on this PR?\"\n  Incorrect behavior: posting a review that lists formatting\
-    \ problems without changing the files.\n\n- Trigger: \"/bonk fix the formatting\
-    \ in this PR and commit the result\" (after Bonk already reviewed the PR)\n  Incorrect\
-    \ behavior: ignoring the triggering comment, performing a second full review,\
-    \ approving the PR, and posting new review comments. The maintainer asked for\
-    \ a code change and a commit, not another review.\n  Correct behavior: read the\
-    \ triggering comment, run the formatter (`pnpm prettify` or `pnpm check`), commit\
-    \ the result, and push.\n\n- Trigger: \"/bonk address the review comments\" (on\
-    \ a PR Bonk previously reviewed)\n  Incorrect behavior: re-reviewing the PR and\
-    \ restating the same findings.\n  Correct behavior: read Bonk's own prior review\
-    \ comments, fix each one in code, commit, and push.\n"
-  gold_removed: "Negative example:\n\n- Trigger: \"/bonk can you fix the formatting\
-    \ on this PR?\"\n  Incorrect behavior: posting a review that lists formatting\
-    \ problems without changing the files.\n"
+  gold_added: "Negative examples:\n\n- Trigger: \"/bonk can you fix the formatting on this PR?\"\n  Incorrect behavior: posting a review that lists formatting problems without changing the files.\n\n- Trigger: \"/bonk fix the formatting in this PR and commit the result\" (after Bonk already reviewed the PR)\n  Incorrect behavior: ignoring the triggering comment, performing a second full review, approving the PR, and posting new review comments. The maintainer asked for a code change and a commit, not another review.\n  Correct behavior: read the triggering comment, run the formatter (`pnpm prettify` or `pnpm check`), commit the result, and push.\n\n- Trigger: \"/bonk address the review comments\" (on a PR Bonk previously reviewed)\n  Incorrect behavior: re-reviewing the PR and restating the same findings.\n  Correct behavior: read Bonk's own prior review comments, fix each one in code, commit, and push.\n"
+  gold_removed: "Negative example:\n\n- Trigger: \"/bonk can you fix the formatting on this PR?\"\n  Incorrect behavior: posting a review that lists formatting problems without changing the files.\n"
 rubric:
-- rule: When the user asks you to change something, change it directly, because the
-    maintainer asked you to do the work, not describe it. Do not stop at suggestions
-    unless they explicitly ask for suggestions or review-only feedback, or you are
-    blocked by ambiguity or permissions.
+- rule: When the user asks you to change something, change it directly, because the maintainer asked you to do the work, not describe it. Do not stop at suggestions unless they explicitly ask for suggestions or review-only feedback, or you are blocked by ambiguity or permissions.
   source:
     path: .opencode/agents/bonk.md
     lines: '21'
     commit: ad6799bd48742f0a589ed5867b269055015e4293
-  evidence: The new non-negotiable rule 'No re-reviewing on fixup requests' and the
-    amended step 9 both strengthen action bias by explicitly forbidding re-review
-    when a fix was requested.
+  evidence: The new non-negotiable rule 'No re-reviewing on fixup requests' and the amended step 9 both strengthen action bias by explicitly forbidding re-review when a fix was requested.
   category: architecture
   verification: llm_judge
-- rule: When invoked on a PR and asked to fix, address, update, format, clean up,
-    add, remove, refactor, or test something, update that PR branch directly. The
-    deliverable is pushed code, not a review comment.
+- rule: When invoked on a PR and asked to fix, address, update, format, clean up, add, remove, refactor, or test something, update that PR branch directly. The deliverable is pushed code, not a review comment.
   source:
     path: .opencode/agents/bonk.md
     lines: '23'
     commit: ad6799bd48742f0a589ed5867b269055015e4293
-  evidence: The new negative examples in the examples section reinforce PR bias by
-    showing that posting review comments instead of pushing code is incorrect behavior
-    for fixup requests.
+  evidence: The new negative examples in the examples section reinforce PR bias by showing that posting review comments instead of pushing code is incorrect behavior for fixup requests.
   category: architecture
   verification: llm_judge
-- rule: On short PR comments such as "take care of this" or "clean up the nits," use
-    the surrounding review thread and inline comments to determine the requested change
-    before deciding the request is ambiguous.
+- rule: On short PR comments such as "take care of this" or "clean up the nits," use the surrounding review thread and inline comments to determine the requested change before deciding the request is ambiguous.
   source:
     path: .opencode/agents/bonk.md
     lines: '25'
     commit: ad6799bd48742f0a589ed5867b269055015e4293
-  evidence: The new 'Triggering comment is the task' rule extends thread-context bias
-    by making the triggering comment the primary instruction across all request types,
-    not just short/ambiguous ones.
+  evidence: The new 'Triggering comment is the task' rule extends thread-context bias by making the triggering comment the primary instruction across all request types, not just short/ambiguous ones.
   category: architecture
   verification: llm_judge
-- rule: If the maintainer asks you to fix or address something, ship the change. If
-    they ask for suggestions only, leave suggestions only.
+- rule: If the maintainer asks you to fix or address something, ship the change. If they ask for suggestions only, leave suggestions only.
   source:
     path: .opencode/agents/bonk.md
     lines: '133'
     commit: ad6799bd48742f0a589ed5867b269055015e4293
-  evidence: The new non-negotiable rules and negative examples reinforce this final
-    reminder by preventing Bonk from falling back to review mode when a fix was requested.
+  evidence: The new non-negotiable rules and negative examples reinforce this final reminder by preventing Bonk from falling back to review mode when a fix was requested.
   category: architecture
   verification: llm_judge
 distractors:
-- rule: 'Read the full issue or PR first. On issues: read the body and all comments.
-    On PRs: read the description, all review comments, all inline file comments, and
-    the triggering thread.'
+- rule: 'Read the full issue or PR first. On issues: read the body and all comments. On PRs: read the description, all review comments, all inline file comments, and the triggering thread.'
   source:
     path: .opencode/agents/bonk.md
     lines: '66'
     commit: ad6799bd48742f0a589ed5867b269055015e4293
   collision_type: rule_conflict
-  why_distracting: The old implementation step 1 directs the agent to read everything
-    before acting, which conflicts with the new 'Start from the triggering comment'
-    approach that prioritizes the specific ask over comprehensive context-gathering.
+  why_distracting: The old implementation step 1 directs the agent to read everything before acting, which conflicts with the new 'Start from the triggering comment' approach that prioritizes the specific ask over comprehensive context-gathering.
   severity: high
-- rule: Use review mode only when the user asked for review or suggestions without
-    asking for code changes.
+- rule: Use review mode only when the user asked for review or suggestions without asking for code changes.
   source:
     path: .opencode/agents/bonk.md
     lines: '89'
     commit: ad6799bd48742f0a589ed5867b269055015e4293
   collision_type: scope_ambiguity
-  why_distracting: An agent might interpret a fixup request on a PR it previously
-    reviewed as a review request rather than an implementation request, especially
-    when the triggering comment uses ambiguous language.
+  why_distracting: An agent might interpret a fixup request on a PR it previously reviewed as a review request rather than an implementation request, especially when the triggering comment uses ambiguous language.
   severity: medium

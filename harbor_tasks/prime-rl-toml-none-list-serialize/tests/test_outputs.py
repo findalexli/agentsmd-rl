@@ -341,13 +341,10 @@ def test_repo_imports_check():
 
 # === CI-mined tests (taskforge.ci_check_miner) ===
 def test_ci_unit_tests_run_tests():
-    """pass_to_pass | Scoped CI-style: pytest imports and inspects config module"""
+    """pass_to_pass | CI job 'Unit tests' → step 'Run tests'"""
     r = subprocess.run(
-        ["bash", "-lc",
-         'cd /workspace/prime-rl && python3 -m pytest --pyargs prime_rl.utils.config --doctest-modules -v 2>&1;'
-         'R=$?; [ $R -eq 0 ] || [ $R -eq 5 ] || exit $R; echo "CI_PASS"'],
-        cwd=REPO, capture_output=True, text=True, timeout=120)
+        ["bash", "-lc", 'PYTEST_OUTPUT_DIR=/tmp/outputs uv run pytest tests/unit -m "not gpu"'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
     assert r.returncode == 0, (
-        f"CI test failed (returncode={r.returncode}):\n"
+        f"CI step 'Run tests' failed (returncode={r.returncode}):\n"
         f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
-    assert "CI_PASS" in r.stdout, "CI marker not found in output"

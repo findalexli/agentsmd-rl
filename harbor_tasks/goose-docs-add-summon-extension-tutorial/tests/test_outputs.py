@@ -247,15 +247,6 @@ print("PASS")
     assert "PASS" in r.stdout
 
 # === CI-mined tests (taskforge.ci_check_miner) ===
-def test_ci_build_and_test_rust_project_build_and_test():
-    """pass_to_pass | CI job 'Build and Test Rust Project' → step 'Build and Test'"""
-    r = subprocess.run(
-        ["bash", "-lc", 'cargo test -- --skip scenario_tests::scenarios::tests && cargo test --jobs 1 scenario_tests::scenarios::tests'], cwd=os.path.join(REPO, 'crates'),
-        capture_output=True, text=True, timeout=300)
-    assert r.returncode == 0, (
-        f"CI step 'Build and Test' failed (returncode={r.returncode}):\n"
-        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
-
 def test_ci_check_rust_code_format_run_cargo_fmt():
     """pass_to_pass | CI job 'Check Rust Code Format' → step 'Run cargo fmt'"""
     r = subprocess.run(
@@ -281,6 +272,15 @@ def test_ci_lint_rust_code_check_for_banned_tls_crates():
         capture_output=True, text=True, timeout=300)
     assert r.returncode == 0, (
         f"CI step 'Check for banned TLS crates' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_build_and_test_rust_project_build_and_test():
+    """pass_to_pass | CI job 'Build and Test Rust Project' → step 'Build and Test'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'cargo test -- --skip scenario_tests::scenarios::tests && cargo test --jobs 1 scenario_tests::scenarios::tests'], cwd=os.path.join(REPO, 'crates'),
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Build and Test' failed (returncode={r.returncode}):\n"
         f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
 
 def test_ci_check_openapi_schema_is_up_to__install_node_js_dependencies_for_openapi():

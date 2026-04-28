@@ -139,5 +139,47 @@ def test_repo_at_correct_base_commit():
     )
 
 # === CI-mined tests (taskforge.ci_check_miner) ===
-# Dropped: test_ci_build_project_run_script, test_ci_test_image_generate_image_snapshots
-# — require Node.js/yarn + network at test time; irrelevant for markdown_authoring task.
+def test_ci_test_image_generate_image_snapshots():
+    """pass_to_pass | CI job 'test image' → step 'generate image snapshots'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'node node_modules/puppeteer/install.mjs'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'generate image snapshots' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_build_compile():
+    """pass_to_pass | CI job 'build' → step 'compile'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'ut compile'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'compile' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_build_check_build_files():
+    """pass_to_pass | CI job 'build' → step 'check build files'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'ut test:dekko'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'check build files' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_check_if_workflow_run_is_trust_check_trust():
+    """pass_to_pass | CI job 'Check if workflow run is trusted' → step 'Check trust'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'if [[ "$REPO" == "ant-design/ant-design" && \\\n      "$EVENT" == "push" && \\\n      ( "$BRANCH" == "master" || \\\n        "$BRANCH" == "feature" || \\\n        "$BRANCH" == "next" ) ]]; then\n  echo "trusted=true" >> $GITHUB_OUTPUT\nelse\n  echo "trusted=false" >> $GITHUB_OUTPUT\nfi'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Check trust' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_build_project_run_script():
+    """pass_to_pass | CI job 'Build Project' → step 'Run Script'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'bash ./scripts/ci-mock-project-build.sh'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Run Script' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")

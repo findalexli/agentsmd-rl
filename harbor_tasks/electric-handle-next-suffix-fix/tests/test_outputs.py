@@ -479,3 +479,39 @@ class TestRepoIntegration:
 
         assert result.returncode == 0, "ESLint stylecheck failed"
 
+# === CI-mined tests (taskforge.ci_check_miner) ===
+def test_ci_derive_build_variables_from_th_determine_the_ref_to_check_out():
+    """pass_to_pass | CI job 'Derive build variables from the source code' → step 'Determine the ref to check out'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'if [ -n "$INPUT_RELEASE_TAG" ]; then\n  ref="refs/tags/$INPUT_RELEASE_TAG"\n  is_release=true\nelif [ -n "$EVENT_RELEASE_TAG" ]; then\n  ref="refs/tags/$EVENT_RELEASE_TAG"\n  is_release=true\nelse\n  ref="$COMMIT_SHA"\n  is_release=false\nfi\n\necho "git_ref=$ref" >> $GITHUB_OUTPUT\necho "is_release=$is_release" >> $GITHUB_OUTPUT'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Determine the ref to check out' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_derive_build_variables_from_th_determine_short_commit_sha_and_electric():
+    """pass_to_pass | CI job 'Derive build variables from the source code' → step 'Determine short_commit_sha and electric_version to use in the build step'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'echo "short_commit_sha=$(\n  git rev-parse --short HEAD\n)" >> $GITHUB_OUTPUT\n\necho "electric_version=$(\n  git describe --abbrev=7 --tags --always --first-parent --match \'@core/sync-service@*\' | sed -En \'s|^@core/sync-service@||p\'\n)" >> $GITHUB_OUTPUT'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Determine short_commit_sha and electric_version to use in the build step' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_run_lux_integration_tests_compile():
+    """pass_to_pass | CI job 'Run Lux integration tests' → step 'Compile'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'mix compile'], cwd=os.path.join(REPO, 'packages/sync-service'),
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Compile' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_run_lux_integration_tests_run_integration_tests():
+    """pass_to_pass | CI job 'Run Lux integration tests' → step 'Run integration tests'"""
+    r = subprocess.run(
+        ["bash", "-lc", './run.sh'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Run integration tests' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")

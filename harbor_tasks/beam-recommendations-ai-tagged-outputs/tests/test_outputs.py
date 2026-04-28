@@ -306,3 +306,48 @@ def test_ci_build_python_source_distributi_build_source():
         f"CI step 'Build source' failed (returncode={r.returncode}):\n"
         f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
 
+# === CI-mined tests (taskforge.ci_check_miner) ===
+def test_ci_typescript_unit_tests_npm():
+    """pass_to_pass | CI job 'TypeScript Unit Tests' → step ''"""
+    r = subprocess.run(
+        ["bash", "-lc", 'npm ci'], cwd=os.path.join(REPO, './sdks/typescript'),
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step '' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_typescript_unit_tests_npm_2():
+    """pass_to_pass | CI job 'TypeScript Unit Tests' → step ''"""
+    r = subprocess.run(
+        ["bash", "-lc", 'npm run build'], cwd=os.path.join(REPO, './sdks/typescript'),
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step '' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_typescript_unit_tests_npm_3():
+    """pass_to_pass | CI job 'TypeScript Unit Tests' → step ''"""
+    r = subprocess.run(
+        ["bash", "-lc", 'npm run prettier-check'], cwd=os.path.join(REPO, './sdks/typescript'),
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step '' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_typescript_unit_tests_npm_4():
+    """pass_to_pass | CI job 'TypeScript Unit Tests' → step ''"""
+    r = subprocess.run(
+        ["bash", "-lc", 'npm test'], cwd=os.path.join(REPO, './sdks/typescript'),
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step '' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_check_environment_variables_check_are_gcp_variables_set():
+    """pass_to_pass | CI job 'Check environment variables' → step 'Check are GCP variables set'"""
+    r = subprocess.run(
+        ["bash", "-lc", './scripts/ci/ci_check_are_gcp_variables_set.sh'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Check are GCP variables set' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")

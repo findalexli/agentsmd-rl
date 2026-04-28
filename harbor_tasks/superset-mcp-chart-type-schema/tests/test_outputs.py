@@ -638,3 +638,203 @@ def test_behavioral_all_seven_chart_types_registered():
     assert data is not None, f"Module load failed:\n{err}"
     assert data["adapter_count"] == 7, f"Expected 7 adapters, got {data['adapter_count']}"
     assert data["valid_count"] == 7, f"Expected 7 valid types, got {data['valid_count']}"
+
+# === PR-added f2p tests (taskforge.test_patch_miner) ===
+def test_pr_added_test_valid_chart_type_returns_schema():
+    """fail_to_pass | PR added test 'test_valid_chart_type_returns_schema' in 'tests/unit_tests/mcp_service/chart/tool/test_get_chart_type_schema.py' (pytest)"""
+    r = subprocess.run(
+        ["bash", "-lc", 'python3 -m pytest -x --no-header -p no:cacheprovider "tests/unit_tests/mcp_service/chart/tool/test_get_chart_type_schema.py::test_valid_chart_type_returns_schema" 2>&1 | tail -50'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"PR-added test 'test_valid_chart_type_returns_schema' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_pr_added_test_xy_schema_has_expected_fields():
+    """fail_to_pass | PR added test 'test_xy_schema_has_expected_fields' in 'tests/unit_tests/mcp_service/chart/tool/test_get_chart_type_schema.py' (pytest)"""
+    r = subprocess.run(
+        ["bash", "-lc", 'python3 -m pytest -x --no-header -p no:cacheprovider "tests/unit_tests/mcp_service/chart/tool/test_get_chart_type_schema.py::test_xy_schema_has_expected_fields" 2>&1 | tail -50'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"PR-added test 'test_xy_schema_has_expected_fields' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_pr_added_test_table_schema_has_columns():
+    """fail_to_pass | PR added test 'test_table_schema_has_columns' in 'tests/unit_tests/mcp_service/chart/tool/test_get_chart_type_schema.py' (pytest)"""
+    r = subprocess.run(
+        ["bash", "-lc", 'python3 -m pytest -x --no-header -p no:cacheprovider "tests/unit_tests/mcp_service/chart/tool/test_get_chart_type_schema.py::test_table_schema_has_columns" 2>&1 | tail -50'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"PR-added test 'test_table_schema_has_columns' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_pr_added_test_pie_schema_has_dimension_metric():
+    """fail_to_pass | PR added test 'test_pie_schema_has_dimension_metric' in 'tests/unit_tests/mcp_service/chart/tool/test_get_chart_type_schema.py' (pytest)"""
+    r = subprocess.run(
+        ["bash", "-lc", 'python3 -m pytest -x --no-header -p no:cacheprovider "tests/unit_tests/mcp_service/chart/tool/test_get_chart_type_schema.py::test_pie_schema_has_dimension_metric" 2>&1 | tail -50'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"PR-added test 'test_pie_schema_has_dimension_metric' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_pr_added_test_big_number_schema_has_metric():
+    """fail_to_pass | PR added test 'test_big_number_schema_has_metric' in 'tests/unit_tests/mcp_service/chart/tool/test_get_chart_type_schema.py' (pytest)"""
+    r = subprocess.run(
+        ["bash", "-lc", 'python3 -m pytest -x --no-header -p no:cacheprovider "tests/unit_tests/mcp_service/chart/tool/test_get_chart_type_schema.py::test_big_number_schema_has_metric" 2>&1 | tail -50'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"PR-added test 'test_big_number_schema_has_metric' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_pr_added_test_include_examples_false_omits_examples():
+    """fail_to_pass | PR added test 'test_include_examples_false_omits_examples' in 'tests/unit_tests/mcp_service/chart/tool/test_get_chart_type_schema.py' (pytest)"""
+    r = subprocess.run(
+        ["bash", "-lc", 'python3 -m pytest -x --no-header -p no:cacheprovider "tests/unit_tests/mcp_service/chart/tool/test_get_chart_type_schema.py::test_include_examples_false_omits_examples" 2>&1 | tail -50'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"PR-added test 'test_include_examples_false_omits_examples' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_pr_added_test_invalid_chart_type_returns_error():
+    """fail_to_pass | PR added test 'test_invalid_chart_type_returns_error' in 'tests/unit_tests/mcp_service/chart/tool/test_get_chart_type_schema.py' (pytest)"""
+    r = subprocess.run(
+        ["bash", "-lc", 'python3 -m pytest -x --no-header -p no:cacheprovider "tests/unit_tests/mcp_service/chart/tool/test_get_chart_type_schema.py::test_invalid_chart_type_returns_error" 2>&1 | tail -50'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"PR-added test 'test_invalid_chart_type_returns_error' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_pr_added_test_examples_match_chart_type():
+    """fail_to_pass | PR added test 'test_examples_match_chart_type' in 'tests/unit_tests/mcp_service/chart/tool/test_get_chart_type_schema.py' (pytest)"""
+    r = subprocess.run(
+        ["bash", "-lc", 'python3 -m pytest -x --no-header -p no:cacheprovider "tests/unit_tests/mcp_service/chart/tool/test_get_chart_type_schema.py::test_examples_match_chart_type" 2>&1 | tail -50'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"PR-added test 'test_examples_match_chart_type' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_pr_added_test_valid_chart_types_constant():
+    """fail_to_pass | PR added test 'test_valid_chart_types_constant' in 'tests/unit_tests/mcp_service/chart/tool/test_get_chart_type_schema.py' (pytest)"""
+    r = subprocess.run(
+        ["bash", "-lc", 'python3 -m pytest -x --no-header -p no:cacheprovider "tests/unit_tests/mcp_service/chart/tool/test_get_chart_type_schema.py::test_valid_chart_types_constant" 2>&1 | tail -50'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"PR-added test 'test_valid_chart_types_constant' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_pr_added_test_all_chart_types_have_examples():
+    """fail_to_pass | PR added test 'test_all_chart_types_have_examples' in 'tests/unit_tests/mcp_service/chart/tool/test_get_chart_type_schema.py' (pytest)"""
+    r = subprocess.run(
+        ["bash", "-lc", 'python3 -m pytest -x --no-header -p no:cacheprovider "tests/unit_tests/mcp_service/chart/tool/test_get_chart_type_schema.py::test_all_chart_types_have_examples" 2>&1 | tail -50'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"PR-added test 'test_all_chart_types_have_examples' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+# === CI-mined tests (taskforge.ci_check_miner) ===
+def test_ci_build_npm():
+    """pass_to_pass | CI job 'build' → step ''"""
+    r = subprocess.run(
+        ["bash", "-lc", 'npm ci'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step '' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_build_npm_2():
+    """pass_to_pass | CI job 'build' → step ''"""
+    r = subprocess.run(
+        ["bash", "-lc", 'npm run ci:release'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step '' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_test_mysql_python_integration_tests_mysql():
+    """pass_to_pass | CI job 'test-mysql' → step 'Python integration tests (MySQL)'"""
+    r = subprocess.run(
+        ["bash", "-lc", './scripts/python_tests.sh'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Python integration tests (MySQL)' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_test_mysql_generate_database_diagnostics_for_docs():
+    """pass_to_pass | CI job 'test-mysql' → step 'Generate database diagnostics for docs'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'python -c "'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Generate database diagnostics for docs' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_frontend_check_translations_lint():
+    """pass_to_pass | CI job 'frontend-check-translations' → step 'lint'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'npm run build-translation'], cwd=os.path.join(REPO, './superset-frontend'),
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'lint' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_test_postgres_hive_python_unit_tests_postgresql():
+    """pass_to_pass | CI job 'test-postgres-hive' → step 'Python unit tests (PostgreSQL)'"""
+    r = subprocess.run(
+        ["bash", "-lc", "pip install -e .[hive] && ./scripts/python_tests.sh -m 'chart_data_flow or sql_json_flow'"], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Python unit tests (PostgreSQL)' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_test_postgres_presto_python_unit_tests_postgresql():
+    """pass_to_pass | CI job 'test-postgres-presto' → step 'Python unit tests (PostgreSQL)'"""
+    r = subprocess.run(
+        ["bash", "-lc", "./scripts/python_tests.sh -m 'chart_data_flow or sql_json_flow'"], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Python unit tests (PostgreSQL)' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_test_load_examples_superset_init():
+    """pass_to_pass | CI job 'test-load-examples' → step 'superset init'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'pip install -e .'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'superset init' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_check_python_deps_run_uv():
+    """pass_to_pass | CI job 'check-python-deps' → step 'Run uv'"""
+    r = subprocess.run(
+        ["bash", "-lc", './scripts/uv-pip-compile.sh'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Run uv' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_check_python_deps_check_for_uncommitted_changes():
+    """pass_to_pass | CI job 'check-python-deps' → step 'Check for uncommitted changes'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'echo "Full diff (for logging/debugging):"\ngit diff\n\necho "Filtered diff (excluding comments and whitespace):"\nfiltered_diff=$(git diff -U0 | grep \'^[-+]\' | grep -vE \'^[-+]{3}\' | grep -vE \'^[-+][[:space:]]*#\' | grep -vE \'^[-+][[:space:]]*$\' || true)\necho "$filtered_diff"\n\nif [[ -n "$filtered_diff" ]]; then\n  echo\n  echo "ERROR: The pinned dependencies are not up-to-date."\n  echo "Please run \'./scripts/uv-pip-compile.sh\' and commit the changes."\n  echo "More info: https://github.com/apache/superset/tree/master/requirements"\n  exit 1\nelse\n  echo "Pinned dependencies are up-to-date."\nfi'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Check for uncommitted changes' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_unit_tests_python_unit_tests():
+    """pass_to_pass | CI job 'unit-tests' → step 'Python unit tests'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'pytest --durations-min=0.5 --cov-report= --cov=superset ./tests/common ./tests/unit_tests --cache-clear --maxfail=50'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Python unit tests' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_unit_tests_python_100_coverage_unit_tests():
+    """pass_to_pass | CI job 'unit-tests' → step 'Python 100% coverage unit tests'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'pytest --durations-min=0.5 --cov=superset/sql/ ./tests/unit_tests/sql/ --cache-clear --cov-fail-under=100'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Python 100% coverage unit tests' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")

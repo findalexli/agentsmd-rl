@@ -550,98 +550,48 @@ print("OK")
 """], capture_output=True, text=True, timeout=30)
         assert r.returncode == 0, f"AST structure check failed for {rel_path}: {r.stderr}"
 
-
 # === CI-mined tests (taskforge.ci_check_miner) ===
-
-# [repo_tests] pass_to_pass
 def test_ci_build_build_the_book():
-    """pass_to_pass | CI job 'build' → validate lockfile integrity"""
+    """pass_to_pass | CI job 'build' → step 'Build the book'"""
     r = subprocess.run(
-        ["bash", "-lc", "uv lock --check"], cwd=REPO,
-        capture_output=True, text=True, timeout=120)
+        ["bash", "-lc", './build_all.sh'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
     assert r.returncode == 0, (
         f"CI step 'Build the book' failed (returncode={r.returncode}):\n"
         f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
 
-
-# [repo_tests] pass_to_pass
-def test_ci_install_test_set_up_python():
-    """pass_to_pass | CI job 'Install test' → step 'Set up Python'"""
-    r = subprocess.run(
-        ["bash", "-lc", "python3 --version && python3 -c 'import sys; assert sys.version_info >= (3, 12), f\"Need 3.12+, got {sys.version}\"'"],
-        capture_output=True, text=True, timeout=30)
-    assert r.returncode == 0, (
-        f"CI step 'Set up Python' failed (returncode={r.returncode}):\n"
-        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
-
-
-# [repo_tests] pass_to_pass
 def test_ci_install_test_verify_package_import():
     """pass_to_pass | CI job 'Install test' → step 'Verify package import'"""
     r = subprocess.run(
-        ["bash", "-lc", "uv lock --check && uv pip install -e . --no-deps --system && python3 -c 'import ast, sys; sys.path.insert(0, \".\"); ast.parse(open(\"areal/__init__.py\").read()); print(\"areal package structure OK\")'"],
-        cwd=REPO,
-        capture_output=True, text=True, timeout=120)
+        ["bash", "-lc", 'uv run python -c "import areal; print(f\'areal version: {areal.__version__}\')"'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
     assert r.returncode == 0, (
         f"CI step 'Verify package import' failed (returncode={r.returncode}):\n"
         f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
 
-
-# [repo_tests] pass_to_pass
 def test_ci_install_test_verify_core_modules_are_importable():
-    """pass_to_pass | CI job 'Install test' → step 'Verify core modules are importable'
-
-    Verifies that the five modified source files are syntactically valid
-    and importable as individual modules via py_compile.
-    """
-    files = [
-        "areal/infra/platforms/platform.py",
-        "areal/infra/platforms/cuda.py",
-        "areal/engine/fsdp_engine.py",
-        "areal/engine/megatron_engine.py",
-        "areal/experimental/engine/archon_engine.py",
-    ]
-    paths = " ".join(f"\"{f}\"" for f in files)
+    """pass_to_pass | CI job 'Install test' → step 'Verify core modules are importable'"""
     r = subprocess.run(
-        ["bash", "-lc", f"python3 -c \"\nimport py_compile, sys\nfiles = [{', '.join(repr(f) for f in files)}]\nfor f in files:\n    py_compile.compile(f, doraise=True)\n    print(f'OK: {{f}}')\nprint('All core modules are importable')\n\""],
-        cwd=REPO,
-        capture_output=True, text=True, timeout=60)
+        ["bash", "-lc", 'uv run python -c "'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
     assert r.returncode == 0, (
         f"CI step 'Verify core modules are importable' failed (returncode={r.returncode}):\n"
         f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
 
-
-# [repo_tests] pass_to_pass
 def test_ci_install_test_build_wheel():
     """pass_to_pass | CI job 'Install test' → step 'Build wheel'"""
     r = subprocess.run(
-        ["bash", "-lc", "uv build --wheel"], cwd=REPO,
+        ["bash", "-lc", 'uv build --wheel'], cwd=REPO,
         capture_output=True, text=True, timeout=300)
     assert r.returncode == 0, (
         f"CI step 'Build wheel' failed (returncode={r.returncode}):\n"
         f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
 
-
-# [repo_tests] pass_to_pass
 def test_ci_install_test_verify_wheel_artifact():
     """pass_to_pass | CI job 'Install test' → step 'Verify wheel artifact'"""
     r = subprocess.run(
-        ["bash", "-lc", """python3 -c "
-import zipfile, glob, sys
-wheels = sorted(glob.glob('dist/*.whl'))
-assert wheels, 'No wheel found in dist/'
-zf = zipfile.ZipFile(wheels[-1])
-bad = zf.testzip()
-assert bad is None, f'Corrupt member: {bad}'
-names = zf.namelist()
-print(f'Wheel OK: {len(names)} members in {wheels[-1]}')
-for n in names[:20]:
-    print(f'  {n}')
-if len(names) > 20:
-    print(f'  ... and {len(names) - 20} more')
-"
-"""], cwd=REPO,
-        capture_output=True, text=True, timeout=60)
+        ["bash", "-lc", 'python -m zipfile -l dist/*.whl | head -20'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
     assert r.returncode == 0, (
         f"CI step 'Verify wheel artifact' failed (returncode={r.returncode}):\n"
         f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")

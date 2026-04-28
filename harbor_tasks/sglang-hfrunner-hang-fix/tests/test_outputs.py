@@ -391,3 +391,13 @@ def test_repo_yamllint():
         assert False, f"yamllint found errors:\n{r.stdout}\n{r.stderr}"
     # If only warnings, consider it a pass
     assert r.returncode == 0 or (r.returncode == 0 or "warning" in r.stdout.lower()), f"yamllint failed:\n{r.stdout}\n{r.stderr}"
+
+# === CI-mined tests (taskforge.ci_check_miner) ===
+def test_ci_stage_a_test_1_gpu_small_amd_start_ci_container():
+    """pass_to_pass | CI job 'stage-a-test-1-gpu-small-amd' → step 'Start CI container'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'bash scripts/ci/amd/amd_ci_start_container.sh'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Start CI container' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")

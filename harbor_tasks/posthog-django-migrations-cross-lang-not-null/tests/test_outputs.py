@@ -192,3 +192,76 @@ def test_skill_clickhouse_pointer_intact() -> None:
     assert "clickhouse-migrations" in text, (
         "SKILL.md must keep the existing pointer to the `clickhouse-migrations` skill."
     )
+
+# === CI-mined tests (taskforge.ci_check_miner) ===
+def test_ci_build_storybook_build_storybook():
+    """pass_to_pass | CI job 'Build Storybook' → step 'Build Storybook'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'pnpm --filter=@posthog/storybook build --test'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Build Storybook' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_hog_tests_check_if_antlr_definitions_are_up_to_dat():
+    """pass_to_pass | CI job 'Hog tests' → step 'Check if ANTLR definitions are up to date'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'antlr | grep "Version" && npm run grammar:build'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Check if ANTLR definitions are up to date' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_hog_tests_check_if_stl_bytecode_is_up_to_date():
+    """pass_to_pass | CI job 'Hog tests' → step 'Check if STL bytecode is up to date'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'python -m common.hogvm.stl.compile'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Check if STL bytecode is up to date' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_hog_tests_run_hogvm_python_tests():
+    """pass_to_pass | CI job 'Hog tests' → step 'Run HogVM Python tests'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'pytest common/hogvm'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Run HogVM Python tests' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_hog_tests_run_hogvm_typescript_tests():
+    """pass_to_pass | CI job 'Hog tests' → step 'Run HogVM TypeScript tests'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'pnpm --filter=@posthog/hogvm install --frozen-lockfile && pnpm --filter=@posthog/hogvm test'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Run HogVM TypeScript tests' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_hog_tests_run_hog_tests():
+    """pass_to_pass | CI job 'Hog tests' → step 'Run Hog tests'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'pnpm --filter=@posthog/hogvm install --frozen-lockfile && pnpm --filter=@posthog/hogvm compile:stl && ./test.sh'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Run Hog tests' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_build___test_type_check():
+    """pass_to_pass | CI job 'Build & Test' → step 'Type check'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'pnpm typecheck'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Type check' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_build___test_run_tests():
+    """pass_to_pass | CI job 'Build & Test' → step 'Run tests'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'pnpm test'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Run tests' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")

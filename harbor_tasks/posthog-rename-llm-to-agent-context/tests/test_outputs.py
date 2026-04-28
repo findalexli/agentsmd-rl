@@ -167,3 +167,112 @@ def test_files_track_in_git_repo():
     assert expected.issubset(tracked), (
         f"expected all three files tracked in git; got: {tracked}"
     )
+
+# === CI-mined tests (taskforge.ci_check_miner) ===
+def test_ci_dagster_tests_run_migrations():
+    """pass_to_pass | CI job 'Dagster tests' → step 'Run migrations'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'python manage.py migrate'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Run migrations' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_dagster_tests_run_clickhouse_migrations():
+    """pass_to_pass | CI job 'Dagster tests' → step 'Run clickhouse migrations'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'python manage.py migrate_clickhouse'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Run clickhouse migrations' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_dagster_tests_run_dagster_tests():
+    """pass_to_pass | CI job 'Dagster tests' → step 'Run Dagster tests'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'pytest posthog/dags --junitxml=junit-dagster.xml'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Run Dagster tests' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_dagster_tests_run_products_dagster_tests():
+    """pass_to_pass | CI job 'Dagster tests' → step 'Run products Dagster tests'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'pytest products/**/dags --junitxml=junit-products.xml'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Run products Dagster tests' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_build___test_type_check():
+    """pass_to_pass | CI job 'Build & Test' → step 'Type check'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'pnpm typecheck'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Type check' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_build___test_run_tests():
+    """pass_to_pass | CI job 'Build & Test' → step 'Run tests'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'pnpm test'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Run tests' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_integration_tests_run_migrations():
+    """pass_to_pass | CI job 'Integration Tests' → step 'Run migrations'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'python manage.py migrate --noinput && python manage.py migrate_clickhouse'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Run migrations' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_integration_tests_seed_test_data():
+    """pass_to_pass | CI job 'Integration Tests' → step 'Seed test data'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'python manage.py generate_demo_data --n-clusters 10 --days-past 7 --days-future 0 --skip-materialization --skip-flag-sync --skip-user-product-list'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Seed test data' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_integration_tests_create_api_key_and_extract_test_ids():
+    """pass_to_pass | CI job 'Integration Tests' → step 'Create API key and extract test IDs'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'python -c "'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Create API key and extract test IDs' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_integration_tests_run_integration_tests():
+    """pass_to_pass | CI job 'Integration Tests' → step 'Run integration tests'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'pnpm run test:integration'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Run integration tests' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_build_package_build_package():
+    """pass_to_pass | CI job 'Build Package' → step 'Build package'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'pnpm build'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Build package' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_build_package_check_mcp_schema_is_up_to_date():
+    """pass_to_pass | CI job 'Build Package' → step 'Check MCP schema is up to date'"""
+    r = subprocess.run(
+        ["bash", "-lc", './bin/hogli build:schema-mcp\nif ! git diff --exit-code services/mcp/schema/tool-inputs.json; then\n  echo ""\n  echo "::error::MCP tool-inputs.json is out of date. Run \'hogli build:schema-mcp\' and commit the result."\n  exit 1\nfi'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Check MCP schema is up to date' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")

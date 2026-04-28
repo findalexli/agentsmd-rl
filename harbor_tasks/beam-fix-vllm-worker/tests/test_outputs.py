@@ -373,6 +373,74 @@ def test_readme_documents_gpu_memory_constraints():
         "README must document that conservative default values are provided for small GPUs"
 
 # === CI-mined tests (taskforge.ci_check_miner) ===
-# Go and TypeScript CI tests dropped: they require toolchains (Go, Node.js)
-# not available in this image and test unrelated monorepo sections.
-# This PR only touches Python files under sdks/python/.
+def test_ci_typescript_unit_tests_npm():
+    """pass_to_pass | CI job 'TypeScript Unit Tests' → step ''"""
+    r = subprocess.run(
+        ["bash", "-lc", 'npm ci'], cwd=os.path.join(REPO, './sdks/typescript'),
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step '' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_typescript_unit_tests_npm_2():
+    """pass_to_pass | CI job 'TypeScript Unit Tests' → step ''"""
+    r = subprocess.run(
+        ["bash", "-lc", 'npm run build'], cwd=os.path.join(REPO, './sdks/typescript'),
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step '' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_typescript_unit_tests_npm_3():
+    """pass_to_pass | CI job 'TypeScript Unit Tests' → step ''"""
+    r = subprocess.run(
+        ["bash", "-lc", 'npm run prettier-check'], cwd=os.path.join(REPO, './sdks/typescript'),
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step '' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_typescript_unit_tests_npm_4():
+    """pass_to_pass | CI job 'TypeScript Unit Tests' → step ''"""
+    r = subprocess.run(
+        ["bash", "-lc", 'npm test'], cwd=os.path.join(REPO, './sdks/typescript'),
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step '' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_go_build_delete_old_coverage():
+    """pass_to_pass | CI job 'Go Build' → step 'Delete old coverage'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'cd sdks && rm -rf .coverage.txt || :'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Delete old coverage' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_go_build_run_coverage():
+    """pass_to_pass | CI job 'Go Build' → step 'Run coverage'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'go test -timeout=25m -coverprofile=coverage.txt -covermode=atomic ./go/pkg/... ./go/container/... ./java/container/... ./python/container/... ./typescript/container/...'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Run coverage' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_go_build_run_fmt():
+    """pass_to_pass | CI job 'Go Build' → step 'Run fmt'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'go fmt ./...'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Run fmt' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_go_build_run_vet():
+    """pass_to_pass | CI job 'Go Build' → step 'Run vet'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'go vet --copylocks=false --unsafeptr=false ./...'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Run vet' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")

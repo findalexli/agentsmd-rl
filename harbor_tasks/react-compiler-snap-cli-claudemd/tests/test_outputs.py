@@ -350,10 +350,46 @@ console.log('PASS');
     assert "PASS" in r.stdout
 
 # === CI-mined tests (taskforge.ci_check_miner) ===
+def test_ci_test_playground_yarn():
+    """pass_to_pass | CI job 'Test playground' → step ''"""
+    r = subprocess.run(
+        ["bash", "-lc", 'yarn install --frozen-lockfile'], cwd=os.path.join(REPO, 'compiler'),
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step '' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_test_playground_check_playwright_version():
+    """pass_to_pass | CI job 'Test playground' → step 'Check Playwright version'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'echo "playwright_version=$(npm ls @playwright/test | grep @playwright | sed \'s/.*@//\' | head -1)" >> "$GITHUB_OUTPUT"'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Check Playwright version' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
 def test_ci_test_playground_npx():
     """pass_to_pass | CI job 'Test playground' → step ''"""
     r = subprocess.run(
         ["bash", "-lc", 'npx playwright install --with-deps chromium'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step '' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_check_flags_ensure_clean_build_directory():
+    """pass_to_pass | CI job 'Check flags' → step 'Ensure clean build directory'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'rm -rf build'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Ensure clean build directory' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_check_flags_yarn():
+    """pass_to_pass | CI job 'Check flags' → step ''"""
+    r = subprocess.run(
+        ["bash", "-lc", 'yarn flags'], cwd=REPO,
         capture_output=True, text=True, timeout=300)
     assert r.returncode == 0, (
         f"CI step '' failed (returncode={r.returncode}):\n"
@@ -368,3 +404,11 @@ def test_ci_test_eslint_plugin_react_hooks_scripts_react_compiler_build_compiler
         f"CI step '' failed (returncode={r.returncode}):\n"
         f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
 
+def test_ci_test_eslint_plugin_react_hooks_yarn():
+    """pass_to_pass | CI job 'Test eslint-plugin-react-hooks' → step ''"""
+    r = subprocess.run(
+        ["bash", "-lc", 'yarn workspace eslint-plugin-react-hooks test'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step '' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")

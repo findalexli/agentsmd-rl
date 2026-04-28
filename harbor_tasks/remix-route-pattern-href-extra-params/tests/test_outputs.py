@@ -132,9 +132,9 @@ def test_package_typecheck_passes():
 
 # === CI-mined tests (taskforge.ci_check_miner) ===
 def test_ci_format_format():
-    """pass_to_pass | CI job 'format' → step 'Format' (check-only, no write)"""
+    """pass_to_pass | CI job 'format' → step 'Format'"""
     r = subprocess.run(
-        ["bash", "-lc", 'pnpm format:check'], cwd=REPO,
+        ["bash", "-lc", 'pnpm format'], cwd=REPO,
         capture_output=True, text=True, timeout=300)
     assert r.returncode == 0, (
         f"CI step 'Format' failed (returncode={r.returncode}):\n"
@@ -168,18 +168,18 @@ def test_ci_check_check_change_files():
         f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
 
 def test_ci_test_run_tests():
-    """pass_to_pass | CI job 'test' → step 'Run tests' (scoped to route-pattern)"""
+    """pass_to_pass | CI job 'test' → step 'Run tests'"""
     r = subprocess.run(
-        ["bash", "-lc", 'pnpm -F @remix-run/route-pattern test'], cwd=REPO,
+        ["bash", "-lc", 'pnpm test'], cwd=REPO,
         capture_output=True, text=True, timeout=300)
     assert r.returncode == 0, (
         f"CI step 'Run tests' failed (returncode={r.returncode}):\n"
         f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
 
 def test_ci_build_build_packages():
-    """pass_to_pass | CI job 'build' → step 'Build packages' (scoped to route-pattern)"""
+    """pass_to_pass | CI job 'build' → step 'Build packages'"""
     r = subprocess.run(
-        ["bash", "-lc", 'pnpm -F @remix-run/route-pattern build'], cwd=REPO,
+        ["bash", "-lc", 'pnpm build'], cwd=REPO,
         capture_output=True, text=True, timeout=300)
     assert r.returncode == 0, (
         f"CI step 'Build packages' failed (returncode={r.returncode}):\n"

@@ -432,3 +432,67 @@ console.log('PR-added test verified: shows empty state when no rows provided')
     assert r.returncode == 0, (
         f"PR-added test 'shows empty state when no rows provided' not found:\n"
         f"{r.stderr}\n{r.stdout}")
+
+# === CI-mined tests (taskforge.ci_check_miner) ===
+def test_ci_e2e_tests_reset_supabase():
+    """pass_to_pass | CI job 'E2E tests' → step 'Reset supabase'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'pnpm exec supabase init'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Reset supabase' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_e2e_tests_build_studio():
+    """pass_to_pass | CI job 'E2E tests' → step 'Build studio'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'SKIP_ASSET_UPLOAD=1 NODE_ENV=test NODE_OPTIONS="--max-old-space-size=4096" pnpm run build:studio'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Build studio' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_e2e_tests_fail_job_if_tests_failed():
+    """pass_to_pass | CI job 'E2E tests' → step 'Fail job if tests failed'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'echo "E2E tests failed" >&2\nexit 1'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Fail job if tests failed' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_e2e_results_all_tests_ok():
+    """pass_to_pass | CI job 'E2E results' → step 'All tests ok'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'exit 0'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'All tests ok' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_e2e_results_some_tests_failed():
+    """pass_to_pass | CI job 'E2E results' → step 'Some tests failed'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'exit 1'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Some tests failed' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_e2e_reports_merge_playwright_reports():
+    """pass_to_pass | CI job 'E2E reports' → step 'Merge Playwright reports'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'npx playwright merge-reports --config=e2e/studio/playwright.merge.config.ts -- e2e/studio/blob-report'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Merge Playwright reports' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_test_run_tests():
+    """pass_to_pass | CI job 'test' → step 'Run Tests'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'pnpm run test:ci'], cwd=os.path.join(REPO, './apps/studio'),
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Run Tests' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")

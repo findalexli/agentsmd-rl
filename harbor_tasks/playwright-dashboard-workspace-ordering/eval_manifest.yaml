@@ -8,13 +8,11 @@ checks:
 - id: grid_workspace_ordering
   type: fail_to_pass
   origin: pr_diff
-  description: Grid sorts current workspace first, defaulting to 'Global' when workspaceDir
-    is undefined
+  description: Grid sorts current workspace first, defaulting to 'Global' when workspaceDir is undefined
 - id: dashboard_api_sends_client_info
   type: fail_to_pass
   origin: pr_diff
-  description: dashboardApp.ts imports createClientInfo and includes clientInfo in
-    /api/sessions/list response
+  description: dashboardApp.ts imports createClientInfo and includes clientInfo in /api/sessions/list response
 - id: deps_declares_cli_client_import
   type: fail_to_pass
   origin: agent_config
@@ -30,8 +28,7 @@ checks:
 - id: test_repo_build
   type: pass_to_pass
   origin: repo_tests
-  description: Repo's npm run build passes - TypeScript compilation and vite dashboard
-    build work
+  description: Repo's npm run build passes - TypeScript compilation and vite dashboard build work
 - id: test_repo_lint_packages
   type: pass_to_pass
   origin: repo_tests
@@ -68,9 +65,28 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: 'CI: docs & lint / '
+- id: test_ci_lint_snippets_pip
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: Lint snippets / '
+- id: test_ci_lint_snippets_mvn
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: Lint snippets / '
+- id: test_ci_lint_snippets_node
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: Lint snippets / '
+- id: test_ci_docs___lint_verify_clean_tree
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: docs & lint / Verify clean tree'
+- id: test_ci_docs___lint_audit_prod_npm_dependencies
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: docs & lint / Audit prod NPM dependencies'
 rubric:
-- rule: When adding imports that cross internal package boundaries, the relevant DEPS.list
-    file must be updated to declare the allowed import path
+- rule: When adding imports that cross internal package boundaries, the relevant DEPS.list file must be updated to declare the allowed import path
   source:
     path: CLAUDE.md
     lines: 90-96
@@ -79,30 +95,20 @@ rubric:
   source:
     path: CLAUDE.md
     lines: 68-70
-  evidence: The gold solution updates `packages/playwright-core/src/tools/dashboard/DEPS.list`
-    to include `../cli-client/registry.ts` before importing `createClientInfo` from
-    it in `dashboardApp.ts`.
+  evidence: The gold solution updates `packages/playwright-core/src/tools/dashboard/DEPS.list` to include `../cli-client/registry.ts` before importing `createClientInfo` from it in `dashboardApp.ts`.
   category: architecture
-- rule: Import boundaries are enforced via `DEPS.list` files (52+ across the repo),
-    checked by `npm run flint`.
+- rule: Import boundaries are enforced via `DEPS.list` files (52+ across the repo), checked by `npm run flint`.
   source:
     path: CLAUDE.md
     lines: 73-75
-  evidence: The gold solution adds `../cli-client/registry.ts` to `packages/playwright-core/src/tools/dashboard/DEPS.list`
-    to satisfy the import boundary check for the new `createClientInfo` import in
-    `dashboardA
+  evidence: The gold solution adds `../cli-client/registry.ts` to `packages/playwright-core/src/tools/dashboard/DEPS.list` to satisfy the import boundary check for the new `createClientInfo` import in `dashboardA
   category: architecture
 distractors:
 - rule: Test Directories and Fixtures for MCP tools
   collision_type: scope_ambiguity
-  why_distracting: The instructions detail specific test directories and commands
-    for MCP tools (`tests/mcp/`), which might lead the agent to write tests for this
-    UI/API change, but the gold solution only implements the fix without adding new
-    tests.
+  why_distracting: The instructions detail specific test directories and commands for MCP tools (`tests/mcp/`), which might lead the agent to write tests for this UI/API change, but the gold solution only implements the fix without adding new tests.
   severity: medium
   source:
     path: CLAUDE.md
     lines: 60-75
-hierarchy_analysis: The configuration is a flat single file (`CLAUDE.md`) that provides
-  essential architectural constraints, specifically the `DEPS.list` system for import
-  boundaries.
+hierarchy_analysis: The configuration is a flat single file (`CLAUDE.md`) that provides essential architectural constraints, specifically the `DEPS.list` system for import boundaries.

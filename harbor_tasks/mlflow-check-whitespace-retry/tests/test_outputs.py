@@ -229,3 +229,111 @@ def test_ruff_format_check_passes_on_target_file():
     )
     assert r.returncode == 0, f"ruff format diff:\n{r.stdout}\n{r.stderr}"
 
+# === CI-mined tests (taskforge.ci_check_miner) ===
+def test_ci_lint_run_pre_commit():
+    """pass_to_pass | CI job 'lint' → step 'Run pre-commit'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'uv run --no-sync pre-commit run --all-files'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Run pre-commit' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_lint_test_clint():
+    """pass_to_pass | CI job 'lint' → step 'Test clint'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'uv run --no-sync pytest dev/clint'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Test clint' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_lint_check_function_signatures():
+    """pass_to_pass | CI job 'lint' → step 'Check function signatures'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'uv run --no-project dev/check_function_signatures.py'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Check function signatures' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_lint_check_whitespace_only_changes():
+    """pass_to_pass | CI job 'lint' → step 'Check whitespace-only changes'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'uv run --no-project dev/check_whitespace_only.py \\\n  --repo $REPO \\\n  --pr $PR_NUMBER'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Check whitespace-only changes' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_lint_check_uv_lock_changes():
+    """pass_to_pass | CI job 'lint' → step 'Check uv.lock changes'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'files=$(gh pr view "${PR_NUMBER}" --repo "${REPO}" --json files --jq \'.files[].path\')\nif echo "$files" | grep -q \'^uv.lock$\' && echo "$files" | grep -q \'^pyproject.toml$\'; then\n  echo \'::warning file=pyproject.toml,line=1,col=1::[Non-blocking]\' \\\n       \'Run `uv lock --upgrade-package <package>` if this PR should update package versions.\' \\\n       \'`uv lock` alone won\'"\'"\'t bump them.\'\nfi'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Check uv.lock changes' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_lint_check_unused_media():
+    """pass_to_pass | CI job 'lint' → step 'Check unused media'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'dev/find-unused-media.sh'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Check unused media' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_build_build_ui():
+    """pass_to_pass | CI job 'build' → step 'Build UI'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'yarn install --immutable && yarn build'], cwd=os.path.join(REPO, 'mlflow/server/js'),
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Build UI' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_build_build_distribution_files():
+    """pass_to_pass | CI job 'build' → step 'Build distribution files'"""
+    r = subprocess.run(
+        ["bash", "-lc", '# if workflow_dispatch is triggered, use the specified ref\nif [ "$EVENT_NAME" == "workflow_dispatch" ]; then\n  SHA_OPT="--sha $(git rev-parse HEAD)"\nelse\n  SHA_OPT=""\nfi\n\npython dev/build.py --package-type "$MATRIX_TYPE" $SHA_OPT\n\n# List distribution files and check their file sizes\nls -lh dist\n\n# Set step outputs\nsdist_path=$(find dist -type f -name "*.tar.gz")\nwheel_path=$(find dist -type f -name "*.whl")\nwheel_name=$(basename $wheel_path)\nwheel_size=$(stat -c %s $wheel_path)\necho "sdist-path=${sdist_path}" >> $GITHUB_OUTPUT\necho "wheel-path=${wheel_path}" >> $GITHUB_OUTPUT\necho "wheel-name=${wheel_name}" >> $GITHUB_OUTPUT\necho "wheel-size=${wheel_size}" >> $GITHUB_OUTPUT'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Build distribution files' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_build_run_twine_check():
+    """pass_to_pass | CI job 'build' → step 'Run twine check'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'twine check --strict $WHEEL_PATH'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Run twine check' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_build_test_installation_from_tarball():
+    """pass_to_pass | CI job 'build' → step 'Test installation from tarball'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'python -c "import mlflow; print(mlflow.__version__)" && python -c "from mlflow import *"'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Test installation from tarball' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_build_test_installation_from_github():
+    """pass_to_pass | CI job 'build' → step 'Test installation from GitHub'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'if [ "$MATRIX_TYPE" == "skinny" ]; then\n  URL="git+https://github.com/${REPO}.git@${REF}#subdirectory=libs/skinny"\nelif [ "$MATRIX_TYPE" == "tracing" ]; then\n  URL="git+https://github.com/${REPO}.git@${REF}#subdirectory=libs/tracing"\nelse\n  URL="git+https://github.com/${REPO}.git@${REF}"\nfi\n\nuv run --isolated --no-project --with $URL python -I -c \'import mlflow; print(mlflow.__version__)\''], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Test installation from GitHub' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_build_test_dev_install_skinny_sh():
+    """pass_to_pass | CI job 'build' → step 'Test dev/install-skinny.sh'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'dev/install-skinny.sh pull/$PR_NUMBER/merge'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Test dev/install-skinny.sh' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")

@@ -310,49 +310,32 @@ def test_repo_trailing_whitespace():
     assert r.returncode == 0, f"Trailing whitespace check failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
 
 # === CI-mined tests (taskforge.ci_check_miner) ===
-def test_ci_install_test_set_up_python():
-    """pass_to_pass | CI job 'Install test' → step 'Set up Python'"""
+def test_ci_build_build_the_book():
+    """pass_to_pass | CI job 'build' → step 'Build the book'"""
     r = subprocess.run(
-        ["python3", "--version"], cwd=REPO,
-        capture_output=True, text=True, timeout=60)
+        ["bash", "-lc", './build_all.sh'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
     assert r.returncode == 0, (
-        f"CI step 'Set up Python' failed (returncode={r.returncode}):\n"
+        f"CI step 'Build the book' failed (returncode={r.returncode}):\n"
         f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
-    assert "3.12" in r.stdout, f"Expected Python 3.12, got: {r.stdout}"
 
 def test_ci_install_test_verify_package_import():
     """pass_to_pass | CI job 'Install test' → step 'Verify package import'"""
-    # Structural check: package __init__.py and version module parse correctly
-    repo = Path(REPO)
-    init_py = repo / "areal" / "__init__.py"
-    version_py = repo / "areal" / "version.py"
-    for fp in [init_py, version_py]:
-        if not fp.exists():
-            raise AssertionError(f"Missing file: {fp}")
-        ast.parse(fp.read_text())
-    # Verify __version__ is exported from __init__.py
-    src = init_py.read_text()
-    assert "from .version import __version__" in src or "__version__" in src, (
-        f"areal/__init__.py must reference __version__")
+    r = subprocess.run(
+        ["bash", "-lc", 'uv run python -c "import areal; print(f\'areal version: {areal.__version__}\')"'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Verify package import' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
 
 def test_ci_install_test_verify_core_modules_are_importable():
     """pass_to_pass | CI job 'Install test' → step 'Verify core modules are importable'"""
-    # Structural check: key module files parse as valid Python
-    repo = Path(REPO)
-    modules = [
-        "areal/api/cli_args.py",
-        "areal/api/__init__.py",
-        "areal/__init__.py",
-    ]
-    for mod in modules:
-        fp = repo / mod
-        if not fp.exists():
-            raise AssertionError(f"Missing module: {fp}")
-        ast.parse(fp.read_text())
-    # Verify WandBConfig and SwanlabConfig are defined in cli_args.py
-    src = (repo / "areal/api/cli_args.py").read_text()
-    assert "class WandBConfig" in src, "WandBConfig class not found"
-    assert "class SwanlabConfig" in src, "SwanlabConfig class not found"
+    r = subprocess.run(
+        ["bash", "-lc", 'uv run python -c "'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Verify core modules are importable' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
 
 def test_ci_install_test_build_wheel():
     """pass_to_pass | CI job 'Install test' → step 'Build wheel'"""
@@ -366,17 +349,8 @@ def test_ci_install_test_build_wheel():
 def test_ci_install_test_verify_wheel_artifact():
     """pass_to_pass | CI job 'Install test' → step 'Verify wheel artifact'"""
     r = subprocess.run(
-        ["bash", "-lc", 'python -m zipfile -l dist/*.whl 2>&1 | awk "NR<=20"'], cwd=REPO,
+        ["bash", "-lc", 'python -m zipfile -l dist/*.whl | head -20'], cwd=REPO,
         capture_output=True, text=True, timeout=300)
     assert r.returncode == 0, (
         f"CI step 'Verify wheel artifact' failed (returncode={r.returncode}):\n"
-        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
-
-def test_ci_build_build_the_book():
-    """pass_to_pass | CI job 'build' → step 'Build the book'"""
-    r = subprocess.run(
-        ["bash", "-lc", 'cd docs && chmod +x ./build_all.sh && ./build_all.sh'], cwd=REPO,
-        capture_output=True, text=True, timeout=300)
-    assert r.returncode == 0, (
-        f"CI step 'Build the book' failed (returncode={r.returncode}):\n"
         f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")

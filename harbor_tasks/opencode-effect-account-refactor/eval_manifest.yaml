@@ -72,8 +72,7 @@ checks:
 - id: agents_md_schemas_rule
   type: fail_to_pass
   origin: pr_diff
-  description: AGENTS.md must document Schema.Class for data types and Schema.brand
-    for single-value types
+  description: AGENTS.md must document Schema.Class for data types and Schema.brand for single-value types
 - id: agents_md_services_rule
   type: fail_to_pass
   origin: pr_diff
@@ -85,17 +84,46 @@ checks:
 - id: agents_md_errors_rule
   type: fail_to_pass
   origin: pr_diff
-  description: AGENTS.md must document preferring 'yield* new MyError' over 'yield*
-    Effect.fail'
+  description: AGENTS.md must document preferring 'yield* new MyError' over 'yield* Effect.fail'
+- id: test_ci_typecheck_run_typecheck
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: typecheck / Run typecheck'
+- id: test_ci_unit_run_unit_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: unit / Run unit tests'
+- id: test_ci_e2e_run_app_e2e_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: e2e / Run app e2e tests'
+- id: test_ci_build_cli_build
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: build-cli / Build'
+- id: test_ci_build_tauri_verify_certificate
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: build-tauri / Verify Certificate'
+- id: test_ci_build_tauri_prepare
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: build-tauri / Prepare'
+- id: test_ci_build_tauri_show_tauri_cli_version
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: build-tauri / Show tauri-cli version'
+- id: test_ci_build_electron_build
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: build-electron / Build'
 rubric:
-- rule: Services must use Layer.effect with Effect.gen pattern, not Layer.succeed
-    with plain objects
+- rule: Services must use Layer.effect with Effect.gen pattern, not Layer.succeed with plain objects
   source:
     path: packages/opencode/AGENTS.md
     lines: 14-15
     commit: 2aae0d3493ac51aa2fd3929c6db0814ab795b04b
-  reference: In `Layer.effect`, always return service implementations with `ServiceName.of({
-    ... })`, never a plain object.
+  reference: In `Layer.effect`, always return service implementations with `ServiceName.of({ ... })`, never a plain object.
 - rule: Data types with multiple fields must use Schema.Class, not Schema.Struct
   source:
     path: packages/opencode/AGENTS.md
@@ -108,62 +136,43 @@ rubric:
     lines: '13'
     commit: 2aae0d3493ac51aa2fd3929c6db0814ab795b04b
   reference: Use branded schemas (`Schema.brand`) for single-value types.
-- rule: Internal helpers must use Effect.fnUntraced, public methods must use Effect.fn
-    with name
+- rule: Internal helpers must use Effect.fnUntraced, public methods must use Effect.fn with name
   source:
     path: packages/opencode/AGENTS.md
     lines: '25'
     commit: 2aae0d3493ac51aa2fd3929c6db0814ab795b04b
-  reference: Use `Effect.fn("ServiceName.method")` for named/traced effects and `Effect.fnUntraced`
-    for internal helpers.
-- rule: In Effect.gen, prefer 'yield* new MyError()' over 'yield* Effect.fail(new
-    MyError())'
+  reference: Use `Effect.fn("ServiceName.method")` for named/traced effects and `Effect.fnUntraced` for internal helpers.
+- rule: In Effect.gen, prefer 'yield* new MyError()' over 'yield* Effect.fail(new MyError())'
   source:
     path: packages/opencode/AGENTS.md
     lines: 21-22,31-32
     commit: 2aae0d3493ac51aa2fd3929c6db0814ab795b04b
-  reference: In `Effect.gen`, prefer `yield* new MyError(...)` over `yield* Effect.fail(new
-    MyError(...))` for direct early-failure branches.
+  reference: In `Effect.gen`, prefer `yield* new MyError(...)` over `yield* Effect.fail(new MyError(...))` for direct early-failure branches.
 - rule: Avoid `try`/`catch` where possible
   source:
     path: AGENTS.md
     lines: 12-12
-  evidence: The expected behavior specifies using `HttpClient.filterStatusOk` for
-    proper HTTP status handling and structured error handling, which aligns with the
-    rule to avoid traditional `try`/`catch` blocks.
+  evidence: The expected behavior specifies using `HttpClient.filterStatusOk` for proper HTTP status handling and structured error handling, which aligns with the rule to avoid traditional `try`/`catch` blocks.
   category: style
 - rule: Keep things in one function unless composable or reusable
   source:
     path: AGENTS.md
     lines: 11-11
-  evidence: The expected behavior requires moving helper functions inside the `Effect.gen`
-    scope, which aligns with the rule to keep things in one function.
+  evidence: The expected behavior requires moving helper functions inside the `Effect.gen` scope, which aligns with the rule to keep things in one function.
   category: style
 distractors:
-- rule: Prefer single word names for variables and functions. Only use multiple words
-    if necessary. Do not introduce new camelCase compounds when a short single-word
-    alternative is clear.
+- rule: Prefer single word names for variables and functions. Only use multiple words if necessary. Do not introduce new camelCase compounds when a short single-word alternative is clear.
   collision_type: rule_conflict
-  why_distracting: The rule mandates single-word names and forbids new camelCase compounds,
-    but the task explicitly requires creating multi-word identifiers like `RefreshToken`,
-    `DeviceCode`, `UserCode`, `AccountRepo`, and `AccountService`.
+  why_distracting: The rule mandates single-word names and forbids new camelCase compounds, but the task explicitly requires creating multi-word identifiers like `RefreshToken`, `DeviceCode`, `UserCode`, `AccountRepo`, and `AccountService`.
   severity: high
   source:
     path: AGENTS.md
     lines: 22-35
-- rule: Rely on type inference when possible; avoid explicit type annotations or interfaces
-    unless necessary for exports or clarity
+- rule: Rely on type inference when possible; avoid explicit type annotations or interfaces unless necessary for exports or clarity
   collision_type: rule_conflict
-  why_distracting: The rule discourages explicit type annotations and interfaces,
-    but the task explicitly requires adding a `Service` interface to the `AccountService`
-    namespace and updating type signatures to use branded types.
+  why_distracting: The rule discourages explicit type annotations and interfaces, but the task explicitly requires adding a `Service` interface to the `AccountService` namespace and updating type signatures to use branded types.
   severity: high
   source:
     path: AGENTS.md
     lines: 14-15
-hierarchy_analysis: The agent is provided with a single `AGENTS.md` file containing
-  general style guidelines. However, the task instructions explicitly contradict several
-  of these guidelines (e.g., requiring multi-word camelCase names and explicit interfaces).
-  Furthermore, the task requires the agent to document Effect patterns, which the
-  gold solution achieves by modifying the `AGENTS.md` file itself, making this a highly
-  meta-referential task where the agent must edit its own instructions.
+hierarchy_analysis: The agent is provided with a single `AGENTS.md` file containing general style guidelines. However, the task instructions explicitly contradict several of these guidelines (e.g., requiring multi-word camelCase names and explicit interfaces). Furthermore, the task requires the agent to document Effect patterns, which the gold solution achieves by modifying the `AGENTS.md` file itself, making this a highly meta-referential task where the agent must edit its own instructions.

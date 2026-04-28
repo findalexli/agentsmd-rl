@@ -166,3 +166,67 @@ def test_repo_lint_passes():
         f"Lint failed.\nstdout:\n{r.stdout[-2000:]}"
         f"\nstderr:\n{r.stderr[-2000:]}"
     )
+
+# === CI-mined tests (taskforge.ci_check_miner) ===
+def test_ci_build_check_if_release():
+    """pass_to_pass | CI job 'build' → step 'Check if release'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'node scripts/check-if-release.js'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Check if release' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_build_validate_config():
+    """pass_to_pass | CI job 'build' → step 'validate config'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'yarn backstage-cli config:check --lax'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'validate config' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_build_lint():
+    """pass_to_pass | CI job 'build' → step 'lint'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'yarn backstage-cli repo lint --success-cache --success-cache-dir .cache/backstage-cli'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'lint' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_build_type_checking_and_declarations():
+    """pass_to_pass | CI job 'build' → step 'type checking and declarations'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'yarn tsc:full'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'type checking and declarations' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_build_build():
+    """pass_to_pass | CI job 'build' → step 'build'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'yarn backstage-cli repo build --all'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'build' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_build_verify_type_dependencies():
+    """pass_to_pass | CI job 'build' → step 'verify type dependencies'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'yarn lint:type-deps'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'verify type dependencies' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_ci_build_test_and_upload_coverage():
+    """pass_to_pass | CI job 'build' → step 'test (and upload coverage)'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'yarn backstage-cli repo test --maxWorkers=3 --workerIdleMemoryLimit=1300M --coverage --success-cache --success-cache-dir .cache/backstage-cli'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'test (and upload coverage)' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")

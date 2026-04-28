@@ -532,46 +532,39 @@ def test_tokenizer_warnings_filter_exists():
 
     raise AssertionError("TokenizerWarningsFilter class not found")
 
-
 # === CI-mined tests (taskforge.ci_check_miner) ===
-# These test real CI commands. They are skipped when required infrastructure
-# (Docker, GPU, NPU) is not available inside the test container.
-
-def test_ci_stage_a_test_1_gpu_small_amd_ensure_vram_is_clear():
-    """pass_to_pass | CI job 'stage-a-test-1-gpu-small-amd' -> step 'Ensure VRAM is clear'
-
-    Requires AMD GPU hardware with ROCm; skipped in CPU-only test environments.
-    """
-    pytest.skip("requires AMD GPU hardware not available in test container")
-
-
 def test_ci_stage_a_test_1_gpu_small_amd_start_ci_container():
-    """pass_to_pass | CI job 'stage-a-test-1-gpu-small-amd' -> step 'Start CI container'
-
-    Requires Docker daemon and AMD GPU; skipped in test container.
-    """
-    pytest.skip("requires docker daemon and AMD GPU not available in test container")
-
+    """pass_to_pass | CI job 'stage-a-test-1-gpu-small-amd' → step 'Start CI container'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'bash scripts/ci/amd/amd_ci_start_container.sh'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Start CI container' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
 
 def test_ci_multimodal_gen_test_2_npu_a3_run_test():
-    """pass_to_pass | CI job 'multimodal-gen-test-2-npu-a3' -> step 'Run test'
-
-    Requires NPU A3 hardware; skipped in CPU-only test environments.
-    """
-    pytest.skip("requires NPU A3 hardware not available in test container")
-
+    """pass_to_pass | CI job 'multimodal-gen-test-2-npu-a3' → step 'Run test'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'python3 sglang/multimodal_gen/test/run_suite.py --suite 2-npu'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Run test' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
 
 def test_ci_multimodal_gen_test_1_npu_a3_run_test():
-    """pass_to_pass | CI job 'multimodal-gen-test-1-npu-a3' -> step 'Run test'
-
-    Requires NPU A3 hardware; skipped in CPU-only test environments.
-    """
-    pytest.skip("requires NPU A3 hardware not available in test container")
-
+    """pass_to_pass | CI job 'multimodal-gen-test-1-npu-a3' → step 'Run test'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'python3 sglang/multimodal_gen/test/run_suite.py --suite 1-npu'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Run test' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
 
 def test_ci_multimodal_gen_test_8_npu_a3_run_test():
-    """pass_to_pass | CI job 'multimodal-gen-test-8-npu-a3' -> step 'Run test'
-
-    Requires NPU A3 hardware; skipped in CPU-only test environments.
-    """
-    pytest.skip("requires NPU A3 hardware not available in test container")
+    """pass_to_pass | CI job 'multimodal-gen-test-8-npu-a3' → step 'Run test'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'python3 sglang/multimodal_gen/test/run_suite.py --suite 8-npu'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Run test' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")

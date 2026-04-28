@@ -348,6 +348,15 @@ def test_repo_build():
     assert r.returncode == 0, f"Build failed:\n{r.stderr[-500:]}{r.stdout[-500:]}"
 
 # === CI-mined tests (taskforge.ci_check_miner) ===
+def test_ci_check_license_ensure_clean_build_directory():
+    """pass_to_pass | CI job 'Check license' → step 'Ensure clean build directory'"""
+    r = subprocess.run(
+        ["bash", "-lc", 'rm -rf build'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"CI step 'Ensure clean build directory' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
 def test_ci_check_license_yarn():
     """pass_to_pass | CI job 'Check license' → step ''"""
     r = subprocess.run(
@@ -378,7 +387,7 @@ def test_ci_test_print_warnings_scripts_ci_test_print_warnings_sh():
 def test_ci_jest_babel_plugin_react_compil_yarn():
     """pass_to_pass | CI job 'Jest babel-plugin-react-compiler' → step ''"""
     r = subprocess.run(
-        ["bash", "-lc", 'yarn workspace babel-plugin-react-compiler jest --maxWorkers=2'], cwd=f"{REPO}/compiler",
+        ["bash", "-lc", 'yarn workspace babel-plugin-react-compiler jest'], cwd=REPO,
         capture_output=True, text=True, timeout=300)
     assert r.returncode == 0, (
         f"CI step '' failed (returncode={r.returncode}):\n"
@@ -387,7 +396,7 @@ def test_ci_jest_babel_plugin_react_compil_yarn():
 def test_ci_lint_babel_plugin_react_compil_yarn():
     """pass_to_pass | CI job 'Lint babel-plugin-react-compiler' → step ''"""
     r = subprocess.run(
-        ["bash", "-lc", 'yarn workspace babel-plugin-react-compiler lint'], cwd=f"{REPO}/compiler",
+        ["bash", "-lc", 'yarn workspace babel-plugin-react-compiler lint'], cwd=REPO,
         capture_output=True, text=True, timeout=300)
     assert r.returncode == 0, (
         f"CI step '' failed (returncode={r.returncode}):\n"
