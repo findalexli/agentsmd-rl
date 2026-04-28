@@ -797,6 +797,10 @@ def main() -> None:
     scout_parser.add_argument("--months", type=int, default=4, help="Months back for agentmd (default: 4)")
     scout_parser.add_argument("--skip-config-diff-check", action="store_true")
     scout_parser.add_argument("--dry-run", action="store_true")
+    scout_parser.add_argument(
+        "--repo-created-before", metavar="YYYY-MM-DD", default=None,
+        help="Drop repos created on or after this date. Filters out fresh "
+             "vibe-coding repos. Example: --repo-created-before 2025-12-01.")
 
     # --- filter command ---
     filter_parser = subparsers.add_parser("filter", help="Filter scouted PRs for quality")
@@ -881,15 +885,46 @@ def _cmd_scout(args: argparse.Namespace) -> None:
             print(f"Cutoff date: {cutoff_iso} ({args.months} months ago)")
 
         all_candidates = []
+        # Optional recency filter: drop repos that were created on/after the
+        # cutoff date. Catches fresh vibe-coding repos that popped up just to
+        # ship a few skill files.
+        repo_age_skipped: list[tuple[str, str]] = []
         for repo, target, caution in repos:
+            if getattr(args, "repo_created_before", None):
+                created = _gh_repo_created_at(repo)
+                if created and created >= args.repo_created_before:
+                    repo_age_skipped.append((repo, created[:10]))
+                    continue
             candidates = scout_repo(repo, target, existing, caution, cutoff_date=cutoff_iso)
             all_candidates.extend(candidates)
             time.sleep(1)
+
+        if repo_age_skipped:
+            print(f"\n  Skipped {len(repo_age_skipped)} repos created on/after "
+                  f"{args.repo_created_before}:")
+            for r, d in repo_age_skipped[:10]:
+                print(f"    {d}  {r}")
+            if len(repo_age_skipped) > 10:
+                print(f"    ... and {len(repo_age_skipped)-10} more")
 
     output_path = ROOT / (args.output or default_output)
     _write_jsonl(output_path, all_candidates)
     _print_summary(all_candidates)
     print(f"  Output: {output_path}")
+
+
+def _gh_repo_created_at(repo: str) -> str | None:
+    """Return the repo's `created_at` ISO string, or None on failure."""
+    try:
+        r = subprocess.run(
+            ["gh", "api", f"repos/{repo}", "--jq", ".created_at"],
+            capture_output=True, text=True, timeout=15)
+        if r.returncode != 0:
+            return None
+        s = r.stdout.strip().strip('"')
+        return s if s and s != "null" else None
+    except Exception:
+        return None
 
 
 def _cmd_filter(args: argparse.Namespace) -> None:
