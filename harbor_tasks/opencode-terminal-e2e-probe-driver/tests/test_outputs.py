@@ -489,3 +489,13 @@ def test_ci_typecheck_run_typecheck():
     assert r.returncode == 0, (
         f"CI step 'Run typecheck' failed (returncode={r.returncode}):\n"
         f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+# === PR-added f2p tests (taskforge.test_patch_miner) ===
+def test_pr_added_terminal_toggles_the_terminal_panel():
+    """fail_to_pass | PR added test '/terminal toggles the terminal panel' in 'packages/app/e2e/prompt/prompt-slash-terminal.spec.ts' (vitest_or_jest)"""
+    r = subprocess.run(
+        ["bash", "-lc", '(pnpm vitest run "packages/app/e2e/prompt/prompt-slash-terminal.spec.ts" -t "/terminal toggles the terminal panel" 2>&1 || npx vitest run "packages/app/e2e/prompt/prompt-slash-terminal.spec.ts" -t "/terminal toggles the terminal panel" 2>&1 || pnpm jest "packages/app/e2e/prompt/prompt-slash-terminal.spec.ts" -t "/terminal toggles the terminal panel" 2>&1 || npx jest "packages/app/e2e/prompt/prompt-slash-terminal.spec.ts" -t "/terminal toggles the terminal panel" 2>&1) | tail -50'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"PR-added test '/terminal toggles the terminal panel' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")

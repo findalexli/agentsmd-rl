@@ -387,3 +387,13 @@ def test_ci_e2e_run_app_e2e_tests():
     assert r.returncode == 0, (
         f"CI step 'Run app e2e tests' failed (returncode={r.returncode}):\n"
         f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+# === PR-added f2p tests (taskforge.test_patch_miner) ===
+def test_pr_added_auto_accept_toggle_works_before_first_submit():
+    """fail_to_pass | PR added test 'auto-accept toggle works before first submit' in 'packages/app/e2e/session/session-composer-dock.spec.ts' (vitest_or_jest)"""
+    r = subprocess.run(
+        ["bash", "-lc", '(pnpm vitest run "packages/app/e2e/session/session-composer-dock.spec.ts" -t "auto-accept toggle works before first submit" 2>&1 || npx vitest run "packages/app/e2e/session/session-composer-dock.spec.ts" -t "auto-accept toggle works before first submit" 2>&1 || pnpm jest "packages/app/e2e/session/session-composer-dock.spec.ts" -t "auto-accept toggle works before first submit" 2>&1 || npx jest "packages/app/e2e/session/session-composer-dock.spec.ts" -t "auto-accept toggle works before first submit" 2>&1) | tail -50'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"PR-added test 'auto-accept toggle works before first submit' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")

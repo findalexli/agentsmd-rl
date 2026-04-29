@@ -133,3 +133,13 @@ def test_ci_e2e_run_app_e2e_tests():
     assert r.returncode == 0, (
         f"CI step 'Run app e2e tests' failed (returncode={r.returncode}):\n"
         f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+# === PR-added f2p tests (taskforge.test_patch_miner) ===
+def test_pr_added_todo_dock_transitions_and_collapse_behavior():
+    """fail_to_pass | PR added test 'todo dock transitions and collapse behavior' in 'packages/app/e2e/session/session-composer-dock.spec.ts' (vitest_or_jest)"""
+    r = subprocess.run(
+        ["bash", "-lc", '(pnpm vitest run "packages/app/e2e/session/session-composer-dock.spec.ts" -t "todo dock transitions and collapse behavior" 2>&1 || npx vitest run "packages/app/e2e/session/session-composer-dock.spec.ts" -t "todo dock transitions and collapse behavior" 2>&1 || pnpm jest "packages/app/e2e/session/session-composer-dock.spec.ts" -t "todo dock transitions and collapse behavior" 2>&1 || npx jest "packages/app/e2e/session/session-composer-dock.spec.ts" -t "todo dock transitions and collapse behavior" 2>&1) | tail -50'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"PR-added test 'todo dock transitions and collapse behavior' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")

@@ -167,3 +167,49 @@ def test_ci_unit_run_unit_tests():
     assert r.returncode == 0, (
         f"CI step 'Run unit tests' failed (returncode={r.returncode}):\n"
         f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+# === PR-added f2p tests (taskforge.test_patch_miner) ===
+def test_pr_added_parseManagedPlist_strips_MDM_metadata_keys():
+    """fail_to_pass | PR added test 'parseManagedPlist strips MDM metadata keys' in 'packages/opencode/test/config/config.test.ts' (vitest_or_jest)"""
+    r = subprocess.run(
+        ["bash", "-lc", '(pnpm vitest run "packages/opencode/test/config/config.test.ts" -t "parseManagedPlist strips MDM metadata keys" 2>&1 || npx vitest run "packages/opencode/test/config/config.test.ts" -t "parseManagedPlist strips MDM metadata keys" 2>&1 || pnpm jest "packages/opencode/test/config/config.test.ts" -t "parseManagedPlist strips MDM metadata keys" 2>&1 || npx jest "packages/opencode/test/config/config.test.ts" -t "parseManagedPlist strips MDM metadata keys" 2>&1) | tail -50'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"PR-added test 'parseManagedPlist strips MDM metadata keys' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_pr_added_parseManagedPlist_parses_enabled_providers():
+    """fail_to_pass | PR added test 'parseManagedPlist parses enabled_providers' in 'packages/opencode/test/config/config.test.ts' (vitest_or_jest)"""
+    r = subprocess.run(
+        ["bash", "-lc", '(pnpm vitest run "packages/opencode/test/config/config.test.ts" -t "parseManagedPlist parses enabled_providers" 2>&1 || npx vitest run "packages/opencode/test/config/config.test.ts" -t "parseManagedPlist parses enabled_providers" 2>&1 || pnpm jest "packages/opencode/test/config/config.test.ts" -t "parseManagedPlist parses enabled_providers" 2>&1 || npx jest "packages/opencode/test/config/config.test.ts" -t "parseManagedPlist parses enabled_providers" 2>&1) | tail -50'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"PR-added test 'parseManagedPlist parses enabled_providers' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_pr_added_parseManagedPlist_handles_empty_config():
+    """fail_to_pass | PR added test 'parseManagedPlist handles empty config' in 'packages/opencode/test/config/config.test.ts' (vitest_or_jest)"""
+    r = subprocess.run(
+        ["bash", "-lc", '(pnpm vitest run "packages/opencode/test/config/config.test.ts" -t "parseManagedPlist handles empty config" 2>&1 || npx vitest run "packages/opencode/test/config/config.test.ts" -t "parseManagedPlist handles empty config" 2>&1 || pnpm jest "packages/opencode/test/config/config.test.ts" -t "parseManagedPlist handles empty config" 2>&1 || npx jest "packages/opencode/test/config/config.test.ts" -t "parseManagedPlist handles empty config" 2>&1) | tail -50'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"PR-added test 'parseManagedPlist handles empty config' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_pr_added_parseManagedPlist_parses_server_settings():
+    """fail_to_pass | PR added test 'parseManagedPlist parses server settings' in 'packages/opencode/test/config/config.test.ts' (vitest_or_jest)"""
+    r = subprocess.run(
+        ["bash", "-lc", '(pnpm vitest run "packages/opencode/test/config/config.test.ts" -t "parseManagedPlist parses server settings" 2>&1 || npx vitest run "packages/opencode/test/config/config.test.ts" -t "parseManagedPlist parses server settings" 2>&1 || pnpm jest "packages/opencode/test/config/config.test.ts" -t "parseManagedPlist parses server settings" 2>&1 || npx jest "packages/opencode/test/config/config.test.ts" -t "parseManagedPlist parses server settings" 2>&1) | tail -50'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"PR-added test 'parseManagedPlist parses server settings' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_pr_added_parseManagedPlist_parses_permission_rules():
+    """fail_to_pass | PR added test 'parseManagedPlist parses permission rules' in 'packages/opencode/test/config/config.test.ts' (vitest_or_jest)"""
+    r = subprocess.run(
+        ["bash", "-lc", '(pnpm vitest run "packages/opencode/test/config/config.test.ts" -t "parseManagedPlist parses permission rules" 2>&1 || npx vitest run "packages/opencode/test/config/config.test.ts" -t "parseManagedPlist parses permission rules" 2>&1 || pnpm jest "packages/opencode/test/config/config.test.ts" -t "parseManagedPlist parses permission rules" 2>&1 || npx jest "packages/opencode/test/config/config.test.ts" -t "parseManagedPlist parses permission rules" 2>&1) | tail -50'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"PR-added test 'parseManagedPlist parses permission rules' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")

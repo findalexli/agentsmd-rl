@@ -334,3 +334,13 @@ def test_ci_test_run_tests():
     assert r.returncode == 0, (
         f"CI step 'Run tests' failed (returncode={r.returncode}):\n"
         f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+# === PR-added f2p tests (taskforge.test_patch_miner) ===
+def test_pr_added_renders_SVG_with_preserved_viewBox_and_kebab_cas():
+    """fail_to_pass | PR added test 'renders SVG with preserved viewBox and kebab-cased attributes' in 'packages/component/src/test/stream.test.tsx' (vitest_or_jest)"""
+    r = subprocess.run(
+        ["bash", "-lc", '(pnpm vitest run "packages/component/src/test/stream.test.tsx" -t "renders SVG with preserved viewBox and kebab-cased attributes" 2>&1 || npx vitest run "packages/component/src/test/stream.test.tsx" -t "renders SVG with preserved viewBox and kebab-cased attributes" 2>&1 || pnpm jest "packages/component/src/test/stream.test.tsx" -t "renders SVG with preserved viewBox and kebab-cased attributes" 2>&1 || npx jest "packages/component/src/test/stream.test.tsx" -t "renders SVG with preserved viewBox and kebab-cased attributes" 2>&1) | tail -50'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"PR-added test 'renders SVG with preserved viewBox and kebab-cased attributes' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")

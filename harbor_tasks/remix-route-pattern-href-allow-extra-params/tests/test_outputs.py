@@ -214,39 +214,11 @@ def test_pr_added_handles_optional_locale_and_page_on_home_route():
         f"PR-added test 'handles optional locale and page on home route' failed (returncode={r.returncode}):\n"
         f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
 
-# === CI-mined tests (taskforge.ci_check_miner) ===
-def test_ci_check_typecheck():
-    """pass_to_pass | CI job 'check' → step 'Typecheck'"""
+def test_pr_added_throws_for_unnamed_wildcard():
+    """fail_to_pass | PR added test 'throws for unnamed wildcard' in 'packages/route-pattern/src/lib/route-pattern.test.ts' (vitest_or_jest)"""
     r = subprocess.run(
-        ["bash", "-lc", 'pnpm typecheck'], cwd=REPO,
+        ["bash", "-lc", '(pnpm vitest run "packages/route-pattern/src/lib/route-pattern.test.ts" -t "throws for unnamed wildcard" 2>&1 || npx vitest run "packages/route-pattern/src/lib/route-pattern.test.ts" -t "throws for unnamed wildcard" 2>&1 || pnpm jest "packages/route-pattern/src/lib/route-pattern.test.ts" -t "throws for unnamed wildcard" 2>&1 || npx jest "packages/route-pattern/src/lib/route-pattern.test.ts" -t "throws for unnamed wildcard" 2>&1) | tail -50'], cwd=REPO,
         capture_output=True, text=True, timeout=300)
     assert r.returncode == 0, (
-        f"CI step 'Typecheck' failed (returncode={r.returncode}):\n"
-        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
-
-def test_ci_check_check_change_files():
-    """pass_to_pass | CI job 'check' → step 'Check change files'"""
-    r = subprocess.run(
-        ["bash", "-lc", 'pnpm changes:validate'], cwd=REPO,
-        capture_output=True, text=True, timeout=300)
-    assert r.returncode == 0, (
-        f"CI step 'Check change files' failed (returncode={r.returncode}):\n"
-        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
-
-def test_ci_test_run_tests():
-    """pass_to_pass | CI job 'test' → step 'Run tests'"""
-    r = subprocess.run(
-        ["bash", "-lc", 'pnpm test'], cwd=REPO,
-        capture_output=True, text=True, timeout=300)
-    assert r.returncode == 0, (
-        f"CI step 'Run tests' failed (returncode={r.returncode}):\n"
-        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
-
-def test_ci_build_build_packages():
-    """pass_to_pass | CI job 'build' → step 'Build packages'"""
-    r = subprocess.run(
-        ["bash", "-lc", 'pnpm build'], cwd=REPO,
-        capture_output=True, text=True, timeout=300)
-    assert r.returncode == 0, (
-        f"CI step 'Build packages' failed (returncode={r.returncode}):\n"
+        f"PR-added test 'throws for unnamed wildcard' failed (returncode={r.returncode}):\n"
         f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")

@@ -210,6 +210,24 @@ def test_pr_added_excludes_nameless_wildcard_from_params():
         f"PR-added test 'excludes nameless wildcard from params' failed (returncode={r.returncode}):\n"
         f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
 
+def test_pr_added_throws_for_unnamed_wildcard():
+    """fail_to_pass | PR added test 'throws for unnamed wildcard' in 'packages/route-pattern/src/lib/route-pattern.test.ts' (vitest_or_jest)"""
+    r = subprocess.run(
+        ["bash", "-lc", '(pnpm vitest run "packages/route-pattern/src/lib/route-pattern.test.ts" -t "throws for unnamed wildcard" 2>&1 || npx vitest run "packages/route-pattern/src/lib/route-pattern.test.ts" -t "throws for unnamed wildcard" 2>&1 || pnpm jest "packages/route-pattern/src/lib/route-pattern.test.ts" -t "throws for unnamed wildcard" 2>&1 || npx jest "packages/route-pattern/src/lib/route-pattern.test.ts" -t "throws for unnamed wildcard" 2>&1) | tail -50'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"PR-added test 'throws for unnamed wildcard' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_pr_added_supports_repeated_params():
+    """fail_to_pass | PR added test 'supports repeated params' in 'packages/route-pattern/src/lib/route-pattern.test.ts' (vitest_or_jest)"""
+    r = subprocess.run(
+        ["bash", "-lc", '(pnpm vitest run "packages/route-pattern/src/lib/route-pattern.test.ts" -t "supports repeated params" 2>&1 || npx vitest run "packages/route-pattern/src/lib/route-pattern.test.ts" -t "supports repeated params" 2>&1 || pnpm jest "packages/route-pattern/src/lib/route-pattern.test.ts" -t "supports repeated params" 2>&1 || npx jest "packages/route-pattern/src/lib/route-pattern.test.ts" -t "supports repeated params" 2>&1) | tail -50'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"PR-added test 'supports repeated params' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
 def test_pr_added_shows_pattern():
     """fail_to_pass | PR added test 'shows pattern' in 'packages/route-pattern/src/lib/route-pattern/href.test.ts' (vitest_or_jest)"""
     r = subprocess.run(

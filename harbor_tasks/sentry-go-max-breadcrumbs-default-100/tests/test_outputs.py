@@ -192,3 +192,40 @@ def test_changelog_breaking_changes_section():
     assert "MaxBreadcrumbs" in head, (
         "Breaking changes section must reference the MaxBreadcrumbs option"
     )
+
+# === PR-added f2p tests (taskforge.test_patch_miner) ===
+def test_pr_added_TestAddBreadcrumbAppendsBreadcrumb():
+    """fail_to_pass | PR added test 'TestAddBreadcrumbAppendsBreadcrumb' in 'scope_test.go' (go_test)"""
+    r = subprocess.run(
+        ["bash", "-lc", 'go test ./ -run "^TestAddBreadcrumbAppendsBreadcrumb$" -count=1 -v 2>&1 | tail -50'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"PR-added test 'TestAddBreadcrumbAppendsBreadcrumb' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_pr_added_TestAddBreadcrumbAddsTimestamp():
+    """fail_to_pass | PR added test 'TestAddBreadcrumbAddsTimestamp' in 'scope_test.go' (go_test)"""
+    r = subprocess.run(
+        ["bash", "-lc", 'go test ./ -run "^TestAddBreadcrumbAddsTimestamp$" -count=1 -v 2>&1 | tail -50'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"PR-added test 'TestAddBreadcrumbAddsTimestamp' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_pr_added_TestAddBreadcrumbDefaultLimit():
+    """fail_to_pass | PR added test 'TestAddBreadcrumbDefaultLimit' in 'scope_test.go' (go_test)"""
+    r = subprocess.run(
+        ["bash", "-lc", 'go test ./ -run "^TestAddBreadcrumbDefaultLimit$" -count=1 -v 2>&1 | tail -50'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"PR-added test 'TestAddBreadcrumbDefaultLimit' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_pr_added_TestAddBreadcrumbAddsBreadcrumb():
+    """fail_to_pass | PR added test 'TestAddBreadcrumbAddsBreadcrumb' in 'scope_test.go' (go_test)"""
+    r = subprocess.run(
+        ["bash", "-lc", 'go test ./ -run "^TestAddBreadcrumbAddsBreadcrumb$" -count=1 -v 2>&1 | tail -50'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"PR-added test 'TestAddBreadcrumbAddsBreadcrumb' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")

@@ -392,6 +392,15 @@ def test_pr_added_preserves_extra_providerData_without_letting_it_():
         f"PR-added test 'preserves extra providerData without letting it overwrite canonical envelopes' failed (returncode={r.returncode}):\n"
         f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
 
+def test_pr_added_extractAllUserContent_throws_on_unknown_entry():
+    """fail_to_pass | PR added test 'extractAllUserContent throws on unknown entry' in 'packages/agents-openai/test/openaiChatCompletionsConverter.test.ts' (vitest_or_jest)"""
+    r = subprocess.run(
+        ["bash", "-lc", '(pnpm vitest run "packages/agents-openai/test/openaiChatCompletionsConverter.test.ts" -t "extractAllUserContent throws on unknown entry" 2>&1 || npx vitest run "packages/agents-openai/test/openaiChatCompletionsConverter.test.ts" -t "extractAllUserContent throws on unknown entry" 2>&1 || pnpm jest "packages/agents-openai/test/openaiChatCompletionsConverter.test.ts" -t "extractAllUserContent throws on unknown entry" 2>&1 || npx jest "packages/agents-openai/test/openaiChatCompletionsConverter.test.ts" -t "extractAllUserContent throws on unknown entry" 2>&1) | tail -50'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"PR-added test 'extractAllUserContent throws on unknown entry' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
 def test_pr_added_removes_reserved_keys_without_touching_other_val():
     """fail_to_pass | PR added test 'removes reserved keys without touching other values' in 'packages/agents-openai/test/utils/providerData.test.ts' (vitest_or_jest)"""
     r = subprocess.run(
@@ -399,4 +408,13 @@ def test_pr_added_removes_reserved_keys_without_touching_other_val():
         capture_output=True, text=True, timeout=300)
     assert r.returncode == 0, (
         f"PR-added test 'removes reserved keys without touching other values' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_pr_added_converts_flat_camelCase_keys_to_snake_case():
+    """fail_to_pass | PR added test 'converts flat camelCase keys to snake_case' in 'packages/agents-openai/test/utils/providerData.test.ts' (vitest_or_jest)"""
+    r = subprocess.run(
+        ["bash", "-lc", '(pnpm vitest run "packages/agents-openai/test/utils/providerData.test.ts" -t "converts flat camelCase keys to snake_case" 2>&1 || npx vitest run "packages/agents-openai/test/utils/providerData.test.ts" -t "converts flat camelCase keys to snake_case" 2>&1 || pnpm jest "packages/agents-openai/test/utils/providerData.test.ts" -t "converts flat camelCase keys to snake_case" 2>&1 || npx jest "packages/agents-openai/test/utils/providerData.test.ts" -t "converts flat camelCase keys to snake_case" 2>&1) | tail -50'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"PR-added test 'converts flat camelCase keys to snake_case' failed (returncode={r.returncode}):\n"
         f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")

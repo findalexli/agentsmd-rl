@@ -342,75 +342,30 @@ def test_no_settimeout_in_new_tests():
         "setTimeout found in new test code. Use await + conditions instead."
     )
 
-
 # === PR-added f2p tests (taskforge.test_patch_miner) ===
-
-# [pr_diff] fail_to_pass
 def test_pr_added_should_throw_on_empty_hostname_from_truthy_non_s():
-    """fail_to_pass | PR added test 'should throw on empty hostname from truthy non-string value' in socket.test.ts"""
-    p = Path(TEST_FILE)
-    assert p.exists(), f"{TEST_FILE} does not exist"
-    text = p.read_text()
-    test_name = "should throw on empty hostname from truthy non-string value"
+    """fail_to_pass | PR added test 'should throw on empty hostname from truthy non-string value' in 'test/js/bun/net/socket.test.ts' (vitest_or_jest)"""
+    r = subprocess.run(
+        ["bash", "-lc", '(pnpm vitest run "test/js/bun/net/socket.test.ts" -t "should throw on empty hostname from truthy non-string value" 2>&1 || npx vitest run "test/js/bun/net/socket.test.ts" -t "should throw on empty hostname from truthy non-string value" 2>&1 || pnpm jest "test/js/bun/net/socket.test.ts" -t "should throw on empty hostname from truthy non-string value" 2>&1 || npx jest "test/js/bun/net/socket.test.ts" -t "should throw on empty hostname from truthy non-string value" 2>&1) | tail -50'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"PR-added test 'should throw on empty hostname from truthy non-string value' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
 
-    # Test must exist in the file (agent added it)
-    assert test_name in text, (
-        f"PR-added test '{test_name}' not found in socket.test.ts. "
-        "Add a test with this description to the test file."
-    )
-
-    # Behavioral verification: Bun.listen with [] hostname throws correct error
-    r = _run_bun(r"""
-    const socket = { data() {}, open() {}, close() {} };
-    try {
-        Bun.listen({ hostname: [], port: 0, socket });
-        console.log('NO_THROW');
-    } catch (e) {
-        const msg = e.message;
-        if (msg.includes('non-empty') && msg.includes('hostname')) {
-            console.log('PASS');
-        } else {
-            console.log('FAIL:' + msg);
-        }
-    }
-    """)
-    output = (r.stdout + r.stderr).strip()
-    assert "PASS" in output, (
-        f"Hostname empty-array fix failed (rc={r.returncode}): {output}"
-    )
-
-
-# [pr_diff] fail_to_pass
 def test_pr_added_should_throw_on_empty_unix_path_from_truthy_non_():
-    """fail_to_pass | PR added test 'should throw on empty unix path from truthy non-string value' in socket.test.ts"""
-    p = Path(TEST_FILE)
-    assert p.exists(), f"{TEST_FILE} does not exist"
-    text = p.read_text()
-    test_name = "should throw on empty unix path from truthy non-string value"
+    """fail_to_pass | PR added test 'should throw on empty unix path from truthy non-string value' in 'test/js/bun/net/socket.test.ts' (vitest_or_jest)"""
+    r = subprocess.run(
+        ["bash", "-lc", '(pnpm vitest run "test/js/bun/net/socket.test.ts" -t "should throw on empty unix path from truthy non-string value" 2>&1 || npx vitest run "test/js/bun/net/socket.test.ts" -t "should throw on empty unix path from truthy non-string value" 2>&1 || pnpm jest "test/js/bun/net/socket.test.ts" -t "should throw on empty unix path from truthy non-string value" 2>&1 || npx jest "test/js/bun/net/socket.test.ts" -t "should throw on empty unix path from truthy non-string value" 2>&1) | tail -50'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"PR-added test 'should throw on empty unix path from truthy non-string value' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
 
-    # Test must exist in the file (agent added it)
-    assert test_name in text, (
-        f"PR-added test '{test_name}' not found in socket.test.ts. "
-        "Add a test with this description to the test file."
-    )
-
-    # Behavioral verification: Bun.listen with [] unix must throw (not crash)
-    # The bindgen layer rejects non-string unix values before reaching Zig code
-    r = _run_bun(r"""
-    const socket = { data() {}, open() {}, close() {} };
-    try {
-        Bun.listen({ unix: [], socket });
-        console.log('NO_THROW');
-    } catch (e) {
-        const msg = e.message;
-        if (msg.includes('unix') && msg.includes('string')) {
-            console.log('PASS');
-        } else {
-            console.log('FAIL:' + msg);
-        }
-    }
-    """)
-    output = (r.stdout + r.stderr).strip()
-    assert "PASS" in output, (
-        f"Unix empty-array fix failed (rc={r.returncode}): {output}"
-    )
+def test_pr_added_should_not_leak_memory_when_connect_fails_again():
+    """fail_to_pass | PR added test 'should not leak memory when connect() fails again' in 'test/js/bun/net/socket.test.ts' (vitest_or_jest)"""
+    r = subprocess.run(
+        ["bash", "-lc", '(pnpm vitest run "test/js/bun/net/socket.test.ts" -t "should not leak memory when connect() fails again" 2>&1 || npx vitest run "test/js/bun/net/socket.test.ts" -t "should not leak memory when connect() fails again" 2>&1 || pnpm jest "test/js/bun/net/socket.test.ts" -t "should not leak memory when connect() fails again" 2>&1 || npx jest "test/js/bun/net/socket.test.ts" -t "should not leak memory when connect() fails again" 2>&1) | tail -50'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"PR-added test 'should not leak memory when connect() fails again' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")

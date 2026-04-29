@@ -191,3 +191,12 @@ def test_pr_added_does_not_match_different_hostname():
     assert r.returncode == 0, (
         f"PR-added test 'does not match different hostname' failed (returncode={r.returncode}):\n"
         f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_pr_added_matches_exact_static_pattern_with_full_URL():
+    """fail_to_pass | PR added test 'matches exact static pattern with full URL' in 'packages/route-pattern/src/lib/matchers/trie.test.ts' (vitest_or_jest)"""
+    r = subprocess.run(
+        ["bash", "-lc", '(pnpm vitest run "packages/route-pattern/src/lib/matchers/trie.test.ts" -t "matches exact static pattern with full URL" 2>&1 || npx vitest run "packages/route-pattern/src/lib/matchers/trie.test.ts" -t "matches exact static pattern with full URL" 2>&1 || pnpm jest "packages/route-pattern/src/lib/matchers/trie.test.ts" -t "matches exact static pattern with full URL" 2>&1 || npx jest "packages/route-pattern/src/lib/matchers/trie.test.ts" -t "matches exact static pattern with full URL" 2>&1) | tail -50'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"PR-added test 'matches exact static pattern with full URL' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")

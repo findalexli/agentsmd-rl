@@ -461,3 +461,21 @@ def test_pr_added_video_start_stop():
     assert r.returncode == 0, (
         f"PR-added test 'video-start-stop' failed (returncode={r.returncode}):\n"
         f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_pr_added_pdf():
+    """fail_to_pass | PR added test 'pdf' in 'tests/mcp/cli.spec.ts' (vitest_or_jest)"""
+    r = subprocess.run(
+        ["bash", "-lc", '(pnpm vitest run "tests/mcp/cli.spec.ts" -t "pdf" 2>&1 || npx vitest run "tests/mcp/cli.spec.ts" -t "pdf" 2>&1 || pnpm jest "tests/mcp/cli.spec.ts" -t "pdf" 2>&1 || npx jest "tests/mcp/cli.spec.ts" -t "pdf" 2>&1) | tail -50'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"PR-added test 'pdf' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_pr_added_tracing_start_stop():
+    """fail_to_pass | PR added test 'tracing-start-stop' in 'tests/mcp/cli.spec.ts' (vitest_or_jest)"""
+    r = subprocess.run(
+        ["bash", "-lc", '(pnpm vitest run "tests/mcp/cli.spec.ts" -t "tracing-start-stop" 2>&1 || npx vitest run "tests/mcp/cli.spec.ts" -t "tracing-start-stop" 2>&1 || pnpm jest "tests/mcp/cli.spec.ts" -t "tracing-start-stop" 2>&1 || npx jest "tests/mcp/cli.spec.ts" -t "tracing-start-stop" 2>&1) | tail -50'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"PR-added test 'tracing-start-stop' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")

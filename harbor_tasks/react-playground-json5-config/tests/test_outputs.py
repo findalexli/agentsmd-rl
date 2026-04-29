@@ -386,6 +386,24 @@ def test_ci_yarn_build_and_lint_lint_build():
         f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
 
 # === PR-added f2p tests (taskforge.test_patch_miner) ===
+def test_pr_added_error_is_displayed_when_config_has_validation_er():
+    """fail_to_pass | PR added test 'error is displayed when config has validation error' in 'compiler/apps/playground/__tests__/e2e/page.spec.ts' (vitest_or_jest)"""
+    r = subprocess.run(
+        ["bash", "-lc", '(pnpm vitest run "compiler/apps/playground/__tests__/e2e/page.spec.ts" -t "error is displayed when config has validation error" 2>&1 || npx vitest run "compiler/apps/playground/__tests__/e2e/page.spec.ts" -t "error is displayed when config has validation error" 2>&1 || pnpm jest "compiler/apps/playground/__tests__/e2e/page.spec.ts" -t "error is displayed when config has validation error" 2>&1 || npx jest "compiler/apps/playground/__tests__/e2e/page.spec.ts" -t "error is displayed when config has validation error" 2>&1) | tail -50'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"PR-added test 'error is displayed when config has validation error' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_pr_added_error_is_displayed_when_config_has_syntax_error():
+    """fail_to_pass | PR added test 'error is displayed when config has syntax error' in 'compiler/apps/playground/__tests__/e2e/page.spec.ts' (vitest_or_jest)"""
+    r = subprocess.run(
+        ["bash", "-lc", '(pnpm vitest run "compiler/apps/playground/__tests__/e2e/page.spec.ts" -t "error is displayed when config has syntax error" 2>&1 || npx vitest run "compiler/apps/playground/__tests__/e2e/page.spec.ts" -t "error is displayed when config has syntax error" 2>&1 || pnpm jest "compiler/apps/playground/__tests__/e2e/page.spec.ts" -t "error is displayed when config has syntax error" 2>&1 || npx jest "compiler/apps/playground/__tests__/e2e/page.spec.ts" -t "error is displayed when config has syntax error" 2>&1) | tail -50'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"PR-added test 'error is displayed when config has syntax error' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
 def test_pr_added_empty_string_returns_empty_object():
     """fail_to_pass | PR added test 'empty string returns empty object' in 'compiler/apps/playground/__tests__/parseConfigOverrides.test.mjs' (vitest_or_jest)"""
     r = subprocess.run(

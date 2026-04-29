@@ -193,3 +193,58 @@ def test_ci_typecheck_run_typecheck():
     assert r.returncode == 0, (
         f"CI step 'Run typecheck' failed (returncode={r.returncode}):\n"
         f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+# === PR-added f2p tests (taskforge.test_patch_miner) ===
+def test_pr_added_rejects_invalid_type():
+    """fail_to_pass | PR added test 'rejects invalid type' in 'packages/opencode/test/session/structured-output.test.ts' (vitest_or_jest)"""
+    r = subprocess.run(
+        ["bash", "-lc", '(pnpm vitest run "packages/opencode/test/session/structured-output.test.ts" -t "rejects invalid type" 2>&1 || npx vitest run "packages/opencode/test/session/structured-output.test.ts" -t "rejects invalid type" 2>&1 || pnpm jest "packages/opencode/test/session/structured-output.test.ts" -t "rejects invalid type" 2>&1 || npx jest "packages/opencode/test/session/structured-output.test.ts" -t "rejects invalid type" 2>&1) | tail -50'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"PR-added test 'rejects invalid type' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_pr_added_parses_json_schema_format_with_defaults():
+    """fail_to_pass | PR added test 'parses json_schema format with defaults' in 'packages/opencode/test/session/structured-output.test.ts' (vitest_or_jest)"""
+    r = subprocess.run(
+        ["bash", "-lc", '(pnpm vitest run "packages/opencode/test/session/structured-output.test.ts" -t "parses json_schema format with defaults" 2>&1 || npx vitest run "packages/opencode/test/session/structured-output.test.ts" -t "parses json_schema format with defaults" 2>&1 || pnpm jest "packages/opencode/test/session/structured-output.test.ts" -t "parses json_schema format with defaults" 2>&1 || npx jest "packages/opencode/test/session/structured-output.test.ts" -t "parses json_schema format with defaults" 2>&1) | tail -50'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"PR-added test 'parses json_schema format with defaults' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_pr_added_parses_json_schema_format_with_custom_retryCount():
+    """fail_to_pass | PR added test 'parses json_schema format with custom retryCount' in 'packages/opencode/test/session/structured-output.test.ts' (vitest_or_jest)"""
+    r = subprocess.run(
+        ["bash", "-lc", '(pnpm vitest run "packages/opencode/test/session/structured-output.test.ts" -t "parses json_schema format with custom retryCount" 2>&1 || npx vitest run "packages/opencode/test/session/structured-output.test.ts" -t "parses json_schema format with custom retryCount" 2>&1 || pnpm jest "packages/opencode/test/session/structured-output.test.ts" -t "parses json_schema format with custom retryCount" 2>&1 || npx jest "packages/opencode/test/session/structured-output.test.ts" -t "parses json_schema format with custom retryCount" 2>&1) | tail -50'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"PR-added test 'parses json_schema format with custom retryCount' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_pr_added_rejects_json_schema_without_schema():
+    """fail_to_pass | PR added test 'rejects json_schema without schema' in 'packages/opencode/test/session/structured-output.test.ts' (vitest_or_jest)"""
+    r = subprocess.run(
+        ["bash", "-lc", '(pnpm vitest run "packages/opencode/test/session/structured-output.test.ts" -t "rejects json_schema without schema" 2>&1 || npx vitest run "packages/opencode/test/session/structured-output.test.ts" -t "rejects json_schema without schema" 2>&1 || pnpm jest "packages/opencode/test/session/structured-output.test.ts" -t "rejects json_schema without schema" 2>&1 || npx jest "packages/opencode/test/session/structured-output.test.ts" -t "rejects json_schema without schema" 2>&1) | tail -50'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"PR-added test 'rejects json_schema without schema' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_pr_added_rejects_negative_retryCount():
+    """fail_to_pass | PR added test 'rejects negative retryCount' in 'packages/opencode/test/session/structured-output.test.ts' (vitest_or_jest)"""
+    r = subprocess.run(
+        ["bash", "-lc", '(pnpm vitest run "packages/opencode/test/session/structured-output.test.ts" -t "rejects negative retryCount" 2>&1 || npx vitest run "packages/opencode/test/session/structured-output.test.ts" -t "rejects negative retryCount" 2>&1 || pnpm jest "packages/opencode/test/session/structured-output.test.ts" -t "rejects negative retryCount" 2>&1 || npx jest "packages/opencode/test/session/structured-output.test.ts" -t "rejects negative retryCount" 2>&1) | tail -50'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"PR-added test 'rejects negative retryCount' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_pr_added_parses_text_format():
+    """fail_to_pass | PR added test 'parses text format' in 'packages/opencode/test/session/structured-output.test.ts' (vitest_or_jest)"""
+    r = subprocess.run(
+        ["bash", "-lc", '(pnpm vitest run "packages/opencode/test/session/structured-output.test.ts" -t "parses text format" 2>&1 || npx vitest run "packages/opencode/test/session/structured-output.test.ts" -t "parses text format" 2>&1 || pnpm jest "packages/opencode/test/session/structured-output.test.ts" -t "parses text format" 2>&1 || npx jest "packages/opencode/test/session/structured-output.test.ts" -t "parses text format" 2>&1) | tail -50'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"PR-added test 'parses text format' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")

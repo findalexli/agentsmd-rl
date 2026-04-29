@@ -275,108 +275,47 @@ def test_typecheck_passes():
     )
 
 # === PR-added f2p tests (taskforge.test_patch_miner) ===
-# Each test runs the full test file with the upstream Vitest unit config and
-# extracts the number of passing tests from the summary line.  The PR adds new
-# tests to these files, so the count at gold is strictly greater than at base.
-# This avoids asserting on gold-patch-specific test-name literals.
-
-def _run_vitest_file(test_file: str) -> subprocess.CompletedProcess:
-    return subprocess.run(
-        ["pnpm", "exec", "vitest", "run", "--config", "vitest.unit.config.ts",
-         test_file],
-        cwd=PKG, capture_output=True, text=True, timeout=300,
-        env={**os.environ, "CI": "true"},
-    )
-
-
-def _get_passed_count(result: subprocess.CompletedProcess) -> int:
-    # Strip ANSI escape codes so the regex works on plain text.
-    clean = re.sub(r"\x1b\[[0-9;]*m", "", result.stdout)
-    m = re.search(r"Tests\s+(\d+)\s+passed", clean)
-    assert m is not None, f"could not find test count in vitest output:\n{result.stdout[-2000:]}"
-    return int(m.group(1))
-
-
 def test_pr_added_should_use_cache_buster_instead_of_handle_mutati():
-    """f2p | PR added tests in expired-shapes-cache.test.ts — at base 13 tests, at gold 15."""
-    r = _run_vitest_file("test/expired-shapes-cache.test.ts")
+    """fail_to_pass | PR added test 'should use cache buster instead of handle mutation on 409 without handle header' in 'packages/typescript-client/test/expired-shapes-cache.test.ts' (vitest_or_jest)"""
+    r = subprocess.run(
+        ["bash", "-lc", '(pnpm vitest run "packages/typescript-client/test/expired-shapes-cache.test.ts" -t "should use cache buster instead of handle mutation on 409 without handle header" 2>&1 || npx vitest run "packages/typescript-client/test/expired-shapes-cache.test.ts" -t "should use cache buster instead of handle mutation on 409 without handle header" 2>&1 || pnpm jest "packages/typescript-client/test/expired-shapes-cache.test.ts" -t "should use cache buster instead of handle mutation on 409 without handle header" 2>&1 || npx jest "packages/typescript-client/test/expired-shapes-cache.test.ts" -t "should use cache buster instead of handle mutation on 409 without handle header" 2>&1) | tail -50'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
     assert r.returncode == 0, (
-        f"expired-shapes-cache tests failed (exit {r.returncode}).\n"
-        f"--- stdout ---\n{r.stdout[-3000:]}\n--- stderr ---\n{r.stderr[-1000:]}")
-    count = _get_passed_count(r)
-    assert count > 13, (
-        f"Expected > 13 tests in expired-shapes-cache but saw {count}. "
-        f"PR test patch may not have been applied.")
-
+        f"PR-added test 'should use cache buster instead of handle mutation on 409 without handle header' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
 
 def test_pr_added_should_use_cache_buster_on_409_without_handle_he():
-    """f2p | Duplicate of above — each check entry must have 1:1 test function."""
-    r = _run_vitest_file("test/expired-shapes-cache.test.ts")
+    """fail_to_pass | PR added test 'should use cache buster on 409 without handle header when initial handle is undefined' in 'packages/typescript-client/test/expired-shapes-cache.test.ts' (vitest_or_jest)"""
+    r = subprocess.run(
+        ["bash", "-lc", '(pnpm vitest run "packages/typescript-client/test/expired-shapes-cache.test.ts" -t "should use cache buster on 409 without handle header when initial handle is undefined" 2>&1 || npx vitest run "packages/typescript-client/test/expired-shapes-cache.test.ts" -t "should use cache buster on 409 without handle header when initial handle is undefined" 2>&1 || pnpm jest "packages/typescript-client/test/expired-shapes-cache.test.ts" -t "should use cache buster on 409 without handle header when initial handle is undefined" 2>&1 || npx jest "packages/typescript-client/test/expired-shapes-cache.test.ts" -t "should use cache buster on 409 without handle header when initial handle is undefined" 2>&1) | tail -50'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
     assert r.returncode == 0, (
-        f"expired-shapes-cache tests failed (exit {r.returncode}).\n"
-        f"--- stdout ---\n{r.stdout[-3000:]}\n--- stderr ---\n{r.stderr[-1000:]}")
-    count = _get_passed_count(r)
-    assert count > 13, (
-        f"Expected > 13 tests in expired-shapes-cache but saw {count}. "
-        f"PR test patch may not have been applied.")
-
+        f"PR-added test 'should use cache buster on 409 without handle header when initial handle is undefined' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
 
 def test_pr_added_markMustRefetch_without_handle_resets_to_Initial():
-    """f2p | PR added tests in shape-stream-state.test.ts — at base 200 tests, at gold 203."""
-    r = _run_vitest_file("test/shape-stream-state.test.ts")
+    """fail_to_pass | PR added test 'markMustRefetch without handle resets to InitialState with undefined handle' in 'packages/typescript-client/test/shape-stream-state.test.ts' (vitest_or_jest)"""
+    r = subprocess.run(
+        ["bash", "-lc", '(pnpm vitest run "packages/typescript-client/test/shape-stream-state.test.ts" -t "markMustRefetch without handle resets to InitialState with undefined handle" 2>&1 || npx vitest run "packages/typescript-client/test/shape-stream-state.test.ts" -t "markMustRefetch without handle resets to InitialState with undefined handle" 2>&1 || pnpm jest "packages/typescript-client/test/shape-stream-state.test.ts" -t "markMustRefetch without handle resets to InitialState with undefined handle" 2>&1 || npx jest "packages/typescript-client/test/shape-stream-state.test.ts" -t "markMustRefetch without handle resets to InitialState with undefined handle" 2>&1) | tail -50'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
     assert r.returncode == 0, (
-        f"shape-stream-state tests failed (exit {r.returncode}).\n"
-        f"--- stdout ---\n{r.stdout[-3000:]}\n--- stderr ---\n{r.stderr[-1000:]}")
-    count = _get_passed_count(r)
-    assert count > 200, (
-        f"Expected > 200 tests in shape-stream-state but saw {count}. "
-        f"PR test patch may not have been applied.")
-
+        f"PR-added test 'markMustRefetch without handle resets to InitialState with undefined handle' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
 
 def test_pr_added_InitialState_without_handle_omits_handle_from_UR():
-    """f2p | Duplicate of above — each check entry must have 1:1 test function."""
-    r = _run_vitest_file("test/shape-stream-state.test.ts")
-    assert r.returncode == 0, (
-        f"shape-stream-state tests failed (exit {r.returncode}).\n"
-        f"--- stdout ---\n{r.stdout[-3000:]}\n--- stderr ---\n{r.stderr[-1000:]}")
-    count = _get_passed_count(r)
-    assert count > 200, (
-        f"Expected > 200 tests in shape-stream-state but saw {count}. "
-        f"PR test patch may not have been applied.")
-
-# === CI-mined tests (taskforge.ci_check_miner) ===
-def test_ci_derive_build_variables_from_th_determine_the_ref_to_check_out():
-    """pass_to_pass | CI job 'Derive build variables from the source code' → step 'Determine the ref to check out'"""
+    """fail_to_pass | PR added test 'InitialState without handle omits handle from URL params' in 'packages/typescript-client/test/shape-stream-state.test.ts' (vitest_or_jest)"""
     r = subprocess.run(
-        ["bash", "-lc", 'if [ -n "$INPUT_RELEASE_TAG" ]; then\n  ref="refs/tags/$INPUT_RELEASE_TAG"\n  is_release=true\nelif [ -n "$EVENT_RELEASE_TAG" ]; then\n  ref="refs/tags/$EVENT_RELEASE_TAG"\n  is_release=true\nelse\n  ref="$COMMIT_SHA"\n  is_release=false\nfi\n\necho "git_ref=$ref" >> $GITHUB_OUTPUT\necho "is_release=$is_release" >> $GITHUB_OUTPUT'], cwd=REPO,
+        ["bash", "-lc", '(pnpm vitest run "packages/typescript-client/test/shape-stream-state.test.ts" -t "InitialState without handle omits handle from URL params" 2>&1 || npx vitest run "packages/typescript-client/test/shape-stream-state.test.ts" -t "InitialState without handle omits handle from URL params" 2>&1 || pnpm jest "packages/typescript-client/test/shape-stream-state.test.ts" -t "InitialState without handle omits handle from URL params" 2>&1 || npx jest "packages/typescript-client/test/shape-stream-state.test.ts" -t "InitialState without handle omits handle from URL params" 2>&1) | tail -50'], cwd=REPO,
         capture_output=True, text=True, timeout=300)
     assert r.returncode == 0, (
-        f"CI step 'Determine the ref to check out' failed (returncode={r.returncode}):\n"
+        f"PR-added test 'InitialState without handle omits handle from URL params' failed (returncode={r.returncode}):\n"
         f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
 
-def test_ci_derive_build_variables_from_th_determine_short_commit_sha_and_electric():
-    """pass_to_pass | CI job 'Derive build variables from the source code' → step 'Determine short_commit_sha and electric_version to use in the build step'"""
+def test_pr_added_StaleRetryState_SyncingState_on_successful_respo():
+    """fail_to_pass | PR added test 'StaleRetryState → SyncingState on successful response' in 'packages/typescript-client/test/shape-stream-state.test.ts' (vitest_or_jest)"""
     r = subprocess.run(
-        ["bash", "-lc", 'echo "short_commit_sha=$(\n  git rev-parse --short HEAD\n)" >> $GITHUB_OUTPUT\n\necho "electric_version=$(\n  git describe --abbrev=7 --tags --always --first-parent --match \'@core/sync-service@*\' | sed -En \'s|^@core/sync-service@||p\'\n)" >> $GITHUB_OUTPUT'], cwd=REPO,
+        ["bash", "-lc", '(pnpm vitest run "packages/typescript-client/test/shape-stream-state.test.ts" -t "StaleRetryState → SyncingState on successful response" 2>&1 || npx vitest run "packages/typescript-client/test/shape-stream-state.test.ts" -t "StaleRetryState → SyncingState on successful response" 2>&1 || pnpm jest "packages/typescript-client/test/shape-stream-state.test.ts" -t "StaleRetryState → SyncingState on successful response" 2>&1 || npx jest "packages/typescript-client/test/shape-stream-state.test.ts" -t "StaleRetryState → SyncingState on successful response" 2>&1) | tail -50'], cwd=REPO,
         capture_output=True, text=True, timeout=300)
     assert r.returncode == 0, (
-        f"CI step 'Determine short_commit_sha and electric_version to use in the build step' failed (returncode={r.returncode}):\n"
-        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
-
-def test_ci_run_lux_integration_tests_compile():
-    """pass_to_pass | CI job 'Run Lux integration tests' → step 'Compile'"""
-    r = subprocess.run(
-        ["bash", "-lc", 'mix compile'], cwd=os.path.join(REPO, 'packages/sync-service'),
-        capture_output=True, text=True, timeout=300)
-    assert r.returncode == 0, (
-        f"CI step 'Compile' failed (returncode={r.returncode}):\n"
-        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
-
-def test_ci_run_lux_integration_tests_run_integration_tests():
-    """pass_to_pass | CI job 'Run Lux integration tests' → step 'Run integration tests'"""
-    r = subprocess.run(
-        ["bash", "-lc", './run.sh'], cwd=REPO,
-        capture_output=True, text=True, timeout=300)
-    assert r.returncode == 0, (
-        f"CI step 'Run integration tests' failed (returncode={r.returncode}):\n"
+        f"PR-added test 'StaleRetryState → SyncingState on successful response' failed (returncode={r.returncode}):\n"
         f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")

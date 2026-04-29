@@ -368,3 +368,12 @@ def test_pr_added_returns_empty_settings_for_GPT_5_chat_latest_ali():
     assert r.returncode == 0, (
         f"PR-added test 'returns empty settings for GPT-5 chat latest aliases' failed (returncode={r.returncode}):\n"
         f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_pr_added_returns_true_only_when_env_points_to_GPT_5():
+    """fail_to_pass | PR added test 'returns true only when env points to GPT-5' in 'packages/agents-core/test/defaultModel.test.ts' (vitest_or_jest)"""
+    r = subprocess.run(
+        ["bash", "-lc", '(pnpm vitest run "packages/agents-core/test/defaultModel.test.ts" -t "returns true only when env points to GPT-5" 2>&1 || npx vitest run "packages/agents-core/test/defaultModel.test.ts" -t "returns true only when env points to GPT-5" 2>&1 || pnpm jest "packages/agents-core/test/defaultModel.test.ts" -t "returns true only when env points to GPT-5" 2>&1 || npx jest "packages/agents-core/test/defaultModel.test.ts" -t "returns true only when env points to GPT-5" 2>&1) | tail -50'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"PR-added test 'returns true only when env points to GPT-5' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")

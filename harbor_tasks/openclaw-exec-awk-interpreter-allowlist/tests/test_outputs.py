@@ -408,3 +408,21 @@ def test_pr_added_prevents_allow_always_bypass_for_shell_carried_a():
     assert r.returncode == 0, (
         f"PR-added test 'prevents allow-always bypass for shell-carried awk interpreters' failed (returncode={r.returncode}):\n"
         f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_pr_added_ignores_normal_script_execution():
+    """fail_to_pass | PR added test 'ignores normal script execution' in 'src/infra/exec-inline-eval.test.ts' (vitest_or_jest)"""
+    r = subprocess.run(
+        ["bash", "-lc", '(pnpm vitest run "src/infra/exec-inline-eval.test.ts" -t "ignores normal script execution" 2>&1 || npx vitest run "src/infra/exec-inline-eval.test.ts" -t "ignores normal script execution" 2>&1 || pnpm jest "src/infra/exec-inline-eval.test.ts" -t "ignores normal script execution" 2>&1 || npx jest "src/infra/exec-inline-eval.test.ts" -t "ignores normal script execution" 2>&1) | tail -50'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"PR-added test 'ignores normal script execution' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+def test_pr_added_matches_interpreter_like_allowlist_patterns():
+    """fail_to_pass | PR added test 'matches interpreter-like allowlist patterns' in 'src/infra/exec-inline-eval.test.ts' (vitest_or_jest)"""
+    r = subprocess.run(
+        ["bash", "-lc", '(pnpm vitest run "src/infra/exec-inline-eval.test.ts" -t "matches interpreter-like allowlist patterns" 2>&1 || npx vitest run "src/infra/exec-inline-eval.test.ts" -t "matches interpreter-like allowlist patterns" 2>&1 || pnpm jest "src/infra/exec-inline-eval.test.ts" -t "matches interpreter-like allowlist patterns" 2>&1 || npx jest "src/infra/exec-inline-eval.test.ts" -t "matches interpreter-like allowlist patterns" 2>&1) | tail -50'], cwd=REPO,
+        capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, (
+        f"PR-added test 'matches interpreter-like allowlist patterns' failed (returncode={r.returncode}):\n"
+        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")

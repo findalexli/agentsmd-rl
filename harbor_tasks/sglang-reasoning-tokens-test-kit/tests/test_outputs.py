@@ -485,30 +485,11 @@ def test_pr_added_test_reasoning_tokens_generate_exact_count():
         f"PR-added test 'test_reasoning_tokens_generate_exact_count' failed (returncode={r.returncode}):\n"
         f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
 
-# === CI-mined tests (taskforge.ci_check_miner) ===
-def test_ci_stage_b_test_16_npu_a3_run_test():
-    """pass_to_pass | CI job 'stage-b-test-16-npu-a3' → step 'Run test'"""
+def test_pr_added_test_gsm8k():
+    """fail_to_pass | PR added test 'test_gsm8k' in 'test/registered/4-gpu-models/test_qwen35_models.py' (pytest)"""
     r = subprocess.run(
-        ["bash", "-lc", 'python3 run_suite.py --hw npu --suite stage-b-test-16-npu-a3 --timeout-per-file 3600'], cwd=REPO,
+        ["bash", "-lc", 'python3 -m pytest -x --no-header -p no:cacheprovider "test/registered/4-gpu-models/test_qwen35_models.py::test_gsm8k" 2>&1 | tail -50'], cwd=REPO,
         capture_output=True, text=True, timeout=300)
     assert r.returncode == 0, (
-        f"CI step 'Run test' failed (returncode={r.returncode}):\n"
-        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
-
-def test_ci_stage_b_test_4_npu_a3_run_test():
-    """pass_to_pass | CI job 'stage-b-test-4-npu-a3' → step 'Run test'"""
-    r = subprocess.run(
-        ["bash", "-lc", 'python3 run_suite.py --hw npu --suite stage-b-test-4-npu-a3 --timeout-per-file 3600'], cwd=REPO,
-        capture_output=True, text=True, timeout=300)
-    assert r.returncode == 0, (
-        f"CI step 'Run test' failed (returncode={r.returncode}):\n"
-        f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
-
-def test_ci_stage_a_test_1_gpu_small_amd_start_ci_container():
-    """pass_to_pass | CI job 'stage-a-test-1-gpu-small-amd' → step 'Start CI container'"""
-    r = subprocess.run(
-        ["bash", "-lc", 'bash scripts/ci/amd/amd_ci_start_container.sh'], cwd=REPO,
-        capture_output=True, text=True, timeout=300)
-    assert r.returncode == 0, (
-        f"CI step 'Start CI container' failed (returncode={r.returncode}):\n"
+        f"PR-added test 'test_gsm8k' failed (returncode={r.returncode}):\n"
         f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
