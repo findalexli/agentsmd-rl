@@ -362,12 +362,20 @@ async def run_dual_pass(
         r.base_count = len(base_status)
         r.gold_count = len(gold_status)
 
-        # f2p: failed at base, passed at gold
-        f2p = sorted([
-            name for name, status in base_status.items()
-            if status.upper() in {"FAILED", "ERROR"}
-            and gold_status.get(name, "").upper() == "PASSED"
-        ])
+        # f2p: failed at base AND passed at gold, OR only-in-gold AND passed
+        # (PR-added tests don't exist at base — SWE-bench treats those as f2p)
+        f2p_set = set()
+        for name, gstat in gold_status.items():
+            if gstat.upper() != "PASSED": continue
+            bstat = base_status.get(name, "").upper()
+            if bstat in {"FAILED", "ERROR"}:
+                f2p_set.add(name)
+            elif bstat == "" and base_status:
+                # Only in gold — newly added by PR. Sanity check: base must have
+                # produced *some* tests (else base run failed entirely and the
+                # diff is meaningless).
+                f2p_set.add(name)
+        f2p = sorted(f2p_set)
         # p2p: passed at base AND gold
         p2p = sorted([
             name for name, status in base_status.items()

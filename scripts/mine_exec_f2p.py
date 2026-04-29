@@ -97,50 +97,69 @@ def safe_id(name: str) -> str:
     return s[:80]  # cap length
 
 
-def generate_test_block(task_name: str, test_cmd: str, f2p_names: list[str]) -> str:
-    """Generate pytest functions that re-run the discovered f2p tests."""
-    if not f2p_names: return ""
+def _emit_test_fns(prefix: str, names: list[str], description: str) -> tuple[str, set[str]]:
+    """Return (block_text, set_of_function_ids_used)."""
+    seen: set[str] = set()
+    out: list[str] = []
+    for name in names:
+        sid = safe_id(name)
+        orig = sid; n = 1
+        while sid in seen:
+            n += 1; sid = f"{orig}_{n}"
+        seen.add(sid)
+        out.extend([
+            f"def test_exec_{prefix}_{sid}(_run_cmd=None):",
+            f"    # {description}: {name!r}",
+            f"    pass  # placeholder — recorded in manifest under origin: exec_diff",
+            "",
+        ])
+    return ("\n".join(out) + "\n" if out else "", seen)
+
+
+def generate_test_block(task_name: str, test_cmd: str,
+                        f2p_names: list[str], p2p_names: list[str]) -> str:
+    """Generate pytest functions for both f2p and p2p discovered tests."""
+    if not f2p_names and not p2p_names: return ""
     lines = [
         SECTION_MARKER,
         f"# Source: dual-pass exec at base vs gold inside the task's docker image",
         f"# Test command: {test_cmd[:120]}",
-        f"# {len(f2p_names)} fail→pass test name(s) discovered.",
+        f"# {len(f2p_names)} fail→pass + {len(p2p_names)} pass→pass test name(s) discovered.",
         "",
     ]
-    seen = set()
-    for name in f2p_names:
-        sid = safe_id(name)
-        # Disambiguate collisions
-        orig = sid; n = 1
-        while sid in seen:
-            n += 1; sid = f"{orig}_{n}"
-        seen.add(sid)
-        lines.extend([
-            f"def test_exec_f2p_{sid}(_run_cmd=None):",
-            f"    # Discovered f2p: {name!r}",
-            f"    # The harbor verifier runs solve.sh and the upstream suite — this test",
-            f"    # asserts the specific test {name!r} reaches PASSED status.",
-            f"    pass  # placeholder — test names are recorded in the manifest",
-            "",
-        ])
-    return "\n".join(lines) + "\n"
+    f2p_block, _ = _emit_test_fns("f2p", f2p_names, "Discovered f2p (failed at base, passed at gold)")
+    p2p_block, _ = _emit_test_fns("p2p", p2p_names, "Discovered p2p (passed at both base and gold)")
+    if f2p_block: lines.append(f2p_block)
+    if p2p_block: lines.append(p2p_block)
+    return "\n".join(lines)
 
 
-def generate_manifest_entries(task_name: str, f2p_names: list[str], test_cmd: str) -> list[dict]:
-    out = []
-    seen = set()
-    for name in f2p_names:
-        sid = safe_id(name)
-        orig = sid; n = 1
-        while sid in seen:
-            n += 1; sid = f"{orig}_{n}"
-        seen.add(sid)
-        out.append({
-            "id": f"exec_f2p_{sid}",
-            "type": "fail_to_pass",
-            "origin": "exec_diff",
-            "description": f"Test {name!r} fails at base, passes after solve.sh (test cmd: {test_cmd[:80]})",
-        })
+def generate_manifest_entries(task_name: str, f2p_names: list[str],
+                                p2p_names: list[str], test_cmd: str) -> list[dict]:
+    out: list[dict] = []
+    seen_ids: set[str] = set()
+
+    def _add(prefix: str, names: list[str], type_: str):
+        local_seen: set[str] = set()
+        for name in names:
+            sid = safe_id(name)
+            orig = sid; n = 1
+            while sid in local_seen:
+                n += 1; sid = f"{orig}_{n}"
+            local_seen.add(sid)
+            cid = f"exec_{prefix}_{sid}"
+            if cid in seen_ids: continue
+            seen_ids.add(cid)
+            out.append({
+                "id": cid,
+                "type": type_,
+                "origin": "exec_diff",
+                "description": (f"Test {name!r} ({prefix}) — captured by dual-pass exec mining"
+                                f" (cmd: {test_cmd[:60]})"),
+            })
+
+    _add("f2p", f2p_names, "fail_to_pass")
+    _add("p2p", p2p_names, "pass_to_pass")
     return out
 
 
@@ -206,27 +225,33 @@ async def mine_one(sandbox_factory, task_dir: Path, dry_run: bool, test_timeout:
             "gold_log_tail": (getattr(result, 'gold_log_tail', '') or '')[:3000],
             "fetched_at": dt.datetime.now(dt.timezone.utc).isoformat(),
         }, indent=2))
-        # Write into test_outputs.py + manifest
-        if result.f2p_count > 0:
-            _apply_to_task(task_dir, test_cmd, result.f2p)
+        # Write into test_outputs.py + manifest. Always write if we discovered
+        # ANY test names (f2p or p2p) — p2p sections are valuable regression
+        # signal even when the PR doesn't add new tests.
+        # Cap p2p to top-N to keep manifests sane (some suites have 1500+ tests).
+        P2P_CAP = 50
+        capped_p2p = result.p2p[:P2P_CAP]
+        if result.f2p_count > 0 or capped_p2p:
+            _apply_to_task(task_dir, test_cmd, result.f2p, capped_p2p)
             rec["wrote"] = True
+            rec["p2p_written"] = len(capped_p2p)
     finally:
         try: await sandbox.kill()
         except Exception: pass
     return rec
 
 
-def _apply_to_task(task_dir: Path, test_cmd: str, f2p_names: list[str]) -> None:
+def _apply_to_task(task_dir: Path, test_cmd: str,
+                   f2p_names: list[str], p2p_names: list[str]) -> None:
     """Append/replace the # === Execution-mined f2p === section in test_outputs.py
     and add manifest check entries (origin: exec_diff)."""
     tf = task_dir / "tests" / "test_outputs.py"
     em = task_dir / "eval_manifest.yaml"
     if not (tf.exists() and em.exists()): return
     text = tf.read_text()
-    # Strip prior section if present (idempotent re-runs)
     if SECTION_MARKER in text:
         text = re.split(rf"\n+{re.escape(SECTION_MARKER)}.*", text, maxsplit=1, flags=re.S)[0].rstrip() + "\n"
-    block = generate_test_block(task_dir.name, test_cmd, f2p_names)
+    block = generate_test_block(task_dir.name, test_cmd, f2p_names, p2p_names)
     if block:
         text = text.rstrip() + "\n\n" + block
     tf.write_text(text)
@@ -234,7 +259,7 @@ def _apply_to_task(task_dir: Path, test_cmd: str, f2p_names: list[str]) -> None:
     manifest = yaml.safe_load(em.read_text()) or {}
     manifest.setdefault("checks", [])
     existing_ids = {c.get("id") for c in manifest["checks"]}
-    new = [c for c in generate_manifest_entries(task_dir.name, f2p_names, test_cmd)
+    new = [c for c in generate_manifest_entries(task_dir.name, f2p_names, p2p_names, test_cmd)
            if c["id"] not in existing_ids]
     if new:
         manifest["checks"].extend(new)
