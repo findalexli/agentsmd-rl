@@ -21,9 +21,7 @@ The research question:
 
 > Can we train coding agents to **reason about which repository instructions apply** to a specific task, rather than blindly following all of them or ignoring them all?
 
-The signal we exploit: when a human writes a PR, they make choices about which conventions to follow. That choice — visible in the gold diff — is the ground truth. Conventions the gold solution follows become **positive rubrics**. Conventions that look relevant but would have produced a worse solution if applied become **negative rubrics / distractors**.
-
-Grounded in: [NoisyBench](https://arxiv.org/abs/2601.07226) (80% accuracy drop from hard distractors), [RARE](https://arxiv.org/abs/2505.18761) (rationale-aware reward), [SkillsBench](https://arxiv.org/abs/2602.12670) (skill selection with distractors), [GSM-DC](https://arxiv.org/abs/2505.18761) (distractor training improves out-of-distribution robustness). See [research/negative_rubrics_plan.md](research/negative_rubrics_plan.md) for the full research plan.
+The signal we exploit: when a human writes a PR, they make choices about which conventions to follow. That choice — visible in the gold diff — is the ground truth. Conventions the gold solution follows become **positive rubrics**. Conventions that look relevant but would have produced a worse solution if applied become **negative rubrics / distractors**. See [research/negative_rubrics_plan.md](research/negative_rubrics_plan.md) for the research plan.
 
 ## How the two parts split the universe of PRs
 
@@ -48,34 +46,10 @@ All tasks get the same four-track evaluation:
 
 Each part has its own scout-and-build pipeline, but both end with the same Docker-image-per-task output. The two pipelines differ in *what the gold diff contains* and therefore *how mechanically a task can be built from it*.
 
-```mermaid
-flowchart LR
-    subgraph "Part 1 — agentmd-following (per-pass, 2026-04-26)"
-        direction TB
-        A1[147 hand-curated repos] --> A2[19,417 merged PRs]
-        A2 --> A3[Gemini causality judge<br/>read each diff, ask: did<br/>rule files shape the fix?]
-        A3 --> A4[546 PRs survive]
-        A4 --> A5[Opus 4.7 + Docker oracle<br/>scaffold each task]
-        A5 --> A6[≈540 built]
-    end
-    subgraph "Part 2 — agentmd-create/edit (2026-04-28 comprehensive)"
-        direction TB
-        B1[24 code-search +<br/>28 title-search queries] --> B2[15,608 repos w/ rule files]
-        B2 --> B3[batched GraphQL<br/>≥100 stars, not archived/fork]
-        B3 --> B4[6,966 unique candidate PRs]
-        B4 --> B5[path regex: every<br/>changed file is a rule file]
-        B5 --> B6[deterministic scaffold<br/>extract distinctive added<br/>lines from gold patch]
-        B6 --> B7[1,351 newly built]
-        B7 --> B8[Gemini post-judge:<br/>load-bearing? slop?]
-        B8 --> B9[+1,345 net active]
-    end
-```
+- **Part 1's bottleneck is an LLM call on every candidate** — there's no syntactic way to tell, without reading the diff, whether a code-only fix encodes a documented convention. The Gemini causality judge drops 94 % at this step.
+- **Part 2's bottleneck moves earlier**: a free path-regex filter ("every changed file is a markdown file") drops mixed PRs upstream of any LLM call. A Gemini post-judge then asks *load_bearing?* and *slop_score?* on the full gold patch.
 
-**Part 1's bottleneck is an LLM call on every candidate** — there's no syntactic way to tell, without reading the diff, whether a code-only fix encodes a documented convention. The Gemini judge classifies into A (edits a rule file → routes to Part 2), B (code follows a rule → keep), C (bug-determined, rule files don't matter → drop), or D (unscaffoldable on Linux/Docker → drop). 94 % of admitted PRs are class C — the dominant cut.
-
-**Part 2's bottleneck moves earlier**: the path-regex filter "every changed file is a rule file" is free and drops mixed PRs upstream of any LLM call. The post-judge then reads the full gold patch and asks two specific questions — *load_bearing?* (would an agent reading vs ignoring this patch behave differently?) and *slop_score 0–10?* (concrete commands and version pins, vs. generic "this skill helps with X" boilerplate). It rejects auto-bot output ("Update AGENTS.md for commit X") and generic AI-authored skill prose; keeps anything with concrete behavioural assertions.
-
-For the full per-stage table — what each filter checks, output count, drop rate — and the per-stage Mermaid funnels, see [`research/data_mining_pipeline.md`](research/data_mining_pipeline.md). What follows here is just the headline numbers and design rationale.
+Full per-stage funnels (input counts, drop rates, post-judge schema) live in [`research/data_mining_pipeline.md`](research/data_mining_pipeline.md). What follows here is just the headline numbers.
 
 ### Part 2's scout, in one paragraph
 
@@ -113,8 +87,8 @@ harbor_tasks_md_authoring/   # Part 2 — agentmd-create/edit: rule-file edits (
 harbor_tasks_agentmd_edits/  # Hybrid: code + rule-file edits in same PR (81 active)
 scripts/
   run_agent_eval.py             # Agent eval runner (Track 1+3+4, pluggable backend)
-  fix_task_toml.py              # Batch fix task.toml formatting issues
-  deploy_judge.py               # Deploy standalone judge to all tasks
+  scaffold_markdown_only.py     # Pipeline B — deterministic markdown-authoring scaffolder
+  push_images.py                # Build + push task images to ghcr.io
 research/                    # Research docs, negative rubrics plan
 .claude/skills/              # Claude Code skills for task scaffolding/validation
 .claude/agents/              # Headless agent definitions for batch pipelines
@@ -165,12 +139,12 @@ Python package for building and validating tasks:
 
 ### `research/`
 
-- [rubric-reward-postmortem.md](research/rubric-reward-postmortem.md) — why LLM-generated rubrics failed as reward signal, trace-derived alternative
+- [data_mining_pipeline.md](research/data_mining_pipeline.md) — canonical methods doc (scout → filter → build → ship)
+- [rubric-reward-postmortem.md](research/rubric-reward-postmortem.md) — why LLM-generated rubrics failed as reward signal
 - [agent-manifest-confounding.md](research/agent-manifest-confounding.md) — agent configs as unmeasured confounders
-- [test-design-audit.md](research/test-design-audit.md) — test.sh design audit (SWE-bench Verified critique)
-- [benchmark_construction_log.md](research/benchmark_construction_log.md) — detailed build log (phases 1-12)
-- [negative_rubrics_plan.md](research/negative_rubrics_plan.md) — distractor conventions research plan
-- [pipeline-v2-plan.md](research/pipeline-v2-plan.md) — pipeline architecture optimization plan
+- [towards-better-tests.md](research/towards-better-tests.md) — test-design diagnosis + experimental results
+- [grading-schema-comparison.md](research/grading-schema-comparison.md) — comparison of eval frameworks
+- [negative_rubrics_plan.md](research/negative_rubrics_plan.md) — distractor research plan
 
 ## Pre-Built Docker Images
 
@@ -231,38 +205,6 @@ harbor run -p harbor_tasks/<task> -a claude-code -m claude-opus-4-6 -e e2b -y
 # Outputs per-task JSONL + summary.json with pass rates
 ```
 
-## Eval Results (April 18 2026)
-
-### Opus 4.7 Baseline (10 tasks)
-
-10 tier-A tasks from 10 different repos, evaluated on E2B with full 4-track scoring.
-
-| Task | T1 (tests) | T3 (rubric) | T4 (distractors) | Time | Repo |
-|------|-----------|-------------|-------------------|------|------|
-| areal-data-proxy-batch-endpoint | **1** | 9/11 | 4/4 | 2.6m | inclusionAI/AReaL |
-| sglang-diffusion-dtype-log-aggregation | 0 | 2/2 | 4/4 | 5.7m | sgl-project/sglang |
-| clickhouse-cidb-secrets-refactor | 0 | 3/3 | 2/2 | 8.1m | ClickHouse/ClickHouse |
-| playwright-mcp-press-enter-auto-snapshot | 0 | 0/3 | 5/5 | 8.3m | microsoft/playwright |
-| vllm-rocm-uv-curl-failure | **1** | 3/3 | 2/2 | 10.7m | vllm-project/vllm |
-| mimir-add-splitfile-claude-code-skill | 0 | 4/10 | 2/2 | 14.0m | grafana/mimir |
-| nextjs-pr-status-reply-resolve | **1** | 6/6 | 2/2 | 14.6m | vercel/next.js |
-| workers-sdk-ai-search-type-generation | 0 | 9/10 | 6/6 | 21.6m | cloudflare/workers-sdk |
-
-### Kimi K2.5 vs Opus 4.7 (8 overlapping tasks)
-
-| Metric | Kimi K2.5 (Fireworks) | Opus 4.7 (Anthropic) |
-|--------|----------------------|---------------------|
-| **Track 1 (solve rate)** | 1/8 (12.5%) | 3/8 (37.5%) |
-| **Track 3 (rubric)** | 25/38 (65.8%) | 36/51 (70.6%) |
-| **Track 4 (distractors)** | 21/21 (100%) | 27/27 (100%) |
-| **Avg time** | 484s | 642s |
-
-Key: Opus solves 3x more tasks. Kimi is 25% faster but produces no diff on the hardest task. Track 4 identical at 100% for both models.
-
-### Known Limitations: Track 3/4 Quality (see audit below)
-
-**Track 1 (programmatic tests) is the primary discriminator.** Tracks 3 and 4 have known quality issues that make their scores unreliable signals — see "Rubric Quality Audit" section.
-
 ## Research Insights
 
 Key findings from building this benchmark, documented in `research/`:
@@ -283,7 +225,7 @@ Repos with CLAUDE.md/AGENTS.md files are systematically different from repos wit
 ### SWE-bench-style test design is fragile
 
 Following [OpenAI's critique of SWE-bench Verified](https://openai.com/index/why-we-no-longer-evaluate-swe-bench-verified/), we audited test design across 100+ tasks and found that structural assertions (exact variable names, AST patterns, grep for specific strings) reject valid alternative solutions. Our design principle: test BEHAVIOR not STRUCTURE. Structural checks are supplementary only (<=40% weight), and every fail-to-pass test must invoke the actual code path.
-[Full analysis →](research/test-design-audit.md)
+[Full analysis →](research/towards-better-tests.md)
 
 ### Generating hard, non-trivial rubrics is an open problem
 
@@ -405,19 +347,6 @@ python -m taskforge.scout scout --agentmd --repos-file scouted_repos.jsonl --out
 python -m taskforge.pipeline scaffold-from-prs --input scouted.jsonl --workers 8 --pool
 ```
 
-## Differentiation from Existing Work
-
-| What | Who Does It | Do We? |
-|------|------------|--------|
-| Mine PRs → Docker environments | SWE-rebench, SWE-Universe, SWE-Next | Yes (standard) |
-| Fail-to-pass test verification | SWE-bench (all variants) | Yes (standard) |
-| RL training from PR environments | SWE-Gym, SWE-RL, DeepSWE | Yes |
-| **Filter for repos with agent configs** | **Nobody** | **Yes (novel)** |
-| **4-track eval: code + config + rubric + distractors** | **Nobody** | **Yes (novel)** |
-| **Negative rubrics (distractor discrimination)** | **Nobody** | **Yes (novel, 1,710 distractors)** |
-| **Hierarchical config context extraction** | **Nobody** | **Yes (novel)** |
-| **Self-contained LLM judge in test harness** | **Nobody** | **Yes (novel, Gemini structured output inside harbor)** |
-
 ## Status (2026-04-28)
 
 - **Part 1 (`harbor_tasks/`)** — agentmd-following: **609 active**. ≈ 93 % Docker oracle pass. Last scout pass 2026-04-26.
@@ -451,47 +380,6 @@ Rubric and distractor rules are generated for diagnostics and model comparison, 
 - Standalone LLM judge deployed into 952 tasks — `harbor run` produces all 4 tracks without external wrappers
 - Agent eval runner (`scripts/run_agent_eval.py`) for batch evaluation with pluggable backends
 
-### Rubric Quality Audit (April 19 2026)
+### Track 3/4 quality
 
-Deep audit of all rubric and distractor rules across 8 eval tasks revealed systemic quality issues. **Track 3 (rubric) scores are currently noise, not signal. Track 4 (distractors) has a ceiling effect — both Opus and Kimi score 100%.**
-
-**Smoking gun**: Kimi K2.5 scored 6/6 rubric on `nextjs-pr-status-reply-resolve` WITHOUT solving the task (T1=0). The rubric doesn't test convention-following — it tests whether the agent attempted the task at all.
-
-**Five systemic pathologies (across 3,487 rubric rules):**
-
-| Problem | Frequency | Description |
-|---------|-----------|-------------|
-| **Tautological rules** | ~50% | Restate what instruction.md says or what any correct solution does automatically |
-| **Duplicate rules** | ~17% | Same rule 2-4x with slightly different phrasing (e.g., wildcard-import 4x in one task) |
-| **Redundant with Track 1** | ~15% | Already tested by programmatic checks in test.sh |
-| **Wrong line numbers** | ~30% | Source lines off by 3-16 lines; files exist (100% accurate) but cited lines contain unrelated content |
-| **Wrong-scope distractors** | ~60% | Pulled from unrelated agent files (e.g., test-generator rules for framework source code) |
-
-**Quantified field coverage (3,487 rubric rules across 914 manifests):**
-
-| Field | Coverage |
-|-------|----------|
-| `source.path` | 73% |
-| `source.lines` | 68% |
-| `evidence` | 35% |
-| `source_text` | 8% |
-| `category` | 37% |
-
-Distractors are well-formed (99%+ field coverage) but mostly implausible — no frontier model follows them.
-
-**Root cause**: The rubric generation prompt asks "find rules the gold solution follows" without distinguishing pre-existing conventions from descriptions of what the PR does. Gemini correctly identifies that the gold uses `Info().get_secret()` and reports it as a "convention" — but it's just the task instruction restated.
-
-**Decision: outcome-only reward, rubrics as monitoring.**
-
-We attempted multiple fixes — Codex/GPT-5.4 extraction (fixed line drift, 100% accuracy), Kimi→Gemini→Kimi validation loop (caught 25-75% of hallucinations), anti-tautology gates (caught obvious cases). These improved precision but didn't solve the core problem: tautological rules are *technically correct*, they just don't test anything meaningful. The boundary between "convention the solution follows" and "description of the solution" is irreducibly fuzzy.
-
-Track 1 (binary outcome from programmatic tests) is the sole RL reward signal. Tracks 3 and 4 are logged for diagnostics — useful for understanding *how* an agent solved a task, not *whether* it did. See [research/rubric-reward-postmortem.md](research/rubric-reward-postmortem.md) for the full analysis and future direction (trace-derived rubrics from multi-agent runs).
-
-**Pipeline improvements (Apr 2026):**
-- Retry stack redesign: eliminated 120x retry amplification (was 10×4×3 calls per rate limit)
-- Multi-backend pool: MiniMax (primary) + GLM (secondary) with auto-fallback and auto-resurrect
-- Staggered worker startup prevents burst rate limiting
-- task.toml batch fixer: all 1,136 task configs now parse cleanly (fixed 222 broken files)
-- Structural test audit: removed syntax-overfitting assertions (if/else keyword checks, exact variable assignments)
-
-E2B agent-chain pipeline operational. RL training loop verified end-to-end with Qwen3.5-35B-A3B on Harbor.
+Track 1 (programmatic tests) is the sole RL reward. Tracks 3 (rubric) and 4 (distractors) are logged as monitoring signals only — they have known quality issues (~50 % tautological rubric rules, distractor ceiling effect at 100 %) that make them unreliable for ranking agents. Full diagnosis in [research/rubric-reward-postmortem.md](research/rubric-reward-postmortem.md).

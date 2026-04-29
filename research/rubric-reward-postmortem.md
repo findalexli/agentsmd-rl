@@ -128,7 +128,7 @@ Anchor on Opus (highest baseline solve rate, 30%): its successful traces are the
 ### Requirements
 
 - **Multi-model trace data** — produced as byproduct of model-comparison eval already planned.
-- **Trace logging** — capture file reads, not just final diff. Tool-call logging already exists per `research/trajectory-logging-design.md`.
+- **Trace logging** — capture file reads, not just final diff. Tool-call logging already exists per `research/archive/trajectory-logging-design.md`.
 - **Sufficient task coverage** — need tasks where ≥1 agent succeeds and ≥1 fails. All-pass / all-fail tasks produce no discriminative signal.
 
 ### Practicality
