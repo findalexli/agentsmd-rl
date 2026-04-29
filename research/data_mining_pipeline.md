@@ -73,10 +73,6 @@ Each task needs a custom behavioural test, so Claude Opus 4.7 in an E2B sandbox 
 
 Per-PR yield: **2.8 %**. The dominant cut is the causality judge — almost all merged PRs are bug fixes any agent could write without consulting any markdown. Class A (gold edits a markdown file) is routed back to the authoring corpus.
 
-## Why the two pipelines look different
-
-Markdown authoring gets a free path-regex shortcut: "the diff edits a markdown file" is visible in file paths alone. Markdown following has no syntactic short-circuit — there's no way to know whether a code-only fix encodes a documented convention without reading the diff, so every candidate costs an LLM call.
-
 ## Persistent raw outputs
 
 Kept under `scout_data/` (gitignored) so the post-judge can be re-run without re-fetching:
