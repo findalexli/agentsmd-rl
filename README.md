@@ -143,7 +143,6 @@ Python package for building and validating tasks:
 - [rubric-reward-postmortem.md](research/rubric-reward-postmortem.md) — why LLM-generated rubrics failed as reward signal
 - [agent-manifest-confounding.md](research/agent-manifest-confounding.md) — agent configs as unmeasured confounders
 - [towards-better-tests.md](research/towards-better-tests.md) — test-design diagnosis + experimental results
-- [grading-schema-comparison.md](research/grading-schema-comparison.md) — comparison of eval frameworks
 - [negative_rubrics_plan.md](research/negative_rubrics_plan.md) — distractor research plan
 
 ## Pre-Built Docker Images

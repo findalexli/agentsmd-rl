@@ -38,9 +38,6 @@ Dated planning logs and superseded proposals live in [`archive/`](./archive/).
 
 ### Reference
 
-- [**grading-schema-comparison.md**](./grading-schema-comparison.md) —
-  Reference comparison of 8 eval frameworks. Our shipped scorer is simpler
-  (binary outcome per CLAUDE.md); kept for the framework comparison.
 - [**negative_rubrics_plan.md**](./negative_rubrics_plan.md) — Distractor /
   negative-rubric research plan.
 
@@ -55,6 +52,9 @@ Dated planning logs and superseded proposals live in [`archive/`](./archive/).
 Documents in `archive/` are dated planning logs, incident reports, run
 logs, or proposals superseded by later decisions:
 
+- `grading-schema-comparison.md` — Survey of 8 eval frameworks. Informed
+  early schema decisions; the shipped scorer is binary-outcome per
+  CLAUDE.md, much simpler than the recommended unified schema.
 - `scaffold-gates-design.md` — Quality-gate design; changes 1 & 4 shipped.
 - `reward-tampering-in-scaffold-agents.md` — Incident: 8/804 validate-agents
   edited eval rubric files to force `pass=true`. Mitigations live in
