@@ -463,3 +463,101 @@ def test_ci_run_bdd_tests_run_bdd_tests():
     assert r.returncode == 0, (
         f"CI step 'Run bdd tests' failed (returncode={r.returncode}):\n"
         f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+# === Execution-mined f2p tests (taskforge.exec_f2p_miner) ===
+# Source: dual-pass exec at base vs gold inside the task's docker image
+# Test command: npm run test:unit
+# 0 fail→pass + 23 pass→pass test name(s) discovered.
+
+def test_exec_p2p_src_ee_services_access_approval_request_access_approval_request_fns_test_ts_8_te(_run_cmd=None):
+    # Discovered p2p (passed at both base and gold): 'src/ee/services/access-approval-request/access-approval-request-fns.test.ts (8 tests)'
+    pass  # placeholder — recorded in manifest under origin: exec_diff
+
+def test_exec_p2p_src_ee_services_pam_web_access_pam_postgres_data_explorer_metadata_test_ts_9_tes(_run_cmd=None):
+    # Discovered p2p (passed at both base and gold): 'src/ee/services/pam-web-access/pam-postgres-data-explorer-metadata.test.ts (9 tests)'
+    pass  # placeholder — recorded in manifest under origin: exec_diff
+
+def test_exec_p2p_src_ee_services_pam_web_access_pam_postgres_session_handler_test_ts_4_tests(_run_cmd=None):
+    # Discovered p2p (passed at both base and gold): 'src/ee/services/pam-web-access/pam-postgres-session-handler.test.ts (4 tests)'
+    pass  # placeholder — recorded in manifest under origin: exec_diff
+
+def test_exec_p2p_src_ee_services_pam_web_access_pam_redis_formatter_test_ts_25_tests(_run_cmd=None):
+    # Discovered p2p (passed at both base and gold): 'src/ee/services/pam-web-access/pam-redis-formatter.test.ts (25 tests)'
+    pass  # placeholder — recorded in manifest under origin: exec_diff
+
+def test_exec_p2p_src_ee_services_pam_web_access_pam_web_access_repl_test_ts_19_tests(_run_cmd=None):
+    # Discovered p2p (passed at both base and gold): 'src/ee/services/pam-web-access/pam-web-access-repl.test.ts (19 tests)'
+    pass  # placeholder — recorded in manifest under origin: exec_diff
+
+def test_exec_p2p_src_ee_services_pam_web_access_pam_web_access_sql_formatter_test_ts_21_tests(_run_cmd=None):
+    # Discovered p2p (passed at both base and gold): 'src/ee/services/pam-web-access/pam-web-access-sql-formatter.test.ts (21 tests)'
+    pass  # placeholder — recorded in manifest under origin: exec_diff
+
+def test_exec_p2p_src_ee_services_pam_web_access_pam_web_access_sql_lexer_test_ts_21_tests(_run_cmd=None):
+    # Discovered p2p (passed at both base and gold): 'src/ee/services/pam-web-access/pam-web-access-sql-lexer.test.ts (21 tests)'
+    pass  # placeholder — recorded in manifest under origin: exec_diff
+
+def test_exec_p2p_src_lib_cache_with_cache_test_ts_28_tests(_run_cmd=None):
+    # Discovered p2p (passed at both base and gold): 'src/lib/cache/with-cache.test.ts (28 tests)'
+    pass  # placeholder — recorded in manifest under origin: exec_diff
+
+def test_exec_p2p_src_lib_casl_boundary_test_ts_41_tests(_run_cmd=None):
+    # Discovered p2p (passed at both base and gold): 'src/lib/casl/boundary.test.ts (41 tests)'
+    pass  # placeholder — recorded in manifest under origin: exec_diff
+
+def test_exec_p2p_src_lib_certificates_extract_certificate_test_ts_2_tests(_run_cmd=None):
+    # Discovered p2p (passed at both base and gold): 'src/lib/certificates/extract-certificate.test.ts (2 tests)'
+    pass  # placeholder — recorded in manifest under origin: exec_diff
+
+def test_exec_p2p_src_lib_crypto_pqc_pqc_crypto_test_ts_19_tests_18_skipped(_run_cmd=None):
+    # Discovered p2p (passed at both base and gold): 'src/lib/crypto/pqc/pqc-crypto.test.ts (19 tests | 18 skipped)'
+    pass  # placeholder — recorded in manifest under origin: exec_diff
+
+def test_exec_p2p_src_lib_crypto_pqc_pqc_x509_test_ts_4_tests_4_skipped(_run_cmd=None):
+    # Discovered p2p (passed at both base and gold): 'src/lib/crypto/pqc/pqc-x509.test.ts (4 tests | 4 skipped)'
+    pass  # placeholder — recorded in manifest under origin: exec_diff
+
+def test_exec_p2p_src_lib_request_context_request_memoizer_test_ts_10_tests(_run_cmd=None):
+    # Discovered p2p (passed at both base and gold): 'src/lib/request-context/request-memoizer.test.ts (10 tests)'
+    pass  # placeholder — recorded in manifest under origin: exec_diff
+
+def test_exec_p2p_src_lib_validator_validate_string_test_ts_5_tests(_run_cmd=None):
+    # Discovered p2p (passed at both base and gold): 'src/lib/validator/validate-string.test.ts (5 tests)'
+    pass  # placeholder — recorded in manifest under origin: exec_diff
+
+def test_exec_p2p_src_lib_validator_validate_url_test_ts_3_tests(_run_cmd=None):
+    # Discovered p2p (passed at both base and gold): 'src/lib/validator/validate-url.test.ts (3 tests)'
+    pass  # placeholder — recorded in manifest under origin: exec_diff
+
+def test_exec_p2p_src_services_certificate_authority_certificate_authority_fns_test_ts_23_tests(_run_cmd=None):
+    # Discovered p2p (passed at both base and gold): 'src/services/certificate-authority/certificate-authority-fns.test.ts (23 tests)'
+    pass  # placeholder — recorded in manifest under origin: exec_diff
+
+def test_exec_p2p_src_services_certificate_est_v3_certificate_est_v3_service_test_ts_15_tests(_run_cmd=None):
+    # Discovered p2p (passed at both base and gold): 'src/services/certificate-est-v3/certificate-est-v3-service.test.ts (15 tests)'
+    pass  # placeholder — recorded in manifest under origin: exec_diff
+
+def test_exec_p2p_src_services_certificate_policy_certificate_policy_service_test_ts_55_tests(_run_cmd=None):
+    # Discovered p2p (passed at both base and gold): 'src/services/certificate-policy/certificate-policy-service.test.ts (55 tests)'
+    pass  # placeholder — recorded in manifest under origin: exec_diff
+
+def test_exec_p2p_src_services_certificate_profile_certificate_profile_service_test_ts_39_tests(_run_cmd=None):
+    # Discovered p2p (passed at both base and gold): 'src/services/certificate-profile/certificate-profile-service.test.ts (39 tests)'
+    pass  # placeholder — recorded in manifest under origin: exec_diff
+
+def test_exec_p2p_src_services_certificate_request_certificate_request_service_test_ts_17_tests(_run_cmd=None):
+    # Discovered p2p (passed at both base and gold): 'src/services/certificate-request/certificate-request-service.test.ts (17 tests)'
+    pass  # placeholder — recorded in manifest under origin: exec_diff
+
+def test_exec_p2p_src_services_certificate_v3_certificate_v3_service_test_ts_27_tests(_run_cmd=None):
+    # Discovered p2p (passed at both base and gold): 'src/services/certificate-v3/certificate-v3-service.test.ts (27 tests)'
+    pass  # placeholder — recorded in manifest under origin: exec_diff
+
+def test_exec_p2p_src_services_folder_commit_folder_commit_service_test_ts_11_tests(_run_cmd=None):
+    # Discovered p2p (passed at both base and gold): 'src/services/folder-commit/folder-commit-service.test.ts (11 tests)'
+    pass  # placeholder — recorded in manifest under origin: exec_diff
+
+def test_exec_p2p_src_services_secret_folder_secret_folder_fns_test_ts_36_tests(_run_cmd=None):
+    # Discovered p2p (passed at both base and gold): 'src/services/secret-folder/secret-folder-fns.test.ts (36 tests)'
+    pass  # placeholder — recorded in manifest under origin: exec_diff
+

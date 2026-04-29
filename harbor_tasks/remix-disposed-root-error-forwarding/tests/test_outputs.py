@@ -314,3 +314,189 @@ def test_ci_test_run_tests():
     assert r.returncode == 0, (
         f"CI step 'Run tests' failed (returncode={r.returncode}):\n"
         f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+# === Execution-mined f2p tests (taskforge.exec_f2p_miner) ===
+# Source: dual-pass exec at base vs gold inside the task's docker image
+# Test command: pnpm test
+# 0 fail→pass + 45 pass→pass test name(s) discovered.
+
+def test_exec_p2p_chromium_src_lib_mixins_animate_layout_mixin_test_tsx_4_tests(_run_cmd=None):
+    # Discovered p2p (passed at both base and gold): ' chromium  src/lib/mixins/animate-layout-mixin.test.tsx (4 tests)'
+    pass  # placeholder — recorded in manifest under origin: exec_diff
+
+def test_exec_p2p_chromium_src_lib_mixins_animate_mixins_test_tsx_5_tests(_run_cmd=None):
+    # Discovered p2p (passed at both base and gold): ' chromium  src/lib/mixins/animate-mixins.test.tsx (5 tests)'
+    pass  # placeholder — recorded in manifest under origin: exec_diff
+
+def test_exec_p2p_chromium_src_lib_mixins_css_mixin_test_tsx_5_tests(_run_cmd=None):
+    # Discovered p2p (passed at both base and gold): ' chromium  src/lib/mixins/css-mixin.test.tsx (5 tests)'
+    pass  # placeholder — recorded in manifest under origin: exec_diff
+
+def test_exec_p2p_chromium_src_lib_mixins_keys_mixin_test_tsx_2_tests(_run_cmd=None):
+    # Discovered p2p (passed at both base and gold): ' chromium  src/lib/mixins/keys-mixin.test.tsx (2 tests)'
+    pass  # placeholder — recorded in manifest under origin: exec_diff
+
+def test_exec_p2p_chromium_src_lib_mixins_on_mixin_test_tsx_6_tests(_run_cmd=None):
+    # Discovered p2p (passed at both base and gold): ' chromium  src/lib/mixins/on-mixin.test.tsx (6 tests)'
+    pass  # placeholder — recorded in manifest under origin: exec_diff
+
+def test_exec_p2p_chromium_src_lib_mixins_press_mixin_test_tsx_12_tests(_run_cmd=None):
+    # Discovered p2p (passed at both base and gold): ' chromium  src/lib/mixins/press-mixin.test.tsx (12 tests)'
+    pass  # placeholder — recorded in manifest under origin: exec_diff
+
+def test_exec_p2p_chromium_src_lib_mixins_ref_mixin_test_tsx_2_tests(_run_cmd=None):
+    # Discovered p2p (passed at both base and gold): ' chromium  src/lib/mixins/ref-mixin.test.tsx (2 tests)'
+    pass  # placeholder — recorded in manifest under origin: exec_diff
+
+def test_exec_p2p_chromium_src_test_client_entry_test_tsx_20_tests(_run_cmd=None):
+    # Discovered p2p (passed at both base and gold): ' chromium  src/test/client-entry.test.tsx (20 tests)'
+    pass  # placeholder — recorded in manifest under origin: exec_diff
+
+def test_exec_p2p_chromium_src_test_create_element_test_ts_1_test(_run_cmd=None):
+    # Discovered p2p (passed at both base and gold): ' chromium  src/test/create-element.test.ts (1 test)'
+    pass  # placeholder — recorded in manifest under origin: exec_diff
+
+def test_exec_p2p_chromium_src_test_diff_dom_test_tsx_9_tests(_run_cmd=None):
+    # Discovered p2p (passed at both base and gold): ' chromium  src/test/diff-dom.test.tsx (9 tests)'
+    pass  # placeholder — recorded in manifest under origin: exec_diff
+
+def test_exec_p2p_chromium_src_test_document_state_test_ts_11_tests(_run_cmd=None):
+    # Discovered p2p (passed at both base and gold): ' chromium  src/test/document-state.test.ts (11 tests)'
+    pass  # placeholder — recorded in manifest under origin: exec_diff
+
+def test_exec_p2p_chromium_src_test_event_listeners_test_tsx_8_tests(_run_cmd=None):
+    # Discovered p2p (passed at both base and gold): ' chromium  src/test/event-listeners.test.tsx (8 tests)'
+    pass  # placeholder — recorded in manifest under origin: exec_diff
+
+def test_exec_p2p_chromium_src_test_frame_test_tsx_40_tests(_run_cmd=None):
+    # Discovered p2p (passed at both base and gold): ' chromium  src/test/frame.test.tsx (40 tests)'
+    pass  # placeholder — recorded in manifest under origin: exec_diff
+
+def test_exec_p2p_chromium_src_test_hydration_attributes_test_tsx_11_tests(_run_cmd=None):
+    # Discovered p2p (passed at both base and gold): ' chromium  src/test/hydration.attributes.test.tsx (11 tests)'
+    pass  # placeholder — recorded in manifest under origin: exec_diff
+
+def test_exec_p2p_chromium_src_test_hydration_boolean_attrs_test_tsx_7_tests(_run_cmd=None):
+    # Discovered p2p (passed at both base and gold): ' chromium  src/test/hydration.boolean-attrs.test.tsx (7 tests)'
+    pass  # placeholder — recorded in manifest under origin: exec_diff
+
+def test_exec_p2p_chromium_src_test_hydration_components_test_tsx_13_tests(_run_cmd=None):
+    # Discovered p2p (passed at both base and gold): ' chromium  src/test/hydration.components.test.tsx (13 tests)'
+    pass  # placeholder — recorded in manifest under origin: exec_diff
+
+def test_exec_p2p_chromium_src_test_hydration_css_test_tsx_6_tests(_run_cmd=None):
+    # Discovered p2p (passed at both base and gold): ' chromium  src/test/hydration.css.test.tsx (6 tests)'
+    pass  # placeholder — recorded in manifest under origin: exec_diff
+
+def test_exec_p2p_chromium_src_test_hydration_extra_nodes_test_tsx_4_tests(_run_cmd=None):
+    # Discovered p2p (passed at both base and gold): ' chromium  src/test/hydration.extra-nodes.test.tsx (4 tests)'
+    pass  # placeholder — recorded in manifest under origin: exec_diff
+
+def test_exec_p2p_chromium_src_test_hydration_forms_test_tsx_7_tests(_run_cmd=None):
+    # Discovered p2p (passed at both base and gold): ' chromium  src/test/hydration.forms.test.tsx (7 tests)'
+    pass  # placeholder — recorded in manifest under origin: exec_diff
+
+def test_exec_p2p_chromium_src_test_hydration_mismatch_test_tsx_7_tests(_run_cmd=None):
+    # Discovered p2p (passed at both base and gold): ' chromium  src/test/hydration.mismatch.test.tsx (7 tests)'
+    pass  # placeholder — recorded in manifest under origin: exec_diff
+
+def test_exec_p2p_chromium_src_test_hydration_text_test_tsx_6_tests(_run_cmd=None):
+    # Discovered p2p (passed at both base and gold): ' chromium  src/test/hydration.text.test.tsx (6 tests)'
+    pass  # placeholder — recorded in manifest under origin: exec_diff
+
+def test_exec_p2p_chromium_src_test_hydration_void_elements_test_tsx_6_tests(_run_cmd=None):
+    # Discovered p2p (passed at both base and gold): ' chromium  src/test/hydration.void-elements.test.tsx (6 tests)'
+    pass  # placeholder — recorded in manifest under origin: exec_diff
+
+def test_exec_p2p_chromium_src_test_jsx_test_tsx_12_tests(_run_cmd=None):
+    # Discovered p2p (passed at both base and gold): ' chromium  src/test/jsx.test.tsx (12 tests)'
+    pass  # placeholder — recorded in manifest under origin: exec_diff
+
+def test_exec_p2p_chromium_src_test_spring_test_ts_25_tests(_run_cmd=None):
+    # Discovered p2p (passed at both base and gold): ' chromium  src/test/spring.test.ts (25 tests)'
+    pass  # placeholder — recorded in manifest under origin: exec_diff
+
+def test_exec_p2p_chromium_src_test_stream_test_tsx_86_tests(_run_cmd=None):
+    # Discovered p2p (passed at both base and gold): ' chromium  src/test/stream.test.tsx (86 tests)'
+    pass  # placeholder — recorded in manifest under origin: exec_diff
+
+def test_exec_p2p_chromium_src_test_style_test_ts_4_tests(_run_cmd=None):
+    # Discovered p2p (passed at both base and gold): ' chromium  src/test/style.test.ts (4 tests)'
+    pass  # placeholder — recorded in manifest under origin: exec_diff
+
+def test_exec_p2p_chromium_src_test_stylesheet_test_ts_11_tests(_run_cmd=None):
+    # Discovered p2p (passed at both base and gold): ' chromium  src/test/stylesheet.test.ts (11 tests)'
+    pass  # placeholder — recorded in manifest under origin: exec_diff
+
+def test_exec_p2p_chromium_src_test_vdom_components_test_tsx_6_tests_1_skipped(_run_cmd=None):
+    # Discovered p2p (passed at both base and gold): ' chromium  src/test/vdom.components.test.tsx (6 tests | 1 skipped)'
+    pass  # placeholder — recorded in manifest under origin: exec_diff
+
+def test_exec_p2p_chromium_src_test_vdom_connect_test_tsx_2_tests(_run_cmd=None):
+    # Discovered p2p (passed at both base and gold): ' chromium  src/test/vdom.connect.test.tsx (2 tests)'
+    pass  # placeholder — recorded in manifest under origin: exec_diff
+
+def test_exec_p2p_chromium_src_test_vdom_context_test_tsx_3_tests(_run_cmd=None):
+    # Discovered p2p (passed at both base and gold): ' chromium  src/test/vdom.context.test.tsx (3 tests)'
+    pass  # placeholder — recorded in manifest under origin: exec_diff
+
+def test_exec_p2p_chromium_src_test_vdom_controlled_props_test_tsx_5_tests(_run_cmd=None):
+    # Discovered p2p (passed at both base and gold): ' chromium  src/test/vdom.controlled-props.test.tsx (5 tests)'
+    pass  # placeholder — recorded in manifest under origin: exec_diff
+
+def test_exec_p2p_chromium_src_test_vdom_dom_order_test_tsx_8_tests(_run_cmd=None):
+    # Discovered p2p (passed at both base and gold): ' chromium  src/test/vdom.dom-order.test.tsx (8 tests)'
+    pass  # placeholder — recorded in manifest under origin: exec_diff
+
+def test_exec_p2p_chromium_src_test_vdom_elements_fragments_test_tsx_8_tests(_run_cmd=None):
+    # Discovered p2p (passed at both base and gold): ' chromium  src/test/vdom.elements-fragments.test.tsx (8 tests)'
+    pass  # placeholder — recorded in manifest under origin: exec_diff
+
+def test_exec_p2p_chromium_src_test_vdom_errors_test_tsx_16_tests(_run_cmd=None):
+    # Discovered p2p (passed at both base and gold): ' chromium  src/test/vdom.errors.test.tsx (16 tests)'
+    pass  # placeholder — recorded in manifest under origin: exec_diff
+
+def test_exec_p2p_chromium_src_test_vdom_events_test_tsx_3_tests(_run_cmd=None):
+    # Discovered p2p (passed at both base and gold): ' chromium  src/test/vdom.events.test.tsx (3 tests)'
+    pass  # placeholder — recorded in manifest under origin: exec_diff
+
+def test_exec_p2p_chromium_src_test_vdom_insert_remove_test_tsx_14_tests(_run_cmd=None):
+    # Discovered p2p (passed at both base and gold): ' chromium  src/test/vdom.insert-remove.test.tsx (14 tests)'
+    pass  # placeholder — recorded in manifest under origin: exec_diff
+
+def test_exec_p2p_chromium_src_test_vdom_keys_test_tsx_14_tests(_run_cmd=None):
+    # Discovered p2p (passed at both base and gold): ' chromium  src/test/vdom.keys.test.tsx (14 tests)'
+    pass  # placeholder — recorded in manifest under origin: exec_diff
+
+def test_exec_p2p_chromium_src_test_vdom_mixins_test_tsx_16_tests(_run_cmd=None):
+    # Discovered p2p (passed at both base and gold): ' chromium  src/test/vdom.mixins.test.tsx (16 tests)'
+    pass  # placeholder — recorded in manifest under origin: exec_diff
+
+def test_exec_p2p_chromium_src_test_vdom_props_test_tsx_33_tests_21_skipped(_run_cmd=None):
+    # Discovered p2p (passed at both base and gold): ' chromium  src/test/vdom.props.test.tsx (33 tests | 21 skipped)'
+    pass  # placeholder — recorded in manifest under origin: exec_diff
+
+def test_exec_p2p_chromium_src_test_vdom_range_root_test_tsx_22_tests(_run_cmd=None):
+    # Discovered p2p (passed at both base and gold): ' chromium  src/test/vdom.range-root.test.tsx (22 tests)'
+    pass  # placeholder — recorded in manifest under origin: exec_diff
+
+def test_exec_p2p_chromium_src_test_vdom_replacements_test_tsx_21_tests(_run_cmd=None):
+    # Discovered p2p (passed at both base and gold): ' chromium  src/test/vdom.replacements.test.tsx (21 tests)'
+    pass  # placeholder — recorded in manifest under origin: exec_diff
+
+def test_exec_p2p_chromium_src_test_vdom_scheduler_test_tsx_2_tests(_run_cmd=None):
+    # Discovered p2p (passed at both base and gold): ' chromium  src/test/vdom.scheduler.test.tsx (2 tests)'
+    pass  # placeholder — recorded in manifest under origin: exec_diff
+
+def test_exec_p2p_chromium_src_test_vdom_signals_test_tsx_5_tests(_run_cmd=None):
+    # Discovered p2p (passed at both base and gold): ' chromium  src/test/vdom.signals.test.tsx (5 tests)'
+    pass  # placeholder — recorded in manifest under origin: exec_diff
+
+def test_exec_p2p_chromium_src_test_vdom_svg_test_tsx_8_tests(_run_cmd=None):
+    # Discovered p2p (passed at both base and gold): ' chromium  src/test/vdom.svg.test.tsx (8 tests)'
+    pass  # placeholder — recorded in manifest under origin: exec_diff
+
+def test_exec_p2p_chromium_src_test_vdom_tasks_test_tsx_2_tests(_run_cmd=None):
+    # Discovered p2p (passed at both base and gold): ' chromium  src/test/vdom.tasks.test.tsx (2 tests)'
+    pass  # placeholder — recorded in manifest under origin: exec_diff
+

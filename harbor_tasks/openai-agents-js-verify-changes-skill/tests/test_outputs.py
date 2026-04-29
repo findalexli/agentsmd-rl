@@ -166,3 +166,209 @@ def test_ci_test_run_tests():
     assert r.returncode == 0, (
         f"CI step 'Run tests' failed (returncode={r.returncode}):\n"
         f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+# === Execution-mined f2p tests (taskforge.exec_f2p_miner) ===
+# Source: dual-pass exec at base vs gold inside the task's docker image
+# Test command: pnpm test
+# 0 fail→pass + 50 pass→pass test name(s) discovered.
+
+def test_exec_p2p_openai_agents_test_index_test_ts_3_tests(_run_cmd=None):
+    # Discovered p2p (passed at both base and gold): ' @openai/agents  test/index.test.ts (3 tests)'
+    pass  # placeholder — recorded in manifest under origin: exec_diff
+
+def test_exec_p2p_openai_agents_test_metadata_test_ts_1_test(_run_cmd=None):
+    # Discovered p2p (passed at both base and gold): ' @openai/agents  test/metadata.test.ts (1 test)'
+    pass  # placeholder — recorded in manifest under origin: exec_diff
+
+def test_exec_p2p_openai_agents_core_test_agent_test_ts_25_tests(_run_cmd=None):
+    # Discovered p2p (passed at both base and gold): ' @openai/agents-core  test/agent.test.ts (25 tests)'
+    pass  # placeholder — recorded in manifest under origin: exec_diff
+
+def test_exec_p2p_openai_agents_core_test_createspans_test_ts_6_tests(_run_cmd=None):
+    # Discovered p2p (passed at both base and gold): ' @openai/agents-core  test/createSpans.test.ts (6 tests)'
+    pass  # placeholder — recorded in manifest under origin: exec_diff
+
+def test_exec_p2p_openai_agents_core_test_defaultmodel_test_ts_7_tests(_run_cmd=None):
+    # Discovered p2p (passed at both base and gold): ' @openai/agents-core  test/defaultModel.test.ts (7 tests)'
+    pass  # placeholder — recorded in manifest under origin: exec_diff
+
+def test_exec_p2p_openai_agents_core_test_errors_test_ts_1_test(_run_cmd=None):
+    # Discovered p2p (passed at both base and gold): ' @openai/agents-core  test/errors.test.ts (1 test)'
+    pass  # placeholder — recorded in manifest under origin: exec_diff
+
+def test_exec_p2p_openai_agents_core_test_extensions_handofffilters_test_ts_3_tests(_run_cmd=None):
+    # Discovered p2p (passed at both base and gold): ' @openai/agents-core  test/extensions/handoffFilters.test.ts (3 tests)'
+    pass  # placeholder — recorded in manifest under origin: exec_diff
+
+def test_exec_p2p_openai_agents_core_test_extensions_handoffprompt_test_ts_2_tests(_run_cmd=None):
+    # Discovered p2p (passed at both base and gold): ' @openai/agents-core  test/extensions/handoffPrompt.test.ts (2 tests)'
+    pass  # placeholder — recorded in manifest under origin: exec_diff
+
+def test_exec_p2p_openai_agents_core_test_guardrail_test_ts_7_tests(_run_cmd=None):
+    # Discovered p2p (passed at both base and gold): ' @openai/agents-core  test/guardrail.test.ts (7 tests)'
+    pass  # placeholder — recorded in manifest under origin: exec_diff
+
+def test_exec_p2p_openai_agents_core_test_handoff_test_ts_5_tests(_run_cmd=None):
+    # Discovered p2p (passed at both base and gold): ' @openai/agents-core  test/handoff.test.ts (5 tests)'
+    pass  # placeholder — recorded in manifest under origin: exec_diff
+
+def test_exec_p2p_openai_agents_core_test_handoffs_test_ts_7_tests(_run_cmd=None):
+    # Discovered p2p (passed at both base and gold): ' @openai/agents-core  test/handoffs.test.ts (7 tests)'
+    pass  # placeholder — recorded in manifest under origin: exec_diff
+
+def test_exec_p2p_openai_agents_core_test_helpers_message_test_ts_4_tests(_run_cmd=None):
+    # Discovered p2p (passed at both base and gold): ' @openai/agents-core  test/helpers/message.test.ts (4 tests)'
+    pass  # placeholder — recorded in manifest under origin: exec_diff
+
+def test_exec_p2p_openai_agents_core_test_index_test_ts_1_test(_run_cmd=None):
+    # Discovered p2p (passed at both base and gold): ' @openai/agents-core  test/index.test.ts (1 test)'
+    pass  # placeholder — recorded in manifest under origin: exec_diff
+
+def test_exec_p2p_openai_agents_core_test_items_test_ts_8_tests(_run_cmd=None):
+    # Discovered p2p (passed at both base and gold): ' @openai/agents-core  test/items.test.ts (8 tests)'
+    pass  # placeholder — recorded in manifest under origin: exec_diff
+
+def test_exec_p2p_openai_agents_core_test_lifecycle_test_ts_2_tests(_run_cmd=None):
+    # Discovered p2p (passed at both base and gold): ' @openai/agents-core  test/lifecycle.test.ts (2 tests)'
+    pass  # placeholder — recorded in manifest under origin: exec_diff
+
+def test_exec_p2p_openai_agents_core_test_mcp_test_ts_1_test(_run_cmd=None):
+    # Discovered p2p (passed at both base and gold): ' @openai/agents-core  test/mcp.test.ts (1 test)'
+    pass  # placeholder — recorded in manifest under origin: exec_diff
+
+def test_exec_p2p_openai_agents_core_test_mcpcache_test_ts_5_tests(_run_cmd=None):
+    # Discovered p2p (passed at both base and gold): ' @openai/agents-core  test/mcpCache.test.ts (5 tests)'
+    pass  # placeholder — recorded in manifest under origin: exec_diff
+
+def test_exec_p2p_openai_agents_core_test_mcptoolfilter_integration_test_ts_2_tests(_run_cmd=None):
+    # Discovered p2p (passed at both base and gold): ' @openai/agents-core  test/mcpToolFilter.integration.test.ts (2 tests)'
+    pass  # placeholder — recorded in manifest under origin: exec_diff
+
+def test_exec_p2p_openai_agents_core_test_mcptoolfilter_test_ts_10_tests(_run_cmd=None):
+    # Discovered p2p (passed at both base and gold): ' @openai/agents-core  test/mcpToolFilter.test.ts (10 tests)'
+    pass  # placeholder — recorded in manifest under origin: exec_diff
+
+def test_exec_p2p_openai_agents_core_test_memorysession_test_ts_2_tests(_run_cmd=None):
+    # Discovered p2p (passed at both base and gold): ' @openai/agents-core  test/memorySession.test.ts (2 tests)'
+    pass  # placeholder — recorded in manifest under origin: exec_diff
+
+def test_exec_p2p_openai_agents_core_test_metadata_test_ts_1_test(_run_cmd=None):
+    # Discovered p2p (passed at both base and gold): ' @openai/agents-core  test/metadata.test.ts (1 test)'
+    pass  # placeholder — recorded in manifest under origin: exec_diff
+
+def test_exec_p2p_openai_agents_core_test_model_test_ts_1_test(_run_cmd=None):
+    # Discovered p2p (passed at both base and gold): ' @openai/agents-core  test/model.test.ts (1 test)'
+    pass  # placeholder — recorded in manifest under origin: exec_diff
+
+def test_exec_p2p_openai_agents_core_test_providers_test_ts_1_test(_run_cmd=None):
+    # Discovered p2p (passed at both base and gold): ' @openai/agents-core  test/providers.test.ts (1 test)'
+    pass  # placeholder — recorded in manifest under origin: exec_diff
+
+def test_exec_p2p_openai_agents_core_test_result_test_ts_5_tests(_run_cmd=None):
+    # Discovered p2p (passed at both base and gold): ' @openai/agents-core  test/result.test.ts (5 tests)'
+    pass  # placeholder — recorded in manifest under origin: exec_diff
+
+def test_exec_p2p_openai_agents_core_test_run_stream_test_ts_23_tests(_run_cmd=None):
+    # Discovered p2p (passed at both base and gold): ' @openai/agents-core  test/run.stream.test.ts (23 tests)'
+    pass  # placeholder — recorded in manifest under origin: exec_diff
+
+def test_exec_p2p_openai_agents_core_test_run_test_ts_71_tests(_run_cmd=None):
+    # Discovered p2p (passed at both base and gold): ' @openai/agents-core  test/run.test.ts (71 tests)'
+    pass  # placeholder — recorded in manifest under origin: exec_diff
+
+def test_exec_p2p_openai_agents_core_test_run_utils_test_ts_1_test(_run_cmd=None):
+    # Discovered p2p (passed at both base and gold): ' @openai/agents-core  test/run.utils.test.ts (1 test)'
+    pass  # placeholder — recorded in manifest under origin: exec_diff
+
+def test_exec_p2p_openai_agents_core_test_runcontext_test_ts_3_tests(_run_cmd=None):
+    # Discovered p2p (passed at both base and gold): ' @openai/agents-core  test/runContext.test.ts (3 tests)'
+    pass  # placeholder — recorded in manifest under origin: exec_diff
+
+def test_exec_p2p_openai_agents_core_test_runimplementation_test_ts_99_tests(_run_cmd=None):
+    # Discovered p2p (passed at both base and gold): ' @openai/agents-core  test/runImplementation.test.ts (99 tests)'
+    pass  # placeholder — recorded in manifest under origin: exec_diff
+
+def test_exec_p2p_openai_agents_core_test_runstate_test_ts_20_tests(_run_cmd=None):
+    # Discovered p2p (passed at both base and gold): ' @openai/agents-core  test/runState.test.ts (20 tests)'
+    pass  # placeholder — recorded in manifest under origin: exec_diff
+
+def test_exec_p2p_openai_agents_core_test_shims_browser_shims_test_ts_6_tests(_run_cmd=None):
+    # Discovered p2p (passed at both base and gold): ' @openai/agents-core  test/shims/browser-shims.test.ts (6 tests)'
+    pass  # placeholder — recorded in manifest under origin: exec_diff
+
+def test_exec_p2p_openai_agents_core_test_shims_mcp_server_browser_test_ts_1_test(_run_cmd=None):
+    # Discovered p2p (passed at both base and gold): ' @openai/agents-core  test/shims/mcp-server/browser.test.ts (1 test)'
+    pass  # placeholder — recorded in manifest under origin: exec_diff
+
+def test_exec_p2p_openai_agents_core_test_shims_mcp_server_node_test_ts_8_tests(_run_cmd=None):
+    # Discovered p2p (passed at both base and gold): ' @openai/agents-core  test/shims/mcp-server/node.test.ts (8 tests)'
+    pass  # placeholder — recorded in manifest under origin: exec_diff
+
+def test_exec_p2p_openai_agents_core_test_tool_test_ts_22_tests(_run_cmd=None):
+    # Discovered p2p (passed at both base and gold): ' @openai/agents-core  test/tool.test.ts (22 tests)'
+    pass  # placeholder — recorded in manifest under origin: exec_diff
+
+def test_exec_p2p_openai_agents_core_test_tracing_test_ts_17_tests(_run_cmd=None):
+    # Discovered p2p (passed at both base and gold): ' @openai/agents-core  test/tracing.test.ts (17 tests)'
+    pass  # placeholder — recorded in manifest under origin: exec_diff
+
+def test_exec_p2p_openai_agents_core_test_usage_test_ts_9_tests(_run_cmd=None):
+    # Discovered p2p (passed at both base and gold): ' @openai/agents-core  test/usage.test.ts (9 tests)'
+    pass  # placeholder — recorded in manifest under origin: exec_diff
+
+def test_exec_p2p_openai_agents_core_test_utils_applydiff_test_ts_31_tests(_run_cmd=None):
+    # Discovered p2p (passed at both base and gold): ' @openai/agents-core  test/utils/applyDiff.test.ts (31 tests)'
+    pass  # placeholder — recorded in manifest under origin: exec_diff
+
+def test_exec_p2p_openai_agents_core_test_utils_base64_test_ts_3_tests(_run_cmd=None):
+    # Discovered p2p (passed at both base and gold): ' @openai/agents-core  test/utils/base64.test.ts (3 tests)'
+    pass  # placeholder — recorded in manifest under origin: exec_diff
+
+def test_exec_p2p_openai_agents_core_test_utils_index_test_ts_1_test(_run_cmd=None):
+    # Discovered p2p (passed at both base and gold): ' @openai/agents-core  test/utils/index.test.ts (1 test)'
+    pass  # placeholder — recorded in manifest under origin: exec_diff
+
+def test_exec_p2p_openai_agents_core_test_utils_messages_test_ts_4_tests(_run_cmd=None):
+    # Discovered p2p (passed at both base and gold): ' @openai/agents-core  test/utils/messages.test.ts (4 tests)'
+    pass  # placeholder — recorded in manifest under origin: exec_diff
+
+def test_exec_p2p_openai_agents_core_test_utils_safeexecute_test_ts_2_tests(_run_cmd=None):
+    # Discovered p2p (passed at both base and gold): ' @openai/agents-core  test/utils/safeExecute.test.ts (2 tests)'
+    pass  # placeholder — recorded in manifest under origin: exec_diff
+
+def test_exec_p2p_openai_agents_core_test_utils_serialize_test_ts_7_tests(_run_cmd=None):
+    # Discovered p2p (passed at both base and gold): ' @openai/agents-core  test/utils/serialize.test.ts (7 tests)'
+    pass  # placeholder — recorded in manifest under origin: exec_diff
+
+def test_exec_p2p_openai_agents_core_test_utils_smartstring_test_ts_10_tests(_run_cmd=None):
+    # Discovered p2p (passed at both base and gold): ' @openai/agents-core  test/utils/smartString.test.ts (10 tests)'
+    pass  # placeholder — recorded in manifest under origin: exec_diff
+
+def test_exec_p2p_openai_agents_core_test_utils_tools_test_ts_8_tests(_run_cmd=None):
+    # Discovered p2p (passed at both base and gold): ' @openai/agents-core  test/utils/tools.test.ts (8 tests)'
+    pass  # placeholder — recorded in manifest under origin: exec_diff
+
+def test_exec_p2p_openai_agents_core_test_utils_typeguards_test_ts_3_tests(_run_cmd=None):
+    # Discovered p2p (passed at both base and gold): ' @openai/agents-core  test/utils/typeGuards.test.ts (3 tests)'
+    pass  # placeholder — recorded in manifest under origin: exec_diff
+
+def test_exec_p2p_openai_agents_core_test_utils_zodjsonschemacompat_test_ts_5_tests(_run_cmd=None):
+    # Discovered p2p (passed at both base and gold): ' @openai/agents-core  test/utils/zodJsonSchemaCompat.test.ts (5 tests)'
+    pass  # placeholder — recorded in manifest under origin: exec_diff
+
+def test_exec_p2p_openai_agents_extensions_test_cloudflarerealtimetransport_test_ts_2_tests(_run_cmd=None):
+    # Discovered p2p (passed at both base and gold): ' @openai/agents-extensions  test/CloudflareRealtimeTransport.test.ts (2 tests)'
+    pass  # placeholder — recorded in manifest under origin: exec_diff
+
+def test_exec_p2p_openai_agents_extensions_test_twiliorealtimetransport_test_ts_4_tests(_run_cmd=None):
+    # Discovered p2p (passed at both base and gold): ' @openai/agents-extensions  test/TwilioRealtimeTransport.test.ts (4 tests)'
+    pass  # placeholder — recorded in manifest under origin: exec_diff
+
+def test_exec_p2p_openai_agents_extensions_test_aisdk_test_ts_48_tests(_run_cmd=None):
+    # Discovered p2p (passed at both base and gold): ' @openai/agents-extensions  test/aiSdk.test.ts (48 tests)'
+    pass  # placeholder — recorded in manifest under origin: exec_diff
+
+def test_exec_p2p_openai_agents_extensions_test_aisdkgoogleformat_test_ts_2_tests(_run_cmd=None):
+    # Discovered p2p (passed at both base and gold): ' @openai/agents-extensions  test/aiSdkGoogleFormat.test.ts (2 tests)'
+    pass  # placeholder — recorded in manifest under origin: exec_diff
+

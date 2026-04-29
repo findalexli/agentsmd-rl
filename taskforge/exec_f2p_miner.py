@@ -118,7 +118,8 @@ GENERIC_INSTALL = {
         "pip install --break-system-packages -e . 2>&1 | tail -10 "
         "|| pip install --break-system-packages -r requirements.txt 2>&1 | tail -10 "
         "|| pip install -e . 2>&1 | tail -10 || true",
-        "pip install --break-system-packages pytest pytest-mock 2>&1 | tail -3 || true",
+        # Common pytest plugins many projects rely on (cov, mock, asyncio)
+        "pip install --break-system-packages pytest pytest-mock pytest-cov pytest-asyncio 2>&1 | tail -3 || true",
     ],
     "tox":  ["pip install --break-system-packages -e . 2>&1 | tail -5 || true"],
     "nox":  ["pip install --break-system-packages -e . 2>&1 | tail -5 || true"],
@@ -315,11 +316,25 @@ async def run_dual_pass(
         # Build the full inline test command: setup + test, joined with ; so
         # one failing setup line doesn't kill the test run (CI installs are
         # often best-effort; missing optional deps are common).
-        full_test = test_cmd + " 2>&1; exit 0"
+        # Prepend a wide PATH that covers common per-user tool install dirs
+        # (cargo, bun, pnpm, uv, etc.) — many images install these without
+        # adding to the global PATH so bash -c can't find them.
+        path_prelude = (
+            'export PATH="/root/.bun/bin:/root/.cargo/bin:/root/.local/bin:'
+            '/root/.deno/bin:/root/.foundry/bin:/root/.nimble/bin:'
+            '/usr/local/cargo/bin:/usr/local/share/pnpm:/usr/local/bin:'
+            '/usr/local/sbin:/usr/sbin:/usr/bin:/sbin:/bin:$PATH"; '
+            'export PNPM_HOME="${PNPM_HOME:-/root/.local/share/pnpm}"; '
+            'export PATH="$PNPM_HOME:$PATH"; '
+            # Source common rc files that set up tool envs (cargo, bun, etc.)
+            'for rc in /root/.cargo/env /root/.bun/_bun /etc/profile.d/*.sh; do '
+            '  [ -f "$rc" ] && . "$rc" 2>/dev/null || true; '
+            'done; '
+        )
+        full_test = path_prelude + test_cmd + " 2>&1; exit 0"
         if setup_cmds:
-            # Wrap each setup line so failures don't abort the chain
             setup_join = "; ".join(c.replace("\n", " && ") + " 2>&1 || true" for c in setup_cmds)
-            full_test = f"{setup_join}; echo '====TEST===='; {full_test}"
+            full_test = path_prelude + setup_join + "; echo '====TEST===='; " + test_cmd + " 2>&1; exit 0"
 
         # Pass 1: base — merge stderr into stdout so parser sees everything
         bcode, bstdout, bstderr = await _run_cmd(sandbox,
@@ -362,6 +377,17 @@ async def run_dual_pass(
         r.base_count = len(base_status)
         r.gold_count = len(gold_status)
 
+        # Sanity: parser-artifact noise. Real test suites produce ≥5 names.
+        # If we got 1-4 "tests", they're probably CLI usage or stack-trace lines
+        # that the parser misread. Don't trust the diff.
+        MIN_TESTS = 5
+        if r.base_count < MIN_TESTS and r.gold_count < MIN_TESTS:
+            r.f2p, r.p2p = [], []
+            r.f2p_count = r.p2p_count = 0
+            r.error = (r.error or
+                       f"low-confidence: base={r.base_count} gold={r.gold_count} (likely parser misread)")
+            return r
+
         # f2p: failed at base AND passed at gold, OR only-in-gold AND passed
         # (PR-added tests don't exist at base — SWE-bench treats those as f2p)
         f2p_set = set()
@@ -370,10 +396,9 @@ async def run_dual_pass(
             bstat = base_status.get(name, "").upper()
             if bstat in {"FAILED", "ERROR"}:
                 f2p_set.add(name)
-            elif bstat == "" and base_status:
-                # Only in gold — newly added by PR. Sanity check: base must have
-                # produced *some* tests (else base run failed entirely and the
-                # diff is meaningless).
+            elif bstat == "" and r.base_count >= MIN_TESTS:
+                # Only in gold — newly added by PR. Require base to have
+                # produced a real test set so we trust the diff.
                 f2p_set.add(name)
         f2p = sorted(f2p_set)
         # p2p: passed at base AND gold

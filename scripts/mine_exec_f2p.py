@@ -59,6 +59,34 @@ def _sanitize_image_name(name: str) -> str:
     return name
 
 
+_RUNNER_PRESENCE_PATTERNS = {
+    # runner_head -> regex that should match in the Dockerfile if the runner is
+    # available in the image
+    "bun":   re.compile(r"\b(bun|FROM\s+oven/bun|curl\s+(-\S+\s+)?https?://bun\.sh/install)\b", re.I),
+    "cargo": re.compile(r"\b(cargo|FROM\s+rust|rustup|cargo\s+install)\b", re.I),
+    "pnpm":  re.compile(r"\b(pnpm|corepack\s+enable|npm\s+install\s+-g\s+pnpm)\b", re.I),
+    "npm":   re.compile(r"\b(npm|FROM\s+node)\b", re.I),
+    "yarn":  re.compile(r"\b(yarn|corepack)\b", re.I),
+    "uv":    re.compile(r"\b(uv|astral-sh/uv|pip\s+install\s+uv)\b", re.I),
+    "pytest": re.compile(r"\b(pytest|FROM\s+python)\b", re.I),
+    "go":    re.compile(r"\b(go\s+|FROM\s+golang)\b", re.I),
+    "mage":  re.compile(r"\b(mage|magefile)\b", re.I),
+    "deno":  re.compile(r"\b(deno|FROM\s+denoland)\b", re.I),
+}
+
+
+def runner_present_in_dockerfile(task_dir: Path, test_cmd: str) -> bool:
+    """Heuristic: does the Dockerfile install/include the runner referenced
+    by the test command? Avoids dispatching tasks where the runner is missing."""
+    df = task_dir / "environment" / "Dockerfile"
+    if not df.exists(): return True   # be permissive
+    text = df.read_text()
+    head = test_cmd.strip().split()[0].lower() if test_cmd.strip() else ""
+    pat = _RUNNER_PRESENCE_PATTERNS.get(head)
+    if not pat: return True            # unknown runner — let it run
+    return bool(pat.search(text))
+
+
 def task_image_tag(task_dir: Path) -> str | None:
     """Read task.toml's docker_image field, or compute the canonical tag from
     the Dockerfile's sha256 hash (matches scripts/push_images.py convention)."""
@@ -190,6 +218,13 @@ async def mine_one(sandbox_factory, task_dir: Path, dry_run: bool, test_timeout:
     setup_cmds, test_cmd, _head = pick
     rec["test_cmd"] = test_cmd[:120]
     rec["n_setup_cmds"] = len(setup_cmds)
+
+    # Skip if the Dockerfile doesn't have the runner installed — saves a
+    # full sandbox boot + docker pull for a guaranteed "command not found".
+    if not runner_present_in_dockerfile(task_dir, test_cmd):
+        rec["skipped"] = True
+        rec["error"] = f"runner {test_cmd.split()[0]!r} not in Dockerfile"
+        return rec
 
     if dry_run:
         rec["dry_run_would_mine"] = True

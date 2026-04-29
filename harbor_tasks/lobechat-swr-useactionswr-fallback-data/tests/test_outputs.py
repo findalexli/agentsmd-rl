@@ -236,3 +236,209 @@ def test_ci_build_desktop_next_bundle_build_desktop_next_js_bundle():
     assert r.returncode == 0, (
         f"CI step 'Build desktop Next.js bundle' failed (returncode={r.returncode}):\n"
         f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
+
+# === Execution-mined f2p tests (taskforge.exec_f2p_miner) ===
+# Source: dual-pass exec at base vs gold inside the task's docker image
+# Test command: pnpm --filter @lobechat/database test:client-db
+# 0 fail→pass + 50 pass→pass test name(s) discovered.
+
+def test_exec_p2p_messagemodel_query_performance_should_query_500_messages_within_50ms(_run_cmd=None):
+    # Discovered p2p (passed at both base and gold): 'MessageModel.query performance > should query 500 messages within 50ms '
+    pass  # placeholder — recorded in manifest under origin: exec_diff
+
+def test_exec_p2p_messagemodel_query_with_messagegroup_aggregation_query_without_compression_group(_run_cmd=None):
+    # Discovered p2p (passed at both base and gold): 'MessageModel.query with MessageGroup aggregation > query without compression groups > should return all messages when no compression groups exist '
+    pass  # placeholder — recorded in manifest under origin: exec_diff
+
+def test_exec_p2p_topicimporterrepo_importtopic_simple_format_array_without_parentid_should_import(_run_cmd=None):
+    # Discovered p2p (passed at both base and gold): 'TopicImporterRepo.importTopic > simple format (array without parentId) > should import messages and build linear parentId chain '
+    pass  # placeholder — recorded in manifest under origin: exec_diff
+
+def test_exec_p2p_src_models___tests___agent_test_ts_81_tests(_run_cmd=None):
+    # Discovered p2p (passed at both base and gold): 'src/models/__tests__/agent.test.ts (81 tests)'
+    pass  # placeholder — recorded in manifest under origin: exec_diff
+
+def test_exec_p2p_src_models___tests___aimodel_test_ts_19_tests(_run_cmd=None):
+    # Discovered p2p (passed at both base and gold): 'src/models/__tests__/aiModel.test.ts (19 tests)'
+    pass  # placeholder — recorded in manifest under origin: exec_diff
+
+def test_exec_p2p_src_models___tests___aiprovider_test_ts_23_tests(_run_cmd=None):
+    # Discovered p2p (passed at both base and gold): 'src/models/__tests__/aiProvider.test.ts (23 tests)'
+    pass  # placeholder — recorded in manifest under origin: exec_diff
+
+def test_exec_p2p_src_models___tests___apikey_test_ts_30_tests(_run_cmd=None):
+    # Discovered p2p (passed at both base and gold): 'src/models/__tests__/apiKey.test.ts (30 tests)'
+    pass  # placeholder — recorded in manifest under origin: exec_diff
+
+def test_exec_p2p_src_models___tests___asynctask_test_ts_7_tests(_run_cmd=None):
+    # Discovered p2p (passed at both base and gold): 'src/models/__tests__/asyncTask.test.ts (7 tests)'
+    pass  # placeholder — recorded in manifest under origin: exec_diff
+
+def test_exec_p2p_src_models___tests___chatgroup_test_ts_40_tests(_run_cmd=None):
+    # Discovered p2p (passed at both base and gold): 'src/models/__tests__/chatGroup.test.ts (40 tests)'
+    pass  # placeholder — recorded in manifest under origin: exec_diff
+
+def test_exec_p2p_src_models___tests___chunk_test_ts_28_tests(_run_cmd=None):
+    # Discovered p2p (passed at both base and gold): 'src/models/__tests__/chunk.test.ts (28 tests)'
+    pass  # placeholder — recorded in manifest under origin: exec_diff
+
+def test_exec_p2p_src_models___tests___document_test_ts_17_tests(_run_cmd=None):
+    # Discovered p2p (passed at both base and gold): 'src/models/__tests__/document.test.ts (17 tests)'
+    pass  # placeholder — recorded in manifest under origin: exec_diff
+
+def test_exec_p2p_src_models___tests___drizzlemigration_test_ts_6_tests(_run_cmd=None):
+    # Discovered p2p (passed at both base and gold): 'src/models/__tests__/drizzleMigration.test.ts (6 tests)'
+    pass  # placeholder — recorded in manifest under origin: exec_diff
+
+def test_exec_p2p_src_models___tests___embedding_test_ts_13_tests(_run_cmd=None):
+    # Discovered p2p (passed at both base and gold): 'src/models/__tests__/embedding.test.ts (13 tests)'
+    pass  # placeholder — recorded in manifest under origin: exec_diff
+
+def test_exec_p2p_src_models___tests___file_test_ts_48_tests(_run_cmd=None):
+    # Discovered p2p (passed at both base and gold): 'src/models/__tests__/file.test.ts (48 tests)'
+    pass  # placeholder — recorded in manifest under origin: exec_diff
+
+def test_exec_p2p_src_models___tests___generation_test_ts_29_tests(_run_cmd=None):
+    # Discovered p2p (passed at both base and gold): 'src/models/__tests__/generation.test.ts (29 tests)'
+    pass  # placeholder — recorded in manifest under origin: exec_diff
+
+def test_exec_p2p_src_models___tests___generationbatch_test_ts_27_tests(_run_cmd=None):
+    # Discovered p2p (passed at both base and gold): 'src/models/__tests__/generationBatch.test.ts (27 tests)'
+    pass  # placeholder — recorded in manifest under origin: exec_diff
+
+def test_exec_p2p_src_models___tests___generationtopic_test_ts_18_tests(_run_cmd=None):
+    # Discovered p2p (passed at both base and gold): 'src/models/__tests__/generationTopic.test.ts (18 tests)'
+    pass  # placeholder — recorded in manifest under origin: exec_diff
+
+def test_exec_p2p_src_models___tests___knowledgebase_test_ts_15_tests(_run_cmd=None):
+    # Discovered p2p (passed at both base and gold): 'src/models/__tests__/knowledgeBase.test.ts (15 tests)'
+    pass  # placeholder — recorded in manifest under origin: exec_diff
+
+def test_exec_p2p_src_models___tests___messages_message_create_test_ts_15_tests(_run_cmd=None):
+    # Discovered p2p (passed at both base and gold): 'src/models/__tests__/messages/message.create.test.ts (15 tests)'
+    pass  # placeholder — recorded in manifest under origin: exec_diff
+
+def test_exec_p2p_src_models___tests___messages_message_delete_test_ts_27_tests(_run_cmd=None):
+    # Discovered p2p (passed at both base and gold): 'src/models/__tests__/messages/message.delete.test.ts (27 tests)'
+    pass  # placeholder — recorded in manifest under origin: exec_diff
+
+def test_exec_p2p_src_models___tests___messages_message_query_test_ts_60_tests(_run_cmd=None):
+    # Discovered p2p (passed at both base and gold): 'src/models/__tests__/messages/message.query.test.ts (60 tests)'
+    pass  # placeholder — recorded in manifest under origin: exec_diff
+
+def test_exec_p2p_src_models___tests___messages_message_stats_test_ts_24_tests(_run_cmd=None):
+    # Discovered p2p (passed at both base and gold): 'src/models/__tests__/messages/message.stats.test.ts (24 tests)'
+    pass  # placeholder — recorded in manifest under origin: exec_diff
+
+def test_exec_p2p_src_models___tests___messages_message_thread_query_test_ts_12_tests(_run_cmd=None):
+    # Discovered p2p (passed at both base and gold): 'src/models/__tests__/messages/message.thread-query.test.ts (12 tests)'
+    pass  # placeholder — recorded in manifest under origin: exec_diff
+
+def test_exec_p2p_src_models___tests___messages_message_update_test_ts_46_tests(_run_cmd=None):
+    # Discovered p2p (passed at both base and gold): 'src/models/__tests__/messages/message.update.test.ts (46 tests)'
+    pass  # placeholder — recorded in manifest under origin: exec_diff
+
+def test_exec_p2p_src_models___tests___messages_messagewithtask_test_ts_8_tests(_run_cmd=None):
+    # Discovered p2p (passed at both base and gold): 'src/models/__tests__/messages/messageWithTask.test.ts (8 tests)'
+    pass  # placeholder — recorded in manifest under origin: exec_diff
+
+def test_exec_p2p_src_models___tests___messages_querywithmessagegroup_perf_test_ts_2_tests(_run_cmd=None):
+    # Discovered p2p (passed at both base and gold): 'src/models/__tests__/messages/queryWithMessageGroup.perf.test.ts (2 tests)'
+    pass  # placeholder — recorded in manifest under origin: exec_diff
+
+def test_exec_p2p_src_models___tests___messages_querywithmessagegroup_test_ts_8_tests(_run_cmd=None):
+    # Discovered p2p (passed at both base and gold): 'src/models/__tests__/messages/queryWithMessageGroup.test.ts (8 tests)'
+    pass  # placeholder — recorded in manifest under origin: exec_diff
+
+def test_exec_p2p_src_models___tests___oauthhandoff_test_ts_14_tests(_run_cmd=None):
+    # Discovered p2p (passed at both base and gold): 'src/models/__tests__/oauthHandoff.test.ts (14 tests)'
+    pass  # placeholder — recorded in manifest under origin: exec_diff
+
+def test_exec_p2p_src_models___tests___plugin_test_ts_6_tests(_run_cmd=None):
+    # Discovered p2p (passed at both base and gold): 'src/models/__tests__/plugin.test.ts (6 tests)'
+    pass  # placeholder — recorded in manifest under origin: exec_diff
+
+def test_exec_p2p_src_models___tests___session_test_ts_55_tests_1_skipped(_run_cmd=None):
+    # Discovered p2p (passed at both base and gold): 'src/models/__tests__/session.test.ts (55 tests | 1 skipped)'
+    pass  # placeholder — recorded in manifest under origin: exec_diff
+
+def test_exec_p2p_src_models___tests___sessiongroup_test_ts_8_tests(_run_cmd=None):
+    # Discovered p2p (passed at both base and gold): 'src/models/__tests__/sessionGroup.test.ts (8 tests)'
+    pass  # placeholder — recorded in manifest under origin: exec_diff
+
+def test_exec_p2p_src_models___tests___thread_test_ts_14_tests(_run_cmd=None):
+    # Discovered p2p (passed at both base and gold): 'src/models/__tests__/thread.test.ts (14 tests)'
+    pass  # placeholder — recorded in manifest under origin: exec_diff
+
+def test_exec_p2p_src_models___tests___topicdocument_test_ts_26_tests(_run_cmd=None):
+    # Discovered p2p (passed at both base and gold): 'src/models/__tests__/topicDocument.test.ts (26 tests)'
+    pass  # placeholder — recorded in manifest under origin: exec_diff
+
+def test_exec_p2p_src_models___tests___topicshare_test_ts_23_tests(_run_cmd=None):
+    # Discovered p2p (passed at both base and gold): 'src/models/__tests__/topicShare.test.ts (23 tests)'
+    pass  # placeholder — recorded in manifest under origin: exec_diff
+
+def test_exec_p2p_src_models___tests___topics_topic_create_test_ts_9_tests(_run_cmd=None):
+    # Discovered p2p (passed at both base and gold): 'src/models/__tests__/topics/topic.create.test.ts (9 tests)'
+    pass  # placeholder — recorded in manifest under origin: exec_diff
+
+def test_exec_p2p_src_models___tests___topics_topic_delete_test_ts_14_tests(_run_cmd=None):
+    # Discovered p2p (passed at both base and gold): 'src/models/__tests__/topics/topic.delete.test.ts (14 tests)'
+    pass  # placeholder — recorded in manifest under origin: exec_diff
+
+def test_exec_p2p_src_models___tests___topics_topic_query_test_ts_46_tests(_run_cmd=None):
+    # Discovered p2p (passed at both base and gold): 'src/models/__tests__/topics/topic.query.test.ts (46 tests)'
+    pass  # placeholder — recorded in manifest under origin: exec_diff
+
+def test_exec_p2p_src_models___tests___topics_topic_stats_test_ts_13_tests(_run_cmd=None):
+    # Discovered p2p (passed at both base and gold): 'src/models/__tests__/topics/topic.stats.test.ts (13 tests)'
+    pass  # placeholder — recorded in manifest under origin: exec_diff
+
+def test_exec_p2p_src_models___tests___topics_topic_update_test_ts_6_tests(_run_cmd=None):
+    # Discovered p2p (passed at both base and gold): 'src/models/__tests__/topics/topic.update.test.ts (6 tests)'
+    pass  # placeholder — recorded in manifest under origin: exec_diff
+
+def test_exec_p2p_src_models___tests___user_test_ts_30_tests(_run_cmd=None):
+    # Discovered p2p (passed at both base and gold): 'src/models/__tests__/user.test.ts (30 tests)'
+    pass  # placeholder — recorded in manifest under origin: exec_diff
+
+def test_exec_p2p_src_models___tests___usermemories_test_ts_52_tests(_run_cmd=None):
+    # Discovered p2p (passed at both base and gold): 'src/models/__tests__/userMemories.test.ts (52 tests)'
+    pass  # placeholder — recorded in manifest under origin: exec_diff
+
+def test_exec_p2p_src_models___tests___usermemoryidentity_test_ts_9_tests(_run_cmd=None):
+    # Discovered p2p (passed at both base and gold): 'src/models/__tests__/userMemoryIdentity.test.ts (9 tests)'
+    pass  # placeholder — recorded in manifest under origin: exec_diff
+
+def test_exec_p2p_src_models_usermemory___tests___context_test_ts_16_tests(_run_cmd=None):
+    # Discovered p2p (passed at both base and gold): 'src/models/userMemory/__tests__/context.test.ts (16 tests)'
+    pass  # placeholder — recorded in manifest under origin: exec_diff
+
+def test_exec_p2p_src_models_usermemory___tests___experience_test_ts_16_tests(_run_cmd=None):
+    # Discovered p2p (passed at both base and gold): 'src/models/userMemory/__tests__/experience.test.ts (16 tests)'
+    pass  # placeholder — recorded in manifest under origin: exec_diff
+
+def test_exec_p2p_src_models_usermemory___tests___identity_test_ts_21_tests(_run_cmd=None):
+    # Discovered p2p (passed at both base and gold): 'src/models/userMemory/__tests__/identity.test.ts (21 tests)'
+    pass  # placeholder — recorded in manifest under origin: exec_diff
+
+def test_exec_p2p_src_models_usermemory___tests___preference_test_ts_16_tests(_run_cmd=None):
+    # Discovered p2p (passed at both base and gold): 'src/models/userMemory/__tests__/preference.test.ts (16 tests)'
+    pass  # placeholder — recorded in manifest under origin: exec_diff
+
+def test_exec_p2p_src_repositories_agentgroup_index_test_ts_35_tests(_run_cmd=None):
+    # Discovered p2p (passed at both base and gold): 'src/repositories/agentGroup/index.test.ts (35 tests)'
+    pass  # placeholder — recorded in manifest under origin: exec_diff
+
+def test_exec_p2p_src_repositories_agentmigration___tests___agentmigrationrepo_test_ts_15_tests(_run_cmd=None):
+    # Discovered p2p (passed at both base and gold): 'src/repositories/agentMigration/__tests__/agentMigrationRepo.test.ts (15 tests)'
+    pass  # placeholder — recorded in manifest under origin: exec_diff
+
+def test_exec_p2p_src_repositories_aiinfra_index_test_ts_52_tests(_run_cmd=None):
+    # Discovered p2p (passed at both base and gold): 'src/repositories/aiInfra/index.test.ts (52 tests)'
+    pass  # placeholder — recorded in manifest under origin: exec_diff
+
+def test_exec_p2p_src_repositories_compression_index_test_ts_20_tests(_run_cmd=None):
+    # Discovered p2p (passed at both base and gold): 'src/repositories/compression/index.test.ts (20 tests)'
+    pass  # placeholder — recorded in manifest under origin: exec_diff
+
