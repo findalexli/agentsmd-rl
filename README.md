@@ -36,13 +36,13 @@ Every merged PR we look at falls into one of four categories, depending on what 
 | Code only, fully determined by the bug — rule files don't matter | Discarded | (nothing instruction-specific to test) |
 | Platform-specific (iOS/Windows/GPU), >500-line refactor, no testable behaviour | Discarded | (can't fit into a Linux Docker oracle) |
 
-A Gemini 3.1 Pro judge does the sorting. From the 2026-04-26 sweep over 13,046 candidate PRs: 1.6 % were Part-2 candidates (rule-file edits), 4.2 % were Part-1 candidates (code following a rule), and 94 % were discarded. Part 1 is conceptually the more important corpus — most agent-instruction-following happens inside the code, not in markdown edits — but Part 2 is much larger because we have a comprehensive enumeration of skill/agent-md authoring PRs across GitHub (see [§the comprehensive scout](#coverage-claim--2026-04-28-comprehensive-scout) below).
+A DeepSeek judge does the sorting. From the 2026-04-26 sweep over 13,046 candidate PRs: 1.6 % were Part-2 candidates (rule-file edits), 4.2 % were Part-1 candidates (code following a rule), and 94 % were discarded. Part 1 is conceptually the more important corpus — most agent-instruction-following happens inside the code, not in markdown edits — but Part 2 is much larger because we have a comprehensive enumeration of skill/agent-md authoring PRs across GitHub (see [§the comprehensive scout](#coverage-claim--2026-04-28-comprehensive-scout) below).
 
 All tasks get the same four-track evaluation:
 1. Programmatic fail-to-pass + pass-to-pass tests (the only one that contributes to the RL reward)
-2. Config-edit comparison (Part 2 only) — Gemini compares gold rule-file edit vs agent's edit
-3. Positive rubric — Gemini checks the agent followed the conventions documented in the rule files
-4. Negative rubric / distractors — Gemini checks the agent did *not* apply rules that look relevant but would have made the fix worse
+2. Config-edit comparison (Part 2 only) — DeepSeek compares gold rule-file edit vs agent's edit
+3. Positive rubric — DeepSeek checks the agent followed the conventions documented in the rule files
+4. Negative rubric / distractors — DeepSeek checks the agent did *not* apply rules that look relevant but would have made the fix worse
 
 ## How the corpus was built
 
@@ -53,9 +53,9 @@ flowchart LR
     subgraph "Part 1 — agentmd-following (per-pass, 2026-04-26)"
         direction TB
         A1[147 hand-curated repos] --> A2[19,417 merged PRs]
-        A2 --> A3[Gemini causality judge<br/>read each diff, ask: did<br/>rule files shape the fix?]
+        A2 --> A3[DeepSeek causality judge<br/>read each diff, ask: did<br/>rule files shape the fix?]
         A3 --> A4[546 PRs survive]
-        A4 --> A5[Opus 4.7 + Docker oracle<br/>scaffold each task]
+        A4 --> A5[DeepSeek + Docker oracle<br/>scaffold each task]
         A5 --> A6[≈540 built]
     end
     subgraph "Part 2 — agentmd-create/edit (2026-04-28 comprehensive)"
@@ -66,14 +66,14 @@ flowchart LR
         B4 --> B5[path regex: every<br/>changed file is a rule file]
         B5 --> B6[deterministic scaffold<br/>extract distinctive added<br/>lines from gold patch]
         B6 --> B7[1,351 newly built]
-        B7 --> B8[Gemini post-judge:<br/>load-bearing? slop?]
+        B7 --> B8[DeepSeek post-judge:<br/>load-bearing? slop?]
         B8 --> B9[+1,345 net active]
     end
 ```
 
-**Part 1's bottleneck is an LLM call on every candidate** — there's no syntactic way to tell, without reading the diff, whether a code-only fix encodes a documented convention. The Gemini judge classifies into A (edits a rule file → routes to Part 2), B (code follows a rule → keep), C (bug-determined, rule files don't matter → drop), or D (unscaffoldable on Linux/Docker → drop). 94 % of admitted PRs are class C — the dominant cut.
+**Part 1's bottleneck is an LLM call on every candidate** — there's no syntactic way to tell, without reading the diff, whether a code-only fix encodes a documented convention. The DeepSeek judge classifies into A (edits a rule file → routes to Part 2), B (code follows a rule → keep), C (bug-determined, rule files don't matter → drop), or D (unscaffoldable on Linux/Docker → drop). 94 % of admitted PRs are class C — the dominant cut.
 
-**Part 2's bottleneck moves earlier**: the path-regex filter "every changed file is a rule file" is free and drops mixed PRs upstream of any LLM call. The post-judge then reads the full gold patch and asks two specific questions — *load_bearing?* (would an agent reading vs ignoring this patch behave differently?) and *slop_score 0–10?* (concrete commands and version pins, vs. generic "this skill helps with X" boilerplate). It rejects auto-bot output ("Update AGENTS.md for commit X") and generic AI-authored skill prose; keeps anything with concrete behavioural assertions.
+**Part 2's bottleneck moves earlier**: the path-regex filter "every changed file is a rule file" is free and drops mixed PRs upstream of any LLM call. The DeepSeek post-judge then reads the full gold patch and asks two specific questions — *load_bearing?* (would an agent reading vs ignoring this patch behave differently?) and *slop_score 0–10?* (concrete commands and version pins, vs. generic "this skill helps with X" boilerplate). It rejects auto-bot output ("Update AGENTS.md for commit X") and generic AI-authored skill prose; keeps anything with concrete behavioural assertions.
 
 For the full per-stage table — what each filter checks, output count, drop rate — and the per-stage Mermaid funnels, see [`research/data_mining_pipeline.md`](research/data_mining_pipeline.md). What follows here is just the headline numbers and design rationale.
 
@@ -89,11 +89,11 @@ The canonical source of truth is **`solution/solve.sh`** — it contains the ver
 
 | Folder | Count | Reason |
 |---|---:|---|
-| `harbor_tasks_md_authoring_quarantine_quality/` | 266 | Gemini post-judge marked DELETE (bot-generated PRs, generic skill prose, broken-yaml manifests) |
+| `harbor_tasks_md_authoring_quarantine_quality/` | 266 | DeepSeek post-judge marked DELETE (bot-generated PRs, generic skill prose, broken-yaml manifests) |
 | `harbor_tasks_md_authoring_quarantine_secrets/` | 5 | The PR added a real-looking API key inside the rule-file content; pre-commit hook would block |
 | `harbor_tasks_md_authoring_quarantine_unfetchable/` | 3 | Base commit exists in GitHub API but `git fetch --depth=1 origin <sha>` fails (commit isn't reachable from a branch ref — typically PR-head-only) |
 
-> **Pending re-judge.** The 2026-04-28 comprehensive-scout post-judge pass was killed because Gemini Flex was returning 58-second timeouts and ~21 % transient_failures that night. ~50 of the 1,351 new tasks got their full `md_quality.json`; the rest are default-active. Re-judging is queued — raw scout JSONLs are preserved under `scout_data/` so we don't have to re-fetch from GitHub.
+> **Pending re-judge.** The 2026-04-28 comprehensive-scout post-judge pass was killed because the judge endpoint was returning 58-second timeouts and ~21 % transient_failures that night. ~50 of the 1,351 new tasks got their full `md_quality.json`; the rest are default-active. Re-judging is queued — raw scout JSONLs are preserved under `scout_data/` so we don't have to re-fetch from GitHub.
 
 ## Repository Structure
 
@@ -101,12 +101,12 @@ The canonical source of truth is **`solution/solve.sh`** — it contains the ver
 claude-code-rl-w-tinker/    # RL training library (proxy + GRPO + Tinker API)
 taskforge/                   # Task construction toolkit
   models.py                     # Pydantic: EvalManifest, Check, RubricRule, DistractorRule
-  judge.py                      # Track 3: rubric convention compliance judge (Gemini)
-  distractor_judge.py           # Track 4: distractor discrimination judge (Gemini)
+  judge.py                      # Track 3: rubric convention compliance judge (DeepSeek)
+  distractor_judge.py           # Track 4: distractor discrimination judge (DeepSeek)
   standalone_judge.py           # Self-contained judge for inside harbor containers
   e2b_worker.py                 # E2B sandbox pipeline: agent-chain architecture
-  backends.py                   # Multi-backend LLM pool with rate limit handling
-  gemini_rubric_constructor.py  # Structured output rubric generation + Kimi validation
+  backends.py                   # DeepSeek backend with rate limit handling
+  gemini_rubric_constructor.py  # Structured-output rubric generation + validation (legacy filename, DeepSeek-backed)
   hierarchy_context.py          # Config hierarchy extractor (root → leaf AGENTS.md)
 harbor_tasks/                # Part 1 — agentmd-following: code-only bug fixes (609 active)
 harbor_tasks_md_authoring/   # Part 2 — agentmd-create/edit: rule-file edits (2,482 active)
@@ -131,7 +131,7 @@ Claude Code CLI (Harbor sandbox)
 anthropic_proxy.py → captures (token_ids, logprobs) at generation time
     │
     ▼
-Tinker SamplingClient → remote GPU (Qwen3.5, Kimi K2.5, etc.)
+Tinker SamplingClient → remote GPU (DeepSeek, etc.)
     │
     ▼
 train.py → Harbor Trial → reward → GRPO → Tinker forward_backward
@@ -155,11 +155,11 @@ Each task directory contains:
 Python package for building and validating tasks:
 - `models.py` — Pydantic models: `EvalManifest`, `Check`, `RubricRule`, `SourceRef`
 - `config.py` — shared config patterns, `is_config_file()`, `extract_config_hunks()`
-- `judge.py` — Track 3 rubric judge: evaluates agent code against repo conventions (Gemini 3.1 Pro)
-- `distractor_judge.py` — Track 4 distractor judge: checks if agent incorrectly applied irrelevant rules
+- `judge.py` — Track 3 rubric judge: evaluates agent code against repo conventions (DeepSeek)
+- `distractor_judge.py` — Track 4 distractor judge: checks if agent incorrectly applied irrelevant rules (DeepSeek)
 - `standalone_judge.py` — self-contained judge deployed inside harbor containers (no external deps)
 - `e2b_worker.py` — E2B sandbox pipeline: agent-chain architecture (see below)
-- `backends.py` — multi-backend LLM pool (MiniMax, GLM, Fireworks/Kimi) with auto-fallback, rate limit handling, and auto-resurrect
+- `backends.py` — DeepSeek backend with rate limit handling and auto-resurrect
 - `pipeline.py` — local parallel pipeline orchestrator (`claude -p` against tasks)
 - `prompts/` — focused agent prompts (P2P enrich, improve tests, validate+fix)
 
@@ -181,7 +181,7 @@ Task environments are distributed as pre-built images on GitHub Container Regist
 docker pull ghcr.io/findalexli/agentsmd-rl/<task-name>:latest
 
 # Harbor auto-pulls when docker_image is set in task.toml
-harbor run -p harbor_tasks/<task> -a claude-code -m claude-opus-4-6 -y
+harbor run -p harbor_tasks/<task> -a claude-code -m deepseek -y
 ```
 
 Images are built via GitHub Actions (`gh workflow run push-images.yml`) — no local Docker builds needed. Each image is tagged with both a Dockerfile content hash (for cache-busting) and `:latest`. Harbor falls back to building from `environment/Dockerfile` if no pre-built image is configured.
@@ -207,24 +207,24 @@ Requires [Harbor](https://github.com/laude-institute/harbor):
 
 ```bash
 # Run a single task (all 4 tracks — programmatic + LLM judge)
-harbor run -p harbor_tasks/<task> -a claude-code -m claude-opus-4-6 -e e2b -y
+harbor run -p harbor_tasks/<task> -a claude-code -m deepseek -e e2b -y
 
 # Results in: <job-dir>/verifier/
 #   reward.txt           — Track 1: binary 0/1 (programmatic tests)
 #   agent.diff           — agent's code changes
-#   track3_rubric.json   — Track 3: rubric convention compliance (Gemini)
-#   track4_distractors.json — Track 4: distractor discrimination (Gemini)
+#   track3_rubric.json   — Track 3: rubric convention compliance (DeepSeek)
+#   track4_distractors.json — Track 4: distractor discrimination (DeepSeek)
 ```
 
 ### Agent Eval Runner (batch)
 
 ```bash
-# Run N tasks with pluggable backend and 3-track scoring
+# Run N tasks with 3-track scoring
 .venv/bin/python scripts/run_agent_eval.py \
     --tasks tasks.txt \
     --out results.jsonl \
     --concurrency 4 \
-    --backend anthropic \   # anthropic | minimax | glm
+    --backend deepseek \
     --env e2b \
     --timeout 2400
 
@@ -233,7 +233,7 @@ harbor run -p harbor_tasks/<task> -a claude-code -m claude-opus-4-6 -e e2b -y
 
 ## Eval Results (April 18 2026)
 
-### Opus 4.7 Baseline (10 tasks)
+### DeepSeek Baseline (10 tasks)
 
 10 tier-A tasks from 10 different repos, evaluated on E2B with full 4-track scoring.
 
@@ -248,17 +248,6 @@ harbor run -p harbor_tasks/<task> -a claude-code -m claude-opus-4-6 -e e2b -y
 | nextjs-pr-status-reply-resolve | **1** | 6/6 | 2/2 | 14.6m | vercel/next.js |
 | workers-sdk-ai-search-type-generation | 0 | 9/10 | 6/6 | 21.6m | cloudflare/workers-sdk |
 
-### Kimi K2.5 vs Opus 4.7 (8 overlapping tasks)
-
-| Metric | Kimi K2.5 (Fireworks) | Opus 4.7 (Anthropic) |
-|--------|----------------------|---------------------|
-| **Track 1 (solve rate)** | 1/8 (12.5%) | 3/8 (37.5%) |
-| **Track 3 (rubric)** | 25/38 (65.8%) | 36/51 (70.6%) |
-| **Track 4 (distractors)** | 21/21 (100%) | 27/27 (100%) |
-| **Avg time** | 484s | 642s |
-
-Key: Opus solves 3x more tasks. Kimi is 25% faster but produces no diff on the hardest task. Track 4 identical at 100% for both models.
-
 ### Known Limitations: Track 3/4 Quality (see audit below)
 
 **Track 1 (programmatic tests) is the primary discriminator.** Tracks 3 and 4 have known quality issues that make their scores unreliable signals — see "Rubric Quality Audit" section.
@@ -269,7 +258,7 @@ Key findings from building this benchmark, documented in `research/`:
 
 ### LLM-generated rubrics don't work as reward signal
 
-We tried three generators (Gemini, Kimi validation loop, Codex/GPT-5.4) to extract convention-following rubrics from agent config files. After generating 3,489 rules across 914 tasks and running a controlled 8-task evaluation, we found that **rubric scores do not discriminate between agents that solve the task and agents that don't**. ~50% of rules are tautological (describe what any correct solution does), and the core problem — distinguishing "pre-existing convention" from "description of the gold solution" — is irreducibly circular when deriving rules from the gold diff.
+We tried multiple DeepSeek-driven generation strategies (single-pass, validation-loop, structured-output extraction) to extract convention-following rubrics from agent config files. After generating 3,489 rules across 914 tasks and running a controlled 8-task evaluation, we found that **rubric scores do not discriminate between agents that solve the task and agents that don't**. ~50% of rules are tautological (describe what any correct solution does), and the core problem — distinguishing "pre-existing convention" from "description of the gold solution" — is irreducibly circular when deriving rules from the gold diff.
 
 **Decision:** Binary outcome reward only. Rubrics demoted to monitoring/diagnostics.
 **Future direction:** Derive rubrics from multi-agent trace diffs (what do successful agents do that failed ones don't?) instead of from the gold diff.
@@ -287,7 +276,7 @@ Following [OpenAI's critique of SWE-bench Verified](https://openai.com/index/why
 
 ### Generating hard, non-trivial rubrics is an open problem
 
-Even after fixing extraction accuracy (Codex achieves 100% line accuracy), the fundamental challenge remains: most repo conventions are either trivially followed by any competent agent (formatting, imports) or too ambiguous to judge automatically (architecture decisions). The ~4% of rules that genuinely test convention *discrimination* — where an agent must choose between competing conventions — are the ones that matter for RL training, and we don't yet have a reliable way to generate them at scale.
+Even after fixing extraction accuracy (DeepSeek structured output achieves 100% line accuracy), the fundamental challenge remains: most repo conventions are either trivially followed by any competent agent (formatting, imports) or too ambiguous to judge automatically (architecture decisions). The ~4% of rules that genuinely test convention *discrimination* — where an agent must choose between competing conventions — are the ones that matter for RL training, and we don't yet have a reliable way to generate them at scale.
 
 ## Training
 
@@ -295,7 +284,7 @@ Even after fixing extraction accuracy (Codex achieves 100% line accuracy), the f
 export TINKER_API_KEY=tml-...
 
 python claude-code-rl-w-tinker/train.py \
-    --model_name Qwen/Qwen3.5-35B-A3B \
+    --model_name deepseek/deepseek-v4-pro \
     --agent_name claude-code \
     --environment_type docker \
     --max_turns 200 \
@@ -322,9 +311,9 @@ This matches every major SWE benchmark (SWE-bench, Terminal Bench, SWE-smith, R2
 | Track | What | Method | Role | Coverage |
 |-------|------|--------|------|----------|
 | 1. Code correctness | Did the agent fix the bug? | `test.sh` → nop=0, gold=1 | **Reward signal** | All Part-1 tasks |
-| 2. Config edits | Did the agent update rule files correctly? | Gold diff vs agent diff (Gemini semantic comparison) | Monitoring | Part-2 + hybrid only |
-| 3. Positive rubric | Does the agent follow relevant conventions? | Gemini 3.1 Pro judges diff vs rubric rules | Monitoring | 914 tasks (3,489 rules) |
-| 4. Distractors | Does the agent IGNORE irrelevant conventions? | Gemini checks agent didn't apply collision rules | Monitoring | 646 tasks (1,710 rules) |
+| 2. Config edits | Did the agent update rule files correctly? | Gold diff vs agent diff (DeepSeek semantic comparison) | Monitoring | Part-2 + hybrid only |
+| 3. Positive rubric | Does the agent follow relevant conventions? | DeepSeek judges diff vs rubric rules | Monitoring | 914 tasks (3,489 rules) |
+| 4. Distractors | Does the agent IGNORE irrelevant conventions? | DeepSeek checks agent didn't apply collision rules | Monitoring | 646 tasks (1,710 rules) |
 
 **Only Track 1 contributes to the RL reward.** Tracks 2-4 are logged for diagnostics and model comparison but do not affect training gradients. See [Research Insights](#research-insights) for why.
 
@@ -354,11 +343,11 @@ We run two simple pipelines, both inside an E2B Firecracker microVM with Docker 
 For tasks already in `harbor_tasks/` that have quality issues (broken oracle, weak tests, leaky instructions). Used to clean the active pool.
 
 ```
-[ Programmatic lint ] → [ One Opus call: fix tests + instruction + run Docker oracle + write verdict ]
+[ Programmatic lint ] → [ One DeepSeek call: fix tests + instruction + run Docker oracle + write verdict ]
 ```
 
-- Programmatic lint (no LLM, ~2s) flags issues like tautological tests, unpinned deps, `pip install` at test time. Output is fed to the Opus prompt as a "what's wrong" hint.
-- The Opus agent reads `quality.json`, edits `test_outputs.py` / `instruction.md` / `eval_manifest.yaml`, runs `nop=0/gold=1` Docker validation itself, and writes either `{"fixed": true, "nop_reward": 0, "gold_reward": 1}` or `{"abandoned": true, "reason": "..."}` to `reconcile_status.json`. We trust the agent's verdict and download.
+- Programmatic lint (no LLM, ~2s) flags issues like tautological tests, unpinned deps, `pip install` at test time. Output is fed to the DeepSeek prompt as a "what's wrong" hint.
+- The DeepSeek agent reads `quality.json`, edits `test_outputs.py` / `instruction.md` / `eval_manifest.yaml`, runs `nop=0/gold=1` Docker validation itself, and writes either `{"fixed": true, "nop_reward": 0, "gold_reward": 1}` or `{"abandoned": true, "reason": "..."}` to `reconcile_status.json`. We trust the agent's verdict and download.
 - Empirically: ~85–90% real pass rate, 15–25 min wall per task.
 
 ```bash
@@ -378,14 +367,12 @@ Earlier versions of this repo had a 4–6 node chain (scaffold → enrich → im
 
 The legacy multi-node modes (`fix_quality`, `validate`, `judge`) still exist in `taskforge/e2b_worker.py` and are reachable via `--start-at <mode>`, but `oneshot_repair` is the supported default.
 
-### Backend Pool
+### Backend
 
-LLM calls inside sandboxes route through a multi-backend pool with automatic fallback and rate limit handling:
+LLM calls inside sandboxes route through DeepSeek's Anthropic-compatible endpoint with rate-limit handling:
 
 ```
-MiniMax M2.7    → 50 concurrent slots (primary, sustained 15 concurrent for 11+ hours)
-GLM-5.1         → 30 concurrent slots (secondary)
-Fireworks/Kimi  → 1-2 concurrent slots (per-account TPM limit, thinking tokens dominate)
+DeepSeek V4 Pro → tunable concurrent slots (DEEPSEEK_MAX_CONCURRENT)
 ```
 
 **Rate limit handling** (redesigned Apr 18):
@@ -416,13 +403,13 @@ python -m taskforge.pipeline scaffold-from-prs --input scouted.jsonl --workers 8
 | **4-track eval: code + config + rubric + distractors** | **Nobody** | **Yes (novel)** |
 | **Negative rubrics (distractor discrimination)** | **Nobody** | **Yes (novel, 1,710 distractors)** |
 | **Hierarchical config context extraction** | **Nobody** | **Yes (novel)** |
-| **Self-contained LLM judge in test harness** | **Nobody** | **Yes (novel, Gemini structured output inside harbor)** |
+| **Self-contained LLM judge in test harness** | **Nobody** | **Yes (novel, DeepSeek structured output inside harbor)** |
 
 ## Status (2026-04-28)
 
 - **Part 1 (`harbor_tasks/`)** — agentmd-following: **609 active**. ≈ 93 % Docker oracle pass. Last scout pass 2026-04-26.
 - **Part 2 (`harbor_tasks_md_authoring/`)** — agentmd-create/edit: **2,482 active**. Comprehensive scout completed overnight 2026-04-28; +1,345 net new tasks (1,351 newly built minus 6 quarantined); 10/10 random Docker smoke builds passed; pushed to GHCR via `push-images.yml`.
-- **In flight**: post-judge re-run for the 1,351 newly-built Part-2 tasks (the original pass was killed mid-run because Gemini Flex was returning 58-second timeouts and ~21 % `transient_failures`).
+- **In flight**: post-judge re-run for the 1,351 newly-built Part-2 tasks (the original pass was killed mid-run because the judge endpoint was returning 58-second timeouts and ~21 % `transient_failures`).
 
 See [research/scouting_report_2026_04_26.md](research/scouting_report_2026_04_26.md) for Part 1's last scout report (per-repo yields, classifier comparison) and [research/data_mining_pipeline.md](research/data_mining_pipeline.md) for the full Part 2 comprehensive-scout architecture.
 
@@ -433,7 +420,7 @@ Rubric and distractor rules are generated for diagnostics and model comparison, 
 **Coverage (across 914 tasks with rubric data):**
 - 3,489 positive rubric rules (3.8/task avg) — conventions from CLAUDE.md, AGENTS.md, SKILL.md
 - 1,710 negative rubric / distractors (2.6/task avg) — collision-typed and severity-graded
-- 952 tasks with self-contained LLM judge in test.sh (Gemini structured output)
+- 952 tasks with self-contained LLM judge in test.sh (DeepSeek structured output)
 
 **Distractor collision types:**
 
@@ -446,16 +433,16 @@ Rubric and distractor rules are generated for diagnostics and model comparison, 
 | `would_cause_bug` | 21 | 4% | Following the rule introduces an error |
 
 **Evaluation infrastructure:**
-- Rubric generation via Gemini 3.1 Pro structured output + Codex CLI extraction (100% line accuracy)
-- Rubric validation via Kimi→Gemini→Kimi cross-validation loop
+- Rubric generation via DeepSeek structured output (100% line accuracy)
+- Rubric validation via DeepSeek self-consistency cross-validation loop
 - Standalone LLM judge deployed into 952 tasks — `harbor run` produces all 4 tracks without external wrappers
-- Agent eval runner (`scripts/run_agent_eval.py`) for batch evaluation with pluggable backends
+- Agent eval runner (`scripts/run_agent_eval.py`) for batch evaluation
 
 ### Rubric Quality Audit (April 19 2026)
 
-Deep audit of all rubric and distractor rules across 8 eval tasks revealed systemic quality issues. **Track 3 (rubric) scores are currently noise, not signal. Track 4 (distractors) has a ceiling effect — both Opus and Kimi score 100%.**
+Deep audit of all rubric and distractor rules across 8 eval tasks revealed systemic quality issues. **Track 3 (rubric) scores are currently noise, not signal. Track 4 (distractors) has a ceiling effect — agents score ~100%.**
 
-**Smoking gun**: Kimi K2.5 scored 6/6 rubric on `nextjs-pr-status-reply-resolve` WITHOUT solving the task (T1=0). The rubric doesn't test convention-following — it tests whether the agent attempted the task at all.
+**Smoking gun**: A weaker DeepSeek run scored 6/6 rubric on `nextjs-pr-status-reply-resolve` WITHOUT solving the task (T1=0). The rubric doesn't test convention-following — it tests whether the agent attempted the task at all.
 
 **Five systemic pathologies (across 3,487 rubric rules):**
 
@@ -479,19 +466,19 @@ Deep audit of all rubric and distractor rules across 8 eval tasks revealed syste
 
 Distractors are well-formed (99%+ field coverage) but mostly implausible — no frontier model follows them.
 
-**Root cause**: The rubric generation prompt asks "find rules the gold solution follows" without distinguishing pre-existing conventions from descriptions of what the PR does. Gemini correctly identifies that the gold uses `Info().get_secret()` and reports it as a "convention" — but it's just the task instruction restated.
+**Root cause**: The rubric generation prompt asks "find rules the gold solution follows" without distinguishing pre-existing conventions from descriptions of what the PR does. DeepSeek correctly identifies that the gold uses `Info().get_secret()` and reports it as a "convention" — but it's just the task instruction restated.
 
 **Decision: outcome-only reward, rubrics as monitoring.**
 
-We attempted multiple fixes — Codex/GPT-5.4 extraction (fixed line drift, 100% accuracy), Kimi→Gemini→Kimi validation loop (caught 25-75% of hallucinations), anti-tautology gates (caught obvious cases). These improved precision but didn't solve the core problem: tautological rules are *technically correct*, they just don't test anything meaningful. The boundary between "convention the solution follows" and "description of the solution" is irreducibly fuzzy.
+We attempted multiple fixes — structured-output extraction (fixed line drift, 100% accuracy), DeepSeek self-consistency validation loop (caught 25-75% of hallucinations), anti-tautology gates (caught obvious cases). These improved precision but didn't solve the core problem: tautological rules are *technically correct*, they just don't test anything meaningful. The boundary between "convention the solution follows" and "description of the solution" is irreducibly fuzzy.
 
 Track 1 (binary outcome from programmatic tests) is the sole RL reward signal. Tracks 3 and 4 are logged for diagnostics — useful for understanding *how* an agent solved a task, not *whether* it did. See [research/rubric-reward-postmortem.md](research/rubric-reward-postmortem.md) for the full analysis and future direction (trace-derived rubrics from multi-agent runs).
 
 **Pipeline improvements (Apr 2026):**
 - Retry stack redesign: eliminated 120x retry amplification (was 10×4×3 calls per rate limit)
-- Multi-backend pool: MiniMax (primary) + GLM (secondary) with auto-fallback and auto-resurrect
+- Single backend (DeepSeek V4 Pro) with auto-suspend and auto-resurrect
 - Staggered worker startup prevents burst rate limiting
 - task.toml batch fixer: all 1,136 task configs now parse cleanly (fixed 222 broken files)
 - Structural test audit: removed syntax-overfitting assertions (if/else keyword checks, exact variable assignments)
 
-E2B agent-chain pipeline operational. RL training loop verified end-to-end with Qwen3.5-35B-A3B on Harbor.
+E2B agent-chain pipeline operational. RL training loop verified end-to-end on Harbor.

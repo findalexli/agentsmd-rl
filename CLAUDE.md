@@ -15,20 +15,20 @@ taskforge/                  # Task-construction toolkit
   models.py                 #   Pydantic: EvalManifest, Check, RubricRule, DistractorRule, SourceRef
   config.py                 #   Shared config patterns, is_config_file(), extract_config_hunks()
   scout.py                  #   gh-based PR discovery + scout-time filters (shared by both pipelines)
-  e2b_worker.py             #   Pipeline A — Opus 4.7 in an E2B sandbox; --start-at oneshot_scaffold
+  e2b_worker.py             #   Pipeline A — DeepSeek in an E2B sandbox; --start-at oneshot_scaffold
   pipeline.py               #   Parallel orchestrator wrapping the above
-  judge.py                  #   Track 3: rubric judge (Gemini)
-  distractor_judge.py       #   Track 4: distractor judge (inverted Gemini)
+  judge.py                  #   Track 3: rubric judge (DeepSeek)
+  distractor_judge.py       #   Track 4: distractor judge (inverted DeepSeek)
   quality_judge.py          #   Pipeline A post-scaffold rubric audit
   quality_gate.py           #   Reward-tampering / jailbreak detection in agent diffs
-  gemini_rubric_constructor.py  # Gemini structured output rubric gen + Kimi validation loop
+  gemini_rubric_constructor.py  # DeepSeek structured-output rubric gen + validation loop (legacy filename)
   e2b.py                    #   E2B sandbox helpers
   templates/task_template/  #   Task template with placeholders (copied by /scaffold-task)
   prompts/                  #   System prompts (scaffold.md, repair_manifest.md, …)
 
 scripts/
   scaffold_markdown_only.py #   Pipeline B — deterministic builder for pure-rule-file PRs (no LLM)
-  quality_judge.py          #   Two-stage Gemini judge: pre-scaffold + post-scaffold quality gate
+  quality_judge.py          #   Two-stage DeepSeek judge: pre-scaffold + post-scaffold quality gate
   run_agent_eval.py         #   Agent eval runner (Tracks 1, 3, 4) — see "Running an Eval" below
   push_images.py            #   Build + push task images to ghcr.io/findalexli/agentsmd-rl/<task>
 
@@ -68,7 +68,7 @@ And satisfy standard requirements:
 
 ## Adding new tasks
 
-### Pipeline A — code-fix tasks (Opus + sandbox)
+### Pipeline A — code-fix tasks (DeepSeek + sandbox)
 
 For one-off authoring:
 1. `/scaffold-task owner/repo#PR_NUMBER` — fetch PR metadata, discover agent configs, generate every task file
@@ -79,7 +79,7 @@ For batch:
 python -m taskforge.e2b_worker --mode pipeline --start-at oneshot_scaffold \
     --input <prs.jsonl> --pool
 ```
-Runs `taskforge/prompts/scaffold.md` inside an E2B sandbox per PR. Post-Opus, the pipeline runs `EvalManifest.model_validate(...)` as a schema gate — scaffolds whose `eval_manifest.yaml` doesn't match `taskforge/models.py` are rejected.
+Runs `taskforge/prompts/scaffold.md` inside an E2B sandbox per PR. Post-scaffold, the pipeline runs `EvalManifest.model_validate(...)` as a schema gate — scaffolds whose `eval_manifest.yaml` doesn't match `taskforge/models.py` are rejected.
 
 ### Pipeline B — markdown-authoring tasks (deterministic, no LLM at scaffold time)
 
@@ -89,7 +89,7 @@ python scripts/scaffold_markdown_only.py \
     --queue <prs.jsonl> --out-dir harbor_tasks_md_authoring \
     --concurrency 16
 ```
-Then run the two Gemini quality gates:
+Then run the two DeepSeek quality gates:
 ```
 python scripts/quality_judge.py --mode markdown_authoring \
     --task-dir harbor_tasks_md_authoring --quarantine
@@ -103,10 +103,10 @@ Canonical eval runner: `scripts/run_agent_eval.py`. Runs N harbor tasks with cla
 
 ```bash
 .venv/bin/python scripts/run_agent_eval.py \
-    --tasks pipeline_logs/minimax_eval/tasks.txt \
-    --out   pipeline_logs/minimax_eval/results.jsonl \
+    --tasks pipeline_logs/eval/tasks.txt \
+    --out   pipeline_logs/eval/results.jsonl \
     --concurrency 4 \
-    --backend minimax \     # minimax | anthropic | glm
+    --backend deepseek \    # deepseek
     --env e2b \             # e2b | docker
     --timeout 2400
 ```
@@ -114,9 +114,8 @@ Canonical eval runner: `scripts/run_agent_eval.py`. Runs N harbor tasks with cla
 Key mechanics:
 - Shadow-copies each task to `/tmp/agent_eval_tasks/<task>/` and prepends a diff-capture hook to `tests/test.sh` (writes agent's diff to `/logs/verifier/agent.diff`).
 - Passes `--force-build` and `--verifier-timeout-multiplier 5` to harbor.
-- After each trial, runs `taskforge.judge.call_judge` (Gemini) for Track 3 and `taskforge.distractor_judge.judge_distractors` (inverted Gemini) for Track 4.
+- After each trial, runs `taskforge.judge.call_judge` (DeepSeek) for Track 3 and `taskforge.distractor_judge.judge_distractors` (inverted DeepSeek) for Track 4.
 - Emits per-task JSONL rows + a `<out>.summary.json` with 3 pass rates.
-- Backend pluggability via `BACKEND_CFG` at the top of the file — add an entry to eval a new model.
 
 Task selection filters (for `tasks.txt`):
 1. `status.json.verdict == "pass"` (oracle works)
@@ -183,7 +182,7 @@ rubric:
       lines: "28-32"
     evidence: "Gold uses `question` not `shouldEnableQuestion`"
     category: naming
-    verification: llm_judge           # Gemini evaluates agent diff vs rule
+    verification: llm_judge           # DeepSeek evaluates agent diff vs rule
 
   - rule: "No wildcard imports in TypeScript files"
     source:
@@ -208,8 +207,8 @@ distractors:
 | Method | When | How | Cost |
 |--------|------|-----|------|
 | `programmatic` | Rule is checkable by grep/AST | `check_cmd` in test.sh | Free |
-| `llm_judge` | Rule requires judgment | Gemini reads diff vs rule | ~$0.01 |
-| `semantic_diff` | Config edit comparison | Gemini compares gold vs agent | ~$0.01 |
+| `llm_judge` | Rule requires judgment | DeepSeek reads diff vs rule | ~$0.01 |
+| `semantic_diff` | Config edit comparison | DeepSeek compares gold vs agent | ~$0.01 |
 
 Prefer `programmatic` when possible — deterministic, no LLM cost, reproducible. Use `llm_judge` only when the rule requires semantic understanding (style, architecture decisions). `semantic_diff` is only for Track 2 config edits.
 
@@ -218,11 +217,11 @@ Prefer `programmatic` when possible — deterministic, no LLM cost, reproducible
 | Track | What | How | Artifact |
 |-------|------|-----|----------|
 | 1. Code correctness | Did the agent fix the bug? | test.sh → nop=0, gold=1 | `checks` |
-| 2. Config edits | Did the agent update config files correctly? | Gold config vs agent diff (Gemini) | `config_edits` |
+| 2. Config edits | Did the agent update config files correctly? | Gold config vs agent diff (DeepSeek) | `config_edits` |
 | 3. Positive rubric | Does the agent follow relevant conventions? | LLM judge on diff vs rules | `rubric` |
 | 4. Distractors | Does the agent ignore irrelevant conventions? | Check agent didn't follow collision rules | `distractors` |
 
-Track 2 gold references are extracted by `taskforge/config_extract.py` at scaffold time — deterministic, no LLM hallucination. Track 3 rubric rules and Track 4 distractors are generated by `taskforge/gemini_rubric_constructor.py` using Gemini structured output (constrained decoding with `responseSchema`) and optionally validated via a Kimi→Gemini→Kimi cross-validation loop.
+Track 2 gold references are extracted by `taskforge/config_extract.py` at scaffold time — deterministic, no LLM hallucination. Track 3 rubric rules and Track 4 distractors are generated by `taskforge/gemini_rubric_constructor.py` (legacy filename — now backed by DeepSeek) using structured output (constrained decoding with `responseSchema`) and optionally validated via a self-consistency loop.
 
 Distractor collision types: `rule_conflict`, `scope_ambiguity`, `meta_confusion`, `architecture_boundary`, `would_cause_bug`. Severity: `high` (bug), `medium` (waste), `low` (minor confusion).
 

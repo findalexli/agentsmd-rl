@@ -1,15 +1,8 @@
 """LLM judge for task quality.
 
-Reads a task directory, invokes the Anthropic API once, and returns verdicts
-for all `llm_judge`-type rubrics. Single-call-per-task design — the prompt
-bundles all rubrics so the model evaluates them in one pass.
-
-We use a SEPARATE env var (JUDGE_API_KEY) so the judge always hits the real
-Anthropic endpoint even when the surrounding executor is pool'd through
-MiniMax/GLM/Kimi via ANTHROPIC_BASE_URL overrides.
-
-Cost estimate: ~4-8k input tokens × ~600 output tokens per task at Opus 4.6 rates
-≈ $0.08-0.12 per task. For 1100 tasks: ~$100 full retrofit.
+Reads a task directory, invokes DeepSeek's Anthropic-compatible API once, and
+returns verdicts for all `llm_judge`-type rubrics. Single-call-per-task design
+— the prompt bundles all rubrics so the model evaluates them in one pass.
 
 Usage:
     from pathlib import Path
@@ -30,12 +23,10 @@ from pathlib import Path
 from taskforge.rubrics import LLM_JUDGE, Rubric
 
 
-JUDGE_API_ENV = "JUDGE_API_KEY"
-JUDGE_API_URL = "https://api.anthropic.com/v1/messages"
-# Opus 4.7 — our best-quality model (step-change improvement in agentic
-# coding over 4.6 per Anthropic docs). The model ID convention
-# (claude-opus-4-7) is the stable alias; [1m] is only in model names.
-JUDGE_MODEL = os.environ.get("JUDGE_MODEL", "claude-opus-4-7")
+JUDGE_API_ENV = "DEEPSEEK_API_KEY"
+JUDGE_BASE_URL = os.environ.get("DEEPSEEK_BASE_URL", "https://api.deepseek.com/anthropic")
+JUDGE_API_URL = f"{JUDGE_BASE_URL}/v1/messages"
+JUDGE_MODEL = os.environ.get("DEEPSEEK_JUDGE_MODEL", "deepseek-v4-pro[1m]")
 
 
 # ─── Prompt construction ───────────────────────────────────────────────────
@@ -118,7 +109,7 @@ class JudgeError(Exception):
     pass
 
 
-def _call_anthropic(prompt: str, api_key: str, model: str,
+def _call_deepseek(prompt: str, api_key: str, model: str,
                     max_retries: int = 4, timeout: float = 180.0) -> dict:
     body = json.dumps({
         "model": model,
@@ -170,7 +161,7 @@ def judge_task(task_dir: Path, api_key: str = "", model: str = "") -> dict:
 
     Returns:
       {
-        "model": "claude-opus-4-7",
+        "model": "deepseek-v4-pro[1m]",
         "rubric_verdicts": {rubric_name: {"outcome": ..., "reason": ...}, ...},
         "tier_a_fails": [rubric_names],
         "tier_b_fails": [rubric_names],
@@ -186,7 +177,7 @@ def judge_task(task_dir: Path, api_key: str = "", model: str = "") -> dict:
     model = model or JUDGE_MODEL
 
     prompt = build_prompt(task_dir)
-    raw = _call_anthropic(prompt, api_key, model)
+    raw = _call_deepseek(prompt, api_key, model)
 
     verdicts: dict[str, dict] = {}
     for r in LLM_JUDGE:

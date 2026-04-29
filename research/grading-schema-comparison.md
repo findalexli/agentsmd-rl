@@ -280,7 +280,7 @@ Vivaria does not define its own schema; it consumes METR tasks and uses whatever
 
 Source: https://arxiv.org/abs/2512.21919
 
-Mixture-of-experts, 30B total / 3B active (Qwen3-30B-A3B base), 256k context for full multi-turn trajectories.
+Mixture-of-experts, 30B total / 3B active (DeepSeek base), 256k context for full multi-turn trajectories.
 
 Verifier emits "Yes" / "No" and the score is computed from logits:
 

@@ -1,19 +1,16 @@
-"""Multi-backend pool with automatic fallback for LLM API calls.
+"""DeepSeek backend pool for LLM API calls.
 
-Supports Anthropic-format (GLM, Anthropic API key) and OpenAI-format
-(OpenRouter/Fireworks for Kimi K2.5) backends. Routes requests cheapest-first;
-on 429 rate limits, transparently retries on the next available backend.
+Speaks DeepSeek's Anthropic-compatible endpoint. On 429 rate limits, applies
+exponential cooldown and auto-suspend / auto-resurrect.
 
 Two execution modes share the same pool:
   - Direct API (httpx)  — ~5 MB/request, for single-shot tasks
   - Subprocess (claude -p) — ~300 MB/process, for multi-turn agent tasks
-    Note: OpenAI-format backends need a litellm proxy for subprocess mode.
 """
 
 from __future__ import annotations
 
 import asyncio
-import json
 import os
 import random
 import re
@@ -67,10 +64,9 @@ class Backend:
     def subprocess_env(self) -> dict[str, str]:
         """Env vars for a claude -p subprocess.
 
-        For Fire Pass setup: sets ALL model env vars (ANTHROPIC_MODEL,
-        ANTHROPIC_SMALL_FAST_MODEL, and the DEFAULT_* variants) so Claude Code
-        subagents also route through the Fireworks turbo router instead of
-        falling back to Anthropic.
+        Sets ALL model env vars (ANTHROPIC_MODEL, ANTHROPIC_SMALL_FAST_MODEL,
+        and the DEFAULT_* variants) so Claude Code subagents route through
+        DeepSeek too.
         """
         env: dict[str, str] = {}
         if self.base_url:
@@ -87,13 +83,11 @@ class Backend:
             env["ANTHROPIC_AUTH_TOKEN"] = self.api_key
         for logical, actual in self.model_map.items():
             env[f"ANTHROPIC_DEFAULT_{logical.upper()}_MODEL"] = actual
-        # Fire Pass: force subagents to use the same model (not fallback to anthropic)
         primary = self.model_map.get("opus") or self.model_map.get("sonnet") or ""
         if primary:
             env["ANTHROPIC_MODEL"] = primary
             # Default SMALL_FAST_MODEL to the haiku slot if mapped, else fall
-            # back to primary. DeepSeek-style backends with separate flash
-            # variants want the cheaper one for subagents.
+            # back to primary. DeepSeek's flash variant goes here for subagents.
             env["ANTHROPIC_SMALL_FAST_MODEL"] = self.model_map.get("haiku") or primary
         # extra_env wins (e.g. CLAUDE_CODE_EFFORT_LEVEL=max for DeepSeek)
         env.update(self.extra_env)
@@ -151,9 +145,7 @@ class BackendPool:
         """Return slots sorted for acquisition:
           primary:   cost_tier asc (cheapest first)
           secondary: free-capacity ratio DESC (least-loaded first within tier)
-        This load-balances same-tier backends (fixes retrofit-run-1 where
-        fireworks was first in declaration order and got hammered while
-        MiniMax stayed idle)."""
+        """
         return sorted(
             self._slots,
             key=lambda s: (
@@ -532,133 +524,6 @@ def backends_from_env(env_file: Path | None = None) -> list[Backend]:
             model_map={"opus": ds_model, "sonnet": ds_model, "haiku": ds_haiku},
             max_concurrent=int(_get("OPENROUTER_DEEPSEEK_MAX_CONCURRENT") or 10),
             cost_tier=1,
-        ))
-
-    # GLM-5.1 — free via Z.AI Anthropic proxy (set GLM_ENABLED=1)
-    if _get("GLM_API_KEY") and _enabled("GLM_ENABLED"):
-        backends.append(Backend(
-            name="glm",
-            base_url="https://api.z.ai/api/anthropic",
-            api_key=_get("GLM_API_KEY"),
-            model_map={"opus": "glm-5.1", "sonnet": "glm-5.1", "haiku": "glm-4.5-air"},
-            max_concurrent=int(_get("GLM_MAX_CONCURRENT") or 30),
-            cost_tier=0,  # free
-        ))
-
-    # ─── Tier-1 backends — ORDER MATTERS ─────────────────────────
-    # BackendPool sorts by cost_tier (stable), so within the same tier we pick
-    # in declaration order. In retrofit run 1, listing Fireworks first caused
-    # it to absorb ALL overflow from GLM (30→78 workers = 48 spillover) — it
-    # was hammered with 127× 429 while MiniMax stayed at 0×. Rebalance by
-    # listing MiniMax FIRST so the first 50 tier-1 spillover lands there.
-
-    # MiniMax via Anthropic-compatible proxy (MiniMax-M2.7)
-    # Tier 1: cheap, subscription-style. In run 1 with max_concurrent=20, it
-    # completed 414 tasks with only 3 × 429 — room to scale. Bumped to 50.
-    if _get("MINIMAX_API_KEY") and _enabled("MINIMAX_ENABLED"):
-        backends.append(Backend(
-            name="minimax",
-            base_url="https://api.minimax.io/anthropic",
-            api_key=_get("MINIMAX_API_KEY"),
-            auth_type="x-api-key",
-            model_map={
-                "opus": "MiniMax-M2.7",
-                "sonnet": "MiniMax-M2.7",
-                "haiku": "MiniMax-M2.7",
-            },
-            max_concurrent=int(_get("MINIMAX_MAX_CONCURRENT") or 50),
-            cost_tier=1,
-        ))
-
-    # ARK Coding Plan (Volcengine) — Anthropic-compatible endpoint that
-    # multiplexes kimi-k2.6, minimax-m2.7, glm-5.1/4.7, deepseek-v3.2,
-    # doubao-seed-*. Pick model via ARK_CODING_MODEL env var.
-    # Docs: https://ark.cn-beijing.volces.com/api/coding
-    if _get("ARK_CODING_API_KEY") and _enabled("ARK_CODING_ENABLED"):
-        ark_model = _get("ARK_CODING_MODEL") or "kimi-k2.6"
-        backends.append(Backend(
-            name=f"ark-{ark_model}",
-            base_url="https://ark.cn-beijing.volces.com/api/coding",
-            api_key=_get("ARK_CODING_API_KEY"),
-            auth_type="x-api-key",  # sets both ANTHROPIC_API_KEY and ANTHROPIC_AUTH_TOKEN
-            model_map={"opus": ark_model, "sonnet": ark_model, "haiku": ark_model},
-            max_concurrent=int(_get("ARK_CODING_MAX_CONCURRENT") or 5),
-            cost_tier=1,
-        ))
-
-    # Chutes.ai — OpenAI-compatible serverless GPU provider
-    # Has MiniMax-M2.5-TEE, Kimi-K2.5-TEE, DeepSeek, GLM-5.1, etc.
-    # Uses litellm proxy inside E2B sandbox to translate OpenAI → Anthropic format.
-    # Different rate limits from Fireworks — good for parallel workloads.
-    if _get("CHUTES_API_KEY") and _enabled("CHUTES_ENABLED"):
-        chutes_model = _get("CHUTES_MODEL") or "moonshotai/Kimi-K2.5-TEE"
-        backends.append(Backend(
-            name="chutes",
-            base_url="http://localhost:4000",  # litellm proxy started inside sandbox
-            api_key="dummy",  # litellm doesn't need auth from localhost
-            model_map={"opus": "opus", "sonnet": "sonnet", "haiku": "haiku"},
-            max_concurrent=int(_get("CHUTES_MAX_CONCURRENT") or 5),
-            cost_tier=1,
-        ))
-
-    # Anthropic API key — direct, full API access, pay-per-token
-    # Tier 2: reliable but paid. Use as primary when Fireworks/GLM unavailable.
-    # Set ANTHROPIC_ENABLED=1 to include in pool (off by default — prefer cheap Kimi)
-    if _get("ANTHROPIC_API_KEY") and _enabled("ANTHROPIC_ENABLED"):
-        # As of harbor-worker-v4 the sandbox runs claude-code 2.1.119, which
-        # emits the new thinking.type.adaptive format Opus 4.7 requires.
-        backends.append(Backend(
-            name="anthropic",
-            base_url="https://api.anthropic.com",
-            api_key=_get("ANTHROPIC_API_KEY"),
-            model_map={
-                "opus": "claude-opus-4-7",
-                "sonnet": "claude-sonnet-4-6",
-                "haiku": "claude-haiku-4-5",
-            },
-            max_concurrent=50,
-            cost_tier=2,
-        ))
-
-    # OAuth — Claude Code Max subscription via subprocess-only (direct API returns 401)
-    # Tier 1: share tier-1 load with MiniMax/Fireworks using Sonnet 4.6.
-    # Set OAUTH_DISABLED=1 to exclude (e.g., for Anthropic-only scaffold runs).
-    # Subscription has a daily limit — if we start hitting 429s from the provider
-    # itself, `consecutive_429s > 100` will auto-blacklist this backend.
-    oauth_token = os.environ.get("CLAUDE_ACCESS_TOKEN", "")
-    if _get("OAUTH_DISABLED") == "1":
-        oauth_token = ""
-    elif not oauth_token:
-        for candidate in (".credentials.json", ".credentials_backup.json"):
-            creds = Path.home() / ".claude" / candidate
-            if creds.exists():
-                try:
-                    oauth_token = json.loads(creds.read_text()).get(
-                        "claudeAiOauth", {}
-                    ).get("accessToken", "")
-                    if oauth_token:
-                        break
-                except (json.JSONDecodeError, KeyError):
-                    pass
-    if oauth_token:
-        # Default to Opus for OAuth — Claude Code Max includes Opus access.
-        # OAUTH_MODEL env var overrides (e.g., "claude-sonnet-4-6" for cheaper).
-        oauth_model = os.environ.get("OAUTH_MODEL", "claude-opus-4-7")
-        backends.append(Backend(
-            name="oauth",
-            base_url="",
-            api_key=oauth_token,
-            auth_type="bearer",
-            model_map={
-                "opus": oauth_model,
-                "sonnet": oauth_model,
-                "haiku": "claude-haiku-4-5",
-            },
-            # Reverted 50→15: round-3 hit 150× 429 → blacklisted at max=50.
-            # 15 keeps us inside subscription-safe range.
-            max_concurrent=15,
-            cost_tier=1,
-            supports_direct=False,
         ))
 
     return backends

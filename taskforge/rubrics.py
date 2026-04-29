@@ -52,7 +52,7 @@ RUBRICS: tuple[Rubric, ...] = (
         verification="llm_judge",
         source="Harbor #1",
         failure_example=(
-            "76% of 1087 tasks failed this in Opus audit: tests grep for '4acc9acc76...' but "
+            "76% of 1087 tasks failed this in scaffold audit: tests grep for '4acc9acc76...' but "
             "instruction only says 'install rustup with SHA256 verification'"
         ),
         judge_prompt=(
@@ -146,11 +146,12 @@ RUBRICS: tuple[Rubric, ...] = (
         failure_example="task has only f2p tests — agent can delete the failing code path and 'win'",
     ),
     # REMOVED 2026-04-15: `anti_cheating_measures` was over-flagging (~98% FAIL)
-    # because Opus assumed the agent could read /solution/ at runtime. Harbor's
-    # actual evaluation architecture mounts /solution/ ONLY during gold validation,
-    # never during agent execution — the agent container cannot see it. The real
-    # residual threat (Dockerfile COPY solution/ baking the answer into the image)
-    # is already caught programmatically by `no_hidden_solution_artifacts`.
+    # because the scaffold judge assumed the agent could read /solution/ at runtime.
+    # Harbor's actual evaluation architecture mounts /solution/ ONLY during gold
+    # validation, never during agent execution — the agent container cannot see
+    # it. The real residual threat (Dockerfile COPY solution/ baking the answer
+    # into the image) is already caught programmatically by
+    # `no_hidden_solution_artifacts`.
     Rubric(
         name="no_hidden_solution_artifacts",
         tier="A",
@@ -196,7 +197,7 @@ RUBRICS: tuple[Rubric, ...] = (
         artifacts=("environment/Dockerfile",),
         verification="programmatic",
         source="Harbor #6",
-        failure_example="57% of 1087 tasks failed this in Opus audit",
+        failure_example="57% of 1087 tasks failed this in scaffold audit",
     ),
     Rubric(
         name="f2p_p2p_classification_correct",
@@ -378,8 +379,8 @@ RUBRICS: tuple[Rubric, ...] = (
         source=(
             "2026-04-24 scaffold audit: ClickHouse-pr-102080 asserts on the exact "
             "sentence 'is larger than 5 MB. Large files should not be committed "
-            "to git' — Opus wrote ';' separator, MiniMax wrote ',' — both correct "
-            "warnings rejected"
+            "to git' — different scaffold runs wrote ';' vs ',' separators — both "
+            "correct warnings rejected"
         ),
         failure_example=(
             "ClickHouse-pr-102080 test: `assert \"is larger than 5 MB. Large files "
@@ -402,7 +403,7 @@ RUBRICS: tuple[Rubric, ...] = (
         source=(
             "2026-04-24 scaffold audit: areal-openai-proxy-empty-session tests use "
             "`ruff format --check` but instruction never mentions formatting. "
-            "Opus+MiniMax produced correct fixes that failed on formatting"
+            "Multiple scaffold runs produced correct fixes that failed on formatting"
         ),
         failure_example=(
             "areal-openai-proxy-empty-session: test_repo_ruff_format runs `ruff "

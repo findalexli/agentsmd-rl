@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """LLM judge for task triviality.
 
-Asks GLM-5.1 (z.ai) — falling back to Fireworks Kimi K2.5 turbo on failure —
-"is this task trivial? would any model pass it without reasoning?"
+Asks DeepSeek (Anthropic-compatible endpoint) "is this task trivial? would
+any model pass it without reasoning?".
 
 A task is judged TRIVIAL if:
 - The fix is < ~5 functional lines AND has no real conceptual content
@@ -26,7 +26,6 @@ import asyncio
 import json
 import os
 import re
-import sys
 from pathlib import Path
 from typing import Any
 
@@ -39,15 +38,10 @@ load_dotenv()
 # Backend config
 # ---------------------------------------------------------------------------
 
-GLM_KEY    = os.environ.get("GLM_API_KEY", "")
-FW_KEY     = os.environ.get("FIREWORKS_API_KEY", "")
-GEMINI_KEY = os.environ.get("GEMINI_API_KEY", "")
-
-GLM_URL    = "https://api.z.ai/api/anthropic/v1/messages"
-FW_URL     = "https://api.fireworks.ai/inference/v1/chat/completions"
-GEMINI_URL = ("https://generativelanguage.googleapis.com/v1beta/models/"
-              "gemini-2.5-flash:generateContent")
-KIMI_MODEL = "accounts/fireworks/routers/kimi-k2p5-turbo"
+DEEPSEEK_KEY = os.environ.get("DEEPSEEK_API_KEY", "")
+DEEPSEEK_BASE_URL = os.environ.get("DEEPSEEK_BASE_URL", "https://api.deepseek.com/anthropic")
+DEEPSEEK_URL = f"{DEEPSEEK_BASE_URL}/v1/messages"
+DEEPSEEK_MODEL = os.environ.get("DEEPSEEK_JUDGE_MODEL", "deepseek-v4-pro[1m]")
 
 JUDGE_PROMPT = """\
 You judge whether a software-engineering task is TRIVIAL or SUBSTANTIAL.
@@ -72,7 +66,7 @@ Read the gold patch and instruction below, then output JSON:
 
 {
   "verdict": "trivial" | "substantial",
-  "reason": "≤25 words",
+  "reason": "<=25 words",
   "confidence": 0.0-1.0
 }
 
@@ -103,88 +97,36 @@ def build_prompt(task_dir: Path) -> str | None:
 # ---------------------------------------------------------------------------
 
 
-async def call_glm(prompt: str, client: httpx.AsyncClient) -> str:
+async def call_deepseek(prompt: str, client: httpx.AsyncClient) -> str:
     r = await client.post(
-        GLM_URL,
+        DEEPSEEK_URL,
         headers={
-            "x-api-key": GLM_KEY,
+            "x-api-key": DEEPSEEK_KEY,
             "content-type": "application/json",
             "anthropic-version": "2023-06-01",
         },
         json={
-            "model": "claude-sonnet-4-5",
-            "max_tokens": 200,
+            "model": DEEPSEEK_MODEL,
+            "max_tokens": 300,
             "messages": [{"role": "user", "content": prompt}],
         },
-        timeout=45,
+        timeout=60,
     )
     r.raise_for_status()
     data = r.json()
     return data["content"][0]["text"]
 
 
-async def call_kimi(prompt: str, client: httpx.AsyncClient) -> str:
-    r = await client.post(
-        FW_URL,
-        headers={"Authorization": f"Bearer {FW_KEY}", "Content-Type": "application/json"},
-        json={
-            "model": KIMI_MODEL,
-            "max_tokens": 300,
-            "messages": [
-                {"role": "system", "content": "Output only valid JSON. No preamble."},
-                {"role": "user", "content": prompt},
-            ],
-        },
-        timeout=60,
-    )
-    r.raise_for_status()
-    return r.json()["choices"][0]["message"]["content"]
-
-
-async def call_gemini(prompt: str, client: httpx.AsyncClient) -> str:
-    r = await client.post(
-        f"{GEMINI_URL}?key={GEMINI_KEY}",
-        headers={"Content-Type": "application/json"},
-        json={
-            "contents": [{"parts": [{"text": prompt}]}],
-            "generationConfig": {
-                "temperature": 0.0,
-                "maxOutputTokens": 1000,
-                "responseMimeType": "application/json",
-                "responseSchema": {
-                    "type": "OBJECT",
-                    "properties": {
-                        "verdict": {"type": "STRING", "enum": ["trivial", "substantial"]},
-                        "reason": {"type": "STRING"},
-                        "confidence": {"type": "NUMBER"},
-                    },
-                    "required": ["verdict", "reason"],
-                },
-            },
-        },
-        timeout=60,
-    )
-    r.raise_for_status()
-    data = r.json()
-    cand = (data.get("candidates") or [{}])[0]
-    parts = (cand.get("content") or {}).get("parts") or [{}]
-    return parts[0].get("text", "")
-
-
 def parse_verdict(text: str) -> dict | None:
     """Parse JSON verdict from LLM output, tolerating markdown fences and prose."""
-    # Strip markdown fences
     t = text.strip()
     if t.startswith("```"):
-        # Drop opening fence (and optional 'json' tag) and closing fence
         t = re.sub(r"^```(?:json)?\s*\n", "", t)
         t = re.sub(r"\n```\s*$", "", t)
-    # Try direct parse
     try:
         return json.loads(t)
     except Exception:
         pass
-    # Try greedy brace extraction
     s = t.find("{")
     e = t.rfind("}")
     if s == -1 or e == -1 or s >= e:
@@ -196,37 +138,23 @@ def parse_verdict(text: str) -> dict | None:
 
 
 async def judge_one(task_name: str, prompt: str, client: httpx.AsyncClient,
-                    glm_sem: asyncio.Semaphore, kimi_sem: asyncio.Semaphore,
-                    gemini_sem: asyncio.Semaphore, primary: str = "gemini") -> dict:
-    """Call primary backend, fall back through other available backends.
-
-    Default primary = gemini (most reliable + structured output).
-    """
+                    sem: asyncio.Semaphore) -> dict:
     out: dict[str, Any] = {"name": task_name, "verdict": None, "reason": "",
                            "backend": None, "confidence": None}
-
-    backends: list[tuple[str, asyncio.Semaphore, str, callable]] = []
-    if GEMINI_KEY:
-        backends.append(("gemini", gemini_sem, "gemini_error", call_gemini))
-    if GLM_KEY:
-        backends.append(("glm",    glm_sem,    "glm_error",    call_glm))
-    if FW_KEY:
-        backends.append(("kimi",   kimi_sem,   "kimi_error",   call_kimi))
-    # Reorder: primary first, others after
-    backends.sort(key=lambda b: 0 if b[0] == primary else 1)
-
-    for name, sem, err_key, fn in backends:
-        async with sem:
-            try:
-                txt = await fn(prompt, client)
-                v = parse_verdict(txt)
-                if v and v.get("verdict") in ("trivial", "substantial"):
-                    out.update(v)
-                    out["backend"] = name
-                    return out
-                out[err_key] = f"unparseable: {txt[:200]}"
-            except Exception as e:
-                out[err_key] = str(e)[:200]
+    if not DEEPSEEK_KEY:
+        out["error"] = "no DEEPSEEK_API_KEY"
+        return out
+    async with sem:
+        try:
+            txt = await call_deepseek(prompt, client)
+            v = parse_verdict(txt)
+            if v and v.get("verdict") in ("trivial", "substantial"):
+                out.update(v)
+                out["backend"] = "deepseek"
+                return out
+            out["error"] = f"unparseable: {txt[:200]}"
+        except Exception as e:
+            out["error"] = str(e)[:200]
     return out
 
 
@@ -236,7 +164,6 @@ async def judge_one(task_name: str, prompt: str, client: httpx.AsyncClient,
 
 
 async def main_async(args: argparse.Namespace) -> None:
-    # Load candidates
     if args.candidates:
         cands = json.loads(args.candidates.read_text())
         names = [r["name"] for r in cands["trivial"]]
@@ -245,9 +172,7 @@ async def main_async(args: argparse.Namespace) -> None:
 
     print(f"judging {len(names)} tasks…")
 
-    glm_sem    = asyncio.Semaphore(args.glm_concurrency)
-    kimi_sem   = asyncio.Semaphore(args.kimi_concurrency)
-    gemini_sem = asyncio.Semaphore(args.gemini_concurrency)
+    sem = asyncio.Semaphore(args.concurrency)
 
     results: list[dict] = []
     async with httpx.AsyncClient() as client:
@@ -258,8 +183,7 @@ async def main_async(args: argparse.Namespace) -> None:
                 results.append({"name": n, "verdict": "skip",
                                 "reason": "missing instruction or solve.sh"})
                 return
-            r = await judge_one(n, prompt, client, glm_sem, kimi_sem, gemini_sem,
-                                primary=args.primary)
+            r = await judge_one(n, prompt, client, sem)
             results.append(r)
             verdict = r.get("verdict") or "ERROR"
             print(f"  [{len(results):>3}/{len(names)}] {verdict:>11s}  "
@@ -283,11 +207,7 @@ def main() -> None:
     ap.add_argument("--candidates", type=Path,
                     help="JSON from detect_trivial_tasks.py — uses .trivial[].name")
     ap.add_argument("--task-dir", type=Path, help="single task dir to judge")
-    ap.add_argument("--glm-concurrency", type=int, default=4)
-    ap.add_argument("--kimi-concurrency", type=int, default=2)
-    ap.add_argument("--gemini-concurrency", type=int, default=8)
-    ap.add_argument("--primary", choices=["gemini", "glm", "kimi"], default="gemini",
-                    help="Primary judge backend (default: gemini)")
+    ap.add_argument("--concurrency", type=int, default=8)
     ap.add_argument("--out", type=Path, default=Path("/tmp/triviality_verdicts.json"))
     args = ap.parse_args()
     asyncio.run(main_async(args))

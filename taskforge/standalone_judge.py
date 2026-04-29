@@ -4,15 +4,16 @@
 Designed to run INSIDE the harbor container after programmatic tests.
 No external dependencies beyond Python stdlib + PyYAML.
 
-Reads eval_manifest.yaml and agent's diff, calls Gemini API for judging.
+Reads eval_manifest.yaml and agent's diff, calls DeepSeek for judging.
 Writes results to /logs/verifier/track3_rubric.json and track4_distractors.json.
 
 Usage (inside container):
     python3 /tests/standalone_judge.py /tests/eval_manifest.yaml /logs/verifier/agent.diff
 
 Env vars:
-    GEMINI_API_KEY — required for LLM judge calls
-    ANTHROPIC_API_KEY — fallback if no Gemini key
+    DEEPSEEK_API_KEY — required for LLM judge calls
+    DEEPSEEK_BASE_URL — override (default https://api.deepseek.com/anthropic)
+    DEEPSEEK_JUDGE_MODEL — override (default deepseek-v4-pro[1m])
 """
 from __future__ import annotations
 
@@ -23,8 +24,9 @@ import sys
 import urllib.request
 from pathlib import Path
 
-GEMINI_MODEL = "gemini-3.1-pro-preview-customtools"
-GEMINI_URL = f"https://generativelanguage.googleapis.com/v1beta/models/{GEMINI_MODEL}:generateContent"
+DEEPSEEK_BASE_URL = os.environ.get("DEEPSEEK_BASE_URL", "https://api.deepseek.com/anthropic")
+DEEPSEEK_MODEL = os.environ.get("DEEPSEEK_JUDGE_MODEL", "deepseek-v4-pro[1m]")
+DEEPSEEK_URL = f"{DEEPSEEK_BASE_URL}/v1/messages"
 
 # ── YAML loading (handles missing PyYAML gracefully) ──────────────────────
 
@@ -97,47 +99,21 @@ def _parse_yaml_minimal(text: str) -> dict:
 
 # ── Gemini API ────────────────────────────────────────────────────────────
 
-def _call_gemini(prompt: str, api_key: str, schema: dict) -> list[dict]:
-    """Call Gemini with structured output."""
+def _call_deepseek(prompt: str, api_key: str, schema: dict | None = None) -> list[dict]:
+    """Call DeepSeek (Anthropic-compatible) for judging.
+
+    `schema` is accepted for API symmetry with the legacy structured-output
+    path but is ignored — DeepSeek returns plain JSON we parse directly.
+    """
+    del schema  # unused
     body = json.dumps({
-        "contents": [{"parts": [{"text": prompt}]}],
-        "generationConfig": {
-            "temperature": 0.1,
-            "maxOutputTokens": 8192,
-            "responseMimeType": "application/json",
-            "responseSchema": schema,
-        },
-    }).encode()
-
-    req = urllib.request.Request(
-        GEMINI_URL,
-        data=body,
-        headers={
-            "Content-Type": "application/json",
-            "x-goog-api-key": api_key,
-        },
-    )
-
-    try:
-        with urllib.request.urlopen(req, timeout=120) as resp:
-            data = json.loads(resp.read())
-        text = data["candidates"][0]["content"]["parts"][0]["text"].strip()
-        return json.loads(text)
-    except Exception as e:
-        print(f"  [judge] Gemini call failed: {e}", file=sys.stderr)
-        return []
-
-
-def _call_anthropic(prompt: str, api_key: str) -> list[dict]:
-    """Fallback: call Anthropic Claude Haiku."""
-    body = json.dumps({
-        "model": "claude-haiku-4-5-20251001",
+        "model": DEEPSEEK_MODEL,
         "max_tokens": 4096,
         "messages": [{"role": "user", "content": prompt}],
     }).encode()
 
     req = urllib.request.Request(
-        "https://api.anthropic.com/v1/messages",
+        DEEPSEEK_URL,
         data=body,
         headers={
             "content-type": "application/json",
@@ -155,7 +131,7 @@ def _call_anthropic(prompt: str, api_key: str) -> list[dict]:
         s, e = text.find("["), text.rfind("]") + 1
         return json.loads(text[s:e]) if s >= 0 and e > s else []
     except Exception as e:
-        print(f"  [judge] Anthropic call failed: {e}", file=sys.stderr)
+        print(f"  [judge] DeepSeek call failed: {e}", file=sys.stderr)
         return []
 
 
@@ -176,7 +152,7 @@ _RUBRIC_SCHEMA = {
 }
 
 
-def judge_rubric(rules: list[dict], diff: str, gemini_key: str, anthropic_key: str) -> dict:
+def judge_rubric(rules: list[dict], diff: str, deepseek_key: str) -> dict:
     """Track 3: Evaluate agent's code against convention rules."""
     if not rules:
         return {"score": 1.0, "passed": 0, "total": 0, "results": []}
@@ -220,12 +196,9 @@ Be generous — minor style differences are fine. Focus on whether the spirit of
 Respond with ONLY a JSON array:
 [{{"rule_num": N, "pass": true/false, "reasoning": "one sentence"}}]"""
 
-    if gemini_key:
-        results = _call_gemini(prompt, gemini_key, _RUBRIC_SCHEMA)
-    elif anthropic_key:
-        results = _call_anthropic(prompt, anthropic_key)
-    else:
+    if not deepseek_key:
         return {"score": 0.5, "passed": 0, "total": len(rules), "results": [], "error": "no API key"}
+    results = _call_deepseek(prompt, deepseek_key, _RUBRIC_SCHEMA)
 
     passed = sum(1 for r in results if r.get("pass", False))
     return {
@@ -252,7 +225,7 @@ _DISTRACTOR_SCHEMA = {
 }
 
 
-def judge_distractors(distractors: list[dict], diff: str, gemini_key: str, anthropic_key: str) -> dict:
+def judge_distractors(distractors: list[dict], diff: str, deepseek_key: str) -> dict:
     """Track 4: Check if agent incorrectly applied distractor rules."""
     if not distractors:
         return {"score": 1.0, "passed": 0, "total": 0, "results": []}
@@ -287,12 +260,9 @@ For each distractor:
 Respond with ONLY a JSON array:
 [{{"rule_num": N, "applied": true/false, "reason": "one short sentence"}}]"""
 
-    if gemini_key:
-        results = _call_gemini(prompt, gemini_key, _DISTRACTOR_SCHEMA)
-    elif anthropic_key:
-        results = _call_anthropic(prompt, anthropic_key)
-    else:
+    if not deepseek_key:
         return {"score": 0.5, "passed": 0, "total": len(distractors), "results": [], "error": "no API key"}
+    results = _call_deepseek(prompt, deepseek_key, _DISTRACTOR_SCHEMA)
 
     passed = sum(1 for r in results if not r.get("applied", False))
     return {
@@ -380,24 +350,23 @@ def main():
         diff_out.write_text(diff)
 
     # API keys
-    gemini_key = os.environ.get("GEMINI_API_KEY", "")
-    anthropic_key = os.environ.get("ANTHROPIC_API_KEY", "")
+    deepseek_key = os.environ.get("DEEPSEEK_API_KEY", "")
 
-    if not gemini_key and not anthropic_key:
-        print("  [judge] No GEMINI_API_KEY or ANTHROPIC_API_KEY, skipping", file=sys.stderr)
+    if not deepseek_key:
+        print("  [judge] No DEEPSEEK_API_KEY, skipping", file=sys.stderr)
         return
 
     # Track 3: Rubric
     if rubric:
         print(f"  [judge] Track 3: evaluating {len(rubric)} rubric rules...", file=sys.stderr)
-        t3 = judge_rubric(rubric, diff, gemini_key, anthropic_key)
+        t3 = judge_rubric(rubric, diff, deepseek_key)
         Path("/logs/verifier/track3_rubric.json").write_text(json.dumps(t3, indent=2))
         print(f"  [judge] Track 3: {t3['passed']}/{t3['total']} passed (score={t3['score']:.2f})", file=sys.stderr)
 
     # Track 4: Distractors
     if distractors:
         print(f"  [judge] Track 4: evaluating {len(distractors)} distractors...", file=sys.stderr)
-        t4 = judge_distractors(distractors, diff, gemini_key, anthropic_key)
+        t4 = judge_distractors(distractors, diff, deepseek_key)
         Path("/logs/verifier/track4_distractors.json").write_text(json.dumps(t4, indent=2))
         print(f"  [judge] Track 4: {t4['passed']}/{t4['total']} ignored (score={t4['score']:.2f})", file=sys.stderr)
 

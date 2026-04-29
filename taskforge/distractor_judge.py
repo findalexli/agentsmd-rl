@@ -5,7 +5,7 @@ decide whether the agent **incorrectly applied** it to the diff. A distractor
 is "passed" when the agent correctly **ignored** it.
 
 Public API:
-    judge_distractors(distractors, diff, gemini_key, anthropic_key) -> (score, results)
+    judge_distractors(distractors, diff, deepseek_key) -> (score, results)
 
 Score is the fraction of distractors the agent correctly ignored.
 """
@@ -89,35 +89,18 @@ Respond with ONLY a JSON array:
 [{{"rule_num": N, "applied": true/false, "reason": "one short sentence"}}]"""
 
 
-def _call_gemini(prompt: str, api_key: str) -> list[dict]:
-    body = json.dumps({
-        "contents": [{"parts": [{"text": prompt}]}],
-        "generationConfig": {
-            "temperature": 0.1,
-            "maxOutputTokens": 8192,
-            "responseMimeType": "application/json",
-            "responseSchema": _DISTRACTOR_SCHEMA,
-        },
-    }).encode()
-    url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-pro-preview-customtools:generateContent"
-    req = urllib.request.Request(url, data=body, headers={
-        "Content-Type": "application/json",
-        "x-goog-api-key": api_key,
-    })
-    with urllib.request.urlopen(req, timeout=120) as r:
-        data = json.loads(r.read().decode())
-    text = data["candidates"][0]["content"]["parts"][0]["text"].strip()
-    return json.loads(text)
+DEEPSEEK_BASE_URL = os.environ.get("DEEPSEEK_BASE_URL", "https://api.deepseek.com/anthropic")
+DEEPSEEK_MODEL = os.environ.get("DEEPSEEK_JUDGE_MODEL", "deepseek-v4-pro[1m]")
 
 
-def _call_anthropic(prompt: str, api_key: str) -> list[dict]:
+def _call_deepseek(prompt: str, api_key: str) -> list[dict]:
     body = json.dumps({
-        "model": "claude-haiku-4-5-20251001",
+        "model": DEEPSEEK_MODEL,
         "max_tokens": 4096,
         "messages": [{"role": "user", "content": prompt}],
     }).encode()
     req = urllib.request.Request(
-        "https://api.anthropic.com/v1/messages",
+        f"{DEEPSEEK_BASE_URL}/v1/messages",
         data=body,
         headers={
             "content-type": "application/json",
@@ -137,20 +120,15 @@ def _call_anthropic(prompt: str, api_key: str) -> list[dict]:
 def judge_distractors(
     distractors: list[dict],
     diff: str,
-    gemini_key: str = "",
-    anthropic_key: str = "",
+    deepseek_key: str = "",
 ) -> tuple[float, list[dict]]:
     if not distractors:
         return 1.0, []
     prompt = _build_prompt(distractors, diff)
-    gemini_key = gemini_key or os.environ.get("GEMINI_API_KEY", "")
-    anthropic_key = anthropic_key or os.environ.get("ANTHROPIC_API_KEY", "")
-    if gemini_key:
-        results = _call_gemini(prompt, gemini_key)
-    elif anthropic_key:
-        results = _call_anthropic(prompt, anthropic_key)
-    else:
+    deepseek_key = deepseek_key or os.environ.get("DEEPSEEK_API_KEY", "")
+    if not deepseek_key:
         return 0.5, []
+    results = _call_deepseek(prompt, deepseek_key)
     passed = sum(1 for r in results if not r.get("applied", False))
     score = passed / len(distractors) if distractors else 1.0
     return score, results
@@ -168,16 +146,13 @@ def main():
 
     # Load env
     env_file = Path(__file__).parent.parent / ".env"
-    gemini_key = os.environ.get("GEMINI_API_KEY", "")
-    anthropic_key = os.environ.get("ANTHROPIC_API_KEY", "")
-    if not (gemini_key or anthropic_key) and env_file.exists():
+    deepseek_key = os.environ.get("DEEPSEEK_API_KEY", "")
+    if not deepseek_key and env_file.exists():
         for line in env_file.read_text().splitlines():
-            if line.startswith("GEMINI_API_KEY="):
-                gemini_key = line.split("=", 1)[1].strip().strip('"')
-            if line.startswith("ANTHROPIC_API_KEY="):
-                anthropic_key = line.split("=", 1)[1].strip().strip('"')
+            if line.startswith("DEEPSEEK_API_KEY="):
+                deepseek_key = line.split("=", 1)[1].strip().strip('"')
 
-    score, results = judge_distractors(distractors, diff, gemini_key, anthropic_key)
+    score, results = judge_distractors(distractors, diff, deepseek_key)
     for r in results:
         status = "APPLIED(FAIL)" if r.get("applied") else "IGNORED(PASS)"
         print(f"  Distractor {r.get('rule_num', '?')}: {status} — {r.get('reason', '')}", file=sys.stderr)

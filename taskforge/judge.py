@@ -152,7 +152,7 @@ def judge_config_edits(config_edits: list[dict], diff: str, api_key: str) -> tup
     """Evaluate whether agent made the correct config file edits (Track 2).
 
     Compares agent's actual config changes against deterministic gold references
-    extracted from solve.sh. Uses Gemini for semantic comparison (not exact match).
+    extracted from solve.sh. Uses DeepSeek for semantic comparison (not exact match).
 
     Returns (score, per_edit_results).
     Score is fraction of gold config edits the agent correctly made.
@@ -196,9 +196,9 @@ def judge_config_edits(config_edits: list[dict], diff: str, api_key: str) -> tup
         modified = sum(1 for c in comparisons if c["file_modified"])
         return modified / len(comparisons) if comparisons else 1.0, comparisons
 
-    # Call Gemini for semantic comparison
-    gemini_key = os.environ.get("GEMINI_API_KEY", "")
-    if not gemini_key:
+    # Call DeepSeek for semantic comparison
+    deepseek_key = api_key or os.environ.get("DEEPSEEK_API_KEY", "")
+    if not deepseek_key:
         # Fallback: simple file-modified check
         modified = sum(1 for c in comparisons if c["file_modified"])
         return modified / len(comparisons) if comparisons else 1.0, comparisons
@@ -229,7 +229,7 @@ Respond with ONLY a JSON array:
 [{{"file_num": N, "verdict": "pass|partial|fail", "reason": "one sentence"}}]"""
 
     try:
-        results = _call_gemini(prompt, gemini_key)
+        results = _call_deepseek(prompt, deepseek_key)
     except Exception:
         # Fallback
         modified = sum(1 for c in comparisons if c["file_modified"])
@@ -310,12 +310,8 @@ Be generous — minor style differences are fine. Focus on whether the spirit of
 Respond with ONLY a JSON array:
 [{{"rule_num": N, "pass": true/false, "reason": "one sentence"}}]"""
 
-    # Try Gemini first (preferred), fall back to Anthropic
-    gemini_key = os.environ.get("GEMINI_API_KEY", "")
-    if gemini_key:
-        return _call_gemini(prompt, gemini_key)
-    else:
-        return _call_anthropic(prompt, api_key)
+    deepseek_key = api_key or os.environ.get("DEEPSEEK_API_KEY", "")
+    return _call_deepseek(prompt, deepseek_key)
 
 
 _JUDGE_RESULT_SCHEMA = {
@@ -334,52 +330,22 @@ _JUDGE_RESULT_SCHEMA = {
 }
 
 
-def _call_gemini(prompt: str, api_key: str) -> list[dict]:
-    """Call Gemini 3.1 Pro for rubric judging with structured output."""
+DEEPSEEK_BASE_URL = os.environ.get("DEEPSEEK_BASE_URL", "https://api.deepseek.com/anthropic")
+DEEPSEEK_MODEL = os.environ.get("DEEPSEEK_JUDGE_MODEL", "deepseek-v4-pro[1m]")
+
+
+def _call_deepseek(prompt: str, api_key: str) -> list[dict]:
+    """Call DeepSeek (Anthropic-compatible) for rubric judging."""
     import urllib.request
 
     body = json.dumps({
-        "contents": [{"parts": [{"text": prompt}]}],
-        "generationConfig": {
-            "temperature": 0.1,
-            "maxOutputTokens": 8192,
-            "responseMimeType": "application/json",
-            "responseSchema": _JUDGE_RESULT_SCHEMA,
-        },
-    }).encode()
-
-    url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-pro-preview-customtools:generateContent"
-    req = urllib.request.Request(url, data=body, headers={
-        "Content-Type": "application/json",
-        "x-goog-api-key": api_key,
-    })
-
-    with urllib.request.urlopen(req, timeout=120) as resp:
-        data = json.loads(resp.read())
-
-    parts = data.get("candidates", [{}])[0].get("content", {}).get("parts", [])
-    if not parts:
-        return []
-
-    text = parts[0].get("text", "").strip()
-    try:
-        return json.loads(text)
-    except json.JSONDecodeError:
-        return []
-
-
-def _call_anthropic(prompt: str, api_key: str) -> list[dict]:
-    """Fallback: call Anthropic Claude Haiku for rubric judging."""
-    import urllib.request
-
-    body = json.dumps({
-        "model": "claude-haiku-4-5-20251001",
-        "max_tokens": 2048,
-        "messages": [{"role": "user", "content": prompt}]
+        "model": DEEPSEEK_MODEL,
+        "max_tokens": 4096,
+        "messages": [{"role": "user", "content": prompt}],
     }).encode()
 
     req = urllib.request.Request(
-        "https://api.anthropic.com/v1/messages",
+        f"{DEEPSEEK_BASE_URL}/v1/messages",
         data=body,
         headers={
             "Content-Type": "application/json",
@@ -388,7 +354,7 @@ def _call_anthropic(prompt: str, api_key: str) -> list[dict]:
         },
     )
 
-    with urllib.request.urlopen(req, timeout=60) as resp:
+    with urllib.request.urlopen(req, timeout=120) as resp:
         data = json.loads(resp.read())
 
     text = data["content"][0]["text"].strip()
@@ -433,18 +399,15 @@ def main():
         print("0.0")
         sys.exit(0)
 
-    gemini_key = os.environ.get("GEMINI_API_KEY", "")
-    api_key = os.environ.get("ANTHROPIC_API_KEY", "")
-    if not gemini_key and not api_key:
+    api_key = os.environ.get("DEEPSEEK_API_KEY", "")
+    if not api_key:
         env_file = Path(__file__).parent.parent / ".env"
         if env_file.exists():
             for line in env_file.read_text().splitlines():
-                if line.startswith("GEMINI_API_KEY="):
-                    gemini_key = line.split("=", 1)[1].strip().strip('"')
-                    os.environ["GEMINI_API_KEY"] = gemini_key
-                if line.startswith("ANTHROPIC_API_KEY="):
+                if line.startswith("DEEPSEEK_API_KEY="):
                     api_key = line.split("=", 1)[1].strip().strip('"')
-        if not gemini_key and not api_key:
+                    os.environ["DEEPSEEK_API_KEY"] = api_key
+        if not api_key:
             print("0.5", file=sys.stderr)
             print("0.5")
             sys.exit(0)

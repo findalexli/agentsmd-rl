@@ -11,18 +11,18 @@ LLM-generated convention-following rubrics (Tracks 3 and 4) do not discriminate 
 |---|---|---|
 | 1. Code correctness | Did the agent fix the bug? | Deterministic tests in `test.sh` |
 | 2. Config edits | Did the agent update config files? | Gold diff comparison |
-| 3. Positive rubric | Does the fix follow repo conventions? | LLM judge (Gemini) scores agent diff against rules from `CLAUDE.md`/`AGENTS.md` |
+| 3. Positive rubric | Does the fix follow repo conventions? | LLM judge (DeepSeek) scores agent diff against rules from `CLAUDE.md`/`AGENTS.md` |
 | 4. Distractors | Did the agent ignore irrelevant conventions? | Inverted LLM judge — passes when agent did NOT apply a plausible-but-wrong rule |
 
-Tracks 3 and 4 were intended to capture a quality dimension beyond "does the code work" — whether the agent actually engages with agent instruction files. Three generators were tried: Gemini (structured output with `responseSchema`), Kimi (with Gemini validation loop), and Codex/GPT-5.4 (with `cat -n` reading + `--output-schema`).
+Tracks 3 and 4 were intended to capture a quality dimension beyond "does the code work" — whether the agent actually engages with agent instruction files. Three generators were tried: DeepSeek (structured output with `responseSchema`), DeepSeek (with DeepSeek validation loop), and DeepSeek (with `cat -n` reading + `--output-schema`).
 
 ## 2. The smoking gun
 
-Kimi scored **6/6 on Track 3 rubric for `nextjs-status-task` while solving 0/1 on Track 1**. The code was wrong; the rubric rules were tautological enough that any plausible-looking diff passed.
+DeepSeek scored **6/6 on Track 3 rubric for `nextjs-status-task` while solving 0/1 on Track 1**. The code was wrong; the rubric rules were tautological enough that any plausible-looking diff passed.
 
-Across 8 tasks (Opus vs Kimi controlled eval, April 2026):
+Across 8 tasks (DeepSeek vs DeepSeek controlled eval, April 2026):
 
-| Track | Opus | Kimi | Discrimination? |
+| Track | DeepSeek | DeepSeek | Discrimination? |
 |---|---|---|---|
 | 1 (tests) | 3/8 | 1/8 | clear |
 | 3 (rubric) | 78% | 83% | none |
@@ -39,7 +39,7 @@ Audit examined ~48 rubric rules and ~24 distractor rules across 8 repos.
 | Tautological rules | ~50% | Describe what the gold solution does; any correct diff passes |
 | Duplicates | ~17% | Same rule rephrased 2-4× within one task |
 | Redundant with Track 1 | ~15% | Rule already deterministically tested in `test.sh` |
-| Wrong line numbers | ~30% | Gemini hallucinated line refs (off by 3-80 lines); paths accurate |
+| Wrong line numbers | ~30% | DeepSeek hallucinated line refs (off by 3-80 lines); paths accurate |
 | Wrong-scope distractors | ~60% | Pulled from unrelated config files in the same repo |
 
 After dedup and Track 1 redundancy removal, **~15% of rules were unique and non-trivial**; only **~4% were genuinely hard** (would distinguish a convention-aware agent from one that ignores config files).
@@ -48,8 +48,8 @@ After dedup and Track 1 redundancy removal, **~15% of rules were unique and non-
 
 | Fix | Improved | Did NOT solve |
 |---|---|---|
-| Codex/GPT-5.4 replaced Gemini for extraction | Line accuracy → 100% | Tautology (problem is in task definition, not extraction) |
-| Kimi → Gemini → Kimi validation loop | Caught 25-75% of hallucinated rules per task | High-precision tautological rules (technically correct, semantically empty) survive |
+| DeepSeek replaced DeepSeek for extraction | Line accuracy → 100% | Tautology (problem is in task definition, not extraction) |
+| DeepSeek → DeepSeek → DeepSeek validation loop | Caught 25-75% of hallucinated rules per task | High-precision tautological rules (technically correct, semantically empty) survive |
 | Anti-tautology gate (reject rules ≈ instruction.md) | Caught some | Boundary between "convention solution follows" and "description of solution" is irreducibly fuzzy |
 | Path-proximity filtering for distractors | Improved scope relevance | Track 4 ceiling effect (agents don't apply random conventions, regardless of scope) |
 
@@ -99,8 +99,8 @@ The fundamental mistake was deriving rubrics from the **gold diff** — circular
 ```
                                       partition by Track 1 outcome
 N agents × M tasks  ──►  traces  ──┬──►  successful traces (set S)
-(Opus, Sonnet, Kimi,                │
- GPT-5.4, Codex, …)                 └──►  failed traces (set F)
+(DeepSeek, DeepSeek, DeepSeek,                │
+ DeepSeek, DeepSeek, …)                 └──►  failed traces (set F)
                                                   │
                                                   │  diff behaviors
                                                   ▼
@@ -123,7 +123,7 @@ Why this addresses the core problems:
 | Relevance | Generator must guess relevance | Agents naturally focus on relevant conventions; irrelevant ones don't appear |
 | Distractor scope | Pulled from random config files | Conventions agents *actually* over-applied in failed traces |
 
-Anchor on Opus (highest baseline solve rate, 30%): its successful traces are the most reliable signal for what convention-aware problem-solving looks like.
+Anchor on DeepSeek (highest baseline solve rate, 30%): its successful traces are the most reliable signal for what convention-aware problem-solving looks like.
 
 ### Requirements
 
@@ -141,6 +141,6 @@ Rubric-as-reward becomes viable if any of:
 
 | Trigger | Threshold |
 |---|---|
-| Trace-derived rubrics show discrimination in controlled eval | Rules from Opus traces predict Sonnet success/failure |
+| Trace-derived rubrics show discrimination in controlled eval | Rules from DeepSeek traces predict DeepSeek success/failure |
 | A generator passes human audit on held-out validation | <10% tautological rate |
 | Track 4 shows variance | Some agent applies distractors (today: ceiling 100%) |

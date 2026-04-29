@@ -61,7 +61,7 @@ logger = logging.getLogger(__name__)
 ROOT = Path(__file__).resolve().parent.parent
 TEMPLATE_DIR = Path(__file__).resolve().parent / "e2b_template"
 TEMPLATE_ALIAS = "harbor-worker-v4"  # bumped from v3 to force rebuild with
-# claude-code 2.1.119 (was 2.1.97 in v3 — broke Opus 4.7 thinking format)
+# claude-code 2.1.119
 SANDBOX_TIMEOUT = 5400  # seconds — refreshed before each agent step. Bumped
 # from 3600 because oneshot fix_task_quality routinely runs >1h on complex
 # repos (npm install, large repo clones, iterative Docker builds) — the old
@@ -162,16 +162,16 @@ class StartAt(str, Enum):
     """DAG entry point — which node a task starts at.
 
     Supported (canonical):
-      ONESHOT_REPAIR — 2-node pipeline: qgate + fix_task_quality. Opus owns
+      ONESHOT_REPAIR — 2-node pipeline: qgate + fix_task_quality. DeepSeek owns
                        Docker validate + give-up internally. Default for
                        repairing existing tasks. ~85-90% pass, ~$5/task.
       SCAFFOLD       — initial PR → task generation. Still in use for new tasks.
 
     Deprecated (kept for backward compat with in-flight runs; prefer
-    ONESHOT_REPAIR which folds these into one Opus call):
+    ONESHOT_REPAIR which folds these into one DeepSeek call):
       QGATE, RUBRIC, ENRICH    — sub-stages of the older multi-node DAG.
       IMPROVE, FIX_QUALITY     — old test-improvement / quality-fix entry
-                                  points. The 4-Opus-call chain they trigger
+                                  points. The 4-call chain they trigger
                                   (fix → validate_and_fix → quality_judge →
                                   instruction_reconcile → tests_rewrite) is
                                   redundant: validate_and_fix often overwrites
@@ -330,18 +330,13 @@ async def ensure_template() -> str:
 async def create_worker_sandbox(
     backend_env: dict[str, str] | None = None,
     timeout: int = SANDBOX_TIMEOUT,
-    max_ip_retries: int = 10,
 ) -> AsyncSandbox:
     """Create sandbox from harbor-worker template with env vars injected.
-    Retries sandbox creation if the egress IP is blocked by the LLM provider.
     timeout = sandbox lifetime in seconds (default 1 hour)."""
     envs = {
         "GH_TOKEN": os.environ.get("GH_TOKEN", ""),
-        "GEMINI_API_KEY": os.environ.get("GEMINI_API_KEY", ""),
-        # JUDGE_API_KEY is the REAL Anthropic key — routed directly to api.anthropic.com.
-        # Kept separate from ANTHROPIC_API_KEY so the pool backend (MiniMax/GLM/Kimi)
-        # can override ANTHROPIC_API_KEY without disturbing the judge.
-        "JUDGE_API_KEY": os.environ.get("JUDGE_API_KEY") or os.environ.get("ANTHROPIC_API_KEY", ""),
+        # DEEPSEEK_API_KEY drives the LLM judges inside the sandbox.
+        "DEEPSEEK_API_KEY": os.environ.get("DEEPSEEK_API_KEY", ""),
     }
     if backend_env:
         envs.update(backend_env)
@@ -361,176 +356,44 @@ async def create_worker_sandbox(
                 except Exception:
                     pass
 
-    # Determine the API base URL for IP probing
-    api_base = backend_env.get("ANTHROPIC_BASE_URL", "") if backend_env else ""
-
-    for ip_attempt in range(max_ip_retries):
-        sandbox = await retry_on_429(
-            lambda: AsyncSandbox.create(
-                template=TEMPLATE_ALIAS,
-                timeout=timeout,
-                envs=envs,
-            )
+    sandbox = await retry_on_429(
+        lambda: AsyncSandbox.create(
+            template=TEMPLATE_ALIAS,
+            timeout=timeout,
+            envs=envs,
         )
-
-        # Explicitly extend sandbox lifetime
-        try:
-            await sandbox.set_timeout(timeout)
-        except Exception:
-            pass
-
-        # Quick IP probe: only for Fireworks backend (detect IP blocks)
-        is_fireworks = api_base and "fireworks" in api_base.lower()
-        if is_fireworks:
-            api_key = envs.get("ANTHROPIC_API_KEY", "")
-            if api_key and api_key != "dummy":
-                probe_code, probe_out, _ = await run_cmd(
-                    sandbox,
-                    f'curl -s -o /dev/null -w "%{{http_code}}" -X POST '
-                    f'"https://api.fireworks.ai/inference/v1/messages" '
-                    f'-H "Content-Type: application/json" '
-                    f'-H "x-api-key: {api_key}" '
-                    f'-H "anthropic-version: 2023-06-01" '
-                    f"""-d '{{"model":"accounts/fireworks/routers/kimi-k2p5-turbo","messages":[{{"role":"user","content":"hi"}}],"max_tokens":1}}'""",
-                    timeout=15,
-                )
-                status_code = probe_out.strip()
-                # Reject both 403 (IP blocked) and 400/429 (rate limited).
-                # Fireworks returns rate limits as HTTP 400 with "rate limit"
-                # in the body (via LiteLLM proxy), not always as 429.
-                if status_code in ("403", "400", "429"):
-                    logger.warning(
-                        "Sandbox %s rejected by Fireworks (%s), rotating IP (%d/%d)...",
-                        sandbox.sandbox_id, status_code, ip_attempt + 1, max_ip_retries,
-                    )
-                    try:
-                        await sandbox.kill()
-                    except Exception:
-                        pass
-                    await asyncio.sleep(2)
-                    continue
-                logger.info("Sandbox %s Fireworks IP check OK (status %s)", sandbox.sandbox_id, status_code)
-
-        # Wait for Docker daemon to be ready
-        for _ in range(10):
-            code, _, _ = await run_cmd(sandbox, "docker info", timeout=10)
-            if code == 0:
-                break
-            await asyncio.sleep(2)
-
-        # Ensure worker user owns workspace
-        await run_cmd(sandbox, "chown -R worker:worker /workspace /logs/verifier", timeout=10)
-        await run_cmd(sandbox, "usermod -aG docker worker 2>/dev/null || true", timeout=5)
-
-        # Start litellm proxy if backend uses localhost:4000 (Gemini or Chutes)
-        if backend_env and backend_env.get("ANTHROPIC_BASE_URL") == "http://localhost:4000":
-            await _ensure_litellm_proxy(sandbox)
-
-        # OAuth: write credentials file so `claude -p` can authenticate.
-        # The CLI reads ~/.claude/.credentials.json, NOT CLAUDE_ACCESS_TOKEN env.
-        # _run_agent runs as user "worker" (home=/home/worker), so that's the
-        # primary path. Also write to root for any root-context commands.
-        if _oauth_creds_json:
-            try:
-                await run_cmd(sandbox, "mkdir -p /home/worker/.claude /root/.claude", timeout=5)
-                await sandbox.files.write("/home/worker/.claude/.credentials.json", _oauth_creds_json)
-                await sandbox.files.write("/root/.claude/.credentials.json", _oauth_creds_json)
-            except Exception as e:
-                logger.warning("Failed to write OAuth credentials to sandbox: %s", e)
-
-        return sandbox
-
-    # All retries exhausted
-    logger.error("All %d IP probe retries failed, proceeding with blocked sandbox", max_ip_retries)
-    return sandbox
-
-
-async def _ensure_litellm_proxy(sandbox: AsyncSandbox) -> bool:
-    """Start litellm proxy for OpenAI-format backend routing if not already running.
-
-    Supports Gemini (gemini/ prefix) and Chutes (openai/ prefix with api_base).
-    The proxy translates requests so claude -p sees Anthropic format.
-    """
-    code, stdout, _ = await run_cmd(
-        sandbox,
-        'curl -s -o /dev/null -w "%{http_code}" http://localhost:4000/health 2>/dev/null || echo 000',
-        timeout=5,
     )
-    if stdout.strip() == "200":
-        return True
 
-    # Determine which backend to configure
-    chutes_key = os.environ.get("CHUTES_API_KEY", "")
-    chutes_model = os.environ.get("CHUTES_MODEL", "moonshotai/Kimi-K2.5-TEE")
-    chutes_enabled = os.environ.get("CHUTES_ENABLED", "") == "1"
-    gemini_key = os.environ.get("GEMINI_API_KEY", "")
+    # Explicitly extend sandbox lifetime
+    try:
+        await sandbox.set_timeout(timeout)
+    except Exception:
+        pass
 
-    if chutes_key and chutes_enabled:
-        # Chutes — OpenAI-compatible endpoint
-        litellm_config = (
-            'litellm_settings:\n'
-            '  drop_params: true\n'
-            'model_list:\n'
-            '  - model_name: "claude-opus-4-6"\n'
-            '    litellm_params:\n'
-            f'      model: "openai/{chutes_model}"\n'
-            f'      api_key: "{chutes_key}"\n'
-            '      api_base: "https://llm.chutes.ai/v1"\n'
-            '  - model_name: "claude-sonnet-4-6"\n'
-            '    litellm_params:\n'
-            f'      model: "openai/{chutes_model}"\n'
-            f'      api_key: "{chutes_key}"\n'
-            '      api_base: "https://llm.chutes.ai/v1"\n'
-            '  - model_name: "opus"\n'
-            '    litellm_params:\n'
-            f'      model: "openai/{chutes_model}"\n'
-            f'      api_key: "{chutes_key}"\n'
-            '      api_base: "https://llm.chutes.ai/v1"\n'
-        )
-        backend_label = f"Chutes ({chutes_model})"
-    elif gemini_key:
-        litellm_config = (
-            'litellm_settings:\n'
-            '  drop_params: true\n'
-            'model_list:\n'
-            '  - model_name: "claude-opus-4-6"\n'
-            '    litellm_params:\n'
-            '      model: "gemini/gemini-3.1-pro-preview-customtools"\n'
-            f'      api_key: "{gemini_key}"\n'
-            '  - model_name: "claude-sonnet-4-6"\n'
-            '    litellm_params:\n'
-            '      model: "gemini/gemini-3.1-pro-preview-customtools"\n'
-            f'      api_key: "{gemini_key}"\n'
-            '  - model_name: "opus"\n'
-            '    litellm_params:\n'
-            '      model: "gemini/gemini-3.1-pro-preview-customtools"\n'
-            f'      api_key: "{gemini_key}"\n'
-        )
-        backend_label = "Gemini 3.1 Pro"
-    else:
-        logger.warning("No CHUTES_API_KEY or GEMINI_API_KEY — cannot start litellm proxy")
-        return False
-
-    await sandbox.files.write("/tmp/litellm_config.yaml", litellm_config.encode())
-    await run_cmd(
-        sandbox,
-        "nohup litellm --config /tmp/litellm_config.yaml --port 4000 "
-        "> /tmp/litellm.log 2>&1 &",
-        timeout=10,
-    )
-    for _attempt in range(20):
+    # Wait for Docker daemon to be ready
+    for _ in range(10):
+        code, _, _ = await run_cmd(sandbox, "docker info", timeout=10)
+        if code == 0:
+            break
         await asyncio.sleep(2)
-        code, stdout, _ = await run_cmd(
-            sandbox,
-            'curl -s -o /dev/null -w "%{http_code}" http://localhost:4000/health 2>/dev/null || echo 000',
-            timeout=5,
-        )
-        if stdout.strip() == "200":
-            logger.info("Sandbox %s: litellm proxy -> %s ready", sandbox.sandbox_id, backend_label)
-            return True
 
-    logger.warning("Sandbox %s: litellm proxy failed to start after 40s", sandbox.sandbox_id)
-    return False
+    # Ensure worker user owns workspace
+    await run_cmd(sandbox, "chown -R worker:worker /workspace /logs/verifier", timeout=10)
+    await run_cmd(sandbox, "usermod -aG docker worker 2>/dev/null || true", timeout=5)
+
+    # OAuth: write credentials file so `claude -p` can authenticate.
+    # The CLI reads ~/.claude/.credentials.json, NOT CLAUDE_ACCESS_TOKEN env.
+    # _run_agent runs as user "worker" (home=/home/worker), so that's the
+    # primary path. Also write to root for any root-context commands.
+    if _oauth_creds_json:
+        try:
+            await run_cmd(sandbox, "mkdir -p /home/worker/.claude /root/.claude", timeout=5)
+            await sandbox.files.write("/home/worker/.claude/.credentials.json", _oauth_creds_json)
+            await sandbox.files.write("/root/.claude/.credentials.json", _oauth_creds_json)
+        except Exception as e:
+            logger.warning("Failed to write OAuth credentials to sandbox: %s", e)
+
+    return sandbox
 
 
 # ---------------------------------------------------------------------------
@@ -972,7 +835,7 @@ async def node_rubric_loop(
     sandbox: AsyncSandbox,
     repo_url: str,
 ) -> tuple[str, str, str, int]:
-    """Node 2: Gemini↔Kimi rubric+quality loop — runs INSIDE the sandbox.
+    """Node 2: DeepSeek rubric+quality loop — runs INSIDE the sandbox.
 
     Reads: /workspace/task/eval_manifest.yaml, /workspace/repo/ (cloned repo)
     Writes: updated eval_manifest.yaml with rubrics + distractors
@@ -985,7 +848,7 @@ async def node_rubric_loop(
         "cd /workspace && python3 -c \""
         "from taskforge.gemini_rubric_constructor import run_rubric_quality_loop, stamp_rubrics_to_manifest; "
         "from pathlib import Path; import json, os; "
-        "key = os.environ.get('GEMINI_API_KEY', ''); "
+        "key = os.environ.get('DEEPSEEK_API_KEY', ''); "
         "r = run_rubric_quality_loop(Path('/workspace/task'), Path('/workspace/repo'), key, max_rounds=3); "
         "print(json.dumps({k: r.get(k) for k in "
         "['status','quality_verdict','quality_reasoning','meta_referential',"
@@ -993,7 +856,7 @@ async def node_rubric_loop(
         "if r.get(k) is not None}, default=str)); "
         "stamp_rubrics_to_manifest(Path('/workspace/task'), r) if r.get('status') == 'ok' else None"
         "\"",
-        timeout=300,  # up to 3 rounds of Gemini+Kimi
+        timeout=300,  # up to 3 rounds
     )
 
     if code != 0:
@@ -1602,10 +1465,9 @@ async def node_rubric_lint(sandbox: AsyncSandbox) -> tuple[int, list[str]]:
 
 
 async def node_quality_judge(sandbox: AsyncSandbox) -> tuple[str, dict]:
-    """Node 6b: LLM quality judge — Opus 4.6 scores task against 10 llm_judge rubrics.
+    """Node 6b: LLM quality judge — DeepSeek scores task against 10 llm_judge rubrics.
 
-    Uses JUDGE_API_KEY (real Anthropic endpoint), NOT the pool's ANTHROPIC_API_KEY
-    (which may point at MiniMax/GLM/Kimi for the executor).
+    Uses DEEPSEEK_API_KEY (DeepSeek's Anthropic-compatible endpoint).
 
     Reads: /workspace/task/instruction.md, tests/test_outputs.py, solution/solve.sh,
            environment/Dockerfile
@@ -1633,7 +1495,7 @@ async def node_quality_judge(sandbox: AsyncSandbox) -> tuple[str, dict]:
     code, stdout, stderr = await run_cmd(
         sandbox,
         "cd /workspace && python3 /workspace/run_judge.py",
-        timeout=240,  # Opus judge ~5-30s typical
+        timeout=240,  # DeepSeek judge ~5-30s typical
     )
     if code != 0:
         return "error", {"error": (stderr or stdout)[:200]}
@@ -1654,8 +1516,7 @@ async def node_instruction_reconcile(sandbox: AsyncSandbox) -> tuple[str, str]:
     Called ONLY when node_quality_judge flags behavior_in_task_description,
     no_solution_leakage, or instruction_no_hint_leakage as FAIL.
 
-    The executor is the pool backend (MiniMax/GLM/Kimi) — NOT Opus — because
-    this is a conventional rewrite task, not a judgment call.
+    The executor is the DeepSeek pool backend.
 
     Reads: /workspace/task/quality.json + instruction.md + tests/ + solution/
     Writes: /workspace/task/instruction.md (rewritten); reconcile_status.json
@@ -1883,7 +1744,7 @@ async def run_task(
     DAG nodes (each runs only if start_at <= node position):
       0. scaffold   — create task from PR (only if pr_ref provided)
       1. qgate      — fast programmatic quality gate (in sandbox)
-      2. rubric     — Gemini↔Kimi rubric loop (in sandbox)
+      2. rubric     — DeepSeek rubric loop (in sandbox)
       3. enrich     — P2P enrichment (claude -p)
       4. improve    — test improvement (claude -p, conditional)
       5. validate   — Docker oracle + fix (claude -p)
@@ -2199,7 +2060,7 @@ async def run_task(
 
             _refresh_timeout(sandbox)
 
-            # ── Node 2: Gemini↔Kimi Rubric Loop ──────────────────
+            # ── Node 2: DeepSeek Rubric Loop ──────────────────
             if start_at.should_run(StartAt.RUBRIC) and agentmd and repo_url:
                 t0 = time.monotonic()
                 loop_status, quality_verdict, abandon_reason, rounds = await node_rubric_loop(
@@ -2212,7 +2073,7 @@ async def run_task(
                 await update_sandbox_status(sandbox, "rubric_quality_loop", {
                     **_stamp("rubric_quality_loop", loop_status, elapsed,
                              f"verdict={quality_verdict} rounds={rounds}"),
-                    "model": "gemini-3.1-pro + kimi-k2.5",
+                    "model": "deepseek-v4-pro",
                     "quality_verdict": quality_verdict,
                     "loop_rounds": rounds,
                     "abandon_reason": abandon_reason,
@@ -2231,22 +2092,22 @@ async def run_task(
 
             _refresh_timeout(sandbox)
 
-            # ── Node 2b: Gemini CLI Rubric (exact line numbers) ───
+            # ── Node 2b: CLI Rubric extraction (exact line numbers, DeepSeek-backed) ───
             if start_at.should_run(StartAt.RUBRIC) and agentmd and repo_url:
                 t0 = time.monotonic()
                 cli_status, nr, nd, ns = await node_gemini_cli_rubric(
                     sandbox, repo_url)
                 elapsed = time.monotonic() - t0
 
-                await update_sandbox_status(sandbox, "gemini_cli_rubric", {
-                    **_stamp("gemini_cli_rubric", cli_status, elapsed,
+                await update_sandbox_status(sandbox, "cli_rubric", {
+                    **_stamp("cli_rubric", cli_status, elapsed,
                              f"+{nr}R +{nd}D skip={ns}"),
-                    "model": "gemini-3.1-pro-preview",
+                    "model": "deepseek-v4-pro",
                     "rubrics_added": nr,
                     "distractors_added": nd,
                     "skipped": ns,
                 })
-                logger.info("[%s] gemini CLI rubric: %s +%dR +%dD skip=%d (%.1fs)",
+                logger.info("[%s] CLI rubric: %s +%dR +%dD skip=%d (%.1fs)",
                             result.task_name, cli_status, nr, nd, ns, elapsed)
 
             _refresh_timeout(sandbox)
@@ -2415,7 +2276,7 @@ async def run_task(
                     logger.warning("[%s] RUBRIC TAMPERING: %d injected rules cleaned",
                                    result.task_name, injected)
 
-            # ── Node 6b: Quality Judge (Opus 4.6 via JUDGE_API_KEY) ─
+            # ── Node 6b: Quality Judge (DeepSeek via DEEPSEEK_API_KEY) ─
             # Scores task against 10 llm_judge rubrics. Writes quality.json.
             # Runs for BOTH code-only and agentmd tasks.
             judge_summary: dict = {}

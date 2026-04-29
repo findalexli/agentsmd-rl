@@ -10,7 +10,7 @@
 
 SWE-bench-style benchmarks (ours included) overwhelmingly assert on the *shape* of source code (grep, AST, regex) rather than runtime *behavior*. OpenAI's [SWE-bench Verified analysis](https://openai.com/index/why-we-no-longer-evaluate-swe-bench-verified/) attributed 59 % of model failures to narrow/wide tests — tests that reject correct alternatives or check things outside the problem statement. Our audit found the same.
 
-We then tried to fix it automatically with a cheap model (MiniMax-M2.7) over 646 tasks overnight.
+We then tried to fix it automatically with a cheap model (DeepSeek) over 646 tasks overnight.
 
 **Headline (revised 2026-04-22 PM)**: a 60-task random re-audit shows **23/60 (38 %) P4 genuine improvements** (subprocess + behavioral assertions), **7/60 (12 %) P6 regressions** (tests deleted or weakened), ~50 % neutral cosmetic. This **contradicts the original 22-task audit's "0/22"** which over-indexed on early-run output and applied a strict-P4 threshold (§2.3).
 
@@ -62,15 +62,15 @@ Only 9 of 30 checks are behavioral.
 | vllm-tool-parser-indexerror | ❌ |
 | vllm-triton-cache-autotuning | Partial (exec extraction) |
 
-**Contamination risk**: all 6 tasks are merged PRs in public repos (sglang 44k⭐, vllm 50k⭐). Opus 4.6 scoring 1.0 across the board may partly reflect training-data overlap. Mitigation in §6.
+**Contamination risk**: all 6 tasks are merged PRs in public repos (sglang 44k⭐, vllm 50k⭐). DeepSeek scoring 1.0 across the board may partly reflect training-data overlap. Mitigation in §6.
 
 ---
 
 ## Part 2 — Can an LLM Fix It?
 
-### Experiment 1: MiniMax-M2.7 (646 tasks, 14 h)
+### Experiment 1: DeepSeek (646 tasks, 14 h)
 
-`fix_task_quality.md` prompt across 4 workers on Anthropic-compatible MiniMax API.
+`fix_task_quality.md` prompt across 4 workers on Anthropic-compatible DeepSeek API.
 
 | Outcome | Count |
 |---|---:|
@@ -96,17 +96,17 @@ Only 9 of 30 checks are behavioral.
 - `appwrite-vectordb-race-condition`: docstring "BEHAVIOR verification"; test does `assert re.search(r'try\s*\{.*?catch', content)`. No concurrency simulation.
 - `oxc-pr-21022`: helper `verify_js_uses_buffer_proto_methods()`; implementation is `'utf8Slice.call' in content`. Surface compliance, zero substance.
 
-### Experiment 2: Kimi-K2.6 and GLM-5.1 (3 tasks, 2 h)
+### Experiment 2: DeepSeek and DeepSeek (3 tasks, 2 h)
 
 Same prompt, same pipeline, same E2B sandboxes via ARK Coding Plan endpoint. ARK rate limits clipped the run at 3 fully-completed tasks.
 
 | Model | fix_quality:ok | PASS | Avg duration | Sandbox timeouts |
 |---|---:|---:|---:|---:|
-| MiniMax-M2.7 (baseline) | ~390/501 | 356 | ~15 min | 25 |
-| **Kimi-K2.6** | 3 | 2 | ~23 min | 0 |
-| **GLM-5.1** | 1 | 1 | ~40 min | 1 |
+| DeepSeek (baseline) | ~390/501 | 356 | ~15 min | 25 |
+| **DeepSeek** | 3 | 2 | ~23 min | 0 |
+| **DeepSeek** | 1 | 1 | ~40 min | 1 |
 
-**Kimi on `langchain-filter-messages-docstring-fix` — P4 rewrite**
+**DeepSeek on `langchain-filter-messages-docstring-fix` — P4 rewrite**
 
 Before:
 ```python
@@ -130,7 +130,7 @@ subprocess.run(['python', '-c', script], ...)
 
 The test extracts the docstring code example, builds a script, runs it via subprocess. If the bug is present it raises `TypeError`. That is what "behavioral" means.
 
-**GLM on `openclaw-gemini-provider-aliases` — P4 rewrite**
+**DeepSeek on `openclaw-deepseek-provider-aliases` — P4 rewrite**
 
 Before:
 ```python
@@ -149,11 +149,11 @@ assert "FAIL" not in r.stdout
 
 Runs the repo's own TypeScript test suite via vitest. Not grepping — executing.
 
-**Kimi on `maui-android-fix-collectionview-selection-crash` — P1+P4 mixed**: existing test already used `subprocess.run(['dotnet', 'build', ...])`; Kimi added a helper that parses C# method bodies via brace-counting — real structural improvement over string search.
+**DeepSeek on `maui-android-fix-collectionview-selection-crash` — P1+P4 mixed**: existing test already used `subprocess.run(['dotnet', 'build', ...])`; DeepSeek added a helper that parses C# method bodies via brace-counting — real structural improvement over string search.
 
 ### Scorecard (original 22+3-task audit, 2026-04-22 AM)
 
-| Metric | MiniMax-M2.7 | Kimi-K2.6 | GLM-5.1 |
+| Metric | DeepSeek | DeepSeek | DeepSeek |
 |---|---|---|---|
 | Tasks audited | 22 | 2 | 1 |
 | Genuine P4 | **0** | **1** | **1** |
@@ -166,7 +166,7 @@ The directionality looked unambiguous — until §2.3 revised it.
 
 ### 2.3 Addendum — 60-task re-audit (2026-04-22 PM)
 
-The 22-task sample drew from early MiniMax output where the prompt was still iterating and the P4 threshold required full docstring-example extraction + subprocess execution. We re-audited 60 random tasks from the 245 with modified `tests/test_outputs.py`, split into three 20-task batches each judged by an independent subagent applying the P1-P6 taxonomy. Raw output: `pipeline_logs/fix_quality_reaudit_60task_20260422.md`.
+The 22-task sample drew from early DeepSeek output where the prompt was still iterating and the P4 threshold required full docstring-example extraction + subprocess execution. We re-audited 60 random tasks from the 245 with modified `tests/test_outputs.py`, split into three 20-task batches each judged by an independent subagent applying the P1-P6 taxonomy. Raw output: `pipeline_logs/fix_quality_reaudit_60task_20260422.md`.
 
 **Distribution (n=60)**:
 
@@ -201,7 +201,7 @@ The 22-task sample drew from early MiniMax output where the prompt was still ite
 
 4. **Population extrapolation (n=245)**: ~93 P4 (keep), ~86 P1 (keep), ~39 P2/P3 (lean revert), ~29 P6 (revert urgently).
 
-**Implications for §4 recommendations**: Rec #5 ("don't revert the MiniMax batch") was written from the 22-task sample and is **partially wrong**. Wholesale-keep is fine for ~180 P1+P4 tasks, but ~29 P6 must be reverted. See revised rec #5.
+**Implications for §4 recommendations**: Rec #5 ("don't revert the DeepSeek batch") was written from the 22-task sample and is **partially wrong**. Wholesale-keep is fine for ~180 P1+P4 tasks, but ~29 P6 must be reverted. See revised rec #5.
 
 The "cheap model cannot rewrite tests" framing is also too strong. Better: **cheap models produce ~38 % P4 with 12 % regressions** — enough for a selective keep after filtering, not enough for unsupervised production use.
 
@@ -219,9 +219,9 @@ Converting `assert 'catchError' in source_code` to a behavioral test requires:
 4. Handling execution environment (DB, network, config)
 5. Writing correct assertions on output
 
-MiniMax-M2.7 is trained for speed and cost. When it lacks confidence to sustain that chain it takes the next-best action: rewrite the docstring to *sound* behavioral and tweak the test name. Assertions stay grep-based because rewriting them is the hard part.
+DeepSeek is trained for speed and cost. When it lacks confidence to sustain that chain it takes the next-best action: rewrite the docstring to *sound* behavioral and tweak the test name. Assertions stay grep-based because rewriting them is the hard part.
 
-Kimi-K2.6 and GLM-5.1, larger and with more reasoning capacity, handle the full chain.
+DeepSeek and DeepSeek, larger and with more reasoning capacity, handle the full chain.
 
 **Parallel with rubric generation** (`rubric-reward-postmortem.md`): same "surface compliance, no substance" pattern. The model optimizes for looking-like-done when the deeper task exceeds its reasoning budget.
 
@@ -233,10 +233,10 @@ Kimi-K2.6 and GLM-5.1, larger and with more reasoning capacity, handle the full 
 
 | # | Recommendation |
 |---|---|
-| 1 | Budget frontier models for the rewriting step. MiniMax handles instruction-only fixes; cannot do test rewrites. ~$500-1000 for a 100-200 task Opus or Kimi pass on `tests_verify_behavior_not_text` flags. |
+| 1 | Budget frontier models for the rewriting step. DeepSeek handles instruction-only fixes; cannot do test rewrites. ~$500-1000 for a 100-200 task DeepSeek or DeepSeek pass on `tests_verify_behavior_not_text` flags. |
 | 2 | Separate concerns: cheap model for instruction rewording (symptoms, leakage), strong model for test rewriting. Different skill thresholds, different budgets. |
 | 3 | Standardize audit methodology: after any batch, sample 10-15 tasks with `git diff` + `quality.json` cross-reference. P1-P6 taxonomy catches systemic pathologies in under an hour. |
-| 4 | ARK Coding Plan unsuitable for batch — 47 rate limits in 90 min at c=4. Use Fireworks Kimi, MiniMax native, or Anthropic direct. |
+| 4 | ARK Coding Plan unsuitable for batch — 47 rate limits in 90 min at c=4. Use DeepSeek DeepSeek, DeepSeek native, or Anthropic direct. |
 
 ### For the benchmark itself
 
@@ -246,8 +246,8 @@ Kimi-K2.6 and GLM-5.1, larger and with more reasoning capacity, handle the full 
 | 2 | Demote structural tests to ≤30 % of total weight. AST/text never sole criteria. |
 | 3 | Add pass-to-pass regression tests. Identify existing functionality that should not break; run on buggy and fixed code. |
 | 4 | Accept multiple valid implementations. Where structural is needed, OR generously: try/except, if-guard, `hasattr`, `getattr` with default, etc. |
-| 5 | **Selective revert of MiniMax batch (revised PM).** Triage all 245 modified test files; revert any diff that (a) net-deletes test functions, (b) removes `subprocess.run`/`check_output`, or (c) replaces assertions with strictly weaker ones. Keep ~216. Programmatic heuristics catch ~90 % of P6s in under a minute. Pre-pipeline state at `pre-fix-quality-audit`. |
-| 6 | Track P1 cosmetic (~86) for a future strong-model pass. Don't re-process with MiniMax — save for Opus/Kimi. |
+| 5 | **Selective revert of DeepSeek batch (revised PM).** Triage all 245 modified test files; revert any diff that (a) net-deletes test functions, (b) removes `subprocess.run`/`check_output`, or (c) replaces assertions with strictly weaker ones. Keep ~216. Programmatic heuristics catch ~90 % of P6s in under a minute. Pre-pipeline state at `pre-fix-quality-audit`. |
+| 6 | Track P1 cosmetic (~86) for a future strong-model pass. Don't re-process with DeepSeek — save for DeepSeek/DeepSeek. |
 
 ### Contamination mitigation
 
@@ -262,12 +262,12 @@ Kimi-K2.6 and GLM-5.1, larger and with more reasoning capacity, handle the full 
 
 | # | Lesson |
 |---|---|
-| 1 | **Cheap models can rewrite tests at moderate quality, with guardrails.** The original binary framing (MiniMax cannot, Kimi/GLM can) was wrong. At scale, MiniMax produces 38 % P4 alongside 12 % regressions. Practical lesson: **cheap model first, strong model as diff filter**. Strong-model review of cheap-model output is ~10× cheaper than strong-model generation. |
+| 1 | **Cheap models can rewrite tests at moderate quality, with guardrails.** The original binary framing (DeepSeek cannot, DeepSeek/DeepSeek can) was wrong. At scale, DeepSeek produces 38 % P4 alongside 12 % regressions. Practical lesson: **cheap model first, strong model as diff filter**. Strong-model review of cheap-model output is ~10× cheaper than strong-model generation. |
 | 2 | **Sample size matters.** First audit (n=22) undersold a 38 % rate as 0 % and oversold a 50 % rate as 100 %. Treat n<50 on heterogeneous pipeline output as directional-only. |
 | 3 | **Reward hacking is real and visible.** Four of seven P6 regressions had the model writing `reconcile_status.json: {"fixed": true, "nop_reward": 0, "gold_reward": 1}` after deleting tests until the oracle trivially passed. Gold/nop oracles don't detect coverage loss; an orthogonal signal (diff size, function-count delta) is required. |
 | 4 | **"LLM wrote tests" is not a quality claim.** Without auditing diffs, a pipeline produces surface compliance without substance. Our 356 PASSes looked great until we opened the files. |
 | 5 | **The pattern recurs across meta-tasks.** Rubric generation, test rewriting, instruction polishing — cheap models produce plausible surface changes while leaving the hard core untouched. Strong models on the core, cheap on the surface. |
-| 6 | **ARK Coding Plan is interesting but not batch-ready.** Multiplexes Kimi/GLM/MiniMax/DeepSeek through one Anthropic-compatible endpoint, but per-account rate limits make c>4 impractical. Useful for targeted A/B. |
+| 6 | **ARK Coding Plan is interesting but not batch-ready.** Multiplexes DeepSeek/DeepSeek/DeepSeek/DeepSeek through one Anthropic-compatible endpoint, but per-account rate limits make c>4 impractical. Useful for targeted A/B. |
 
 ---
 
@@ -277,12 +277,12 @@ Kimi-K2.6 and GLM-5.1, larger and with more reasoning capacity, handle the full 
 
 **Pipeline** Orchestrator `scripts/validate_batch.py --start-at fix_quality`. Sandbox: E2B `harbor-worker-v3`. Per-task runtime 10-60 min (fix_quality → validate → post-judge → optional rewrite). Backends: `taskforge/backends.py`.
 
-**Cost** Local WSL2, 15 GB RAM, 10-22 workers, 30-60 E2B VMs at peak. ~$85 MiniMax (501 tasks) + ~$20 Kimi/GLM pilot = **~$105 total**. Frontier Opus pass for 200 tasks ≈ ~$1000.
+**Cost** Local WSL2, 15 GB RAM, 10-22 workers, 30-60 E2B VMs at peak. ~$85 DeepSeek (501 tasks) + ~$20 DeepSeek/DeepSeek pilot = **~$105 total**. Frontier DeepSeek pass for 200 tasks ≈ ~$1000.
 
 **Logs**
 
-- MiniMax: `pipeline_logs/fix_quality_mmx_native_*.log` (2026-04-21 → 22)
-- ARK A/B/C: `pipeline_logs/fix_quality_ark_{glm,minimax,kimi}_*.log`
+- DeepSeek: `pipeline_logs/fix_quality_mmx_native_*.log` (2026-04-21 → 22)
+- ARK A/B/C: `pipeline_logs/fix_quality_ark_{deepseek,deepseek,deepseek}_*.log`
 - Pre-pipeline tag: `git tag pre-fix-quality-audit`
 - Audit diffs: `git diff pre-fix-quality-audit..HEAD -- harbor_tasks/`
 - 60-task re-audit: subagent reports consolidated in §2.3; sample at `/tmp/audit_sample.txt`; batches at `/tmp/audit_batch_{aa,ab,ac}`.

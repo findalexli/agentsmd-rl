@@ -6,7 +6,7 @@ Modes:
   Scaffold new PRs:   --input prs.jsonl [--agentmd]
 
 Pipeline per task: [Scaffold] → QGate → Rubric → P2P Enrich → Improve → Validate+Fix → Lint
-Only GLM + Fireworks backends (no OAuth).
+Routes through the DeepSeek backend.
 
 Usage:
     set -a && source .env && set +a && export GH_TOKEN=$(gh auth token)

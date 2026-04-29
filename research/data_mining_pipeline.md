@@ -65,11 +65,11 @@ Files that existed at the base commit are **modified** (an agent edits prose alr
 
 So the corpus is **38.6 % create-from-scratch authoring** and **54.0 % edit-existing-prose authoring**, with the remainder removals or binary moves. Skills (`SKILL.md`) dominate by file-count (44 % of all touches) but `AGENTS.md` is close behind on a per-task basis. The "tasks touching ≥ 1" column doesn't sum to 2,482 because ~13 % of tasks touch markdown files of multiple kinds in the same PR (e.g. adds an `AGENTS.md` and a `CLAUDE.md` together).
 
-A Gemini post-judge (`load_bearing`, `research_relevant`, `slop_score`, `verdict`) tags low-quality scaffolds for quarantine. Tasks default to active until judged. The 2026-04-28 pass was killed mid-flight by Gemini Flex timeouts; re-judge is queued.
+A DeepSeek post-judge (`load_bearing`, `research_relevant`, `slop_score`, `verdict`) tags low-quality scaffolds for quarantine. Tasks default to active until judged. The 2026-04-28 pass was killed mid-flight by DeepSeek timeouts; re-judge is queued.
 
 ## Markdown following (609 tasks)
 
-Each task needs a custom behavioural test, so Claude Opus 4.7 in an E2B sandbox writes the Dockerfile, gold patch, and test, then runs `nop=0 / gold=1` as the oracle.
+Each task needs a custom behavioural test, so Claude DeepSeek in an E2B sandbox writes the Dockerfile, gold patch, and test, then runs `nop=0 / gold=1` as the oracle.
 
 **Funnel:**
 
@@ -78,8 +78,8 @@ Each task needs a custom behavioural test, so Claude Opus 4.7 in an E2B sandbox 
 | Walk recent merged PRs from 147 markdown-equipped repos | 19,417 | – |
 | De-dup against existing tasks | 14,549 | 25 % |
 | Re-confirm markdown still present at merge SHA | 13,046 | 8 % |
-| **Gemini causality judge** — did the markdown shape the fix? | 546 (class B) | 94 % |
-| Opus build + Docker oracle (`nop=0`, `gold=1`) | ~540 built | ~28 % |
+| **DeepSeek causality judge** — did the markdown shape the fix? | 546 (class B) | 94 % |
+| DeepSeek build + Docker oracle (`nop=0`, `gold=1`) | ~540 built | ~28 % |
 
 Per-PR yield: **2.8 %**. The dominant cut is the causality judge — almost all merged PRs are bug fixes any agent could write without consulting any markdown. Class A (gold edits a markdown file) is routed back to the authoring corpus.
 
@@ -110,5 +110,5 @@ The tradeoff is explicit: the test rewards reproducing the human's prose. An age
 - **Verbatim-grep tests** for the authoring corpus require literal-string reproduction; mitigated by the post-judge but not eliminated.
 - **Single-classifier post-judge** (no second-classifier cross-check).
 - **Closed file-path definition.** Novel agent-instruction formats need adding to the regex by hand.
-- **Pending re-judge** — the 2026-04-28 post-judge pass was killed by Gemini Flex timeouts; ~50 of 1,351 new tasks have full `md_quality.json`, the rest are default-active until re-judge runs.
+- **Pending re-judge** — the 2026-04-28 post-judge pass was killed by DeepSeek timeouts; ~50 of 1,351 new tasks have full `md_quality.json`, the rest are default-active until re-judge runs.
 - **Recall floor** — < 100-star repos, archived/private repos, forks, and PRs older than 2025-09-01 are intentionally excluded.

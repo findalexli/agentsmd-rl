@@ -2,7 +2,7 @@
 """Clean agent eval runner: harbor + claude-code + 3-track scoring.
 
 Runs N harbor tasks in parallel through claude-code (E2B or docker),
-pointed at a configurable Anthropic-compatible backend (MiniMax by default).
+pointed at DeepSeek's Anthropic-compatible endpoint.
 After each trial:
   - Track 1 (programmatic): reward.txt from test.sh
   - Track 3 (rubric):        judge.py against eval_manifest.yaml + agent.diff
@@ -13,13 +13,13 @@ to tests/test.sh so the agent's diff is written to /logs/verifier/agent.diff.
 
 Usage:
     .venv/bin/python scripts/run_agent_eval.py \\
-        --tasks pipeline_logs/minimax_eval/tasks.txt \\
-        --out   pipeline_logs/minimax_eval/results.jsonl \\
+        --tasks pipeline_logs/eval/tasks.txt \\
+        --out   pipeline_logs/eval/results.jsonl \\
         --concurrency 4 \\
-        --backend minimax \\
+        --backend deepseek \\
         --env e2b
 
-Backends: minimax | anthropic | glm
+Backend: deepseek
 """
 from __future__ import annotations
 
@@ -75,35 +75,10 @@ def load_env() -> dict[str, str]:
 
 
 BACKEND_CFG = {
-    "minimax": {
-        "base_url": "https://api.minimax.io/anthropic",
-        "api_key_env": "MINIMAX_API_KEY",
-        "model": "MiniMax-M2.7",
-    },
-    "anthropic": {
-        "base_url": "",  # default api.anthropic.com
-        "api_key_env": "ANTHROPIC_API_KEY",
-        "model": "claude-opus-4-7",
-    },
-    "glm": {
-        "base_url": "https://api.z.ai/api/anthropic",
-        "api_key_env": "GLM_API_KEY",
-        "model": "glm-4.6",
-    },
-    "glm5": {
-        "base_url": "https://api.z.ai/api/anthropic",
-        "api_key_env": "GLM_API_KEY",
-        "model": "glm-5.1",
-    },
-    "kimi": {
-        "base_url": "https://ark.cn-beijing.volces.com/api/coding",
-        "api_key_env": "ARK_CODING_API_KEY",
-        "model": "kimi-k2.6",
-    },
-    "fireworks": {
-        "base_url": "https://api.fireworks.ai/inference",
-        "api_key_env": "FIREWORKS_API_KEY",
-        "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+    "deepseek": {
+        "base_url": "https://api.deepseek.com/anthropic",
+        "api_key_env": "DEEPSEEK_API_KEY",
+        "model": "deepseek-v4-pro[1m]",
     },
 }
 
@@ -180,7 +155,6 @@ async def run_harbor(
     timeout_s: int = 1800,
 ) -> tuple[int, str]:
     """Run `harbor run` for one task. Returns (exit_code, stderr_tail)."""
-    gemini_key = os.environ.get("GEMINI_API_KEY", "")
     agent_env = [
         ("ANTHROPIC_API_KEY", api_key),
         ("ANTHROPIC_AUTH_TOKEN", api_key),
@@ -190,8 +164,10 @@ async def run_harbor(
         ("ANTHROPIC_DEFAULT_SONNET_MODEL", backend_cfg["model"]),
         ("ANTHROPIC_DEFAULT_HAIKU_MODEL", backend_cfg["model"]),
     ]
-    if gemini_key:
-        agent_env.append(("GEMINI_API_KEY", gemini_key))
+    # Judges run against the same DeepSeek endpoint as the agent.
+    deepseek_key = os.environ.get("DEEPSEEK_API_KEY", "") or api_key
+    if deepseek_key:
+        agent_env.append(("DEEPSEEK_API_KEY", deepseek_key))
     if backend_cfg["base_url"]:
         agent_env.insert(0, ("ANTHROPIC_BASE_URL", backend_cfg["base_url"]))
 
@@ -264,17 +240,15 @@ async def score_trial(task: str, trial_dir: Path, env: dict[str, str]) -> tuple[
         return default
 
     diff = diff_path.read_text()
-    gemini_key = env.get("GEMINI_API_KEY", "") or os.environ.get("GEMINI_API_KEY", "")
-    anthropic_key = env.get("ANTHROPIC_API_KEY", "") or os.environ.get("ANTHROPIC_API_KEY", "")
-    os.environ["GEMINI_API_KEY"] = gemini_key  # call_judge reads from env
-    os.environ["ANTHROPIC_API_KEY"] = anthropic_key
+    deepseek_key = env.get("DEEPSEEK_API_KEY", "") or os.environ.get("DEEPSEEK_API_KEY", "")
+    os.environ["DEEPSEEK_API_KEY"] = deepseek_key  # judges read from env
 
     # Track 3
     rubric_info = {"score": 0.0, "passed": 0, "total": 0}
     rules = load_manifest_rubric(str(manifest_path))
     if rules:
         try:
-            results = await asyncio.to_thread(call_judge, rules, diff, anthropic_key)
+            results = await asyncio.to_thread(call_judge, rules, diff, deepseek_key)
             if results:
                 p = sum(1 for r in results if r.get("pass", False))
                 rubric_info = {
@@ -291,7 +265,7 @@ async def score_trial(task: str, trial_dir: Path, env: dict[str, str]) -> tuple[
     if distractors:
         try:
             score, results = await asyncio.to_thread(
-                judge_distractors, distractors, diff, gemini_key, anthropic_key
+                judge_distractors, distractors, diff, deepseek_key
             )
             p = sum(1 for r in results if not r.get("applied", False))
             distractor_info = {
@@ -399,7 +373,7 @@ async def main():
     p.add_argument("--tasks", required=True, help="Path to tasks.txt (one task per line)")
     p.add_argument("--out", required=True, help="Output JSONL path")
     p.add_argument("--concurrency", type=int, default=4)
-    p.add_argument("--backend", choices=["minimax", "anthropic", "glm", "glm5", "kimi", "fireworks"], default="minimax")
+    p.add_argument("--backend", choices=["deepseek"], default="deepseek")
     p.add_argument("--env", choices=["e2b", "docker"], default="e2b")
     p.add_argument("--timeout", type=int, default=1800, help="Per-task timeout in seconds")
     p.add_argument("--run-id", default=None)
@@ -439,7 +413,7 @@ async def main():
     SCRATCH_DIR.mkdir(parents=True, exist_ok=True)
 
     # Also propagate E2B_API_KEY to subprocess env
-    for k in ("E2B_API_KEY", "GEMINI_API_KEY", "ANTHROPIC_API_KEY"):
+    for k in ("E2B_API_KEY", "DEEPSEEK_API_KEY"):
         if k in env and not os.environ.get(k):
             os.environ[k] = env[k]
 
@@ -447,7 +421,7 @@ async def main():
     # owned by other running pipelines (e.g. overnight scaffold workers).
 
     print(f"run_id={run_id} backend={args.backend} env={args.env} n_tasks={len(tasks)} conc={args.concurrency}")
-    print(f"  model={cfg['model']} base_url={cfg['base_url'] or '(anthropic default)'}")
+    print(f"  model={cfg['model']} base_url={cfg['base_url']}")
     print(f"  logs: {log_prefix}/")
 
     sem = asyncio.Semaphore(args.concurrency)
@@ -475,7 +449,7 @@ async def main():
     summary = summarize(results)
     summary["backend"] = args.backend
     summary["model"] = cfg["model"]
-    summary["base_url"] = cfg["base_url"] or "(anthropic default)"
+    summary["base_url"] = cfg["base_url"]
     if args.pin_claude_version:
         summary["claude_code_version"] = args.pin_claude_version
     summary_path = out_path.with_suffix(".summary.json")

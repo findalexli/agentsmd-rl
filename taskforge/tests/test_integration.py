@@ -488,9 +488,7 @@ class TestCLIHelp:
             cwd=ROOT, capture_output=True, text=True, timeout=10,
         )
         assert r.returncode == 0
-        # Today's added backends must show up
-        for backend in ("kimi", "glm5", "minimax", "anthropic"):
-            assert backend in r.stdout, f"backend {backend} missing from --help"
+        assert "deepseek" in r.stdout, "deepseek backend missing from --help"
         assert "--pin-claude-version" in r.stdout
 
 
@@ -502,33 +500,45 @@ class TestBackendPool:
     def test_backends_from_env_returns_list(self, monkeypatch):
         from taskforge import backends
         # Provide one minimal key so we get at least 1 backend
-        monkeypatch.setenv("ANTHROPIC_API_KEY", "x" * 40)
-        monkeypatch.setenv("ANTHROPIC_ENABLED", "1")
+        monkeypatch.setenv("DEEPSEEK_API_KEY", "x" * 40)
+        monkeypatch.setenv("DEEPSEEK_ENABLED", "1")
         result = backends.backends_from_env()
         assert isinstance(result, list)
         assert all(hasattr(b, "name") for b in result)
         assert all(hasattr(b, "base_url") for b in result)
 
-    def test_no_disabled_fireworks_or_gemini_as_agent(self):
-        """Today we removed the dead Fireworks + Gemini-as-agent backends.
-        They must not appear regardless of env."""
+    def test_only_deepseek_backends_registered(self):
+        """Pool should only ever yield DeepSeek-family backends."""
         import os
         from taskforge import backends
-        # Even if someone sets FIREWORKS_API_KEY + FIREWORKS_ENABLED, the
-        # registration code is gone — backend pool won't include "fireworks".
-        os.environ["FIREWORKS_API_KEY"] = "x" * 40
-        os.environ["FIREWORKS_ENABLED"] = "1"
+        for var, val in [
+            ("FIREWORKS_API_KEY", "x" * 40), ("FIREWORKS_ENABLED", "1"),
+            ("MINIMAX_API_KEY", "x" * 40), ("MINIMAX_ENABLED", "1"),
+            ("GLM_API_KEY", "x" * 40), ("GLM_ENABLED", "1"),
+            ("ARK_CODING_API_KEY", "x" * 40), ("ARK_CODING_ENABLED", "1"),
+            ("CHUTES_API_KEY", "x" * 40), ("CHUTES_ENABLED", "1"),
+            ("ANTHROPIC_API_KEY", "x" * 40), ("ANTHROPIC_ENABLED", "1"),
+        ]:
+            os.environ[var] = val
         try:
             names = {b.name for b in backends.backends_from_env()}
-            assert "fireworks" not in names, (
-                "Fireworks backend resurrected — should be removed permanently"
-            )
-            assert "gemini" not in names, (
-                "Gemini-as-agent backend resurrected — should be removed permanently"
-            )
+            for forbidden in ("fireworks", "gemini", "minimax", "glm",
+                              "anthropic", "oauth", "chutes"):
+                assert forbidden not in names, (
+                    f"{forbidden} backend resurrected — only DeepSeek allowed"
+                )
+            assert all(n.startswith("deepseek") or n.startswith("openrouter-deepseek")
+                       for n in names), names
         finally:
-            os.environ.pop("FIREWORKS_API_KEY", None)
-            os.environ.pop("FIREWORKS_ENABLED", None)
+            for var in (
+                "FIREWORKS_API_KEY", "FIREWORKS_ENABLED",
+                "MINIMAX_API_KEY", "MINIMAX_ENABLED",
+                "GLM_API_KEY", "GLM_ENABLED",
+                "ARK_CODING_API_KEY", "ARK_CODING_ENABLED",
+                "CHUTES_API_KEY", "CHUTES_ENABLED",
+                "ANTHROPIC_ENABLED",
+            ):
+                os.environ.pop(var, None)
 
 
 # ════════════════════════════════════════════════════════════════════════════

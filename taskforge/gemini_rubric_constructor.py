@@ -1,22 +1,17 @@
 #!/usr/bin/env python3
-"""Gemini-powered rubric constructor with structured output + Kimi validation.
+"""Rubric constructor with structured output + cross-validation.
 
-Feeds the FULL config hierarchy + gold solution + instruction to Gemini 3.1 Pro
-using constrained decoding (responseSchema) for guaranteed-consistent output.
+Legacy filename — internally still implemented against Gemini's structured
+output endpoint. The DeepSeek-only cleanup leaves this module intact but
+disables it at runtime by withholding the credential it requires
+(GEMINI_API_KEY). All callers in the DeepSeek pipeline either skip this node
+or fall back to a no-op result. Refactor to DeepSeek's Anthropic-compatible
+endpoint is tracked separately.
 
-Optional Kimi→Gemini→Kimi loop:
-  1. Gemini generates structured rubrics (constrained decoding)
-  2. Kimi validates each rubric against actual repo config files
-  3. Gemini resolves any disagreements (structured follow-up)
-
-Usage (standalone):
+Usage (standalone — requires GEMINI_API_KEY, otherwise short-circuits):
     python3 -m taskforge.gemini_rubric_constructor \
         --task harbor_tasks_agentmd_edits/opencode-acp-question-tool-flag \
         --repo /tmp/repos/opencode
-
-    # With Kimi validation:
-    python3 -m taskforge.gemini_rubric_constructor \
-        --task ... --repo ... --kimi-validate
 """
 
 from __future__ import annotations

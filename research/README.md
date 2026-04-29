@@ -29,8 +29,8 @@ Grouped by topic. Dated planning logs and superseded proposals live in
 ### Test quality & oracles
 
 - [**towards-better-tests.md**](./towards-better-tests.md) — Why
-  test-rewriting is a frontier-model task. MiniMax-M2.7 produced 0/22
-  genuine rewrites across 646 tasks; Kimi-K2.6 and GLM-5.1 produced 2/3.
+  test-rewriting is a frontier-model task. DeepSeek produced 0/22
+  genuine rewrites across 646 tasks; DeepSeek and DeepSeek produced 2/3.
   Merges the earlier `test-design-audit.md` (archived) with the April 2026
   experimental validation.
 
@@ -90,7 +90,7 @@ superseded by later decisions. Kept for historical context:
   corpus has since grown well past the snapshot here.
 - `dag_architecture.md` — Apr-8 reactive self-healing DAG proposal;
   current pipeline is the simpler `taskforge/pipeline.py` parallel
-  orchestrator with quarantine + Codex rescue.
+  orchestrator with quarantine + DeepSeek rescue.
 - `e2b_validation_plan.md` — Apr-8 plan for the harbor-worker E2B template;
   shipped as `taskforge/e2b.py` and `scripts/run_agent_eval.py --env e2b`.
 - `tinker-experiment-log-2026-03-29.md` — Early E2B/Nemotron-120B GRPO

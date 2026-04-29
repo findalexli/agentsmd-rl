@@ -1,18 +1,18 @@
-"""LiteLLM proxy for routing claude -p through alternative models.
+"""LiteLLM proxy for routing claude -p through DeepSeek via OpenRouter.
 
-Starts a local litellm proxy that maps Anthropic model names to any
-OpenRouter/OpenAI-compatible backend. Claude Code sees its normal API
-format; litellm translates under the hood.
+Starts a local litellm proxy that maps Anthropic model names to DeepSeek on
+OpenRouter. Claude Code sees its normal API format; litellm translates under
+the hood.
 
 Usage:
     # As a context manager in Python
-    with litellm_proxy(model="openrouter/moonshotai/kimi-k2.5", port=4111) as url:
+    with litellm_proxy(model="openrouter/deepseek/deepseek-v4-pro", port=4111) as url:
         os.environ["ANTHROPIC_BASE_URL"] = url
         # run claude -p ...
 
     # As CLI
-    python -m taskforge.proxy --model openrouter/moonshotai/kimi-k2.5
-    python -m taskforge.proxy --model openrouter/moonshotai/kimi-k2.5 -- python -m taskforge.pipeline audit-tests --workers 4
+    python -m taskforge.proxy --model openrouter/deepseek/deepseek-v4-pro
+    python -m taskforge.proxy --model openrouter/deepseek/deepseek-v4-pro -- python -m taskforge.pipeline audit-tests --workers 4
 """
 
 from __future__ import annotations
@@ -38,17 +38,12 @@ def _write_config(model: str, port: int) -> Path:
     clean_model = model.removeprefix("openrouter/")
 
     config = f"""model_list:
-  - model_name: "claude-opus-4-6"
+  - model_name: "deepseek-v4-pro"
     litellm_params:
       model: "openai/{clean_model}"
       api_key: "os.environ/OPENROUTER_API_KEY"
       api_base: "https://openrouter.ai/api/v1"
-  - model_name: "claude-sonnet-4-6"
-    litellm_params:
-      model: "openai/{clean_model}"
-      api_key: "os.environ/OPENROUTER_API_KEY"
-      api_base: "https://openrouter.ai/api/v1"
-  - model_name: "claude-haiku-4-5-20251001"
+  - model_name: "deepseek-v4-flash"
     litellm_params:
       model: "openai/{clean_model}"
       api_key: "os.environ/OPENROUTER_API_KEY"
@@ -78,14 +73,14 @@ def _wait_for_proxy(port: int, timeout: int = 30) -> bool:
 
 @contextmanager
 def litellm_proxy(
-    model: str = "openrouter/moonshotai/kimi-k2.5",
+    model: str = "openrouter/deepseek/deepseek-v4-pro",
     port: int = 4111,
     openrouter_key: str | None = None,
 ):
     """Context manager that starts a litellm proxy and yields the base URL.
 
     Usage:
-        with litellm_proxy(model="openrouter/moonshotai/kimi-k2.5") as url:
+        with litellm_proxy(model="openrouter/deepseek/deepseek-v4-pro") as url:
             os.environ["ANTHROPIC_BASE_URL"] = url
             os.environ["ANTHROPIC_API_KEY"] = "sk-litellm-local"
             subprocess.run(["claude", "-p", ...])
@@ -143,7 +138,7 @@ def litellm_proxy(
 
 def main():
     parser = argparse.ArgumentParser(description="Run commands through litellm proxy")
-    parser.add_argument("--model", default="openrouter/moonshotai/kimi-k2.5")
+    parser.add_argument("--model", default="openrouter/deepseek/deepseek-v4-pro")
     parser.add_argument("--port", type=int, default=4111)
     parser.add_argument("command", nargs="*", help="Command to run (after --)")
     args = parser.parse_args()

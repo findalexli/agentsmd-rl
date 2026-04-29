@@ -13,7 +13,7 @@ scaffold      (704)   PR → task skeleton via claude -p
     ↓
 qgate         (789)   programmatic lint (task_lint.lint_task)        ◄── Change 1, 2a, 3
     ↓
-rubric                Gemini ↔ Kimi rubric extraction
+rubric                DeepSeek ↔ DeepSeek rubric extraction
     ↓
 enrich       (1985)   pass_to_pass enrichment                        ◄── Change 5
     ↓
@@ -133,7 +133,7 @@ if used and not any(l in instr.read_text() for l in used):
         "Running the repository's CI lint step should produce zero new errors.\n")
 ```
 
-**Evidence**: `areal-openai-proxy-empty-session` — tests include `ruff format --check`. Opus and MiniMax wrote semantically correct fixes that failed on formatting. Instruction never mentioned formatting.
+**Evidence**: `areal-openai-proxy-empty-session` — tests include `ruff format --check`. DeepSeek and DeepSeek wrote semantically correct fixes that failed on formatting. Instruction never mentioned formatting.
 
 ## Implementation priority
 
