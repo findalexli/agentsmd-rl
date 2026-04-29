@@ -33,6 +33,31 @@ logger = logging.getLogger(__name__)
 # Pick the right parser for a given test command head
 # ---------------------------------------------------------------------------
 
+def _parse_log_js_smart(log: str) -> dict[str, str]:
+    """JS test runner dispatcher: vitest, jest, mocha, jest-json, tap.
+
+    Many pnpm/npm/yarn/bun test commands invoke whichever runner the project
+    uses internally. We don't know which from the head — so try them all and
+    return the one that produced the most parseable test names.
+    """
+    candidates = [
+        parsers.parse_log_vitest,
+        parsers.parse_log_jest,
+        parsers.parse_log_jest_json,
+        parsers.parse_log_tap,
+        parsers.parse_log_pytest,    # last fallback for PASS/FAIL prefix output
+    ]
+    best = {}
+    for fn in candidates:
+        try:
+            out = fn(log)
+        except Exception:
+            continue
+        if len(out) > len(best):
+            best = out
+    return best
+
+
 PARSER_MAP = {
     "pytest":     parsers.parse_log_pytest,
     "tox":        parsers.parse_log_pytest,
@@ -45,14 +70,16 @@ PARSER_MAP = {
     "phpunit":    parsers.parse_log_phpunit,
     "mvn":        parsers.parse_log_maven,
     "gradle":     parsers.parse_log_gradle_custom,
-    # JS frameworks — pytest fallback works OK for jest/vitest verbose output
-    # because "PASS" / "FAIL" prefixes are similar.
-    "vitest":     parsers.parse_log_pytest,
-    "jest":       parsers.parse_log_pytest,
-    "pnpm":       parsers.parse_log_pytest,
-    "npm":        parsers.parse_log_pytest,
-    "yarn":       parsers.parse_log_pytest,
-    "bun":        parsers.parse_log_pytest,
+    # JS family — route through the smart dispatcher because the head doesn't
+    # tell us which runner the project actually uses inside.
+    "vitest":     parsers.parse_log_vitest,
+    "jest":       parsers.parse_log_jest,
+    "pnpm":       _parse_log_js_smart,
+    "npm":        _parse_log_js_smart,
+    "yarn":       _parse_log_js_smart,
+    "bun":        _parse_log_js_smart,
+    "node":       _parse_log_js_smart,
+    "deno":       _parse_log_js_smart,
 }
 
 # Step-command and step-name patterns we strongly prefer (test runs).
@@ -294,24 +321,26 @@ async def run_dual_pass(
             setup_join = "; ".join(c.replace("\n", " && ") + " 2>&1 || true" for c in setup_cmds)
             full_test = f"{setup_join}; echo '====TEST===='; {full_test}"
 
-        # Pass 1: base
-        _, base_log, _ = await _run_cmd(sandbox,
+        # Pass 1: base — merge stderr into stdout so parser sees everything
+        bcode, bstdout, bstderr = await _run_cmd(sandbox,
             f"docker run --rm -e PYTHONUNBUFFERED=1 "
             f"  {shlex.quote(docker_image)} "
-            f"  bash -lc {shlex.quote(full_test)}",
+            f"  bash -c {shlex.quote(full_test)} 2>&1",
             timeout=test_timeout)
+        base_log = (bstdout or "") + (bstderr or "")
 
         # Pass 2: gold — apply solve.sh, then setup + test in the SAME container
         full_gold = "bash /solution/solve.sh > /tmp/solve.log 2>&1; " + full_test
-        _, gold_log, _ = await _run_cmd(sandbox,
+        gcode, gstdout, gstderr = await _run_cmd(sandbox,
             f"docker rm -f {task_name}-gold 2>/dev/null; "
             f"docker run --name {task_name}-gold "
             f"  -v /tmp/{task_name}__solve.sh:/solution/solve.sh:ro "
             f"  -e PYTHONUNBUFFERED=1 "
             f"  {shlex.quote(docker_image)} "
-            f"  bash -lc {shlex.quote(full_gold)}; "
+            f"  bash -c {shlex.quote(full_gold)} 2>&1; "
             f"docker rm -f {task_name}-gold 2>/dev/null || true",
             timeout=test_timeout + 600)
+        gold_log = (gstdout or "") + (gstderr or "")
 
         # Strip everything before "====TEST====" so the parser only sees test output
         if "====TEST====" in base_log:
@@ -319,12 +348,17 @@ async def run_dual_pass(
         if "====TEST====" in gold_log:
             gold_log = gold_log.split("====TEST====", 1)[1]
 
-        # Save tails for debugging
-        r.base_log_tail = base_log[-2500:] if base_log else ""
-        r.gold_log_tail = gold_log[-2500:] if gold_log else ""
+        # Strip ANSI escape codes before parsing — vitest, jest, cargo, et al.
+        # all emit ANSI colors by default, and most parsers' regex don't handle
+        # them. SWE-rebench V2 handles this in their pipeline outside the parser.
+        base_log_clean = parsers.ansi_escape(base_log) if base_log else ""
+        gold_log_clean = parsers.ansi_escape(gold_log) if gold_log else ""
+        # Save tails of CLEANED log for debugging (so we can see what parser saw)
+        r.base_log_tail = base_log_clean[-2500:]
+        r.gold_log_tail = gold_log_clean[-2500:]
         # Parse both logs
-        base_status = parser(base_log)
-        gold_status = parser(gold_log)
+        base_status = parser(base_log_clean)
+        gold_status = parser(gold_log_clean)
         r.base_count = len(base_status)
         r.gold_count = len(gold_status)
 
