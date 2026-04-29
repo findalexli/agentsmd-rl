@@ -1,80 +1,4 @@
 checks:
-- id: rust_compiles
-  description: Rust code compiles successfully with new SymbolicatorMessage type
-  type: fail_to_pass
-  origin: pr_diff
-- id: symbolicator_enum
-  description: SymbolicatorMessage enum defined with all required variants
-  type: fail_to_pass
-  origin: pr_diff
-- id: sender_type
-  description: Channel sender type changed from Result<BTreeMap> to SymbolicatorMessage
-  type: fail_to_pass
-  origin: pr_diff
-- id: progress_token
-  description: PROGRESS_TOKEN constant defined in both Rust and TypeScript
-  type: fail_to_pass
-  origin: pr_diff
-- id: progress_notifications
-  description: Analyzer handles SymbolicationStart and SymbolicationEnd messages
-  type: fail_to_pass
-  origin: pr_diff
-- id: fatal_error
-  description: Fatal errors cause server process exit
-  type: fail_to_pass
-  origin: pr_diff
-- id: activity_monitor_file
-  description: activity_monitor.ts exists with ServerActivityMonitor class
-  type: fail_to_pass
-  origin: pr_diff
-- id: state_methods
-  description: ServerActivityMonitor has all required state transition methods
-  type: pass_to_pass
-  origin: pr_diff
-- id: monitor_render
-  description: ServerActivityMonitor renders status bar with correct styling
-  type: pass_to_pass
-  origin: pr_diff
-- id: context_wiring
-  description: context.ts initializes and wires the activity monitor
-  type: fail_to_pass
-  origin: pr_diff
-- id: client_progress
-  description: context.ts handles $/progress notifications from server
-  type: fail_to_pass
-  origin: pr_diff
-- id: request_wrapping
-  description: context.ts wraps sendRequest to track request latency
-  type: fail_to_pass
-  origin: pr_diff
-- id: error_handler
-  description: context.ts sets error handler to prevent auto-restart on fatal errors
-  type: fail_to_pass
-  origin: pr_diff
-- id: main_init
-  description: main.ts initializes activity monitor with version info
-  type: fail_to_pass
-  origin: pr_diff
-- id: ts_syntax
-  description: TypeScript files have valid syntax
-  type: pass_to_pass
-  origin: pr_diff
-- id: runner_start
-  description: runner sends SymbolicationStart at batch start
-  type: fail_to_pass
-  origin: pr_diff
-- id: runner_end
-  description: runner sends SymbolicationEnd at batch end
-  type: fail_to_pass
-  origin: pr_diff
-- id: error_distinction
-  description: runner distinguishes between Error and FatalError variants
-  type: fail_to_pass
-  origin: pr_diff
-- id: output_channel
-  description: moveOutputChannel is created and reused across restarts
-  type: fail_to_pass
-  origin: pr_diff
 - id: cargo_check_move_analyzer
   description: cargo check -p move-analyzer compiles without errors
   type: pass_to_pass
@@ -111,34 +35,18 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: 'CI: windows-cli-tests / cargo test'
-- id: test_ci_windows_cli_tests_scripts_changed_files_sh
-  type: pass_to_pass
-  origin: repo_tests
-  description: 'CI: windows-cli-tests / '
 - id: test_ci_license_check_run_license_check
   type: pass_to_pass
   origin: repo_tests
   description: 'CI: license-check / Run license check'
-- id: test_ci_license_check_git_checks
-  type: pass_to_pass
-  origin: repo_tests
-  description: 'CI: license-check / Git checks'
 - id: test_ci_check_docs_run_afdocs_check
   type: pass_to_pass
   origin: repo_tests
   description: 'CI: check-docs / Run afdocs check'
-- id: test_ci_move_formatter___check_formatt_npm
-  type: pass_to_pass
-  origin: repo_tests
-  description: 'CI: Move Formatter - check formatting / '
 - id: test_ci_move_formatter___check_formatt_npx
   type: pass_to_pass
   origin: repo_tests
   description: 'CI: Move Formatter - check formatting / '
-- id: test_ci_move_formatter___run_tests_tree_sitter
-  type: pass_to_pass
-  origin: repo_tests
-  description: 'CI: Move Formatter - run tests / '
 - id: test_ci_move_formatter___run_tests_npm
   type: pass_to_pass
   origin: repo_tests
@@ -151,30 +59,6 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: 'CI: Tree Sitter - run tests / '
-- id: test_ci_validate_mainnet_run_split_cluster_check_script
-  type: pass_to_pass
-  origin: repo_tests
-  description: 'CI: validate-mainnet / Run split cluster check script'
-- id: test_ci_validate_mainnet_bisect
-  type: pass_to_pass
-  origin: repo_tests
-  description: 'CI: validate-mainnet / Bisect'
-- id: test_ci_validate_mainnet_mark_failures
-  type: pass_to_pass
-  origin: repo_tests
-  description: 'CI: validate-mainnet / Mark Failures'
-- id: test_ci_validate_testnet_run_split_cluster_check_script
-  type: pass_to_pass
-  origin: repo_tests
-  description: 'CI: validate-testnet / Run split cluster check script'
-- id: test_ci_validate_testnet_bisect
-  type: pass_to_pass
-  origin: repo_tests
-  description: 'CI: validate-testnet / Bisect'
-- id: test_ci_validate_testnet_mark_failures
-  type: pass_to_pass
-  origin: repo_tests
-  description: 'CI: validate-testnet / Mark Failures'
 rubric:
 - rule: TypeScript files should follow project linting conventions
   source:

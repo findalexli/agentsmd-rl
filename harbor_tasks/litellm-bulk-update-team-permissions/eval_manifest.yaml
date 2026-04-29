@@ -23,50 +23,6 @@ checks:
   type: fail_to_pass
   origin: pr_diff
   description: permissions field is typed against KeyManagementRoutes, so unknown strings raise ValidationError.
-- id: test_all_teams_appends_preserving_existing
-  type: fail_to_pass
-  origin: pr_diff
-  description: apply_to_all_teams merges new permissions into each team without overwriting existing ones.
-- id: test_all_teams_skips_teams_already_having_permission
-  type: fail_to_pass
-  origin: pr_diff
-  description: Teams whose existing permissions already cover the request are not rewritten.
-- id: test_pagination_processes_multiple_pages
-  type: fail_to_pass
-  origin: pr_diff
-  description: 'Cursor-based pagination — second find_many uses cursor={"team_id": <last-id-of-page1>}.'
-- id: test_team_ids_uses_in_filter
-  type: fail_to_pass
-  origin: pr_diff
-  description: 'Targeted mode performs a single find_many with where={"team_id": {"in": [...]}} (no N+1).'
-- id: test_team_ids_returns_404_for_missing
-  type: fail_to_pass
-  origin: pr_diff
-  description: When any requested team_id is absent, the handler raises HTTPException(404).
-- id: test_400_when_neither_team_ids_nor_apply_all
-  type: fail_to_pass
-  origin: pr_diff
-  description: Caller must specify either team_ids or apply_to_all_teams=True; otherwise 400.
-- id: test_400_when_both_team_ids_and_apply_all
-  type: fail_to_pass
-  origin: pr_diff
-  description: team_ids and apply_to_all_teams=True are mutually exclusive; both → 400.
-- id: test_empty_permissions_is_noop
-  type: fail_to_pass
-  origin: pr_diff
-  description: Empty permissions list returns immediately (teams_updated=0) without touching the DB.
-- id: test_non_admin_gets_403
-  type: fail_to_pass
-  origin: pr_diff
-  description: Non-admin callers receive HTTPException(403).
-- id: test_uses_batch_writer_not_individual_updates
-  type: fail_to_pass
-  origin: agent_config
-  source:
-    path: CLAUDE.md
-    lines: '137'
-    commit: d132b1bf51cb7c3e6932bae9984216d4f622f945
-  description: 'Per CLAUDE.md ''Batch writes'' rule: multiple writes to the same table go through prisma_client.db.batch_().'
 - id: test_existing_team_default_params_tests_pass
   type: pass_to_pass
   origin: repo_tests

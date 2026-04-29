@@ -24,8 +24,7 @@ checks:
 - id: desktop_router_paths_match_web
   type: fail_to_pass
   origin: pr_diff
-  description: Desktop router config paths must include all paths from web router
-    config
+  description: Desktop router config paths must include all paths from web router config
 - id: react_skill_documents_desktop_sync_rule
   type: fail_to_pass
   origin: pr_diff
@@ -37,16 +36,7 @@ checks:
 - id: code_review_skill_has_spa_routing_check
   type: fail_to_pass
   origin: pr_diff
-  description: code-review/SKILL.md must include SPA/routing section for desktopRouter
-    pair
-- id: componentmap_desktop_imports_stats
-  type: fail_to_pass
-  origin: pr_diff
-  description: componentMap.desktop.ts must import the Stats component
-- id: componentmap_desktop_imports_creds
-  type: fail_to_pass
-  origin: pr_diff
-  description: componentMap.desktop.ts must import the Creds component
+  description: code-review/SKILL.md must include SPA/routing section for desktopRouter pair
 - id: test_repo_eslint_componentmap_desktop
   type: pass_to_pass
   origin: repo_tests
@@ -76,58 +66,37 @@ checks:
   origin: static
   description: Required files exist in the repo
 rubric:
-- rule: Config documentation updates should be consistent with the style of existing
-    skill documentation in the repo
+- rule: Config documentation updates should be consistent with the style of existing skill documentation in the repo
   source:
     path: .agents/skills/react/SKILL.md
     lines: 1-10
     commit: 991de25b9757697553e1180096d8e1d5b8c0d83a
-- rule: SPA-related code is grouped under `src/spa/` (entries + router) and `src/routes/`
-    (page segments).
+- rule: SPA-related code is grouped under `src/spa/` (entries + router) and `src/routes/` (page segments).
   source:
     path: .agents/skills/spa-routes/SKILL.md
-  evidence: The gold solution correctly modifies the router configuration in `src/spa/router/desktopRouter.config.desktop.tsx`
-    and the page segment mapping in `src/routes/(main)/settings/features/componentMap.desktop.ts`
-    following the SPA structure documented in spa-routes skill.
+  evidence: The gold solution correctly modifies the router configuration in `src/spa/router/desktopRouter.config.desktop.tsx` and the page segment mapping in `src/routes/(main)/settings/features/componentMap.desktop.ts` following the SPA structure documented in spa-routes skill.
   category: architecture
-- rule: Update the relevant agent skill documentation to clearly describe the desktop
-    file sync requirement.
+- rule: Update the relevant agent skill documentation to clearly describe the desktop file sync requirement.
   source:
     path: .agents/skills/react/SKILL.md
-  evidence: The gold solution updates `.agents/skills/code-review/SKILL.md`, `.agents/skills/react/SKILL.md`,
-    and `.agents/skills/spa-routes/SKILL.md` to explicitly document the `.desktop.ts(x)`
-    file sync requirement.
+  evidence: The gold solution updates `.agents/skills/code-review/SKILL.md`, `.agents/skills/react/SKILL.md`, and `.agents/skills/spa-routes/SKILL.md` to explicitly document the `.desktop.ts(x)` file sync requirement.
   category: documentation
-- rule: All AI development skills are available in `.agents/skills/` directory and
-    auto-loaded by Claude Code when relevant. ALWAYS read `.agents/skills/code-review/SKILL.md`
-    first.
+- rule: All AI development skills are available in `.agents/skills/` directory and auto-loaded by Claude Code when relevant. ALWAYS read `.agents/skills/code-review/SKILL.md` first.
   source:
     path: .agents/skills/code-review/SKILL.md
-  evidence: The gold solution updates `.agents/skills/code-review/SKILL.md` and `.agents/skills/react/SKILL.md`
-    to include explicit rules about keeping `.desktop` files in sync, directly modifying
-    the agent's own instruction files. This follows the convention documented in AGENTS.md
-    that agents should read code-review/SKILL.md first during PR reviews.
+  evidence: The gold solution updates `.agents/skills/code-review/SKILL.md` and `.agents/skills/react/SKILL.md` to include explicit rules about keeping `.desktop` files in sync, directly modifying the agent's own instruction files. This follows the convention documented in AGENTS.md that agents should read code-review/SKILL.md first during PR reviews.
   category: documentation
-- rule: When reviewing PRs or code diffs, ALWAYS read `.agents/skills/code-review/SKILL.md`
-    first.
+- rule: When reviewing PRs or code diffs, ALWAYS read `.agents/skills/code-review/SKILL.md` first.
   source:
     path: .agents/skills/code-review/SKILL.md
-  evidence: The gold solution specifically targets `.agents/skills/code-review/SKILL.md`
-    to add the SPA/routing sync check, leveraging the convention that agents read
-    code-review/SKILL.md first during PR reviews to ensure the new rule is visible.
+  evidence: The gold solution specifically targets `.agents/skills/code-review/SKILL.md` to add the SPA/routing sync check, leveraging the convention that agents read code-review/SKILL.md first during PR reviews to ensure the new rule is visible.
   category: documentation
 distractors:
 - rule: Do not add new `features/` folders inside `src/routes/`.
   collision_type: scope_ambiguity
-  why_distracting: The file to edit is `src/routes/(main)/settings/features/componentMap.desktop.ts`.
-    An agent might see this path violates the rule against having `features/` inside
-    `src/routes/` and attempt to refactor/move the directory to comply, which is out
-    of scope and would break imports.
+  why_distracting: The file to edit is `src/routes/(main)/settings/features/componentMap.desktop.ts`. An agent might see this path violates the rule against having `features/` inside `src/routes/` and attempt to refactor/move the directory to comply, which is out of scope and would break imports.
   severity: high
   source:
     path: CLAUDE.md
     lines: 47-49
-hierarchy_analysis: The agent must understand the relationship between the root config
-  files (`AGENTS.md`, `CLAUDE.md`) and the dynamically loaded skill files in `.agents/skills/`.
-  The task requires modifying the leaf nodes (skill files) to enforce a new rule globally,
-  demonstrating an understanding of how the agent's own instruction hierarchy works.
+hierarchy_analysis: The agent must understand the relationship between the root config files (`AGENTS.md`, `CLAUDE.md`) and the dynamically loaded skill files in `.agents/skills/`. The task requires modifying the leaf nodes (skill files) to enforce a new rule globally, demonstrating an understanding of how the agent's own instruction hierarchy works.

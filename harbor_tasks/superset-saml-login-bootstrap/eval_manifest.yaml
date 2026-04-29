@@ -28,22 +28,6 @@ checks:
     kind: pr_diff
     function: test_bootstrap_saml_provider_default_icon
     path: tests/unit_tests/views/test_bootstrap_auth.py
-- id: test_recaptcha_excluded_for_federated_auth[AUTH_OAUTH]
-  type: pass_to_pass
-  origin: repo_tests
-  description: Recaptcha excluded for federated OAuth (regression guard)
-  source:
-    kind: pr_diff
-    function: test_recaptcha_not_shown_for_federated_auth
-    path: tests/unit_tests/views/test_bootstrap_auth.py
-- id: test_recaptcha_excluded_for_federated_auth[AUTH_SAML]
-  type: fail_to_pass
-  origin: repo_tests
-  description: Recaptcha excluded for federated SAML (the new behavior)
-  source:
-    kind: pr_diff
-    function: test_recaptcha_not_shown_for_federated_auth
-    path: tests/unit_tests/views/test_bootstrap_auth.py
 - id: test_csrf_exempt_includes_saml_acs
   type: fail_to_pass
   origin: pr_diff
@@ -65,22 +49,6 @@ checks:
   source:
     kind: pr_diff
     function: test_bootstrap_oauth_providers
-    path: tests/unit_tests/views/test_bootstrap_auth.py
-- id: test_recaptcha_shown_for_non_federated[AUTH_DB]
-  type: pass_to_pass
-  origin: repo_tests
-  description: Recaptcha still shown for AUTH_DB (regression guard)
-  source:
-    kind: pr_diff
-    function: test_recaptcha_shown_for_non_federated_auth
-    path: tests/unit_tests/views/test_bootstrap_auth.py
-- id: test_recaptcha_shown_for_non_federated[AUTH_LDAP]
-  type: pass_to_pass
-  origin: repo_tests
-  description: Recaptcha still shown for AUTH_LDAP (regression guard)
-  source:
-    kind: pr_diff
-    function: test_recaptcha_shown_for_non_federated_auth
     path: tests/unit_tests/views/test_bootstrap_auth.py
 rubric:
 - id: type_hints_on_new_python

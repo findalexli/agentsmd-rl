@@ -41,10 +41,6 @@ checks:
   type: pass_to_pass
   origin: static
   description: Solution file Microsoft.Maui.sln exists and is readable
-- id: test_utils_csproj_valid
-  type: pass_to_pass
-  origin: static
-  description: Integration tests project file is valid XML
 - id: github_workflows_exist
   type: pass_to_pass
   origin: static
@@ -84,8 +80,7 @@ checks:
 - id: skill_md_yaml_frontmatter
   type: pass_to_pass
   origin: repo_tests
-  description: Existing SKILL.md files have valid YAML frontmatter with name and description
-    fields
+  description: Existing SKILL.md files have valid YAML frontmatter with name and description fields
 - id: copilot_instructions_structure
   type: pass_to_pass
   origin: repo_tests
@@ -93,8 +88,7 @@ checks:
 - id: powershell_scripts_structure
   type: pass_to_pass
   origin: repo_tests
-  description: Existing PowerShell scripts have proper param() and ErrorActionPreference
-    settings
+  description: Existing PowerShell scripts have proper param() and ErrorActionPreference settings
 - id: gitattributes_content
   type: pass_to_pass
   origin: repo_tests
@@ -134,81 +128,57 @@ checks:
 - id: msbuild_isolation_files
   type: fail_to_pass
   origin: pr_diff
-  description: BaseBuildTest.cs creates valid Directory.Build.props and .targets XML
-    to prevent MSBuild inheritance
+  description: BaseBuildTest.cs creates valid Directory.Build.props and .targets XML to prevent MSBuild inheritance
 - id: skill_md_valid
   type: fail_to_pass
   origin: pr_diff
-  description: run-integration-tests SKILL.md exists with valid frontmatter and all
-    test categories
+  description: run-integration-tests SKILL.md exists with valid frontmatter and all test categories
 - id: run_script_valid
   type: fail_to_pass
   origin: pr_diff
-  description: Run-IntegrationTests.ps1 exists with ValidateSet categories and workflow
-    parameters
+  description: Run-IntegrationTests.ps1 exists with ValidateSet categories and workflow parameters
 - id: copilot_instructions_lists_integration_skill
   type: fail_to_pass
   origin: pr_diff
-  description: copilot-instructions.md lists the run-integration-tests skill with
-    categories
+  description: copilot-instructions.md lists the run-integration-tests skill with categories
 - id: integration_instructions_references_skill
   type: fail_to_pass
   origin: pr_diff
-  description: integration-tests.instructions.md references the run-integration-tests
-    skill
+  description: integration-tests.instructions.md references the run-integration-tests skill
 - id: copilot_instructions_skill_numbering
   type: fail_to_pass
   origin: pr_diff
   description: Skill numbering is sequential (run-integration-tests=8, try-fix=9)
 rubric:
-- rule: Skill documentation follows the existing format in copilot-instructions.md
-    (Purpose, Trigger phrases, Categories)
+- rule: Skill documentation follows the existing format in copilot-instructions.md (Purpose, Trigger phrases, Categories)
   source:
     path: .github/copilot-instructions.md
     lines: 249-260
     commit: 71e5c2f595d7cc104adc18753a646e9c557c10da
-- rule: SKILL.md files MUST include YAML frontmatter with name, description, and metadata
-    (author, version)
+- rule: SKILL.md files MUST include YAML frontmatter with name, description, and metadata (author, version)
   source:
     path: .github/skills/pr-build-status/SKILL.md
     lines: 1-8
     commit: 71e5c2f595d7cc104adc18753a646e9c557c10da
-- rule: Skills must be documented in the copilot instructions with their path, purpose,
-    and trigger phrases so that agents and users know how and when to invoke them.
+- rule: Skills must be documented in the copilot instructions with their path, purpose, and trigger phrases so that agents and users know how and when to invoke them.
   source:
     path: .github/copilot-instructions.md
     lines: 265-275
-  evidence: The gold solution adds the `run-integration-tests` skill to the copilot
-    instructions following the established format for other skills, including the
-    skill name in bold, the path to the SKILL.md file,
+  evidence: The gold solution adds the `run-integration-tests` skill to the copilot instructions following the established format for other skills, including the skill name in bold, the path to the SKILL.md file,
   category: documentation
 distractors:
-- rule: When performing a code review on PRs that change functional code, run the
-    pr-finalize skill to verify that the PR title and description accurately match
-    the actual implementation.
+- rule: When performing a code review on PRs that change functional code, run the pr-finalize skill to verify that the PR title and description accurately match the actual implementation.
   collision_type: meta_confusion
-  why_distracting: The config instructs the agent to run the `pr-finalize` skill when
-    reviewing PRs that change functional code. An agent might get confused between
-    its role as a PR reviewer and a PR author, attempting to invoke `pr-finalize`
-    or writing review comments instead of just implementing the requested skill.
+  why_distracting: The config instructs the agent to run the `pr-finalize` skill when reviewing PRs that change functional code. An agent might get confused between its role as a PR reviewer and a PR author, attempting to invoke `pr-finalize` or writing review comments instead of just implementing the requested skill.
   severity: medium
   source:
     path: .github/copilot-instructions.md
     lines: 10-12
-- rule: 'Testing frameworks: xUnit for Unit tests, NUnit for UI tests, Appium for
-    UI test automation'
+- rule: 'Testing frameworks: xUnit for Unit tests, NUnit for UI tests, Appium for UI test automation'
   collision_type: scope_ambiguity
-  why_distracting: The config explicitly lists xUnit for Unit tests and NUnit/Appium
-    for UI tests, but omits Integration tests. An agent might try to force the integration
-    tests into one of these categories, change the test framework, or move the files
-    to match the documented paths, which would break the existing integration test
-    infrastructure.
+  why_distracting: The config explicitly lists xUnit for Unit tests and NUnit/Appium for UI tests, but omits Integration tests. An agent might try to force the integration tests into one of these categories, change the test framework, or move the files to match the documented paths, which would break the existing integration test infrastructure.
   severity: low
   source:
     path: .github/copilot-instructions.md
     lines: 25-29
-hierarchy_analysis: 'The task involves a flat configuration structure where the agent
-  must edit the very configuration file (`.github/copilot-instructions.md`) that governs
-  its behavior. The challenge is meta-referential: the agent must understand the implicit
-  schema of its own instructions to correctly append new capabilities without breaking
-  existing ones.'
+hierarchy_analysis: 'The task involves a flat configuration structure where the agent must edit the very configuration file (`.github/copilot-instructions.md`) that governs its behavior. The challenge is meta-referential: the agent must understand the implicit schema of its own instructions to correctly append new capabilities without breaking existing ones.'

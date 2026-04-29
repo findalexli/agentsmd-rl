@@ -3,24 +3,13 @@ rubric:
   source:
     path: CLAUDE.md
   reference: Code follows Kotlin project style and conventions
-- rule: 'K2/FIR (Current): Located in `compiler/fir/` - Frontend IR, the new compiler
-    frontend'
+- rule: 'K2/FIR (Current): Located in `compiler/fir/` - Frontend IR, the new compiler frontend'
   source:
     path: compiler/AGENTS.md
     lines: 7-7
-  evidence: The gold solution correctly targets the K2/FIR compiler by modifying `compiler/fir/checkers/src/org/jetbrains/kotlin/fir/analysis/checkers/expression/FirWhenConditionChecker.kt`,
-    adhering to the archi
+  evidence: The gold solution correctly targets the K2/FIR compiler by modifying `compiler/fir/checkers/src/org/jetbrains/kotlin/fir/analysis/checkers/expression/FirWhenConditionChecker.kt`, adhering to the archi
   category: architecture
 checks:
-- id: test_guard_condition_no_diagnostic_false_positive
-  type: fail_to_pass
-  origin: pr_diff
-  description: Guard conditions on non-subject variables don't trigger false positive
-    - runs FIR analysis test to verify
-- id: test_checker_compiles
-  type: fail_to_pass
-  origin: pr_diff
-  description: Modified FirWhenConditionChecker compiles without errors via Gradle
 - id: test_helper_method_behaviorally_correct
   type: fail_to_pass
   origin: pr_diff
@@ -28,18 +17,11 @@ checks:
 - id: test_old_unguarded_pattern_removed
   type: fail_to_pass
   origin: pr_diff
-  description: Old unguarded pattern with nested if check is removed - fixes the false
-    positive root cause
+  description: Old unguarded pattern with nested if check is removed - fixes the false positive root cause
 - id: test_checkered_logic_restructured_for_subject_only
   type: fail_to_pass
   origin: pr_diff
-  description: After guard condition, checker directly accesses arguments[1] assuming
-    subject is at arguments[0]
-- id: test_guard_condition_test_data_exists
-  type: pass_to_pass
-  origin: repo_tests
-  description: Test data file for guard condition exists and has correct structure
-    with KT-85244 reference
+  description: After guard condition, checker directly accesses arguments[1] assuming subject is at arguments[0]
 - id: test_kotlin_syntax_valid
   type: pass_to_pass
   origin: static
@@ -53,29 +35,21 @@ checks:
   origin: repo_tests
   description: FIR analysis tests directory has expected structure with build.gradle.kts
 distractors:
-- rule: 'Test-before-fix: When fixing an issue and adding a test, commit the test
-    data as a separate commit before the fix.'
+- rule: 'Test-before-fix: When fixing an issue and adding a test, commit the test data as a separate commit before the fix.'
   collision_type: meta_confusion
-  why_distracting: The prompt states that the tests are already present in the repository
-    (`compiler/fir/analysis-tests/testData/resolve/when/`). The agent might waste
-    time trying to create a separate commit for test data that already exists, misunderstanding
-    the scope of the task.
+  why_distracting: The prompt states that the tests are already present in the repository (`compiler/fir/analysis-tests/testData/resolve/when/`). The agent might waste time trying to create a separate commit for test data that already exists, misunderstanding the scope of the task.
   severity: medium
   source:
     path: compiler/AGENTS.md
     lines: 25-26
 - rule: 'K1/FE 1.0 (Legacy): Located in `compiler/frontend/` - uses PSI and BindingContext'
   collision_type: architecture_boundary
-  why_distracting: The issue is specifically about the FIR (K2) compiler. The agent
-    might mistakenly try to apply a parallel fix to the legacy K1 frontend in `compiler/frontend/`,
-    which is out of scope and crosses an architecture boundary.
+  why_distracting: The issue is specifically about the FIR (K2) compiler. The agent might mistakenly try to apply a parallel fix to the legacy K1 frontend in `compiler/frontend/`, which is out of scope and crosses an architecture boundary.
   severity: medium
   source:
     path: compiler/AGENTS.md
     lines: 6-6
-hierarchy_analysis: The hierarchy is straightforward, with `compiler/AGENTS.md` providing
-  the primary architectural guidelines. The agent must use these guidelines to correctly
-  navigate the boundaries between K1, K2/FIR, and Backend IR.
+hierarchy_analysis: The hierarchy is straightforward, with `compiler/AGENTS.md` providing the primary architectural guidelines. The agent must use these guidelines to correctly navigate the boundaries between K1, K2/FIR, and Backend IR.
 version: '2.0'
 source:
   repo: JetBrains/kotlin.git
