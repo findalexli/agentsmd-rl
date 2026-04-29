@@ -5,22 +5,23 @@ Grouped by topic. Dated planning logs and superseded proposals live in
 [`archive/`](./archive/).
 
 > **Start here**: [`data_mining_pipeline.md`](./data_mining_pipeline.md) is the
-> canonical methods doc — how we mine PRs, the assumptions each filter
-> enforces, and the per-stage funnel rates that produce the current
-> 1,300-task corpus.
+> canonical methods doc — how we mine PRs, what each filter checks for, and
+> the per-stage funnel diagrams (Mermaid) for each of the two parts of the
+> benchmark. Snapshot 2026-04-28: **3,172 active tasks** (2,482 in Part 2,
+> 609 in Part 1, 81 in the hybrid corpus).
 
 ## Index
 
 ### Corpus construction
 
 - [**data_mining_pipeline.md**](./data_mining_pipeline.md) *(canonical)* —
-  How merged GitHub PRs become benchmark tasks. Five assumptions (A1–A5),
-  the filter that enforces each, the side-by-side waterfall diagrams for
-  Pipeline A (code-fix) vs Pipeline B (markdown-authoring), and the
-  failure-mode catalog observed in production.
-- [**scouting_report_2026_04_26.md**](./scouting_report_2026_04_26.md) —
-  Single-day Pipeline A scout pass: 19,417 PRs fetched, 13,046 judged,
-  750 A+B wins. The funnel numbers cited in the README and methods doc.
+  How merged GitHub PRs become benchmark tasks. The two parts —
+  agentmd-following (Part 1, 609 tasks) and agentmd-create/edit (Part 2,
+  2,482 tasks) — with Mermaid funnel diagrams, a stage-by-stage table of
+  what each filter checks, and the failure-mode catalog observed in
+  production. Includes the 2026-04-28 comprehensive scout (24 code-search
+  queries + 28 date-windowed title queries → 6,966 unique candidate PRs →
+  1,351 newly-built tasks).
 - [**scaffold-gates-design.md**](./scaffold-gates-design.md) — Quality-gate
   proposals for the scaffold step (taskforge/task_lint.py). Changes 1 & 4
   shipped; 2/3/5 on the roadmap.
@@ -35,12 +36,10 @@ Grouped by topic. Dated planning logs and superseded proposals live in
 
 ### Rubric pipeline
 
-- [**rubric-audit-findings.md**](./rubric-audit-findings.md) — Technical
-  taxonomy of errors in batch-generated rubrics (bare filenames, wrong
-  line numbers, hallucinated rules). Proposes three-step verification.
 - [**rubric-reward-postmortem.md**](./rubric-reward-postmortem.md) —
   Decision record: why LLM-generated rubrics failed as reward signal.
   Binary test outcome is the sole reward; rubrics are monitoring-only.
+  *(Supersedes the earlier `rubric-audit-findings.md`, now in archive.)*
 
 ### Benchmark integrity
 
@@ -70,6 +69,13 @@ Grouped by topic. Dated planning logs and superseded proposals live in
 Documents in `archive/` are dated planning logs, run logs, or proposals
 superseded by later decisions. Kept for historical context:
 
+- `scouting_report_2026_04_26.md` — Single-day Part-1 scout pass
+  (19,417 PRs → 13,046 judged → 750 wins). The numbers were absorbed into
+  `data_mining_pipeline.md` §Part 1; the per-day report is preserved here
+  for the per-repo yield breakdown and classifier comparisons.
+- `rubric-audit-findings.md` — Mar-29 audit of 106 task rubrics; the
+  taxonomy of errors fed into `rubric-reward-postmortem.md`'s decision to
+  drop rubrics from the reward signal.
 - `0408_plan.md`, `04_05_overnight_glm_scaffold.md` — Overnight run logs
   from specific dates.
 - `mvp-roadmap.md` — Early philosophical roadmap.

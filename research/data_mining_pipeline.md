@@ -43,76 +43,95 @@ Recall gaps that remain are intentional:
 
 The infrastructure that makes this affordable: `taskforge/gh_graphql.py` provides batched alias queries for repo metadata, PR enumeration, file paths, and full repo bundles — each replaces N REST calls with N/50 GraphQL aliased calls. Without it, the per-repo PR enumeration alone (15,608 repos) would have been ~28 K REST calls (5K/hr budget = 6 hours blocked on rate limits). With it, the whole comprehensive scout runs in ~2 hours wall clock and ~1,300 GraphQL calls. We can refresh the corpus on demand.
 
-## How each part actually filters PRs
+## The pipelines, end to end
 
-The two parts have different filtering structures, because the gold-diff content drives what's possible. Part 1 needs an LLM to read every candidate's diff and decide if a rule influenced it (no shortcut works). Part 2 has a free filter (a path regex) that drops 96 % of candidates before any LLM call, so the LLM only judges the small surviving set.
+The two parts have different filtering structures because the gold-diff content drives what's possible. **Part 1 needs an LLM to read every candidate's diff** and decide if a rule influenced the fix — there's no syntactic short-circuit. **Part 2 has a free path-regex filter** that drops most candidates before any LLM call, so the LLM only judges the small surviving set.
 
-### Part 1 — agentmd-following (`harbor_tasks/`)
+What follows is the funnel for each part, in two views: a Mermaid flowchart of the architecture, and a stage-by-stage table that says exactly what each filter checks for and how much it drops.
 
-The latest scout (2026-04-26) walked 147 hand-curated, rule-equipped repos and processed 19,417 merged PRs:
+### Part 1 — agentmd-following
 
-```
-                                                                              %  of raw
-19,417  ████████████████████████████████████████████████████████████████████  100.00  raw merged PRs from 147 repos
-        │
-        │  name-dedup against baseline (skip already-scaffolded)     ×0.749    drops 25.1 %
-        ▼
-14,549  ███████████████████████████████████████████████████          74.93   unique new PRs
-        │
-        │  rule-equipped repo allowlist                              ×0.897    drops  7.7 %
-        ▼
-13,046  ██████████████████████████████████████████████               67.19   PRs into the LLM judge
-        │
-        │  Gemini causality judge: did rule files shape the fix?    ×0.058    drops 94.2 %  ◄── biggest cut
-        │      "no, fully bug-determined"        → 10,398 (79.7 %)
-        │      "no, unscaffoldable"              →  1,896 (14.5 %)
-        │      "yes, edits a rule file"          →    204 (1.6 %)  → routed to Part 2
-        │      "yes, code follows a rule"        →    546 (4.2 %)  → kept for Part 1
-        ▼
-   546  ██                                                             2.81  Part-1 candidates
-        │
-        │  Opus 4.7 build + Docker oracle (nop=0, gold=1)            ×~0.72    drops ~28 %
-        ▼
-  ≈540  ██                                                             ≈2.8  built from this pass (cumulative active corpus across all passes: 609)
+```mermaid
+flowchart TB
+    A["147 rule-equipped repos<br/>(hand-curated allowlist)"]
+    B["walk recent merged PRs<br/>via gh search prs"]
+    C[/"19,417 raw merged PRs"/]
+    D{{"de-dup against<br/>already-scaffolded baseline"}}
+    E[/"14,549 unique new PRs"/]
+    F{{"keep only PRs from<br/>rule-equipped repos"}}
+    G[/"13,046 PRs into<br/>the Gemini judge"/]
+    H{{"Gemini causality judge<br/>(reads PR diff + rule files)<br/><b>did the rule files<br/>shape the fix?</b>"}}
+    I[/"546 Part-1 candidates<br/>(class B: code follows a rule)"/]
+    J["+204 class-A wins<br/>routed to Part 2"]
+    K{{"Opus 4.7 in sandbox<br/>builds Dockerfile +<br/>writes behavioural test +<br/>runs nop=0/gold=1 oracle"}}
+    L[/"≈540 built tasks<br/>from this pass"/]
+    M[("Active Part-1 corpus<br/><b>609 tasks</b><br/>(cumulative across passes)")]
+
+    A --> B --> C --> D --> E --> F --> G --> H
+    H --> I --> K --> L --> M
+    H -.routes off.-> J
 ```
 
-Per-PR yield: **2.8 %**. The dominant cut (94 %) is the Gemini causality judge — almost all merged PRs are bug fixes any agent could write without consulting any rule file.
+| Stage | Inputs | What it checks | Output count | Drop rate |
+|---|---|---|---:|---:|
+| Discovery | – | A maintained allowlist of repos that contain `CLAUDE.md` / `AGENTS.md` / `SKILL.md` / `.cursor/rules`. New repos are added by hand after a quick eyeball. | **147 repos** | – |
+| PR walk | 147 repos | `gh search prs --is-merged --updated >=…`. No filter — we want every recent merged PR. | **19,417 PRs** | – |
+| De-dup | 19,417 PRs | Drop PRs that already have a task directory (slug name match). Free, mechanical. | 14,549 PRs | 25 % |
+| Repo allowlist re-check | 14,549 PRs | Re-confirm the PR is in a repo that still has at least one rule file at the merge SHA (some PRs come from forks or mid-rebase commits). | 13,046 PRs | 8 % |
+| **Gemini causality judge** *(LLM, dominant cut)* | PR title + body + full diff + the repo's rule files | One Gemini call per PR. The model classifies into A / B / C / D: <ul><li>**A** — gold edits a rule file → route to Part 2</li><li>**B** — code-only fix that *follows a documented rule* → keep for Part 1</li><li>**C** — code-only fix fully determined by the bug, rule files are decorative → drop</li><li>**D** — platform-specific (iOS / Windows / GPU) or > 500-line refactor — can't fit a Linux Docker oracle → drop</li></ul> The judge is told to err toward C/D when ambiguous; we'd rather lose a borderline B than admit a C. | A=204, B=546, C=10,398, D=1,896 | **94 %** |
+| Opus build + Docker oracle | 546 class-B PRs | Opus 4.7 in an E2B sandbox, given the PR diff and a scaffolding template, writes `environment/Dockerfile`, `solution/solve.sh`, `tests/test_outputs.py`, and `eval_manifest.yaml`, then runs `nop=0` (no fix → reward 0) and `gold=1` (apply gold patch → reward 1). Tasks where the oracle fails are dropped. | ≈540 built | ~28 % |
 
-### Part 2 — agentmd-create/edit (`harbor_tasks_md_authoring/`)
+Per-PR yield: **2.8 % per scout pass**. The dominant cut (94 %) is the Gemini causality judge — almost all merged PRs are bug fixes any agent could write without consulting any rule file. The remaining ~28 % oracle drop catches scaffolds where Opus chose a brittle test (e.g. depends on a network resource at test time) or got the patch slightly wrong.
 
-The 2026-04-28 comprehensive scout had a different shape, because it deliberately reaches across all of GitHub instead of sampling a curated repo set:
+### Part 2 — agentmd-create/edit (2026-04-28 comprehensive scout)
 
+```mermaid
+flowchart TB
+    subgraph "Discovery: dual-path"
+        direction TB
+        S1[24 code-search queries<br/>filename:CLAUDE.md / SKILL.md / etc.<br/>subdivided by path: to break 1000-cap]
+        S2[28 title-search queries<br/>SKILL.md in:title / etc.<br/>popular ones split into<br/>4 disjoint date windows]
+    end
+    S1 --> R1[/"15,608 unique repos<br/>with rule files in default branch"/]
+    R1 --> F1{{"batched GraphQL filter<br/>≥100 stars,<br/>not archived, not a fork"}}
+    F1 --> R2[/"846 healthy repos"/]
+    R2 --> P1{{"per-repo: list last 50<br/>merged PRs since 2025-09-01<br/>(batched GraphQL)"}}
+    P1 --> Q1[/"23,812 PRs"/]
+    Q1 --> P2{{"fetch each PR's file paths<br/>keep only those touching<br/>a rule-file path<br/>(batched GraphQL)"}}
+    P2 --> A1[/"2,745 PRs<br/>via code-search method"/]
+
+    S2 --> A2[/"4,301 PRs<br/>via title method"/]
+
+    A1 --> M1{{"merge + dedupe<br/>by (repo, pr_number)"}}
+    A2 --> M1
+    M1 --> C1[/"6,966 unique<br/>candidate PRs"/]
+    C1 --> F2{{"path regex<br/>every changed file<br/>is a rule file"}}
+    F2 --> C2[/"~3,800 rule-file-only<br/>candidates"/]
+    C2 --> F3{{"name-dedup against<br/>already-scaffolded tasks"}}
+    F3 --> S[/"1,351 newly-scaffolded<br/>tasks"/]
+    S --> J1{{"Gemini post-judge<br/>full gold patch<br/><b>load-bearing? slop?</b>"}}
+    J1 --> Q[/"6 quarantined<br/>(3 secret + 3 unfetchable)"/]
+    J1 --> N[("Net new active<br/><b>+1,345</b><br/>1,137 → 2,482")]
 ```
-                                                                                  %  of raw
-                                              DUAL DISCOVERY ═════════════════
- 6,966  ████████████████████████████████████████████████████████████████████   100.00  unique candidate PRs (merged 2025-09-01..)
-        ╠═══ via code-search-by-filename → batched GraphQL PR enum (2,745 PRs)
-        ╚═══ via 28-query date-windowed title search             (4,301 PRs)
-        │
-        │  rule-file-only path regex (every changed file is a rule file) ×~0.55  drops ~45 %
-        │  ~45 % mix code with rule files — those route to Part 1's queue
-        ▼
- ~3,800  ██████████████████████████████████████                          ~55  rule-file-only candidates
-        │
-        │  name-dedup against existing tasks (already built earlier; skipped)
-        ▼
- 1,351  █████████████                                                    19.4  newly-built tasks
-        │
-        │  Gemini post-judge — full gold patch
-        │  (2026-04-28 run partially completed — Gemini Flex returned
-        │   58-second timeouts and ~21 % transient_failures; re-judge queued)
-        │
-        │  6 of the 1,351 quarantined: 3 secret-pattern (API-key-shaped strings
-        │  in skill content) + 3 unfetchable (base SHAs not reachable from any branch ref)
-        ▼
- +1,345  █████████████                                                   19.3  net new active (1,137 → 2,482)
-```
 
-Per-PR yield: **19.3 %** — about 25× the older narrow scouts' 0.72 %. The jump isn't because per-PR difficulty fell; it's because (a) the rule-file-only path filter cuts mixed code+markdown PRs upstream of any LLM call, and (b) the comprehensive discovery captured the ~40 % of skill PRs whose titles don't quote the rule file (previously invisible).
+| Stage | Inputs | What it checks | Output count | Drop rate |
+|---|---|---|---:|---:|
+| Code-search discovery (Method A) | The whole of GitHub | 24 `gh api search/code` queries like `filename:CLAUDE.md`, `filename:SKILL.md path:.claude/skills/`, `extension:mdc path:.cursor/rules/`. GitHub caps each query at 1,000 results, so we subdivide by `path:` / `extension:` to spread the load. | **15,608 unique repos** | – |
+| Star + archive filter | 15,608 repos | One batched GraphQL call per 50 repos. Keep ≥ 100 stars, drop archived, drop forks. | 846 repos | 95 % |
+| PR enumeration | 846 repos | Per repo, list the 50 most recently merged PRs since 2025-09-01 (8-month window), batched GraphQL. | 23,812 PRs | – |
+| File-paths fetch + rule-file filter | 23,812 PRs | Per PR, fetch the changed-files list (batched GraphQL), keep only PRs that touch at least one rule-file path. | 2,745 PRs | 88 % |
+| Title-search discovery (Method B) | The whole of GitHub | 28 title queries like `is:pr is:merged SKILL.md in:title`. Popular queries (saturating the 1,000 cap) split into four disjoint date windows for ~4× more depth. | **4,301 PRs** | – |
+| Merge + dedupe | 2,745 + 4,301 | Union by `(repo, pr_number)`. The two methods miss different subsets — Method A misses PRs in repos whose rule file was deleted; Method B misses PRs that don't quote the rule file in their title. Combined, the residual blind spot is small. | **6,966 unique** | – |
+| Rule-file-only path filter *(free)* | 6,966 PRs | Every file path in the diff matches the rule-file regex. PRs that mix code and rule files route to Part 1 (the Opus pipeline can scaffold those; Part 2's verbatim-grep cannot). | ~3,800 PRs | ~45 % |
+| Scaffolder de-dup | ~3,800 PRs | Drop PRs that already have a task directory (slug name collision with earlier scouts). | 1,351 newly built | – |
+| **Gemini post-judge** *(LLM, partial)* | The full gold patch + the PR description | One Gemini call per scaffolded task. The model returns four structured fields: <ul><li>`load_bearing` — would an agent reading this gold patch behave differently than one ignoring it?</li><li>`research_relevant` — does the change carry a behavioural assertion an agent could either follow or violate?</li><li>`slop_score` (0–10) — 0 = concrete commands / paths / version pins, 10 = generic "this skill helps with X" boilerplate</li><li>`verdict` — HIGH / MEDIUM / LOW / DELETE, computed deterministically from the above</li></ul> Default to reject when in doubt. **Note**: the 2026-04-28 run was killed mid-pass when Gemini Flex started returning 58-second timeouts; ~50 of the 1,351 got their full judgement; re-judge is queued. | 1,345 net new active (after 6 quarantines) | (pending re-judge) |
+| Quarantine | 1,351 built | 3 dirs contained API-key-shaped strings (Google-style 39-char prefixes) inside skill content — pre-commit hook would block. 3 dirs had base SHAs that exist in the GitHub API but `git fetch --depth=1 origin <sha>` returns exit 128 (the SHA isn't reachable from any branch ref, typically a force-pushed PR head). | 6 quarantined | 0.4 % |
+
+Per-PR yield: **19.3 %** — about 25× the older narrow scouts' 0.72 %. The jump isn't because per-PR difficulty fell; it's because the new scout (a) cuts mixed code+markdown PRs upstream of any LLM call via the path filter, and (b) recovers the ~40 % of skill-authoring PRs whose titles don't quote the rule file.
 
 ### Why the two pipelines look so different
 
-Part 1's pipeline is dominated by an expensive but unavoidable LLM call on every candidate — there's no syntactic way to tell, without reading the diff, whether a code-only fix encodes a documented convention. Part 2's pipeline gets to short-circuit because "the diff edits a rule file" *is* a syntactic property visible in the file paths. Both pipelines end up at a 2-3 % per-pass yield from raw GitHub PRs once you account for the relative size of the discovery pool.
+Part 1's pipeline is dominated by an expensive but unavoidable LLM call on every candidate — there's no syntactic way to tell, without reading the diff, whether a code-only fix encodes a documented convention. Part 2's pipeline gets to short-circuit because "the diff edits a rule file" *is* a syntactic property visible in the file paths alone. Both pipelines end up at a 2–3 % per-pass yield from raw GitHub PRs once you account for the relative size of the discovery pool — the path-regex shortcut just shifts the cost from LLM calls to a free regex.
 
 ### Persistent raw outputs
 

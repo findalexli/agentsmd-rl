@@ -46,53 +46,44 @@ All tasks get the same four-track evaluation:
 
 ## How the corpus was built
 
-Each part has its own scout-and-build pipeline, but both end with the same Docker-image-per-task output. The pipelines differ in *what the gold diff contains* and therefore *how mechanically a task can be built from it*.
+Each part has its own scout-and-build pipeline, but both end with the same Docker-image-per-task output. The two pipelines differ in *what the gold diff contains* and therefore *how mechanically a task can be built from it*.
 
-### Part 1 — agentmd-following (`harbor_tasks/`, 609 active)
-
-Source: PRs whose gold fix is code-only, where the fix encodes a rule documented in the repo's rule files. Scaffolded by **Claude Opus 4.7 in an isolated sandbox**, because each task needs a custom behavioural test that reproduces the bug — and writing that test requires reading the repo and understanding the change. The latest scout pass (2026-04-26) walked 147 repos and 19,417 merged PRs; a Gemini causality judge classified 750 of them as Part-1 candidates (5.7 %); Opus then built ~540 of those into new tasks (≈ 93 % Docker oracle pass on the new ones). The cumulative active corpus (this pass plus all prior passes) sits at **609**.
-
-### Part 2 — agentmd-create/edit (`harbor_tasks_md_authoring/`, 2,482 active)
-
-Source: PRs whose gold diff is *only* rule files. Scaffolded **deterministically** (no LLM) — shallow-clone the repo at the base commit, apply the gold patch, then generate a `test_outputs.py` that greps for the most distinctive lines the patch added. If the agent's output contains those lines, the test passes. Quality is gated post-hoc by a Gemini judge that reads the full gold patch and rejects boilerplate / autobot / generic slop.
-
-#### What "reward = 1" actually means in Part 2
-
-The canonical source of truth is **`solution/solve.sh`** — it contains the verbatim git patch from the merged PR. `eval_manifest.yaml`'s `config_edits.gold_added` mirrors it. `tests/test_outputs.py` is *derived from* `solve.sh` at scaffold time: we extract the 1–10 most distinctive added lines and emit `assert "<line>" in <file_text>` for each one.
-
-This means the tests look like literal-string assertions:
-
-```python
-def test_signal_00():
-    text = (REPO / "AGENTS.md").read_text()
-    assert "- When creating a PR with `gh pr create`, always apply exactly one of these labels..." in text
+```mermaid
+flowchart LR
+    subgraph "Part 1 — agentmd-following (per-pass, 2026-04-26)"
+        direction TB
+        A1[147 hand-curated repos] --> A2[19,417 merged PRs]
+        A2 --> A3[Gemini causality judge<br/>read each diff, ask: did<br/>rule files shape the fix?]
+        A3 --> A4[546 PRs survive]
+        A4 --> A5[Opus 4.7 + Docker oracle<br/>scaffold each task]
+        A5 --> A6[≈540 built]
+    end
+    subgraph "Part 2 — agentmd-create/edit (2026-04-28 comprehensive)"
+        direction TB
+        B1[24 code-search +<br/>28 title-search queries] --> B2[15,608 repos w/ rule files]
+        B2 --> B3[batched GraphQL<br/>≥100 stars, not archived/fork]
+        B3 --> B4[6,966 unique candidate PRs]
+        B4 --> B5[path regex: every<br/>changed file is a rule file]
+        B5 --> B6[deterministic scaffold<br/>extract distinctive added<br/>lines from gold patch]
+        B6 --> B7[1,351 newly built]
+        B7 --> B8[Gemini post-judge:<br/>load-bearing? slop?]
+        B8 --> B9[+1,345 net active]
+    end
 ```
 
-That's deliberate. The agent reads `instruction.md` (the human's PR description, which names the specific labels to add — `feature`, `bug`, `skip-changelog`). Its job is to faithfully implement what the description specifies. A test that loosened to "agent wrote SOMETHING about PR labels" would pass both for a working solution AND a generic punt — losing the entire discrimination signal. So the test asks for the specific lines named in the instruction.
+**Part 1's bottleneck is an LLM call on every candidate** — there's no syntactic way to tell, without reading the diff, whether a code-only fix encodes a documented convention. The Gemini judge classifies into A (edits a rule file → routes to Part 2), B (code follows a rule → keep), C (bug-determined, rule files don't matter → drop), or D (unscaffoldable on Linux/Docker → drop). 94 % of admitted PRs are class C — the dominant cut.
 
-This has a known cost: an agent that produces a *semantically equivalent* but textually different rendering (different markdown bullet style, paraphrased prose, label names changed despite the instruction naming them) fails. The post-judge mitigates this by rejecting tasks where the gold patch is so generic that paraphrase would be plausible (most "Add a skill that helps with X" boilerplate gets DELETE'd). It doesn't eliminate it.
+**Part 2's bottleneck moves earlier**: the path-regex filter "every changed file is a rule file" is free and drops mixed PRs upstream of any LLM call. The post-judge then reads the full gold patch and asks two specific questions — *load_bearing?* (would an agent reading vs ignoring this patch behave differently?) and *slop_score 0–10?* (concrete commands and version pins, vs. generic "this skill helps with X" boilerplate). It rejects auto-bot output ("Update AGENTS.md for commit X") and generic AI-authored skill prose; keeps anything with concrete behavioural assertions.
 
-If you're inspecting a Part-2 task and find the test surprisingly literal, that's by design — read `solve.sh` for the canonical PR diff and `instruction.md` for what the agent is being told to write. The literal strings in `test_outputs.py` are not a hardcoded artifact; they're the verbatim diff lines from the human's PR.
+For the full per-stage table — what each filter checks, output count, drop rate — and the per-stage Mermaid funnels, see [`research/data_mining_pipeline.md`](research/data_mining_pipeline.md). What follows here is just the headline numbers and design rationale.
 
-The comprehensive 2026-04-28 scout grew this corpus from 1,137 → 2,482 (**+1,345 net**) by combining two complementary discovery methods, then deduping. It's worth describing both, because together they aim for a near-exhaustive census of skill / rule-file authoring on public GitHub:
+### Part 2's scout, in one paragraph
 
-**Method A — code search.** Run `gh api search/code` with `filename:` / `path:` queries (24 of them, e.g. `filename:SKILL.md path:.claude/skills/`, `filename:.cursorrules`, `extension:mdc`) to list every repo on GitHub that has a rule file in its default branch. GitHub caps each query at 1,000 results, so we subdivide by path/extension to break the cap. Result: **15,608 unique repos**. We then filter to ≥ 100 stars, not archived, not a fork (filtering done in batched GraphQL — 312 calls to enumerate metadata for all 15,608 repos), leaving **846 healthy repos**. For each healthy repo, we enumerate its last 50 merged PRs since 2025-09-01 (batched GraphQL again, ~17 calls), then fetch each PR's file paths and keep the ones that touch a rule-file path: **2,745 PRs**.
+The comprehensive 2026-04-28 scout grew this corpus from 1,137 → **2,482 active** (**+1,345 net**) by combining two complementary discovery methods. Method A: 24 `gh api search/code` queries (subdivided by `path:` to break the 1,000-result cap) enumerate every repo on GitHub with a rule file in its default branch — **15,608 repos**. After ≥ 100 stars + not-archived + not-fork (batched GraphQL), the 846 healthy survivors yield **2,745 candidate PRs** that touch a rule-file path. Method B: 28 title queries with date-windowing recover **4,301 more PRs**. Merged + deduped: **6,966 unique candidates** in the 8-month window. The deterministic scaffolder built **1,351** of those; 6 hit the secret-pattern or unfetchable-SHA quarantine. Total infrastructure cost: ~2 hours wall and ~1,300 GraphQL calls — `taskforge/gh_graphql.py`'s batched alias queries make this affordable.
 
-**Method B — date-windowed title search.** The traditional approach: search for `is:pr is:merged SKILL.md in:title`, `... AGENTS.md in:title`, etc. Each query also caps at 1,000 results. For the popular ones (SKILL.md, CLAUDE.md, .cursor/rules, …) we split the merge window into four disjoint date ranges (Sep–Oct, Nov–Dec, Jan–Feb, Mar–Apr) and run each as a separate query — that recovers another 3× the results past the cap. 28 base queries × variable windowing produced **4,301 PRs**.
+### What "reward = 1" actually means in Part 2
 
-**Merging the two.** Keyed by `(repo, pr_number)`: **6,966 unique candidate PRs**. The deterministic scaffolder built **1,351 new tasks** from the new ones (the rest were either already-scaffolded duplicates or didn't pass the rule-file-only path filter). 6 of the 1,351 were then quarantined (3 contained API-key-shaped strings in skill content, 3 had base commits unreachable from any branch ref). The active Part-2 corpus went from 1,137 → **2,482** for a net gain of **+1,345**.
-
-#### Why this is a near-exhaustive census
-
-Recall gaps that remain are intentional:
-- < 100-star repos (we treat that as a production-quality floor)
-- PRs older than 2025-09-01 (deliberate 8-month window)
-- Repos archived or made private after the index ran
-- Forks (convention edits in forks rarely reflect upstream practice)
-
-Method A by itself covers any rule file present on default branch right now. Method B covers PRs whose title quotes the rule file. The two miss different subsets — Method A misses PRs in repos whose rule file was added then deleted; Method B misses PRs titled `feat: add new skill` that touch SKILL.md without naming it. Combined, the residual blind spots are repos that match neither — a small fraction of the universe.
-
-The infrastructure (`taskforge/gh_graphql.py` for batched GraphQL, `scripts/code_search_phase2_batched.py`) makes a full re-run feasible in ~2 hours wall clock and ~1,300 GraphQL calls, so we can refresh the corpus on demand.
+The canonical source of truth is **`solution/solve.sh`** — it contains the verbatim git patch from the merged PR. `eval_manifest.yaml`'s `config_edits.gold_added` mirrors it. `tests/test_outputs.py` is *derived from* `solve.sh` at scaffold time: we extract the 1–10 most distinctive added lines and emit `assert "<line>" in <file_text>` for each one. The literal strings in the test file aren't hand-coded — they're auto-extracted from the PR's diff. The agent's job is to faithfully reproduce the lines named in `instruction.md` (the human's PR description). A loosened "agent wrote SOMETHING about PR labels" test would pass both for a working solution AND a generic punt, losing all discrimination — so we keep the literal-string check by design.
 
 ### Quarantines (Part 2)
 
@@ -103,8 +94,6 @@ The infrastructure (`taskforge/gh_graphql.py` for batched GraphQL, `scripts/code
 | `harbor_tasks_md_authoring_quarantine_unfetchable/` | 3 | Base commit exists in GitHub API but `git fetch --depth=1 origin <sha>` fails (commit isn't reachable from a branch ref — typically PR-head-only) |
 
 > **Pending re-judge.** The 2026-04-28 comprehensive-scout post-judge pass was killed because Gemini Flex was returning 58-second timeouts and ~21 % transient_failures that night. ~50 of the 1,351 new tasks got their full `md_quality.json`; the rest are default-active. Re-judging is queued — raw scout JSONLs are preserved under `scout_data/` so we don't have to re-fetch from GitHub.
-
-For the full breakdown — exact regex, every drop count, per-row decision logs, the funnel diagrams — see [`research/data_mining_pipeline.md`](research/data_mining_pipeline.md).
 
 ## Repository Structure
 
