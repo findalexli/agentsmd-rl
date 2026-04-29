@@ -29,43 +29,41 @@ A merged PR is useful only when its gold diff is shaped by these markdown files.
 
 Built deterministically — no LLM at scaffold time. The gold patch IS the answer; tests are auto-derived from the most distinctive added lines.
 
-**Discovery (dual-path, comprehensive scout 2026-04-28):**
+**Discovery + funnel:**
 
-- **Method A — code search.** 24 `gh api search/code` queries (`filename:SKILL.md`, `extension:mdc path:.cursor/rules/`, etc.) subdivided by path to break GitHub's 1,000-result cap → **15,608 unique repos**. Filter to ≥ 100 stars, not archived, not a fork (batched GraphQL) → 846 repos. Enumerate last 50 merged PRs per repo since 2025-09-01, keep ones touching a markdown path → **2,745 PRs**.
-- **Method B — title search.** 28 queries like `is:pr is:merged SKILL.md in:title`, popular ones split into four disjoint date windows → **4,301 PRs**.
-- **Merged + deduped:** **6,966 unique candidate PRs**.
+| Stage | Count |
+|---|---:|
+| Candidate merged PRs (code-search 2,745 ∪ title-search 4,301, deduped) | 6,966 |
+| Every changed file is a markdown file (path regex, free) | ~3,800 |
+| Not already scaffolded | 1,351 built |
+| After secret / unfetchable-SHA quarantine | **+1,345 net new** (1,137 → 2,482) |
 
-The two methods miss different subsets (A misses repos that later deleted their markdown; B misses PRs that don't quote the file in the title — ~40 % of skill-authoring work). Combined coverage is near-exhaustive for ≥ 100-star public repos in the 8-month window.
+Per-PR yield 19.3 %. Discovery covers ≥ 100-star public repos, 8-month merge window.
 
-**Funnel:**
+**What the 2,482 gold patches touch (per-task averages):**
 
-| Stage | Output | Drop |
-|---|---:|---:|
-| 6,966 unique PRs | – | – |
-| Path regex: every changed file is a markdown file (free) | ~3,800 | ~45 % |
-| Name-dedup against existing tasks | 1,351 newly built | – |
-| Quarantine: secret-shaped strings + unfetchable SHAs | 1,345 net new | 0.4 % |
+| File kind | Tasks | Avg files / task | Avg +lines / task | Median +lines | Avg net / task | Median net |
+|---|---:|---:|---:|---:|---:|---:|
+| `SKILL.md` | 1,040 | 2.34 | 139 | 47 | 107 | 29 |
+| `AGENTS.md` | 743 | 1.23 | 106 | 45 | 93 | 35 |
+| `CLAUDE.md` | 552 | 1.21 | 65 | 10 | 36 | 5 |
+| `.github/copilot-instructions.md` | 233 | 1.00 | 121 | 94 | 109 | 87 |
+| `.cursor/rules/*.mdc` | 126 | 3.78 | 291 | 65 | 158 | 60 |
+| `.cursorrules` | 33 | 1.03 | 68 | 39 | 34 | 39 |
+| other markdown | 185 | 4.04 | 260 | 67 | 150 | 52 |
+| **Whole corpus** | **2,482** | **2.22** | **151** | **56** | **110** | **38** |
 
-Net new from this scout: **+1,345** (1,137 → 2,482). Per-PR yield: **19.3 %**.
+`+lines` = lines added by the gold patch; `net` = lines added minus lines removed. Tasks column doesn't sum to 2,482 because ~13 % of PRs touch markdown files of multiple kinds at once.
 
-**What the 2,482 gold patches actually touch.** Across the corpus, the 2,482 tasks change **5,509 markdown files in total** — 71 % of tasks touch a single file, 14 % touch two, the rest touch 3+ (the long tail goes up to 197 files in one batched skill-authoring PR).
+Read across:
+- Median task adds **56 lines of markdown**; mean is 151 — the long tail (one PR adds 197 files / thousands of lines) pulls the mean.
+- `CLAUDE.md` is the lightest unit of work (median 10 +lines): "tighten one bullet" edits to an existing canonical file.
+- `copilot-instructions.md` is the most consistent (mean ≈ median ≈ 100): always one file, almost always written from scratch.
+- `.cursor/rules/*.mdc` PRs are batched: 3.78 files at ~290 +lines each.
 
-Files that existed at the base commit are **modified** (an agent edits prose already there); files that did not are **created** (an agent writes a brand-new skill / instruction file from scratch); a few are **deleted** (agent removes a stale skill). Breakdown by canonical file kind:
+**File-status split** (created vs. modified at the base commit, summed across all 5,509 file touches): 2,127 created (39 %), 2,977 modified (54 %), 319 deleted, 86 binary/other. Skills skew toward edits (1,679 modified vs. 630 created); `AGENTS.md` and `copilot-instructions.md` skew toward fresh authoring.
 
-| File kind                | Created (new in PR) | Modified (existed at base) | Deleted | Total touches | Tasks touching ≥ 1 |
-|---|---:|---:|---:|---:|---:|
-| `SKILL.md`               |  630 | 1,679 | 101 | 2,438 | 1,040 |
-| `AGENTS.md`              |  479 |   391 |  15 |   911 |   743 |
-| `CLAUDE.md`              |  306 |   319 |  42 |   670 |   552 |
-| `.github/copilot-instructions.md` | 140 |  82 |   8 |   233 |   233 |
-| `.cursor/rules/*.mdc`    |  210 |   188 |  68 |   476 |   126 |
-| `.cursorrules`           |   16 |    12 |   6 |    34 |    33 |
-| other markdown (e.g. `docs/*.md` paired with the above) | 346 | 306 | 79 | 747 | 185 |
-| **Total**                | **2,127** | **2,977** | **319** | **5,509** | – |
-
-So the corpus is **38.6 % create-from-scratch authoring** and **54.0 % edit-existing-prose authoring**, with the remainder removals or binary moves. Skills (`SKILL.md`) dominate by file-count (44 % of all touches) but `AGENTS.md` is close behind on a per-task basis. The "tasks touching ≥ 1" column doesn't sum to 2,482 because ~13 % of tasks touch markdown files of multiple kinds in the same PR (e.g. adds an `AGENTS.md` and a `CLAUDE.md` together).
-
-A Gemini post-judge (`load_bearing`, `research_relevant`, `slop_score`, `verdict`) tags low-quality scaffolds for quarantine. Tasks default to active until judged. The 2026-04-28 pass was killed mid-flight by Gemini Flex timeouts; re-judge is queued.
+A Gemini post-judge tags low-quality scaffolds for quarantine; the 2026-04-28 pass was killed by Gemini Flex timeouts and is queued for re-run.
 
 ## Markdown following (609 tasks)
 
@@ -82,10 +80,6 @@ Each task needs a custom behavioural test, so Claude Opus 4.7 in an E2B sandbox 
 | Opus build + Docker oracle (`nop=0`, `gold=1`) | ~540 built | ~28 % |
 
 Per-PR yield: **2.8 %**. The dominant cut is the causality judge — almost all merged PRs are bug fixes any agent could write without consulting any markdown. Class A (gold edits a markdown file) is routed back to the authoring corpus.
-
-## Why the two pipelines look different
-
-Markdown authoring gets a free path-regex shortcut: "the diff edits a markdown file" is visible in file paths alone. Markdown following has no syntactic short-circuit — there's no way to know whether a code-only fix encodes a documented convention without reading the diff, so every candidate costs an LLM call.
 
 ## Persistent raw outputs
 
