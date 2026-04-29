@@ -29,43 +29,33 @@ A merged PR is useful only when its gold diff is shaped by these markdown files.
 
 Built deterministically — no LLM at scaffold time. The gold patch IS the answer; tests are auto-derived from the most distinctive added lines.
 
-**Discovery (dual-path, comprehensive scout 2026-04-28):**
+**Discovery + funnel:**
 
-- **Method A — code search.** 24 `gh api search/code` queries (`filename:SKILL.md`, `extension:mdc path:.cursor/rules/`, etc.) subdivided by path to break GitHub's 1,000-result cap → **15,608 unique repos**. Filter to ≥ 100 stars, not archived, not a fork (batched GraphQL) → 846 repos. Enumerate last 50 merged PRs per repo since 2025-09-01, keep ones touching a markdown path → **2,745 PRs**.
-- **Method B — title search.** 28 queries like `is:pr is:merged SKILL.md in:title`, popular ones split into four disjoint date windows → **4,301 PRs**.
-- **Merged + deduped:** **6,966 unique candidate PRs**.
+| Stage | Count |
+|---|---:|
+| Candidate merged PRs (code-search 2,745 ∪ title-search 4,301, deduped) | 6,966 |
+| Every changed file is a markdown file (path regex, free) | ~3,800 |
+| Not already scaffolded | 1,351 built |
+| After secret / unfetchable-SHA quarantine | **+1,345 net new** (1,137 → 2,482) |
 
-The two methods miss different subsets (A misses repos that later deleted their markdown; B misses PRs that don't quote the file in the title — ~40 % of skill-authoring work). Combined coverage is near-exhaustive for ≥ 100-star public repos in the 8-month window.
+Per-PR yield 19.3 %. Discovery covers ≥ 100-star public repos, 8-month merge window.
 
-**Funnel:**
+**What the 2,482 gold patches touch:**
 
-| Stage | Output | Drop |
-|---|---:|---:|
-| 6,966 unique PRs | – | – |
-| Path regex: every changed file is a markdown file (free) | ~3,800 | ~45 % |
-| Name-dedup against existing tasks | 1,351 newly built | – |
-| Quarantine: secret-shaped strings + unfetchable SHAs | 1,345 net new | 0.4 % |
-
-Net new from this scout: **+1,345** (1,137 → 2,482). Per-PR yield: **19.3 %**.
-
-**What the 2,482 gold patches actually touch.** Across the corpus, the 2,482 tasks change **5,509 markdown files in total** — 71 % of tasks touch a single file, 14 % touch two, the rest touch 3+ (the long tail goes up to 197 files in one batched skill-authoring PR).
-
-Files that existed at the base commit are **modified** (an agent edits prose already there); files that did not are **created** (an agent writes a brand-new skill / instruction file from scratch); a few are **deleted** (agent removes a stale skill). Breakdown by canonical file kind:
-
-| File kind                | Created (new in PR) | Modified (existed at base) | Deleted | Total touches | Tasks touching ≥ 1 |
+| File kind | Created | Modified | Deleted | Files | PRs |
 |---|---:|---:|---:|---:|---:|
-| `SKILL.md`               |  630 | 1,679 | 101 | 2,438 | 1,040 |
-| `AGENTS.md`              |  479 |   391 |  15 |   911 |   743 |
-| `CLAUDE.md`              |  306 |   319 |  42 |   670 |   552 |
-| `.github/copilot-instructions.md` | 140 |  82 |   8 |   233 |   233 |
-| `.cursor/rules/*.mdc`    |  210 |   188 |  68 |   476 |   126 |
-| `.cursorrules`           |   16 |    12 |   6 |    34 |    33 |
-| other markdown (e.g. `docs/*.md` paired with the above) | 346 | 306 | 79 | 747 | 185 |
-| **Total**                | **2,127** | **2,977** | **319** | **5,509** | – |
+| `SKILL.md` | 630 | 1,679 | 101 | 2,438 | 1,040 |
+| `AGENTS.md` | 479 | 391 | 15 | 911 | 743 |
+| `CLAUDE.md` | 306 | 319 | 42 | 670 | 552 |
+| `.github/copilot-instructions.md` | 140 | 82 | 8 | 233 | 233 |
+| `.cursor/rules/*.mdc` | 210 | 188 | 68 | 476 | 126 |
+| `.cursorrules` | 16 | 12 | 6 | 34 | 33 |
+| other markdown | 346 | 306 | 79 | 747 | 185 |
+| **Total** | **2,127** | **2,977** | **319** | **5,509** | – |
 
-So the corpus is **38.6 % create-from-scratch authoring** and **54.0 % edit-existing-prose authoring**, with the remainder removals or binary moves. Skills (`SKILL.md`) dominate by file-count (44 % of all touches) but `AGENTS.md` is close behind on a per-task basis. The "tasks touching ≥ 1" column doesn't sum to 2,482 because ~13 % of tasks touch markdown files of multiple kinds in the same PR (e.g. adds an `AGENTS.md` and a `CLAUDE.md` together).
+`Created` = file did not exist at the base commit (write from scratch). `Modified` = file existed (edit prose in place). `Files` and `PRs` differ because one PR can change multiple markdown files at once (avg ~2.2 files per PR; long tail up to 197). Net: **39 % create-from-scratch, 54 % edit-existing**, the rest deletions.
 
-A Gemini post-judge (`load_bearing`, `research_relevant`, `slop_score`, `verdict`) tags low-quality scaffolds for quarantine. Tasks default to active until judged. The 2026-04-28 pass was killed mid-flight by Gemini Flex timeouts; re-judge is queued.
+A Gemini post-judge tags low-quality scaffolds for quarantine; the 2026-04-28 pass was killed by Gemini Flex timeouts and is queued for re-run.
 
 ## Markdown following (609 tasks)
 
