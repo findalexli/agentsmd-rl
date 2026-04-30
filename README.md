@@ -361,20 +361,26 @@ python -m taskforge.pipeline scaffold-from-prs --input scouted.jsonl --workers 8
 
 - **Part 1 (`harbor_tasks/`)** — agentmd-following: **609 active**, **608/608 GHCR images (100 %)**, 540/609 last-confirmed Docker oracle pass (89 %). Last scout pass 2026-04-26.
 - **Part 2 (`harbor_tasks_md_authoring/`)** — agentmd-create/edit: **2,482 active**. Comprehensive scout completed overnight 2026-04-28; +1,345 net new tasks (1,351 newly built minus 6 quarantined); 10/10 random Docker smoke builds passed; pushed to GHCR via `push-images.yml`.
-- **Test-signal coverage** (Part 1): **430/609 (70 %)** tasks have at least one upstream-derived test section in `test_outputs.py`. Total upstream test functions: **4,444** across CI-mined, PR-added f2p, and execution-mined origins (see [Test signal sources](#test-signal-sources) below).
+- **Test-signal coverage** (Part 1): **430/609 (70 %)** tasks have ≥1 upstream-mined check; **11,910 total Check entries** (3,572 f2p + 8,338 p2p) — see [Test signal: f2p / p2p by origin](#test-signal-f2p--p2p-by-origin).
 - **In flight**: post-judge re-run for the 1,351 newly-built Part-2 tasks (the original pass was killed mid-run because Gemini Flex was returning 58-second timeouts and ~21 % `transient_failures`).
 
-### Test signal sources
+### Test signal: f2p / p2p by origin
 
-Each Part-1 task's `tests/test_outputs.py` may carry up to three machine-mined sections. They sit on top of structural checks (file existence, syntax) and provide real behavioral signal.
+Across 609 Part-1 tasks: **3,572 f2p** entries (5.87/task mean, median 5) and **8,338 p2p** (13.69/task, median 11). Each `Check` carries an `origin:` tag indicating which miner produced it.
 
-| Origin | What it captures | Coverage | Test fns | Tool |
-|---|---|---:|---:|---|
-| `# === CI-mined tests` | Real `run:` commands from the merge commit's GitHub check-runs (workflow YAML + composite-action follower) | 414 (68 %) | 2,481 | `taskforge/ci_check_miner.py` + `ci_test_generator.py` |
-| `# === PR-added f2p tests` | Test functions added or modified in the gold patch (parsed from `solve.sh`) | 71 (12 %) | 387 | `taskforge/test_patch_miner.py` |
-| `# === Execution-mined` | SWE-rebench-V2-style: dual-pass docker run at base vs gold inside the task's GHCR image, parsed via per-framework log parsers | 32 (5 %) | 1,576 | `taskforge/exec_f2p_miner.py` + `exec_log_parsers.py` |
+| Origin | f2p | p2p | Tasks (any) | Mean / task* | Source |
+|---|---:|---:|---:|---|---|
+| `pr_diff` — tests added or modified in gold `solve.sh` | **3,143** (88 %) | 414 | 567 / 609 | 5.5 f2p | [`test_patch_miner.py`](taskforge/test_patch_miner.py) |
+| `repo_tests` — upstream CI commands at merge SHA | 140 | **5,351** (64 %) | 591 / 609 | 9.1 p2p | [`ci_check_miner.py`](taskforge/ci_check_miner.py) → [`ci_test_generator.py`](taskforge/ci_test_generator.py) |
+| `exec_diff` — dual-pass docker run, base vs gold (SWE-rebench V2 style) | 8 | 1,568 (19 %) | 32 / 609 | **49 p2p** | [`exec_f2p_miner.py`](taskforge/exec_f2p_miner.py) + [`exec_log_parsers.py`](taskforge/exec_log_parsers.py) |
+| `agent_config` — rules cited from CLAUDE.md/AGENTS.md/SKILL.md | 236 | 249 | ~131 | 2.0 f2p | rubric pipeline |
+| `static` — synthesized structural checks | 45 | 756 | ~300 | — | scaffold defaults |
 
-Execution mining has the right semantics (real test names from real test runs) but is gated by image fatness — most failures are setup quirks (missing tool in image, missing pytest plugin, working-directory mismatches with CI). See [data_mining_pipeline.md](research/data_mining_pipeline.md) for the full mining architecture.
+*\*mean computed only over tasks where the origin is present.*
+
+f2p is dominated by PR test patches (88 %). p2p is dominated by mined CI commands (64 %); `exec_diff` is narrowest but deepest — 49 real test names per task on the 32 where the suite runs cleanly inside the GHCR image. Drops are mostly per-task setup quirks (missing tool, pytest plugin, working-dir mismatch); fixing them broadly needs LLM-generated "fat" Dockerfiles.
+
+Run pointers: [`research/data_mining_pipeline.md`](research/data_mining_pipeline.md) for the full scout→build flow; `python scripts/mine_exec_f2p.py --concurrency 80` to run the dual-pass exec miner across many tasks.
 
 See [research/scouting_report_2026_04_26.md](research/scouting_report_2026_04_26.md) for Part 1's last scout report (per-repo yields, classifier comparison) and [research/data_mining_pipeline.md](research/data_mining_pipeline.md) for the full Part 2 comprehensive-scout architecture.
 
