@@ -131,12 +131,12 @@ def test_ci_run_upgrade_downgrade_test___r_run_reparent_tests_vtctl_n_1_vttablet
         f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
 
 def test_ci_run_upgrade_downgrade_test___o_building_last_release_s_binaries():
-    """pass_to_pass | CI job 'Run Upgrade Downgrade Test - Online DDL flow' → step "Building last release's binaries""""
+    # pass_to_pass | CI job 'Run Upgrade Downgrade Test - Online DDL flow' → step "Building last release's binaries
     r = subprocess.run(
         ["bash", "-lc", 'make build'], cwd=REPO,
         capture_output=True, text=True, timeout=300)
     assert r.returncode == 0, (
-        f"CI step "Building last release's binaries" failed (returncode={r.returncode}):\n"
+        f"CI step 'Building last release's binaries' failed (returncode={r.returncode}):\n"
         f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
 
 def test_ci_run_upgrade_downgrade_test___o_run_online_ddl_tests_primary_n_replica_n():

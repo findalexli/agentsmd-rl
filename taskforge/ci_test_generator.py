@@ -346,15 +346,26 @@ def generate_test_file(spec: dict, repo_path: str = "/workspace/REPO") -> str:
             fname = f"{base}_{n}"
         seen_fnames.add(fname)
 
+        # Sanitize step_name: strip embedded quotes so it survives BOTH a `# comment`
+        # AND an f-string without breaking parsing. Many YAML step names contain
+        # quotes (e.g. step_name='"Check ... pyproject.toml"').
+        _step_name_safe = (
+            (s.get("step_name", "") or "")
+            .replace('"', "'")
+            .replace("\n", " ")
+            .replace("\r", " ")
+        )[:140]
+        _base_name_safe = (c.get("base_name", "") or "").replace('"', "'")[:80]
+        _ttl_safe = f"{ttl} | CI job {_base_name_safe!r} → step {_step_name_safe!r}"
         lines.append(f'def {fname}():')
-        lines.append(f'    """{ttl} | CI job {c.get("base_name","")!r} → step {s.get("step_name","")!r}"""')
+        lines.append(f'    # {_ttl_safe}')
         lines.append(f'    r = subprocess.run(')
         lines.append(f'        ["bash", "-lc", {cmd!r}]{wd_clause},')
         # 5 min per CI command — caps total test.sh wall time for tasks with many
         # mined gates so we stay inside Harbor's verifier-timeout budget.
         lines.append(f'        capture_output=True, text=True, timeout=300)')
         lines.append(f'    assert r.returncode == 0, (')
-        lines.append(f'        f"CI step {s.get("step_name","")!r} failed (returncode={{r.returncode}}):\\n"')
+        lines.append(f'        f"CI step {_step_name_safe!r} failed (returncode={{r.returncode}}):\\n"')
         lines.append(f'        f"stdout: {{r.stdout[-1500:]}}\\nstderr: {{r.stderr[-1500:]}}")')
         lines.append('')
     return "\n".join(lines)

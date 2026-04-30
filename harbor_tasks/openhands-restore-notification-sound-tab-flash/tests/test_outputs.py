@@ -275,12 +275,12 @@ def test_ci_fe_unit_tests_run_tests_and_collect_coverage():
         f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
 
 def test_ci_check_package_versions_check_for_any_rev_fields_in_pyproject_to():
-    """pass_to_pass | CI job 'check-package-versions' → step "Check for any 'rev' fields in pyproject.toml""""
+    # pass_to_pass | CI job 'check-package-versions' → step "Check for any 'rev' fields in pyproject.toml
     r = subprocess.run(
         ["bash", "-lc", "python - <<'PY'"], cwd=REPO,
         capture_output=True, text=True, timeout=300)
     assert r.returncode == 0, (
-        f"CI step "Check for any 'rev' fields in pyproject.toml" failed (returncode={r.returncode}):\n"
+        f"CI step 'Check for any 'rev' fields in pyproject.toml' failed (returncode={r.returncode}):\n"
         f"stdout: {r.stdout[-1500:]}\nstderr: {r.stderr[-1500:]}")
 
 def test_ci_fe_e2e_tests_run_playwright_tests():
