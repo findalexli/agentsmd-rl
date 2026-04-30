@@ -38,7 +38,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
-HARBOR_TASKS = ROOT / "harbor_tasks"
+HARBOR_TASKS = ROOT / "markdown_following"
 
 from taskforge.task_lint import lint_test_sh  # noqa: E402
 

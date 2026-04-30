@@ -36,7 +36,7 @@ from dataclasses import dataclass, asdict
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-HARBOR_TASKS = ROOT / "harbor_tasks"
+HARBOR_TASKS = ROOT / "markdown_following"
 SCRATCH_DIR = Path(os.environ.get("EVAL_SCRATCH_DIR", "/tmp/agent_eval_tasks"))
 
 DIFF_CAPTURE_SNIPPET = r"""

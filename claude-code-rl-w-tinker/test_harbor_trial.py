@@ -36,7 +36,7 @@ pytestmark = [
 
 MODEL_NAME = "Qwen/Qwen3-8B"
 LORA_RANK = 16
-HARBOR_TASKS_DIR = Path(__file__).resolve().parent.parent / "harbor_tasks"
+HARBOR_TASKS_DIR = Path(__file__).resolve().parent.parent / "markdown_following"
 
 # Pick a simple task
 TASK_NAME = "areal-batch-rtensor-http-fetch"

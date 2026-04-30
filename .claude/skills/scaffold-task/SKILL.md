@@ -19,7 +19,7 @@ Create a benchmark task from a GitHub PR. The PR is the "gold solution" — we b
 |------|------|-----------|
 | 1. Fetch PR metadata | gh CLI calls for title, body, diff, base commit | [steps.md](steps.md) §1 |
 | 2. Discover agent configs | Find all CLAUDE.md/AGENTS.md/SKILL.md at base commit | [steps.md](steps.md) §2 |
-| 3. Copy template + fill | Copy `taskforge/templates/task_template/` → `harbor_tasks/` | [steps.md](steps.md) §3 |
+| 3. Copy template + fill | Copy `taskforge/templates/task_template/` → `markdown_following/` | [steps.md](steps.md) §3 |
 | 4. Write files | Dockerfile, solve.sh, test_outputs.py, eval_manifest.yaml, instruction.md | [steps.md](steps.md) §4 |
 | 5. Self-audit | Stub walk, alternative fix, F2P coverage, anti-patterns | [steps.md](steps.md) §5 |
 
@@ -37,7 +37,7 @@ Create a benchmark task from a GitHub PR. The PR is the "gold solution" — we b
 
 ## Output directory
 
-Write to `harbor_tasks/$TASK_NAME/` (or `harbor_tasks_agentmd_edits/$TASK_NAME/` if the PR also modifies agent config files).
+Write to `markdown_following/$TASK_NAME/` (or `markdown_edits/$TASK_NAME/` if the PR also modifies agent config files).
 
 ## Anti-patterns to avoid
 

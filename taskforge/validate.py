@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Write status.json per task from validation_results.csv or E2B test output.
 
-Reads validation data and writes/updates harbor_tasks/<task>/status.json.
+Reads validation data and writes/updates markdown_following/<task>/status.json.
 Also generates VALIDATION_STATUS.md summary.
 
 Usage:
@@ -20,7 +20,7 @@ from datetime import datetime
 from pathlib import Path
 
 ROOT = Path(__file__).parent.parent
-HARBOR_TASKS = ROOT / "harbor_tasks"
+HARBOR_TASKS = ROOT / "markdown_following"
 
 
 def read_or_create(status_path: Path) -> dict:

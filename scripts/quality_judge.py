@@ -6,7 +6,7 @@ Two-phase filter:
   Phase 2 (Gemini): read instruction.md + solve.sh summary for borderline tasks
 
 Modes:
-  --mode agentmd_edits      (default) Original schema for harbor_tasks_agentmd_edits/
+  --mode agentmd_edits      (default) Original schema for markdown_edits/
   --mode markdown_authoring Markdown-authoring task quality (load-bearing vs slop)
 
 Pre-judge mode:
@@ -23,7 +23,7 @@ Usage:
     # Markdown authoring corpus
     .venv/bin/python scripts/quality_judge.py \\
         --mode markdown_authoring \\
-        --task-dir harbor_tasks_md_authoring \\
+        --task-dir markdown_authoring \\
         --quarantine
     # Pre-judge: filter scout JSONL before scaffolder runs
     .venv/bin/python scripts/quality_judge.py \\
@@ -46,7 +46,7 @@ import yaml
 from taskforge.gemini_rubric_constructor import call_gemini
 
 # TASK_DIR is now a CLI arg; keep this as the legacy default.
-DEFAULT_TASK_DIR = Path("harbor_tasks_agentmd_edits")
+DEFAULT_TASK_DIR = Path("markdown_edits")
 
 # Gemini structured output schema for quality classification
 # Markdown_authoring quality schema — load-bearing vs slop, for the
@@ -630,7 +630,7 @@ def main():
                         choices=["agentmd_edits", "markdown_authoring"],
                         default="agentmd_edits")
     parser.add_argument("--task-dir", type=Path,
-                        help="Override task directory (default: harbor_tasks_agentmd_edits or harbor_tasks_md_authoring per --mode)")
+                        help="Override task directory (default: markdown_edits or markdown_authoring per --mode)")
     parser.add_argument("--output", default="/tmp/quality_results.json")
     parser.add_argument("--limit", type=int, default=0)
     parser.add_argument("--concurrency", type=int, default=8,
@@ -643,7 +643,7 @@ def main():
     parser.add_argument("--quarantine", action="store_true",
                         help="(markdown_authoring) move LOW/DELETE to <task-dir>_quarantine_quality/")
     parser.add_argument("--move-tier2", action="store_true",
-                        help="Move Tier 2 only tasks to harbor_tasks")
+                        help="Move Tier 2 only tasks to markdown_following")
     # Pre-judge mode
     parser.add_argument("--scout-jsonl", type=Path,
                         help="Pre-judge mode: filter a scout JSONL by title+files (no scaffold)")
@@ -672,7 +672,7 @@ def main():
     # Default task-dir per mode
     task_dir = args.task_dir
     if task_dir is None:
-        task_dir = (Path("harbor_tasks_md_authoring")
+        task_dir = (Path("markdown_authoring")
                     if args.mode == "markdown_authoring"
                     else DEFAULT_TASK_DIR)
 

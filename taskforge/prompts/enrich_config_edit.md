@@ -4,7 +4,7 @@ Add config file update tests to an existing agentmd-edit task that's missing the
 
 ## Input
 
-`$ARGUMENTS` = task name in `harbor_tasks_agentmd_edits/` (e.g., `remix-add-charset-to-contenttype-for`)
+`$ARGUMENTS` = task name in `markdown_edits/` (e.g., `remix-add-charset-to-contenttype-for`)
 
 ## Context
 
@@ -15,10 +15,10 @@ This task was scaffolded from a PR that changed both code AND agent config files
 ### 1. Understand the task
 
 Read these files:
-- `harbor_tasks_agentmd_edits/$ARGUMENTS/instruction.md` — what the task asks
-- `harbor_tasks_agentmd_edits/$ARGUMENTS/solution/solve.sh` — the gold patch
-- `harbor_tasks_agentmd_edits/$ARGUMENTS/tests/test_outputs.py` — existing tests
-- `harbor_tasks_agentmd_edits/$ARGUMENTS/eval_manifest.yaml` — existing checks
+- `markdown_edits/$ARGUMENTS/instruction.md` — what the task asks
+- `markdown_edits/$ARGUMENTS/solution/solve.sh` — the gold patch
+- `markdown_edits/$ARGUMENTS/tests/test_outputs.py` — existing tests
+- `markdown_edits/$ARGUMENTS/eval_manifest.yaml` — existing checks
 
 ### 2. Identify config file changes in the gold patch
 

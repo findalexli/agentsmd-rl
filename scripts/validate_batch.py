@@ -40,7 +40,7 @@ from taskforge.e2b_worker import (
 def find_all_tasks() -> list[tuple[str, Path]]:
     """Find ALL tasks with a Dockerfile and test.sh. Returns (task_name, task_dir)."""
     tasks = []
-    for d in ["harbor_tasks", "harbor_tasks_agentmd_edits"]:
+    for d in ["markdown_following", "markdown_edits"]:
         base = ROOT / d
         if not base.exists():
             continue
@@ -63,8 +63,8 @@ def find_unvalidated(recent_hours: int | None = None) -> list[tuple[str, Path]]:
         result = subprocess.run(
             ["git", "log", f"--since={recent_hours} hours ago",
              "--name-only", "--diff-filter=A", "--pretty=format:",
-             "--", "harbor_tasks/*/environment/Dockerfile",
-             "harbor_tasks_agentmd_edits/*/environment/Dockerfile"],
+             "--", "markdown_following/*/environment/Dockerfile",
+             "markdown_edits/*/environment/Dockerfile"],
             capture_output=True, text=True, cwd=ROOT,
         )
         recent_tasks = set()
@@ -75,7 +75,7 @@ def find_unvalidated(recent_hours: int | None = None) -> list[tuple[str, Path]]:
                     recent_tasks.add(f"{parts[0]}/{parts[1]}")
 
     unvalidated = []
-    for d in ["harbor_tasks", "harbor_tasks_agentmd_edits"]:
+    for d in ["markdown_following", "markdown_edits"]:
         base = ROOT / d
         if not base.exists():
             continue
@@ -200,7 +200,7 @@ async def run_batch_scaffold(
     results_lock = asyncio.Lock()
     total = len(pr_refs)
     done = 0
-    task_dir = ROOT / ("harbor_tasks_agentmd_edits" if agentmd else "harbor_tasks")
+    task_dir = ROOT / ("markdown_edits" if agentmd else "markdown_following")
 
     async def worker(pr_ref: str, max_retries: int = 5):
         nonlocal done
@@ -308,7 +308,7 @@ async def main():
                     task_names.add(line)
         # Resolve task names to (name, base_dir) tuples
         items = []
-        for d in ["harbor_tasks", "harbor_tasks_agentmd_edits"]:
+        for d in ["markdown_following", "markdown_edits"]:
             base = ROOT / d
             if not base.exists():
                 continue

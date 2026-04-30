@@ -1,6 +1,6 @@
 # Scaffold Task
 
-Create a benchmark task from a GitHub PR. Copies `templates/task/` → `harbor_tasks/<task-name>/`, then fills in placeholders.
+Create a benchmark task from a GitHub PR. Copies `templates/task/` → `markdown_following/<task-name>/`, then fills in placeholders.
 
 ## Input
 
@@ -50,7 +50,7 @@ Aim for **more rules rather than fewer** — better to include a borderline rule
 
 ```bash
 TASK_NAME="<repo-short>-<descriptive-slug>"
-cp -r taskforge/templates/task_template/ harbor_tasks/$TASK_NAME/
+cp -r taskforge/templates/task_template/ markdown_following/$TASK_NAME/
 ```
 
 Replace all `{{PLACEHOLDER}}` tokens across files:

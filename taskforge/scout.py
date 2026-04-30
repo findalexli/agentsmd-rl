@@ -1,8 +1,8 @@
 """PR scouting: discover, filter, and classify candidate PRs for task generation.
 
 Consolidates all scouting logic:
-  - Code-only PR scouting (harbor_tasks)
-  - AgentMD PR scouting (harbor_tasks_agentmd_edits) — PRs touching code + config
+  - Code-only PR scouting (markdown_following)
+  - AgentMD PR scouting (markdown_edits) — PRs touching code + config
   - Pre-filtering with heuristics
   - Quality filtering with diff analysis and config classification
 
@@ -813,9 +813,9 @@ def main() -> None:
 
 
 def _cmd_scout(args: argparse.Namespace) -> None:
-    harbor_tasks = ROOT / "harbor_tasks"
-    harbor_agentmd = ROOT / "harbor_tasks_agentmd_edits"
-    existing = get_existing_prs(harbor_tasks, harbor_agentmd)
+    markdown_following = ROOT / "markdown_following"
+    harbor_agentmd = ROOT / "markdown_edits"
+    existing = get_existing_prs(markdown_following, harbor_agentmd)
     print(f"Existing tasks: {len(existing)} PRs across repos")
 
     if args.agentmd:

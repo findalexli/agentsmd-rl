@@ -190,7 +190,7 @@ def repo_path_for(task_dir: Path) -> str:
 
 def main() -> int:
     ap = argparse.ArgumentParser()
-    ap.add_argument("--task-dir", default="harbor_tasks")
+    ap.add_argument("--task-dir", default="markdown_following")
     ap.add_argument("--tasks", help="Comma-sep list of task names (skip otherwise)")
     ap.add_argument("--limit", type=int, default=None)
     ap.add_argument("--apply", action="store_true", help="Write changes (default: dry-run)")

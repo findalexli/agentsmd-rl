@@ -28,7 +28,7 @@ ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 from taskforge.task_lint import lint_test_deps_in_dockerfile  # noqa: E402
 
-HARBOR_TASKS = ROOT / "harbor_tasks"
+HARBOR_TASKS = ROOT / "markdown_following"
 
 PIP_INSTALLABLE = frozenset({
     "ruff", "black", "isort", "mypy", "pyright", "pylint",

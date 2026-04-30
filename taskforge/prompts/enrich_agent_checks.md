@@ -2,11 +2,11 @@ You are reviewing the eval_manifest.yaml and test_outputs.py for harbor task `$A
 
 ## Steps
 
-1. Read `harbor_tasks/$ARGUMENTS/agent_configs.md` completely — this concatenates ALL agent config files from the repo, with headers like `## File: CLAUDE.md` or `## File: .github/copilot-instructions.md`
-2. Read `harbor_tasks/$ARGUMENTS/eval_manifest.yaml` to see existing checks
-3. Read `harbor_tasks/$ARGUMENTS/solution/solve.sh` to see which files are changed
-4. Read `harbor_tasks/$ARGUMENTS/tests/test_outputs.py` to see current tests
-5. Read `harbor_tasks/$ARGUMENTS/task.toml` to get the base_commit for source attribution
+1. Read `markdown_following/$ARGUMENTS/agent_configs.md` completely — this concatenates ALL agent config files from the repo, with headers like `## File: CLAUDE.md` or `## File: .github/copilot-instructions.md`
+2. Read `markdown_following/$ARGUMENTS/eval_manifest.yaml` to see existing checks
+3. Read `markdown_following/$ARGUMENTS/solution/solve.sh` to see which files are changed
+4. Read `markdown_following/$ARGUMENTS/tests/test_outputs.py` to see current tests
+5. Read `markdown_following/$ARGUMENTS/task.toml` to get the base_commit for source attribution
 
 ## CRITICAL: Line number attribution
 

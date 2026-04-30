@@ -8,7 +8,7 @@ Output:
   pipeline_logs/dockerfile_fix_<ts>/input.jsonl     — { "task_ref": "<name>" } per line
   pipeline_logs/dockerfile_fix_<ts>/missing.txt     — bare task names
 
-Optional: writes `harbor_tasks/<task>/_failure.log` with the docker build
+Optional: writes `markdown_following/<task>/_failure.log` with the docker build
 output captured locally (probes the Dockerfile to surface the actual error).
 """
 from __future__ import annotations
@@ -36,7 +36,7 @@ async def _has_ghcr_image(name: str) -> bool:
 async def _try_local_build(name: str, timeout: int = 600) -> tuple[bool, str]:
     """Attempt a local docker build of the task's environment to capture the
     real error message. Returns (success, captured_log_tail)."""
-    df = ROOT / "harbor_tasks" / name / "environment"
+    df = ROOT / "markdown_following" / name / "environment"
     if not (df / "Dockerfile").exists():
         return False, "no Dockerfile"
     p = await asyncio.create_subprocess_exec(
@@ -72,7 +72,7 @@ def is_tier_a(task_dir: Path) -> bool:
 
 async def main() -> int:
     ap = argparse.ArgumentParser()
-    ap.add_argument("--task-dir", default="harbor_tasks")
+    ap.add_argument("--task-dir", default="markdown_following")
     ap.add_argument("--probe-build", action="store_true",
                     help="Run docker build locally for each missing task to capture real error (slow)")
     ap.add_argument("--build-timeout", type=int, default=300)

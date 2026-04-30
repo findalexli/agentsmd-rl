@@ -6,12 +6,12 @@ A benchmark and RL training pipeline for AI coding agents that work with **agent
 
 | | What the agent does | What we measure | Corpus | Tasks |
 |---|---|---|---|---|
-| **Part 1 — agentmd-following** | Reads the repo's rule files, then writes code to fix a bug | Does the code follow the conventions the rule files document? (e.g. "use snake_case", "no wildcard imports", "always add a /api/v2 prefix") | `harbor_tasks/` | **609** |
-| **Part 2 — agentmd-create/edit** | Writes or edits a rule file (creating new conventions, fixing a typo, adding a section) | Does the agent's output contain the distinctive lines the human author wrote in the gold PR? | `harbor_tasks_md_authoring/` | **2,482** |
+| **Part 1 — agentmd-following** | Reads the repo's rule files, then writes code to fix a bug | Does the code follow the conventions the rule files document? (e.g. "use snake_case", "no wildcard imports", "always add a /api/v2 prefix") | `markdown_following/` | **609** |
+| **Part 2 — agentmd-create/edit** | Writes or edits a rule file (creating new conventions, fixing a typo, adding a section) | Does the agent's output contain the distinctive lines the human author wrote in the gold PR? | `markdown_authoring/` | **2,482** |
 
 Both parts come from real merged GitHub PRs (we don't synthesize anything). Both ship as Docker images on `ghcr.io/findalexli/agentsmd-rl/<task>:latest` and use the same scoring harness — a deterministic test plus optional LLM judges. Snapshot 2026-04-28: **3,172 active tasks total** — **2,482 for Part 2 (skill / markdown authoring)** and **609 for Part 1 (agentmd-following)**, plus a small hybrid corpus of 81.
 
-A small third corpus, `harbor_tasks_agentmd_edits/` (81 tasks), holds PRs that do *both* — fix code AND update the rule file in the same diff — and tests whether agents can keep code and config in sync.
+A small third corpus, `markdown_edits/` (81 tasks), holds PRs that do *both* — fix code AND update the rule file in the same diff — and tests whether agents can keep code and config in sync.
 
 ## Why this matters
 
@@ -29,8 +29,8 @@ Every merged PR we look at falls into one of four categories, depending on what 
 
 | What's in the gold diff | Goes to | Tests what |
 |---|---|---|
-| Edits a rule file (`CLAUDE.md`, `SKILL.md`, etc.) — possibly alongside code | **Part 2** (`harbor_tasks_md_authoring/`) | Can the agent author or update rule files? |
-| Code only, but the fix encodes a rule that's documented in a rule file | **Part 1** (`harbor_tasks/`) | Can the agent recognise which documented conventions apply? |
+| Edits a rule file (`CLAUDE.md`, `SKILL.md`, etc.) — possibly alongside code | **Part 2** (`markdown_authoring/`) | Can the agent author or update rule files? |
+| Code only, but the fix encodes a rule that's documented in a rule file | **Part 1** (`markdown_following/`) | Can the agent recognise which documented conventions apply? |
 | Code only, fully determined by the bug — rule files don't matter | Discarded | (nothing instruction-specific to test) |
 | Platform-specific (iOS/Windows/GPU), >500-line refactor, no testable behaviour | Discarded | (can't fit into a Linux Docker oracle) |
 
@@ -63,9 +63,9 @@ The canonical source of truth is **`solution/solve.sh`** — it contains the ver
 
 | Folder | Count | Reason |
 |---|---:|---|
-| `harbor_tasks_md_authoring_quarantine_quality/` | 266 | Gemini post-judge marked DELETE (bot-generated PRs, generic skill prose, broken-yaml manifests) |
-| `harbor_tasks_md_authoring_quarantine_secrets/` | 5 | The PR added a real-looking API key inside the rule-file content; pre-commit hook would block |
-| `harbor_tasks_md_authoring_quarantine_unfetchable/` | 3 | Base commit exists in GitHub API but `git fetch --depth=1 origin <sha>` fails (commit isn't reachable from a branch ref — typically PR-head-only) |
+| `markdown_authoring_quarantine_quality/` | 266 | Gemini post-judge marked DELETE (bot-generated PRs, generic skill prose, broken-yaml manifests) |
+| `markdown_authoring_quarantine_secrets/` | 5 | The PR added a real-looking API key inside the rule-file content; pre-commit hook would block |
+| `markdown_authoring_quarantine_unfetchable/` | 3 | Base commit exists in GitHub API but `git fetch --depth=1 origin <sha>` fails (commit isn't reachable from a branch ref — typically PR-head-only) |
 
 > **Pending re-judge.** The 2026-04-28 comprehensive-scout post-judge pass was killed because Gemini Flex was returning 58-second timeouts and ~21 % transient_failures that night. ~50 of the 1,351 new tasks got their full `md_quality.json`; the rest are default-active. Re-judging is queued — raw scout JSONLs are preserved under `scout_data/` so we don't have to re-fetch from GitHub.
 
@@ -89,9 +89,9 @@ taskforge/                   # Task construction toolkit
   exec_f2p_miner.py             # SWE-rebench-V2-style dual-pass exec mining (base vs gold)
   exec_log_parsers.py           # 66 per-framework log parsers (pytest, vitest, jest, cargo, gotest, …)
   test_exec_f2p_miner.py        # Unit tests for the exec miner (parser routing, picker, install patching)
-harbor_tasks/                # Part 1 — agentmd-following: code-only bug fixes (609 active)
-harbor_tasks_md_authoring/   # Part 2 — agentmd-create/edit: rule-file edits (2,482 active)
-harbor_tasks_agentmd_edits/  # Hybrid: code + rule-file edits in same PR (81 active)
+markdown_following/                # Part 1 — agentmd-following: code-only bug fixes (609 active)
+markdown_authoring/   # Part 2 — agentmd-create/edit: rule-file edits (2,482 active)
+markdown_edits/  # Hybrid: code + rule-file edits in same PR (81 active)
 scripts/
   run_agent_eval.py             # Agent eval runner (Track 1+3+4, pluggable backend)
   scaffold_markdown_only.py     # Pipeline B — deterministic markdown-authoring scaffolder
@@ -165,15 +165,15 @@ Task environments are distributed as pre-built images on GitHub Container Regist
 docker pull ghcr.io/findalexli/agentsmd-rl/<task-name>:latest
 
 # Harbor auto-pulls when docker_image is set in task.toml
-harbor run -p harbor_tasks/<task> -a claude-code -m claude-opus-4-6 -y
+harbor run -p markdown_following/<task> -a claude-code -m claude-opus-4-6 -y
 ```
 
 Images are built via GitHub Actions (`gh workflow run push-images.yml`) — no local Docker builds needed. Each image is tagged with both a Dockerfile content hash (for cache-busting) and `:latest`. Harbor falls back to building from `environment/Dockerfile` if no pre-built image is configured.
 
 Both task corpora are kept on GHCR:
-- `harbor_tasks/` — code-fix tasks
-- `harbor_tasks_md_authoring/` — markdown-authoring tasks (all 2,482 active tasks have images as of 2026-04-28; 99 % coverage at any given time, with a handful in flight after each scout)
-- `harbor_tasks_agentmd_edits/` — code + config edit tasks (Track 2)
+- `markdown_following/` — code-fix tasks
+- `markdown_authoring/` — markdown-authoring tasks (all 2,482 active tasks have images as of 2026-04-28; 99 % coverage at any given time, with a handful in flight after each scout)
+- `markdown_edits/` — code + config edit tasks (Track 2)
 
 All Dockerfiles use shallow clone (`git fetch --depth=1 origin <SHA>`) for fast builds and small images.
 
@@ -191,7 +191,7 @@ Requires [Harbor](https://github.com/laude-institute/harbor):
 
 ```bash
 # Run a single task (all 4 tracks — programmatic + LLM judge)
-harbor run -p harbor_tasks/<task> -a claude-code -m claude-opus-4-6 -e e2b -y
+harbor run -p markdown_following/<task> -a claude-code -m claude-opus-4-6 -e e2b -y
 
 # Results in: <job-dir>/verifier/
 #   reward.txt           — Track 1: binary 0/1 (programmatic tests)
@@ -303,7 +303,7 @@ We run two simple pipelines, both inside an E2B Firecracker microVM with Docker 
 
 ### Pipeline 1: Repair (existing task → cleaned task)
 
-For tasks already in `harbor_tasks/` that have quality issues (broken oracle, weak tests, leaky instructions). Used to clean the active pool.
+For tasks already in `markdown_following/` that have quality issues (broken oracle, weak tests, leaky instructions). Used to clean the active pool.
 
 ```
 [ Programmatic lint ] → [ One Opus call: fix tests + instruction + run Docker oracle + write verdict ]
@@ -359,8 +359,8 @@ python -m taskforge.pipeline scaffold-from-prs --input scouted.jsonl --workers 8
 
 ## Status (2026-04-29)
 
-- **Part 1 (`harbor_tasks/`)** — agentmd-following: **609 active**, **608/608 GHCR images (100 %)**, 540/609 last-confirmed Docker oracle pass (89 %). Last scout pass 2026-04-26.
-- **Part 2 (`harbor_tasks_md_authoring/`)** — agentmd-create/edit: **2,482 active**. Comprehensive scout completed overnight 2026-04-28; +1,345 net new tasks (1,351 newly built minus 6 quarantined); 10/10 random Docker smoke builds passed; pushed to GHCR via `push-images.yml`.
+- **Part 1 (`markdown_following/`)** — agentmd-following: **609 active**, **608/608 GHCR images (100 %)**, 540/609 last-confirmed Docker oracle pass (89 %). Last scout pass 2026-04-26.
+- **Part 2 (`markdown_authoring/`)** — agentmd-create/edit: **2,482 active**. Comprehensive scout completed overnight 2026-04-28; +1,345 net new tasks (1,351 newly built minus 6 quarantined); 10/10 random Docker smoke builds passed; pushed to GHCR via `push-images.yml`.
 - **Test-signal coverage** (Part 1): **430/609 (70 %)** tasks have ≥1 upstream-mined check; **11,910 total Check entries** (3,572 f2p + 8,338 p2p) — see [Test signal: f2p / p2p by origin](#test-signal-f2p--p2p-by-origin).
 - **In flight**: post-judge re-run for the 1,351 newly-built Part-2 tasks (the original pass was killed mid-run because Gemini Flex was returning 58-second timeouts and ~21 % `transient_failures`).
 

@@ -14,7 +14,7 @@ Cost estimate: ~4-8k input tokens × ~600 output tokens per task at Opus 4.6 rat
 Usage:
     from pathlib import Path
     from taskforge.quality_judge import judge_task
-    result = judge_task(Path("harbor_tasks/my-task"))
+    result = judge_task(Path("markdown_following/my-task"))
     if result["tier_a_fails"]:
         print("quality judge flagged:", result["tier_a_fails"])
 """

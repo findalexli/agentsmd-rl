@@ -1,19 +1,19 @@
 # Validate Task
 
-Docker oracle test for `harbor_tasks/$ARGUMENTS/`. Builds the image, runs nop (base commit) and gold (solve.sh), checks binary reward.
+Docker oracle test for `markdown_following/$ARGUMENTS/`. Builds the image, runs nop (base commit) and gold (solve.sh), checks binary reward.
 
 Run AFTER `/scaffold-task` has created all files.
 
 ## Inputs
 
-`harbor_tasks/$ARGUMENTS/` must have: instruction.md, task.toml, eval_manifest.yaml, tests/test.sh, solution/solve.sh, environment/Dockerfile.
+`markdown_following/$ARGUMENTS/` must have: instruction.md, task.toml, eval_manifest.yaml, tests/test.sh, solution/solve.sh, environment/Dockerfile.
 
 ## Steps
 
 ### 1. Build Docker image
 
 ```bash
-docker build -q -t harbor-$ARGUMENTS:latest harbor_tasks/$ARGUMENTS/environment/
+docker build -q -t harbor-$ARGUMENTS:latest markdown_following/$ARGUMENTS/environment/
 ```
 
 If build fails → verdict `fail_build`, note the error.
@@ -22,7 +22,7 @@ If build fails → verdict `fail_build`, note the error.
 
 ```bash
 docker run --rm \
-  -v $(pwd)/harbor_tasks/$ARGUMENTS/tests:/tests:ro \
+  -v $(pwd)/markdown_following/$ARGUMENTS/tests:/tests:ro \
   -v /tmp/nop_logs:/logs/verifier \
   harbor-$ARGUMENTS:latest \
   bash -c "mkdir -p /logs/verifier && chmod +x /tests/test.sh && /tests/test.sh"
@@ -36,8 +36,8 @@ Read `/tmp/nop_logs/reward.txt`.
 
 ```bash
 docker run --rm \
-  -v $(pwd)/harbor_tasks/$ARGUMENTS/tests:/tests:ro \
-  -v $(pwd)/harbor_tasks/$ARGUMENTS/solution:/solution:ro \
+  -v $(pwd)/markdown_following/$ARGUMENTS/tests:/tests:ro \
+  -v $(pwd)/markdown_following/$ARGUMENTS/solution:/solution:ro \
   -v /tmp/gold_logs:/logs/verifier \
   harbor-$ARGUMENTS:latest \
   bash -c "mkdir -p /logs/verifier && chmod +x /tests/test.sh /solution/solve.sh && /solution/solve.sh 2>/dev/null && /tests/test.sh"

@@ -284,5 +284,5 @@ Kimi-K2.6 and GLM-5.1, larger and with more reasoning capacity, handle the full 
 - MiniMax: `pipeline_logs/fix_quality_mmx_native_*.log` (2026-04-21 → 22)
 - ARK A/B/C: `pipeline_logs/fix_quality_ark_{glm,minimax,kimi}_*.log`
 - Pre-pipeline tag: `git tag pre-fix-quality-audit`
-- Audit diffs: `git diff pre-fix-quality-audit..HEAD -- harbor_tasks/`
+- Audit diffs: `git diff pre-fix-quality-audit..HEAD -- markdown_following/`
 - 60-task re-audit: subagent reports consolidated in §2.3; sample at `/tmp/audit_sample.txt`; batches at `/tmp/audit_batch_{aa,ab,ac}`.

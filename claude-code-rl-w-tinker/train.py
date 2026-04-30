@@ -102,7 +102,7 @@ logging.getLogger("LiteLLM").setLevel(logging.WARNING)
 logging.getLogger("httpx").setLevel(logging.WARNING)
 logging.getLogger("uvicorn").setLevel(logging.WARNING)
 
-HARBOR_TASKS_DIR = Path(__file__).resolve().parent.parent / "harbor_tasks"
+HARBOR_TASKS_DIR = Path(__file__).resolve().parent.parent / "markdown_following"
 
 
 # ── Config ───────────────────────────────────────────────────────────────

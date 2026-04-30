@@ -11,7 +11,7 @@ Optional Kimi→Gemini→Kimi loop:
 
 Usage (standalone):
     python3 -m taskforge.gemini_rubric_constructor \
-        --task harbor_tasks_agentmd_edits/opencode-acp-question-tool-flag \
+        --task markdown_edits/opencode-acp-question-tool-flag \
         --repo /tmp/repos/opencode
 
     # With Kimi validation:

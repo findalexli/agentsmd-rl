@@ -892,7 +892,7 @@ def _cli():
     import sys
 
     p = argparse.ArgumentParser(description="Programmatic task-quality linter.")
-    p.add_argument("task_dir", help="Path to a task dir or a harbor_tasks/ root")
+    p.add_argument("task_dir", help="Path to a task dir or a markdown_following/ root")
     p.add_argument("--json", action="store_true", help="Output JSON summary")
     p.add_argument("--fail-on", choices=["A", "B", "C", "any"], default="A",
                    help="Exit nonzero if any finding of this tier or higher (default A)")

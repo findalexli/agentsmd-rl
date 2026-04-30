@@ -16,7 +16,7 @@ import time
 from pathlib import Path
 
 ROOT = Path("/home/alex/agentsmd-rl")
-MD_DIR = ROOT / "harbor_tasks_md_authoring"
+MD_DIR = ROOT / "markdown_authoring"
 
 
 def log(msg: str):
@@ -129,7 +129,7 @@ def main():
     sc_log = ROOT / "pipeline_logs" / "scaffold_v4_2026_04_26" / f"md_only_{args.label}.log"
     run([".venv/bin/python", "scripts/scaffold_markdown_only.py",
          "--queue", str(queue),
-         "--out-dir", "harbor_tasks_md_authoring",
+         "--out-dir", "markdown_authoring",
          "--concurrency", "16"], sc_log)
     post_scaff = count_corpus()
     log(f"  scaffolded {post_scaff - pre} new tasks ({pre} -> {post_scaff})")
@@ -139,7 +139,7 @@ def main():
     out_json = ROOT / "pipeline_logs" / "scaffold_v4_2026_04_26" / f"md_quality_{args.label}.json"
     run([".venv/bin/python", "scripts/quality_judge.py",
          "--mode", "markdown_authoring",
-         "--task-dir", "harbor_tasks_md_authoring",
+         "--task-dir", "markdown_authoring",
          "--concurrency", "32",
          "--service-tier", "standard",
          "--quarantine",
@@ -164,7 +164,7 @@ def main():
 
     log("Phase 7: commit + push")
     subprocess.run(["git", "add",
-                    "harbor_tasks_md_authoring/",
+                    "markdown_authoring/",
                     "research/md_authoring_quality_judgments.json",
                     "scouted_v3_new_2026_04_27.jsonl",
                     "scouted_deep30_2026_04_27.jsonl"],
@@ -192,7 +192,7 @@ def main():
 
     log("Phase 8: trigger GHCR workflow")
     r = subprocess.run(["gh", "workflow", "run", "push-images.yml",
-                        "-f", "task_dir=harbor_tasks_md_authoring",
+                        "-f", "task_dir=markdown_authoring",
                         "-f", "tier_a_only=false",
                         "-f", "update_toml=false"],
                        cwd=ROOT, capture_output=True, text=True)

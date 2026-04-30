@@ -35,7 +35,7 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 ROOT = Path(__file__).resolve().parent.parent
-HARBOR_TASKS_DIR = ROOT / "harbor_tasks"
+HARBOR_TASKS_DIR = ROOT / "markdown_following"
 RESULTS_FILE = ROOT / "pipeline_logs" / "e2b_validate_results.json"
 
 
@@ -350,7 +350,7 @@ def main():
     parser.add_argument("--build-concurrency", type=int, default=5, help="Max concurrent template builds")
     parser.add_argument("--tasks", type=int, default=None, help="Limit to first N tasks")
     parser.add_argument("--filter", type=str, default=None, help="Glob filter on task names (e.g. 'gradio-*')")
-    parser.add_argument("--task-dir", type=str, default=None, help="Task directory (default: harbor_tasks)")
+    parser.add_argument("--task-dir", type=str, default=None, help="Task directory (default: markdown_following)")
     parser.add_argument("--resume", action="store_true", help="Skip tasks already validated in results file")
     args = parser.parse_args()
     if args.task_dir:

@@ -7,7 +7,7 @@ that test name and asserts exit-code 0.
 
 Frameworks supported: pytest, jest, vitest (vitest_or_jest), go_test.
 
-Output: appends to harbor_tasks/<task>/tests/test_outputs.py under a
+Output: appends to markdown_following/<task>/tests/test_outputs.py under a
 `# === PR-added f2p tests (taskforge.test_patch_miner) ===` separator.
 """
 from __future__ import annotations

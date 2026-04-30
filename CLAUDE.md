@@ -32,9 +32,9 @@ scripts/
   run_agent_eval.py         #   Agent eval runner (Tracks 1, 3, 4) — see "Running an Eval" below
   push_images.py            #   Build + push task images to ghcr.io/findalexli/agentsmd-rl/<task>
 
-harbor_tasks/               # Pipeline A output: code-fix tasks (~580 active)
-harbor_tasks_md_authoring/  # Pipeline B output: markdown-authoring tasks (~718 active)
-harbor_tasks_agentmd_edits/ # Track 2 corpus: code + config-edit tasks (~82, smaller / harder)
+markdown_following/               # Pipeline A output: code-fix tasks (~580 active)
+markdown_authoring/  # Pipeline B output: markdown-authoring tasks (~718 active)
+markdown_edits/ # Track 2 corpus: code + config-edit tasks (~82, smaller / harder)
   <task>/
     instruction.md          #   Agent reads this (bug description, not the fix)
     task.toml               #   Metadata (difficulty, timeouts, resources)
@@ -47,7 +47,7 @@ research/                   # Research docs (data_mining_pipeline.md is the cano
 ```
 
 Quarantined and gitignored locally:
-- `harbor_tasks_md_authoring_quarantine_quality/` — Pipeline B quality-gate rejects (kept on disk for audit, audit trail in `research/md_authoring_quality_judgments.json`)
+- `markdown_authoring_quarantine_quality/` — Pipeline B quality-gate rejects (kept on disk for audit, audit trail in `research/md_authoring_quality_judgments.json`)
 - `pipeline_logs/`, `jobs/`, `pipeline_claims*/` — local working state, never tracked
 
 ## Task Selection Criteria
@@ -86,13 +86,13 @@ Runs `taskforge/prompts/scaffold.md` inside an E2B sandbox per PR. Post-Opus, th
 For PRs whose every changed file is a rule file (`CLAUDE.md` / `AGENTS.md` / `SKILL.md` / `.cursor/rules/*`):
 ```
 python scripts/scaffold_markdown_only.py \
-    --queue <prs.jsonl> --out-dir harbor_tasks_md_authoring \
+    --queue <prs.jsonl> --out-dir markdown_authoring \
     --concurrency 16
 ```
 Then run the two Gemini quality gates:
 ```
 python scripts/quality_judge.py --mode markdown_authoring \
-    --task-dir harbor_tasks_md_authoring --quarantine
+    --task-dir markdown_authoring --quarantine
 ```
 
 The full multi-stage funnel (discover → scout → filter → judge → build → ship) is documented in [research/data_mining_pipeline.md](research/data_mining_pipeline.md), including waterfall diagrams of where every PR drops out.

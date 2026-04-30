@@ -687,7 +687,7 @@ def mine_task(repo: str, base_commit: str, merge_commit: str, *,
 
 def main() -> int:
     ap = argparse.ArgumentParser()
-    ap.add_argument("--task", help="Task name (reads harbor_tasks/<task>/eval_manifest.yaml)")
+    ap.add_argument("--task", help="Task name (reads markdown_following/<task>/eval_manifest.yaml)")
     ap.add_argument("--repo", help="owner/repo (overrides manifest)")
     ap.add_argument("--base", help="base_commit SHA (overrides)")
     ap.add_argument("--merge", help="merge_commit SHA (overrides)")
@@ -713,7 +713,7 @@ def main() -> int:
 
     # Single-task mode
     if args.task and not (args.repo and args.base and args.merge):
-        manifest = ROOT / "harbor_tasks" / args.task / "eval_manifest.yaml"
+        manifest = ROOT / "markdown_following" / args.task / "eval_manifest.yaml"
         if not manifest.exists():
             return print(f"manifest not found: {manifest}", file=sys.stderr) or 2
         d = yaml.safe_load(manifest.read_text())

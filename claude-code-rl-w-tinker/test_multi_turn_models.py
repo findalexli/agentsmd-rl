@@ -23,7 +23,7 @@ if _env_path.exists():
             k, v = line.split("=", 1)
             os.environ.setdefault(k.strip(), v.strip())
 
-HARBOR_TASKS_DIR = Path(__file__).resolve().parent.parent / "harbor_tasks"
+HARBOR_TASKS_DIR = Path(__file__).resolve().parent.parent / "markdown_following"
 TASK_NAME = "areal-batch-rtensor-http-fetch"
 
 # Get host IP for Docker

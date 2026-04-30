@@ -149,14 +149,14 @@ class TaskKind(str, Enum):
     """Task shape — drives folder placement and per-track expectations.
 
     code_fix              — agent fixes a bug; behavioral fail_to_pass tests are required.
-                            Track 1 is the canonical signal. (harbor_tasks/)
+                            Track 1 is the canonical signal. (markdown_following/)
     code_with_config      — bundled: agent fixes code AND updates an instruction
                             markdown. Tracks 1 + 2 both required.
-                            (harbor_tasks_agentmd_edits/)
+                            (markdown_edits/)
     markdown_authoring    — PR only modifies SKILL.md / AGENTS.md / CLAUDE.md.
                             No behavioral test exists; Track 2 (semantic diff vs
                             gold markdown) is the only meaningful score.
-                            (harbor_tasks_md_authoring/)
+                            (markdown_authoring/)
     """
     CODE_FIX = "code_fix"
     CODE_WITH_CONFIG = "code_with_config"

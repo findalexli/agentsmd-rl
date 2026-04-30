@@ -25,7 +25,7 @@ lint         (1416)   post-validation rubric review
     ↓
 judge        (1479)   LLM quality judge
     ↓
-promote to harbor_tasks/
+promote to markdown_following/
 ```
 
 ## The 5 changes at a glance

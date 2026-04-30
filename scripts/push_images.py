@@ -12,14 +12,14 @@ The script:
 
 Usage (GitHub Actions — preferred):
     # Trigger via workflow_dispatch in the GitHub UI, or:
-    gh workflow run push-images.yml -f task_dir=harbor_tasks -f tier_a_only=true
+    gh workflow run push-images.yml -f task_dir=markdown_following -f tier_a_only=true
 
 Usage (local — if you really need to):
     echo $(gh auth token) | docker login ghcr.io -u findalexli --password-stdin
-    .venv/bin/python scripts/push_images.py --task-dir harbor_tasks --tier-a --batch-size 50
+    .venv/bin/python scripts/push_images.py --task-dir markdown_following --tier-a --batch-size 50
 
 Usage (generate task list for GHA matrix):
-    .venv/bin/python scripts/push_images.py --list-tasks --tier-a --task-dir harbor_tasks
+    .venv/bin/python scripts/push_images.py --list-tasks --tier-a --task-dir markdown_following
 """
 
 import argparse
@@ -205,7 +205,7 @@ def update_task_toml(task_path: Path, image_ref: str) -> None:
 
 def main():
     parser = argparse.ArgumentParser(description="Build and push task images to ghcr.io")
-    parser.add_argument("--task-dir", type=Path, default=ROOT / "harbor_tasks")
+    parser.add_argument("--task-dir", type=Path, default=ROOT / "markdown_following")
     parser.add_argument("--tier-a", action="store_true", help="Only tier-A tasks")
     parser.add_argument("--owner", default=os.environ.get("GH_OWNER", "findalexli"))
     parser.add_argument("--tag", default="auto", help="Image tag (default: Dockerfile hash)")

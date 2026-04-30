@@ -6,9 +6,9 @@ How we turn merged GitHub PRs into runnable benchmark tasks.
 
 | Part | Folder | Active | What the agent does |
 |---|---|---:|---|
-| **Markdown authoring** | `harbor_tasks_md_authoring/` | **2,482** | Writes / edits a skill or AGENTS.md / CLAUDE.md file |
-| **Markdown following** | `harbor_tasks/` | **609** | Reads the skill / markdown files, then writes code that obeys them |
-| Hybrid (small) | `harbor_tasks_agentmd_edits/` | 81 | Both — fix code AND update the markdown in one diff |
+| **Markdown authoring** | `markdown_authoring/` | **2,482** | Writes / edits a skill or AGENTS.md / CLAUDE.md file |
+| **Markdown following** | `markdown_following/` | **609** | Reads the skill / markdown files, then writes code that obeys them |
+| Hybrid (small) | `markdown_edits/` | 81 | Both — fix code AND update the markdown in one diff |
 
 All shipped as Docker images on `ghcr.io/findalexli/agentsmd-rl/<task>:latest`.
 

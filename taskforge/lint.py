@@ -17,7 +17,7 @@ Usage:
     python -m taskforge.lint --tasks "sglang-*"      # glob pattern
     python -m taskforge.lint --severity critical      # only critical issues
     python -m taskforge.lint --json                   # machine-readable output
-    python -m taskforge.lint --task-dir harbor_tasks_agentmd_edits
+    python -m taskforge.lint --task-dir markdown_edits
 """
 
 from __future__ import annotations
@@ -455,7 +455,7 @@ def _get_tasks(task_dir: str | None, pattern: str | None) -> list:
     from pathlib import Path
 
     root = Path(__file__).parent.parent
-    base = root / (task_dir or "harbor_tasks")
+    base = root / (task_dir or "markdown_following")
     if not base.exists():
         return []
     tasks = sorted(t for t in base.iterdir() if t.is_dir() and (t / "tests" / "test.sh").exists())
@@ -471,7 +471,7 @@ def main() -> None:
 
     parser = argparse.ArgumentParser(description="Lint harbor task test.sh files")
     parser.add_argument("--tasks", help="Glob pattern for task names (e.g., 'sglang-*')")
-    parser.add_argument("--task-dir", help="Task directory (default: harbor_tasks)")
+    parser.add_argument("--task-dir", help="Task directory (default: markdown_following)")
     parser.add_argument("--severity", choices=["critical", "warning", "info"], default="warning")
     parser.add_argument("--json", action="store_true", dest="json_output")
     args = parser.parse_args()

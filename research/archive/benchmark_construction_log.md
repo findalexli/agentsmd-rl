@@ -12,7 +12,7 @@ Remake all 430 harbor tasks with the new v2 format:
 - [x] PR metadata: 430/430 tasks have PR numbers (task_metadata.jsonl)
 - [x] Prompts: scaffold.md, validate.md, remake.md in taskforge/prompts/
 - [x] Pipeline: `python -m taskforge.pipeline remake` works
-- [x] Agent configs: 426/430 with full content in harbor_tasks/{task}/agent_configs.md
+- [x] Agent configs: 426/430 with full content in markdown_following/{task}/agent_configs.md
 
 ### Phase 1: Pilot — DONE
 - [x] 3 tasks (python, node, rust): 3/3 remade + Docker validated (nop=0, gold=1)
@@ -92,16 +92,16 @@ Using E2B sandboxes (~5x faster than local Docker):
 
 **Step 4: Convert kimi_drafts to v2** (111 tasks)
 - All currently v1 format (old test.sh + rubric.yaml + judge.py)
-- 65 React, 45 VS Code, 1 Fiber — 0 overlap with harbor_tasks
+- 65 React, 45 VS Code, 1 Fiber — 0 overlap with markdown_following
 - Convert each: pytest test_outputs.py + eval_manifest.yaml + standardized test.sh
 - Delete old judge.py, judge_hook.sh, rubric.yaml
 - Validate (nop=0, gold=1)
-- Move passing tasks into harbor_tasks/
+- Move passing tasks into markdown_following/
 
 **Step 5: Scout fresh PRs** — DONE
 - Used 49 repos in scouted_repos.jsonl
 - ~100 new tasks created (339 → 439 total)
-- Target: 400+ total validated tasks (harbor_tasks + converted kimi_drafts)
+- Target: 400+ total validated tasks (markdown_following + converted kimi_drafts)
 
 ---
 
@@ -140,7 +140,7 @@ Using E2B sandboxes (~5x faster than local Docker):
 
 ### Hour 4-5: Convert kimi_drafts — DONE
 - [x] Triage: 49 ready, 62 partial, 0 broken
-- [x] Copied 49 ready tasks to harbor_tasks/ (439 → 487)
+- [x] Copied 49 ready tasks to markdown_following/ (439 → 487)
 - [x] Extracted source info (repo/commit) from 45 Dockerfiles → task.toml
 - [x] Sonnet remake: 46/49 OK, 2 timeouts, 1 skipped
 - [x] E2B validate 46 kimi + 21 retries → 25 valid, 21 errors, 21 invalid
@@ -186,7 +186,7 @@ Using E2B sandboxes (~5x faster than local Docker):
 
 ### Hour 7: Wave 2 kimi_drafts + git commit — DONE
 - [x] Generated instruction.md for 44 partial kimi_drafts (agent)
-- [x] Copied 44 tasks to harbor_tasks (487 → 531)
+- [x] Copied 44 tasks to markdown_following (487 → 531)
 - [x] Sonnet remake: 42/44 OK, 2 timeouts
 - [x] E2B validate: 14 new passes
 - [x] Git commit 1: da02a95 — V2 migration, 487 tasks, 274 passing
@@ -235,7 +235,7 @@ Using E2B sandboxes (~5x faster than local Docker):
   - ~53% of tasks got new checks, ~47% correctly had no relevant rules
 - [x] Patch regeneration: 18 broken solve.sh regenerated with `git apply --3way`
 - [x] Local Docker rust builds: 30 tasks with 900s timeout (in progress overnight)
-- [x] All 111 kimi_drafts moved to harbor_tasks/ (550 total)
+- [x] All 111 kimi_drafts moved to markdown_following/ (550 total)
 
 ### Scoreboard (2026-04-03 09:00)
 
@@ -385,7 +385,7 @@ claude --bare -p "prompt" \
 
 ### Current Scoreboard (2026-04-03 11:00)
 
-**harbor_tasks (original):**
+**markdown_following (original):**
 | Status | Count | % |
 |--------|-------|---|
 | pass | 394 | 71.6% |
@@ -394,7 +394,7 @@ claude --bare -p "prompt" \
 | other | 18 | 3.3% |
 | **Total** | **550** | |
 
-**harbor_tasks_agentmd_edits (new):**
+**markdown_edits (new):**
 | Status | Count | % |
 |--------|-------|---|
 | pass (code-only) | 95 | 33.8% |

@@ -16,7 +16,7 @@ Two CLI modes:
 Usage:
     # Docker-only validation (no LLM needed, fast)
     python -m taskforge.e2b_worker --mode docker-only \\
-        --task-dir harbor_tasks --concurrency 50
+        --task-dir markdown_following --concurrency 50
 
     # Full pipeline from PRs (scaffold new tasks)
     python -m taskforge.e2b_worker --mode pipeline \\
@@ -24,11 +24,11 @@ Usage:
 
     # Re-run existing tasks from quality gate
     python -m taskforge.e2b_worker --mode pipeline --start-at qgate \\
-        --task-dir harbor_tasks --pool --concurrency 18
+        --task-dir markdown_following --pool --concurrency 18
 
     # Just improve + validate existing tasks
     python -m taskforge.e2b_worker --mode pipeline --start-at improve \\
-        --task-dir harbor_tasks --pool --concurrency 18
+        --task-dir markdown_following --pool --concurrency 18
 """
 
 from __future__ import annotations
@@ -771,8 +771,8 @@ async def node_scaffold(
         prompt_file = ROOT / ".claude" / "commands" / "scaffold-task.md"
     prompt = prompt_file.read_text().replace("$ARGUMENTS", pr_ref)
 
-    task_dir_name = "harbor_tasks_agentmd_edits" if agentmd else "harbor_tasks"
-    prompt = prompt.replace("harbor_tasks/", f"{task_dir_name}/")
+    task_dir_name = "markdown_edits" if agentmd else "markdown_following"
+    prompt = prompt.replace("markdown_following/", f"{task_dir_name}/")
 
     await sandbox.files.write("/workspace/scaffold_prompt.md", prompt.encode())
 
@@ -2655,7 +2655,7 @@ async def run_task(
 
             # ── Retrofit: trust prior validation ──────────────────
             # When start_at=JUDGE, we skipped validate_and_fix. The task was
-            # validated previously (it's in harbor_tasks/, meaning it already
+            # validated previously (it's in markdown_following/, meaning it already
             # passed nop=0/gold=1 at download time). Seed result.valid=True from
             # the prior status.json so judge+reconcile nodes run.
             if start_at == StartAt.JUDGE and not result.valid:
@@ -3418,7 +3418,7 @@ def main():
     parser.add_argument("--start-at", type=str, default=None,
                         choices=["scaffold", "oneshot_scaffold", "oneshot_repair_manifest", "oneshot_fix_dockerfile", "oneshot_repair_full", "oneshot_full_qa_review", "qgate", "rubric", "enrich", "improve", "validate", "judge"],
                         help="DAG entry point (default: scaffold for --input, validate for existing tasks)")
-    parser.add_argument("--task-dir", default="harbor_tasks")
+    parser.add_argument("--task-dir", default="markdown_following")
     parser.add_argument("--tasks", type=str, default=None, help="Comma-sep task names")
     parser.add_argument("--filter", type=str, default=None, help="Glob filter")
     parser.add_argument("--limit", type=int, default=None)

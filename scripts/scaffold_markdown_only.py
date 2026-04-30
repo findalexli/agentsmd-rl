@@ -11,14 +11,14 @@ Input: scaffold queue JSONL with `{repo, pr}` rows (e.g. the same format
 audit_stub_batch.py + scaffold v3/v4 use).
 
 Output:
-  - Tasks scaffolded under `harbor_tasks_md_authoring/<slug>/`
+  - Tasks scaffolded under `markdown_authoring/<slug>/`
   - PRs that aren't pure-markdown are written to <queue_basename>_codebearing.jsonl
     (so they can be routed through the Opus pipeline separately)
 
 Usage:
     .venv/bin/python scripts/scaffold_markdown_only.py \\
         --queue /tmp/scaffold_queue_v4_remaining.jsonl \\
-        --out-dir harbor_tasks_md_authoring \\
+        --out-dir markdown_authoring \\
         --concurrency 16
 
 Behavior is idempotent: re-running on the same queue with existing task dirs
@@ -667,7 +667,7 @@ async def amain(args):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--queue", required=True, help="Input JSONL of {repo, pr}")
-    ap.add_argument("--out-dir", default="harbor_tasks_md_authoring",
+    ap.add_argument("--out-dir", default="markdown_authoring",
                     help="Output dir for scaffolded tasks (under repo root)")
     ap.add_argument("--concurrency", type=int, default=16)
     args = ap.parse_args()

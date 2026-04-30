@@ -236,8 +236,8 @@ def mine_test_patch(task_dir: Path) -> dict:
 
 def main() -> int:
     ap = argparse.ArgumentParser()
-    ap.add_argument("--task", help="Single task name in harbor_tasks/")
-    ap.add_argument("--task-dir", default="harbor_tasks")
+    ap.add_argument("--task", help="Single task name in markdown_following/")
+    ap.add_argument("--task-dir", default="markdown_following")
     ap.add_argument("--out", help="Output JSONL (one line per task)")
     args = ap.parse_args()
 

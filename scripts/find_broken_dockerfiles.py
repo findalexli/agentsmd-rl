@@ -5,7 +5,7 @@ For each FAILED job in the last N runs:
   1. Pull the per-step log
   2. Identify which task it was building (matrix input)
   3. Capture the last ~50 lines as failure context
-  4. Write `harbor_tasks/<task>/_failure.log` for the fix pipeline to upload
+  4. Write `markdown_following/<task>/_failure.log` for the fix pipeline to upload
   5. Append `{"task_ref": "<task>"}` to the input JSONL
 
 Output:
@@ -79,7 +79,7 @@ def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--max-runs", type=int, default=5)
     ap.add_argument("--out-dir", default=None)
-    ap.add_argument("--task-dir", default="harbor_tasks")
+    ap.add_argument("--task-dir", default="markdown_following")
     args = ap.parse_args()
 
     ts = dt.datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -164,7 +164,7 @@ def main() -> int:
     print(f"\nFound {len(discovery)} broken Dockerfiles", file=sys.stderr)
     print(f"  → {inp}", file=sys.stderr)
     print(f"  → discovery.json: {out_dir/'discovery.json'}", file=sys.stderr)
-    print(f"  → _failure.log written under each harbor_tasks/<task>/", file=sys.stderr)
+    print(f"  → _failure.log written under each markdown_following/<task>/", file=sys.stderr)
     return 0
 
 

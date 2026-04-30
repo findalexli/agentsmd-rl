@@ -8,7 +8,7 @@ at eval time — no LLM needed for the gold reference.
 
 Usage:
     # At scaffold time: extract gold config changes
-    python -m taskforge.config_extract --task harbor_tasks_agentmd_edits/taskname
+    python -m taskforge.config_extract --task markdown_edits/taskname
 
     # At eval time: compare agent's changes against gold
     python -m taskforge.config_extract --compare \

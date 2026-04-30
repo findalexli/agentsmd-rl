@@ -1,7 +1,7 @@
 """Real-harness integration tests for the taskforge pipeline.
 
 No mocks. Exercises the actual code paths against:
-  - the real harbor_tasks/ corpus (read-only)
+  - the real markdown_following/ corpus (read-only)
   - real auto-fixer scripts in dry-run mode
   - real subprocess calls to CLI entry points
 
@@ -37,7 +37,7 @@ from taskforge.task_lint import (
 )
 
 
-HARBOR = ROOT / "harbor_tasks"
+HARBOR = ROOT / "markdown_following"
 
 
 # ════════════════════════════════════════════════════════════════════════════
@@ -91,7 +91,7 @@ class TestRubricRegistry:
 # A handful of tasks that were specifically auto-fixed today. Asserting on
 # the post-fix state confirms our fixers + lint behave consistently.
 
-@pytest.mark.skipif(not HARBOR.exists(), reason="harbor_tasks/ not present")
+@pytest.mark.skipif(not HARBOR.exists(), reason="markdown_following/ not present")
 class TestRealCorpusLint:
     def test_clean_task_post_autofix_has_no_hard_fails(self):
         """transformers-processor-chat-template-kwargs had no reward-gate bugs
@@ -107,10 +107,10 @@ class TestRealCorpusLint:
         )
 
     def test_contaminated_oracle_caught(self):
-        # This task was quarantined to harbor_tasks_quarantine/ in commit
+        # This task was quarantined to markdown_following_quarantine/ in commit
         # 2026-04-24 — it has curl github.com/.../*.diff in solve.sh.
-        # Look there first, fall back to harbor_tasks/.
-        QUARANTINE = ROOT / "harbor_tasks_quarantine"
+        # Look there first, fall back to markdown_following/.
+        QUARANTINE = ROOT / "markdown_following_quarantine"
         for parent in (QUARANTINE, HARBOR):
             td = parent / "airflow-worker-serviceaccount-split"
             if td.exists():
@@ -565,7 +565,7 @@ class TestPromptsExist:
 # End-to-end lint orchestrator on a real task
 # ════════════════════════════════════════════════════════════════════════════
 
-@pytest.mark.skipif(not HARBOR.exists(), reason="harbor_tasks/ not present")
+@pytest.mark.skipif(not HARBOR.exists(), reason="markdown_following/ not present")
 class TestLintTaskOrchestrator:
     def test_lint_task_runs_on_real_corpus_without_crashing(self):
         """Smoke-test the orchestrator across a sample of real tasks. The

@@ -1,7 +1,7 @@
 # AgentMD Scaffold Campaign — 2026-04-05/06
 
 ## Goal
-Scaffold new `harbor_tasks_agentmd_edits` tasks. Target: 500+ total (currently 236 existing).
+Scaffold new `markdown_edits` tasks. Target: 500+ total (currently 236 existing).
 
 ## Status (updated 2026-04-06 15:30 PDT)
 
@@ -69,12 +69,12 @@ GLM will hit its 5-hour cap after ~35-40 tasks. When that happens:
 ```bash
 # GLM batch
 .venv/bin/python -m taskforge.pipeline improve-tests \
-  --task-dir harbor_tasks_agentmd_edits \
+  --task-dir markdown_edits \
   --tasks "$GLM_TASKS" --workers 4 --budget 10.0 --timeout 1800
 
 # OAuth batch (concurrent, separate terminal)
 .venv/bin/python -m taskforge.pipeline improve-tests \
-  --task-dir harbor_tasks_agentmd_edits \
+  --task-dir markdown_edits \
   --tasks "$OAUTH_TASKS" --workers 4 --budget 10.0 --timeout 1800
 ```
 

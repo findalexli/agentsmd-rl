@@ -24,7 +24,7 @@ sys.path.insert(0, str(ROOT))
 
 from taskforge.task_lint import lint_lint_requirement_stated  # noqa: E402
 
-HARBOR_TASKS = ROOT / "harbor_tasks"
+HARBOR_TASKS = ROOT / "markdown_following"
 
 # Human-readable tool names + canonical install/invocation hint for instruction
 _TOOL_DESC = {

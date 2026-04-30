@@ -160,7 +160,7 @@ Bundled-vs-pure-markdown split inside Class A is done at scaffold time by counti
 2. Scaffold the 977-PR pool through `oneshot_scaffold`: ~$7,800, 60 % expected pass → ~580 new tasks.
 3. Build + push GHCR images for the 399 tier-A scaffolded tasks (`push-images.yml` in flight).
 4. Distractor-generation pass on 91 tasks scaffolded last night with rubric but no distractor block.
-5. Class-A triage script: split bundled vs pure-markdown via `changed_files`, set `task.kind`, route into `harbor_tasks_agentmd_edits/` vs `harbor_tasks_md_authoring/`.
+5. Class-A triage script: split bundled vs pure-markdown via `changed_files`, set `task.kind`, route into `markdown_edits/` vs `markdown_authoring/`.
 
 ## Artifacts on disk
 

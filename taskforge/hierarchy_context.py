@@ -11,10 +11,10 @@ The PR author's choices (what they follow vs ignore) are the ground truth signal
 
 Usage:
     # Single task
-    python -m taskforge.hierarchy_context --task harbor_tasks_agentmd_edits/opencode-acp-question-tool-flag
+    python -m taskforge.hierarchy_context --task markdown_edits/opencode-acp-question-tool-flag
 
     # Batch scan
-    python -m taskforge.hierarchy_context --task-dir harbor_tasks_agentmd_edits --limit 10
+    python -m taskforge.hierarchy_context --task-dir markdown_edits --limit 10
 """
 
 from __future__ import annotations

@@ -493,13 +493,13 @@ Week 4: Run full pipeline on 500+ PRs, iterate on quality
 
 **2. `scripts/pregen_task.py`**
 - Input: `filtered_prs.jsonl`
-- Output: `harbor_tasks/<name>/` with mechanical files + `_context.json`
+- Output: `markdown_following/<name>/` with mechanical files + `_context.json`
 - Logic: `gh` CLI calls, Jinja2 templates, patch splitting
 - Dependencies: `jinja2`, `gh` CLI
 - Lines of code: ~300
 
 **3. `scripts/llm_scaffold.py`**
-- Input: `harbor_tasks/<name>/_context.json`
+- Input: `markdown_following/<name>/_context.json`
 - Output: `instruction.md`, `test.sh`, `rubric.yaml` in task dir
 - Logic: OpenRouter API call, JSON response parsing, self-check
 - Dependencies: `httpx` or `openai` SDK
@@ -546,7 +546,7 @@ Week 4: Run full pipeline on 500+ PRs, iterate on quality
 │   ├── validate-task.md          # v1 validate prompt (keep as reference)
 │   └── build-rubric.md           # v1 rubric prompt (keep as reference)
 ├── scouted_prs.jsonl             # 420 PR candidates (EXISTS)
-├── harbor_tasks/                 # 432 tasks (EXISTS)
+├── markdown_following/                 # 432 tasks (EXISTS)
 └── pipeline_logs/                # v1 run logs (EXISTS)
 ```
 

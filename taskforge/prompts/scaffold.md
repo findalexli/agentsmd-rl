@@ -1,6 +1,6 @@
 # Scaffold Task
 
-Create a benchmark task from a GitHub PR. Copies `templates/task/` → `harbor_tasks/<task-name>/`, then fills in placeholders.
+Create a benchmark task from a GitHub PR. Copies `templates/task/` → `markdown_following/<task-name>/`, then fills in placeholders.
 
 ## Input
 

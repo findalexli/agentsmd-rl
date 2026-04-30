@@ -29,8 +29,8 @@ sys.stdout.reconfigure(line_buffering=True)
 sys.stderr.reconfigure(line_buffering=True)
 
 ROOT = Path(__file__).parent.parent
-HARBOR_TASKS = ROOT / "harbor_tasks"
-HARBOR_AGENTMD = ROOT / "harbor_tasks_agentmd_edits"
+HARBOR_TASKS = ROOT / "markdown_following"
+HARBOR_AGENTMD = ROOT / "markdown_edits"
 COMMANDS_DIR = ROOT / ".claude" / "commands"
 PROMPTS_DIR = ROOT / "taskforge" / "prompts"
 TEMPLATE_DIR = ROOT / "taskforge" / "templates" / "task_template"
@@ -563,7 +563,7 @@ async def main():
     all_actions = sorted(set(PROMPT_FILES) | set(COMMAND_FILES) | {"solve", "full", "scaffold-from-prs"})
     parser.add_argument("action", choices=all_actions)
     parser.add_argument("--tasks", help="Comma-separated task names (default: all)")
-    parser.add_argument("--task-dir", help="Task directory (default: harbor_tasks)")
+    parser.add_argument("--task-dir", help="Task directory (default: markdown_following)")
     parser.add_argument("--model", help="Override model (opus/sonnet/haiku)")
     parser.add_argument("--workers", type=int, default=4)
     parser.add_argument("--budget", type=float, help="Max USD per task")
