@@ -82,13 +82,24 @@ taskforge/                   # Task construction toolkit
   backends.py                   # Multi-backend LLM pool with rate limit handling
   gemini_rubric_constructor.py  # Structured output rubric generation + Kimi validation
   hierarchy_context.py          # Config hierarchy extractor (root → leaf AGENTS.md)
+  ci_check_miner.py             # Mine upstream CI check-runs at PR merge SHA (with PR-head fallback)
+  ci_test_generator.py          # CI mined check-runs → tests/test_outputs.py + manifest checks
+  test_patch_miner.py           # Extract added+modified test fns from PR's gold patch (per-framework regex)
+  test_patch_generator.py       # PR-added f2p → pytest functions
+  exec_f2p_miner.py             # SWE-rebench-V2-style dual-pass exec mining (base vs gold)
+  exec_log_parsers.py           # 66 per-framework log parsers (pytest, vitest, jest, cargo, gotest, …)
+  test_exec_f2p_miner.py        # Unit tests for the exec miner (parser routing, picker, install patching)
 harbor_tasks/                # Part 1 — agentmd-following: code-only bug fixes (609 active)
 harbor_tasks_md_authoring/   # Part 2 — agentmd-create/edit: rule-file edits (2,482 active)
 harbor_tasks_agentmd_edits/  # Hybrid: code + rule-file edits in same PR (81 active)
 scripts/
   run_agent_eval.py             # Agent eval runner (Track 1+3+4, pluggable backend)
   scaffold_markdown_only.py     # Pipeline B — deterministic markdown-authoring scaffolder
-  push_images.py                # Build + push task images to ghcr.io
+  push_images.py                # Build + push task images to ghcr.io (1800s push timeout, crash-recovery)
+  revamp_with_ci_mining.py      # Apply CI miner output to existing tasks (idempotent re-runs)
+  append_pr_added_f2p.py        # Apply test_patch_miner output to existing tasks
+  mine_exec_f2p.py              # Orchestrate exec_f2p_miner over many tasks via E2B (--concurrency 80)
+  reconcile_manifests.py        # Drop manifest check IDs whose `def test_<id>` doesn't exist (safety-guarded)
 research/                    # Research docs, negative rubrics plan
 .claude/skills/              # Claude Code skills for task scaffolding/validation
 .claude/agents/              # Headless agent definitions for batch pipelines
@@ -346,11 +357,24 @@ python -m taskforge.scout scout --agentmd --repos-file scouted_repos.jsonl --out
 python -m taskforge.pipeline scaffold-from-prs --input scouted.jsonl --workers 8 --pool
 ```
 
-## Status (2026-04-28)
+## Status (2026-04-29)
 
-- **Part 1 (`harbor_tasks/`)** — agentmd-following: **609 active**. ≈ 93 % Docker oracle pass. Last scout pass 2026-04-26.
+- **Part 1 (`harbor_tasks/`)** — agentmd-following: **609 active**, **608/608 GHCR images (100 %)**, 540/609 last-confirmed Docker oracle pass (89 %). Last scout pass 2026-04-26.
 - **Part 2 (`harbor_tasks_md_authoring/`)** — agentmd-create/edit: **2,482 active**. Comprehensive scout completed overnight 2026-04-28; +1,345 net new tasks (1,351 newly built minus 6 quarantined); 10/10 random Docker smoke builds passed; pushed to GHCR via `push-images.yml`.
+- **Test-signal coverage** (Part 1): **430/609 (70 %)** tasks have at least one upstream-derived test section in `test_outputs.py`. Total upstream test functions: **4,444** across CI-mined, PR-added f2p, and execution-mined origins (see [Test signal sources](#test-signal-sources) below).
 - **In flight**: post-judge re-run for the 1,351 newly-built Part-2 tasks (the original pass was killed mid-run because Gemini Flex was returning 58-second timeouts and ~21 % `transient_failures`).
+
+### Test signal sources
+
+Each Part-1 task's `tests/test_outputs.py` may carry up to three machine-mined sections. They sit on top of structural checks (file existence, syntax) and provide real behavioral signal.
+
+| Origin | What it captures | Coverage | Test fns | Tool |
+|---|---|---:|---:|---|
+| `# === CI-mined tests` | Real `run:` commands from the merge commit's GitHub check-runs (workflow YAML + composite-action follower) | 414 (68 %) | 2,481 | `taskforge/ci_check_miner.py` + `ci_test_generator.py` |
+| `# === PR-added f2p tests` | Test functions added or modified in the gold patch (parsed from `solve.sh`) | 71 (12 %) | 387 | `taskforge/test_patch_miner.py` |
+| `# === Execution-mined` | SWE-rebench-V2-style: dual-pass docker run at base vs gold inside the task's GHCR image, parsed via per-framework log parsers | 32 (5 %) | 1,576 | `taskforge/exec_f2p_miner.py` + `exec_log_parsers.py` |
+
+Execution mining has the right semantics (real test names from real test runs) but is gated by image fatness — most failures are setup quirks (missing tool in image, missing pytest plugin, working-directory mismatches with CI). See [data_mining_pipeline.md](research/data_mining_pipeline.md) for the full mining architecture.
 
 See [research/scouting_report_2026_04_26.md](research/scouting_report_2026_04_26.md) for Part 1's last scout report (per-repo yields, classifier comparison) and [research/data_mining_pipeline.md](research/data_mining_pipeline.md) for the full Part 2 comprehensive-scout architecture.
 
