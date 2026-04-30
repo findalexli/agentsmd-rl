@@ -200,6 +200,9 @@ class StartAt(str, Enum):
     ONESHOT_REPAIR = "oneshot_repair"  # canonical: qgate + fix_task_quality
     ONESHOT_SCAFFOLD = "oneshot_scaffold"  # canonical: one-call scaffold from PR
     ONESHOT_REPAIR_MANIFEST = "oneshot_repair_manifest"  # canonical: rewrite eval_manifest.yaml only, preserve tests/Dockerfile/solve.sh
+    ONESHOT_FIX_DOCKERFILE = "oneshot_fix_dockerfile"    # canonical: fix Dockerfile rot from a GHA failure log; preserve tests/solve/instruction
+    ONESHOT_REPAIR_FULL = "oneshot_repair_full"          # canonical: free-form Dockerfile + tests/test_outputs.py edits to satisfy Docker oracle (nop=0, gold=1)
+    ONESHOT_FULL_QA_REVIEW = "oneshot_full_qa_review"    # canonical: 4-dimension QA review (CI/CD, functional tests, instruction rubrics, Docker) + auto-fix + Docker oracle gate
 
     @classmethod
     def from_str(cls, s: str) -> "StartAt":
@@ -846,6 +849,98 @@ async def node_scaffold(
     # Read task name from task.toml
     task_name = await _read_task_name(sandbox, pr_ref)
     return "ok", task_name, ""
+
+
+async def node_full_qa_review(sandbox: AsyncSandbox) -> tuple[str, str]:
+    """Full QA review: 4-dimension audit + fixes + oracle validation.
+    Reads taskforge/prompts/full_qa_review.md."""
+    prompt_file = ROOT / "taskforge" / "prompts" / "full_qa_review.md"
+    prompt = prompt_file.read_text()
+    await sandbox.files.write("/workspace/full_qa_review_prompt.md", prompt.encode())
+    code, stdout, stderr = await run_cmd(
+        sandbox,
+        "cat /workspace/full_qa_review_prompt.md | claude -p "
+        "--dangerously-skip-permissions --model opus "
+        "--output-format json",
+        user="worker",
+        timeout=2700,  # 45 min agent budget
+    )
+    if code != 0:
+        combined = stdout + stderr
+        if _is_rate_limit(combined):
+            return "rate_limited", combined[:500]
+        return "error", combined[:500]
+    try:
+        raw = await sandbox.files.read("/workspace/task/scaffold_status.json", format="text")
+        ss = json.loads(raw)
+        if ss.get("abandoned"):
+            return "abandoned", ss.get("reason", "")[:300]
+    except Exception:
+        pass
+    return "ok", ""
+
+
+async def node_repair_full(sandbox: AsyncSandbox) -> tuple[str, str]:
+    """Full repair: agent fixes Dockerfile and/or tests/test_outputs.py to make
+    Docker oracle nop=0 + gold=1. Tests/solve.sh/instruction.md preserved.
+    """
+    prompt_file = ROOT / "taskforge" / "prompts" / "repair_full.md"
+    prompt = prompt_file.read_text()
+    await sandbox.files.write("/workspace/repair_full_prompt.md", prompt.encode())
+    code, stdout, stderr = await run_cmd(
+        sandbox,
+        "cat /workspace/repair_full_prompt.md | claude -p "
+        "--dangerously-skip-permissions --model opus "
+        "--output-format json",
+        user="worker",
+        timeout=2400,  # 40 min budget per task — agent does multiple Docker iterations
+    )
+    if code != 0:
+        combined = stdout + stderr
+        if _is_rate_limit(combined):
+            return "rate_limited", combined[:500]
+        return "error", combined[:500]
+    try:
+        raw = await sandbox.files.read("/workspace/task/scaffold_status.json", format="text")
+        ss = json.loads(raw)
+        if ss.get("abandoned"):
+            return "abandoned", ss.get("reason", "")[:300]
+    except Exception:
+        pass
+    return "ok", ""
+
+
+async def node_fix_dockerfile(sandbox: AsyncSandbox) -> tuple[str, str]:
+    """Fix Dockerfile rot in place. tests/solve/instruction untouched.
+
+    Reads: taskforge/prompts/fix_dockerfile.md  (uploaded via prompt)
+    Mutates: /workspace/task/environment/Dockerfile (in sandbox)
+    Returns: (status, error)
+    """
+    prompt_file = ROOT / "taskforge" / "prompts" / "fix_dockerfile.md"
+    prompt = prompt_file.read_text()
+    await sandbox.files.write("/workspace/fix_dockerfile_prompt.md", prompt.encode())
+
+    code, stdout, stderr = await run_cmd(
+        sandbox,
+        "cat /workspace/fix_dockerfile_prompt.md | claude -p "
+        "--dangerously-skip-permissions --model opus "
+        "--output-format json",
+        user="worker",
+    )
+    if code != 0:
+        combined = stdout + stderr
+        if _is_rate_limit(combined):
+            return "rate_limited", combined[:500]
+        return "error", combined[:500]
+    try:
+        raw = await sandbox.files.read("/workspace/task/scaffold_status.json", format="text")
+        ss = json.loads(raw)
+        if ss.get("abandoned"):
+            return "abandoned", ss.get("reason", "")[:300]
+    except Exception:
+        pass
+    return "ok", ""
 
 
 async def node_repair_manifest(sandbox: AsyncSandbox) -> tuple[str, str]:
@@ -2089,6 +2184,179 @@ async def run_task(
                 result.scaffold_status = "skipped"
                 result.task_name = task_ref
 
+                # ── Oneshot full QA review: 4-dimension audit + fixes + oracle gate ──
+                if start_at == StartAt.ONESHOT_FULL_QA_REVIEW:
+                    await run_cmd(sandbox, "rm -f /workspace/task/scaffold_status.json")
+                    t0 = time.monotonic()
+                    s, err = await node_full_qa_review(sandbox)
+                    elapsed = time.monotonic() - t0
+                    result.scaffold_time = round(elapsed, 2)
+                    if s == "rate_limited":
+                        result.error = f"rate limited: {err}"
+                        if pool and backend: pool.report_429(backend)
+                        raise _RateLimited(result.error)
+                    if s == "abandoned":
+                        result.error = f"qa_review abandoned: {err}"
+                        result.valid = False
+                        logger.info("[%s] qa_review ABANDONED (%.0fs): %s",
+                                    task_ref, elapsed, err[:200])
+                        result.total_time = round(time.monotonic() - t_start, 2)
+                        return result
+                    if s != "ok":
+                        result.error = f"qa_review failed: {err}"
+                        result.total_time = round(time.monotonic() - t_start, 2)
+                        return result
+                    # Run Docker oracle to confirm
+                    nop, gold, err2 = await node_validate_docker_only(sandbox)
+                    result.nop_reward = nop
+                    result.gold_reward = gold
+                    result.valid = (nop == 0.0 and gold == 1.0)
+                    if not result.valid:
+                        result.error = f"oracle still failing nop={nop} gold={gold}; {err2[:200]}"
+                        logger.warning("[%s] qa_review REJECTED (oracle): nop=%s gold=%s",
+                                       task_ref, nop, gold)
+                        result.total_time = round(time.monotonic() - t_start, 2)
+                        return result
+                    # Schema-validate the manifest
+                    try:
+                        manifest_raw = await sandbox.files.read(
+                            "/workspace/task/eval_manifest.yaml", format="text")
+                        import yaml as _yaml
+                        from taskforge.models import EvalManifest
+                        EvalManifest.model_validate(_yaml.safe_load(manifest_raw))
+                    except Exception as schema_err:
+                        result.valid = False
+                        result.error = f"manifest schema invalid after qa: {str(schema_err)[:300]}"
+                        logger.warning("[%s] qa_review REJECTED (schema): %s",
+                                       task_ref, str(schema_err)[:200])
+                        result.total_time = round(time.monotonic() - t_start, 2)
+                        return result
+                    # Download all touched files
+                    try:
+                        for sub in [("environment", "Dockerfile"),
+                                     ("tests", "test_outputs.py"),
+                                     ("eval_manifest.yaml",),
+                                     ("instruction.md",)]:
+                            sandbox_path = "/workspace/task/" + "/".join(sub)
+                            try:
+                                content = await sandbox.files.read(sandbox_path, format="text")
+                                local = dest.joinpath(*sub)
+                                local.parent.mkdir(parents=True, exist_ok=True)
+                                local.write_text(content)
+                            except Exception:
+                                pass
+                        result.downloaded = True
+                        logger.info("[%s] qa_review PASS — files written (nop=0 gold=1)", task_ref)
+                    except Exception as e:
+                        result.valid = False
+                        result.error = f"download error: {e}"
+                    result.total_time = round(time.monotonic() - t_start, 2)
+                    if pool and backend and result.valid:
+                        pool.report_success(backend)
+                    return result
+
+                # ── Oneshot full repair (legacy of qa_review with smaller scope) ──
+                if start_at == StartAt.ONESHOT_REPAIR_FULL:
+                    await run_cmd(sandbox, "rm -f /workspace/task/scaffold_status.json")
+                    t0 = time.monotonic()
+                    s, err = await node_repair_full(sandbox)
+                    elapsed = time.monotonic() - t0
+                    result.scaffold_time = round(elapsed, 2)
+                    if s == "rate_limited":
+                        result.error = f"rate limited: {err}"
+                        if pool and backend: pool.report_429(backend)
+                        raise _RateLimited(result.error)
+                    if s == "abandoned":
+                        result.error = f"repair_full abandoned: {err}"
+                        result.valid = False
+                        logger.info("[%s] repair_full ABANDONED (%.0fs): %s",
+                                    task_ref, elapsed, err[:200])
+                        result.total_time = round(time.monotonic() - t_start, 2)
+                        return result
+                    if s != "ok":
+                        result.error = f"repair_full failed: {err}"
+                        result.total_time = round(time.monotonic() - t_start, 2)
+                        return result
+                    # Run our own Docker oracle to confirm nop=0 + gold=1
+                    nop, gold, err2 = await node_validate_docker_only(sandbox)
+                    result.nop_reward = nop
+                    result.gold_reward = gold
+                    result.valid = (nop == 0.0 and gold == 1.0)
+                    if not result.valid:
+                        result.error = f"docker oracle still failing nop={nop} gold={gold}; {err2[:200]}"
+                        logger.warning("[%s] repair_full REJECTED (oracle): nop=%s gold=%s",
+                                       task_ref, nop, gold)
+                        result.total_time = round(time.monotonic() - t_start, 2)
+                        return result
+                    # Download Dockerfile + tests/test_outputs.py back to disk
+                    try:
+                        df = await sandbox.files.read(
+                            "/workspace/task/environment/Dockerfile", format="text")
+                        (dest / "environment" / "Dockerfile").write_text(df)
+                        tp = await sandbox.files.read(
+                            "/workspace/task/tests/test_outputs.py", format="text")
+                        (dest / "tests" / "test_outputs.py").write_text(tp)
+                        result.downloaded = True
+                        logger.info("[%s] repair_full PASS — files written (nop=0 gold=1)", task_ref)
+                    except Exception as e:
+                        result.valid = False
+                        result.error = f"download error: {e}"
+                    result.total_time = round(time.monotonic() - t_start, 2)
+                    if pool and backend and result.valid:
+                        pool.report_success(backend)
+                    return result
+
+                # ── Oneshot Dockerfile fix: rewrite Dockerfile from a failure log ──
+                if start_at == StartAt.ONESHOT_FIX_DOCKERFILE:
+                    await run_cmd(sandbox, "rm -f /workspace/task/scaffold_status.json")
+                    t0 = time.monotonic()
+                    s, err = await node_fix_dockerfile(sandbox)
+                    elapsed = time.monotonic() - t0
+                    result.scaffold_time = round(elapsed, 2)
+                    if s == "rate_limited":
+                        result.error = f"rate limited: {err}"
+                        if pool and backend: pool.report_429(backend)
+                        raise _RateLimited(result.error)
+                    if s == "abandoned":
+                        result.error = f"fix_dockerfile abandoned: {err}"
+                        result.valid = False
+                        logger.info("[%s] fix_dockerfile ABANDONED (%.0fs): %s",
+                                    task_ref, elapsed, err[:200])
+                        result.total_time = round(time.monotonic() - t_start, 2)
+                        return result
+                    if s != "ok":
+                        result.error = f"fix_dockerfile failed: {err}"
+                        result.total_time = round(time.monotonic() - t_start, 2)
+                        return result
+                    # Verify docker build succeeds in sandbox
+                    code, build_out, _ = await run_cmd(
+                        sandbox,
+                        "cd /workspace && docker build -t task-env-fixtest ./task/environment/ 2>&1 | tail -20",
+                        timeout=600,
+                    )
+                    if code != 0:
+                        result.valid = False
+                        result.error = f"docker build still failing: {build_out[-300:]}"
+                        logger.warning("[%s] fix_dockerfile REJECTED (build): %s",
+                                       task_ref, build_out[-200:])
+                        result.total_time = round(time.monotonic() - t_start, 2)
+                        return result
+                    # Download just the fixed Dockerfile back to disk
+                    try:
+                        new_df = await sandbox.files.read(
+                            "/workspace/task/environment/Dockerfile", format="text")
+                        (dest / "environment" / "Dockerfile").write_text(new_df)
+                        result.valid = True
+                        result.downloaded = True
+                        logger.info("[%s] fix_dockerfile PASS — Dockerfile written", task_ref)
+                    except Exception as e:
+                        result.valid = False
+                        result.error = f"failed to download Dockerfile: {e}"
+                    result.total_time = round(time.monotonic() - t_start, 2)
+                    if pool and backend and result.valid:
+                        pool.report_success(backend)
+                    return result
+
                 # ── Oneshot manifest repair: rewrite eval_manifest.yaml only ──
                 # Skips the rest of the pipeline (qgate/rubric/enrich/improve/validate).
                 # Uses the schema gate to verify the agent produced canonical output.
@@ -3148,7 +3416,7 @@ def main():
     parser.add_argument("--mode", choices=["pipeline", "docker-only"], required=True,
                         help="pipeline: unified DAG (LLM + Docker). docker-only: no LLM, just Docker oracle")
     parser.add_argument("--start-at", type=str, default=None,
-                        choices=["scaffold", "oneshot_scaffold", "oneshot_repair_manifest", "qgate", "rubric", "enrich", "improve", "validate", "judge"],
+                        choices=["scaffold", "oneshot_scaffold", "oneshot_repair_manifest", "oneshot_fix_dockerfile", "oneshot_repair_full", "oneshot_full_qa_review", "qgate", "rubric", "enrich", "improve", "validate", "judge"],
                         help="DAG entry point (default: scaffold for --input, validate for existing tasks)")
     parser.add_argument("--task-dir", default="harbor_tasks")
     parser.add_argument("--tasks", type=str, default=None, help="Comma-sep task names")

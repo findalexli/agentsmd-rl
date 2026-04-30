@@ -105,6 +105,20 @@ BACKEND_CFG = {
         "api_key_env": "FIREWORKS_API_KEY",
         "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
     },
+    "deepseek_pro": {
+        "base_url": "https://api.deepseek.com/anthropic",
+        "api_key_env": "DEEPSEEK_API_KEY",
+        "model": "deepseek-v4-pro[1m]",
+        "subagent_model": "deepseek-v4-flash",  # cheaper for subagents
+        "effort_level": "max",                  # max thinking budget
+    },
+    "deepseek_flash": {
+        "base_url": "https://api.deepseek.com/anthropic",
+        "api_key_env": "DEEPSEEK_API_KEY",
+        "model": "deepseek-v4-flash",
+        "subagent_model": "deepseek-v4-flash",
+        "effort_level": "max",
+    },
 }
 
 
@@ -194,6 +208,17 @@ async def run_harbor(
         agent_env.append(("GEMINI_API_KEY", gemini_key))
     if backend_cfg["base_url"]:
         agent_env.insert(0, ("ANTHROPIC_BASE_URL", backend_cfg["base_url"]))
+    # Optional: backend may override subagent model + thinking effort (DeepSeek)
+    if backend_cfg.get("subagent_model"):
+        agent_env.append(("CLAUDE_CODE_SUBAGENT_MODEL", backend_cfg["subagent_model"]))
+        # Override haiku slot specifically (the small/fast model)
+        for i, (k, _) in enumerate(agent_env):
+            if k == "ANTHROPIC_DEFAULT_HAIKU_MODEL":
+                agent_env[i] = ("ANTHROPIC_DEFAULT_HAIKU_MODEL", backend_cfg["subagent_model"])
+            if k == "ANTHROPIC_SMALL_FAST_MODEL":
+                agent_env[i] = ("ANTHROPIC_SMALL_FAST_MODEL", backend_cfg["subagent_model"])
+    if backend_cfg.get("effort_level"):
+        agent_env.append(("CLAUDE_CODE_EFFORT_LEVEL", backend_cfg["effort_level"]))
 
     cmd = [
         "harbor", "run",
@@ -206,7 +231,10 @@ async def run_harbor(
         "-o", str(job_dir.parent),
         "--verifier-timeout-multiplier", "5",
         "--timeout-multiplier", "2",
-        "--force-build",
+        # Note: removed --force-build so harbor can pull prebuilt ghcr.io
+        # images (saves 3-5 min/task and avoids E2B docker compat warnings).
+        # If you need to bust the cache, set EVAL_FORCE_BUILD=1.
+        *(["--force-build"] if os.environ.get("EVAL_FORCE_BUILD") == "1" else []),
         "-y",
     ]
     for k, v in agent_env:
@@ -399,7 +427,7 @@ async def main():
     p.add_argument("--tasks", required=True, help="Path to tasks.txt (one task per line)")
     p.add_argument("--out", required=True, help="Output JSONL path")
     p.add_argument("--concurrency", type=int, default=4)
-    p.add_argument("--backend", choices=["minimax", "anthropic", "glm", "glm5", "kimi", "fireworks"], default="minimax")
+    p.add_argument("--backend", choices=list(BACKEND_CFG.keys()), default="minimax")
     p.add_argument("--env", choices=["e2b", "docker"], default="e2b")
     p.add_argument("--timeout", type=int, default=1800, help="Per-task timeout in seconds")
     p.add_argument("--run-id", default=None)
@@ -426,6 +454,9 @@ async def main():
     env = load_env()
     cfg = BACKEND_CFG[args.backend]
     api_key = env.get(cfg["api_key_env"], "") or os.environ.get(cfg["api_key_env"], "")
+    # DeepSeek key tolerance: also accept lowercase `deepseek_api_key` from .env
+    if not api_key and cfg["api_key_env"] == "DEEPSEEK_API_KEY":
+        api_key = env.get("deepseek_api_key", "") or os.environ.get("deepseek_api_key", "")
     if not api_key:
         sys.exit(f"Missing {cfg['api_key_env']}")
 
